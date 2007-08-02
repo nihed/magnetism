@@ -3,10 +3,9 @@
  */
 package com.dumbhippo.jive;
 
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.Log;
 
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.util.EJBUtil;
@@ -60,20 +59,13 @@ public class HippoAuthProvider implements
 		
 		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		
-		if (HippoUserProvider.ENABLE_ADMIN_USER && username.equals(HippoUserProvider.getAdminUsername())) {
-            String anticipatedDigest = AuthFactory.createDigest(token, HippoUserProvider.getAdminPassword());
-			Log.debug("trying to auth admin, expected " + anticipatedDigest);	            
-            if (!digest.equalsIgnoreCase(anticipatedDigest)) {
-                throw new UnauthorizedException("Bad admin password");
-            }
-		} else {			
-			if (glue.isServerTooBusy()) {
-				// Jive disconnects clients whenever it encounters an unexpected exception
-				throw new ServerTooBusyException();
-			}			
-			if (!glue.authenticateJabberUser(username, token, digest))
-				throw new UnauthorizedException("Not authorized");
-		}
+		if (glue.isServerTooBusy()) {
+			// Jive disconnects clients whenever it encounters an unexpected exception
+			throw new ServerTooBusyException();
+		}			
+		if (!glue.authenticateJabberUser(username, token, digest))
+			throw new UnauthorizedException("Not authorized");
+
 		Log.debug("auth succeeded for user " + username);
 	}
 

@@ -9,7 +9,7 @@ import sys
 result = False
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(("@@bindHost@@", @@jivePlainPort@@))
+    s.connect(("@@bindHost@@", @@openfirePlainPort@@))
 
     s.send("<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams'/>")
     got = s.recv(1024)

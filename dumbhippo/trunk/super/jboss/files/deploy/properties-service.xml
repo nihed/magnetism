@@ -23,9 +23,6 @@
 	    dumbhippo.server.forbidRobots=@@forbidRobots:properties@@
 	    Dumbhippo.server.email.disable=@@disableEmail:properties@@
         dumbhippo.server.bind.host=@@bindHost:properties@@
-		dumbhippo.server.xmpp.port=@@jivePlainPort:properties@@
-		dumbhippo.server.xmpp.adminuser=admin
-		dumbhippo.server.xmpp.password=@@jivePassword:properties@@
         dumbhippo.server.http.port=@@tomcatHttpPort:properties@@
 		dumbhippo.server.baseurl=@@baseurl:properties@@
 		dumbhippo.server.baseurlGnome=@@baseurlGnome:properties@@
