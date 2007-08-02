@@ -34,27 +34,29 @@
  * 
  * ***** END LICENSE BLOCK ***** */
  
-const RDF = Components.classes["@mozilla.org/rdf/rdf-service;1"]
-    .getService(Components.interfaces.nsIRDFService); 
+const RDF = Components.classes["@mozilla.org/rdf/rdf-service;1"].getService(Components.interfaces.nsIRDFService); 
 const BOOKMARK_NAME = RDF.GetResource("http://home.netscape.com/NC-rdf#Name");
 const BOOKMARK_DATE = RDF.GetResource("http://home.netscape.com/NC-rdf#Date");
+const BOOKMARK_VISITCOUNT = RDF.GetResource("http://home.netscape.com/NC-rdf#VisitCount");
 
-function readRDFString(aDS,aRes,aProp) 
-{
-  var n = aDS.GetTarget(aRes, aProp, true);
-  if (n)
-    return n.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-  else 
-    return "";
+function readRDFThingy(ds,res,prop,qi,def) {
+  var val = ds.GetTarget(res, prop, true);
+  if (val)
+    return val.QueryInterface(qi).Value;
+  else
+    return def;
 }
 
-function readRDFDate(aDS,aRes,aProp) 
-{
-  var n = aDS.GetTarget(aRes, aProp, true);
-  if (n)
-    return new Date(n.QueryInterface(Components.interfaces.nsIRDFDate).Value/1000);
-  else 
-    return null;
+function readRDFString(ds,res,prop) {
+  return readRDFThingy(ds,res,prop,Components.interfaces.nsIRDFLiteral,"")
+}
+
+function readRDFDate(ds,res,prop) {
+  return new Date(readRDFThingy(ds,res,prop,Components.interfaces.nsIRDFDate,null)/1000);
+}
+
+function readRDFInt(ds,res,prop) {
+  return readRDFThingy(ds,res,prop,Components.interfaces.nsIRDFInt,-1);
 }
 
 var getHistory = function() {
@@ -66,7 +68,8 @@ var getHistory = function() {
       var resource = item.QueryInterface(Components.interfaces.nsIRDFResource);
       var itemname = readRDFString(gh, resource, BOOKMARK_NAME);
       var itemdate = readRDFDate(gh, resource, BOOKMARK_DATE);
-      result.push({'name': itemname, 'date': itemdate, 'url': resource.Value})
+      var itemcount = readRDFInt(gh, resource, BOOKMARK_VISITCOUNT);
+      result.push({'name': itemname, 'date': itemdate, 'url': resource.Value, 'visitcount': itemcount})
     }
     return result
 }
