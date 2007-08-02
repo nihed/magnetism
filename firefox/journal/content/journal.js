@@ -57,7 +57,7 @@ var journal = {
   onload: function() {
     document.getElementById('q').focus();
 
-    var content = document.getElementById('content');
+    var content = document.getElementById('history');
     var histitems = getHistory();
     
     var headernode = document.createElement('h4')
