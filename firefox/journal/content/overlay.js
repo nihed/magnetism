@@ -54,7 +54,8 @@ var firefoxjournal = {
   },
   onTabOpen: function(e) {
     var browser = e.target.linkedBrowser;
-    browser.loadURI(JOURNAL_CHROME);
+    if (!browser.currentURI)
+      browser.loadURI(JOURNAL_CHROME);
   },
 };
 window.addEventListener("load", function(e) { firefoxjournal.onLoad(e); }, false);
