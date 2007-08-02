@@ -83,8 +83,7 @@ var getHistory = function() {
       var action = "visited";
       if (resource.Value.startsWith("http://www.google.com/") && resource.Value.toQueryParams()["q"] ) { 
         /* detect google web searches, should be doing this in a better place */
-        var googleSearchedFor = resource.Value.toQueryParams()["q"]
-        itemname = googleSearchedFor.replace("+", " ");
+        itemname = decodeURIComponent(resource.Value.toQueryParams()["q"].replace(/\+/g," "));
         action = "searched for";
       }
 
@@ -144,6 +143,8 @@ var filterHistoryItems = function(items, q) {
 }
 
 var pad = function(x) { return x < 9 ? "0" + x : "" + x };
+var twelveHour = function(x) { return (x > 12)? x % 12 + 1 : x };
+var meridiem = function(x) { return (x % 12 > 0)? "pm" : "am" };
 
 var formatMonth = function(i) { return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][i]}
 
@@ -168,7 +169,7 @@ var journal = {
       histitemnode.className = 'item';
       var hrs = viewed_item.date.getHours();
       var mins = viewed_item.date.getMinutes();
-      histitemnode.appendChild(createSpanText(pad(hrs) + ":" + pad(mins), 'time'));
+      histitemnode.appendChild(createSpanText(twelveHour(hrs) + ":" + pad(mins) + " " + meridiem(hrs), 'time'));
       histitemnode.appendChild(createSpanText(viewed_item.action, 'action'));
       histitemnode.appendChild(createAText(viewed_item.name,viewed_item.url,'title'));
 
@@ -194,6 +195,7 @@ var journal = {
     if (searchbox.value) {
       content.appendChild(document.createTextNode("Searching for " + searchbox.value))
       viewed_items = sliceByDay(filterHistoryItems(histitems, searchbox.value));
+      document.getElementById("google-q").src = "http://www.gnome.org/~clarkbw/google/?q=" + escape(searchbox.value);
     } else {
       viewed_items = [sliceByDay(histitems)[0]];
     }

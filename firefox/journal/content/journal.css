@@ -52,7 +52,7 @@ img {
 }
 
 #content {
-	border-bottom: 1px solid #222 ;
+
 }
 
 #header {
@@ -131,6 +131,8 @@ input.green-button:hover {
 .history {
 	display: table;
   font-size: 10pt;
+	border-bottom: 1px solid #222 ;
+  padding-bottom: 20px;
 }
 .item {
 	display: table-row;
@@ -180,4 +182,22 @@ input.green-button:hover {
 .nav {
   text-align: center;
   margin: 1em;
+}
+
+/* ==== Google Search ==== */
+
+#google {
+  float: right;
+  padding: 0;
+  margin: 0;
+  margin-left: 40px;
+}
+#google-q {
+  width: 330px;
+  min-height: 745px;
+  height; 100%:
+  padding: 0;
+  margin: 0; 
+  overflow: hidden;
+  border: none;
 }
