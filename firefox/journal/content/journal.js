@@ -48,6 +48,15 @@ function readRDFString(aDS,aRes,aProp)
     return "";
 }
 
+function readRDFDate(aDS,aRes,aProp) 
+{
+  var n = aDS.GetTarget(aRes, aProp, true);
+  if (n)
+    return new Date(n.QueryInterface(Components.interfaces.nsIRDFDate).Value/1000);
+  else 
+    return null;
+}
+
 var getHistory = function() {
     var gh = Components.classes["@mozilla.org/browser/global-history;2"].getService(Components.interfaces.nsIRDFDataSource);
     iter = gh.GetAllResources();
@@ -56,8 +65,7 @@ var getHistory = function() {
       var item = iter.getNext();
       var resource = item.QueryInterface(Components.interfaces.nsIRDFResource);
       var itemname = readRDFString(gh, resource, BOOKMARK_NAME);
-      //var itemdate = readRDFString(gh, resource, BOOKMARK_DATE);
-      var itemdate = '';
+      var itemdate = readRDFDate(gh, resource, BOOKMARK_DATE);
       result.push({'name': itemname, 'date': itemdate, 'url': resource.Value})
     }
     return result
