@@ -34,18 +34,28 @@
  * 
  * ***** END LICENSE BLOCK ***** */
 
+const JOURNAL_CHROME = "chrome://firefoxjournal/content/journal.html";
+
 var firefoxjournal = {
   onLoad: function() {
     // initialization code
     this.initialized = true;
     this.strings = document.getElementById("firefoxjournal-strings");
+    var container = gBrowser.tabContainer;
+    var me = this;
+    container.addEventListener("TabOpen", function(e) { me.onTabOpen(e); }, false);    
   },
   onMenuItemCommand: function(e) {
 	var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
 		.getService(Components.interfaces.nsIWindowMediator);
 	var recentWindow = wm.getMostRecentWindow("navigator:browser");		
-	recentWindow.delayedOpenTab("chrome://firefoxjournal/content/journal.html", null, null, null, null);
+	recentWindow.delayedOpenTab(JOURNAL_CHROME, null, null, null, null);
 	
+  },
+  onTabOpen: function(e) {
+    var browser = e.target.linkedBrowser;
+    browser.loadURI(JOURNAL_CHROME);
   },
 };
 window.addEventListener("load", function(e) { firefoxjournal.onLoad(e); }, false);
+
