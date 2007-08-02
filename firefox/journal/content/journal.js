@@ -34,6 +34,20 @@
  * 
  * ***** END LICENSE BLOCK ***** */
  
+const RDF = Components.classes["@mozilla.org/rdf/rdf-service;1"]
+    .getService(Components.interfaces.nsIRDFService); 
+const BOOKMARK_NAME = RDF.GetResource("http://home.netscape.com/NC-rdf#Name");
+const BOOKMARK_DATE = RDF.GetResource("http://home.netscape.com/NC-rdf#Date");
+
+function readRDFString(aDS,aRes,aProp) 
+{
+  var n = aDS.GetTarget(aRes, aProp, true);
+  if (n)
+    return n.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
+  else 
+    return "";
+}
+
 var getHistory = function() {
     var gh = Components.classes["@mozilla.org/browser/global-history;2"].getService(Components.interfaces.nsIRDFDataSource);
     iter = gh.GetAllResources();
@@ -41,7 +55,10 @@ var getHistory = function() {
     while (iter.hasMoreElements()) {
       var item = iter.getNext();
       var resource = item.QueryInterface(Components.interfaces.nsIRDFResource);
-      result.push(resource.Value)
+      var itemname = readRDFString(gh, resource, BOOKMARK_NAME);
+      //var itemdate = readRDFString(gh, resource, BOOKMARK_DATE);
+      var itemdate = '';
+      result.push({'name': itemname, 'date': itemdate, 'url': resource.Value})
     }
     return result
 }
@@ -71,12 +88,12 @@ var journal = {
     for (var i = 0; i < histitems.length; i++) {
       var histitemnode = document.createElement('div')
       histitemnode.className = 'item'
-      histitemnode.appendChild(createSpanText('00:00pm'))
+      histitemnode.appendChild(createSpanText(histitems[i].date))
       histitemnode.appendChild(createSpanText('visited', 'action'))
       var a = document.createElement('a')
       a.className = 'title'
-      a.setAttribute('href', histitems[i])
-      a.appendChild(document.createTextNode(histitems[i]))
+      a.setAttribute('href', histitems[i].url)
+      a.appendChild(document.createTextNode(histitems[i].name))
       histitemnode.appendChild(a)
       
       histnode.appendChild(histitemnode)
