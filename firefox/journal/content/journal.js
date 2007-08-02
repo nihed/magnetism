@@ -184,7 +184,7 @@ var meridiem = function(x) { return (x % 12 > 0)? "pm" : "am" };
 var formatMonth = function(i) { return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][i]}
 
 var journal = {
-  appendDaySet: function(dayset, docState) {
+  appendDaySet: function(dayset) {
     var date = dayset[0].date;
 
     dayset.sort(function (a,b) { if (a.date > b.date) { return -1; } else { return 1; }})
@@ -198,7 +198,6 @@ var journal = {
     histnode.className = 'history';
     content.appendChild(histnode);
 
-    var curtabindex = docState['tabindex']
     for (var i = 0; i < dayset.length; i++) {
       var viewed_item = dayset[i]
       var is_target = viewed_item == this.targetHistoryItem;
@@ -211,8 +210,7 @@ var journal = {
       histitemnode.appendChild(createSpanText(twelveHour(hrs) + ":" + pad(mins) + " " + meridiem(hrs), 'time'));
       histitemnode.appendChild(createSpanText(viewed_item.action, 'action'));
       var titleLink = createAText(viewed_item.name,viewed_item.url,'title');
-      titleLink.setAttribute('tabindex', curtabindex);
-      curtabindex = curtabindex+1; 
+      titleLink.setAttribute('tabindex', 1);
       if (is_target) 
         this.targetHistoryItemLink = titleLink;
       histitemnode.appendChild(titleLink);
@@ -226,7 +224,7 @@ var journal = {
       histmetanode.appendChild(hrefLink);
       histnode.appendChild(histitemnode);
       histnode.appendChild(histmetanode);
-    }    
+    }
   },
 
   redisplay: function() {    
@@ -236,8 +234,6 @@ var journal = {
     while (content.firstChild) { content.removeChild(content.firstChild) };
     
     var histitems = getHistory();
-    
-    var docState = {'tabindex': 1}
     
     var viewed_items;
     var highest_item;
@@ -252,7 +248,7 @@ var journal = {
     }
 
     for (var i = 0; i < viewed_items.length; i++) {
-      this.appendDaySet(viewed_items[i], docState);
+      this.appendDaySet(viewed_items[i]);
     }
   },
   getJournalPrefs : function() {
