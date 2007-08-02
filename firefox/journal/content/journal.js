@@ -277,34 +277,9 @@ var journal = {
     searchbox.select();
     searchbox.focus();
   },
-  getJournalPrefs : function() {
-  	if (!this.branch) {
-      var manager = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
-      LOG("manager: " + manager)
-      this.branch = manager.getBranch("extensions.firefoxjournal@colin.walters.");
-    }
-    return this.branch;    
-  },
-  firstTimeInit : function() {
-    var jprefs = this.getJournalPrefs();
-    if (jprefs.getBoolPref("firstTime")) {
-      return;
-    }  
-    
-    var prefs = Components.classes["@mozilla.org/preferences-service;1"].
-                  getService(Components.interfaces.nsIPrefBranch);    
-    var oldHomepage = prefs.getCharPref("browser.startup.homepage");
-    jprefs.setCharPref("oldHomepage", oldHomepage);
-    prefs.setCharPref("browser.startup.homepage", JOURNAL_CHROME);
-    prefs.setIntPref("browser.startup.page", 1);
-    
-    jprefs.setBoolPref("firstTime", true);     
-  },
   onload: function() {
     this.searchTimeout = null;
     this.targetHistoryItem = null;
-    
-    this.firstTimeInit();
     
     var searchbox = document.getElementById('q');
     var searchform = document.forms['qform'];
