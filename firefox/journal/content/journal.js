@@ -34,12 +34,53 @@
  * 
  * ***** END LICENSE BLOCK ***** */
  
+var getHistory = function() {
+    var gh = Components.classes["@mozilla.org/browser/global-history;2"].getService(Components.interfaces.nsIRDFDataSource);
+    iter = gh.GetAllResources();
+    var result = [];
+    while (iter.hasMoreElements()) {
+      var item = iter.getNext();
+      var resource = item.QueryInterface(Components.interfaces.nsIRDFResource);
+      result.push(resource.Value)
+    }
+    return result
+}
+
+var createSpanText = function(text, className) {
+  var span = document.createElement('span')
+  span.className = className
+  span.appendChild(document.createTextNode(text))
+  return span
+}
+ 
 var journal = {
   onload: function() {
     document.getElementById('q').focus();
 
-    content = document.getElementById('content')
-    content.appendChild(document.createTextNode('HELLO WORLD'))
+    var content = document.getElementById('content');
+    var histitems = getHistory();
+    
+    var headernode = document.createElement('h4')
+    headernode.className = 'date'
+    headernode.appendChild(document.createTextNode('Today'))
+    content.appendChild(headernode)
+    var histnode = document.createElement('div')
+    histnode.className = 'history'
+    content.appendChild(histnode)
+    
+    for (var i = 0; i < histitems.length; i++) {
+      var histitemnode = document.createElement('div')
+      histitemnode.className = 'item'
+      histitemnode.appendChild(createSpanText('00:00pm'))
+      histitemnode.appendChild(createSpanText('visited', 'action'))
+      var a = document.createElement('a')
+      a.className = 'title'
+      a.setAttribute('href', histitems[i])
+      a.appendChild(document.createTextNode(histitems[i]))
+      histitemnode.appendChild(a)
+      
+      histnode.appendChild(histitemnode)
+    }
   }
  }
  
