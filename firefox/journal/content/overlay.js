@@ -40,10 +40,12 @@ var firefoxjournal = {
   onLoad: function() {
     // initialization code
     this.initialized = true;
+    // Do first time bits
+    this.firstTimeInit();        
     this.strings = document.getElementById("firefoxjournal-strings");
     var container = gBrowser.tabContainer;
     var me = this;
-    container.addEventListener("TabOpen", function(e) { me.onTabOpen(e); }, false);    
+    container.addEventListener("TabOpen", function(e) { me.onTabOpen(e); }, false);
   },
   onMenuItemCommand: function(e) {
 	var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
@@ -57,6 +59,27 @@ var firefoxjournal = {
     if (!browser.currentURI)
       browser.loadURI(JOURNAL_CHROME);
   },
+  getJournalPrefs : function() {
+  	if (!this.branch) {
+      var manager = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
+      this.branch = manager.getBranch("extensions.firefoxjournal@colin.walters.");
+    }
+    return this.branch;    
+  },
+  firstTimeInit : function() {
+    var jprefs = this.getJournalPrefs();
+    if (jprefs.getBoolPref("firstTime")) {
+      return;
+    }  
+    
+    var prefs = Components.classes["@mozilla.org/preferences-service;1"].
+                  getService(Components.interfaces.nsIPrefBranch);    
+    var oldHomepage = prefs.getCharPref("browser.startup.homepage");
+    jprefs.setCharPref("oldHomepage", oldHomepage);
+    prefs.setCharPref("browser.startup.homepage", JOURNAL_CHROME);
+    prefs.setIntPref("browser.startup.page", 1);
+    
+    jprefs.setBoolPref("firstTime", true);     
+  },  
 };
 window.addEventListener("load", function(e) { firefoxjournal.onLoad(e); }, false);
-
