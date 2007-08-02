@@ -183,6 +183,10 @@ input.green-button:hover {
   text-decoration: none;
   text-align:right;
 }
+.clear-search {
+  font-size: small;
+  text-decoration: none;
+}
 .nav {
   text-align: center;
   margin: 1em;
@@ -195,10 +199,11 @@ input.green-button:hover {
   padding: 0;
   margin: 0;
   margin-left: 40px;
+  height: 100%;
 }
 #google-q {
   width: 330px;
-  min-height: 745px;
+  min-height: 800px;
   height; 100%:
   padding: 0;
   margin: 0; 
