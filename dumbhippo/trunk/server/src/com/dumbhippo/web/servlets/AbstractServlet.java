@@ -79,7 +79,10 @@ public abstract class AbstractServlet extends HttpServlet {
 		
 		// this means "we are hosed for a minute, try back in a bit"
 		// There's a Retry-After header we could set...
-		SERVICE_UNAVAILABLE(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+		SERVICE_UNAVAILABLE(HttpServletResponse.SC_SERVICE_UNAVAILABLE),
+		
+		// need http auth
+		UNAUTHORIZED(HttpServletResponse.SC_UNAUTHORIZED);
 		
 		private int code;
 		HttpResponseCode(int code) {
@@ -403,7 +406,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		} catch (RuntimeException e) {
 			Throwable cause = e.getCause();
 			if (cause instanceof HttpException) {
-				logger.debug("http exception processing " + request.getMethod(), e);
+				logger.debug("http exception processing {}: {}", request.getMethod(), e.getMessage());
 				((HttpException) cause).send(response);
 				return null;
 			} else if (cause instanceof HumanVisibleException) {

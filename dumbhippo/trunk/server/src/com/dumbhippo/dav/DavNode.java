@@ -9,7 +9,7 @@ import java.util.Map;
 import com.dumbhippo.server.NotFoundException;
 
 public interface DavNode {
-
+	
 	/**
 	 * Get the name of the node, NOT url-encoded or in any way url-aware
 	 * @return

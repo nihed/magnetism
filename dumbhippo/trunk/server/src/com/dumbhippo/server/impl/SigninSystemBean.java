@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Client;
@@ -195,6 +196,14 @@ public class SigninSystemBean implements SigninSystem {
 		mailer.sendMessage(message);
 	}
 
+	public Client authenticatePassword(Guid userGuid, String password, String clientIdentifier) throws HumanVisibleException {
+		User user = identitySpider.lookupUser(userGuid);
+		if (user == null)
+			throw new HumanVisibleException("No such user " + userGuid);
+		
+		return authenticatePassword(user, password, clientIdentifier);
+	}
+		
 	public Client authenticatePassword(String address, String password, String clientIdentifier) throws HumanVisibleException {
 		Resource resource;
 		
@@ -235,20 +244,25 @@ public class SigninSystemBean implements SigninSystem {
 			throw new HumanVisibleException("You entered '" + address + "', we don't know about that email address or AIM screen name");
 		}
 		
-		Account account;
-		
 		User user = identitySpider.lookupUserByResource(SystemViewpoint.getInstance(), resource);
 		if (user == null && noAuthentication) {
 			logger.warn("Creating new account for resource: {}", resource);
-			account = accountSystem.createAccountFromResource(resource);
+			Account account = accountSystem.createAccountFromResource(resource);
 			user = account.getOwner();
-		} else if (user == null) {
+		}
+		
+		if (user == null) {
 			throw new HumanVisibleException("Hmm, there doesn't seem to be an account with the "
 					+ ((resource instanceof EmailResource) ? " email address '" : " screen name '") + address + "'");
 		} else {
-			account = accountSystem.lookupAccountByUser(user);
-			assert account != null;
+			return authenticatePassword(user, password, clientIdentifier);
 		}
+	}
+	
+	private Client authenticatePassword(User user, String password, String clientIdentifier) throws HumanVisibleException {
+		boolean noAuthentication = configuration.getProperty(HippoProperty.DISABLE_AUTHENTICATION).equals("true");
+		
+		Account account = user.getAccount();
 		
 		if (account.checkPassword(password) || noAuthentication) {
 			return accountSystem.authorizeNewClient(account, clientIdentifier);

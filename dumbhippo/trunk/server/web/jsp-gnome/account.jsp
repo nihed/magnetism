@@ -26,6 +26,7 @@
 	<gnome:stylesheet name="account"/>	
 	<gnome:faviconIncludes/>
 	<dht3:accountJavascriptSetup account="${account}"/>
+	<dh:script module="dh.textinput"/>
 </head>
 <body>
 	<gnome:page>
