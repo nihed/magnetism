@@ -80,7 +80,15 @@ var createSpanText = function(text, className) {
   span.appendChild(document.createTextNode(text))
   return span
 }
- 
+
+var createAText = function(text, href, className) {
+  var a = document.createElement('a');
+  a.setAttribute('class' , className);
+  a.setAttribute('href', href);
+  a.appendChild(document.createTextNode(text));
+  return a;
+}
+
 var journal = {
   onload: function() {
     document.getElementById('q').focus();
@@ -99,15 +107,19 @@ var journal = {
     for (var i = 0; i < histitems.length; i++) {
       var histitemnode = document.createElement('div')
       histitemnode.className = 'item'
-      histitemnode.appendChild(createSpanText(histitems[i].date))
+      histitemnode.appendChild(createSpanText(histitems[i].date, 'time'))
       histitemnode.appendChild(createSpanText('visited', 'action'))
-      var a = document.createElement('a')
-      a.className = 'title'
-      a.setAttribute('href', histitems[i].url)
-      a.appendChild(document.createTextNode(histitems[i].name))
-      histitemnode.appendChild(a)
-      
+
+      histitemnode.appendChild(createAText(histitems[i].name,histitems[i].url,'title'))
+
+      var histmetanode = document.createElement('div')
+      histmetanode.className = 'meta'
+      histmetanode.appendChild(createSpanText('', 'blue'))
+      histmetanode.appendChild(createSpanText('', 'tags'))
+      histmetanode.appendChild(createAText(histitems[i].url,histitems[i].url,'url'));
+
       histnode.appendChild(histitemnode)
+      histnode.appendChild(histmetanode)
     }
   }
  }
