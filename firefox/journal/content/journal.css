@@ -137,6 +137,10 @@ input.green-button:hover {
 .item {
 	display: table-row;
 }
+.target-item {
+	font-weight: bold;
+	font-size: 12pt;	
+}
 .time, .action, .title {
 	display: table-cell;
 	padding: 0.2em;
