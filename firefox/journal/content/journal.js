@@ -39,6 +39,8 @@ const BOOKMARK_NAME = RDF.GetResource("http://home.netscape.com/NC-rdf#Name");
 const BOOKMARK_DATE = RDF.GetResource("http://home.netscape.com/NC-rdf#Date");
 const BOOKMARK_VISITCOUNT = RDF.GetResource("http://home.netscape.com/NC-rdf#VisitCount");
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 function LOG(msg) {
   var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
                                  .getService(Components.interfaces.nsIConsoleService);
@@ -91,23 +93,23 @@ var getHistory = function() {
 
 function sliceByDay(histitems) {
   var days = {}
-  for (var i = 0; i < histitems; i++) {
+  for (var i = 0; i < histitems.length; i++) {
     var hi = histitems[i]
-    var timeday = hi.date.getTime() / (24 * 60 * 60 * 1000)
+    var timeday = Math.floor(hi.date.getTime() / DAY_MS)
     if (!days[timeday])
       days[timeday] = []
+     
     days[timeday].push(hi)
   }
-  LOG("pushing days: " + days)
   var sorted_days = []
   for (timeday in days) {
     sorted_days.push([timeday, days[timeday]])
   }
   sorted_days.sort(function (a,b) { if (a[0] == b[0]) { return 0; } else if (a[0] > b[0]) { return 1; } else { return -1; } })
-  LOG("sorted days: "+sorted_days)
   days = []
-  for (var i = 0; i < sorted_days; i++) {
-    days.push(sorted_days[i][1])
+  for (var i = 0; i < sorted_days.length; i++) {
+    var dayset = sorted_days[i][1]    
+    days.unshift(dayset)
   }
   return days;
 }
@@ -139,47 +141,63 @@ var filterHistoryItems = function(items, q) {
   return result;
 }
 
+var pad = function(x) { return x < 9 ? "0" + x : "" + x };
+
+var formatMonth = function(i) { return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][i]}
+
 var journal = {
-  redisplay: function() {    LOG("redisplay");
+  appendDaySet: function(dayset) {
+    var date = dayset[0].date;
+
+    dayset.sort(function (a,b) { if (a.date > b.date) { return 1; } else { return -1; }})
+
+    var content = document.getElementById('history');    
+    var headernode = document.createElement('h4');
+    headernode.className = 'date';
+    headernode.appendChild(document.createTextNode(formatMonth(date.getMonth()) + " " + pad(date.getDay()) + " " + date.getFullYear()));
+    content.appendChild(headernode);
+    var histnode = document.createElement('div');
+    histnode.className = 'history';
+    content.appendChild(histnode);
+
+    for (var i = 0; i < dayset.length; i++) {
+      var viewed_item = dayset[i]
+      var histitemnode = document.createElement('div');
+      histitemnode.className = 'item';
+      var hrs = viewed_item.date.getHours();
+      var mins = viewed_item.date.getMinutes();
+      histitemnode.appendChild(createSpanText(pad(hrs) + ":" + pad(mins), 'time'));
+      histitemnode.appendChild(createSpanText(viewed_item.action, 'action'));
+      histitemnode.appendChild(createAText(viewed_item.name,viewed_item.url,'title'));
+
+      var histmetanode = document.createElement('div');
+      histmetanode.className = 'meta';
+      histmetanode.appendChild(createSpanText(' ', 'blue'));
+      histmetanode.appendChild(createSpanText(' ', 'tags'));
+      histmetanode.appendChild(createAText(viewed_item.url.split("?")[0],viewed_item.url,'url'));
+      histnode.appendChild(histitemnode);
+      histnode.appendChild(histmetanode);
+    }    
+  },
+
+  redisplay: function() {    
+    LOG("redisplay");
     var content = document.getElementById('history'); 
     var searchbox = document.getElementById('q');     
     while (content.firstChild) { content.removeChild(content.firstChild) };
     
     var histitems = getHistory();
     
-    var headernode = document.createElement('h4');
-    headernode.className = 'date';
-    headernode.appendChild(document.createTextNode('Today'));
-    content.appendChild(headernode);
-    var histnode = document.createElement('div');
-    histnode.className = 'history';
-    content.appendChild(histnode);
-      
-    var today_items = histitems; //sliceByDay(histitems)[0];
+    var viewed_items;
     if (searchbox.value) {
       content.appendChild(document.createTextNode("Searching for " + searchbox.value))
-      today_items = filterHistoryItems(today_items, searchbox.value);
+      viewed_items = sliceByDay(filterHistoryItems(histitems, searchbox.value));
+    } else {
+      viewed_items = [sliceByDay(histitems)[0]];
     }
-
-    for (var i = 0; i < today_items.length; i++) {
-      var histitemnode = document.createElement('div');
-      histitemnode.className = 'item';
-      var pad = function(x) { return x < 9 ? "0" + x : "" + x };
-      var hrs = today_items[i].date.getHours();
-      var mins = today_items[i].date.getMinutes();
-      histitemnode.appendChild(createSpanText(pad(hrs) + ":" + pad(mins), 'time'));
-      histitemnode.appendChild(createSpanText(today_items[i].action, 'action'));
-      histitemnode.appendChild(createAText(today_items[i].name,today_items[i].url,'title'));
-
-      var histmetanode = document.createElement('div');
-      histmetanode.className = 'meta';
-      histmetanode.appendChild(createSpanText(' ', 'blue'));
-      histmetanode.appendChild(createSpanText(' ', 'tags'));
-      histmetanode.appendChild(createAText(today_items[i].url.split("?")[0],today_items[i].url,'url'));
-      histnode.appendChild(histitemnode);
-      histnode.appendChild(histmetanode);
+    for (var i = 0; i < viewed_items.length; i++) {
+      this.appendDaySet(viewed_items[i]);
     }
-
   },
   onload: function() {
     this.searchTimeout = null;
