@@ -251,7 +251,13 @@ var journal = {
     var viewed_items;
     var highest_item;
     if (searchbox.value) {
-      content.appendChild(document.createTextNode("Searching for " + searchbox.value))
+      content.appendChild(document.createTextNode("Searching for " + searchbox.value + " "))
+      var clearSearch = document.createElement("a");
+      clearSearch.setAttribute( 'onclick' , "journal.clearSearch();");
+      clearSearch.href = "javascript:void(0);";
+      clearSearch.className = "clear-search";
+      clearSearch.appendChild(document.createTextNode("[clear]"));
+      content.appendChild(clearSearch);
       viewed_items = sliceByDay(filterHistoryItems(histitems, searchbox.value));
       document.getElementById("google-q").src = "http://www.gnome.org/~clarkbw/google/?q=" + escape(searchbox.value);
       viewed_items = limitSliceCount(viewed_items, 10)
@@ -263,6 +269,13 @@ var journal = {
     for (var i = 0; i < viewed_items.length; i++) {
       this.appendDaySet(viewed_items[i]);
     }
+  },
+  clearSearch : function() {
+    var searchbox = document.getElementById('q');
+    searchbox.value='';
+    this.redisplay();
+    searchbox.select();
+    searchbox.focus();
   },
   getJournalPrefs : function() {
   	if (!this.branch) {
