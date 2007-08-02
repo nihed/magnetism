@@ -129,9 +129,10 @@ var createAText = function(text, href, className) {
 
 var filterHistoryItems = function(items, q) {
   var result = []
+  q = q.toLowerCase();
   for (var i = 0; i < items.length; i++) {
     item = items[i]
-    if (item['url'].indexOf(q) >= 0 || item['name'].indexOf(q) >= 0) {
+    if (item['url'].indexOf(q) >= 0 || item['name'].toLowerCase().indexOf(q) >= 0) {
       result.push(item)
     }
   }
