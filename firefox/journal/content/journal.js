@@ -92,7 +92,7 @@ var getHistory = function() {
     return result
 }
 
-function sliceByDay(histitems) {
+var sliceByDay = function(histitems) {
   var tzoffset = (new Date().getTimezoneOffset() * 60 * 1000);
   var days = {}
   for (var i = 0; i < histitems.length; i++) {
@@ -115,6 +115,39 @@ function sliceByDay(histitems) {
     days.unshift(dayset)
   }
   return days;
+}
+
+var limitSliceCount = function(slices, limit) {
+  var count = 0;
+  var newslices = []
+  for (var i = 0; i < slices.length; i++) {
+    var slice = slices[i]
+    var space = limit - count;
+    if (space == 0)
+      break;
+    if (slice.length > space) {
+      slice = slice.splice(0, space)
+    }
+    count = count + slice.length;
+    newslices.push(slice);
+  }
+  return newslices;
+}
+
+var findHighestVisited = function(slices) {
+  var highest;
+  for (var i = 0; i < slices.length; i++) {
+    var slice = slices[i];
+    for (var j = 0; j < slice.length; j++) {
+      var histitem = slice[j];
+      if (!highest) {
+        highest = histitem;
+      } else if (highest.visitcount < histitem.visitcount) {
+        highest = histitem;
+      }
+    }
+  }
+  return highest;
 }
 
 var createSpanText = function(text, className) {
@@ -151,7 +184,7 @@ var meridiem = function(x) { return (x % 12 > 0)? "pm" : "am" };
 var formatMonth = function(i) { return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][i]}
 
 var journal = {
-  appendDaySet: function(dayset) {
+  appendDaySet: function(dayset, docState) {
     var date = dayset[0].date;
 
     dayset.sort(function (a,b) { if (a.date > b.date) { return -1; } else { return 1; }})
@@ -165,21 +198,32 @@ var journal = {
     histnode.className = 'history';
     content.appendChild(histnode);
 
+    var curtabindex = docState['tabindex']
     for (var i = 0; i < dayset.length; i++) {
       var viewed_item = dayset[i]
+      var is_target = viewed_item == this.targetHistoryItem;
       var histitemnode = document.createElement('div');
       histitemnode.className = 'item';
+      if (is_target)
+        histitemnode.addClassName('target-item');
       var hrs = viewed_item.date.getHours();
       var mins = viewed_item.date.getMinutes();
       histitemnode.appendChild(createSpanText(twelveHour(hrs) + ":" + pad(mins) + " " + meridiem(hrs), 'time'));
       histitemnode.appendChild(createSpanText(viewed_item.action, 'action'));
-      histitemnode.appendChild(createAText(viewed_item.name,viewed_item.url,'title'));
+      var titleLink = createAText(viewed_item.name,viewed_item.url,'title');
+      titleLink.setAttribute('tabindex', curtabindex);
+      curtabindex = curtabindex+1; 
+      if (is_target) 
+        this.targetHistoryItemLink = titleLink;
+      histitemnode.appendChild(titleLink);
 
       var histmetanode = document.createElement('div');
       histmetanode.className = 'meta';
       histmetanode.appendChild(createSpanText(' ', 'blue'));
       histmetanode.appendChild(createSpanText(' ', 'tags'));
-      histmetanode.appendChild(createAText(viewed_item.url.split("?")[0],viewed_item.url,'url'));
+      var hrefLink = createAText(viewed_item.url.split("?")[0],viewed_item.url,'url');
+      hrefLink.setAttribute('tabindex', 0)
+      histmetanode.appendChild(hrefLink);
       histnode.appendChild(histitemnode);
       histnode.appendChild(histmetanode);
     }    
@@ -193,16 +237,22 @@ var journal = {
     
     var histitems = getHistory();
     
+    var docState = {'tabindex': 1}
+    
     var viewed_items;
+    var highest_item;
     if (searchbox.value) {
       content.appendChild(document.createTextNode("Searching for " + searchbox.value))
       viewed_items = sliceByDay(filterHistoryItems(histitems, searchbox.value));
       document.getElementById("google-q").src = "http://www.gnome.org/~clarkbw/google/?q=" + escape(searchbox.value);
+      viewed_items = limitSliceCount(viewed_items, 15)
+      this.targetHistoryItem = findHighestVisited(viewed_items);      
     } else {
       viewed_items = [sliceByDay(histitems)[0]];
     }
+
     for (var i = 0; i < viewed_items.length; i++) {
-      this.appendDaySet(viewed_items[i]);
+      this.appendDaySet(viewed_items[i], docState);
     }
   },
   getJournalPrefs : function() {
@@ -230,17 +280,32 @@ var journal = {
   },
   onload: function() {
     this.searchTimeout = null;
+    this.targetHistoryItem = null;
     
     this.firstTimeInit();
     
     var searchbox = document.getElementById('q');
+    var searchform = document.forms['qform'];
     
     var me = this;
-    searchbox.onkeydown = function (e) { me.handleSearchChanged() };
+    searchbox.addEventListener("keyup", function () { me.handleSearchChanged() }, false);
+    searchform.addEventListener("submit", function () { me.onsubmit(); return false; }, true);
     
     this.redisplay();
     
     searchbox.focus()
+  },
+  onsubmit: function() {
+    if (typeof this.searchTimeout == "number") {
+      window.clearTimeout(this.searchTimeout);
+      this.searchTimeout = null;
+    }
+    if (this.targetHistoryItem) {
+      LOG("replacing with search target: " + this.targetHistoryItem.url + " from: " + window.location);
+      window.location.href = this.targetHistoryItem.url;
+    } else {
+      LOG("no search target");
+    }
   },
   idleDoSearch: function() {
     LOG("idle search");
