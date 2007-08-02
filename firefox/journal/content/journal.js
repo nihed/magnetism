@@ -93,10 +93,11 @@ var getHistory = function() {
 }
 
 function sliceByDay(histitems) {
+  var tzoffset = (new Date().getTimezoneOffset() * 60 * 1000);
   var days = {}
   for (var i = 0; i < histitems.length; i++) {
     var hi = histitems[i]
-    var timeday = Math.floor(hi.date.getTime() / DAY_MS)
+    var timeday = Math.floor((hi.date.getTime() - tzoffset) / DAY_MS)
     if (!days[timeday])
       days[timeday] = []
      
@@ -104,7 +105,8 @@ function sliceByDay(histitems) {
   }
   var sorted_days = []
   for (timeday in days) {
-    sorted_days.push([timeday, days[timeday]])
+    var dayset = days[timeday]
+    sorted_days.push([timeday, dayset])
   }
   sorted_days.sort(function (a,b) { if (a[0] == b[0]) { return 0; } else if (a[0] > b[0]) { return 1; } else { return -1; } })
   days = []
@@ -152,7 +154,7 @@ var journal = {
   appendDaySet: function(dayset) {
     var date = dayset[0].date;
 
-    dayset.sort(function (a,b) { if (a.date > b.date) { return 1; } else { return -1; }})
+    dayset.sort(function (a,b) { if (a.date > b.date) { return -1; } else { return 1; }})
 
     var content = document.getElementById('history');    
     var headernode = document.createElement('h4');
