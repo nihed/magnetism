@@ -34,6 +34,8 @@
  * 
  * ***** END LICENSE BLOCK ***** */
  
+const JOURNAL_CHROME = "chrome://firefoxjournal/content/journal.html"; 
+ 
 const RDF = Components.classes["@mozilla.org/rdf/rdf-service;1"].getService(Components.interfaces.nsIRDFService); 
 const BOOKMARK_NAME = RDF.GetResource("http://home.netscape.com/NC-rdf#Name");
 const BOOKMARK_DATE = RDF.GetResource("http://home.netscape.com/NC-rdf#Date");
@@ -199,12 +201,41 @@ var journal = {
       this.appendDaySet(viewed_items[i]);
     }
   },
+  getJournalPrefs : function() {
+  	if (!this.branch) {
+      var manager = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
+      LOG("manager: " + manager)
+      this.branch = manager.getBranch("extensions.firefoxjournal@colin.walters.");
+    }
+    return this.branch;    
+  },
+  firstTimeInit : function() {
+    var jprefs = this.getJournalPrefs();
+    if (jprefs.getBoolPref("firstTime")) {
+      return;
+    }  
+    
+    var prefs = Components.classes["@mozilla.org/preferences-service;1"].
+                  getService(Components.interfaces.nsIPrefBranch);    
+    var oldHomepage = prefs.getCharPref("browser.startup.homepage");
+    jprefs.setCharPref("oldHomepage", oldHomepage);
+    prefs.setCharPref("browser.startup.homepage", JOURNAL_CHROME);
+    prefs.setIntPref("browser.startup.page", 1);
+    
+    jprefs.setBoolPref("firstTime", true);     
+  },
   onload: function() {
     this.searchTimeout = null;
+    
+    this.firstTimeInit();
+    
     var searchbox = document.getElementById('q');
+    
     var me = this;
-    searchbox.onkeydown = function (e) { me.handleSearchChanged() } 
+    searchbox.onkeydown = function (e) { me.handleSearchChanged() };
+    
     this.redisplay();
+    
     searchbox.focus()
   },
   idleDoSearch: function() {
