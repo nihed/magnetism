@@ -245,7 +245,7 @@ var journal = {
       content.appendChild(document.createTextNode("Searching for " + searchbox.value))
       viewed_items = sliceByDay(filterHistoryItems(histitems, searchbox.value));
       document.getElementById("google-q").src = "http://www.gnome.org/~clarkbw/google/?q=" + escape(searchbox.value);
-      viewed_items = limitSliceCount(viewed_items, 15)
+      viewed_items = limitSliceCount(viewed_items, 10)
       this.targetHistoryItem = findHighestVisited(viewed_items);      
     } else {
       viewed_items = [sliceByDay(histitems)[0]];
