@@ -18,6 +18,9 @@ import com.dumbhippo.server.util.EJBUtil;
 
 public class HippoUserProvider implements UserProvider {
 
+	static final public boolean ENABLE_ADMIN_USER = true;
+	private static final String ADMIN_USER_NAME = "admin";
+	
 	private UserNotFoundException createUserNotFound(String username, Exception root) {
 		return new UserNotFoundException ("No account has username '" + username + "'", root);
 	}
@@ -28,6 +31,10 @@ public class HippoUserProvider implements UserProvider {
 		
 		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 	
+		if (ENABLE_ADMIN_USER && username.equals(ADMIN_USER_NAME)) {
+			return new User(ADMIN_USER_NAME, "Administrator", null, null, null);
+		}
+		
 		JabberUser remote = null;
 		try {
 			remote = glue.loadUser(username);
@@ -66,6 +73,9 @@ public class HippoUserProvider implements UserProvider {
 		if (result > Integer.MAX_VALUE)
 			throw new Error("Too many users for JiveMessenger's mind!");
 		
+		if (ENABLE_ADMIN_USER)
+			result = result + 1;
+	
 		Log.debug(" count is " + result);
 		
 		return (int) result;
@@ -107,6 +117,9 @@ public class HippoUserProvider implements UserProvider {
 		
 		Log.debug("setName() username = " + username + " name = " + name);
 		
+		if (ENABLE_ADMIN_USER && username.equals(ADMIN_USER_NAME))
+			return;
+		
 		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 
 		try {
@@ -121,6 +134,9 @@ public class HippoUserProvider implements UserProvider {
 		
 		Log.debug("setEmail() username = " + username + " email = " + email);
 		
+		if (ENABLE_ADMIN_USER && username.equals(ADMIN_USER_NAME))
+			return;
+
 		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);		
 
 		try {
@@ -187,9 +203,12 @@ public class HippoUserProvider implements UserProvider {
 		return false;		
 	}
 
+	public static String getAdminUsername() {
+		return ADMIN_USER_NAME;
+	}
 
 	public Collection<String> getUsernames() {
 		// All users on system isn't something we want to support
-		return Collections.emptySet();
+		return Collections.singleton(ADMIN_USER_NAME);
 	}
 }

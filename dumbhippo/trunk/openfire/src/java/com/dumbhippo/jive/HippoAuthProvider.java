@@ -57,6 +57,9 @@ public class HippoAuthProvider implements
 		
 		Log.debug("authenticate() username = " + username + " token = " + token + " digest = " + digest);
 		
+		if (HippoUserProvider.getAdminUsername().equals(username))
+			throw new UnauthorizedException("Cannot log in as admin user");
+		
 		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		
 		if (glue.isServerTooBusy()) {

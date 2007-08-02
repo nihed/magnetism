@@ -120,11 +120,6 @@ public class MessengerGlueBean implements MessengerGlue {
 				  	        ctx.getMethod().getName(), end - start);
 			}
 			return result;
-		} catch (Exception e) {
-			logger.error("Unexpected exception: " + e.getMessage(), e);
-			// create a new RuntimeException that won't have any types the XMPP server 
-			// is unfamiliar with
-			throw new RuntimeException(e.getClass().getName() + ": " + e.getMessage());
 		} finally {
 			changeActiveRequestCount(-1);
 		}

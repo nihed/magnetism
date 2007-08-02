@@ -21,6 +21,9 @@
     	<java>commons-fileupload-1.1.1.jar</java>
     </module>    
     <module>
+    	<java>dom4j-1.6.1.jar</java>
+    </module>
+    <module>
     	<java>slf4j-log4j12.jar</java>
     </module>
     <module>
