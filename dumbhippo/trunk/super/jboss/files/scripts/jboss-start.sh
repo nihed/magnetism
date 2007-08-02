@@ -16,7 +16,6 @@ echo "Starting jboss..."
 if test x"$slaveMode" != xyes; then
 mysqlTargetdir="@@mysqlTargetdir@@"
 mysqlOptions="@@mysqlOptions@@"
-dbcommand="/usr/bin/mysql $mysqlOptions jive"
 
 if [ -d $mysqlTargetdir/data/dumbhippo ] ; then : ; else
     echo "... dumbhippo database doesn't exist, creating ..."

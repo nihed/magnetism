@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <jive>
-  <dumbhippo>
-    <adminuser>admin</adminuser>
-    <adminpassword>@@jivePassword@@</adminpassword>
-  </dumbhippo>
   <adminConsole> 
     <!-- Disable either port by setting the value to -1 -->  
-    <port>@@jiveAdminPort@@</port>  
-    <securePort>@@jiveAdminSecurePort@@</securePort>  
+    <port>@@openfireAdminPort@@</port>  
+    <securePort>@@openfireAdminSecurePort@@</securePort>  
     <!-- By default, only the user with the username "admin" can login
          to the admin console. Alternatively, you can specify a comma-delimitted
          list usernames that should be authorized to login by setting the
@@ -30,7 +26,7 @@
   <database>
     <defaultProvider>
       <driver>org.hsqldb.jdbcDriver</driver>
-      <serverURL>jdbc:hsqldb:file:@@targetdir@@/jive.db</serverURL>
+      <serverURL>jdbc:hsqldb:file:@@dbpath@@</serverURL>
       <username>sa</username>
       <password>@@dbpassword@@</password>
     </defaultProvider>
