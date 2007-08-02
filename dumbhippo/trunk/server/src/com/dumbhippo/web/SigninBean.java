@@ -19,7 +19,6 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.Viewpoint;
-import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
 import com.dumbhippo.web.LoginCookie.BadTastingException;
 
 /**
@@ -106,7 +105,7 @@ public abstract class SigninBean  {
 					account = CookieAuthentication.authenticate(request);
 					userGuid = account.getOwner().getGuid();
 					storeGuid(request.getSession(), userGuid);
-					logger.debug("storing authenticated user {} in session", account.getOwner());
+					logger.debug("storing cookie-authenticated user {} in session", account.getOwner());
 				} catch (BadTastingException e) {
 					logger.warn("Cookie was malformed", e);
 					userGuid = null;
@@ -114,10 +113,26 @@ public abstract class SigninBean  {
 					logger.debug("Cookie not valid: {}", e.getMessage());
 					userGuid = null;
 				}
+				
+				if (userGuid == null) {
+					// If we fail, try http auth (which the browser should only have
+					// attempted if we sent SC_UNAUTHORIZED, which we only do from 
+					// the DAV servlet)
+					try {
+						account = HttpAuthentication.authenticate(request);
+						userGuid = account.getOwner().getGuid();
+						storeGuid(request.getSession(), userGuid);
+						logger.debug("storing http-authenticated user {} in session", account.getOwner());						
+					} catch (NotLoggedInException e) {
+						logger.debug("Http auth not valid: {}", e.getMessage());
+						userGuid = null;
+					}
+				}
+
 			} else {
 				AccountSystem accountSystem = WebEJBUtil.defaultLookup(AccountSystem.class);
 				try {
-					account = accountSystem.lookupAccountByOwnerId(userGuid);
+					account = accountSystem.lookupAccountByOwnerId(userGuid);					
 				} catch (NotFoundException e) {
 					logger.warn("Couldn't load account for stored authenticated user");
 				}
@@ -152,7 +167,7 @@ public abstract class SigninBean  {
 	}
 
 	/**
-	 * Store authentication information on the session and/or in a persistant client
+	 * Store authentication information on the session and/or in a persistent client
 	 * cookie after initial authentication of a client
 	 * 
 	 * @param request request object
@@ -174,6 +189,24 @@ public abstract class SigninBean  {
 		}		
 
 		return "/";
+	}
+	
+	/** 
+	 * Initializes auth in a context where we can't or have no need to set the cookie, 
+	 * right now used with DAV and HTTP auth
+	 * 
+	 * @param request
+	 * @param client
+	 */
+	public static void initializeAuthenticationNoCookie(HttpServletRequest request, Client client) {
+		Account account = client.getAccount();
+		User user = account.getOwner();
+		if (account.isActive()) {
+			;
+		} else {
+			SigninBean.storeGuid(request.getSession(), user.getGuid());
+			request.getSession().setAttribute(CLIENT_ID_KEY, client.getId());
+		}
 	}
 	
 	/**

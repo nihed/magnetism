@@ -21,14 +21,6 @@ public class CookieAuthentication {
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(CookieAuthentication.class);
 	
-	@SuppressWarnings("serial")
-	public static class NotLoggedInException extends Exception {
-
-		public NotLoggedInException(String string) {
-			super(string);
-		}
-	}
-	
 	/**
 	 * Finds an auth cookie for the current server. DOES NOT AUTHENTICATE IT.
 	 * 

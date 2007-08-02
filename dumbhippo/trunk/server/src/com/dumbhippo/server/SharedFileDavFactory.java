@@ -22,6 +22,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.SharedFile;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.storage.StoredData;
@@ -257,19 +258,21 @@ public class SharedFileDavFactory {
 				}
 			}
 			
-			// FIXME In real life we need to return empty list here
-			//return TypeUtils.emptyList(DavNode.class);
-			
-			// For debugging, return full list (expensive!)
-			Collection<User> allUsers = getFileSystem().listUserDirectoriesWithPublicShares(getViewpoint());
-			if (cachedUserNodes == null)
-				cachedUserNodes = new HashMap<String,DavNode>();
-			for (User u : allUsers) {
-				if (cachedUserNodes.get(u.getId()) == null) {
-					cachedUserNodes.put(u.getId(), new UserNode(this, u, byId));
+			Configuration config = EJBUtil.defaultLookup(Configuration.class);
+			if (!Boolean.parseBoolean(config.getPropertyFatalIfUnset(HippoProperty.DOGFOOD_MODE))) {
+				return Collections.emptyList();
+			} else {				
+				// For debugging, return full list (expensive!)
+				Collection<User> allUsers = getFileSystem().listUserDirectoriesWithPublicShares(getViewpoint());
+				if (cachedUserNodes == null)
+					cachedUserNodes = new HashMap<String,DavNode>();
+				for (User u : allUsers) {
+					if (cachedUserNodes.get(u.getId()) == null) {
+						cachedUserNodes.put(u.getId(), new UserNode(this, u, byId));
+					}
 				}
+				return cachedUserNodes.values();
 			}
-			return cachedUserNodes.values();
 		}
 		
 		@Override

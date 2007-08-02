@@ -95,10 +95,20 @@ public class WebDavServlet extends AbstractServlet {
 		return false;
 	}
 
+	private boolean sendUnauthorizedIfNotLoggedIn(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		SigninBean signin = SigninBean.getForRequest(request);
+		if (signin.isValid()) {
+			return false;
+		} else {
+			response.setHeader("WWW-Authenticate", "BASIC realm=\"users\"");
+			response.sendError(DavStatusCode.UNAUTHORIZED.getCode(), "Need to log in");
+			return true;
+		}
+	}
+	
 	@Override
 	protected void service(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-
+			throws ServletException, IOException {				
 		String m = request.getMethod();
 
 		DavMethod davMethod = null;
@@ -194,6 +204,10 @@ public class WebDavServlet extends AbstractServlet {
 	@Override
 	protected void doPut(HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
+		
+		if (sendUnauthorizedIfNotLoggedIn(request, response))
+			return;
+		
 		DavHandler handler = getDavHandler(request);
 		
 		String contentType = request.getContentType();
@@ -213,6 +227,9 @@ public class WebDavServlet extends AbstractServlet {
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
+		if (sendUnauthorizedIfNotLoggedIn(request, response))
+			return;
+		
 		DavHandler handler = getDavHandler(request);
 		try {
 			handler.delete(getNodePath(request));
