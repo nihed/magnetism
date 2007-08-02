@@ -410,8 +410,8 @@
             <fileset dir="${src.i18n.dir}" includes="*.properties"/>
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
             <fileset dir="${resources.dir}/jar" includes="**"/>
-            <!-- HIPPO: Exclude commons-logging since we already have it in the server -->
-            <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar" excludes="commons-logging.jar"/>
+            <!-- HIPPO: Exclude various jar's that we already have in the server; commons-logging.jar is a particular problem if duplicated -->
+            <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar" excludes="commons-codec.jar,commons-logging.jar,commons-httpclient.jar,jstl.jar,jsp-api.jar,slf4j*jar,dom4j*.jar"/>
             <manifest>
                 <attribute name="Built-By" value="Jive Software (www.igniterealtime.org)"/>
             </manifest>
