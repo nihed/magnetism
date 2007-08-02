@@ -75,7 +75,16 @@ var getHistory = function() {
       var itemname = readRDFString(gh, resource, BOOKMARK_NAME);
       var itemdate = readRDFDate(gh, resource, BOOKMARK_DATE);
       var itemcount = readRDFInt(gh, resource, BOOKMARK_VISITCOUNT);
-      result.push({'name': itemname, 'date': itemdate, 'url': resource.Value, 'visitcount': itemcount})
+
+      var action = "visited";
+      if (resource.Value.startsWith("http://www.google.com/") && resource.Value.toQueryParams()["q"] ) { 
+        /* detect google web searches, should be doing this in a better place */
+        var googleSearchedFor = resource.Value.toQueryParams()["q"]
+        itemname = googleSearchedFor.replace("+", " ");
+        action = "searched for";
+      }
+
+      result.push({'name': itemname, 'date': itemdate, 'url': resource.Value, 'visitcount': itemcount, 'action' : action})
     }
     return result
 }
@@ -144,41 +153,32 @@ var journal = {
     var histnode = document.createElement('div');
     histnode.className = 'history';
     content.appendChild(histnode);
-    
+      
     var today_items = histitems; //sliceByDay(histitems)[0];
     if (searchbox.value) {
       content.appendChild(document.createTextNode("Searching for " + searchbox.value))
       today_items = filterHistoryItems(today_items, searchbox.value);
     }
-    
+
     for (var i = 0; i < today_items.length; i++) {
       var histitemnode = document.createElement('div');
       histitemnode.className = 'item';
       var pad = function(x) { return x < 9 ? "0" + x : "" + x };
-      var hrs = histitems[i].date.getHours();
-      var mins = histitems[i].date.getMinutes();
+      var hrs = today_items[i].date.getHours();
+      var mins = today_items[i].date.getMinutes();
       histitemnode.appendChild(createSpanText(pad(hrs) + ":" + pad(mins), 'time'));
-
-      if (histitems[i].url.startsWith("http://www.google.com/") && histitems[i].url.toQueryParams()["q"] ) { 
-        /* detect google web searches, should be doing this in a better place */
-        var googleSearchedFor = histitems[i].url.toQueryParams()["q"]
-        googleSearchedFor = googleSearchedFor.replace("+", " ");
-        histitemnode.appendChild(createSpanText('searched for', 'action'));
-        histitemnode.appendChild(createAText(googleSearchedFor,histitems[i].url,'title'));
-      }
-      else {
-        histitemnode.appendChild(createSpanText('visited', 'action'));
-        histitemnode.appendChild(createAText(histitems[i].name,histitems[i].url,'title'));
-      }
+      histitemnode.appendChild(createSpanText(today_items[i].action, 'action'));
+      histitemnode.appendChild(createAText(today_items[i].name,today_items[i].url,'title'));
 
       var histmetanode = document.createElement('div');
       histmetanode.className = 'meta';
       histmetanode.appendChild(createSpanText(' ', 'blue'));
       histmetanode.appendChild(createSpanText(' ', 'tags'));
-      histmetanode.appendChild(createAText(histitems[i].url.split("?")[0],histitems[i].url,'url'));
+      histmetanode.appendChild(createAText(today_items[i].url.split("?")[0],today_items[i].url,'url'));
       histnode.appendChild(histitemnode);
       histnode.appendChild(histmetanode);
     }
+
   },
   onload: function() {
     this.searchTimeout = null;
