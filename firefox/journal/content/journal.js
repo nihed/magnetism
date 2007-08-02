@@ -67,7 +67,7 @@ function readRDFInt(ds,res,prop) {
 
 var getHistory = function() {
     var gh = Components.classes["@mozilla.org/browser/global-history;2"].getService(Components.interfaces.nsIRDFDataSource);
-    iter = gh.GetAllResources();
+    var iter = gh.GetAllResources();
     var result = [];
     while (iter.hasMoreElements()) {
       var item = iter.getNext();
@@ -114,12 +114,7 @@ var createAText = function(text, href, className) {
   var a = document.createElement('a');
   a.setAttribute('class' , className);
   a.setAttribute('href', href);
-  var noquery = href;
-  var idx = noquery.lastIndexOf('?');
-  if (idx > 0) {
-    noquery = noquery.substring(0, idx) + "?...";
-  }
-  a.appendChild(document.createTextNode(noquery));
+  a.appendChild(document.createTextNode(text));
   return a;
 }
 
@@ -163,16 +158,24 @@ var journal = {
       var hrs = histitems[i].date.getHours();
       var mins = histitems[i].date.getMinutes();
       histitemnode.appendChild(createSpanText(pad(hrs) + ":" + pad(mins), 'time'));
-      histitemnode.appendChild(createSpanText('visited', 'action'));
 
-      histitemnode.appendChild(createAText(histitems[i].name,histitems[i].url,'title'));
+      if (histitems[i].url.startsWith("http://www.google.com/") && histitems[i].url.toQueryParams()["q"] ) { 
+        /* detect google web searches, should be doing this in a better place */
+        var googleSearchedFor = histitems[i].url.toQueryParams()["q"]
+        googleSearchedFor = googleSearchedFor.replace("+", " ");
+        histitemnode.appendChild(createSpanText('searched for', 'action'));
+        histitemnode.appendChild(createAText(googleSearchedFor,histitems[i].url,'title'));
+      }
+      else {
+        histitemnode.appendChild(createSpanText('visited', 'action'));
+        histitemnode.appendChild(createAText(histitems[i].name,histitems[i].url,'title'));
+      }
 
       var histmetanode = document.createElement('div');
       histmetanode.className = 'meta';
-      histmetanode.appendChild(createSpanText('', 'blue'));
-      histmetanode.appendChild(createSpanText('', 'tags'));
-      histmetanode.appendChild(createAText(histitems[i].url,histitems[i].url,'url'));
-
+      histmetanode.appendChild(createSpanText(' ', 'blue'));
+      histmetanode.appendChild(createSpanText(' ', 'tags'));
+      histmetanode.appendChild(createAText(histitems[i].url.split("?")[0],histitems[i].url,'url'));
       histnode.appendChild(histitemnode);
       histnode.appendChild(histmetanode);
     }
