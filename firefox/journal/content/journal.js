@@ -289,7 +289,7 @@ var journal = {
     
     var me = this;
     searchbox.addEventListener("keyup", function () { me.handleSearchChanged() }, false);
-    searchform.addEventListener("submit", function () { me.onsubmit(); return false; }, true);
+    searchform.addEventListener("submit", function (e) { me.onsubmit(); Event.stop(e); }, true);
     
     this.redisplay();
     
