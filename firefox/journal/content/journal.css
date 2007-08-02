@@ -138,8 +138,8 @@ input.green-button:hover {
 	display: table-row;
 }
 .target-item {
-	font-weight: bold;
-	font-size: 12pt;	
+	border: 1px solid #FFF;
+	font-weight: bold;	
 }
 .time, .action, .title {
 	display: table-cell;

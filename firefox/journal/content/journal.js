@@ -234,7 +234,8 @@ var journal = {
   onResultFocus: function(e, focused) {
     if (focused) {
       var defTarget = document.getElementById("default-target-item");
-      defTarget.removeClassName("target-item"); 
+      if (defTarget) 
+        defTarget.removeClassName("target-item"); 
       e.target.addClassName("target-item");
     } else {
       e.target.removeClassName("target-item");
@@ -279,13 +280,14 @@ var journal = {
   },
   onload: function() {
     this.searchTimeout = null;
+    this.searchValue = null;
     this.targetHistoryItem = null;
     
     var searchbox = document.getElementById('q');
     var searchform = document.forms['qform'];
     
     var me = this;
-    searchbox.addEventListener("keyup", function () { me.handleSearchChanged() }, false);
+    searchbox.addEventListener("keyup", function (e) { me.handleSearchChanged(e) }, false);
     searchform.addEventListener("submit", function (e) { me.onsubmit(); Event.stop(e); }, true);
     
     this.redisplay();
@@ -309,7 +311,11 @@ var journal = {
     this.searchTimeout = null;
     this.redisplay(); 
   },
-  handleSearchChanged: function() {
+  handleSearchChanged: function(e) {
+    var q = e.target;
+    if (q.value == this.searchValue)
+      return;
+    this.searchValue = q.value;
     if (!this.searchTimeout) {
       var me = this;
       this.searchTimeout = window.setTimeout(function () { me.idleDoSearch() }, 250);
