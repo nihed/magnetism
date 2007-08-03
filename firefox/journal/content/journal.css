@@ -128,6 +128,15 @@ input.green-button:hover {
 .date {
 
 }
+#selected-item-notice {
+  position: absolute;
+  border: 1px solid black;
+  background-color: #9F9FFF;
+  display: none;
+  font-size: 10pt;
+  font-weight: normal;
+  z-index: 1;
+}
 .history {
 	display: table;
   font-size: 10pt;
@@ -193,6 +202,9 @@ input.green-button:hover {
 }
 .no-results {
   font-family: italic;	
+}
+.input-text {
+  font-family: monospace;	
 }
 /* ==== Google Search ==== */
 

@@ -250,18 +250,33 @@ var journal = {
       histnode.appendChild(histmetanode);
     }
   },
+  setAsTargetItem: function (node) {
+    node.addClassName("target-item");
+    //var selected = $("selected-item-notice");
+    //var pos = Position.realOffset(node);
+    //selected.style.top = 500;
+    //selected.style.left = 340;
+    //selected.targetNode = node;
+    //selected.style.display = "block";
+  },
+  unsetAsTargetItem: function (node) {
+    node.removeClassName("target-item");  
+    //var selected = $("selected-item-notice")
+    //if (selected.targetNode == node) {
+    //  selected.style.display = "none";
+    //}    
+  },
   onResultFocus: function(e, focused) {
     if (focused) {
       var defTarget = document.getElementById("default-target-item");
       if (defTarget) 
-        defTarget.removeClassName("target-item"); 
-      e.target.addClassName("target-item");
+        this.unsetAsTargetItem(defTarget); 
+      this.setAsTargetItem(e.target);
     } else {
-      e.target.removeClassName("target-item");
+      this.unsetAsTargetItem(e.target);
     }
   },
   redisplay: function() {    
-    LOG("redisplay");
     var content = document.getElementById('history'); 
     var searchbox = document.getElementById('q');     
     while (content.firstChild) { content.removeChild(content.firstChild) };
@@ -270,16 +285,18 @@ var journal = {
     
     var viewed_items;
     var highest_item;
-    if (searchbox.value) {
-      content.appendChild(document.createTextNode("Searching for " + searchbox.value + " "))
+    var search = searchbox.value;
+    if (search)
+      search = search.strip()
+    if (search) {
+      content.appendChild(document.createTextNode("Searching for " + search + " "))
       var clearSearch = document.createElement("a");
       clearSearch.setAttribute( 'onclick' , "journal.clearSearch();");
       clearSearch.href = "javascript:void(0);";
       clearSearch.className = "clear-search";
       clearSearch.appendChild(document.createTextNode("[clear]"));
       content.appendChild(clearSearch);
-      viewed_items = sliceByDay(filterHistoryItems(histitems, searchbox.value));
-      document.getElementById("google-q").src = "http://www.gnome.org/~clarkbw/google/?q=" + escape(searchbox.value);
+      viewed_items = sliceByDay(filterHistoryItems(histitems, search));
       viewed_items = limitSliceCount(viewed_items, 10);
       this.targetHistoryItem = findHighestVisited(viewed_items);
       if (viewed_items.length == 0) {
@@ -299,16 +316,16 @@ var journal = {
       this.appendDaySet(viewed_items[i]);
     }
     
-    if (searchbox.value) { 
+    if (search) { 
       var div;
-      if (isWebLink(searchbox.value)) {
+      if (isWebLink(search)) {
         div = document.createElement("div");
         div.appendChild(document.createTextNode("Go to "));
         var openUrl = document.createElement('a');
         openUrl.setAttribute('tabindex', 1)
-        var urlTarget = parseUserUrl(searchbox.value);
+        var urlTarget = parseUserUrl(search);
         openUrl.setAttribute('href', urlTarget);
-        openUrl.appendChild(createSpanText(searchbox.value, "text-url"));
+        openUrl.appendChild(createSpanText(search, "input-text"));
         div.appendChild(openUrl);
         content.appendChild(div);
       } 
@@ -317,8 +334,8 @@ var journal = {
       div.appendChild(document.createTextNode("Search the web for "));      
       var stfw = document.createElement('a');
       stfw.setAttribute('tabindex', 1)      
-      stfw.setAttribute('href', getSearchUrl(searchbox.value));
-      stfw.appendChild(createSpanText(searchbox.value, "text-url"));
+      stfw.setAttribute('href', getSearchUrl(search));
+      stfw.appendChild(createSpanText(search, "input-text"));
       div.appendChild(stfw);
       content.appendChild(div)
     }
@@ -346,32 +363,43 @@ var journal = {
     
     searchbox.focus()
   },
-  onsubmit: function() {
+  clearSearchTimeouts: function() {
     if (typeof this.searchTimeout == "number") {
       window.clearTimeout(this.searchTimeout);
       this.searchTimeout = null;
     }
+    if (typeof this.webSearchTimeout == "number") {
+      window.clearTimeout(this.webSearchTimeout);
+      this.webSearchTimeout = null;
+    }  
+  },
+  onsubmit: function() {
+    this.clearSearchTimeouts();
     if (this.targetHistoryItem) {
-      LOG("replacing with search target: " + this.targetHistoryItem.url + " from: " + window.location);
       window.location.href = this.targetHistoryItem.url;
-    } else {
-      LOG("no search target");
     }
   },
   idleDoSearch: function() {
-    LOG("idle search");
     this.searchTimeout = null;
     this.redisplay(); 
   },
+  idleDoWebSearch: function() {
+    this.webSearchTimeout = null;
+    var q = document.getElementById("q").value;
+    if (q) {
+      document.getElementById("google-q").src = "http://www.gnome.org/~clarkbw/google/?q=" + escape(q.strip());
+    }    
+  },
   handleSearchChanged: function(e) {
     var q = e.target;
-    if (q.value == this.searchValue)
+    var search = q.value.strip()
+    if (search == this.searchValue)
       return;
-    this.searchValue = q.value;
+    this.searchValue = search;
     if (!this.searchTimeout) {
       var me = this;
       this.searchTimeout = window.setTimeout(function () { me.idleDoSearch() }, 250);
-      LOG("timeout id " + this.searchTimeout);
+      this.webSearchTimeout = window.setTimeout(function () { me.idleDoWebSearch() }, 500);      
     }
   }
 }
