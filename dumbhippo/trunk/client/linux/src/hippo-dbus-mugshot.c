@@ -11,6 +11,35 @@
 #include "hippo-dbus-mugshot.h"
 #include "main.h"
 
+
+
+
+
+
+
+/*
+ ****************
+ *  This whole "Mugshot" D-Bus API is deprecated. Use the data model, which should be accessed
+ *  via the org.freedesktop.od.Engine bus name, or for Stacker-specific rather than desktop
+ *  generic API, use the com.dumbhippo.Client name.
+ * 
+ *  Eventually this codebase should be split into an "online desktop engine" (org.freedesktop.od)
+ *  and the Mugshot stacker client (com.dumbhippo.)
+ *
+ *  "Mugshot" should not be in any namespaces or in the code at all really, other than as
+ *  a configurable parameter used when the server is mugshot.org.
+ ****************
+ */
+
+
+
+
+
+
+
+
+
+
 static void
 append_strings_as_dict(DBusMessageIter *iter,
                        ...)

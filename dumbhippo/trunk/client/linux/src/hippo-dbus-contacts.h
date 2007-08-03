@@ -4,6 +4,17 @@
 
 /* implement contacts-related dbus methods */
 
+
+/*
+ ****************
+ *
+ *  This API is deprecated junk, use the data model. We need to clean this out.
+ *
+ ****************
+ */
+
+
+
 #include "hippo-dbus-server.h"
 
 G_BEGIN_DECLS

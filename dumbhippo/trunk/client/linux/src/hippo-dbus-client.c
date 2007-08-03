@@ -49,7 +49,8 @@ get_connection(GError **error)
 
 static char*
 hippo_dbus_full_bus_name_internal(const char *server,
-                                  gboolean    old_form)
+                                  const char *base_bus_name,
+                                  gboolean    backward_hex)
 {
     GString *str;
     const char *p;
@@ -71,7 +72,7 @@ hippo_dbus_full_bus_name_internal(const char *server,
      * to some random server so it probably doesn't matter.
      *
      */
-    str = g_string_new(HIPPO_DBUS_BASE_BUS_NAME);
+    str = g_string_new(base_bus_name);
     g_string_append_c(str, '.');
 
     if (server_with_port)
@@ -89,7 +90,7 @@ hippo_dbus_full_bus_name_internal(const char *server,
             g_string_append_c(str, *p);
         } else {
             g_string_append_c(str, '_');
-            if (old_form) {
+            if (backward_hex) {
                 /* Nibbles backwards */
                 g_string_append_c(str, hexdigits[(*p) & 0xf]);
                 g_string_append_c(str, hexdigits[(*p) >> 4]);
@@ -108,13 +109,19 @@ hippo_dbus_full_bus_name_internal(const char *server,
 char*
 hippo_dbus_full_bus_name(const char *server)
 {
-    return hippo_dbus_full_bus_name_internal(server, FALSE);
+    return hippo_dbus_full_bus_name_internal(server, HIPPO_DBUS_ENGINE_BASE_BUS_NAME, FALSE);
 }
 
 char*
-hippo_dbus_full_bus_name_old(const char *server)
+hippo_dbus_full_bus_name_com_dumbhippo_with_forward_hex(const char *server)
 {
-    return hippo_dbus_full_bus_name_internal(server, TRUE);
+    return hippo_dbus_full_bus_name_internal(server, HIPPO_DBUS_STACKER_BASE_BUS_NAME, FALSE);
+}
+
+char*
+hippo_dbus_full_bus_name_com_dumbhippo_with_backward_hex(const char *server)
+{
+    return hippo_dbus_full_bus_name_internal(server, HIPPO_DBUS_STACKER_BASE_BUS_NAME, TRUE);
 }
 
 gboolean
@@ -142,8 +149,8 @@ hippo_dbus_open_chat_blocking(const char   *server,
     bus_name = hippo_dbus_full_bus_name(server);
     
     message = dbus_message_new_method_call(bus_name,
-                                           HIPPO_DBUS_PATH,
-                                           HIPPO_DBUS_INTERFACE,
+                                           HIPPO_DBUS_STACKER_PATH,
+                                           HIPPO_DBUS_STACKER_INTERFACE,
                                            "ShowChatWindow");
     if (message == NULL)
         g_error("out of memory");
@@ -156,7 +163,7 @@ hippo_dbus_open_chat_blocking(const char   *server,
     if (!dbus_message_append_args(message,
                                   DBUS_TYPE_STRING, &chat_id,
                                   DBUS_TYPE_INVALID))
-        g_error("out of memory");                                  
+        g_error("out of memory"); 
 
     dbus_error_init(&derror);
     reply = dbus_connection_send_with_reply_and_block(connection, message, -1,
@@ -201,8 +208,8 @@ hippo_dbus_show_browser_blocking(const char   *server,
     bus_name = hippo_dbus_full_bus_name(server);
     
     message = dbus_message_new_method_call(bus_name,
-                                           HIPPO_DBUS_PATH,
-                                           HIPPO_DBUS_INTERFACE,
+                                           HIPPO_DBUS_STACKER_PATH,
+                                           HIPPO_DBUS_STACKER_INTERFACE,
                                            "ShowBrowser");
     if (message == NULL)
         g_error("out of memory");

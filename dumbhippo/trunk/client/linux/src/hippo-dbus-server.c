@@ -238,14 +238,11 @@ hippo_dbus_try_to_acquire(const char  *server,
         return NULL;
     }
 
-    /* We also acquire our old broken bus name for compatibility with old versions
-     * of client apps, and so that when this version is run with --replace
-     * old versions will exit. We *don't* exit if we lose ownership of this
-     * name ourself, since we running the older version with --replace to replace
-     * the new version isn't very interesting
+    /* The com.dumbhippo.Client name may be appropriate to keep forever, as the
+     * canonical name of the Stacker-specific stuff, while desktop generic
+     * stuff is accessed via the org.freedesktop.od.Engine name.
      */
-    
-    old_bus_name = hippo_dbus_full_bus_name_old(server);
+    old_bus_name = hippo_dbus_full_bus_name_com_dumbhippo_with_forward_hex(server);
     if (!acquire_bus_name(connection, server, replace_existing, old_bus_name, error)) {
         /* FIXME leak bus connection since unref isn't allowed */
 
@@ -261,6 +258,63 @@ hippo_dbus_try_to_acquire(const char  *server,
     }
 
     g_free(old_bus_name);
+
+    /* We also acquire our old broken bus name for compatibility with old versions
+     * of client apps, and so that when this version is run with --replace
+     * old versions will exit. We *don't* exit if we lose ownership of this
+     * name ourself, since we running the older version with --replace to replace
+     * the new version isn't very interesting
+     */
+    
+    old_bus_name = hippo_dbus_full_bus_name_com_dumbhippo_with_backward_hex(server);
+    if (!acquire_bus_name(connection, server, replace_existing, old_bus_name, error)) {
+        /* FIXME leak bus connection since unref isn't allowed */
+
+        /* We need to give up the new bus name because we call ShowBrowser on
+         * it in main.c if we fail to get both names, which deadlocks if
+         * we own the new name
+         */
+        dbus_bus_release_name(connection, bus_name, NULL);
+        
+        g_free(old_bus_name);
+        g_free(bus_name);
+        return NULL;
+    }
+
+    g_free(old_bus_name);
+
+    /* Now we acquire the names without the server host/port appended,
+     * we only optionally acquire these if nobody else has them.
+     * This allows apps to avoid adding the server to the name - 
+     * they can just use the "normal" name
+     */
+    {
+        dbus_uint32_t flags;
+        
+        /* We do want to be queued if we don't get this right away */
+        flags = DBUS_NAME_FLAG_ALLOW_REPLACEMENT;
+        if (replace_existing)
+            flags |= DBUS_NAME_FLAG_REPLACE_EXISTING;
+        
+        /* we just ignore errors on this */
+        dbus_bus_request_name(connection, HIPPO_DBUS_ENGINE_BASE_BUS_NAME,
+                              flags,
+                              NULL);
+    }
+
+    {
+        dbus_uint32_t flags;
+        
+        /* We do want to be queued if we don't get this right away */
+        flags = DBUS_NAME_FLAG_ALLOW_REPLACEMENT;
+        if (replace_existing)
+            flags |= DBUS_NAME_FLAG_REPLACE_EXISTING;
+        
+        /* we just ignore errors on this */
+        dbus_bus_request_name(connection, HIPPO_DBUS_STACKER_BASE_BUS_NAME,
+                              flags,
+                              NULL);
+    }
     
     /* the connection is already set up with the main loop. 
      * We just need to create our object, filters, etc. 
@@ -543,8 +597,8 @@ on_endpoint_user_join(HippoEndpointProxy *proxy,
     dbus_bool_t participant_bool = participant;
     
     message = dbus_message_new_method_call(listener->name,
-                                           HIPPO_DBUS_LISTENER_PATH,
-                                           HIPPO_DBUS_LISTENER_INTERFACE,
+                                           HIPPO_DBUS_STACKER_LISTENER_PATH,
+                                           HIPPO_DBUS_STACKER_LISTENER_INTERFACE,
                                            "UserJoin");
     dbus_message_append_args(message,
 			     DBUS_TYPE_UINT64, &endpoint,
@@ -571,8 +625,8 @@ on_endpoint_user_leave(HippoEndpointProxy *proxy,
     const char *user_id = hippo_entity_get_guid(HIPPO_ENTITY(user));
     
     message = dbus_message_new_method_call(listener->name,
-                                           HIPPO_DBUS_LISTENER_PATH,
-                                           HIPPO_DBUS_LISTENER_INTERFACE,
+                                           HIPPO_DBUS_STACKER_LISTENER_PATH,
+                                           HIPPO_DBUS_STACKER_LISTENER_INTERFACE,
                                            "UserLeave");
     dbus_message_append_args(message,
 			     DBUS_TYPE_UINT64, &endpoint,
@@ -623,8 +677,8 @@ on_endpoint_message(HippoEndpointProxy *proxy,
     g_debug("Sending message, %s, serial=%d", text, serial);
 
     message = dbus_message_new_method_call(listener->name,
-                                           HIPPO_DBUS_LISTENER_PATH,
-                                           HIPPO_DBUS_LISTENER_INTERFACE,
+                                           HIPPO_DBUS_STACKER_LISTENER_PATH,
+                                           HIPPO_DBUS_STACKER_LISTENER_INTERFACE,
                                            "Message");
     dbus_message_append_args(message,
 			     DBUS_TYPE_UINT64, &endpoint,
@@ -661,8 +715,8 @@ on_endpoint_entity_info(HippoEndpointProxy *proxy,
         dbus_bool_t music_playing = hippo_person_get_music_playing(person);
     
         message = dbus_message_new_method_call(listener->name,
-                                               HIPPO_DBUS_LISTENER_PATH,
-                                               HIPPO_DBUS_LISTENER_INTERFACE,
+                                               HIPPO_DBUS_STACKER_LISTENER_PATH,
+                                               HIPPO_DBUS_STACKER_LISTENER_INTERFACE,
                                                "UserInfo");
 
         /* dbus doesn't allow null strings */
@@ -1046,8 +1100,8 @@ hippo_application_request_finish(HippoApplicationRequest *request)
         listener->application_requests = g_slist_remove(listener->application_requests, request);
 
         message = dbus_message_new_method_call(listener->name,
-                                               HIPPO_DBUS_LISTENER_PATH,
-                                               HIPPO_DBUS_LISTENER_INTERFACE,
+                                               HIPPO_DBUS_STACKER_LISTENER_PATH,
+                                               HIPPO_DBUS_STACKER_LISTENER_INTERFACE,
                                                "ApplicationInfo");
 
         dbus_message_append_args(message,
@@ -1775,7 +1829,7 @@ handle_message(DBusConnection     *connection,
                 path ? path : "NULL");
     
         if (path && member &&
-            strcmp(path, HIPPO_DBUS_PATH) == 0) {
+            strcmp(path, HIPPO_DBUS_STACKER_PATH) == 0) {
             DBusMessage *reply;
             
             reply = NULL;
@@ -2011,15 +2065,15 @@ hippo_dbus_notify_xmpp_connected(HippoDBus   *dbus,
         
     if (dbus->xmpp_connected) {
         /* notify all the listeners */
-        message = dbus_message_new_signal(HIPPO_DBUS_LISTENER_PATH,
-                                          HIPPO_DBUS_LISTENER_INTERFACE,
+        message = dbus_message_new_signal(HIPPO_DBUS_STACKER_LISTENER_PATH,
+                                          HIPPO_DBUS_STACKER_LISTENER_INTERFACE,
                                           "Connected");
         
         dbus_connection_send(dbus->connection, message, NULL);
         dbus_message_unref(message);
     } else {
-        message = dbus_message_new_signal(HIPPO_DBUS_LISTENER_PATH,
-                                          HIPPO_DBUS_LISTENER_INTERFACE,
+        message = dbus_message_new_signal(HIPPO_DBUS_STACKER_LISTENER_PATH,
+                                          HIPPO_DBUS_STACKER_LISTENER_INTERFACE,
                                           "Disconnected");
         
         dbus_connection_send(dbus->connection, message, NULL);

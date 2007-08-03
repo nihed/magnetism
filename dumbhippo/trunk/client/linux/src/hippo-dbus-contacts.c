@@ -8,6 +8,25 @@
 #include "hippo-dbus-contacts.h"
 #include "main.h"
 
+
+
+
+
+
+/*
+ ****************
+ *
+ *  This API is deprecated junk, use the data model. We need to clean this out.
+ *
+ ****************
+ */
+
+
+
+
+
+
+
 #define HIPPO_DBUS_MUGSHOT_DATACACHE_PATH_PREFIX "/org/mugshot/datacache/"
 
 static void
