@@ -231,14 +231,16 @@ static char*
 connected_rule(const char *name)
 {
     return g_strdup_printf("type='signal',sender='%s',path='%s',interface='%s',member='Connected'",
-                           name, HIPPO_DBUS_LISTENER_PATH, HIPPO_DBUS_LISTENER_INTERFACE);
+                           name, HIPPO_DBUS_STACKER_LISTENER_PATH,
+                           HIPPO_DBUS_STACKER_LISTENER_INTERFACE);
 }
 
 static char*
 disconnected_rule(const char *name)
 {
     return g_strdup_printf("type='signal',sender='%s',path='%s',interface='%s',member='Disconnected'",
-                           name, HIPPO_DBUS_LISTENER_PATH, HIPPO_DBUS_LISTENER_INTERFACE);
+                           name, HIPPO_DBUS_STACKER_LISTENER_PATH,
+                           HIPPO_DBUS_STACKER_LISTENER_INTERFACE);
 }
 
 void
@@ -377,8 +379,8 @@ HippoDBusIpcProviderImpl::createMethodMessage(const char *name)
     g_assert(busUniqueName_ != NULL);
     
     DBusMessage *message = dbus_message_new_method_call(busUniqueName_,
-							HIPPO_DBUS_PATH,
-							HIPPO_DBUS_INTERFACE,
+							HIPPO_DBUS_STACKER_PATH,
+							HIPPO_DBUS_STACKER_INTERFACE,
 							name);
     if (message == NULL)
         g_error("out of memory");
@@ -612,10 +614,10 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
 	    member ? member : "NULL",
 	    path ? path : "NULL");
 
-    if (!path || strcmp(path, HIPPO_DBUS_LISTENER_PATH) != 0)
+    if (!path || strcmp(path, HIPPO_DBUS_STACKER_LISTENER_PATH) != 0)
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
-    if (!interface || strcmp(interface, HIPPO_DBUS_LISTENER_INTERFACE) != 0)
+    if (!interface || strcmp(interface, HIPPO_DBUS_STACKER_LISTENER_INTERFACE) != 0)
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
     if (strcmp(member, "UserJoin") == 0) {
@@ -796,12 +798,12 @@ HippoDBusIpcProviderImpl::handleSignal(DBusMessage *message)
         forgetBusConnection();
     } else if (busUniqueName_ &&
                dbus_message_has_sender(message, busUniqueName_) &&
-               dbus_message_is_signal(message, HIPPO_DBUS_LISTENER_INTERFACE, "Connected")) {
+               dbus_message_is_signal(message, HIPPO_DBUS_STACKER_LISTENER_INTERFACE, "Connected")) {
         clientConnected_ = true;
         notifyRegisterEndpointOpportunity();
     } else if (busUniqueName_ &&
                dbus_message_has_sender(message, busUniqueName_) &&
-               dbus_message_is_signal(message, HIPPO_DBUS_LISTENER_INTERFACE, "Disconnected")) {
+               dbus_message_is_signal(message, HIPPO_DBUS_STACKER_LISTENER_INTERFACE, "Disconnected")) {
         clientConnected_ = false;
         notifyEndpointsInvalidated();
     }
