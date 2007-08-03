@@ -161,6 +161,9 @@ input.green-button:hover {
 	padding: 0.2em;
 	vertical-align: middle;
 }
+.time, .action {
+  white-space: pre;
+}
 .meta {
 	display: table-row;
   text-align: right;
