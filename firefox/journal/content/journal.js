@@ -202,8 +202,8 @@ var filterHistoryItems = function(items, q) {
 }
 
 var pad = function(x) { return x < 9 ? "0" + x : "" + x };
-var twelveHour = function(x) { return (x > 12)? x % 12 + 1 : x };
-var meridiem = function(x) { return (x % 12 > 0)? "pm" : "am" };
+var twelveHour = function(x) { return (x > 12) ? (x % 12) : x };
+var meridiem = function(x) { return (x > 12) ? "pm" : "am" };
 
 var formatMonth = function(i) { return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][i]}
 
