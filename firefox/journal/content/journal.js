@@ -276,7 +276,8 @@ var journal = {
       this.unsetAsTargetItem(e.target);
     }
   },
-  redisplay: function() {    
+  redisplay: function() {
+    var me = this;    
     var content = document.getElementById('history'); 
     var searchbox = document.getElementById('q');     
     while (content.firstChild) { content.removeChild(content.firstChild) };
@@ -297,7 +298,7 @@ var journal = {
       clearSearch.appendChild(document.createTextNode("[clear]"));
       content.appendChild(clearSearch);
       viewed_items = sliceByDay(filterHistoryItems(histitems, search));
-      viewed_items = limitSliceCount(viewed_items, 10);
+      viewed_items = limitSliceCount(viewed_items, 6);
       this.targetHistoryItem = findHighestVisited(viewed_items);
       if (viewed_items.length == 0) {
         content.appendChild(createSpanText("(No results)", "no-results"))
@@ -318,7 +319,8 @@ var journal = {
     
     if (search) { 
       var div;
-      if (isWebLink(search)) {
+      var weblink = isWebLink(search);
+      if (weblink) {
         div = document.createElement("div");
         div.appendChild(document.createTextNode("Go to "));
         var openUrl = document.createElement('a');
@@ -326,8 +328,14 @@ var journal = {
         var urlTarget = parseUserUrl(search);
         openUrl.setAttribute('href', urlTarget);
         openUrl.appendChild(createSpanText(urlTarget, "input-text"));
+        openUrl.addEventListener("focus", function(e) { me.onResultFocus(e, true); }, false);
+        openUrl.addEventListener("blur", function(e) { me.onResultFocus(e, false); }, false);          
         div.appendChild(openUrl);
         content.appendChild(div);
+        if (!this.targetHistoryItem) {
+          this.setAsTargetItem(div);
+          div.setAttribute('id', 'default-target-item');
+        }        
       } 
       div = document.createElement("div")
       div.addClassName("item")
@@ -336,8 +344,14 @@ var journal = {
       stfw.setAttribute('tabindex', 1)      
       stfw.setAttribute('href', getSearchUrl(search));
       stfw.appendChild(createSpanText(search, "input-text"));
+      stfw.addEventListener("focus", function(e) { me.onResultFocus(e, true); }, false);
+      stfw.addEventListener("blur", function(e) { me.onResultFocus(e, false); }, false);        
       div.appendChild(stfw);
       content.appendChild(div)
+      if (!weblink && !this.targetHistoryItem) {
+        this.setAsTargetItem(div);
+        div.setAttribute('id', 'default-target-item');
+      }  
     } else {
       // No search, clear target
       var selected = $("selected-item-notice")
