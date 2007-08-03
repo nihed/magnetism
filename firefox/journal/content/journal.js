@@ -150,6 +150,25 @@ var findHighestVisited = function(slices) {
   return highest;
 }
 
+var isWebLink = function(text) {
+  var idx = text.lastIndexOf('.')
+  if (idx > 0) {
+    return $A(["com", "org", "net", "uk", "us", "cn", "fm"]).include(text.substring(idx+1))
+  }
+  return false;
+}
+
+var parseUserUrl = function(text) {
+  if (text.match(/^[A-Za-z]:.*$/)) {
+    return text;
+  }
+  return "http://" + text;
+}
+
+var getSearchUrl = function(text) {
+  return "http://google.com/search?q=" + escape(text);
+}
+
 var createSpanText = function(text, className) {
   var span = document.createElement('span')
   span.className = className
@@ -261,14 +280,47 @@ var journal = {
       content.appendChild(clearSearch);
       viewed_items = sliceByDay(filterHistoryItems(histitems, searchbox.value));
       document.getElementById("google-q").src = "http://www.gnome.org/~clarkbw/google/?q=" + escape(searchbox.value);
-      viewed_items = limitSliceCount(viewed_items, 10)
-      this.targetHistoryItem = findHighestVisited(viewed_items);      
+      viewed_items = limitSliceCount(viewed_items, 10);
+      this.targetHistoryItem = findHighestVisited(viewed_items);
+      if (viewed_items.length == 0) {
+        content.appendChild(createSpanText("(No results)", "no-results"))
+      }
     } else {
-      viewed_items = [sliceByDay(histitems)[0]];
+      viewed_items = sliceByDay(histitems);
+      for (var i = 0; i < viewed_items.length; i++) {
+        if (viewed_items[i].length > 0) {
+          viewed_items = [viewed_items[i]]
+          break;
+        }
+      }
     }
 
     for (var i = 0; i < viewed_items.length; i++) {
       this.appendDaySet(viewed_items[i]);
+    }
+    
+    if (searchbox.value) { 
+      var div;
+      if (isWebLink(searchbox.value)) {
+        div = document.createElement("div");
+        div.appendChild(document.createTextNode("Go to "));
+        var openUrl = document.createElement('a');
+        openUrl.setAttribute('tabindex', 1)
+        var urlTarget = parseUserUrl(searchbox.value);
+        openUrl.setAttribute('href', urlTarget);
+        openUrl.appendChild(createSpanText(searchbox.value, "text-url"));
+        div.appendChild(openUrl);
+        content.appendChild(div);
+      } 
+      div = document.createElement("div")
+      div.addClassName("item")
+      div.appendChild(document.createTextNode("Search the web for "));      
+      var stfw = document.createElement('a');
+      stfw.setAttribute('tabindex', 1)      
+      stfw.setAttribute('href', getSearchUrl(searchbox.value));
+      stfw.appendChild(createSpanText(searchbox.value, "text-url"));
+      div.appendChild(stfw);
+      content.appendChild(div)
     }
   },
   clearSearch : function() {

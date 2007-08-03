@@ -191,7 +191,9 @@ input.green-button:hover {
   text-align: center;
   margin: 1em;
 }
-
+.no-results {
+  font-family: italic;	
+}
 /* ==== Google Search ==== */
 
 #google {
