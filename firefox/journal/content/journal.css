@@ -120,6 +120,11 @@ input.green-button:hover {
 	background-color: #7ee600;
 }
 
+#debuglog {
+  font-size: 10px;
+  font-weight: normal;	
+}
+
 /* ==== HISTORY ==== */
 
 #q {
@@ -130,6 +135,8 @@ input.green-button:hover {
 }
 #selected-item-notice {
   position: absolute;
+  top: 10px;
+  left: 10px;
   border: 1px solid black;
   background-color: #9F9FFF;
   display: none;
@@ -148,7 +155,6 @@ input.green-button:hover {
 }
 .target-item {
 	border: 1px solid #FFF;
-	font-weight: bold;	
 }
 .time, .action, .title {
 	display: table-cell;
