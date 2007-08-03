@@ -1,4 +1,4 @@
-/* ***** BEGIN LICENSE BLOCK *****
+/* ***** BEGIN LICENSE BLOCK ****
  *   Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
  * The contents of this file are subject to the Mozilla Public License Version
@@ -44,10 +44,10 @@ const BOOKMARK_VISITCOUNT = RDF.GetResource("http://home.netscape.com/NC-rdf#Vis
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function LOG(msg) {
-  var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
-                                 .getService(Components.interfaces.nsIConsoleService);
-  consoleService.logStringMessage(msg);}
-
+  var dl = document.getElementById("debuglog");
+  dl.appendChild(document.createTextNode(msg));
+  dl.appendChild(document.createElement("br"));
+}
 
 function readRDFThingy(ds,res,prop,qi,def) {
   var val = ds.GetTarget(res, prop, true);
@@ -223,10 +223,6 @@ var journal = {
       var is_target = viewed_item == this.targetHistoryItem;
       var histitemnode = document.createElement('div');
       histitemnode.className = 'item';
-      if (is_target) {
-        histitemnode.addClassName('target-item');
-        histitemnode.setAttribute('id', 'default-target-item');
-      }
       var hrs = viewed_item.date.getHours();
       var mins = viewed_item.date.getMinutes();
       histitemnode.appendChild(createSpanText(twelveHour(hrs) + ":" + pad(mins) + " " + meridiem(hrs), 'time'));
@@ -248,23 +244,27 @@ var journal = {
       histmetanode.appendChild(hrefLink);
       histnode.appendChild(histitemnode);
       histnode.appendChild(histmetanode);
+      if (is_target) {
+        this.setAsTargetItem(histitemnode);
+        histitemnode.setAttribute('id', 'default-target-item');
+      }      
     }
   },
   setAsTargetItem: function (node) {
     node.addClassName("target-item");
-    //var selected = $("selected-item-notice");
-    //var pos = Position.realOffset(node);
-    //selected.style.top = 500;
-    //selected.style.left = 340;
-    //selected.targetNode = node;
-    //selected.style.display = "block";
+    var selected = $("selected-item-notice");
+    var pos = Position.positionedOffset(node);
+    selected.style.top = pos[1] + "px";
+    selected.style.left = (pos[0] + node.offsetWidth) + "px";
+    selected.targetNode = node;
+    selected.style.display = "block";
   },
   unsetAsTargetItem: function (node) {
     node.removeClassName("target-item");  
-    //var selected = $("selected-item-notice")
-    //if (selected.targetNode == node) {
-    //  selected.style.display = "none";
-    //}    
+    var selected = $("selected-item-notice")
+    if (selected.targetNode == node) {
+      selected.style.display = "none";
+    }    
   },
   onResultFocus: function(e, focused) {
     if (focused) {
@@ -325,7 +325,7 @@ var journal = {
         openUrl.setAttribute('tabindex', 1)
         var urlTarget = parseUserUrl(search);
         openUrl.setAttribute('href', urlTarget);
-        openUrl.appendChild(createSpanText(search, "input-text"));
+        openUrl.appendChild(createSpanText(urlTarget, "input-text"));
         div.appendChild(openUrl);
         content.appendChild(div);
       } 
@@ -338,6 +338,10 @@ var journal = {
       stfw.appendChild(createSpanText(search, "input-text"));
       div.appendChild(stfw);
       content.appendChild(div)
+    } else {
+      // No search, clear target
+      var selected = $("selected-item-notice")
+      selected.style.display = "none";    
     }
   },
   clearSearch : function() {
@@ -359,9 +363,9 @@ var journal = {
     searchbox.addEventListener("keyup", function (e) { me.handleSearchChanged(e) }, false);
     searchform.addEventListener("submit", function (e) { me.onsubmit(); Event.stop(e); }, true);
     
-    this.redisplay();
+    searchbox.focus();
     
-    searchbox.focus()
+    window.setTimeout(function () { me.redisplay(); }, 150);    
   },
   clearSearchTimeouts: function() {
     if (typeof this.searchTimeout == "number") {
