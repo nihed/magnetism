@@ -21,9 +21,9 @@ def _escape_server_name(server_name):
 
 def _make_bus_name(server_name):
     if server_name == None:
-        return "org.mugshot.Mugshot";
+        return "org.freedesktop.od.Engine";
 
-    return "com.dumbhippo.Client." + _escape_server_name(server_name)
+    return "org.freedesktop.od.Engine." + _escape_server_name(server_name)
 
 class DataModel(AbstractModel):
     singletons = {}
@@ -69,16 +69,16 @@ class DataModel(AbstractModel):
 
         bus = dbus.SessionBus()
         try:
-            self._proxy = bus.get_object(_make_bus_name(self.server_name), '/org/mugshot/data_model')
+            self._proxy = bus.get_object(_make_bus_name(self.server_name), '/org/freedesktop/od/data_model')
         except dbus.DBusException:
             return
         
         # Order matters ... we want the self_id to be there before we call on_connect
-        self_id = self._proxy.Get('org.mugshot.dm.Model', 'SelfId', reply_handler=self.__get_self_id_reply, error_handler=lambda e: None)
-        self._proxy.Get('org.mugshot.dm.Model', 'Connected', reply_handler=self.__get_connected_reply, error_handler=lambda e: None)
+        self_id = self._proxy.Get('org.freedesktop.od.Model', 'SelfId', reply_handler=self.__get_self_id_reply, error_handler=lambda e: None)
+        self._proxy.Get('org.freedesktop.od.Model', 'Connected', reply_handler=self.__get_connected_reply, error_handler=lambda e: None)
 
-        self._proxy.connect_to_signal("Connected", self.__on_connected, dbus_interface='org.mugshot.dm.Model')
-        self._proxy.connect_to_signal("Disconnected", self.__on_disconnected, dbus_interface='org.mugshot.dm.Model')
+        self._proxy.connect_to_signal("Connected", self.__on_connected, dbus_interface='org.freedesktop.od.Model')
+        self._proxy.connect_to_signal("Disconnected", self.__on_disconnected, dbus_interface='org.freedesktop.od.Model')
 
     def __on_connected(self, self_id):
         if self_id == '':
@@ -149,15 +149,15 @@ class _DBusCallback(dbus.service.Object):
         self.__model = model
 
         if model.server_name != None:
-            path = "/org/mugshot/callback/" + _escape_server_name(model.server_name)
+            path = "/org/freedesktop/od/callback/" + _escape_server_name(model.server_name)
         else:
-            path = "/org/mugshot/callback/_default"
+            path = "/org/freedesktop/od/callback/_default"
 
         self.path = dbus.ObjectPath(path)
         
         dbus.service.Object.__init__(self, bus, self.path)
 
-    @dbus.service.method("org.mugshot.dm.Client",
+    @dbus.service.method("org.freedesktop.od.ModelClient",
                          in_signature='a(ssba(ssyyyv))', out_signature='')
     def Notify(self, resources):
         _logger.debug("got notify for resources: %s", resources)
@@ -196,5 +196,5 @@ class _DBusQuery(Query):
         meth_path = self.__method[0] + "#" + self.__method[1]
         _logger.debug("executing query meth: '%s' fetch: '%s' params: '%s'", meth_path, self.__fetch, self.__params)
         self.__model._get_proxy().Query(self.__model.callback.path, meth_path, self.__fetch, self.__params,
-                                        dbus_interface='org.mugshot.dm.Model', reply_handler=self.__on_reply, error_handler=self.__on_error)
+                                        dbus_interface='org.freedesktop.od.Model', reply_handler=self.__on_reply, error_handler=self.__on_error)
         
