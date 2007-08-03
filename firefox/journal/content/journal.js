@@ -92,12 +92,17 @@ var getHistory = function() {
     return result
 }
 
+var getLocalDayOffset = function(date, tzoffset) {
+  var tzoff = tzoffset || (new Date().getTimezoneOffset() * 60 * 1000);
+  return Math.floor((date.getTime() - tzoff) / DAY_MS)  
+}
+
 var sliceByDay = function(histitems) {
   var tzoffset = (new Date().getTimezoneOffset() * 60 * 1000);
   var days = {}
   for (var i = 0; i < histitems.length; i++) {
     var hi = histitems[i]
-    var timeday = Math.floor((hi.date.getTime() - tzoffset) / DAY_MS)
+    var timeday = getLocalDayOffset(hi.date, tzoffset)
     if (!days[timeday])
       days[timeday] = []
      
@@ -206,13 +211,16 @@ var journal = {
   appendDaySet: function(dayset) {
     var me = this;
     var date = dayset[0].date;
+    var today = new Date();
 
     dayset.sort(function (a,b) { if (a.date > b.date) { return -1; } else { return 1; }})
 
     var content = document.getElementById('history');    
     var headernode = document.createElement('h4');
     headernode.className = 'date';
-    headernode.appendChild(document.createTextNode(formatMonth(date.getMonth()) + " " + pad(date.getDay()) + " " + date.getFullYear()));
+    if (getLocalDayOffset(today) == getLocalDayOffset(date))
+      headernode.appendChild(document.createTextNode("Today, "))
+    headernode.appendChild(document.createTextNode(formatMonth(date.getMonth()) + " " + pad(date.getDate()) + " " + date.getFullYear()));
     content.appendChild(headernode);
     var histnode = document.createElement('div');
     histnode.className = 'history';
