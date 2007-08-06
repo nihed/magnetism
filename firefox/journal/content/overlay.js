@@ -47,13 +47,6 @@ var firefoxjournal = {
     var me = this;
     container.addEventListener("TabOpen", function(e) { me.onTabOpen(e); }, false);
   },
-  onMenuItemCommand: function(e) {
-	var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-		.getService(Components.interfaces.nsIWindowMediator);
-	var recentWindow = wm.getMostRecentWindow("navigator:browser");		
-	recentWindow.delayedOpenTab(JOURNAL_CHROME, null, null, null, null);
-	
-  },
   onTabOpen: function(e) {
     var browser = e.target.linkedBrowser;
     if (!browser.currentURI)
