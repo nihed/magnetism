@@ -43,9 +43,4 @@
   <stringbundleset id="stringbundleset">
     <stringbundle id="firefoxjournal-strings" src="chrome://firefoxjournal/locale/firefoxjournal.properties"/>
   </stringbundleset>
-
-  <menupopup id="menu_ToolsPopup">
-    <menuitem id="firefoxjournal-hello" label="&firefoxjournal.label;" 
-              oncommand="firefoxjournal.onMenuItemCommand(event);"/>
-  </menupopup>
 </overlay>
