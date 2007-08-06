@@ -273,22 +273,41 @@ var journal = {
     node.removeClassName("target-item");
   },
   searchInfoBar: function(q) {
+      var me = this;
       var node = document.createElement("div");
       node.className = "search-info-bar";
-
-      
+ 
       node.appendChild(createSpanText("Searching for ", "search-pre-term"));
       node.appendChild(createSpanText(q,"search-term"));
-
       var clearSearch = document.createElement("a");
-      clearSearch.setAttribute( 'onclick' , "journal.clearSearch();");
+      clearSearch.addEventListener("click", function() { me.clearSearch(); }, false);
       clearSearch.href = "javascript:void(0);";
       clearSearch.className = "clear-search";
       clearSearch.setAttribute("accesskey", "c");
       clearSearch.setAttribute("title", "Clear this search [shift-alt-c]");
-      clearSearch.appendChild(document.createTextNode(" [clear]"));
+      clearSearch.appendChild(document.createTextNode("[clear]"));
       node.appendChild(clearSearch);
-
+      
+      var searchService = Components.classes["@mozilla.org/browser/search-service;1"].getService(Components.interfaces.nsIBrowserSearchService);
+      var currentEngine = searchService.currentEngine;
+      if (currentEngine && currentEngine.name) {
+        var searchUri = currentEngine.getSubmission(q, null).uri.spec;
+        node.appendChild(document.createTextNode(" | "));  
+        var searchNode = document.createElement("span");       
+        searchNode.addClassName("search-provider");
+        var a = document.createElement("a");
+        a.setAttribute("href", searchUri);
+        var img = document.createElement("img");
+        img.setAttribute("src", currentEngine.iconURI.spec);
+        a.appendChild(img);
+        searchNode.appendChild(a);
+        searchNode.appendChild(document.createTextNode(" "));
+        a = document.createElement("a");
+        a.setAttribute("href", searchUri);   
+        a.appendChild(document.createTextNode(currentEngine.name + ": " + q));
+        searchNode.appendChild(a);  
+        node.appendChild(searchNode);
+      }
       return node;
   },
   onResultFocus: function(e, focused) {
@@ -296,9 +315,9 @@ var journal = {
       var defTarget = document.getElementById("default-target-item");
       if (defTarget) 
         this.unsetAsTargetItem(defTarget); 
-      this.setAsTargetItem(e.target);
+      this.setAsTargetItem(e.target.parentNode);
     } else {
-      this.unsetAsTargetItem(e.target);
+      this.unsetAsTargetItem(e.target.parentNode);
     }
   },
   redisplay: function() {
@@ -335,47 +354,6 @@ var journal = {
 
     for (var i = 0; i < viewed_items.length; i++) {
       this.appendDaySet(viewed_items[i]);
-    }
-    
-    if (search) { 
-      var div;
-      var weblink = isWebLink(search);
-      if (weblink) {
-        div = document.createElement("div");
-        div.appendChild(document.createTextNode("Go to "));
-        var openUrl = document.createElement('a');
-        openUrl.setAttribute('tabindex', 1)
-        var urlTarget = parseUserUrl(search);
-        openUrl.setAttribute('href', urlTarget);
-        openUrl.appendChild(createSpanText(urlTarget, "input-text"));
-        openUrl.addEventListener("focus", function(e) { me.onResultFocus(e, true); }, false);
-        openUrl.addEventListener("blur", function(e) { me.onResultFocus(e, false); }, false);          
-        div.appendChild(openUrl);
-        content.appendChild(div);
-        if (!this.targetHistoryItem) {
-          this.setAsTargetItem(div);
-          div.setAttribute('id', 'default-target-item');
-        }        
-      } 
-      div = document.createElement("div")
-      div.addClassName("item")
-      div.appendChild(document.createTextNode("Searching Google for "));      
-      var stfw = document.createElement('a');
-      stfw.setAttribute('tabindex', 1)      
-      stfw.setAttribute('href', getSearchUrl(search));
-      stfw.appendChild(createSpanText(search, "input-text"));
-      stfw.addEventListener("focus", function(e) { me.onResultFocus(e, true); }, false);
-      stfw.addEventListener("blur", function(e) { me.onResultFocus(e, false); }, false);        
-      div.appendChild(stfw);
-      content.appendChild(div)
-      if (!weblink && !this.targetHistoryItem) {
-        this.setAsTargetItem(div);
-        div.setAttribute('id', 'default-target-item');
-      }  
-    } else {
-      // No search, clear target
-      var selected = $("selected-item-notice")
-      selected.style.display = "none";    
     }
   },
   clearSearch : function() {
