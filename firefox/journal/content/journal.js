@@ -79,15 +79,23 @@ var getHistory = function() {
       var itemname = readRDFString(gh, resource, BOOKMARK_NAME);
       var itemdate = readRDFDate(gh, resource, BOOKMARK_DATE);
       var itemcount = readRDFInt(gh, resource, BOOKMARK_VISITCOUNT);
-
+      var displayUrl = resource.Value;
       var action = "visited";
+
       if (resource.Value.startsWith("http://www.google.com/") && resource.Value.toQueryParams()["q"] ) { 
-        /* detect google web searches, should be doing this in a better place */
+        /* detect google web searches */
         itemname = decodeURIComponent(resource.Value.toQueryParams()["q"].replace(/\+/g," "));
         action = "searched for";
       }
 
-      result.push({'name': itemname, 'date': itemdate, 'url': resource.Value, 'visitcount': itemcount, 'action' : action})
+      if (resource.Value.startsWith("http://www.amazon.com/") && resource.Value.toQueryParams()["field-keywords"] ) { 
+        /* detect amazon product searches */
+        itemname = decodeURIComponent(resource.Value.toQueryParams()["field-keywords"].replace(/\+/g," "));
+        action = "searched for";
+        displayURl = "http://www.amazon.com/";
+      }
+
+      result.push({'name': itemname, 'date': itemdate, 'url': resource.Value, 'displayurl' : displayUrl, 'visitcount': itemcount, 'action' : action})
     }
     return result
 }
@@ -264,6 +272,25 @@ var journal = {
   unsetAsTargetItem: function (node) {
     node.removeClassName("target-item");
   },
+  searchInfoBar: function(q) {
+      var node = document.createElement("div");
+      node.className = "search-info-bar";
+
+      
+      node.appendChild(createSpanText("Searching for ", "search-pre-term"));
+      node.appendChild(createSpanText(q,"search-term"));
+
+      var clearSearch = document.createElement("a");
+      clearSearch.setAttribute( 'onclick' , "journal.clearSearch();");
+      clearSearch.href = "javascript:void(0);";
+      clearSearch.className = "clear-search";
+      clearSearch.setAttribute("accesskey", "c");
+      clearSearch.setAttribute("title", "Clear this search [shift-alt-c]");
+      clearSearch.appendChild(document.createTextNode(" [clear]"));
+      node.appendChild(clearSearch);
+
+      return node;
+  },
   onResultFocus: function(e, focused) {
     if (focused) {
       var defTarget = document.getElementById("default-target-item");
@@ -288,13 +315,8 @@ var journal = {
     if (search)
       search = search.strip()
     if (search) {
-      content.appendChild(document.createTextNode("Searching for " + search + " "))
-      var clearSearch = document.createElement("a");
-      clearSearch.setAttribute( 'onclick' , "journal.clearSearch();");
-      clearSearch.href = "javascript:void(0);";
-      clearSearch.className = "clear-search";
-      clearSearch.appendChild(document.createTextNode("[clear]"));
-      content.appendChild(clearSearch);
+      content.appendChild(this.searchInfoBar(search))
+
       viewed_items = sliceByDay(filterHistoryItems(histitems, search));
       viewed_items = limitSliceCount(viewed_items, 6);
       this.targetHistoryItem = findHighestVisited(viewed_items);
@@ -337,7 +359,7 @@ var journal = {
       } 
       div = document.createElement("div")
       div.addClassName("item")
-      div.appendChild(document.createTextNode("Search the web for "));      
+      div.appendChild(document.createTextNode("Searching Google for "));      
       var stfw = document.createElement('a');
       stfw.setAttribute('tabindex', 1)      
       stfw.setAttribute('href', getSearchUrl(search));
