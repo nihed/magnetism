@@ -130,6 +130,9 @@ input.green-button:hover {
   font-weight: bold;
   color: #000;
 }
+.search-provider {
+  font-size: 14pt;			
+}
 .date {
 
 }
@@ -144,6 +147,7 @@ input.green-button:hover {
 }
 .target-item {
 	border: 1px solid #FFF;
+	background-color: #FFFF99;	
 }
 .time, .action, .title {
 	display: table-cell;
@@ -184,6 +188,7 @@ input.green-button:hover {
 .clear-search {
   font-size: 14pt;
   text-decoration: none;
+  padding-left: 10px;
 }
 .nav {
   text-align: center;
