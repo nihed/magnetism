@@ -387,6 +387,7 @@ var journal = {
     
     searchbox.focus();
     
+    $("history").appendChild(document.createTextNode("Loading journal..."))
     window.setTimeout(function () { me.redisplay(); }, 150);    
   },
   clearSearchTimeouts: function() {
@@ -424,8 +425,8 @@ var journal = {
     this.searchValue = search;
     if (!this.searchTimeout) {
       var me = this;
-      this.searchTimeout = window.setTimeout(function () { me.idleDoSearch() }, 250);
-      this.webSearchTimeout = window.setTimeout(function () { me.idleDoWebSearch() }, 500);      
+      this.searchTimeout = window.setTimeout(function () { me.idleDoSearch() }, 350);
+      this.webSearchTimeout = window.setTimeout(function () { me.idleDoWebSearch() }, 600);      
     }
   }
 }
