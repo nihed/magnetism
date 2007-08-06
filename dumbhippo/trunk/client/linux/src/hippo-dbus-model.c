@@ -927,6 +927,16 @@ static const HippoDBusMember model_members[] = {
      *   Resource ID to forget notifications on
      */
     { HIPPO_DBUS_MEMBER_METHOD, "Forget", "os", "", handle_forget },
+
+    /* ConnectedChanged: connected status changed (this signal will be replaced
+     * eventually by moving self id and the online flag into global resource)
+     * 
+     * Parameters:
+     *  boolean connected = true/false
+     *  string selfId
+     * 
+     */
+    { HIPPO_DBUS_MEMBER_SIGNAL, "ConnectedChanged", "", "bs", NULL },
     
     { 0, NULL }
 };
@@ -977,25 +987,28 @@ void
 hippo_dbus_model_notify_connected_changed(gboolean connected)
 {
     DBusConnection *connection = hippo_dbus_get_connection(hippo_app_get_dbus(hippo_get_app()));
-    DBusMessage *message;
-    DBusMessageIter iter;
 
     if (connected) {
         char *resource_id = get_self_id();
-    
-        message = dbus_message_new_signal(HIPPO_DBUS_MODEL_PATH, HIPPO_DBUS_MODEL_INTERFACE,
-                                          "Connected");
-        
-        dbus_message_iter_init_append(message, &iter);
-        dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &resource_id);
+
+        hippo_dbus_helper_emit_signal(connection,
+                                      HIPPO_DBUS_MODEL_PATH, HIPPO_DBUS_MODEL_INTERFACE,
+                                      "ConnectedChanged",
+                                      DBUS_TYPE_BOOLEAN, &connected,
+                                      DBUS_TYPE_STRING, &resource_id,
+                                      DBUS_TYPE_INVALID);
 
         g_free(resource_id);
     } else {
-        message = dbus_message_new_signal(HIPPO_DBUS_MODEL_PATH, HIPPO_DBUS_MODEL_INTERFACE,
-                                          "Disconnected");
-        
-    }
+        const char *empty_string;
 
-    dbus_connection_send(connection, message, NULL);
-    dbus_message_unref(message);
+        empty_string = "";
+        
+        hippo_dbus_helper_emit_signal(connection,
+                                      HIPPO_DBUS_MODEL_PATH, HIPPO_DBUS_MODEL_INTERFACE,
+                                      "ConnectedChanged",
+                                      DBUS_TYPE_BOOLEAN, &connected,
+                                      DBUS_TYPE_STRING, &empty_string,
+                                      DBUS_TYPE_INVALID);
+    }
 }
