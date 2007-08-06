@@ -77,8 +77,13 @@ class DataModel(AbstractModel):
         self_id = self._proxy.Get('org.freedesktop.od.Model', 'SelfId', reply_handler=self.__get_self_id_reply, error_handler=lambda e: None)
         self._proxy.Get('org.freedesktop.od.Model', 'Connected', reply_handler=self.__get_connected_reply, error_handler=lambda e: None)
 
-        self._proxy.connect_to_signal("Connected", self.__on_connected, dbus_interface='org.freedesktop.od.Model')
-        self._proxy.connect_to_signal("Disconnected", self.__on_disconnected, dbus_interface='org.freedesktop.od.Model')
+        self._proxy.connect_to_signal("ConnectedChanged", self.__on_connected_changed, dbus_interface='org.freedesktop.od.Model')
+
+    def __on_connected_changed(self, connected, self_id):
+        if connected:
+            self.__on_connected(self_id)
+        else:
+            self.__on_disconnected()
 
     def __on_connected(self, self_id):
         if self_id == '':
