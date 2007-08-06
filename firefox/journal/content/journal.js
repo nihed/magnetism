@@ -260,19 +260,9 @@ var journal = {
   },
   setAsTargetItem: function (node) {
     node.addClassName("target-item");
-    var selected = $("selected-item-notice");
-    var pos = Position.positionedOffset(node);
-    selected.style.top = pos[1] + "px";
-    selected.style.left = (pos[0] + node.offsetWidth) + "px";
-    selected.targetNode = node;
-    selected.style.display = "block";
   },
   unsetAsTargetItem: function (node) {
-    node.removeClassName("target-item");  
-    var selected = $("selected-item-notice")
-    if (selected.targetNode == node) {
-      selected.style.display = "none";
-    }    
+    node.removeClassName("target-item");
   },
   onResultFocus: function(e, focused) {
     if (focused) {
