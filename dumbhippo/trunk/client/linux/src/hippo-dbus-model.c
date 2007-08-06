@@ -902,7 +902,7 @@ static const HippoDBusMember model_members[] = {
      *     Array of parameters:
      *        Parameter ID namespace uri
      *        Parameter ID local name
-     *        Update type (0=add, 1=replace, 2=delete, 3=clear)
+     *        Update type ('a'=add, 'r'=replace, 'd'=delete, 'c'=clear)
      *        Data type ('s'=string, 'r'=resource)
      *        Cardinality ('.'=1, '?'=01, '*'=N)
      *        Value (variant)
