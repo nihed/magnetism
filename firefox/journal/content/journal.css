@@ -36,17 +36,6 @@ img {
   border: 0;
 }
 
-#foot-logo {
-	position: fixed;
-	bottom: 40px;
-	right: 40px;
-	height: 100px;
-	width: 73px;
-	background-image: url('gnome_logo.png');
-	background-position: top left;
-	background-repeat: no-repeat;
-}
-
 #page {
 	min-height: 600px;
 }
@@ -130,6 +119,17 @@ input.green-button:hover {
 #q {
   width: 20em;
 }
+.search-info-bar {
+  border: 1px solid #ccc;
+  padding: 10px;
+  font-size: 18pt;
+  color: #666;
+  background-color: #eee;
+}
+.search-term {
+  font-weight: bold;
+  color: #000;
+}
 .date {
 
 }
@@ -176,22 +176,13 @@ input.green-button:hover {
 .title {
 
 }
-.tools {
-  text-align: left;
-  padding-left: 0.5em;
-  padding-right: 0.5em;
-}
-
-.tools:before {
-  content: " — ";
-}
 .url {
   color: green;
   text-decoration: none;
   text-align:right;
 }
 .clear-search {
-  font-size: small;
+  font-size: 14pt;
   text-decoration: none;
 }
 .nav {
@@ -207,14 +198,12 @@ input.green-button:hover {
 /* ==== Google Search ==== */
 
 #google {
-  float: right;
   padding: 0;
   margin: 0;
-  margin-left: 40px;
   height: 100%;
 }
 #google-q {
-  width: 330px;
+  width: 800px;
   min-height: 800px;
   height; 100%:
   padding: 0;
