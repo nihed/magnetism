@@ -196,6 +196,10 @@ input.green-button:hover {
 .input-text {
   font-family: monospace;	
 }
+.keybinding-hint {
+  color: green;
+  font-size: smaller;	
+}
 /* ==== Sidebar ==== */
 #sidebar {
   float: right;
