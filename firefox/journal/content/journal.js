@@ -199,10 +199,6 @@ var parseUserUrl = function(text) {
   return "http://" + text;
 }
 
-var getSearchUrl = function(text) {
-  return "http://google.com/search?q=" + escape(text);
-}
-
 var createSpanText = function(text, className) {
   var span = document.createElement('span')
   span.className = className
@@ -327,7 +323,7 @@ var journal = {
       if (currentEngine && currentEngine.name) {
         var searchUri = currentEngine.getSubmission(q, null).uri.spec;
         node.appendChild(document.createTextNode(" | "));  
-        var searchNode = document.createElement("span");       
+        var searchNode = document.createElement("span");     
         searchNode.addClassName("search-provider");
         var a = document.createElement("a");
         a.setAttribute("href", searchUri);
@@ -337,9 +333,11 @@ var journal = {
         searchNode.appendChild(a);
         searchNode.appendChild(document.createTextNode(" "));
         a = document.createElement("a");
+        a.setAttribute("id", "search-provider");        
         a.setAttribute("href", searchUri);   
         a.appendChild(document.createTextNode(currentEngine.name + ": " + q));
-        searchNode.appendChild(a);  
+        searchNode.appendChild(a);
+        searchNode.appendChild(createSpanText(" (Ctrl-Enter)", "keybinding-hint"));
         node.appendChild(searchNode);
       }
       return node;
@@ -408,15 +406,28 @@ var journal = {
     searchbox.select();
     searchbox.focus();
   },
+  handleWindowKey: function(e) {
+    if (e.keyCode == 13 && e.ctrlKey) { 
+      var sp = $("search-provider");
+      if (sp) {
+        var click = document.createEvent("MouseEvents");
+        click.initEvent("click", "true", "true");   
+        sp.dispatchEvent(click);   
+        Event.stop(e);
+      }
+    }    
+  },
   onload: function() {
+    var me = this;  
     this.searchTimeout = null;
     this.searchValue = null;
     this.targetHistoryItem = null;
     
+    window.addEventListener("keyup", function (e) { me.handleWindowKey(e); }, false);    
+    
     var searchbox = document.getElementById('q');
     var searchform = document.forms['qform'];
     
-    var me = this;
     searchbox.addEventListener("keyup", function (e) { me.handleSearchChanged(e) }, false);
     searchform.addEventListener("submit", function (e) { me.onsubmit(); Event.stop(e); }, true);
     
