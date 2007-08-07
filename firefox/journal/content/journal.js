@@ -79,23 +79,44 @@ var getHistory = function() {
       var itemname = readRDFString(gh, resource, BOOKMARK_NAME);
       var itemdate = readRDFDate(gh, resource, BOOKMARK_DATE);
       var itemcount = readRDFInt(gh, resource, BOOKMARK_VISITCOUNT);
-      var displayUrl = resource.Value;
+      var displayUrl = resource.Value.split("?")[0];
       var action = "visited";
+      var hrs = itemdate.getHours();
+      var mins = itemdate.getMinutes();
 
       if (resource.Value.startsWith("http://www.google.com/") && resource.Value.toQueryParams()["q"] ) { 
         /* detect google web searches */
         itemname = decodeURIComponent(resource.Value.toQueryParams()["q"].replace(/\+/g," "));
-        action = "searched for";
+        action = "googled for";
       }
-
-      if (resource.Value.startsWith("http://www.amazon.com/") && resource.Value.toQueryParams()["field-keywords"] ) { 
+      else if (resource.Value.startsWith("http://search.yahoo.com/search") && resource.Value.toQueryParams()["p"] ) { 
+        /* detect amazon product searches */
+        itemname = decodeURIComponent(resource.Value.toQueryParams()["p"].replace(/\+/g," "));
+        action = "yahoo'd for";
+        displayUrl = "http://search.yahoo.com/" + itemname;
+      }
+      else if (resource.Value.startsWith("http://search.creativecommons.org/") && resource.Value.toQueryParams()["q"] ) { 
+        /* detect amazon product searches */
+        itemname = decodeURIComponent(resource.Value.toQueryParams()["q"].replace(/\+/g," "));
+        action = "cc'd for";
+        displayUrl = "http://search.creativecommons.org/" + itemname;
+      }
+      else if (resource.Value.startsWith("http://www.amazon.com/") && resource.Value.toQueryParams()["field-keywords"] ) { 
         /* detect amazon product searches */
         itemname = decodeURIComponent(resource.Value.toQueryParams()["field-keywords"].replace(/\+/g," "));
-        action = "searched for";
-        displayURl = "http://www.amazon.com/";
+        action = "amazon'd for";
+        displayUrl = "http://www.amazon.com/" + itemname;
+      }
+      else if (resource.Value.startsWith("http://search.ebay.com/") && ( resource.Value.toQueryParams()["satitle"] || resource.Value.toQueryParams()["query"] ) ) { 
+        /* detect ebay product searches */
+        /* FIXME: this doesn't always detect searches even from our own engine... */
+        var q = resource.Value.toQueryParams()["satitle"] || resource.Value.toQueryParams()["query"];
+        itemname = decodeURIComponent(q.replace(/\+/g," "));
+        action = "ebay'd for";
+        displayUrl = "http://www.ebay.com/" + itemname;
       }
 
-      result.push({'name': itemname, 'date': itemdate, 'url': resource.Value, 'displayurl' : displayUrl, 'visitcount': itemcount, 'action' : action})
+      result.push({'name': itemname, 'date': itemdate, 'time': twelveHour(hrs) + ":" + pad(mins) + " " + meridiem(hrs), 'url': resource.Value, 'displayurl' : displayUrl, 'visitcount': itemcount, 'action' : action})
     }
     return result
 }
@@ -217,7 +238,6 @@ var formatMonth = function(i) { return ["January", "February", "March", "April",
 
 var journal = {
   appendDaySet: function(dayset) {
-    var me = this;
     var date = dayset[0].date;
     var today = new Date();
 
@@ -231,40 +251,54 @@ var journal = {
     headernode.appendChild(document.createTextNode(formatMonth(date.getMonth()) + " " + pad(date.getDate()) + " " + date.getFullYear()));
     content.appendChild(headernode);
     var histnode = document.createElement('div');
-    histnode.className = 'history';
+    histnode.className = 'set';
     content.appendChild(histnode);
 
     for (var i = 0; i < dayset.length; i++) {
-      var viewed_item = dayset[i]
-      var is_target = viewed_item == this.targetHistoryItem;
-      var histitemnode = document.createElement('div');
-      histitemnode.className = 'item';
-      var hrs = viewed_item.date.getHours();
-      var mins = viewed_item.date.getMinutes();
-      histitemnode.appendChild(createSpanText(twelveHour(hrs) + ":" + pad(mins) + " " + meridiem(hrs), 'time'));
-      histitemnode.appendChild(createSpanText(viewed_item.action, 'action'));
-      var titleLink = createAText(viewed_item.name,viewed_item.url,'title');
-      titleLink.setAttribute('tabindex', 1);
-      if (is_target) 
-        this.targetHistoryItemLink = titleLink;
-      titleLink.addEventListener("focus", function(e) { me.onResultFocus(e, true); }, false);
-      titleLink.addEventListener("blur", function(e) { me.onResultFocus(e, false); }, false);             
-      histitemnode.appendChild(titleLink);
-
-      var histmetanode = document.createElement('div');
-      histmetanode.className = 'meta';
-      histmetanode.appendChild(createSpanText(' ', 'blue'));
-      histmetanode.appendChild(createSpanText(' ', 'tags'));
-      var hrefLink = createAText(viewed_item.url.split("?")[0],viewed_item.url,'url');
-      hrefLink.setAttribute('tabindex', 0); 
-      histmetanode.appendChild(hrefLink);
-      histnode.appendChild(histitemnode);
-      histnode.appendChild(histmetanode);
-      if (is_target) {
-        this.setAsTargetItem(histitemnode);
-        histitemnode.setAttribute('id', 'default-target-item');
-      }      
+      histnode.appendChild(this.createLinkItem(dayset[i]));
     }
+  },
+  createLinkItem: function(node) {
+      var is_target = node == this.targetHistoryItem;
+
+      var item = document.createElement('a');
+      item.href = node.url;
+      item.className = 'item';
+      item.setAttribute('tabindex', 1); 
+
+      if (is_target) {
+        this.setAsTargetItem(item);
+        item.setAttribute('id', 'default-target-item');
+      }
+
+      var me = this;
+      item.addEventListener("focus", function(e) { me.onResultFocus(e, true); }, false);
+      item.addEventListener("blur", function(e) { me.onResultFocus(e, false); }, false);             
+
+      item.appendChild(createSpanText(node.time, 'time'));
+      item.appendChild(createSpanText(node.action, 'action'));
+
+      var urlSection = document.createElement('div');
+      urlSection.className = 'urls';
+        var titleDiv = document.createElement('div');
+        titleDiv.appendChild(createSpanText(node.name,'title'));
+      urlSection.appendChild(titleDiv);
+        var hrefDiv = document.createElement('div');
+        hrefDiv.appendChild(createSpanText(node.displayurl,'url'));
+      urlSection.appendChild(hrefDiv);
+      item.appendChild(urlSection);
+
+      return item;
+  },
+  alternativeSearchEngines: function (q) {
+    if (! q ) return;
+    var searchService = Components.classes["@mozilla.org/browser/search-service;1"].getService(Components.interfaces.nsIBrowserSearchService);
+    var engines = searchService.getEngines(Object()); /* NS strongly desires an Out argument to be an object */
+    var search = Array();
+    for (var i = 0; i < engines.length; i++) {
+      search.push({'name': engines[i].name, 'date': '', 'time': ' '.times(15), 'url': engines[i].getSubmission(q, null).uri.spec, 'displayurl' : engines[i].description, 'visitcount': 0, 'action' : "[alt-" + i + "]" });
+    }
+    return search;
   },
   setAsTargetItem: function (node) {
     node.addClassName("target-item");
@@ -315,9 +349,9 @@ var journal = {
       var defTarget = document.getElementById("default-target-item");
       if (defTarget) 
         this.unsetAsTargetItem(defTarget); 
-      this.setAsTargetItem(e.target.parentNode);
+      this.setAsTargetItem(e.target);
     } else {
-      this.unsetAsTargetItem(e.target.parentNode);
+      this.unsetAsTargetItem(e.target);
     }
   },
   redisplay: function() {
@@ -355,6 +389,17 @@ var journal = {
     for (var i = 0; i < viewed_items.length; i++) {
       this.appendDaySet(viewed_items[i]);
     }
+    var altSearches = this.alternativeSearchEngines(search);
+    var set = document.createElement("div");
+    set.className = "set";
+    for (var i = 0; i < altSearches.length; i++) {
+      set.appendChild(this.createLinkItem(altSearches[i]));
+    }
+    var altSearchH4 = document.createElement("h4");
+    altSearchH4.appendChild(document.createTextNode("Alternative Searches"));
+    $("history").appendChild(altSearchH4);
+    $("history").appendChild(set);
+
   },
   clearSearch : function() {
     var searchbox = document.getElementById('q');
