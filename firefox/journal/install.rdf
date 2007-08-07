@@ -2,12 +2,12 @@
 <RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
  xmlns:em="http://www.mozilla.org/2004/em-rdf#">
   <Description about="urn:mozilla:install-manifest">
-    <em:id>firefoxjournal@colin.walters</em:id>
+    <em:id>firefoxjournal@redhat.com</em:id>
     <em:name>Firefox Journal</em:name>
     <em:version>0.1</em:version>
-    <em:creator>Colin Walters</em:creator>
+    <em:creator>Red Hat, Inc.</em:creator>
     <em:description>See your Firefox use as a timeline</em:description>
-    <em:homepageURL>http://submind.verbum.org/firefoxjournal</em:homepageURL>
+    <em:homepageURL></em:homepageURL>
     <em:targetApplication>
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id> <!-- firefox -->

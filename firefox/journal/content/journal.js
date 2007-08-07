@@ -14,7 +14,7 @@
  * The Original Code is Firefox Journal.
  *
  * The Initial Developer of the Original Code is
- * Colin Walters.
+ * Red Hat, Inc.
  * Portions created by the Initial Developer are Copyright (C) 2007
  * the Initial Developer. All Rights Reserved.
  *
