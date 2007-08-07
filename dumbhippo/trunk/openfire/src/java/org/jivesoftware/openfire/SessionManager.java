@@ -537,24 +537,23 @@ public class SessionManager extends BasicModule {
      * Creates a new <tt>ClientSession</tt>. The new Client session will have a newly created
      * stream ID.
      *
+     * @param serverName name or alias of the server used by this client session 
      * @param conn the connection to create the session from.
      * @return a newly created session.
      */
-    public ClientSession createClientSession(Connection conn) {
-        return createClientSession(conn, nextStreamID());
+    public ClientSession createClientSession(String serverName, Connection conn) {
+        return createClientSession(serverName, conn, nextStreamID());
     }
 
     /**
      * Creates a new <tt>ClientSession</tt> with the specified streamID.
      *
+     * @param serverName name or alias of the server used by this client session
      * @param conn the connection to create the session from.
      * @param id the streamID to use for the new session.
      * @return a newly created session.
      */
-    public ClientSession createClientSession(Connection conn, StreamID id) {
-        if (serverName == null) {
-            throw new IllegalStateException("Server not initialized");
-        }
+    public ClientSession createClientSession(String serverName, Connection conn, StreamID id) {
         ClientSession session = new ClientSession(serverName, conn, id);
         conn.init(session);
         // Register to receive close notification on this session so we can
@@ -963,7 +962,7 @@ public class SessionManager extends BasicModule {
      */
     public ClientSession getBestRoute(JID recipient) {
         // Return null if the JID belongs to a foreign server
-        if (serverName == null || !serverName.equals(recipient.getDomain())) {
+        if (!XMPPServer.getInstance().isLocal(recipient)) {
              return null;
         }
         ClientSession session = null;
@@ -1065,9 +1064,9 @@ public class SessionManager extends BasicModule {
      * @return the <code>Session</code> associated with the JID data.
      */
     public ClientSession getSession(String username, String domain, String resource) {
-        // Return null if the JID's data belongs to a foreign server. If the server is
-        // shutting down then serverName will be null so answer null too in this case.
-        if (serverName == null || !serverName.equals(domain)) {
+        // Return null if the JID's data belongs to a foreign server. (or if the server
+    	// is shutton down)
+    	if (!XMPPServer.getInstance().isLocalDomain(domain)) {
             return null;
         }
 
@@ -1664,7 +1663,7 @@ public class SessionManager extends BasicModule {
             for (String hostname : session.getHostnames()) {
                 unregisterOutgoingServerSession(hostname);
                 // Remove the route to the session using the hostname
-                XMPPServer.getInstance().getRoutingTable().removeRoute(new JID(hostname));
+                XMPPServer.getInstance().getRoutingTable().removeDomainRoute(hostname);
             }
         }
     }

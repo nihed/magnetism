@@ -801,7 +801,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public void start() {
         super.start();
         // Add the route to this service
-        routingTable.addRoute(getAddress(), this);
+        routingTable.addComponentRoute(chatServiceName, this);
         ArrayList<String> params = new ArrayList<String>();
         params.clear();
         params.add(getServiceDomain());
@@ -822,7 +822,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public void stop() {
         super.stop();
         // Remove the route to this service
-        routingTable.removeRoute(getAddress());
+        routingTable.removeComponentRoute(chatServiceName);
         timer.cancel();
         logAllConversation();
         // Remove the statistics.

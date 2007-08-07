@@ -92,6 +92,7 @@ public class XMPPServer {
     private static XMPPServer instance;
 
     private String name;
+    private String[] aliases;
     private Version version;
     private Date startDate;
     private Date stopDate;
@@ -169,19 +170,43 @@ public class XMPPServer {
         }
         return new XMPPServerInfoImpl(name, version, startDate, stopDate, getConnectionManager());
     }
+    
+    /**
+     * Returns true if the given domain is local to the server - that is, this
+     * server's primary domain or an alias domain. Return false even if the domain 
+     * matches the subdomain for a component.
+     *
+     * @param domain the domain to check
+     * @return true if the domain is a local domain for this server
+     */
+    public boolean isLocalDomain(String domain) {
+    	if (name == null) // Server shutdown
+    		return false;
+    	
+    	if (name.equals(domain)) {
+            return true;
+    	}
+    	
+		for (String alias : aliases) { 
+			if (alias.equals(domain))
+				return true;
+		}
+    	
+    	return false;
+    }
 
     /**
      * Returns true if the given address is local to the server (managed by this
-     * server domain). Return false even if the jid's domain matches a local component's
-     * service JID.
+     * server's primary domain or alias domain). Return false even if the jid's 
+     * domain matches a local component's service JID.
      *
      * @param jid the JID to check.
      * @return true if the address is a local address to this server.
      */
     public boolean isLocal(JID jid) {
         boolean local = false;
-        if (jid != null && name != null && name.equals(jid.getDomain())) {
-            local = true;
+        if (jid != null) {
+        	local = isLocalDomain(jid.getDomain());
         }
         return local;
     }
@@ -196,7 +221,7 @@ public class XMPPServer {
      */
     public boolean isRemote(JID jid) {
         if (jid != null) {
-            if (!name.equals(jid.getDomain()) && componentManager.getComponent(jid) == null) {
+            if (!isLocalDomain(jid.getDomain()) && componentManager.getComponent(jid) == null) {
                 return true;
             }
         }
@@ -210,7 +235,7 @@ public class XMPPServer {
      * @return true if the given address matches a component service JID.
      */
     public boolean matchesComponent(JID jid) {
-        return jid != null && !name.equals(jid.getDomain()) &&
+        return jid != null && !isLocalDomain(jid.getDomain()) &&
                 componentManager.getComponent(jid) != null;
     }
 
@@ -289,11 +314,21 @@ public class XMPPServer {
     public void removeServerListener(XMPPServerListener listener) {
         listeners.remove(listener);
     }
+    
+    private void initializeDomains() {
+        name = JiveGlobals.getProperty("xmpp.domain", "127.0.0.1").toLowerCase();
+
+        String aliasesString = JiveGlobals.getProperty("xmpp.domainAliases").toLowerCase().trim();
+        if (aliasesString != null && !aliasesString.equals(""))
+        	aliases = aliasesString.split("\\s*,\\s*");
+        else
+        	aliases = new String[0];
+    }
 
     private void initialize(String home) throws FileNotFoundException {
         locateOpenfire(home);
 
-        name = JiveGlobals.getProperty("xmpp.domain", "127.0.0.1").toLowerCase();
+        initializeDomains();
 
         version = new Version(3, 3, 2, Version.ReleaseStatus.Release, 1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
@@ -321,7 +356,7 @@ public class XMPPServer {
         // Make sure that setup finished correctly.
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             // Set the new server domain assigned during the setup process
-            name = JiveGlobals.getProperty("xmpp.domain").toLowerCase();
+        	initializeDomains();
 
             // Update certificates (if required)
             try {
@@ -1302,4 +1337,98 @@ public class XMPPServer {
         return (InternalComponentManager) modules.get(InternalComponentManager.class);
     }
 
+    private boolean hostnameMatchesDomain(String hostname, String domain) {
+    	if (!hostname.endsWith(domain))
+    		return false;
+    	
+    	if (!(hostname.length() == domain.length() || 
+    		  hostname.charAt(hostname.length() - domain.length() - 1) == '.'))
+    		return false;
+
+    	return true;
+    }
+    
+    /**
+     * Returns the appropriate domain to use for the user's JID when a client connects to 
+     * the specified hostname.
+     * 
+     * @param hostname the hostname specified by the user (as the "to" of the stream or
+     * the Host: of a HTTP GET)
+     * @return the appropriate domain. Defaults to the server's domain if there was no match
+     */
+	public String getDomainForHostname(String hostname) {
+		// The algorithm we look for here is that we loook among the server name and aliases
+		// and find the longest domain that is either an exact match or a trailing component
+		// ('bar.com' matches 'bar.com' and 'foo.bar.com' but not 'foo-bar.com') 
+		
+        if (name == null)
+            throw new IllegalStateException("Server not initialized");
+
+        if (hostname != null) {
+			String match = null;
+			
+			if (hostnameMatchesDomain(hostname, name))
+				match = name;
+			
+			for (String alias : aliases) {
+				if ((match == null || alias.length() > match.length()) &&
+					hostnameMatchesDomain(hostname, alias))
+					match = alias;
+			}
+			
+			if (match != null)
+				return match;
+		}
+
+		return name;
+	}
+
+	/**
+	 * Returns all addresses a component should be registered under, based on
+	 * the configured domain and alias domains for the server. 
+	 * 
+	 * @param subdomain the subdomain of the component (does not include
+	 *   the server name)
+	 * @return all addresses the component should be registered under
+	 */
+	public Collection<JID> getComponentAddresses(String subdomain) {
+		if (name == null)
+            throw new IllegalStateException("Server not initialized");
+		
+		if (aliases.length == 0)
+			return Collections.singleton(new JID(null, subdomain + "." + name, null));
+		else {
+			Collection<JID> result = new ArrayList<JID>();
+			
+			result.add(new JID(null, subdomain + "." + name, null));
+			for (String alias : aliases)
+				result.add(new JID(null, subdomain + "." + alias, null));
+			
+			return result;
+		}
+	}
+	
+	/**
+	 * Returns all local addresses for a JID, based on the alias domains
+	 * that have been configured for the server. (Note that this only applies
+	 * to addresses hosted directly by the server, such as local users,
+	 * and not to JID's on subdomains. See {@link #getComponentAddresses(String)}
+	 * for getting all component names for a subdomain. If the JID is not local,
+	 * the result will be only the JID itself. 
+	 * 
+	 * @param node the node to find aliases for
+	 * @return all local names for the JID (includes the JID itself)
+	 */
+	public Collection<JID> getAddressAliases(JID node) {
+		if (aliases.length == 0 || !isLocal(node))
+			return Collections.singleton(node);
+		
+		Collection<JID> result = new ArrayList<JID>();
+		
+		result.add(new JID(node.getNode(), name, node.getResource()));
+		for (String alias : aliases)
+			result.add(new JID(node.getNode(), alias, node.getResource()));
+		
+		return result;
+	}
 }

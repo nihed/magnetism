@@ -257,12 +257,12 @@ public class ClientSession extends Session {
             // Set default TLS policy
             connection.setTlsPolicy(Connection.TLSPolicy.disabled);
         }
-
+        
         // Indicate the compression policy to use for this connection
         connection.setCompressionPolicy(compressionPolicy);
 
         // Create a ClientSession for this user.
-        Session session = SessionManager.getInstance().createClientSession(connection);
+        Session session = SessionManager.getInstance().createClientSession(serverName, connection);
 
         // Build the start packet response
         StringBuilder sb = new StringBuilder(200);
@@ -433,7 +433,7 @@ public class ClientSession extends Session {
     /**
      * Creates a session with an underlying connection and permission protection.
      *
-     * @param serverName name of the server.
+     * @param serverName name or alias of the server used by this client session 
      * @param connection The connection we are proxying.
      * @param streamID unique identifier of this session.
      */

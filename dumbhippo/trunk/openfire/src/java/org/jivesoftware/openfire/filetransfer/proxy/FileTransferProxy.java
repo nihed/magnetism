@@ -196,7 +196,7 @@ public class FileTransferProxy extends BasicModule
 
     private void startProxy() {
         connectionManager.processConnections(bindInterface, getProxyPort());
-        routingTable.addRoute(getAddress(), this);
+        routingTable.addComponentRoute(proxyServiceName, this);
         XMPPServer server = XMPPServer.getInstance();
 
         server.getIQDiscoItemsHandler().addServerItemsProvider(this);
@@ -207,7 +207,7 @@ public class FileTransferProxy extends BasicModule
 
         XMPPServer.getInstance().getIQDiscoItemsHandler()
                 .removeComponentItem(getAddress().toString());
-        routingTable.removeRoute(getAddress());
+        routingTable.removeComponentRoute(proxyServiceName);
         connectionManager.disable();
     }
 

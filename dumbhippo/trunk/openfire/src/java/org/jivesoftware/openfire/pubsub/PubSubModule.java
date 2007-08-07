@@ -391,7 +391,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     public void start() {
         super.start();
         // Add the route to this service
-        routingTable.addRoute(getAddress(), this);
+        routingTable.addComponentRoute(serviceName, this);
         // Start the pubsub engine
         engine.start();
         ArrayList<String> params = new ArrayList<String>();
@@ -403,7 +403,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     public void stop() {
         super.stop();
         // Remove the route to this service
-        routingTable.removeRoute(getAddress());
+        routingTable.removeComponentRoute(serviceName);
         // Stop the pubsub engine. This will gives us the chance to
         // save queued items to the database.
         engine.shutdown();

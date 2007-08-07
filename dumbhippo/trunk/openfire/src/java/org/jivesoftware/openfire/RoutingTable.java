@@ -79,11 +79,30 @@ public interface RoutingTable {
      * route to the table. It is expected that routes are added and removed
      * on a relatively rare occassion so routing tables should be optimized
      * for lookup speed.</p>
+     * <p>Note that if the server has configured aliases and the node is 
+     * local, multiple routes may be added to the server behind the scenes</p> 
      *
      * @param node        The route's destination node
      * @param destination The destination object for this route
      */
     void addRoute(JID node, RoutableChannelHandler destination);
+    
+    /**
+     * <p>Add a route to the routing table for an external domain</p>
+     * 
+     * @param domain the name of the domain to add the route for
+     * @param destination The destination object for this route
+     */
+    void addDomainRoute(String domain, RoutableChannelHandler destination);
+    
+    /**
+     * <p>Add routes to the routing table for all appropriate names for a component
+     * (using the domain and domain aliases for the server) </p>
+     *  
+     * @param subdomain the bare subdomain for the component (without the server name at the end)
+     * @param destination The destination object for this route
+     */
+    void addComponentRoute(String subdomainPrefix, RoutableChannelHandler destination);
 
     /**
      * <p>Obtain a route to a packet handler for the given node.</p>
@@ -144,4 +163,18 @@ public interface RoutingTable {
      * @return The destination object previously registered under the given address, or null if none existed
      */
     ChannelHandler removeRoute(JID node);
+    
+    /**
+     * <p>Remove a route for a domain from the routing table that was added with addDommainRoute()</p> 
+     * 
+     * @param domain the name of the domain that we are routing for
+     */
+    void removeDomainRoute(String domain);
+    
+    /**
+     * <p>Remove a route for a component from the routing table that was added with addComponentRoute()</p>
+     *  
+     * @param subdomain the bare subdomain for the component (without the server name at the end)
+     */
+    void removeComponentRoute(String subdomain);
 }

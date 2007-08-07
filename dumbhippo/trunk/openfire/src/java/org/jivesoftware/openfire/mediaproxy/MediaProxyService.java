@@ -90,7 +90,7 @@ public class MediaProxyService extends BasicModule
             } catch (SocketException e) {
             }
 
-            routingTable.addRoute(getAddress(), this);
+            routingTable.addComponentRoute(serviceName, this);
             XMPPServer.getInstance().getIQDiscoItemsHandler().addServerItemsProvider(this);
         } else {
             if (echo != null) echo.cancel();
@@ -102,7 +102,7 @@ public class MediaProxyService extends BasicModule
         super.stop();
         mediaProxy.stopProxy();
         XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(getAddress().toString());
-        routingTable.removeRoute(getAddress());
+        routingTable.removeComponentRoute(serviceName);
         if (echo != null) echo.cancel();
     }
 

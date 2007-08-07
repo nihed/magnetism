@@ -204,7 +204,7 @@ public class ServerSocketReader extends SocketReader {
         threadPool.shutdown();
     }
 
-    boolean createSession(String namespace) throws UnauthorizedException, XmlPullParserException,
+    boolean createSession(String serverName, String namespace) throws UnauthorizedException, XmlPullParserException,
             IOException {
         if ("jabber:server".equals(namespace)) {
             // The connected client is a server so create an IncomingServerSession

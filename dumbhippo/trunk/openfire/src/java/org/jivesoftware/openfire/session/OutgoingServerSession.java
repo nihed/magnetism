@@ -664,7 +664,7 @@ public class OutgoingServerSession extends Session {
             // was already registered nothing happens
             sessionManager.registerOutgoingServerSession(hostname, this);
             // Add a new route for this new session
-            XMPPServer.getInstance().getRoutingTable().addRoute(new JID(hostname), this);
+            XMPPServer.getInstance().getRoutingTable().addDomainRoute(hostname, this);
         }
     }
 
