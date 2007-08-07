@@ -291,8 +291,12 @@ var journal = {
     var searchService = Components.classes["@mozilla.org/browser/search-service;1"].getService(Components.interfaces.nsIBrowserSearchService);
     var engines = searchService.getEngines(Object()); /* NS strongly desires an Out argument to be an object */
     var search = Array();
-    for (var i = 0; i < engines.length; i++) {
-      search.push({'name': engines[i].name, 'date': '', 'time': ' '.times(15), 'url': engines[i].getSubmission(q, null).uri.spec, 'displayurl' : engines[i].description, 'visitcount': 0, 'action' : "[alt-" + i + "]" });
+    // Skip first engine, we displayed that above
+    for (var i = 1; i < engines.length; i++) {
+      // Keybinding here is handled in window
+      search.push({'name': engines[i].name, 'date': '', 'time': ' '.times(15), 
+                   'url': engines[i].getSubmission(q, null).uri.spec, 
+                   'displayurl' : engines[i].description, 'visitcount': 0, 'action' : "[ctrl-" + i + "]" });
     }
     return search;
   },
@@ -391,7 +395,9 @@ var journal = {
     var set = document.createElement("div");
     set.className = "set";
     for (var i = 0; i < altSearches.length; i++) {
-      set.appendChild(this.createLinkItem(altSearches[i]));
+      var linkItem = this.createLinkItem(altSearches[i]);
+      linkItem.setAttribute("id", "altsearch-" + i);
+      set.appendChild(linkItem);
     }
     var altSearchH4 = document.createElement("h4");
     altSearchH4.appendChild(document.createTextNode("Alternative Searches"));
@@ -407,14 +413,22 @@ var journal = {
     searchbox.focus();
   },
   handleWindowKey: function(e) {
-    if (e.keyCode == 13 && e.ctrlKey) { 
-      var sp = $("search-provider");
-      if (sp) {
-        var click = document.createEvent("MouseEvents");
-        click.initEvent("click", "true", "true");   
-        sp.dispatchEvent(click);   
-        Event.stop(e);
-      }
+    if (!e.ctrlKey)
+      return;
+    var click = document.createEvent("MouseEvents");
+    click.initEvent("click", "true", "true");
+    var target;     
+    if (e.keyCode == 13) { 
+      target = $("search-provider");
+    } else if (e.keyCode >= 49 && e.keyCode < 57) {  // 1-9
+      var idx = e.keyCode - 49;
+      target = $("altsearch-" + idx);
+    } else {
+      return;
+    }
+    if (target) {
+      target.dispatchEvent(click);
+      Event.stop(e);
     }    
   },
   onload: function() {
