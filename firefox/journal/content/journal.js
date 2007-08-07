@@ -406,7 +406,7 @@ var journal = {
 
   },
   clearSearch : function() {
-    var searchbox = document.getElementById('q');
+    var searchbox = $('q');
     searchbox.value='';
     this.redisplay();
     searchbox.select();
@@ -415,6 +415,15 @@ var journal = {
   handleWindowKey: function(e) {
     if (!e.ctrlKey)
       return;
+    
+    // Ctrl-c is clear search
+    if (e.keyCode == 67) {
+      this.clearSearch();
+      Event.stop(e);
+      return;
+    }
+    
+    // Handle control bindings for links
     var click = document.createEvent("MouseEvents");
     click.initEvent("click", "true", "true");
     var target;     
