@@ -14,7 +14,7 @@
  * The Original Code is Firefox Journal.
  *
  * The Initial Developer of the Original Code is
- * Colin Walters.
+ * Red Hat, Inc.
  * Portions created by the Initial Developer are Copyright (C) 2007
  * the Initial Developer. All Rights Reserved.
  *
@@ -55,7 +55,7 @@ var firefoxjournal = {
   getJournalPrefs : function() {
   	if (!this.branch) {
       var manager = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
-      this.branch = manager.getBranch("extensions.firefoxjournal@colin.walters.");
+      this.branch = manager.getBranch("extensions.firefoxjournal@redhat.com.");
     }
     return this.branch;    
   },
