@@ -13,6 +13,8 @@ import org.jivesoftware.openfire.container.Module;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.interceptor.InterceptorManager;
+import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.util.Log;
 import org.xmpp.component.ComponentException;
 
@@ -32,6 +34,7 @@ public class HippoPlugin implements Plugin {
 	private MessageSender messageSenderProvider = new MessageSender();
 	private CompatibilityNotifier compatibilityNotifier = new CompatibilityNotifier();
 	private AdminHandler adminHandler = new AdminHandler();
+	private PacketInterceptor securityInterceptor = new HippoSecurityInterceptor();
 	private List<Module> internalModules = new ArrayList<Module>();
 	
 	private void addIQHandler(IQHandler handler) {
@@ -62,6 +65,8 @@ public class HippoPlugin implements Plugin {
 			Log.debug("Adding PresenceMonitor");
 			SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
 			sessionManager.registerListener(clientManager);
+			
+			InterceptorManager.getInstance().addInterceptor(securityInterceptor);
 			
 			XMPPServer.getInstance().getRoutingTable().addRoute(adminHandler.getAddress(), adminHandler);
 					
@@ -118,6 +123,8 @@ public class HippoPlugin implements Plugin {
 		if (routingTable != null)
 			routingTable.removeRoute(adminHandler.getAddress());
 
+		InterceptorManager.getInstance().removeInterceptor(securityInterceptor);
+		
 		XmppMessageSender messageSender = EJBUtil.defaultLookup(XmppMessageSender.class);
 		messageSender.setProvider(null);
 		messageSenderProvider.shutdown();
