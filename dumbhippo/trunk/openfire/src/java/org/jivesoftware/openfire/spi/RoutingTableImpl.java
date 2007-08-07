@@ -11,7 +11,14 @@
 
 package org.jivesoftware.openfire.spi;
 
-import org.jivesoftware.util.Log;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.jivesoftware.openfire.ChannelHandler;
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
@@ -19,11 +26,8 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
-import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <p>Uses simple Maps for table storage.</p>
@@ -47,43 +51,54 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         super("Routing table");
     }
 
-    public void addRoute(JID node, RoutableChannelHandler destination) {
+    private void addSingleRoute(JID node, RoutableChannelHandler destination) {
 
         String nodeJID = node.getNode() == null ? "" : node.getNode();
         String resourceJID = node.getResource() == null ? "" : node.getResource();
 
-        if (destination instanceof ClientSession) {
-            Object nameRoutes = routes.get(node.getDomain());
-            if (nameRoutes == null) {
-                // No route to the requested domain. Create a new entry in the table
-                synchronized (node.getDomain().intern()) {
-                    // Check again if a route exists now that we have a lock
-                    nameRoutes = routes.get(node.getDomain());
-                    if (nameRoutes == null) {
-                        // Still nothing so create a new entry in the map for domain
-                        nameRoutes = new ConcurrentHashMap();
-                        routes.put(node.getDomain(), nameRoutes);
-                    }
+        Object nameRoutes = routes.get(node.getDomain());
+        if (nameRoutes == null) {
+            // No route to the requested domain. Create a new entry in the table
+            synchronized (node.getDomain().intern()) {
+                // Check again if a route exists now that we have a lock
+                nameRoutes = routes.get(node.getDomain());
+                if (nameRoutes == null) {
+                    // Still nothing so create a new entry in the map for domain
+                    nameRoutes = new ConcurrentHashMap();
+                    routes.put(node.getDomain(), nameRoutes);
                 }
             }
-            // Check if there is something associated with the node of the JID
-            Object resourceRoutes = ((Map) nameRoutes).get(nodeJID);
-            if (resourceRoutes == null) {
-                // Nothing was found so create a new entry for this node (a.k.a. user)
-                synchronized (nodeJID.intern()) {
-                    resourceRoutes = ((Map) nameRoutes).get(nodeJID);
-                    if (resourceRoutes == null) {
-                        resourceRoutes = new ConcurrentHashMap();
-                        ((Map) nameRoutes).put(nodeJID, resourceRoutes);
-                    }
+        }
+        // Check if there is something associated with the node of the JID
+        Object resourceRoutes = ((Map) nameRoutes).get(nodeJID);
+        if (resourceRoutes == null) {
+            // Nothing was found so create a new entry for this node (a.k.a. user)
+            synchronized (nodeJID.intern()) {
+                resourceRoutes = ((Map) nameRoutes).get(nodeJID);
+                if (resourceRoutes == null) {
+                    resourceRoutes = new ConcurrentHashMap();
+                    ((Map) nameRoutes).put(nodeJID, resourceRoutes);
                 }
             }
-            // Add the connected resource to the node's Map
-            ((Map) resourceRoutes).put(resourceJID, destination);
         }
-        else {
-            routes.put(node.getDomain(), destination);
-        }
+        // Add the connected resource to the node's Map
+        ((Map) resourceRoutes).put(resourceJID, destination);
+    }
+    
+    public void addDomainRoute(String domain, RoutableChannelHandler destination) {
+        routes.put(domain, destination);
+    }
+    
+    public void addRoute(JID node, RoutableChannelHandler destination) {
+    	for (JID address : XMPPServer.getInstance().getAddressAliases(node)) {
+    		addSingleRoute(address, destination);
+    	}
+    }
+    
+    public void addComponentRoute(String subdomain, RoutableChannelHandler destination) {
+    	for (JID address : XMPPServer.getInstance().getComponentAddresses(subdomain)) {
+    		addDomainRoute(address.getDomain(), destination);
+    	}
     }
 
     public RoutableChannelHandler getRoute(JID node) {
@@ -220,7 +235,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         return route;
     }
 
-    public ChannelHandler removeRoute(JID node) {
+    private ChannelHandler removeSingleRoute(JID node) {
 
         ChannelHandler route = null;
         String nodeJID = node.getNode() == null ? "" : node.getNode();
@@ -259,6 +274,41 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         }
         return route;
     }
+    
+    public ChannelHandler removeRoute(JID node) {
+    	ChannelHandler destination = null;
+    	
+    	for (JID address : XMPPServer.getInstance().getAddressAliases(node)) {
+    		// All the aliases should be pointing to the same destination, so which
+    		// one we return isn't important
+    		destination = removeSingleRoute(address);
+    	}
+    	
+    	return destination;
+    }
+    
+    public void removeDomainRoute(String domain) {
+        ChannelHandler route = null;
+
+        try {
+            Object nameRoutes = routes.get(domain);
+            if (nameRoutes instanceof ConcurrentHashMap) {
+            	Log.error("Attempt to remove a domain route for a local domain"); 
+            }
+            else if (nameRoutes != null) {
+                routes.remove(domain);
+            }
+        }
+        catch (Exception e) {
+            Log.error("Error removing route", e);
+        }
+    }
+
+	public void removeComponentRoute(String subdomain) {
+    	for (JID address : XMPPServer.getInstance().getComponentAddresses(subdomain)) {
+    		removeDomainRoute(address.getDomain());
+    	}
+	}
 
     public void initialize(XMPPServer server) {
         super.initialize(server);

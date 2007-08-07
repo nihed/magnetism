@@ -85,7 +85,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         serviceAddress = new JID(null, "component." + serverDomain, null);
         if (!server.isSetupMode()) {
             // Add a route to this service
-            server.getRoutingTable().addRoute(getAddress(), this);
+            server.getRoutingTable().addComponentRoute("component", this);
         }
     }
 
@@ -93,7 +93,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         super.stop();
         if (getAddress() != null) {
             // Remove the route to this service
-            XMPPServer.getInstance().getRoutingTable().removeRoute(getAddress());
+            XMPPServer.getInstance().getRoutingTable().removeComponentRoute("component");
         }
     }
 
@@ -111,7 +111,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         JID componentJID = new JID(subdomain + "." + serverDomain);
 
         // Add the route to the new service provided by the component
-        XMPPServer.getInstance().getRoutingTable().addRoute(componentJID,
+        XMPPServer.getInstance().getRoutingTable().addComponentRoute(subdomain,
                 new RoutableComponent(componentJID, component));
 
         // Initialize the new component
@@ -135,7 +135,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             // Unregister the componet's domain
             components.remove(subdomain);
             // Remove the route
-            XMPPServer.getInstance().getRoutingTable().removeRoute(componentJID);
+            XMPPServer.getInstance().getRoutingTable().removeComponentRoute(subdomain);
             if (e instanceof ComponentException) {
                 // Rethrow the exception
                 throw (ComponentException)e;
@@ -156,7 +156,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
 
         // Remove the route for the service provided by the component
         if (XMPPServer.getInstance().getRoutingTable() != null) {
-            XMPPServer.getInstance().getRoutingTable().removeRoute(componentJID);
+            XMPPServer.getInstance().getRoutingTable().removeComponentRoute(subdomain);
         }
 
         // Remove the disco item from the server for the component that is being removed

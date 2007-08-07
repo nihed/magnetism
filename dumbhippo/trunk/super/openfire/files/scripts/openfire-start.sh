@@ -37,6 +37,7 @@ INSERT INTO jiveProperty VALUES ( 'xmpp.socket.ssl.port', @@openfireSecurePort@@
 INSERT INTO jiveProperty VALUES ( 'xmpp.server.socket.port', @@openfireServerPort@@ ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.component.socket.port', @@openfireComponentPort@@ ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.domain', 'dumbhippo.com' ) ;
+INSERT INTO jiveProperty VALUES ( 'xmpp.domainAliases', 'mugshot.org, online.gnome.org' ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.client.tls.policy', 'disabled') ;
 INSERT INTO jiveProperty VALUES ( 'httpbind.enabled', 'true' ) ;
 INSERT INTO jiveProperty VALUES ( 'httpbind.port.plain', @@openfireHttpBindPlainPort@@ ) ;

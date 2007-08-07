@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.Session;
@@ -361,7 +362,10 @@ public abstract class SocketReader implements Runnable {
         // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
         // error and close the underlying connection.
         String host = reader.getXPPParser().getAttributeValue("", "to");
-        if (validateHost() && isHostUnknown(host)) {
+        
+        String domain = XMPPServer.getInstance().getDomainForHostname(host);
+        
+        if (validateHost() && isHostUnknown(domain, host)) {
             StringBuilder sb = new StringBuilder(250);
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
@@ -388,7 +392,7 @@ public abstract class SocketReader implements Runnable {
         // Create the correct session based on the sent namespace. At this point the server
         // may offer the client to secure the connection. If the client decides to secure
         // the connection then a <starttls> stanza should be received
-        else if (!createSession(xpp.getNamespace(null))) {
+        else if (!createSession(domain, xpp.getNamespace(null))) {
             // No session was created because of an invalid namespace prefix so answer a stream
             // error and close the underlying connection
             StringBuilder sb = new StringBuilder(250);
@@ -414,13 +418,13 @@ public abstract class SocketReader implements Runnable {
         }
     }
 
-    private boolean isHostUnknown(String host) {
+    private boolean isHostUnknown(String serverDomain, String host) {
         if (host == null) {
             // Answer false since when using server dialback the stream header will not
             // have a TO attribute
             return false;
         }
-        if (serverName.equals(host)) {
+        if (serverDomain.equals(host)) {
             // requested host matched the server name
             return false;
         }
@@ -468,6 +472,6 @@ public abstract class SocketReader implements Runnable {
      * @throws XmlPullParserException
      * @throws IOException
      */
-    abstract boolean createSession(String namespace) throws UnauthorizedException,
+    abstract boolean createSession(String serverName, String namespace) throws UnauthorizedException,
             XmlPullParserException, IOException;
 }

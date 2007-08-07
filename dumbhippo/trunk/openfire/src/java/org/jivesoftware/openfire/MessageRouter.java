@@ -94,15 +94,20 @@ public class MessageRouter extends BasicModule {
                 }
 
                 try {
+                	// HIPPO: We get messages sent to admin@dumbhippo.com by sticking them
+                	//   into the routing table, so we don't want to bypass the routing
+                	//   table for this case. The routing table will have entries for the
+                	//   bare JID anyways, so the main thing we loose is offline storage,
+                	//   which we don't want.
                     // Check if message was sent to a bare JID of a local user
-                    if (recipientJID != null && recipientJID.getResource() == null &&
-                            serverName.equals(recipientJID.getDomain())) {
-                        routeToBareJID(recipientJID, packet);
-                    }
-                    else {
+//                    if (recipientJID != null && recipientJID.getResource() == null &&
+//                            serverName.equals(recipientJID.getDomain())) {
+//                        routeToBareJID(recipientJID, packet);
+//                    }
+//                    else {
                         // Deliver stanza to best route
                         routingTable.getBestRoute(recipientJID).process(packet);
-                    }
+//                    }
                 }
                 catch (Exception e) {
                     try {

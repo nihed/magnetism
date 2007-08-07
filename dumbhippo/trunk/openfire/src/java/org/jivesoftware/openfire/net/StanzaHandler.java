@@ -17,6 +17,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.Session;
 import org.xmlpull.v1.XmlPullParser;
@@ -542,14 +543,17 @@ public abstract class StanzaHandler {
         // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
         // error and close the underlying connection.
         String host = xpp.getAttributeValue("", "to");
-        if (validateHost() && isHostUnknown(host)) {
+        
+        String domain = XMPPServer.getInstance().getDomainForHostname(host);
+        
+        if (validateHost() && isHostUnknown(domain, host)) {
             StringBuilder sb = new StringBuilder(250);
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
             sb.append("'?>");
             // Append stream header
             sb.append("<stream:stream ");
-            sb.append("from=\"").append(serverName).append("\" ");
+            sb.append("from=\"").append(domain).append("\" ");
             sb.append("id=\"").append(StringUtils.randomString(5)).append("\" ");
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
@@ -569,7 +573,7 @@ public abstract class StanzaHandler {
         // Create the correct session based on the sent namespace. At this point the server
         // may offer the client to secure the connection. If the client decides to secure
         // the connection then a <starttls> stanza should be received
-        else if (!createSession(xpp.getNamespace(null), serverName, xpp, connection)) {
+        else if (!createSession(xpp.getNamespace(null), domain, xpp, connection)) {
             // No session was created because of an invalid namespace prefix so answer a stream
             // error and close the underlying connection
             StringBuilder sb = new StringBuilder(250);
@@ -578,7 +582,7 @@ public abstract class StanzaHandler {
             sb.append("'?>");
             // Append stream header
             sb.append("<stream:stream ");
-            sb.append("from=\"").append(serverName).append("\" ");
+            sb.append("from=\"").append(domain).append("\" ");
             sb.append("id=\"").append(StringUtils.randomString(5)).append("\" ");
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
@@ -595,13 +599,13 @@ public abstract class StanzaHandler {
         }
     }
 
-    private boolean isHostUnknown(String host) {
+    private boolean isHostUnknown(String serverDomain, String host) {
         if (host == null) {
             // Answer false since when using server dialback the stream header will not
             // have a TO attribute
             return false;
         }
-        if (serverName.equals(host)) {
+        if (serverDomain.equals(host)) {
             // requested host matched the server name
             return false;
         }
@@ -639,6 +643,7 @@ public abstract class StanzaHandler {
      * Creates the appropriate {@link Session} subclass based on the specified namespace.
      *
      * @param namespace the namespace sent in the stream element. eg. jabber:client.
+     * @param serverName the name of the server where the session is connecting to.
      * @return the created session or null.
      * @throws org.xmlpull.v1.XmlPullParserException
      */

@@ -4,8 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.IQRouter;
+import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -13,6 +13,7 @@ import org.jivesoftware.openfire.container.Module;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.util.Log;
 import org.xmpp.component.ComponentException;
 
 import com.dumbhippo.ExceptionUtils;
@@ -30,12 +31,23 @@ public class HippoPlugin implements Plugin {
 	private XmppClientManager clientManager = new XmppClientManager();
 	private MessageSender messageSenderProvider = new MessageSender();
 	private CompatibilityNotifier compatibilityNotifier = new CompatibilityNotifier();
+	private AdminHandler adminHandler = new AdminHandler();
 	private List<Module> internalModules = new ArrayList<Module>();
 	
 	private void addIQHandler(IQHandler handler) {
-		IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
 		internalModules.add(handler);
 		handler.start();
+		
+		/**
+		 * Because we've set up adminHandler to get all packets sent to admin@[ourdomain]
+		 * we need to actually handle our IQ's there, and adding the handler to the 
+		 * global iqRouter doesn't do any good. We do it anyways, since it's not clear
+		 * what's supposed to be happening... the fact that IQ's end up in our
+		 * handler is somewhat coincidental.  
+		 */
+		adminHandler.addIQHandler(handler);
+
+		IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
 		iqRouter.addHandler(handler);
 	}
 	
@@ -50,6 +62,8 @@ public class HippoPlugin implements Plugin {
 			Log.debug("Adding PresenceMonitor");
 			SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
 			sessionManager.registerListener(clientManager);
+			
+			XMPPServer.getInstance().getRoutingTable().addRoute(adminHandler.getAddress(), adminHandler);
 					
 			try {
 				InternalComponentManager.getInstance().addComponent("rooms", roomHandler);
@@ -99,6 +113,10 @@ public class HippoPlugin implements Plugin {
 		clientManager.shutdown();
 		
 		PresenceService.getInstance().clearLocalPresence();
+
+		RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+		if (routingTable != null)
+			routingTable.removeRoute(adminHandler.getAddress());
 
 		XmppMessageSender messageSender = EJBUtil.defaultLookup(XmppMessageSender.class);
 		messageSender.setProvider(null);

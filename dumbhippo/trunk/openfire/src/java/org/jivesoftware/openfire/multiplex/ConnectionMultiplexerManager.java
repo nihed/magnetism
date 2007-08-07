@@ -129,8 +129,12 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
     public void createClientSession(String connectionManagerDomain, String streamID) {
         // TODO Consider that client session may return null when IP address is forbidden
         Connection connection = new ClientSessionConnection(connectionManagerDomain);
+
+        // TODO handle server aliases here
+        String serverName = XMPPServer.getInstance().getServerInfo().getName();
+        
         ClientSession session = SessionManager.getInstance()
-                .createClientSession(connection, new BasicStreamID(streamID));
+                .createClientSession(serverName, connection, new BasicStreamID(streamID));
         // Register that this streamID belongs to the specified connection manager
         streamIDs.put(streamID, connectionManagerDomain);
         // Register which sessions are being hosted by the speicifed connection manager
