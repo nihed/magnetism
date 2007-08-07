@@ -136,54 +136,50 @@ input.green-button:hover {
 .date {
 
 }
-.history {
+.set {
 	display: table;
   font-size: 10pt;
 	border-bottom: 1px solid #222 ;
   padding-bottom: 20px;
+  width: 600px;
 }
 .item {
 	display: table-row;
+	vertical-align: top;
 }
-.target-item {
-	border: 1px solid #FFF;
-	background-color: #FFFF99;	
-}
-.time, .action, .title {
+.time, .action, .urls {
 	display: table-cell;
 	padding: 0.2em;
-	vertical-align: middle;
+	vertical-align: top;
 }
 .time, .action {
   white-space: pre;
-}
-.meta {
-	display: table-row;
-  text-align: right;
-  font-size: 10pt;
-}
-.meta span, .meta .url {
-	display: table-cell;
-}
-.time, .blue {
-  background-color: #E5ECF9;
-  color: #777;
-  text-align: center;
   padding-left: 0.5em;
   padding-right: 0.5em;
+  width: 1%; /* hacks, hacks, hacks! keep the column from expanding */
+}
+.time {
+  background-color: inherit;
+  color: #999;
+  text-align: center;
+  border-right: 1px solid #ccc;
 }
 .action {
-  color: #999;
+  color: #666;
   text-transform: lowercase;  
   text-align: right;
 }
 .title {
-
+  text-decoration: underline;
 }
 .url {
   color: green;
   text-decoration: none;
   text-align:right;
+}
+.target-item { /* could add .item:hover here but doesn't look quite right */
+	border: 1px solid #FFF;
+	background-color: #FFFF99;	
 }
 .clear-search {
   font-size: 14pt;
@@ -199,6 +195,12 @@ input.green-button:hover {
 }
 .input-text {
   font-family: monospace;	
+}
+/* ==== Sidebar ==== */
+#sidebar {
+  float: right;
+  min-width: 200px;
+  min-height: 600px;
 }
 /* ==== Google Search ==== */
 
