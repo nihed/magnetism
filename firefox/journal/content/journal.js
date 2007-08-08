@@ -69,16 +69,21 @@ function readRDFInt(ds,res,prop) {
   return readRDFThingy(ds,res,prop,Components.interfaces.nsIRDFInt,-1);
 }
 
+var historyCache = null;
+
 var getHistory = function() {
-    var gh = Components.classes["@mozilla.org/browser/global-history;2"].getService(Components.interfaces.nsIRDFDataSource);
-    var iter = gh.GetAllResources();
+    var historyRdf = Components.classes["@mozilla.org/browser/global-history;2"].getService(Components.interfaces.nsIRDFDataSource);
+    var globalHistory = Components.classes["@mozilla.org/browser/global-history;2"].getService(Components.interfaces.nsIRDFDataSource);
+    if (historyCache && historyCache.length == globalHistory.count)
+      return historyCache; 
+    var iter = globalHistory.GetAllResources();
     var result = [];
     while (iter.hasMoreElements()) {
       var item = iter.getNext();
       var resource = item.QueryInterface(Components.interfaces.nsIRDFResource);
-      var itemname = readRDFString(gh, resource, BOOKMARK_NAME);
-      var itemdate = readRDFDate(gh, resource, BOOKMARK_DATE);
-      var itemcount = readRDFInt(gh, resource, BOOKMARK_VISITCOUNT);
+      var itemname = readRDFString(globalHistory, resource, BOOKMARK_NAME);
+      var itemdate = readRDFDate(globalHistory, resource, BOOKMARK_DATE);
+      var itemcount = readRDFInt(globalHistory, resource, BOOKMARK_VISITCOUNT);
       var displayUrl = resource.Value.split("?")[0].substring(0,50) + ((resource.Value.split("?")[0].length > 50)? "..." : "");
       var action = "visited";
       var hrs = itemdate.getHours();
@@ -115,9 +120,9 @@ var getHistory = function() {
         action = "ebay'd for";
         displayUrl = "http://www.ebay.com/" + itemname;
       }
-
       result.push({'name': itemname, 'date': itemdate, 'time': twelveHour(hrs) + ":" + pad(mins) + " " + meridiem(hrs), 'url': resource.Value, 'displayurl' : displayUrl, 'visitcount': itemcount, 'action' : action})
     }
+    historyCache = result;
     return result
 }
 
