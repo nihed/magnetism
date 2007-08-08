@@ -15,6 +15,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
 public class AdminHandler implements RoutableChannelHandler{
 	JID address;
@@ -65,6 +66,26 @@ public class AdminHandler implements RoutableChannelHandler{
 										   "No handler found for IQ"));
 			
 			XMPPServer.getInstance().getPacketRouter().route(reply);
+		} else if (packet instanceof Presence) {
+			Presence presence = (Presence)packet;
+			
+			if (presence.getType() == Presence.Type.subscribe) {
+				Presence reply = new Presence();
+				
+		        reply.setFrom(packet.getTo());
+		        reply.setTo(packet.getFrom());
+		        reply.setType(Presence.Type.subscribed);
+		        
+		        XMPPServer.getInstance().getPacketRouter().route(reply);
+			} else if (presence.getType() == Presence.Type.probe) {
+				Presence reply = new Presence();
+				
+		        reply.setFrom(packet.getTo());
+		        reply.setTo(packet.getFrom());
+		        
+		        XMPPServer.getInstance().getPacketRouter().route(reply);
+				
+			}
 		}
 	}
 
