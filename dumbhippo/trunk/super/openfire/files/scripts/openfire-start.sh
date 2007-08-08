@@ -35,7 +35,7 @@ DELETE FROM jiveProperty ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.socket.plain.port', @@openfirePlainPort@@ ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.socket.ssl.port', @@openfireSecurePort@@ ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.server.socket.port', @@openfireServerPort@@ ) ;
-INSERT INTO jiveProperty VALUES ( 'xmpp.server.dialback.secret', @@dialbackSecret@@ ) ;
+INSERT INTO jiveProperty VALUES ( 'xmpp.server.dialback.secret', '@@dialbackSecret@@' ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.component.socket.port', @@openfireComponentPort@@ ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.domain', '@@openfireDomain@@' ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.domainAliases', '@@openfireDomainAliases@@' ) ;
