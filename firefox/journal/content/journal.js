@@ -206,14 +206,14 @@ var parseUserUrl = function(text) {
 
 var createSpanText = function(text, className) {
   var span = document.createElement('span')
-  span.className = className
+  if (className) span.className = className
   span.appendChild(document.createTextNode(text))
   return span
 }
 
 var createAText = function(text, href, className) {
   var a = document.createElement('a');
-  a.setAttribute('class' , className);
+  if (className) a.setAttribute('class' , className);
   a.setAttribute('href', href);
   a.appendChild(document.createTextNode(text));
   return a;
