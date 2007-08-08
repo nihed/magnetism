@@ -66,4 +66,14 @@ public interface XmppMessageSender {
 	 * @param sender
 	 */
 	public void setProvider(XmppMessageSenderProvider sender);
+	
+	/**
+	 * Debug function to send a message to an arbitrary external JID. The from is
+	 * settable to allow testing sending a message from different server aliases.
+	 * 
+	 * @param to recipient of the message
+	 * @param from sender of the message (must be a JID on this server domain or alias domain)
+	 * @param body body of the message
+	 */
+	public void sendAdminMessage(String to, String from, String body);
 }

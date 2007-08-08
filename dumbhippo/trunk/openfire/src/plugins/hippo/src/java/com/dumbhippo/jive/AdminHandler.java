@@ -9,6 +9,7 @@ import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -30,6 +31,8 @@ public class AdminHandler implements RoutableChannelHandler{
 	}
 
 	public void process(Packet packet) throws UnauthorizedException, PacketException {
+		Log.debug("processing packet sent to admin user: " + packet);
+		
 		if (packet instanceof Message) {
 	        Message reply = new Message();
 	        reply.setFrom(packet.getTo());

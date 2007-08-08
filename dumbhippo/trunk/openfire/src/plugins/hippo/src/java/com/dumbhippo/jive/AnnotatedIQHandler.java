@@ -124,8 +124,6 @@ public class AnnotatedIQHandler extends org.jivesoftware.openfire.handler.IQHand
 	public void process(Packet packet) {
 		IQ request = (IQ)packet;
 		
-		Log.debug("handling IQ packet " + request);
-		
 		IQ reply = null;
 		
 		try {

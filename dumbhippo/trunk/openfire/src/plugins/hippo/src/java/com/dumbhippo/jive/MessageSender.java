@@ -16,6 +16,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.ChannelHandler;
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
@@ -323,5 +324,14 @@ public class MessageSender implements XmppMessageSenderProvider {
         addMembershipChangeExtension(message, groupView, groupMember, memberView);
         
 		sendMessage(recipient.getGuid(), message);
+	}
+
+	public void sendAdminMessage(String to, String from, String body) {
+		Message message = new Message();
+		message.setTo(new JID(to));
+		message.setFrom(new JID(from));
+		message.setBody(body);
+		
+		XMPPServer.getInstance().getPacketRouter().route(message);
 	}
 }
