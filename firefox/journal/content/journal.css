@@ -147,6 +147,9 @@ input.green-button:hover {
 	display: table-row;
 	vertical-align: top;
 }
+.item:hover {
+  background-color: #f9f9f9;
+}
 .time, .action, .urls {
 	display: table-cell;
 	padding: 0.2em;
@@ -177,7 +180,7 @@ input.green-button:hover {
   text-decoration: none;
   text-align:right;
 }
-.target-item { /* could add .item:hover here but doesn't look quite right */
+.target-item, .target-item:hover {
 	border: 1px solid #FFF;
 	background-color: #FFFF99;	
 }
