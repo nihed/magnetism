@@ -436,6 +436,7 @@ var journal = {
       return;
     }
     if (target) {
+      target.focus();
       target.dispatchEvent(click);
       Event.stop(e);
     }    
