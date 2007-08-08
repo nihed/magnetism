@@ -29,6 +29,11 @@ public class XmppMessageSenderBean implements XmppMessageSender {
 			provider.sendNewPostMessage(recipient, post);
 	}
 
+	public void sendAdminMessage(String to, String from, String body) {
+		if (provider != null)
+			provider.sendAdminMessage(to, from, body);
+	}
+
 	public void setProvider(XmppMessageSenderProvider provider) {
 		this.provider = provider;
 	}
