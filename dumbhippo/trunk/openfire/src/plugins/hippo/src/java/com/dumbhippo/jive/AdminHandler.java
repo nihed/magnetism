@@ -34,14 +34,19 @@ public class AdminHandler implements RoutableChannelHandler{
 		Log.debug("processing packet sent to admin user: " + packet);
 		
 		if (packet instanceof Message) {
-	        Message reply = new Message();
-	        reply.setFrom(packet.getTo());
-	        reply.setTo(packet.getFrom());
-	        reply.setType(Message.Type.normal);
-	        
-	        reply.setBody("You sent me something, here's my reply");
-	        
-	        XMPPServer.getInstance().getPacketRouter().route(reply);
+			Message message = (Message)packet;
+
+			// It's important to not to auto-reply to messages of type error!
+			if (message.getType() == Message.Type.normal) {
+		        Message reply = new Message();
+		        reply.setFrom(packet.getTo());
+		        reply.setTo(packet.getFrom());
+		        reply.setType(Message.Type.normal);
+		        
+		        reply.setBody("You sent me something, here's my reply");
+		        
+		        XMPPServer.getInstance().getPacketRouter().route(reply);
+			}
 		} else if (packet instanceof IQ) {
 			IQ iq = (IQ)packet;
 			Element child = iq.getChildElement();
