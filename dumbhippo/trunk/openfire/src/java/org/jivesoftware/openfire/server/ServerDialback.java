@@ -64,9 +64,10 @@ public class ServerDialback {
      */
     protected static String CHARSET = "UTF-8";
     /**
-     * Secret key to be used for encoding and decoding keys used for authentication.
+     * Secret key to be used for encoding and decoding keys used for authentication
+     * if no key has been configured.
      */
-    private static final String secretKey = StringUtils.randomString(10);
+    private static final String defaultSecretKey = StringUtils.randomString(10);
 
     private static XmlPullParserFactory FACTORY = null;
 
@@ -245,7 +246,7 @@ public class ServerDialback {
      */
     public boolean authenticateDomain(OutgoingServerSocketReader socketReader, String domain,
             String hostname, String id) {
-        String key = AuthFactory.createDigest(id, secretKey);
+        String key = AuthFactory.createDigest(id, getSecretKey());
         Log.debug("OS - Sent dialback key to host: " + hostname + " id: " + id + " from domain: " +
                 domain);
 
@@ -490,7 +491,32 @@ public class ServerDialback {
         }
     }
 
-    private boolean isHostUnknown(String recipient) {
+	private static String getSecretKey() {
+		/**
+		 * Our default behavior is to use a runtime generated secret particular
+		 * to this run of the server, but we also allow a different key to be
+		 * configured to allow server dialback to work across a cluster of
+		 * machines that have been configured with the same key. They need
+		 * the same key to do deal with the case where the dialback from an
+		 * outgoing connection connects to a different server in the cluster.
+		 * (Obviously there are many other aspects of proper clustered configuration; 
+		 * but under certain circumstances this piece can be useful in isolation.
+		 * 
+		 * We're a bit paranoid here to avoid accidental configuration to "",
+		 * which would be highly insecure. 
+		 */
+		String secretKey = JiveGlobals.getProperty("xmpp.server.dialback.secret");
+		if (secretKey == null)
+			return defaultSecretKey;
+		
+		secretKey = secretKey.trim();
+		if (secretKey.equals(""))
+			return defaultSecretKey;
+		
+		return secretKey;
+	}
+
+	private boolean isHostUnknown(String recipient) {
         boolean host_unknown = !serverName.equals(recipient);
         // If the recipient does not match the serverName then check if it matches a subdomain. This
         // trick is useful when subdomains of this server are registered in the DNS so remote
@@ -662,7 +688,7 @@ public class ServerDialback {
 
         // Verify the received key
         // Created the expected key based on the received ID value and the shared secret
-        String expectedKey = AuthFactory.createDigest(id, secretKey);
+        String expectedKey = AuthFactory.createDigest(id, getSecretKey());
         boolean verified = expectedKey.equals(key);
 
         // Send the result of the key verification
