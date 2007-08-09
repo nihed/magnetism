@@ -46,6 +46,7 @@ void             hippo_connection_set_cache                 (HippoConnection  *c
                                                              HippoDataCache   *cache);
 
 gboolean         hippo_connection_get_has_auth              (HippoConnection  *connection);
+HippoServerType  hippo_connection_get_auth_server_type      (HippoConnection  *connection);
 void             hippo_connection_forget_auth               (HippoConnection  *connection);
 HippoBrowserKind hippo_connection_get_auth_browser          (HippoConnection  *connection);
 

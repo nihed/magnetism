@@ -22,7 +22,8 @@ typedef struct _HippoDBusClass HippoDBusClass;
 
 GType        	 hippo_dbus_get_type               (void) G_GNUC_CONST;
 
-HippoDBus* hippo_dbus_try_to_acquire           (const char  *server,
+HippoDBus* hippo_dbus_try_to_acquire           (const char  *desktop_server,
+                                                const char  *stacker_server,
                                                 gboolean     replace_existing,
                                                 GError     **error);
 void       hippo_dbus_init_services            (HippoDBus   *dbus);
