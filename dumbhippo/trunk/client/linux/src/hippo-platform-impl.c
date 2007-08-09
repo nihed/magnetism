@@ -545,16 +545,12 @@ hippo_platform_impl_get_message_server(HippoPlatform  *platform,
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
     const char *server;
-
-    g_return_val_if_fail(server_type == HIPPO_SERVER_STACKER_MESSAGE ||
-                         server_type == HIPPO_SERVER_DESKTOP_MESSAGE,
-                         NULL);
-
+    
     /* on Windows this looks up a preference, this function
      * is pretty pointless on Linux
      */
     
-    server = hippo_get_default_server(impl->instance, server_type);
+    server = hippo_get_default_server(impl->instance, server_type, HIPPO_SERVER_PROTOCOL_MESSAGE);
     return g_strdup(server);
 }
 
@@ -565,15 +561,11 @@ hippo_platform_impl_get_web_server(HippoPlatform  *platform,
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
     const char *server;
 
-    g_return_val_if_fail(server_type == HIPPO_SERVER_STACKER_WEB ||
-                         server_type == HIPPO_SERVER_DESKTOP_WEB,
-                         NULL);
-
     /* on Windows this looks up a preference, this function
      * is pretty pointless on Linux
      */
     
-    server = hippo_get_default_server(impl->instance, server_type);
+    server = hippo_get_default_server(impl->instance, server_type, HIPPO_SERVER_PROTOCOL_WEB);
     return g_strdup(server);
 }
 
