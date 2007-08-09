@@ -1339,7 +1339,10 @@ handle_show_browser(HippoDBus   *dbus,
     }
 
     cache = hippo_app_get_data_cache(hippo_get_app());
-    hippo_stack_manager_show_browser(cache, FALSE);
+
+    hippo_app_set_show_stacker(hippo_get_app(), TRUE);
+    hippo_stack_manager_show_browser(hippo_app_get_stack(hippo_get_app()),
+                                     FALSE);
     
     reply = dbus_message_new_method_return(message);
     return reply;

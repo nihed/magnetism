@@ -26,7 +26,7 @@
 /* Border around the entire window */
 #define WINDOW_BORDER 1
 
-typedef struct {
+struct _HippoStackManager {
     int              refcount;
     HippoDataCache  *cache;
     HippoActions    *actions;
@@ -67,7 +67,12 @@ typedef struct {
     guint            user_moved_browser : 1;
     
     guint            idle : 1;
-} StackManager;
+};
+
+/* this is a temporary hack to avoid a huge diff obscuring the real point
+ * of the change
+ */
+typedef struct _HippoStackManager StackManager;
 
 static void manager_close_notification(StackManager *manager);
 
@@ -735,6 +740,9 @@ manager_disconnect(StackManager *manager)
                                              G_CALLBACK(on_block_removed),
                                              manager);
 
+        g_signal_handlers_disconnect_by_func(manager->connection,
+                                             G_CALLBACK(handle_filter_change), manager);
+        
         while (manager->blocks != NULL) {
                 remove_block(manager->blocks->data, manager);
         }
@@ -876,9 +884,9 @@ manager_attach(StackManager    *manager,
     manager->actions = hippo_actions_new(manager->cache);
     
     platform = hippo_connection_get_platform(manager->connection);
-    
+
     /* this creates a refcount cycle, but
-     * hippo_stack_manager_unmanage breaks it.
+     * hippo_stack_manager_free breaks it.
      * Also, too lazy right now to key to the cache/icon
      * pair, right now it just keys to the cache
      */
@@ -1006,33 +1014,36 @@ manager_detach(HippoDataCache  *cache)
     g_object_set_data(G_OBJECT(cache), "stack-manager", NULL);
 }
 
-void
-hippo_stack_manager_manage(HippoDataCache  *cache)
+HippoStackManager*
+hippo_stack_manager_new(HippoDataCache *cache)
 {
     StackManager *manager;
 
     manager = manager_new();
 
     manager_attach(manager, cache);
+
+    return manager;
+}
+
+void
+hippo_stack_manager_free(HippoStackManager *manager)
+{
+    manager_detach(manager->cache);
     manager_unref(manager);
 }
 
-void
-hippo_stack_manager_unmanage(HippoDataCache  *cache)
+HippoStackManager*
+hippo_stack_manager_get (HippoDataCache *cache)
 {
-    manager_detach(cache);
+    return g_object_get_data(G_OBJECT(cache), "stack-manager");
 }
 
 void
-hippo_stack_manager_set_idle (HippoDataCache  *cache,
-                              gboolean         idle)
+hippo_stack_manager_set_idle (HippoStackManager *manager,
+                              gboolean           idle)
 {
-    StackManager *manager;
-
-    manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
-
-    if (manager == NULL)
-        return;
+    g_return_if_fail(manager != NULL);
     
     manager->idle = idle != FALSE;
     
@@ -1044,49 +1055,50 @@ hippo_stack_manager_set_idle (HippoDataCache  *cache,
 
 
 void
-hippo_stack_manager_set_screen_info(HippoDataCache  *cache,
-                                    HippoRectangle  *monitor,
-                                    HippoRectangle  *icon,
-                                    HippoOrientation icon_orientation)
+hippo_stack_manager_set_screen_info(HippoStackManager *manager,
+                                    HippoRectangle    *monitor,
+                                    HippoRectangle    *icon,
+                                    HippoOrientation   icon_orientation)
 {
-    StackManager *manager;
-
-    manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
-
+    g_return_if_fail(manager != NULL);
+    
     if (manager->notification_open)
         update_for_screen_info(manager, monitor, icon, icon_orientation, FALSE, TRUE);
 }
 
 void
-hippo_stack_manager_hush(HippoDataCache  *cache)
+hippo_stack_manager_hush(HippoStackManager *manager)
 {
-    StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
-
+    g_return_if_fail(manager != NULL);
+    
     manager_hush(manager);
 }
 
 void
-hippo_stack_manager_close_notification(HippoDataCache  *cache)
+hippo_stack_manager_close_notification(HippoStackManager *manager)
 {
-    StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
-
+    g_return_if_fail(manager != NULL);
+    
     manager_close_notification(manager);
 }
 
 void
-hippo_stack_manager_close_browser(HippoDataCache  *cache)
+hippo_stack_manager_close_browser(HippoStackManager *manager)
 {
-    StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
-
+    g_return_if_fail(manager != NULL);
+    
     manager_set_browser_visible(manager, FALSE);
 }
 
 void
-hippo_stack_manager_show_browser(HippoDataCache  *cache,
-                                 gboolean         hide_if_visible)
+hippo_stack_manager_show_browser(HippoStackManager *manager,
+                                 gboolean           hide_if_visible)
 {
-    StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
-    HippoConnection *connection = hippo_data_cache_get_connection(manager->cache);
+    HippoConnection *connection;
+
+    g_return_if_fail(manager != NULL);
+    
+    connection = hippo_data_cache_get_connection(manager->cache);
 
     if (!hippo_connection_get_connected(connection)) {
         return;
@@ -1096,10 +1108,13 @@ hippo_stack_manager_show_browser(HippoDataCache  *cache,
 }
 
 void
-hippo_stack_manager_toggle_filter(HippoDataCache  *cache)
+hippo_stack_manager_toggle_filter(HippoStackManager *manager)
 {
-    StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
-    HippoConnection *connection = hippo_data_cache_get_connection(manager->cache);
+    HippoConnection *connection;
+
+    g_return_if_fail(manager != NULL);
+    
+    connection = hippo_data_cache_get_connection(manager->cache);
 
     if (!hippo_connection_get_connected(connection)) {
         g_debug("ignoring filter toggle due to current disconnection state");
@@ -1110,10 +1125,13 @@ hippo_stack_manager_toggle_filter(HippoDataCache  *cache)
 }
 
 void
-hippo_stack_manager_toggle_nofeed(HippoDataCache  *cache)
+hippo_stack_manager_toggle_nofeed(HippoStackManager *manager)
 {
-    StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
-    HippoConnection *connection = hippo_data_cache_get_connection(manager->cache);
+    HippoConnection *connection;
+
+    g_return_if_fail(manager != NULL);
+    
+    connection = hippo_data_cache_get_connection(manager->cache);
 
     if (!hippo_connection_get_connected(connection)) {
         g_debug("ignoring nofeed toggle due to current disconnection state");        
@@ -1124,10 +1142,13 @@ hippo_stack_manager_toggle_nofeed(HippoDataCache  *cache)
 }
 
 void
-hippo_stack_manager_toggle_noselfsource(HippoDataCache  *cache)
+hippo_stack_manager_toggle_noselfsource(HippoStackManager *manager)
 {
-    StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
-    HippoConnection *connection = hippo_data_cache_get_connection(manager->cache);
+    HippoConnection *connection;
+
+    g_return_if_fail(manager != NULL);
+
+    connection = hippo_data_cache_get_connection(manager->cache);
 
     if (!hippo_connection_get_connected(connection)) {
         g_debug("ignoring noselfsource toggle due to current disconnection state");        

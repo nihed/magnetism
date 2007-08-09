@@ -16,6 +16,8 @@ struct HippoUI {
     HippoDataCache *cache;
     HippoConnection *connection;
     HippoDBus *dbus;
+
+    HippoStackManager *stack;
     
     HippoStatusIcon *icon;
     GtkWidget *about_dialog;
@@ -471,7 +473,7 @@ on_icon_size_changed(GtkStatusIcon *tray_icon,
 
     hippo_ui_get_screen_info(ui, &monitor, &icon, &icon_orientation);
 
-    hippo_stack_manager_set_screen_info(ui->cache,
+    hippo_stack_manager_set_screen_info(ui->stack,
                                         &monitor, &icon, icon_orientation);
 
     /* TRUE to keep gtk from scaling our pixbuf, FALSE to do the default pixbuf
@@ -684,8 +686,8 @@ hippo_ui_new(HippoDataCache *cache,
     g_object_ref(ui->dbus);
     
     ui->photo_cache = hippo_pixbuf_cache_new(ui->platform);
-    
-    hippo_stack_manager_manage(ui->cache);
+
+    ui->stack = hippo_stack_manager_new(ui->cache);
     
     ui->icon = hippo_status_icon_new(ui->cache);
 
@@ -700,7 +702,8 @@ hippo_ui_new(HippoDataCache *cache,
 void
 hippo_ui_free(HippoUI *ui)
 {
-    hippo_stack_manager_unmanage(ui->cache);
+    hippo_stack_manager_free(ui->stack);
+    ui->stack = NULL;
     
     if (ui->about_dialog)
         gtk_object_destroy(GTK_OBJECT(ui->about_dialog));
@@ -727,5 +730,11 @@ void
 hippo_ui_set_idle(HippoUI          *ui,
                   gboolean          idle)
 {
-    hippo_stack_manager_set_idle(ui->cache, idle);
+    hippo_stack_manager_set_idle(ui->stack, idle);
+}
+
+HippoStackManager*
+hippo_ui_get_stack_manager  (HippoUI *ui)
+{
+    return ui->stack;
 }

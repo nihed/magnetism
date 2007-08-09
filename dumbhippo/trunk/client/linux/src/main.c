@@ -73,6 +73,28 @@ hippo_app_get_dbus (HippoApp *app)
     return app->dbus;
 }
 
+void
+hippo_app_set_show_stacker (HippoApp *app,
+                            gboolean  value)
+{
+    if (value && app->ui == NULL) {
+        app->ui = hippo_ui_new(app->cache, app->dbus);
+        hippo_ui_show(app->ui);
+    } else if (!value && app->ui != NULL) {
+        hippo_ui_free(app->ui);
+        app->ui = NULL;
+    }
+}
+
+HippoStackManager*
+hippo_app_get_stack (HippoApp *app)
+{
+    g_return_val_if_fail(app != NULL, NULL);
+    g_return_val_if_fail(app->ui != NULL, NULL);
+
+    return hippo_ui_get_stack_manager(app->ui);
+}
+
 static void
 hippo_app_restart(HippoApp *app)
 {
@@ -671,9 +693,7 @@ hippo_app_new(HippoInstanceType  instance_type,
     g_signal_connect(G_OBJECT(app->connection), "whereim-changed",
                      G_CALLBACK(on_whereim_changed), app);      
     g_signal_connect(G_OBJECT(app->connection), "external-iq-return",
-                     G_CALLBACK(on_external_iq_return), app);    
-
-    app->ui = hippo_ui_new(app->cache, app->dbus);
+                     G_CALLBACK(on_external_iq_return), app);
     
     /* initially be sure we are the latest installed, though it's 
      * tough to imagine this happening outside of testing 
@@ -885,7 +905,8 @@ main(int argc, char **argv)
     /* Ignore failure here */
     hippo_connection_signin(the_app->connection);
 
-    hippo_ui_show(the_app->ui);
+    /* enable stacker UI */
+    hippo_app_set_show_stacker(the_app, TRUE);
     
     if (options.initial_debug_share) {
         /* timeout removes itself */
