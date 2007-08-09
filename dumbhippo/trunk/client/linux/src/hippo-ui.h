@@ -33,7 +33,7 @@ void             hippo_ui_load_photo           (HippoUI                  *ui,
                                                 HippoEntity              *entity,
                                                 HippoPixbufCacheLoadFunc  func,
                                                 void                     *data);
-
+HippoStackManager* hippo_ui_get_stack_manager  (HippoUI                  *ui);
 
 G_END_DECLS
 

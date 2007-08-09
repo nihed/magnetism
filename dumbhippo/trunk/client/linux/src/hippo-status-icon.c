@@ -132,13 +132,21 @@ hippo_status_icon_activate(GtkStatusIcon *gtk_icon)
             platform = hippo_connection_get_platform(connection);
             hippo_platform_show_disconnected_window(platform, connection);
         } else {
-            hippo_stack_manager_show_browser(icon->cache, TRUE);
+            /* the UI has to exist since we (the tray icon) are part of it */
+            hippo_stack_manager_show_browser(hippo_stack_manager_get(icon->cache), TRUE);
         }
     } else if (button == 3) {
         time = gtk_get_current_event_time();
     
         hippo_status_icon_popup_menu(gtk_icon, button, time);
     }
+}
+
+static void
+on_quit_activated(GtkMenuItem *menu_item,
+                  void        *data)
+{
+    hippo_app_set_show_stacker(hippo_get_app(), FALSE);
 }
 
 static void
@@ -185,8 +193,8 @@ hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
     gtk_menu_shell_append(GTK_MENU_SHELL(icon->popup_menu), menu_item);
     
     menu_item = gtk_image_menu_item_new_from_stock (GTK_STOCK_QUIT, NULL);
-    g_signal_connect_swapped(menu_item, "activate", G_CALLBACK(hippo_app_quit),
-                             hippo_get_app());
+    g_signal_connect_swapped(menu_item, "activate", G_CALLBACK(on_quit_activated),
+                             NULL);
     gtk_widget_show(menu_item);
     gtk_menu_shell_append(GTK_MENU_SHELL(icon->popup_menu), menu_item);
     

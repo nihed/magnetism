@@ -318,44 +318,44 @@ hippo_actions_get_server_time_offset (HippoActions *actions)
 void
 hippo_actions_close_browser(HippoActions    *actions)
 {
-    hippo_stack_manager_close_browser(actions->cache);
+    hippo_stack_manager_close_browser(hippo_stack_manager_get(actions->cache));
 }
 
 void
 hippo_actions_close_notification(HippoActions    *actions)
 {
-    hippo_stack_manager_close_notification(actions->cache);
+    hippo_stack_manager_close_notification(hippo_stack_manager_get(actions->cache));
 }
 
 void
 hippo_actions_hush_notification(HippoActions    *actions)
 {
-    hippo_stack_manager_hush(actions->cache);
+    hippo_stack_manager_hush(hippo_stack_manager_get(actions->cache));
 }
 
 void
 hippo_actions_expand_notification(HippoActions *actions)
 {
-    hippo_stack_manager_close_notification(actions->cache);
-    hippo_stack_manager_show_browser(actions->cache, FALSE);
+    hippo_stack_manager_close_notification(hippo_stack_manager_get(actions->cache));
+    hippo_stack_manager_show_browser(hippo_stack_manager_get(actions->cache), FALSE);
 }
 
 void
 hippo_actions_toggle_filter(HippoActions *actions)
 {
-    hippo_stack_manager_toggle_filter(actions->cache);
+    hippo_stack_manager_toggle_filter(hippo_stack_manager_get(actions->cache));
 }
 
 void
 hippo_actions_toggle_nofeed(HippoActions *actions)
 {
-    hippo_stack_manager_toggle_nofeed(actions->cache);
+    hippo_stack_manager_toggle_nofeed(hippo_stack_manager_get(actions->cache));
 }
 
 void
 hippo_actions_toggle_noselfsource(HippoActions *actions)
 {
-    hippo_stack_manager_toggle_noselfsource(actions->cache);
+    hippo_stack_manager_toggle_noselfsource(hippo_stack_manager_get(actions->cache));
 }
 
 void
