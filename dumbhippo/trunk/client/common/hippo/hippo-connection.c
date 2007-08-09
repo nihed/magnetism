@@ -240,7 +240,7 @@ struct _HippoConnection {
     char *username;
     char *password;
     char *self_resource_id;
-    gboolean contacts_loaded;
+    HippoServerType auth_server_type;
     char *download_url;
     char *tooltip;
     char *active_block_filter;
@@ -250,6 +250,7 @@ struct _HippoConnection {
     unsigned int too_old : 1;
     unsigned int upgrade_available : 1;
     unsigned int last_auth_failed : 1;
+    unsigned int contacts_loaded : 1;
     
     guint external_iq_serial;
 };
@@ -303,6 +304,13 @@ hippo_connection_init(HippoConnection *connection)
     connection->state = HIPPO_STATE_SIGNED_OUT;
     connection->pending_outgoing_messages = g_queue_new();
 
+    /* desktop is the "more conservative" one (we don't
+     * show the stacker UI), though it's probably
+     * wrong to care about this value unless we
+     * are in fact logged in
+     */
+    connection->auth_server_type = HIPPO_SERVER_DESKTOP;
+    
     /* default browsers if we don't discover otherwise 
      * (we'll use whatever the user has logged in with
      * if they've logged in with something)
@@ -587,6 +595,12 @@ hippo_connection_get_has_auth(HippoConnection  *connection)
     return connection->username && connection->password;
 }
 
+HippoServerType
+hippo_connection_get_auth_server_type (HippoConnection  *connection)
+{
+    return connection->auth_server_type;
+}
+
 HippoBrowserKind
 hippo_connection_get_auth_browser(HippoConnection  *connection)
 {
@@ -635,9 +649,11 @@ hippo_connection_get_self_resource_id(HippoConnection  *connection)
     if (connection->self_resource_id == NULL && connection->username != NULL) {
 
         /* FIXME this seems hosed; we should ask the server for the self resource ID
-         * by making yourself a property on the global object or whatever.
-         * We have no way of knowing which hostname the ID will use really,
-         * we use HIPPO_SERVER_STACKER_WEB here but that might not be right.
+         * by making yourself a property on the global object or whatever perhaps.
+         * 
+         * Right now both the "desktop" and "stacker" servers return resource
+         * ids with the "stacker" hostname, so we hardcode HIPPO_SERVER_STACKER
+         * below.
          */
         
         const char *self_guid = hippo_connection_get_self_guid(connection);
@@ -1084,7 +1100,7 @@ hippo_connection_connect(HippoConnection *connection, const char *redirect_host)
         return;
     }
     
-    hippo_platform_get_message_host_port(connection->platform, HIPPO_SERVER_STACKER,
+    hippo_platform_get_message_host_port(connection->platform, connection->auth_server_type,
                                          &message_host, &message_port);
 
     if (redirect_host) {
@@ -1219,6 +1235,14 @@ hippo_connection_load_auth(HippoConnection *connection)
     gboolean result;
     gboolean old_has_auth;
 
+    /*
+     * Right now, we always connect to the "stacker" (mugshot.org)
+     * server if we have a cookie for it, and to the "desktop" (online.gnome.org)
+     * server otherwise. Eventually, we may want to adjust this to
+     * be a setting or something else.
+     * 
+     */
+    
     old_has_auth = hippo_connection_get_has_auth(connection);
 
     /* always clear current username/password */
@@ -1229,14 +1253,38 @@ hippo_connection_load_auth(HippoConnection *connection)
     result = hippo_platform_read_login_cookie(connection->platform,
                                               HIPPO_SERVER_STACKER,
                                               &connection->login_browser,
-                                              &connection->username, &connection->password);
-
+                                              &connection->username, &connection->password);    
+    
     if (connection->username) {
         /* don't print the password in the log info */
-        g_debug("Loaded username '%s' password %s", connection->username,
+        g_debug("Loaded username '%s' password %s for STACKER mode", connection->username,
                 connection->password ? "loaded" : "not found");
     }
 
+    /* If we aren't authed to the stacker (i.e. mugshot.org) try auth to the
+     * desktop server (i.e. online.gnome.org).
+     */
+    if (hippo_connection_get_has_auth(connection)) {
+        connection->auth_server_type = HIPPO_SERVER_STACKER;
+    } else {
+        zero_str(&connection->username);
+        zero_str(&connection->password);
+        zero_str(&connection->self_resource_id);
+        
+        result = hippo_platform_read_login_cookie(connection->platform,
+                                                  HIPPO_SERVER_DESKTOP,
+                                                  &connection->login_browser,
+                                                  &connection->username, &connection->password);    
+        
+        if (connection->username) {
+            /* don't print the password in the log info */
+            g_debug("Loaded username '%s' password %s for DESKTOP mode", connection->username,
+                    connection->password ? "loaded" : "not found");
+        }
+
+        connection->auth_server_type = HIPPO_SERVER_DESKTOP;
+    }
+    
     if (old_has_auth != hippo_connection_get_has_auth(connection)) {
         g_signal_emit(connection, signals[HAS_AUTH_CHANGED], 0);
     }
@@ -4206,7 +4254,7 @@ hippo_connection_make_absolute_url(HippoConnection *connection,
         char *url;
         
         server = hippo_platform_get_web_server(connection->platform,
-                                               HIPPO_SERVER_STACKER);
+                                               connection->auth_server_type);
         url = g_strdup_printf("http://%s%s", server, maybe_relative);
         g_free(server);
 

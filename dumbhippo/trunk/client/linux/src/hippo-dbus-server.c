@@ -79,7 +79,8 @@ struct _HippoDBusListener {
 
 struct _HippoDBus {
     GObject parent;
-    char           *bus_name;
+    char           *desktop_bus_name;    
+    char           *stacker_bus_name;    
     DBusConnection *connection;
     unsigned int in_dispatch : 1; /* dbus is broken and we can't recurse right now */
     unsigned int xmpp_connected : 1;
@@ -197,14 +198,16 @@ acquire_bus_name(DBusConnection *connection,
 }
 
 HippoDBus*
-hippo_dbus_try_to_acquire(const char  *server,
+hippo_dbus_try_to_acquire(const char  *desktop_server,
+                          const char  *stacker_server,
                           gboolean     replace_existing,
                           GError     **error)
 {
     HippoDBus *dbus;
     DBusGConnection *gconnection;
     DBusConnection *connection;
-    char *bus_name;
+    char *desktop_bus_name;
+    char *stacker_bus_name;
     char *old_bus_name;
     DBusError derror;
     
@@ -231,29 +234,44 @@ hippo_dbus_try_to_acquire(const char  *server,
         return NULL;
     }
 
-    bus_name = hippo_dbus_full_bus_name(server);
-    if (!acquire_bus_name(connection, server, replace_existing, bus_name, error)) {
-        g_free(bus_name);
+    stacker_bus_name = NULL;
+    desktop_bus_name = NULL;
+
+    stacker_bus_name = hippo_dbus_full_bus_name(stacker_server);
+    if (!acquire_bus_name(connection, stacker_server, replace_existing, stacker_bus_name, error)) {
+        g_free(stacker_bus_name);
         /* FIXME leak bus connection since unref isn't allowed */
         return NULL;
     }
 
+    desktop_bus_name = hippo_dbus_full_bus_name(desktop_server);
+    if (!acquire_bus_name(connection, desktop_server, replace_existing, desktop_bus_name, error)) {
+        g_free(stacker_bus_name);
+        g_free(desktop_bus_name);
+        /* FIXME leak bus connection since unref isn't allowed */
+        return NULL;
+    }
+    
     /* The com.dumbhippo.Client name may be appropriate to keep forever, as the
      * canonical name of the Stacker-specific stuff, while desktop generic
      * stuff is accessed via the org.freedesktop.od.Engine name.
+     *
+     * So this is done only for the stacker server name.
      */
-    old_bus_name = hippo_dbus_full_bus_name_com_dumbhippo_with_forward_hex(server);
-    if (!acquire_bus_name(connection, server, replace_existing, old_bus_name, error)) {
+    old_bus_name = hippo_dbus_full_bus_name_com_dumbhippo_with_forward_hex(stacker_server);
+    if (!acquire_bus_name(connection, stacker_server, replace_existing, old_bus_name, error)) {
         /* FIXME leak bus connection since unref isn't allowed */
 
         /* We need to give up the new bus name because we call ShowBrowser on
          * it in main.c if we fail to get both names, which deadlocks if
          * we own the new name
          */
-        dbus_bus_release_name(connection, bus_name, NULL);
+        dbus_bus_release_name(connection, stacker_bus_name, NULL);
+        dbus_bus_release_name(connection, desktop_bus_name, NULL);
         
         g_free(old_bus_name);
-        g_free(bus_name);
+        g_free(stacker_bus_name);
+        g_free(desktop_bus_name);
         return NULL;
     }
 
@@ -264,20 +282,25 @@ hippo_dbus_try_to_acquire(const char  *server,
      * old versions will exit. We *don't* exit if we lose ownership of this
      * name ourself, since we running the older version with --replace to replace
      * the new version isn't very interesting
+     *
+     * Since this is compat gunk, it only uses the stacker server.
      */
     
-    old_bus_name = hippo_dbus_full_bus_name_com_dumbhippo_with_backward_hex(server);
-    if (!acquire_bus_name(connection, server, replace_existing, old_bus_name, error)) {
+    old_bus_name = hippo_dbus_full_bus_name_com_dumbhippo_with_backward_hex(stacker_server);
+    if (!acquire_bus_name(connection, stacker_server, replace_existing, old_bus_name, error)) {
         /* FIXME leak bus connection since unref isn't allowed */
 
         /* We need to give up the new bus name because we call ShowBrowser on
          * it in main.c if we fail to get both names, which deadlocks if
          * we own the new name
          */
-        dbus_bus_release_name(connection, bus_name, NULL);
+        dbus_bus_release_name(connection, stacker_bus_name, NULL);
+        dbus_bus_release_name(connection, desktop_bus_name, NULL);
         
         g_free(old_bus_name);
-        g_free(bus_name);
+
+        g_free(stacker_bus_name);
+        g_free(desktop_bus_name);
         return NULL;
     }
 
@@ -322,7 +345,8 @@ hippo_dbus_try_to_acquire(const char  *server,
     g_debug("D-BUS connection established");
 
     dbus = g_object_new(HIPPO_TYPE_DBUS, NULL);
-    dbus->bus_name = bus_name;
+    dbus->stacker_bus_name = stacker_bus_name;
+    dbus->desktop_bus_name = desktop_bus_name;
     dbus->connection = connection;
     
     if (!dbus_connection_add_filter(connection, handle_message,
@@ -440,7 +464,8 @@ hippo_dbus_finalize(GObject *object)
     while (dbus->listeners)
 	disconnect_listener(dbus, dbus->listeners->data);
     
-    g_free(dbus->bus_name);
+    g_free(dbus->stacker_bus_name);
+    g_free(dbus->desktop_bus_name);
 
 #ifdef HAVE_DBUS_1_0
     /* pre-1.0 dbus is all f'd up and may crash if we do this when the
@@ -1974,7 +1999,8 @@ handle_message(DBusConnection     *connection,
             /* If we lose our name, we behave as if disconnected */
             const char *name = NULL;
             if (dbus_message_get_args(message, NULL, DBUS_TYPE_STRING, &name, DBUS_TYPE_INVALID) && 
-                strcmp(name, dbus->bus_name) == 0) {
+                (strcmp(name, dbus->stacker_bus_name) == 0 ||
+                 strcmp(name, dbus->desktop_bus_name) == 0)) {
 
                 hippo_dbus_disconnected(dbus);
                 dbus = NULL;

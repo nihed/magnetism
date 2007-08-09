@@ -800,7 +800,8 @@ main(int argc, char **argv)
     HippoOptions options;
     HippoDBus *dbus;
     HippoPlatform *platform;
-    char *server;
+    char *stacker_server;
+    char *desktop_server;
     GError *error;
      
     hippo_set_print_debug_func(print_debug_func);
@@ -833,7 +834,8 @@ main(int argc, char **argv)
     }
     
     platform = hippo_platform_impl_new(options.instance_type);
-    server = hippo_platform_get_web_server(platform, HIPPO_SERVER_STACKER);
+    stacker_server = hippo_platform_get_web_server(platform, HIPPO_SERVER_STACKER);
+    desktop_server = hippo_platform_get_web_server(platform, HIPPO_SERVER_DESKTOP);
 
     if (g_file_test(VERSION_FILE, G_FILE_TEST_EXISTS)) {
         hippo_version_file = VERSION_FILE;
@@ -851,7 +853,7 @@ main(int argc, char **argv)
     }
 
     error = NULL;
-    dbus = hippo_dbus_try_to_acquire(server,
+    dbus = hippo_dbus_try_to_acquire(desktop_server, stacker_server,
                                      (options.quit_existing || options.replace_existing),
                                      &error);
     if (dbus == NULL) {
@@ -863,7 +865,7 @@ main(int argc, char **argv)
             error = NULL;
 
             if (options.show_window) {
-                if (!hippo_dbus_show_browser_blocking(server, &error)) {
+                if (!hippo_dbus_show_browser_blocking(stacker_server, &error)) {
                     g_printerr(_("Can't talk to existing instance: %s\n"), error->message);
                     g_error_free(error);
                     return 1;
@@ -899,9 +901,11 @@ main(int argc, char **argv)
     dbus = NULL;
     g_object_unref(platform);
     platform = NULL;
-    g_free(server);
-    server = NULL;
-
+    g_free(stacker_server);
+    stacker_server = NULL;
+    g_free(desktop_server);
+    desktop_server = NULL;
+    
     /* Ignore failure here */
     hippo_connection_signin(the_app->connection);
 
