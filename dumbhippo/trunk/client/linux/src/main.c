@@ -833,7 +833,7 @@ main(int argc, char **argv)
     }
     
     platform = hippo_platform_impl_new(options.instance_type);
-    server = hippo_platform_get_web_server(platform);
+    server = hippo_platform_get_web_server(platform, HIPPO_SERVER_STACKER_WEB);
 
     if (g_file_test(VERSION_FILE, G_FILE_TEST_EXISTS)) {
         hippo_version_file = VERSION_FILE;

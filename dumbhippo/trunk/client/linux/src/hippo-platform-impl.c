@@ -31,6 +31,7 @@ static gboolean     hippo_platform_impl_get_pointer_position (HippoPlatform     
                                                               int               *x_p,
                                                               int               *y_p);
 static gboolean     hippo_platform_impl_read_login_cookie   (HippoPlatform     *platform,
+                                                             HippoServerType    web_server_type,
                                                              HippoBrowserKind  *origin_browser_p,
                                                              char             **username_p,
                                                              char             **password_p);
@@ -56,8 +57,10 @@ static void         hippo_platform_impl_show_disconnected_window (HippoPlatform 
 static HippoNetworkStatus hippo_platform_impl_get_network_status (HippoPlatform *platform);
 
 static HippoInstanceType hippo_platform_impl_get_instance_type (HippoPlatform  *platform);
-static char*        hippo_platform_impl_get_message_server  (HippoPlatform     *platform);
-static char*        hippo_platform_impl_get_web_server      (HippoPlatform     *platform);
+static char*        hippo_platform_impl_get_message_server  (HippoPlatform     *platform,
+                                                             HippoServerType    server_type);
+static char*        hippo_platform_impl_get_web_server      (HippoPlatform     *platform,
+                                                             HippoServerType    server_type);
 static gboolean     hippo_platform_impl_get_signin          (HippoPlatform     *platform);
 static void         hippo_platform_impl_set_message_server  (HippoPlatform     *platform,
                                                              const char        *value);
@@ -273,6 +276,7 @@ hippo_platform_impl_get_pointer_position (HippoPlatform     *platform,
 
 static gboolean
 hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
+                                      HippoServerType   web_server_type,
                                       HippoBrowserKind *origin_browser_p,
                                       char            **username_p,
                                       char            **password_p)
@@ -287,7 +291,7 @@ hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
     char *username = NULL;
     char *password = NULL;
 
-    hippo_platform_get_web_host_port(platform, &web_host, &web_port);
+    hippo_platform_get_web_host_port(platform, web_server_type, &web_host, &web_port);
     
     g_debug("Looking for login to %s:%d", web_host, web_port);
     
@@ -535,54 +539,42 @@ hippo_platform_impl_get_instance_type(HippoPlatform  *platform)
     return impl->instance;
 }
 
-static const char *
-get_debug_server(void)
-{
-    const char *debug_server = g_getenv("HIPPO_DEBUG_SERVER");
-    if (debug_server)
-        return debug_server;
-    else
-	return "localinstance.mugshot.org";
-}
-
 static char*
-hippo_platform_impl_get_message_server(HippoPlatform *platform)
+hippo_platform_impl_get_message_server(HippoPlatform  *platform,
+                                       HippoServerType server_type)
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
     const char *server;
 
-    server = g_getenv("HIPPO_MESSAGE_SERVER");
-    if (server)
-	return g_strdup(server);
+    g_return_val_if_fail(server_type == HIPPO_SERVER_STACKER_MESSAGE ||
+                         server_type == HIPPO_SERVER_DESKTOP_MESSAGE,
+                         NULL);
 
-    /* FIXME */
-
-    if (impl->instance == HIPPO_INSTANCE_DOGFOOD)
-        return g_strdup("dogfood.mugshot.org:21020");
-    else if (impl->instance == HIPPO_INSTANCE_DEBUG)
-        return g_strconcat(get_debug_server(), ":21020", NULL);
-    else
-        return g_strdup(HIPPO_DEFAULT_MESSAGE_SERVER);
+    /* on Windows this looks up a preference, this function
+     * is pretty pointless on Linux
+     */
+    
+    server = hippo_get_default_server(impl->instance, server_type);
+    return g_strdup(server);
 }
 
 static char*
-hippo_platform_impl_get_web_server(HippoPlatform *platform)
+hippo_platform_impl_get_web_server(HippoPlatform  *platform,
+                                   HippoServerType server_type)
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
     const char *server;
 
-    server = g_getenv("HIPPO_WEB_SERVER");
-    if (server)
-	return g_strdup(server);
+    g_return_val_if_fail(server_type == HIPPO_SERVER_STACKER_WEB ||
+                         server_type == HIPPO_SERVER_DESKTOP_WEB,
+                         NULL);
 
-    /* FIXME */
-
-    if (impl->instance == HIPPO_INSTANCE_DOGFOOD)
-        return g_strdup("dogfood.mugshot.org:9080");
-    else if (impl->instance == HIPPO_INSTANCE_DEBUG)
-        return g_strconcat(get_debug_server(), ":8080", NULL);
-    else
-        return g_strdup(HIPPO_DEFAULT_WEB_SERVER);
+    /* on Windows this looks up a preference, this function
+     * is pretty pointless on Linux
+     */
+    
+    server = hippo_get_default_server(impl->instance, server_type);
+    return g_strdup(server);
 }
 
 static gboolean

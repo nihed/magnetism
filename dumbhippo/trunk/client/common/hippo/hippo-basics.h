@@ -29,6 +29,16 @@ typedef enum {
 #define HIPPO_ERROR hippo_error_quark()
 GQuark hippo_error_quark(void);
 
+/* this conflates a 2x2 matrix into one enum, sue me.  The full server
+ * spec is a 3x2x2 (instance X stacker/desktop X web/xmpp
+ */
+typedef enum {
+    HIPPO_SERVER_DESKTOP_WEB,
+    HIPPO_SERVER_DESKTOP_MESSAGE,
+    HIPPO_SERVER_STACKER_WEB,
+    HIPPO_SERVER_STACKER_MESSAGE
+} HippoServerType;
+
 typedef enum {
     HIPPO_INSTANCE_NORMAL,
     HIPPO_INSTANCE_DOGFOOD,
@@ -118,28 +128,79 @@ typedef struct {
     } u;
 } HippoUriActionData;
 
-#define HIPPO_DEFAULT_MESSAGE_HOST     "message-router.mugshot.org"
-#define HIPPO_DEFAULT_MESSAGE_PORT     5222
-#define HIPPO_DEFAULT_MESSAGE_SERVER   HIPPO_DEFAULT_MESSAGE_HOST ":5222"
-#define HIPPO_DEFAULT_WEB_HOST         "mugshot.org"
-#define HIPPO_DEFAULT_WEB_PORT         80
-#define HIPPO_DEFAULT_WEB_SERVER       HIPPO_DEFAULT_WEB_HOST ":80"
-#define HIPPO_DEFAULT_LOCAL_HOST       "localinstance.mugshot.org"
-#define HIPPO_DEFAULT_LOCAL_WEB_PORT   8080
-#define HIPPO_DEFAULT_LOCAL_WEB_SERVER HIPPO_DEFAULT_LOCAL_HOST ":8080"
-#define HIPPO_DEFAULT_LOCAL_MESSAGE_SERVER HIPPO_DEFAULT_LOCAL_HOST ":21020"
+/* Default servers for Mugshot Stacker site */
+
+#define HIPPO_DEFAULT_STACKER_MESSAGE_HOST     "message-router.mugshot.org"
+#define HIPPO_DEFAULT_STACKER_MESSAGE_PORT     5222
+#define HIPPO_DEFAULT_STACKER_MESSAGE_SERVER   HIPPO_DEFAULT_STACKER_MESSAGE_HOST ":5222"
+#define HIPPO_DEFAULT_STACKER_WEB_HOST         "mugshot.org"
+#define HIPPO_DEFAULT_STACKER_WEB_PORT         80
+#define HIPPO_DEFAULT_STACKER_WEB_SERVER       HIPPO_DEFAULT_STACKER_WEB_HOST ":80"
+
+#define HIPPO_DEFAULT_STACKER_DOGFOOD_HOST       "dogfood.mugshot.org"
+#define HIPPO_DEFAULT_STACKER_DOGFOOD_WEB_PORT   9080
+#define HIPPO_DEFAULT_STACKER_DOGFOOD_WEB_SERVER HIPPO_DEFAULT_STACKER_DOGFOOD_HOST ":9080"
+#define HIPPO_DEFAULT_STACKER_DOGFOOD_MESSAGE_SERVER HIPPO_DEFAULT_STACKER_DOGFOOD_HOST ":21020"
+
+#define HIPPO_DEFAULT_STACKER_LOCAL_HOST       "localinstance.mugshot.org"
+#define HIPPO_DEFAULT_STACKER_LOCAL_WEB_PORT   8080
+#define HIPPO_DEFAULT_STACKER_LOCAL_WEB_SERVER HIPPO_DEFAULT_STACKER_LOCAL_HOST ":8080"
+#define HIPPO_DEFAULT_STACKER_LOCAL_MESSAGE_SERVER HIPPO_DEFAULT_STACKER_LOCAL_HOST ":21020"
 
 #ifdef G_OS_WIN32
 
-#define HIPPO_DEFAULT_MESSAGE_HOST_L   L"message-router.mugshot.org"
-#define HIPPO_DEFAULT_MESSAGE_SERVER_L HIPPO_DEFAULT_MESSAGE_HOST_L L":5222"
-#define HIPPO_DEFAULT_WEB_HOST_L       L"mugshot.org"
-#define HIPPO_DEFAULT_WEB_SERVER_L     HIPPO_DEFAULT_WEB_HOST_L L":80"
-#define HIPPO_DEFAULT_LOCAL_HOST_L     L"localinstance.mugshot.org"
-#define HIPPO_DEFAULT_LOCAL_WEB_SERVER_L     HIPPO_DEFAULT_LOCAL_HOST_L L":8080"
-#define HIPPO_DEFAULT_LOCAL_MESSAGE_SERVER_L HIPPO_DEFAULT_LOCAL_HOST_L L":21020"
+#define HIPPO_DEFAULT_STACKER_MESSAGE_HOST_L   L"message-router.mugshot.org"
+#define HIPPO_DEFAULT_STACKER_MESSAGE_SERVER_L HIPPO_DEFAULT_STACKER_MESSAGE_HOST_L L":5222"
+#define HIPPO_DEFAULT_STACKER_WEB_HOST_L       L"mugshot.org"
+#define HIPPO_DEFAULT_STACKER_WEB_SERVER_L     HIPPO_DEFAULT_STACKER_WEB_HOST_L L":80"
+
+#define HIPPO_DEFAULT_STACKER_DOGFOOD_HOST_L     L"dogfood.mugshot.org"
+#define HIPPO_DEFAULT_STACKER_DOGFOOD_WEB_SERVER_L     HIPPO_DEFAULT_STACKER_DOGFOOD_HOST_L L":9080"
+#define HIPPO_DEFAULT_STACKER_DOGFOOD_MESSAGE_SERVER_L HIPPO_DEFAULT_STACKER_DOGFOOD_HOST_L L":21020"
+
+#define HIPPO_DEFAULT_STACKER_LOCAL_HOST_L     L"localinstance.mugshot.org"
+#define HIPPO_DEFAULT_STACKER_LOCAL_WEB_SERVER_L     HIPPO_DEFAULT_STACKER_LOCAL_HOST_L L":8080"
+#define HIPPO_DEFAULT_STACKER_LOCAL_MESSAGE_SERVER_L HIPPO_DEFAULT_STACKER_LOCAL_HOST_L L":21020"
 
 #endif /* G_OS_WIN32 */
+
+/* Default servers for GNOME online desktop site (for now XMPP server is the same)
+ */
+
+#define HIPPO_DEFAULT_DESKTOP_MESSAGE_HOST     "message-router.mugshot.org"
+#define HIPPO_DEFAULT_DESKTOP_MESSAGE_PORT     5222
+#define HIPPO_DEFAULT_DESKTOP_MESSAGE_SERVER   HIPPO_DEFAULT_DESKTOP_MESSAGE_HOST ":5222"
+#define HIPPO_DEFAULT_DESKTOP_WEB_HOST         "online.gnome.org"
+#define HIPPO_DEFAULT_DESKTOP_WEB_PORT         80
+#define HIPPO_DEFAULT_DESKTOP_WEB_SERVER       HIPPO_DEFAULT_DESKTOP_WEB_HOST ":80"
+
+#define HIPPO_DEFAULT_DESKTOP_DOGFOOD_HOST       "dogfood-online.gnome.org"
+#define HIPPO_DEFAULT_DESKTOP_DOGFOOD_WEB_PORT   9080
+#define HIPPO_DEFAULT_DESKTOP_DOGFOOD_WEB_SERVER HIPPO_DEFAULT_DESKTOP_DOGFOOD_HOST ":9080"
+#define HIPPO_DEFAULT_DESKTOP_DOGFOOD_MESSAGE_SERVER HIPPO_DEFAULT_DESKTOP_DOGFOOD_HOST ":21020"
+
+#define HIPPO_DEFAULT_DESKTOP_LOCAL_HOST       "localinstance.gnome.org"
+#define HIPPO_DEFAULT_DESKTOP_LOCAL_WEB_PORT   8080
+#define HIPPO_DEFAULT_DESKTOP_LOCAL_WEB_SERVER HIPPO_DEFAULT_DESKTOP_LOCAL_HOST ":8080"
+#define HIPPO_DEFAULT_DESKTOP_LOCAL_MESSAGE_SERVER HIPPO_DEFAULT_DESKTOP_LOCAL_HOST ":21020"
+
+#ifdef G_OS_WIN32
+
+#define HIPPO_DEFAULT_DESKTOP_MESSAGE_HOST_L   L"message-router.mugshot.org"
+#define HIPPO_DEFAULT_DESKTOP_MESSAGE_SERVER_L HIPPO_DEFAULT_DESKTOP_MESSAGE_HOST_L L":5222"
+#define HIPPO_DEFAULT_DESKTOP_WEB_HOST_L       L"online.gnome.org"
+#define HIPPO_DEFAULT_DESKTOP_WEB_SERVER_L     HIPPO_DEFAULT_DESKTOP_WEB_HOST_L L":80"
+
+#define HIPPO_DEFAULT_DESKTOP_DOGFOOD_HOST_L     L"dogfood-online.gnome.org"
+#define HIPPO_DEFAULT_DESKTOP_DOGFOOD_WEB_SERVER_L     HIPPO_DEFAULT_DESKTOP_DOGFOOD_HOST_L L":9080"
+#define HIPPO_DEFAULT_DESKTOP_DOGFOOD_MESSAGE_SERVER_L HIPPO_DEFAULT_DESKTOP_DOGFOOD_HOST_L L":21020"
+
+#define HIPPO_DEFAULT_DESKTOP_LOCAL_HOST_L     L"localinstance.gnome.org"
+#define HIPPO_DEFAULT_DESKTOP_LOCAL_WEB_SERVER_L     HIPPO_DEFAULT_DESKTOP_LOCAL_HOST_L L":8080"
+#define HIPPO_DEFAULT_DESKTOP_LOCAL_MESSAGE_SERVER_L HIPPO_DEFAULT_DESKTOP_LOCAL_HOST_L L":21020"
+
+#endif /* G_OS_WIN32 */
+
 
 #define HIPPO_JID_DOMAIN "dumbhippo.com"
 #define HIPPO_ROOMS_JID_DOMAIN "rooms." HIPPO_JID_DOMAIN
@@ -180,15 +241,23 @@ gboolean hippo_parse_http_url  (const char *url,
                                 char      **host,
                                 int        *port);
 
-gboolean hippo_parse_server          (const char *server,
-                                      char      **host,
-                                      int        *port);                 
-void     hippo_parse_message_server  (const char *server,
-                                      char      **host,
-                                      int        *port);
-void     hippo_parse_web_server      (const char *server,
-                                      char      **host,
-                                      int        *port);
+gboolean hippo_parse_server          (const char       *server,
+                                      char            **host,
+                                      int              *port);                 
+void     hippo_parse_message_server  (const char       *server,
+                                      HippoInstanceType instance_type,
+                                      HippoServerType   server_type,
+                                      char            **host,
+                                      int              *port);
+void     hippo_parse_web_server      (const char       *server,
+                                      HippoInstanceType instance_type,
+                                      HippoServerType   server_type,                                      
+                                      char            **host,
+                                      int              *port);
+
+const char*  hippo_get_default_server (HippoInstanceType instance_type,
+                                       HippoServerType   server_type);
+
 
 gboolean hippo_parse_login_cookie    (const char *cookie_value,
                                       const char *required_host,

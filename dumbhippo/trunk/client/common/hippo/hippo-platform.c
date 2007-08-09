@@ -92,13 +92,15 @@ hippo_platform_get_pointer_position(HippoPlatform *platform,
 
 gboolean
 hippo_platform_read_login_cookie(HippoPlatform    *platform,
+                                 HippoServerType   web_server_type,
                                  HippoBrowserKind *origin_browser_p,
                                  char            **username_p,
                                  char            **password_p)
 {
     g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), FALSE);
     
-    return HIPPO_PLATFORM_GET_CLASS(platform)->read_login_cookie(platform, origin_browser_p, username_p, password_p);
+    return HIPPO_PLATFORM_GET_CLASS(platform)->read_login_cookie(platform, web_server_type,
+                                                                 origin_browser_p, username_p, password_p);
 }
 
 void
@@ -179,19 +181,21 @@ hippo_platform_get_instance_type (HippoPlatform *platform)
 }
 
 char*
-hippo_platform_get_message_server(HippoPlatform *platform)
+hippo_platform_get_message_server(HippoPlatform  *platform,
+                                  HippoServerType server_type)
 {
     g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
     
-    return HIPPO_PLATFORM_GET_CLASS(platform)->get_message_server(platform);    
+    return HIPPO_PLATFORM_GET_CLASS(platform)->get_message_server(platform, server_type);    
 }
 
 char*
-hippo_platform_get_web_server(HippoPlatform *platform)
+hippo_platform_get_web_server(HippoPlatform  *platform,
+                              HippoServerType server_type)
 {
     g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
     
-    return HIPPO_PLATFORM_GET_CLASS(platform)->get_web_server(platform);    
+    return HIPPO_PLATFORM_GET_CLASS(platform)->get_web_server(platform, server_type); 
 }
 
 gboolean
@@ -241,21 +245,25 @@ hippo_platform_make_cache_filename (HippoPlatform  *platform,
 
 void
 hippo_platform_get_message_host_port(HippoPlatform  *platform,
+                                     HippoServerType server_type,
                                      char          **host_p,
                                      int            *port_p)
 {
-    char *server = hippo_platform_get_message_server(platform);
-    hippo_parse_message_server(server, host_p, port_p);
+    char *server = hippo_platform_get_message_server(platform, server_type);
+    hippo_parse_message_server(server, hippo_platform_get_instance_type(platform),
+                               server_type, host_p, port_p);
     g_free(server);
 }
 
 void
 hippo_platform_get_web_host_port(HippoPlatform  *platform,
+                                 HippoServerType server_type,
                                  char          **host_p,
                                  int            *port_p)
 {
-    char *server = hippo_platform_get_web_server(platform);
-    hippo_parse_web_server(server, host_p, port_p);
+    char *server = hippo_platform_get_web_server(platform, server_type);
+    hippo_parse_web_server(server, hippo_platform_get_instance_type(platform),
+                           server_type, host_p, port_p);
     g_free(server);
 }
 
