@@ -237,6 +237,11 @@ hippo_dbus_try_to_acquire(const char  *desktop_server,
     stacker_bus_name = NULL;
     desktop_bus_name = NULL;
 
+
+    /* FIXME we should only get the Engine name here with the desktop server, not
+     * the stacker... that requires a little BigBoard fixage.
+     */
+    
     stacker_bus_name = hippo_dbus_full_bus_name(stacker_server);
     if (!acquire_bus_name(connection, stacker_server, replace_existing, stacker_bus_name, error)) {
         g_free(stacker_bus_name);
