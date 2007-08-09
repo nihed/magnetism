@@ -633,6 +633,13 @@ hippo_connection_get_self_resource_id(HippoConnection  *connection)
     g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), NULL);
 
     if (connection->self_resource_id == NULL && connection->username != NULL) {
+
+        /* FIXME this seems hosed; we should ask the server for the self resource ID
+         * by making yourself a property on the global object or whatever.
+         * We have no way of knowing which hostname the ID will use really,
+         * we use HIPPO_SERVER_STACKER_WEB here but that might not be right.
+         */
+        
         const char *self_guid = hippo_connection_get_self_guid(connection);
 
         /* There isn't any notification when hippo_platform_get_web_server() changes
@@ -640,7 +647,8 @@ hippo_connection_get_self_resource_id(HippoConnection  *connection)
          * it happens is when adjusting the web server in the hidden properties
          * dialog on the windows client.
          */
-        const char *raw_server = hippo_platform_get_web_server(connection->platform);
+        const char *raw_server = hippo_platform_get_web_server(connection->platform,
+                                                               HIPPO_SERVER_STACKER_WEB);
         char *server;
 
         /* Somewhat hacky: we need to match the server's own idea of what it's
@@ -1076,7 +1084,8 @@ hippo_connection_connect(HippoConnection *connection, const char *redirect_host)
         return;
     }
     
-    hippo_platform_get_message_host_port(connection->platform, &message_host, &message_port);
+    hippo_platform_get_message_host_port(connection->platform, HIPPO_SERVER_STACKER_MESSAGE,
+                                         &message_host, &message_port);
 
     if (redirect_host) {
         g_free(message_host);
@@ -1218,6 +1227,7 @@ hippo_connection_load_auth(HippoConnection *connection)
     zero_str(&connection->self_resource_id);
     
     result = hippo_platform_read_login_cookie(connection->platform,
+                                              HIPPO_SERVER_STACKER_WEB,
                                               &connection->login_browser,
                                               &connection->username, &connection->password);
 
@@ -4195,7 +4205,8 @@ hippo_connection_make_absolute_url(HippoConnection *connection,
         char *server;
         char *url;
         
-        server = hippo_platform_get_web_server(connection->platform);
+        server = hippo_platform_get_web_server(connection->platform,
+                                               HIPPO_SERVER_STACKER_WEB);
         url = g_strdup_printf("http://%s%s", server, maybe_relative);
         g_free(server);
 

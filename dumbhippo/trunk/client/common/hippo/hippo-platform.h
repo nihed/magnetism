@@ -48,10 +48,11 @@ struct _HippoPlatformClass {
                                         int             *x_p,
                                         int             *y_p);
     
-    gboolean  (* read_login_cookie)   (HippoPlatform  *platform,
+    gboolean  (* read_login_cookie)   (HippoPlatform    *platform,
+                                       HippoServerType   web_server_type,
                                        HippoBrowserKind *origin_browser_p,
-                                       char          **username,
-                                       char          **password);
+                                       char            **username,
+                                       char            **password);
     void      (* delete_login_cookie) (HippoPlatform  *platform);                                   
     
     const char* (* get_jabber_resource) (HippoPlatform  *platform);
@@ -79,9 +80,11 @@ struct _HippoPlatformClass {
     HippoNetworkStatus (* get_network_status) (HippoPlatform *platform);
     
     /* Preferences */
-    char*     (* get_message_server)  (HippoPlatform *platform);
-    char*     (* get_web_server)      (HippoPlatform *platform);
-    gboolean  (* get_signin)          (HippoPlatform *platform);
+    char*     (* get_message_server)  (HippoPlatform  *platform,
+                                       HippoServerType server_type);
+    char*     (* get_web_server)      (HippoPlatform  *platform,
+                                       HippoServerType server_type);
+    gboolean  (* get_signin)          (HippoPlatform  *platform);
     
     void     (* set_message_server)  (HippoPlatform *platform, const char *value);
     void     (* set_web_server)      (HippoPlatform *platform, const char *value);
@@ -121,10 +124,12 @@ gboolean         hippo_platform_get_pointer_position   (HippoPlatform    *platfo
                                                         int              *y_p);
 
 gboolean         hippo_platform_read_login_cookie      (HippoPlatform    *platform,
+                                                        HippoServerType   server_type,
                                                         HippoBrowserKind *origin_browser_p,
                                                         char            **username_p,
                                                         char            **password_p);
-void             hippo_platform_delete_login_cookie    (HippoPlatform *platform);                                       
+void             hippo_platform_delete_login_cookie    (HippoPlatform *platform);
+
 const char*      hippo_platform_get_jabber_resource    (HippoPlatform *platform); 
 
 void             hippo_platform_open_url               (HippoPlatform   *platform,
@@ -156,8 +161,10 @@ void               hippo_platform_emit_network_status_changed (HippoPlatform *pl
 /* Preferences */
 HippoInstanceType hippo_platform_get_instance_type (HippoPlatform *platform);
 
-char*            hippo_platform_get_message_server     (HippoPlatform *platform); 
-char*            hippo_platform_get_web_server         (HippoPlatform *platform); 
+char*            hippo_platform_get_message_server     (HippoPlatform *platform,
+                                                        HippoServerType server_type); 
+char*            hippo_platform_get_web_server         (HippoPlatform *platform,
+                                                        HippoServerType server_type); 
 gboolean         hippo_platform_get_signin             (HippoPlatform *platform); 
 
 void             hippo_platform_set_message_server     (HippoPlatform  *platform,
@@ -173,9 +180,11 @@ char *           hippo_platform_make_cache_filename    (HippoPlatform  *platform
 
 /* Convenience wrappers on get_server stuff that parse the host/port */
 void             hippo_platform_get_message_host_port  (HippoPlatform  *platform,
+                                                        HippoServerType server_type,
                                                         char          **host_p,
                                                         int            *port_p);
 void             hippo_platform_get_web_host_port      (HippoPlatform  *platform,
+                                                        HippoServerType server_type,
                                                         char          **host_p,
                                                         int            *port_p);
 

@@ -152,7 +152,8 @@ get_row_datav(sqlite3_stmt *stmt,
         return TRUE;
 
     if ((int)strlen(types) > sqlite3_column_count(stmt)) {
-        g_warning("Got %d columns from query, expected at least %d", sqlite3_column_count(stmt), strlen(types));
+        g_warning("Got %d columns from query, expected at least %d", sqlite3_column_count(stmt),
+                  (int) strlen(types));
         goto error;
     }
 
@@ -329,7 +330,7 @@ make_db_name(HippoDiskCache *cache)
     if (user_id == NULL)
         return NULL;
 
-    web_server = hippo_platform_get_web_server(platform);
+    web_server = hippo_platform_get_web_server(platform, HIPPO_SERVER_STACKER_WEB);
 
     path = hippo_platform_make_cache_filename(platform, web_server, user_id);
     
