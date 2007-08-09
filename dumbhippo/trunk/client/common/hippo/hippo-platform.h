@@ -161,9 +161,9 @@ void               hippo_platform_emit_network_status_changed (HippoPlatform *pl
 /* Preferences */
 HippoInstanceType hippo_platform_get_instance_type (HippoPlatform *platform);
 
-char*            hippo_platform_get_message_server     (HippoPlatform *platform,
+char*            hippo_platform_get_message_server     (HippoPlatform  *platform,
                                                         HippoServerType server_type); 
-char*            hippo_platform_get_web_server         (HippoPlatform *platform,
+char*            hippo_platform_get_web_server         (HippoPlatform  *platform,
                                                         HippoServerType server_type); 
 gboolean         hippo_platform_get_signin             (HippoPlatform *platform); 
 

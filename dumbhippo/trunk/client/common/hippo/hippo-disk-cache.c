@@ -330,7 +330,7 @@ make_db_name(HippoDiskCache *cache)
     if (user_id == NULL)
         return NULL;
 
-    web_server = hippo_platform_get_web_server(platform, HIPPO_SERVER_STACKER_WEB);
+    web_server = hippo_platform_get_web_server(platform, HIPPO_SERVER_STACKER);
 
     path = hippo_platform_make_cache_filename(platform, web_server, user_id);
     

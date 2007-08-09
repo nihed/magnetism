@@ -222,11 +222,12 @@ hippo_parse_server(const char *server,
 }
 
 static void
-get_server(const char       *server,
-           HippoInstanceType instance_type,
-           HippoServerType   server_type,
-           char            **host_p,
-           int              *port_p)
+get_server(const char         *server,
+           HippoInstanceType   instance_type,
+           HippoServerType     server_type,
+           HippoServerProtocol protocol,
+           char              **host_p,
+           int                *port_p)
 {
     char *host = NULL;
     int port = -1;
@@ -234,18 +235,22 @@ get_server(const char       *server,
     if (!hippo_parse_server(server, &host, &port)) {
         const char *default_server;
 
-        default_server = hippo_get_default_server(instance_type, server_type);
+        default_server = hippo_get_default_server(instance_type, server_type, protocol);
 
         if (!hippo_parse_server(default_server, &host, &port))
             g_assert_not_reached();
     }
     
     if (port < 0) {
-        if (server_type == HIPPO_SERVER_DESKTOP_WEB ||
-            server_type == HIPPO_SERVER_STACKER_WEB)
+        switch (protocol) {
+        case HIPPO_SERVER_PROTOCOL_WEB:
             port = 80;
-        else
+            break;
+        case HIPPO_SERVER_PROTOCOL_MESSAGE:
             port = 5222;
+            break;
+        }
+        g_assert(port >= 0);
     }
     
     *host_p = host;
@@ -258,11 +263,8 @@ hippo_parse_message_server(const char       *server,
                            HippoServerType   server_type,                         
                            char            **host_p,
                            int              *port_p)
-{
-    g_return_if_fail(server_type == HIPPO_SERVER_STACKER_MESSAGE ||
-                     server_type == HIPPO_SERVER_DESKTOP_MESSAGE);
-    
-    get_server(server, instance_type, server_type, host_p, port_p);
+{    
+    get_server(server, instance_type, server_type, HIPPO_SERVER_PROTOCOL_MESSAGE, host_p, port_p);
 }
 
 void
@@ -272,10 +274,7 @@ hippo_parse_web_server(const char       *server,
                        char            **host_p,
                        int              *port_p)
 {
-    g_return_if_fail(server_type == HIPPO_SERVER_STACKER_WEB ||
-                     server_type == HIPPO_SERVER_DESKTOP_WEB);
-    
-    get_server(server, instance_type, server_type, host_p, port_p);
+    get_server(server, instance_type, server_type, HIPPO_SERVER_PROTOCOL_WEB, host_p, port_p);
 }
 
 gboolean
@@ -1352,21 +1351,32 @@ hippo_current_time_ms(void)
 
 /* this returns a value with the port in it already */
 static const char *
-get_debug_server(HippoServerType server_type)
+get_debug_server(HippoServerType     server_type,
+                 HippoServerProtocol protocol)
 {
-    const char *debug_server = g_getenv("HIPPO_DEBUG_SERVER");
-    if (debug_server)
-        return debug_server;
-
+    const char *server = g_getenv("HIPPO_DEBUG_SERVER");
+    if (server)
+        return server;
+    
     switch (server_type) {
-    case HIPPO_SERVER_DESKTOP_WEB:
-        return HIPPO_DEFAULT_DESKTOP_LOCAL_WEB_SERVER;
-    case HIPPO_SERVER_DESKTOP_MESSAGE:
-        return HIPPO_DEFAULT_DESKTOP_LOCAL_MESSAGE_SERVER;
-    case HIPPO_SERVER_STACKER_WEB:
-        return HIPPO_DEFAULT_STACKER_LOCAL_WEB_SERVER;
-    case HIPPO_SERVER_STACKER_MESSAGE:
-        return HIPPO_DEFAULT_STACKER_LOCAL_MESSAGE_SERVER;
+    case HIPPO_SERVER_DESKTOP:
+        switch (protocol) {
+        case HIPPO_SERVER_PROTOCOL_WEB:
+            return HIPPO_DEFAULT_DESKTOP_LOCAL_WEB_SERVER;
+        case HIPPO_SERVER_PROTOCOL_MESSAGE:
+            return HIPPO_DEFAULT_DESKTOP_LOCAL_MESSAGE_SERVER;
+        }
+        g_assert_not_reached();
+        return NULL;
+    case HIPPO_SERVER_STACKER:
+        switch (protocol) {
+        case HIPPO_SERVER_PROTOCOL_WEB:
+            return HIPPO_DEFAULT_STACKER_LOCAL_WEB_SERVER;
+        case HIPPO_SERVER_PROTOCOL_MESSAGE:
+            return HIPPO_DEFAULT_STACKER_LOCAL_MESSAGE_SERVER;
+        }
+        g_assert_not_reached();
+        return NULL;
     }
 
     g_assert_not_reached();
@@ -1375,21 +1385,32 @@ get_debug_server(HippoServerType server_type)
 }
 
 static const char *
-get_dogfood_server(HippoServerType server_type)
+get_dogfood_server(HippoServerType     server_type,
+                   HippoServerProtocol protocol)
 {
-    const char *dogfood_server = g_getenv("HIPPO_DOGFOOD_SERVER");
-    if (dogfood_server)
-        return dogfood_server;
-
+    const char *server = g_getenv("HIPPO_DOGFOOD_SERVER");
+    if (server)
+        return server;
+    
     switch (server_type) {
-    case HIPPO_SERVER_DESKTOP_WEB:
-        return HIPPO_DEFAULT_DESKTOP_DOGFOOD_WEB_SERVER;
-    case HIPPO_SERVER_DESKTOP_MESSAGE:
-        return HIPPO_DEFAULT_DESKTOP_DOGFOOD_MESSAGE_SERVER;
-    case HIPPO_SERVER_STACKER_WEB:
-        return HIPPO_DEFAULT_STACKER_DOGFOOD_WEB_SERVER;
-    case HIPPO_SERVER_STACKER_MESSAGE:
-        return HIPPO_DEFAULT_STACKER_DOGFOOD_MESSAGE_SERVER;
+    case HIPPO_SERVER_DESKTOP:
+        switch (protocol) {
+        case HIPPO_SERVER_PROTOCOL_WEB:
+            return HIPPO_DEFAULT_DESKTOP_DOGFOOD_WEB_SERVER;
+        case HIPPO_SERVER_PROTOCOL_MESSAGE:
+            return HIPPO_DEFAULT_DESKTOP_DOGFOOD_MESSAGE_SERVER;
+        }
+        g_assert_not_reached();
+        return NULL;
+    case HIPPO_SERVER_STACKER:
+        switch (protocol) {
+        case HIPPO_SERVER_PROTOCOL_WEB:
+            return HIPPO_DEFAULT_STACKER_DOGFOOD_WEB_SERVER;
+        case HIPPO_SERVER_PROTOCOL_MESSAGE:
+            return HIPPO_DEFAULT_STACKER_DOGFOOD_MESSAGE_SERVER;
+        }
+        g_assert_not_reached();
+        return NULL;
     }
 
     g_assert_not_reached();
@@ -1398,21 +1419,32 @@ get_dogfood_server(HippoServerType server_type)
 }
 
 static const char *
-get_production_server(HippoServerType server_type)
+get_production_server(HippoServerType     server_type,
+                      HippoServerProtocol protocol)
 {
-    const char *prod_server = g_getenv("HIPPO_PRODUCTION_SERVER");
-    if (prod_server)
-        return prod_server;
-
+    const char *server = g_getenv("HIPPO_PRODUCTION_SERVER");
+    if (server)
+        return server;
+    
     switch (server_type) {
-    case HIPPO_SERVER_DESKTOP_WEB:
-        return HIPPO_DEFAULT_DESKTOP_WEB_SERVER;
-    case HIPPO_SERVER_DESKTOP_MESSAGE:
-        return HIPPO_DEFAULT_DESKTOP_MESSAGE_SERVER;
-    case HIPPO_SERVER_STACKER_WEB:
-        return HIPPO_DEFAULT_STACKER_WEB_SERVER;
-    case HIPPO_SERVER_STACKER_MESSAGE:
-        return HIPPO_DEFAULT_STACKER_MESSAGE_SERVER;
+    case HIPPO_SERVER_DESKTOP:
+        switch (protocol) {
+        case HIPPO_SERVER_PROTOCOL_WEB:
+            return HIPPO_DEFAULT_DESKTOP_WEB_SERVER;
+        case HIPPO_SERVER_PROTOCOL_MESSAGE:
+            return HIPPO_DEFAULT_DESKTOP_MESSAGE_SERVER;
+        }
+        g_assert_not_reached();
+        return NULL;
+    case HIPPO_SERVER_STACKER:
+        switch (protocol) {
+        case HIPPO_SERVER_PROTOCOL_WEB:
+            return HIPPO_DEFAULT_STACKER_WEB_SERVER;
+        case HIPPO_SERVER_PROTOCOL_MESSAGE:
+            return HIPPO_DEFAULT_STACKER_MESSAGE_SERVER;
+        }
+        g_assert_not_reached();
+        return NULL;
     }
 
     g_assert_not_reached();
@@ -1421,14 +1453,14 @@ get_production_server(HippoServerType server_type)
 }
 
 const char*
-hippo_get_default_server(HippoInstanceType instance_type,
-                         HippoServerType   server_type)
+hippo_get_default_server(HippoInstanceType   instance_type,
+                         HippoServerType     server_type,
+                         HippoServerProtocol protocol)
 {
     /* Check env variables that force a particular web/message
      * server regardless of instance
      */
-    if (server_type == HIPPO_SERVER_STACKER_WEB ||
-        server_type == HIPPO_SERVER_DESKTOP_WEB) {
+    if (protocol == HIPPO_SERVER_PROTOCOL_WEB) {
         const char *web_server = g_getenv("HIPPO_WEB_SERVER");
         if (web_server)
             return web_server;
@@ -1441,11 +1473,11 @@ hippo_get_default_server(HippoInstanceType instance_type,
     /* Then try per-instance env variables and defaults */
     switch (instance_type) {
     case HIPPO_INSTANCE_NORMAL:
-        return get_production_server(server_type);
+        return get_production_server(server_type, protocol);
     case HIPPO_INSTANCE_DOGFOOD:
-        return get_dogfood_server(server_type);
+        return get_dogfood_server(server_type, protocol);
     case HIPPO_INSTANCE_DEBUG:
-        return get_debug_server(server_type);
+        return get_debug_server(server_type, protocol);
     }
 
     g_assert_not_reached();

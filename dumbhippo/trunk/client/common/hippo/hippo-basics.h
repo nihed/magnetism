@@ -29,15 +29,18 @@ typedef enum {
 #define HIPPO_ERROR hippo_error_quark()
 GQuark hippo_error_quark(void);
 
-/* this conflates a 2x2 matrix into one enum, sue me.  The full server
- * spec is a 3x2x2 (instance X stacker/desktop X web/xmpp
+/* The full server spec is a 3x2x2 matrix
+ * (instance X stacker/desktop X web/xmpp)
  */
 typedef enum {
-    HIPPO_SERVER_DESKTOP_WEB,
-    HIPPO_SERVER_DESKTOP_MESSAGE,
-    HIPPO_SERVER_STACKER_WEB,
-    HIPPO_SERVER_STACKER_MESSAGE
+    HIPPO_SERVER_DESKTOP,
+    HIPPO_SERVER_STACKER
 } HippoServerType;
+
+typedef enum {
+    HIPPO_SERVER_PROTOCOL_WEB,
+    HIPPO_SERVER_PROTOCOL_MESSAGE
+} HippoServerProtocol;
 
 typedef enum {
     HIPPO_INSTANCE_NORMAL,
@@ -255,8 +258,9 @@ void     hippo_parse_web_server      (const char       *server,
                                       char            **host,
                                       int              *port);
 
-const char*  hippo_get_default_server (HippoInstanceType instance_type,
-                                       HippoServerType   server_type);
+const char*  hippo_get_default_server (HippoInstanceType   instance_type,
+                                       HippoServerType     server_type,
+                                       HippoServerProtocol protocol);
 
 
 gboolean hippo_parse_login_cookie    (const char *cookie_value,
