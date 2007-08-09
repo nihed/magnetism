@@ -62,7 +62,7 @@ class Button(hippo.CanvasButton):
         button.unset_flags(gtk.CAN_DEFAULT)
         # Avoid some padding
         button.set_name('bigboard-nopad-button')
-        child = ButtonLabel(ypadding=label_ypadding)
+        child = gtk.Label() #ButtonLabel(ypadding=label_ypadding)
         child.set_text(label)
         button.add(child)
         child.set_alignment(0.5, 0)
