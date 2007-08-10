@@ -3,7 +3,6 @@
 
 desktopfilesdir=$(datadir)/applications
 desktopfiles_in_files=					\
-	online-desktop.desktop.in			\
 	apps/gmail/gmail.desktop.in			\
 	apps/google-calendar/google-calendar.desktop.in \
 	apps/google-docs/google-docs.desktop.in		\
@@ -19,9 +18,12 @@ desktopfiles_DATA = $(desktopfiles_files)
 %.desktop: %.desktop.in
 	mkdir -p $(@D) && cat $< | sed -e 's/^_//g' > $@
 	
+xsessiondir = $(datadir)/xsessions
+xsession_DATA = online-desktop.desktop
+	
 gnomeautostartdir = $(datadir)/gnome/autostart
 gnomeautostart_DATA = online-desktop-autostart.desktop
 
-EXTRA_DIST += $(desktopfiles_in_files) $(gnomeautostart_DATA)
+EXTRA_DIST += $(desktopfiles_in_files) $(xsession_DATA) $(gnomeautostart_DATA)
 MAINTAINERCLEANFILES +=	$(desktopfiles_files)
 
