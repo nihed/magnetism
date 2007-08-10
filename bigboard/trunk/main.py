@@ -258,25 +258,7 @@ class BigBoardPanel(dbus.service.Object):
         self._dw = Sidebar(True, GCONF_PREFIX + 'visible')
         self._shown = False
         self.__shell = None
-        self.__autostart_data = '''
-[Desktop Entry]
-Name=bigboard
-Encoding=UTF-8
-Version=1.0
-Exec=bigboard
-X-GNOME-Autostart-enabled=true
-'''
-        autostart_dir = os.path.expanduser('~/.config/autostart') 
-        self.__autostart_file = os.path.join(autostart_dir, 'bigboard.desktop')
-        if not os.access(self.__autostart_file, os.R_OK):
-            try:
-                os.makedirs(autostart_dir)
-            except OSError, e:
-                pass
-            af = open(self.__autostart_file, 'w')
-            af.write(self.__autostart_data)
-            af.close()
-
+        
         gconf_client = gconf.client_get_default()
 
         self.__keybinding = "Super_L"
@@ -592,10 +574,6 @@ X-GNOME-Autostart-enabled=true
         
     @dbus.service.method(BUS_IFACE_PANEL)
     def Exit(self):
-        try:
-            os.unlink(self.__autostart_file)
-        except OSError, e:
-            pass
         gtk.main_quit()
 
     @dbus.service.signal(BUS_IFACE_PANEL,
