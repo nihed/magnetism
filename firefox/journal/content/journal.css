@@ -116,15 +116,20 @@ input.green-button:hover {
 
 /* ==== HISTORY ==== */
 
+#history {
+  float: left;
+}
+
 #q {
   width: 20em;
 }
-.search-info-bar {
+#search-info-bar {
   border: 1px solid #ccc;
   padding: 10px;
   font-size: 18pt;
   color: #666;
   background-color: #eee;
+  display: none;
 }
 .search-term {
   font-weight: bold;
@@ -203,11 +208,26 @@ input.green-button:hover {
   color: green;
   font-size: smaller;	
 }
-/* ==== Sidebar ==== */
-#sidebar {
+.visitcount {
+  font-size: smaller;
+  font-family: italic;
+}
+
+/* ==== Topsites ==== */
+.topsites {
+  font-size: 10pt;
+  display: table;
+}
+.topsite {
+  display: table-row;
+  vertical-align: top;
+}
+
+/* ==== Sidebars ==== */
+.sidebar {
   float: right;
   min-width: 200px;
-  min-height: 600px;
+  min-height: 400px;
 }
 /* ==== Google Search ==== */
 
