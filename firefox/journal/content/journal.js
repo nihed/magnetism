@@ -36,6 +36,8 @@
  
 const JOURNAL_CHROME = "chrome://firefoxjournal/content/journal.html"; 
 
+const FIREFOX_FAVICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAHWSURBVHjaYvz//z8DJQAggJiQOe/fv2fv7Oz8rays/N+VkfG/iYnJfyD/1+rVq7ffu3dPFpsBAAHEAHIBCJ85c8bN2Nj4vwsDw/8zQLwKiO8CcRoQu0DxqlWrdsHUwzBAAIGJmTNnPgYa9j8UqhFElwPxf2MIDeIrKSn9FwSJoRkAEEAM0DD4DzMAyPi/G+QKY4hh5WAXGf8PDQ0FGwJ22d27CjADAAIIrLmjo+MXA9R2kAHvGBA2wwx6B8W7od6CeQcggKCmCEL8bgwxYCbUIGTDVkHDBia+CuotgACCueD3TDQN75D4xmAvCoK9ARMHBzAw0AECiBHkAlC0Mdy7x9ABNA3obAZXIAa6iKEcGlMVQHwWyjYuL2d4v2cPg8vZswx7gHyAAAK7AOif7SAbOqCmn4Ha3AHFsIDtgPq/vLz8P4MSkJ2W9h8ggBjevXvHDo4FQUQg/kdypqCg4H8lUIACnQ/SOBMYI8bAsAJFPcj1AAEEjwVQqLpAbXmH5BJjqI0gi9DTAAgDBBCcAVLkgmQ7yKCZxpCQxqUZhAECCJ4XgMl493ug21ZD+aDAXH0WLM4A9MZPXJkJIIAwTAR5pQMalaCABQUULttBGCCAGCnNzgABBgAMJ5THwGvJLAAAAABJRU5ErkJggg==";
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function LOG(msg) {
@@ -131,53 +133,67 @@ var getHistoryInstance = function() {
   return theHistory;
 }
 
+// Used to recognize search URLs, so we can display them as a "search" with icon
+var searchMapping = $H({
+  // TODO: are these names returned translated?  Also the URLs here probably need translation
+  "Google": {"urlStart": "http://www.google.com",
+             "qparams": ["q"]},
+  "Yahoo": {"urlStart": "http://search.yahoo.com/search",
+            "qparams": ["p"]},
+  "Amazon.com": {"urlStart": "http://www.amazon.com/",
+                 "qparams": ["field-keywords"]},
+  "Creative Commons": {"urlStart": "http://search.creativecommons.org/",
+                       "qparams": ["q"]},
+  "eBay": {"urlStart": "http://search.ebay.com/",
+           "qparams": ["satitle", "query"]},
+});
+
 /***** The Journal *****/
 
 var JournalEntry = Class.create();
 JournalEntry.prototype = {
   initialize: function(histitem) {
+    var me = this;
     this.histitem = histitem;
 
     this.url = histitem.url;
     this.date = histitem.lastVisitDate;
-    this.displayUrl = histitem.url.split("?")[0].substring(0,50) + ((histitem.url.split("?")[0].length > 50)? "..." : "");
+    this.displayUrl = ellipsize(histitem.url.split("?")[0], 50);
     this.title = this.histitem.title;
     this.actionIcon = null;
     this.action = 'visited';
     
     var queryParams = histitem.url.toQueryParams();
     
-    if (histitem.url.startsWith("http://www.google.com/") && queryParams["q"]) { 
-      /* detect google web searches */
-      this.title = decodeURIComponent(queryParams["q"].replace(/\+/g," "));
-      this.action = "googled for";
-    }
-    else if (histitem.url.startsWith("http://search.yahoo.com/search") && queryParams["p"]) { 
-      /* detect yahoo product searches */
-      this.title = decodeURIComponent(queryParams["p"].replace(/\+/g," "));
-      this.action = "yahoo'd for";
-      this.displayUrl =  "http://search.yahoo.com/" + this.title;
-    }
-    else if (histitem.url.startsWith("http://search.creativecommons.org/") && queryParams["q"]) { 
-      /* detect cc product searches */
-      this.title = decodeURIComponent(queryParams["q"].replace(/\+/g," "));
-      this.action = "cc'd for";
-      this.displayUrl =  "http://search.creativecommons.org/" + this.title;
-    }
-    else if (histitem.url.startsWith("http://www.amazon.com/") && queryParams["field-keywords"]) { 
-      /* detect amazon product searches */
-      this.title = decodeURIComponent(queryParams["field-keywords"].replace(/\+/g," "));
-      this.action = "amazon'd for";
-      this.displayUrl =  "http://www.amazon.com/" + this.title;
-    }
-    else if (histitem.url.startsWith("http://search.ebay.com/") && (queryParams["satitle"] || queryParams["query"] ) ) { 
-      /* detect ebay product searches */
-      /* FIXME: this doesn't always detect searches even from our own engine... */
-      var q = queryParams["satitle"] || queryParams["query"];
-      this.title = decodeURIComponent(q.replace(/\+/g," "));
-      this.action = "ebay'd for";
-      this.displayUrl =  "http://www.ebay.com/" + this.title;
-    }    
+    var searchService = Components.classes["@mozilla.org/browser/search-service;1"].getService(Components.interfaces.nsIBrowserSearchService);
+    var engines = searchService.getEngines(Object()); /* NS strongly desires an Out argument to be an object */
+    searchMapping.each(function (kv) {
+      if (!me.url.startsWith(kv[1]['urlStart']))
+        return;
+      var qps = kv[1]['qparams'];
+      var qp = null;
+      for (var i = 0; i < qps.length; i++) {
+        if (queryParams[qps[i]]) {
+          qp = qps[i];
+          break;
+        }
+      }
+      if (!qp)
+        return;
+
+      me.title = decodeURIComponent(queryParams[qp].replace(/\+/g," "));
+      me.action = 'search';
+
+      var engine = null;
+      engines.each(function (eng) {
+        if (eng.name == kv[0]) {
+          engine = eng;
+          throw $break;
+        }
+      });
+      if (engine)
+        me.actionIcon = engine.iconURI.spec;
+    });
   },
   matches: function (q) {
     return this['url'].indexOf(q) >= 0 || this['title'].toLowerCase().indexOf(q) >= 0;
@@ -196,20 +212,29 @@ Journal.prototype = {
     var me = this;
     this.history.observeChange(function () { me.onHistoryChange(); });
     this.journalEntries = null;
+    this.topSites = [];
+    this.topSitesLimit = 10;
     this.onHistoryChange();
   },
   onHistoryChange: function() {
     var me = this;
     var tzoffset = (new Date().getTimezoneOffset() * 60 * 1000);
     
-    // Generate a hash mapping day offset to set of journal entries
+    var topSitesCount = 0;
+    // Generate a hash mapping day offset to set of journal entries, and
+    // the array of all entries for the top sites
     var days = $H();
+    this.topSites = [];
     this.history.each(function (hi) {
       var timeday = getLocalDayOffset(hi.lastVisitDate, tzoffset);
       if (!days[timeday])
         days[timeday] = [];
-      days[timeday].push(new JournalEntry(hi));
+      var journalEntry = new JournalEntry(hi);
+      days[timeday].push(journalEntry);
+      me.topSites.push(journalEntry);
     });
+
+    this.topSites.sort(function (a,b) { if (a.histitem.visitCount > b.histitem.visitCount) { return -1; } else { return 1; } });
         
     // Now sort those day offsets
     this.journalEntries = days.entries();
@@ -223,7 +248,10 @@ Journal.prototype = {
       this.journalEntries[i] = entrySet;
     }
   },
-  search: function (q, limit, it) {
+  iterTopSites: function(iterator) {
+    this.topSites.each(iterator);
+  },
+  search: function(q, limit, it) {
   	var count = 0;  
     q = q.toLowerCase();
     this.journalEntries.each(function (entrySet) {
@@ -271,14 +299,7 @@ var isWebLink = function(text) {
   if (idx > 0) {
     return $A(["com", "org", "net", "uk", "us", "cn", "fm"]).include(text.substring(idx+1))
   }
-  return false;
-}
-
-var parseUserUrl = function(text) {
-  if (text.match(/^[A-Za-z]:.*$/)) {
-    return text;
-  }
-  return "http://" + text;
+  return text.startsWith("http:") || text.startsWith("https:");
 }
 
 var createSpanText = function(text, className) {
@@ -296,6 +317,13 @@ var createAText = function(text, href, className) {
   return a;
 }
 
+var ellipsize = function(s, l) {
+  var substr = s.substring(0, l);
+  if (s.length > l) {
+    substr += "...";
+  }
+  return substr;
+}
 var pad = function(x) { return x < 10 ? "0" + x : "" + x };
 var twelveHour = function(x) { return (x > 12) ? (x % 12) : x };
 var meridiem = function(x) { return (x > 12) ? "pm" : "am" };
@@ -322,6 +350,17 @@ var JournalPage = {
       histnode.appendChild(this.renderJournalItem(dayset[i]));
     }
   },
+  renderJournalItemContent: function(entry) {
+    var urlSection = document.createElement('div');
+    urlSection.className = 'urls';
+    var titleDiv = document.createElement('div');
+    titleDiv.appendChild(createSpanText(entry.title,'title'));
+    urlSection.appendChild(titleDiv);
+    var hrefDiv = document.createElement('div');
+    hrefDiv.appendChild(createSpanText(entry.displayUrl,'url'));
+    urlSection.appendChild(hrefDiv);
+    return urlSection;
+  },
   renderJournalItem: function(entry) {
     var me = this;  
     var isTarget = entry == this.targetHistoryItem;
@@ -345,59 +384,62 @@ var JournalPage = {
     else
       timeText = ' '.times(15);
     item.appendChild(createSpanText(timeText, 'time'));
-    item.appendChild(createSpanText(entry.action, 'action'));
+    var actionDiv = document.createElement('div');
+    actionDiv.className = 'action';
+    if (entry.actionIcon) {
+      var icon = document.createElement("img");
+      icon.setAttribute("src", entry.actionIcon);
+      actionDiv.appendChild(icon);
+      actionDiv.appendChild(document.createTextNode(" "));
+    }
+    actionDiv.appendChild(document.createTextNode(entry.action));
+    item.appendChild(actionDiv);
 
-    var urlSection = document.createElement('div');
-    urlSection.className = 'urls';
-    var titleDiv = document.createElement('div');
-    titleDiv.appendChild(createSpanText(entry.title,'title'));
-    urlSection.appendChild(titleDiv);
-    var hrefDiv = document.createElement('div');
-    hrefDiv.appendChild(createSpanText(entry.displayUrl,'url'));
-    urlSection.appendChild(hrefDiv);
-    item.appendChild(urlSection);
+    item.appendChild(this.renderJournalItemContent(entry));
 
     return item;
   },
-  searchInfoBar: function(q) {
+  renderSearchInfoBar: function(q, searchIsWeblink) {
       var me = this;
-      var node = document.createElement("div");
-      node.className = "search-info-bar";
+      var node = $("search-info-bar");
+      while (node.firstChild) { node.removeChild(node.firstChild); };
  
-      node.appendChild(createSpanText("Searching for ", "search-pre-term"));
+      node.appendChild(createSpanText("Searching history for ", "search-pre-term"));
       node.appendChild(createSpanText(q,"search-term"));
       var clearSearch = document.createElement("a");
       clearSearch.addEventListener("click", function() { me.clearSearch(); }, false);
       clearSearch.href = "javascript:void(0);";
       clearSearch.className = "clear-search";
       clearSearch.setAttribute("accesskey", "c");
-      clearSearch.setAttribute("title", "Clear this search [shift-alt-c]");
+      clearSearch.setAttribute("title", "Clear this search [ESC]");
       clearSearch.appendChild(document.createTextNode("[clear]"));
       node.appendChild(clearSearch);
       
       var searchService = Components.classes["@mozilla.org/browser/search-service;1"].getService(Components.interfaces.nsIBrowserSearchService);
       var currentEngine = searchService.currentEngine;
-      if (currentEngine && currentEngine.name) {
-        var searchUri = currentEngine.getSubmission(q, null).uri.spec;
+      if (searchIsWeblink || (currentEngine && currentEngine.name)) {
+        var searchUri = searchIsWeblink ? q : currentEngine.getSubmission(q, null).uri.spec;
+        var searchIcon = searchIsWeblink ? FIREFOX_FAVICON : currentEngine.iconURI.spec;
+        var searchName = searchIsWeblink ? "Web link" : currentEngine.name;
+
         node.appendChild(document.createTextNode(" | "));  
         var searchNode = document.createElement("span");     
         searchNode.addClassName("search-provider");
         var a = document.createElement("a");
         a.setAttribute("href", searchUri);
         var img = document.createElement("img");
-        img.setAttribute("src", currentEngine.iconURI.spec);
+        img.setAttribute("src", searchIcon);
         a.appendChild(img);
         searchNode.appendChild(a);
         searchNode.appendChild(document.createTextNode(" "));
         a = document.createElement("a");
         a.setAttribute("id", "search-provider");        
         a.setAttribute("href", searchUri);   
-        a.appendChild(document.createTextNode(currentEngine.name + ": " + q));
+        a.appendChild(document.createTextNode(searchName + ": " + q));
         searchNode.appendChild(a);
         searchNode.appendChild(createSpanText(" (Ctrl-Enter)", "keybinding-hint"));
         node.appendChild(searchNode);
       }
-      return node;
   },
   setAsTargetItem: function (node) {
     node.addClassName("target-item");
@@ -415,6 +457,36 @@ var JournalPage = {
       this.unsetAsTargetItem(e.target);
     }
   },
+  redisplayTopSites: function(search) {
+    var me = this;
+    var topSiteLimit = 10;
+    var i = 0;
+    var tsc = $("topsites");
+    if (!tsc)
+      return;
+    while (tsc.firstChild) { tsc.removeChild(tsc.firstChild); }
+    var ts = document.createElement("div");
+    ts.className = "topsites";
+    tsc.appendChild(ts);
+    this.journal.iterTopSites(function (topsite) {
+      if (search && !topsite.matches(search))
+        return;
+      if (i >= topSiteLimit) throw $break;
+      i += 1;
+      var a = document.createElement('a');
+      a.href = topsite.url;
+      a.className = "topsite";
+      a.appendChild(me.renderJournalItemContent(topsite));
+      ts.appendChild(a);
+    });
+  },
+  redisplayApps: function(search) {
+    var me = this;
+    var apps = $("apps");
+    if (!apps)
+      return;
+    var appUrl = null;
+  },
   redisplay: function() {
     var me = this;    
     var content = $('history'); 
@@ -424,9 +496,11 @@ var JournalPage = {
     var viewedItems;
     var search = searchbox.value;
     if (search)
-      search = search.strip()
+      search = search.strip();
+    var searchIsWeblink = isWebLink(search);
     if (search) {
-      content.appendChild(this.searchInfoBar(search))
+      $("search-info-bar").style.display = "block";
+      this.renderSearchInfoBar(search, searchIsWeblink);
 
       viewedItems = []
       this.journal.search(search, 6, function (entrySet) { viewedItems.push(entrySet); });
@@ -435,6 +509,7 @@ var JournalPage = {
         content.appendChild(createSpanText("(No results)", "no-results"))
       }
     } else {
+      $("search-info-bar").style.display = "none";
       viewedItems = this.journal.journalEntries;
       for (var i = 0; i < viewedItems.length; i++) {
         if (viewedItems[i].length > 0) {
@@ -448,14 +523,17 @@ var JournalPage = {
       this.appendDaySet(viewedItems[i]);
     }
 
+    this.redisplayTopSites(search);
+
     if (search) {    
       // Now add the alternative search links
       var searchService = Components.classes["@mozilla.org/browser/search-service;1"].getService(Components.interfaces.nsIBrowserSearchService);
       var engines = searchService.getEngines(Object()); /* NS strongly desires an Out argument to be an object */
       var set = document.createElement("div");
       set.className = "set";
-      // Skip first engine, we displayed that above
-      for (var i = 1; i < engines.length; i++) {
+      // Skip first engine, we displayed that above; unless it was a web link
+      var offset = searchIsWeblink ? 0 : 1;
+      for (var i = offset; i < engines.length; i++) {
         var engine = engines[i];
         var linkItem = this.renderJournalItem({'title': engine.name,
                                                'url': engine.getSubmission(search, null).uri.spec,
@@ -479,15 +557,16 @@ var JournalPage = {
     searchbox.focus();
   },
   handleWindowKey: function(e) {
-    if (!e.ctrlKey)
-      return;
-    
-    // Ctrl-c is clear search
-    if (e.keyCode == 67) {
+
+    // ESC or Ctrl-c is clear search
+    if (e.keyCode == 27 || (e.ctrlKey && e.keyCode == 67)) {
       this.clearSearch();
       Event.stop(e);
       return;
     }
+
+    if (!e.ctrlKey)
+      return;
     
     // Handle control bindings for links
     var click = document.createEvent("MouseEvents");
@@ -508,7 +587,6 @@ var JournalPage = {
     }    
   },
   onload: function() {
-    LOG("onload");
     var me = this;  
     this.searchTimeout = null;
     this.searchValue = null;
