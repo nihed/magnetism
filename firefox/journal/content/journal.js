@@ -146,6 +146,8 @@ var searchMapping = $H({
                        "qparams": ["q"]},
   "eBay": {"urlStart": "http://search.ebay.com/",
            "qparams": ["satitle", "query"]},
+  "netFlix": {"urlStart": "http://www.netflix.com/Search",
+           "qparams": ["v1"]},
 });
 
 /***** The Journal *****/
@@ -418,7 +420,7 @@ var JournalPage = {
       var searchService = Components.classes["@mozilla.org/browser/search-service;1"].getService(Components.interfaces.nsIBrowserSearchService);
       var currentEngine = searchService.currentEngine;
       if (searchIsWeblink || (currentEngine && currentEngine.name)) {
-        var searchUri = searchIsWeblink ? q : currentEngine.getSubmission(q, null).uri.spec;
+        var searchUri = searchIsWeblink ? "http://" + q : currentEngine.getSubmission(q, null).uri.spec;
         var searchIcon = searchIsWeblink ? FIREFOX_FAVICON : currentEngine.iconURI.spec;
         var searchName = searchIsWeblink ? "Web link" : currentEngine.name;
 
