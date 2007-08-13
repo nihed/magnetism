@@ -576,8 +576,8 @@ var JournalPage = {
     var target;     
     if (e.keyCode == 13) { 
       target = $("search-provider");
-    } else if (e.keyCode >= 49 && e.keyCode < 57) {  // 1-9
-      var idx = e.keyCode - 49;
+    } else if (e.keyCode >= 49 && e.keyCode <= 57) {  // 1-9
+      var idx = e.keyCode - 48;
       target = $("altsearch-" + idx);
     } else {
       return;
