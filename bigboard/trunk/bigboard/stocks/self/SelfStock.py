@@ -426,6 +426,11 @@ class SelfStock(AbstractMugshotStock):
         self.__create_fus_proxy()
 
     def __on_authq_visible(self, authq, vis):
+        self.__authq_visible = vis
+        self.__sync_authq_visible()
+        
+    def __sync_authq_visible(self):
+        vis = self.__authq_visible and self.__myself
         self._box.set_child_visible(self.__auth_section_container, vis)
         if not vis:
             if self.__authq_slideout_window:
@@ -466,6 +471,7 @@ class SelfStock(AbstractMugshotStock):
         self.__authq_slideout.set_myself(myself)        
         myself.connect(self.__on_self_changed)
         self.__on_self_changed(myself)
+        self.__sync_authq_visible()        
         
     def __handle_mugshot_connection_status(self, auth, xmpp, contacts):
         self._box.set_child_visible(self._whereim_box, not not auth)
