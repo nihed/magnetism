@@ -404,6 +404,7 @@ class BigBoardPanel(dbus.service.Object):
     @log_except()
     def __idle_do_hide(self):
         self.__logger.debug("in idle hide")
+        self.__autohide_id = 0
         vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
         if vis:
             return        
