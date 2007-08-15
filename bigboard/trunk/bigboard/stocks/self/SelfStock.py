@@ -431,7 +431,7 @@ class SelfStock(AbstractMugshotStock):
         
     def __sync_authq_visible(self):
         vis = self.__authq_visible and self.__myself
-        self._box.set_child_visible(self.__auth_section_container, vis)
+        self._box.set_child_visible(self.__auth_section_container, not not vis)
         if not vis:
             if self.__authq_slideout_window:
                 self.__authq_slideout_window.hide()
