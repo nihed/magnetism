@@ -296,12 +296,25 @@ var findHighestVisited = function(journalEntries) {
   return highest;
 }
 
-var isWebLink = function(text) {
-  var idx = text.lastIndexOf('.')
-  if (idx > 0) {
-    return $A(["com", "org", "net", "uk", "us", "cn", "fm"]).include(text.substring(idx+1))
-  }
-  return text.startsWith("http:") || text.startsWith("https:");
+// FIXME replace this stuff with the same rules Firefox uses internally
+var domainSuffixes = [".com", ".org", ".net", ".uk", ".us", ".cn", ".fm"];
+var prependHttp = function (text, def) {
+  if (text.startsWith("http://") || text.startsWith("https://")) 
+    return text;
+  return "http://" + text;
+}
+var parseWebLink = function(text) {
+  for (var i = 0; i < domainSuffixes.length; i++) {
+    var suffix = domainSuffixes[i];
+    if (text.indexOf(suffix) > 0) {
+      if (text.startsWith("http://") || text.startsWith("https://")) 
+        return text;
+      return "http://" + text;
+    } 
+  };
+  if (text.startsWith("http://") || text.startsWith("https://")) 
+    return text;
+  return null;
 }
 
 var createSpanText = function(text, className) {
@@ -330,9 +343,13 @@ var pad = function(x) { return x < 10 ? "0" + x : "" + x };
 var twelveHour = function(x) { return (x > 12) ? (x % 12) : x };
 var meridiem = function(x) { return (x > 12) ? "pm" : "am" };
 
-var formatMonth = function(i) { return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][i]}
+var formatMonth = function(i) { return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][i]};
 
-var JournalPage = {
+var JournalPage = Class.create();
+JournalPage.prototype = {
+  initialize: function() {
+    this.sidebars = $A();
+  },
   appendDaySet: function(dayset) {
     var date = dayset[0].date;
     var today = new Date();
@@ -420,7 +437,7 @@ var JournalPage = {
       var searchService = Components.classes["@mozilla.org/browser/search-service;1"].getService(Components.interfaces.nsIBrowserSearchService);
       var currentEngine = searchService.currentEngine;
       if (searchIsWeblink || (currentEngine && currentEngine.name)) {
-        var searchUri = searchIsWeblink ? "http://" + q : currentEngine.getSubmission(q, null).uri.spec;
+        var searchUri = searchIsWeblink ? searchIsWeblink : currentEngine.getSubmission(q, null).uri.spec;
         var searchIcon = searchIsWeblink ? FIREFOX_FAVICON : currentEngine.iconURI.spec;
         var searchName = searchIsWeblink ? "Web link" : currentEngine.name;
 
@@ -459,36 +476,6 @@ var JournalPage = {
       this.unsetAsTargetItem(e.target);
     }
   },
-  redisplayTopSites: function(search) {
-    var me = this;
-    var topSiteLimit = 10;
-    var i = 0;
-    var tsc = $("topsites");
-    if (!tsc)
-      return;
-    while (tsc.firstChild) { tsc.removeChild(tsc.firstChild); }
-    var ts = document.createElement("div");
-    ts.className = "topsites";
-    tsc.appendChild(ts);
-    this.journal.iterTopSites(function (topsite) {
-      if (search && !topsite.matches(search))
-        return;
-      if (i >= topSiteLimit) throw $break;
-      i += 1;
-      var a = document.createElement('a');
-      a.href = topsite.url;
-      a.className = "topsite";
-      a.appendChild(me.renderJournalItemContent(topsite));
-      ts.appendChild(a);
-    });
-  },
-  redisplayApps: function(search) {
-    var me = this;
-    var apps = $("apps");
-    if (!apps)
-      return;
-    var appUrl = null;
-  },
   redisplay: function() {
     var me = this;    
     var content = $('history'); 
@@ -499,12 +486,12 @@ var JournalPage = {
     var search = searchbox.value;
     if (search)
       search = search.strip();
-    var searchIsWeblink = isWebLink(search);
+    var searchIsWeblink = parseWebLink(search);
     if (search) {
       $("search-info-bar").style.display = "block";
       this.renderSearchInfoBar(search, searchIsWeblink);
 
-      viewedItems = []
+      viewedItems = [];
       this.journal.search(search, 6, function (entrySet) { viewedItems.push(entrySet); });
       this.targetHistoryItem = findHighestVisited(viewedItems);
       if (viewedItems.length == 0) {
@@ -525,7 +512,9 @@ var JournalPage = {
       this.appendDaySet(viewedItems[i]);
     }
 
-    this.redisplayTopSites(search);
+    this.sidebars.each(function (sb) {
+      sb.redisplay(search);
+    });
 
     if (search) {    
       // Now add the alternative search links
@@ -594,6 +583,9 @@ var JournalPage = {
     this.searchValue = null;
     this.targetHistoryItem = null;
     this.journal = getJournalInstance();
+
+    var prefs = Components.classes["@mozilla.org/preferences-service;1"].
+                  getService(Components.interfaces.nsIPrefBranch);
     
     window.addEventListener("keyup", function (e) { me.handleWindowKey(e); }, false);    
     
@@ -603,10 +595,37 @@ var JournalPage = {
     searchbox.addEventListener("keyup", function (e) { me.handleSearchChanged(e) }, false);
     searchform.addEventListener("submit", function (e) { me.onsubmit(); Event.stop(e); }, true);
     
+    var histcount = document.forms['histcount']; 
+    if (histcount) {
+      $("histcountentry").value = prefs.getIntPref("browser.history_expire_days");
+      histcount.addEventListener("submit", function (e) { me.onHistValueChanged(); Event.stop(e); }, true);
+    }
+
+    this.sidebars.each(function (sb) {
+      var div = document.createElement("div");
+      div.setAttribute("id", sb.sidebarId);
+      div.className = "sidebar";
+      var header = document.createElement("span");
+      header.className = "sidebar-header";
+      header.appendChild(document.createTextNode(sb.sidebarTitle));
+      div.appendChild(header);
+      sb.setupDom(div);
+      $("sidebars").appendChild(div);
+    });
+
     searchbox.focus();
     
     $("history").appendChild(document.createTextNode("Loading journal..."))
     window.setTimeout(function () { me.redisplay(); }, 150);    
+  },
+  onHistValueChanged: function () {
+    var val = $("histcountentry").value;
+    var intVal = parseInt(val);
+    if (!intVal)
+      return;
+    var prefs = Components.classes["@mozilla.org/preferences-service;1"].
+                  getService(Components.interfaces.nsIPrefBranch);
+    prefs.setIntPref("browser.history_expire_days", intVal);    
   },
   clearSearchTimeouts: function() {
     if (typeof this.searchTimeout == "number") {
@@ -628,13 +647,6 @@ var JournalPage = {
     this.searchTimeout = null;
     this.redisplay(); 
   },
-  idleDoWebSearch: function() {
-    this.webSearchTimeout = null;
-    var q = document.getElementById("q").value;
-    if (q) {
-      document.getElementById("google-q").src = "http://www.gnome.org/~clarkbw/google/?q=" + escape(q.strip());
-    }    
-  },
   handleSearchChanged: function(e) {
     var q = e.target;
     var search = q.value.strip()
@@ -644,10 +656,19 @@ var JournalPage = {
     if (!this.searchTimeout) {
       var me = this;
       this.searchTimeout = window.setTimeout(function () { me.idleDoSearch() }, 350);
-      this.webSearchTimeout = window.setTimeout(function () { me.idleDoWebSearch() }, 600);      
     }
-  }
+  },
+  appendSidebar: function(sb) {
+    // test
+    this.sidebars.push(sb);
+  },
+}
+var theJournalPage;
+var getJournalPageInstance = function() {
+  if (theJournalPage == null)
+    theJournalPage = new JournalPage();
+  return theJournalPage;
 }
 
-Event.observe(window, "load", JournalPage.onload.bind(JournalPage), false);
+Event.observe(window, "load", getJournalPageInstance().onload.bind(getJournalPageInstance()), false);
 
