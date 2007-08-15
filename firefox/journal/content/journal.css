@@ -213,29 +213,24 @@ input.green-button:hover {
   font-family: italic;
 }
 
-/* ==== Topsites ==== */
-.topsites {
-  font-size: 10pt;
-  display: table;
-}
-.topsite {
-  display: table-row;
-  vertical-align: top;
-}
-
 /* ==== Sidebars ==== */
-.sidebar {
+.sidebars {
   float: right;
+}
+.sidebar {
+  font-size: 10pt;
   min-width: 200px;
   min-height: 400px;
+  /* border: 1px solid black; */
+}
+.sidebar-header {
+  font-size: 14pt;
+  background-color: #ABABFF;
+  border: 1px solid black;
+  width: 100%;
 }
 /* ==== Google Search ==== */
 
-#google {
-  padding: 0;
-  margin: 0;
-  height: 100%;
-}
 #google-q {
   width: 800px;
   min-height: 800px;
