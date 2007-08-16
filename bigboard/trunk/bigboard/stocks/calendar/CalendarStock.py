@@ -81,13 +81,13 @@ def fmt_date(date):
     
     return date.strftime("%A %b %d")
 
-def fmt_canvas_text(canvas_text, is_today, is_over, color):
+def fmt_canvas_text(canvas_text, is_today, is_over, color=None):
     # stuff that is over is grey 
     if is_over:
         attrs = pango.AttrList()
         attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
         canvas_text.set_property("attributes", attrs)               
-    else:
+    elif color is not None:
         attrs = pango.AttrList()
         # the color is in the format '#FFFFFF' 
         attrs.insert(pango.AttrForeground(int(color[1:3], 16) * 0x101, int(color[3:5], 16) * 0x101, int(color[5:7], 16) * 0x101, 0, 0xFFFF))
@@ -107,10 +107,19 @@ def compare_by_date(event_a, event_b):
 # http://www.google.com/calendar/feeds/example%40gmail.com/private/full
 # this function converts from the first format to the second one, which
 # is then used as a calendar feed url and a calendar id in the code
-def create_calendar_feed_url(calendar_id):
+# This would still work fine if our access level to a certain calendar 
+# changed, because we would drop events for the old calendar id, and add
+# events for the new calendar id.
+def create_calendar_feed_url(calendar_entry):
+    calendar_id = calendar_entry.id.text
+    projection = 'full'
+    # we currently filter out all calendars with 'freebusy' access level, but if we included them,
+    # we would have to specify the 'free-busy' projection for the feed
+    if calendar_entry.access_level.value == 'freebusy':
+        projection = 'free-busy'
     calendar_id_feeds_index = calendar_id.find("/feeds/")
     calendar_id_slash_index = calendar_id.find("/", calendar_id_feeds_index + len(str("/feeds/")) + 1)
-    return calendar_id[:calendar_id_feeds_index + len(str("/feeds"))] + calendar_id[calendar_id_slash_index:] + "/private/full"
+    return calendar_id[:calendar_id_feeds_index + len(str("/feeds"))] + calendar_id[calendar_id_slash_index:] + "/private/" + projection
 
 # for some reason python library doesn't provide a value
 # for gCal:selected element, so we need to fish it out from
@@ -127,8 +136,10 @@ def get_selected_value(extension_elements):
     
 # hidden calendars can still be selected, we should check both flags and only
 # include the ones that are selected and not hidden
+# we don't include calendars to which you only have 'freebusy' access level, because
+# busy 'events' and notifications about them don't seem useful
 def include_calendar(calendar):
-    return get_selected_value(calendar.extension_elements) == 'true' and calendar.hidden.value == 'false'
+    return get_selected_value(calendar.extension_elements) == 'true' and calendar.hidden.value == 'false' and ['owner', 'contributor', 'read'].count(calendar.access_level.value) == 1
 
 class Event(AutoStruct):
     def __init__(self):
@@ -424,7 +435,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         calendar_list = gcalendar.CalendarListFeedFromString(data)
         calendar_dictionary = {}
         for calendar_entry in calendar_list.entry:
-            calendar_entry_id = create_calendar_feed_url(calendar_entry.id.text)
+            calendar_entry_id = create_calendar_feed_url(calendar_entry)
             _logger.debug("calendar feed id: %s", calendar_entry_id) 
             calendar_dictionary[calendar_entry_id] = calendar_entry
             # we delete entries from the old dictionary if they were not deselected
@@ -734,5 +745,5 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         _logger.debug("retrieving events")
         for calendar in self.__calendars.values():   
             if include_calendar(calendar):
-                calendar_feed_url =  create_calendar_feed_url(calendar.id.text)
+                calendar_feed_url =  create_calendar_feed_url(calendar)
                 google.get_google().fetch_calendar(self.__on_calendar_load, self.__on_failed_load, calendar_feed_url, self.__event_range_start, self.__event_range_end)

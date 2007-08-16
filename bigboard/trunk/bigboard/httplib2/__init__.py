@@ -564,7 +564,8 @@ class GoogleLoginAuthentication(Authentication):
         elif request_uri.find("spreadsheets") > 0:
             service = "wise"
 
-        auth = dict(Email=credentials[0], Passwd=credentials[1], service=service, source=headers['user-agent'])
+        # probably need to specify accountType here
+        auth = dict(Email=credentials[0], Passwd=credentials[1], service=service, source=headers['user-agent'], accountType="HOSTED_OR_GOOGLE")
         resp, content = self.http.request("https://www.google.com/accounts/ClientLogin", method="POST", body=urlencode(auth), headers={'Content-Type': 'application/x-www-form-urlencoded'})
         lines = content.split('\n')
         d = dict([tuple(line.split("=", 1)) for line in lines if line])
