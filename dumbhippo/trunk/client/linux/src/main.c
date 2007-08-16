@@ -860,7 +860,7 @@ main(int argc, char **argv)
         g_assert(error != NULL);
 
         if (g_error_matches(error, HIPPO_ERROR, HIPPO_ERROR_ALREADY_RUNNING)) {
-            g_debug("%s\n", error->message);
+            g_debug("Failed to get D-BUS names: %s\n", error->message);
             g_error_free(error);
             error = NULL;
 

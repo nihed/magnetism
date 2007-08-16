@@ -190,10 +190,11 @@ acquire_bus_name(DBusConnection *connection,
           result == DBUS_REQUEST_NAME_REPLY_ALREADY_OWNER)) {
         g_set_error(error, HIPPO_ERROR, HIPPO_ERROR_ALREADY_RUNNING,
                     _("Another copy of %s is already running in this session for server %s"),
-                    g_get_application_name(), server);
+                    g_get_application_name(), server);               
         return FALSE;
     }
 
+    g_debug("Acquired bus name %s", bus_name);
     return TRUE;
 }
 
@@ -317,7 +318,10 @@ hippo_dbus_try_to_acquire(const char  *desktop_server,
      * they can just use the "normal" name
      */
     {
+    	DBusError tmp_derror;
         dbus_uint32_t flags;
+        
+    	dbus_error_init(&tmp_derror);        
         
         /* We do want to be queued if we don't get this right away */
         flags = DBUS_NAME_FLAG_ALLOW_REPLACEMENT;
@@ -327,11 +331,18 @@ hippo_dbus_try_to_acquire(const char  *desktop_server,
         /* we just ignore errors on this */
         dbus_bus_request_name(connection, HIPPO_DBUS_ENGINE_BASE_BUS_NAME,
                               flags,
-                              NULL);
+                              &tmp_derror);
+        if (dbus_error_is_set(&tmp_derror))
+        	g_debug("Failed to get bus name %s: %s", HIPPO_DBUS_ENGINE_BASE_BUS_NAME, tmp_derror.message);
+       	else
+       		g_debug("Acquired bus name %s", HIPPO_DBUS_ENGINE_BASE_BUS_NAME);       	
     }
 
     {
+    	DBusError tmp_derror;    
         dbus_uint32_t flags;
+        
+    	dbus_error_init(&tmp_derror);        
         
         /* We do want to be queued if we don't get this right away */
         flags = DBUS_NAME_FLAG_ALLOW_REPLACEMENT;
@@ -341,7 +352,11 @@ hippo_dbus_try_to_acquire(const char  *desktop_server,
         /* we just ignore errors on this */
         dbus_bus_request_name(connection, HIPPO_DBUS_STACKER_BASE_BUS_NAME,
                               flags,
-                              NULL);
+                              &tmp_derror);
+        if (dbus_error_is_set(&tmp_derror))
+        	g_debug("Failed to get bus name %s: %s", HIPPO_DBUS_STACKER_BASE_BUS_NAME, tmp_derror.message);
+       	else
+       		g_debug("Acquired bus name %s", HIPPO_DBUS_STACKER_BASE_BUS_NAME);                              
     }
     
     /* the connection is already set up with the main loop. 
