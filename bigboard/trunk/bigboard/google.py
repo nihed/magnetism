@@ -265,7 +265,8 @@ class Google(gobject.GObject):
         self.__post_auth_hooks = []
 
         k = keyring.get_keyring()
-        
+        # this line allows to enter new Google account information on bigboard restarts    
+        # k.store_login('google', "", "")
         self.__mail_checker = None
         
         try:
@@ -287,7 +288,7 @@ class Google(gobject.GObject):
             self.__mail_checker.stop()
 
     def __on_auth_ok(self, username, password):
-        self.__username = username
+        self.__username = username.find('@') >= 0 and username or username + '@gmail.com'
         self.__password = password
         self.__auth_requested = False
         keyring.get_keyring().store_login('google', self.__username, self.__password)
@@ -336,7 +337,7 @@ class Google(gobject.GObject):
 
         # there is a chance that someone might have access to more than 25 calendars, so let's
         # specify 1000 for max-results to make sure we get information about all calendars 
-        uri = 'http://www.google.com/calendar/feeds/' + self.__username + '@gmail.com?max-results=1000'
+        uri = 'http://www.google.com/calendar/feeds/' + self.__username + '?max-results=1000'
 
         self.__fetcher.fetch(uri, self.__username, self.__password,
                              lambda url, data: cb(url, data),
@@ -357,7 +358,7 @@ class Google(gobject.GObject):
             min_and_max_str =  "?start-min=" + fmt_date_for_feed_request(event_range_start) + "&start-max=" + fmt_date_for_feed_request(event_range_end) + "&singleevents=true" + "&max-results=1000"
 
         if calendar_feed_url is None:
-            uri = 'http://www.google.com/calendar/feeds/' + self.__username + '@gmail.com/private/full' + min_and_max_str
+            uri = 'http://www.google.com/calendar/feeds/' + self.__username + '/private/full' + min_and_max_str
         else:
             uri = calendar_feed_url + min_and_max_str
 
