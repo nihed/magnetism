@@ -1,0 +1,7 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=IM
+Exec=pidgin
+Type=Application
+Version=1.0
+X-GNOME-Autostart-enabled=true
