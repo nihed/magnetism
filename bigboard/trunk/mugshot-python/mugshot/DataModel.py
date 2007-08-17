@@ -68,18 +68,25 @@ class DataModel(AbstractModel):
         self._on_disconnected()
 
         bus = dbus.SessionBus()
+        targetname = _make_bus_name(self.server_name)
         try:
-            self._proxy = bus.get_object(_make_bus_name(self.server_name), '/org/freedesktop/od/data_model')
+            _logger.debug("Looking for engine %s", targetname)            
+            self._proxy = bus.get_object(targetname, '/org/freedesktop/od/data_model')
         except dbus.DBusException:
+            _logger.debug("Failed to get proxy for %s", targetname, exc_info=True)
             return
         
+        _logger.debug("Found model, querying status")          
         # Order matters ... we want the self_id to be there before we call on_connect
-        self_id = self._proxy.Get('org.freedesktop.od.Model', 'SelfId', reply_handler=self.__get_self_id_reply, error_handler=lambda e: None)
-        self._proxy.Get('org.freedesktop.od.Model', 'Connected', reply_handler=self.__get_connected_reply, error_handler=lambda e: None)
-
+        self_id = self._proxy.Get('org.freedesktop.od.Model', 'SelfId', reply_handler=self.__get_self_id_reply, error_handler=self.__on_dbus_error)
         self._proxy.connect_to_signal("ConnectedChanged", self.__on_connected_changed, dbus_interface='org.freedesktop.od.Model')
+        self._proxy.Get('org.freedesktop.od.Model', 'Connected', reply_handler=self.__get_connected_reply, error_handler=self.__on_dbus_error)        
+
+    def __on_dbus_error(self, err):
+        _logger.error("Caught D-BUS error: %s", err)
 
     def __on_connected_changed(self, connected, self_id):
+        _logger.debug("Connected status changed: %s", connected)       
         if connected:
             self.__on_connected(self_id)
         else:
@@ -96,6 +103,7 @@ class DataModel(AbstractModel):
         self._on_disconnected()
 
     def __get_self_id_reply(self, self_id):
+        _logger.debug("Got self id %s", self_id)  
         if self_id == '':
             self._set_self_id(None)
         else:
