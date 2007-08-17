@@ -156,7 +156,7 @@ desktopfiles_DATA = $(desktopfiles_files)
 
 # Dbus service file
 servicedir = $(datadir)/dbus-1/services
-service_in_files = org.freedesktop.od.Engine.service.in
+service_in_files = org.freedesktop.od.Engine.service.in com.dumbhippo.Client.service.in
 service_DATA = $(service_in_files:.service.in=.service)
 $(service_DATA): $(service_in_files) Makefile
 	@sed -e "s|\@bindir\@|$(bindir)|" $< > $@
