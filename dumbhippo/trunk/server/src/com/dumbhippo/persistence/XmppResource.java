@@ -111,7 +111,7 @@ public class XmppResource extends Resource {
 	@Transient
 	public String getHumanReadableString() {
 		// FIXME: we should possibly unescape the node here
-		return getNode() + IDNA.toUnicode(getDomain());
+		return getNode() + "@" + IDNA.toUnicode(getDomain());
 	}
 	
 	@Override
