@@ -111,6 +111,7 @@
                          </tbody>
 		    </table>
 	    </dht2:formTableRow>
+	    <dht2:formTableRowStatus controlId='dhXmppEntry'></dht2:formTableRowStatus>
 	    <dht2:formTableRow label="Google Talk / Jabber" icon="/images3/${buildStamp}/mail_icon.png" info="Only your Mugshot friends see this.">
 		    <table cellpadding="0" cellspacing="0" class="dh-address-table">
 			    <tbody>

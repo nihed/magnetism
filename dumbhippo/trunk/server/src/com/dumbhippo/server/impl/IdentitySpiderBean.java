@@ -209,20 +209,20 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	public XmppResource getXmpp(final String jidRaw) throws ValidationException, RetryException {
-		final String screenName = XmppResource.canonicalize(jidRaw);
+		final String jid = XmppResource.canonicalize(jidRaw);
 		return TxUtils.runNeedsRetry(new TxCallable<XmppResource>() {
 			public XmppResource call() {
 				Query q;
 
-				q = em.createQuery("from XmppResource a where a.screenName = :name");
-				q.setParameter("name", screenName);
+				q = em.createQuery("from XmppResource a where a.jid = :name");
+				q.setParameter("name", jid);
 
 				XmppResource res;
 				try {
 					res = (XmppResource) q.getSingleResult();
 				} catch (NoResultException e) {
 					try {
-						res = new XmppResource(screenName);
+						res = new XmppResource(jid);
 					} catch (ValidationException v) {
 						throw new RuntimeException(v); // Already validated above
 					}
