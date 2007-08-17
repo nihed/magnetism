@@ -84,8 +84,8 @@ class AppDisplay(PhotoContentItem):
 
         self.__description.set_property("text", self.__app.get_description())
 
-        if self.__app.get_mugshot_app():
-            self.__photo.set_url(self.__app.get_mugshot_app().get_icon_url())
+        if self.__app.get_icon_url():
+            self.__photo.set_url(self.__app.get_icon_url())
         else:
             pixbuf = self.__app.get_local_pixbuf()
             if pixbuf:

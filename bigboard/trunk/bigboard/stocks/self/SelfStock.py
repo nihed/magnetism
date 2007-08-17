@@ -14,6 +14,7 @@ import bigboard.libbig as libbig
 from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock, AbstractMugshotStock
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, Separator
+import bigboard.google
 
 _logger = logging.getLogger('bigboard.stocks.SelfStock')
 
@@ -399,6 +400,8 @@ class SelfStock(AbstractMugshotStock):
         self._model.add_connected_handler(self.__on_connected)
         if self._model.connected:
             self.__on_connected()
+        else:
+            _logger.debug("datamodel not connected, deferring")            
 
         self.__slideout = None
         self.__slideout_display = None
@@ -459,6 +462,7 @@ class SelfStock(AbstractMugshotStock):
             pass
 
     def __on_connected(self):
+        _logger.debug("doing datamodel connected handler")
         self._box.set_child_visible(self._signin, self._model.self_id == None)
         self._box.set_child_visible(self._whereim_box, self._model.self_id != None)
 
