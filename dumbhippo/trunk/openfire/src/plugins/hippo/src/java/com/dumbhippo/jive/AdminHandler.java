@@ -17,6 +17,10 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
+import com.dumbhippo.server.MessengerGlue;
+import com.dumbhippo.server.impl.MessengerGlueBean;
+import com.dumbhippo.server.util.EJBUtil;
+
 public class AdminHandler implements RoutableChannelHandler{
 	JID address;
 	private Map<String, IQHandler> iqHandlers = new HashMap<String, IQHandler>();
@@ -77,6 +81,9 @@ public class AdminHandler implements RoutableChannelHandler{
 		        reply.setType(Presence.Type.subscribed);
 		        
 		        XMPPServer.getInstance().getPacketRouter().route(reply);
+		        
+		        EJBUtil.defaultLookup(MessengerGlue.class).sendQueuedXmppMessages(packet.getTo().toString(), packet.getFrom().toString());
+		        
 			} else if (presence.getType() == Presence.Type.probe) {
 				Presence reply = new Presence();
 				
@@ -84,7 +91,6 @@ public class AdminHandler implements RoutableChannelHandler{
 		        reply.setTo(packet.getFrom());
 		        
 		        XMPPServer.getInstance().getPacketRouter().route(reply);
-				
 			}
 		}
 	}

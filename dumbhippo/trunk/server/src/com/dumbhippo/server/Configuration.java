@@ -106,6 +106,19 @@ public interface Configuration {
 	public URL getBaseUrlGnome();
 	
 	/**
+	 * Get the JID that identifies the "admin user" (the user from which
+	 * XMPP claim verification and sign in mails are sent)
+	 */
+	public String getAdminJid(Site site);
+	public String getAdminJid(Viewpoint viewpoint);
+	
+	/**
+	 * If someone sends us a message via XMPP, we need to derive the site
+	 * from that.
+	 */
+	public Site siteFromAdminJid(String adminJid);
+
+	/**
 	 * Set a configuration property, use to override properties loaded 
 	 * when the server starts up.
 	 *  

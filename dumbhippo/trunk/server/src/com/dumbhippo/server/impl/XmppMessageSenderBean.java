@@ -34,7 +34,13 @@ public class XmppMessageSenderBean implements XmppMessageSender {
 			provider.sendAdminMessage(to, from, body);
 	}
 
+	public void sendAdminFriendRequest(String to, String from) {
+		if (provider != null)
+			provider.sendAdminFriendRequest(to, from);
+	}
+
 	public void setProvider(XmppMessageSenderProvider provider) {
 		this.provider = provider;
 	}
+
 }

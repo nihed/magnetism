@@ -29,6 +29,7 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
@@ -84,6 +85,8 @@ public class PersonViewerBean implements PersonViewer {
 					resources.add(r);
 				else if (r instanceof AimResource)
 					resources.add(r);
+				else if (r instanceof XmppResource)
+					resources.add(r);
 				// we filter out any non-"primary" resources for now
 			}
 		} else if (person instanceof Contact) {
@@ -92,6 +95,8 @@ public class PersonViewerBean implements PersonViewer {
 				if (r instanceof EmailResource)
 					resources.add(r);
 				else if (r instanceof AimResource)
+					resources.add(r);
+				else if (r instanceof XmppResource)
 					resources.add(r);
 				// we filter out any non-"primary" resources for now
 			}

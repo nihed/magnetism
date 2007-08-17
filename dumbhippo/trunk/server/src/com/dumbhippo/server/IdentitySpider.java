@@ -17,6 +17,7 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
+import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.tx.RetryException;
@@ -56,8 +57,8 @@ public interface IdentitySpider {
 	public EmailResource lookupEmail(String email) throws NotFoundException;	
 	
 	/**
-	 * Gets a Resource object for the given AIM address, creating
-	 * it if necessary. Note that the result is a detached entity.
+	 * Get a Resource object for the given AIM address, creating
+	 * it if necessary.
 	 * 
 	 * Note that often if you do:
 	 *    resource = identitySpider.getAim(screenName);
@@ -81,6 +82,32 @@ public interface IdentitySpider {
 	 */
 	public AimResource lookupAim(String screenName) throws NotFoundException;
 	
+	/**
+	 * Get a Resource object for the given XMPP address, creating
+	 * it if necessary.
+	 * 
+	 * Note that often if you do:
+	 *    resource = identitySpider.getXmppp(screenName);
+	 * then resource.getScreenName().equals(screenName) 
+	 * will return false. This is because resources always
+	 * have the normalized form for XMPP addresses.
+	 * 
+	 * @param screenName the address
+	 * @return a resource for the address
+	 * @throws ValidationException if the AIM address is bogus
+	 * @throws RetryException 
+	 */
+	public XmppResource getXmpp(String screenName) throws ValidationException, RetryException;
+	
+	/**
+	 * Returns the XmppResource for a given screen name, or null if there is none.
+	 * Does not create a new XmppResource if it's not there already.
+	 * 
+	 * @param screenName
+	 * @return AimResource object
+	 */
+	public XmppResource lookupXmpp(String screenName) throws NotFoundException;
+
 	/**
 	 * Gets a Resource object for the given URL, creating
 	 * it if necessary. Note that the result is a detached entity.

@@ -629,11 +629,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doSendClaimLinkEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException, RetryException {
-		claimVerifier.sendClaimVerifierLink(viewpoint, viewpoint.getViewer(), address);
+		claimVerifier.sendClaimVerifierLinkEmail(viewpoint, viewpoint.getViewer(), address);
+	}
+	
+	public void doSendClaimLinkXmpp(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException, RetryException {
+		claimVerifier.sendClaimVerifierLinkXmpp(viewpoint, viewpoint.getViewer(), address);
 	}
 	
 	public void doSendClaimLinkAim(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException, RetryException {
-		claimVerifier.sendClaimVerifierLink(viewpoint, viewpoint.getViewer(), address);
+		claimVerifier.sendClaimVerifierLinkAim(viewpoint, viewpoint.getViewer(), address);
 	}
 
 	public void doRemoveClaimEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException {
@@ -661,6 +665,16 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			resource = identitySpider.lookupAim(address);
 		} catch (NotFoundException e) {
 			throw new HumanVisibleException("That AIM screen name isn't associated with any account");
+		}
+		identitySpider.removeVerifiedOwnershipClaim(viewpoint, viewpoint.getViewer(), resource);
+	}
+	
+	public void doRemoveClaimXmpp(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException {
+		Resource resource;
+		try {
+			resource = identitySpider.lookupXmpp(address);
+		} catch (NotFoundException e) {
+			throw new HumanVisibleException("That address isn't associated with any account");
 		}
 		identitySpider.removeVerifiedOwnershipClaim(viewpoint, viewpoint.getViewer(), resource);
 	}

@@ -57,7 +57,7 @@ public class ResourceClaimToken extends Token {
 	public long getExpirationPeriodInSeconds() {
 		if (resource instanceof EmailResource) {
 			return 60*60*24*3; // 3 days 
-		} else if (resource instanceof AimResource) {
+		} else if (resource instanceof AimResource || resource instanceof XmppResource) {
 			return 60*30; // half hour
 		} else {
 			return super.getExpirationPeriodInSeconds();

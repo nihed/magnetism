@@ -19,6 +19,11 @@
 	<property name="buildjar.dir" location="${target}/classes" />
 	<!-- *** stuff in bundled-classpath.external has to be added to application.xml also *** -->
 	<property name="bundled-classpath.external" value="smack-svn-local-build-2005-09-30.jar smackx-svn-local-build-2005-09-30.jar commons-fileupload-1.1.1.jar commons-io-1.2.jar dom4j*.jar slf4j-*.jar rome-*.jar jdom-1.0.jar mediarss.jar taste.jar tagsoup-1.0.jar ICOReader-1.04.jar"/>
+	<!-- We also "bundle" open of the jars from the openfire distribution and use it in the server code for JID manipulation; 
+             this also needs to be in application.xml; this jar will be in the classpath twice in the end, but that shouldn't
+	     cause problems (for this particular jar, anyways, other jars, like dom4j are touchy -->
+	<property name="openfire.lib" value="${dumbhippo.global.lib}/openfire/merge" />
+	<property name="openfire.jars" value="stringprep.jar"/>
 	<property name="bundled-classpath" value="dumbhippo-base.jar"/>	
 	<property name="bundled-deps.web" value="standard.jar" />
 	<property name="bundled-deps.client" value="" />
@@ -27,6 +32,9 @@
 		<pathelement path="${classpath}" />
 		<fileset dir="${lib}">
 			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${openfire.lib}">
+			<include name="${openfire.jars}" />
 		</fileset>
 		<fileset dir="${build.lib}">
 			<include name="**/*.jar" />
@@ -317,6 +325,7 @@
 		<copy file="${buildjar.dir}/dumbhippo-caches.par" todir="${build.deploy.ear}"/>
 		<copy todir="${build.deploy.ear}">
 			<fileset dir="${lib}" includes="${bundled-classpath.external}"/>
+			<fileset dir="${openfire.lib}" includes="${openfire.jars}"/>
 		</copy>
 		<copy todir="${build.deploy.ear}">
 			<fileset dir="${dumbhippo.global.trunkdir}/taste" includes="taste.jar"/>

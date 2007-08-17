@@ -5,6 +5,7 @@ import javax.ejb.Local;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.tx.RetryException;
@@ -54,9 +55,35 @@ public interface ClaimVerifier {
 	 * 
 	 * @param viewpoint viewpoint we're signed in as
 	 * @param user user to change
-	 * @param address the email or AIM address
+	 * @param address the email address
 	 * @throws HumanVisibleException any error to display
 	 * @throws RetryException 
 	 */
-	public void sendClaimVerifierLink(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException, RetryException;
+	public void sendClaimVerifierLinkEmail(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException, RetryException;
+
+	/**
+	 * Send email or an IM with a link that, when clicked, will verify the association of the given user 
+	 * with the given address.
+	 * 
+	 * @param viewpoint viewpoint we're signed in as
+	 * @param user user to change
+	 * @param address the AIM screen name
+	 * @throws HumanVisibleException any error to display
+	 * @throws RetryException 
+	 */
+	public void sendClaimVerifierLinkAim(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException, RetryException;
+
+	/**
+	 * Send email or an IM with a link that, when clicked, will verify the association of the given user 
+	 * with the given address.
+	 * 
+	 * @param viewpoint viewpoint we're signed in as
+	 * @param user user to change
+	 * @param address the XMPP JID
+	 * @throws HumanVisibleException any error to display
+	 * @throws RetryException 
+	 */
+	public void sendClaimVerifierLinkXmpp(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException, RetryException;
+
+	public void sendQueuedXmppLinks(String friendedJid, XmppResource fromResource);
 }

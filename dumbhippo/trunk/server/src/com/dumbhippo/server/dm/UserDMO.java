@@ -24,6 +24,7 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.DesktopSettings;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
@@ -128,6 +129,18 @@ public abstract class UserDMO extends DMObject<Guid> {
 			Resource r = ac.getResource();
 			if (r instanceof AimResource)
 				return ((AimResource)r).getScreenName();
+		}
+		
+		return null;
+	}
+	
+	@DMProperty
+	@DMFilter("viewer.canSeeFriendsOnly(this)")
+	public String getXmpp() {
+		for (AccountClaim ac : user.getAccountClaims()) {
+			Resource r = ac.getResource();
+			if (r instanceof XmppResource)
+				return ((XmppResource)r).getJid();
 		}
 		
 		return null;

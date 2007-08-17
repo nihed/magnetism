@@ -24,6 +24,7 @@ import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 
 import com.dumbhippo.Site;
 import com.dumbhippo.ThreadUtils;
@@ -333,5 +334,13 @@ public class MessageSender implements XmppMessageSenderProvider {
 		message.setBody(body);
 		
 		XMPPServer.getInstance().getPacketRouter().route(message);
+	}
+
+	public void sendAdminFriendRequest(String to, String from) {
+		Presence presence = new Presence(Presence.Type.subscribe);
+		presence.setTo(new JID(to));
+		presence.setFrom(new JID(from));
+		
+		XMPPServer.getInstance().getPacketRouter().route(presence);
 	}
 }

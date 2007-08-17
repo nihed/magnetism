@@ -75,6 +75,35 @@ dh.account.removeClaimAim = function(address) {
 					 });
 }
 
+dh.account.verifyXmpp = function() {
+	var xmppEntryNode = document.getElementById('dhXmppEntry');
+	if (xmppEntryNode.value.indexOf("@") < 0) {
+		dh.formtable.showStatusMessage('dhXmppEntry', "Enter an address, then click Verify");
+		return;
+	}
+	var address = xmppEntryNode.value;
+  	dh.server.doPOST("sendclaimlinkxmpp",
+			 	     { "address" : address },
+  					 function(type, data, http) {
+	  					 dh.formtable.showStatusMessage('dhXmppEntry', "We sent mail to '" + address + "', click on the link in that mail.");
+	  					 xmpppEntryNode.value = "";
+					 },
+					 function(type, error, http) {
+						 dh.formtable.showStatusMessage('dhXmppEntry', "Failed to talk to '" + address + "'- check the address, or just try again...");
+					 });
+}
+
+dh.account.removeClaimXmpp = function(address) {
+  	dh.server.doPOST("removeclaimxmpp",
+			 	     { "address" : address },
+  					 function(type, data, http) {
+  					 	dh.util.refresh();
+					 },
+					 function(type, error, http) {
+						 alert("Couldn't remove this address.");
+					 });
+}
+
 dh.account.hateExternalAccount = function(type, quip, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("hateexternalaccount",
 				     { "type" : type,

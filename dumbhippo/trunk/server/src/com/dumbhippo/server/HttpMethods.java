@@ -122,6 +122,10 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address" })
+	public void doSendClaimLinkXmpp(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException, RetryException;
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "address" })
 	public void doSendClaimLinkAim(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException, RetryException;
 	
 	@HttpContentTypes(HttpResponseData.NONE)
@@ -131,6 +135,10 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address" })
 	public void doRemoveClaimAim(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException;	
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "address" })
+	public void doRemoveClaimXmpp(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException;	
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( {} )	

@@ -134,6 +134,10 @@ tr.dh-email-address-spacer {
 	margin-right:	10px;
 }
 
+#dhXmppEntry {
+	margin-right:	10px;
+}
+
 .dh-love-hate-icon, .dh-add-icon {
     position:  relative;
     bottom:    1px;

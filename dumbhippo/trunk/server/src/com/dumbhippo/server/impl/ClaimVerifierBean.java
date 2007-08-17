@@ -1,5 +1,9 @@
 package com.dumbhippo.server.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.mail.internet.MimeMessage;
@@ -10,7 +14,9 @@ import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
+import com.dumbhippo.DateUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.botcom.BotTaskMessage;
 import com.dumbhippo.persistence.AimResource;
@@ -19,6 +25,7 @@ import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
+import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.AimQueueSender;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
@@ -26,6 +33,7 @@ import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonViewer;
+import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -58,6 +66,9 @@ public class ClaimVerifierBean implements ClaimVerifier {
 	@EJB
 	private AimQueueSender aimQueueSender;
 	
+	@EJB
+	private XmppMessageSender xmppMessageSender;
+	
 	private ResourceClaimToken getToken(final User user, final Resource resource) throws RetryException {	
 		if (user == null && resource == null)
 			throw new IllegalArgumentException("one of user/resource has to be non-null");
@@ -89,6 +100,26 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		});
 	}
 	
+	private List<ResourceClaimToken> getOutstandingTokens(final Resource resource)  {
+		// If the resource has already been claimed, there can be no outstanding tokens
+		if (resource.getAccountClaim() != null)
+			return Collections.emptyList();
+		
+		Query q;
+		
+		q = em.createQuery("SELECT t FROM ResourceClaimToken t WHERE t.resource = :resource");
+		q.setParameter("resource", resource);
+
+		List<ResourceClaimToken> results = new ArrayList<ResourceClaimToken>();
+		for (Object o : q.getResultList()) {
+			ResourceClaimToken token = (ResourceClaimToken)o;
+			if (token.isValid()) 
+				results.add(token);
+		}
+		
+		return results;
+	}
+	
 	public String getAuthKey(final User user, final Resource resource) throws RetryException {
 		return getToken(user, resource).getAuthKey();
 	}
@@ -98,52 +129,76 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		return token.getAuthURL(configuration.getBaseUrl(viewpoint));
 	}
 	
-	public void sendClaimVerifierLink(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException, RetryException {
+	public void sendClaimVerifierLinkEmail(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException, RetryException {
 		if (!viewpoint.isOfUser(user)) {
 			throw new HumanVisibleException("You aren't signed in as the person you want to add an address for");
 		}
-		if (address.contains("@")) {
-			EmailResource resource;
-			try {
-				resource = identitySpider.getEmail(address);
-			} catch (ValidationException e) {
-				throw new HumanVisibleException("That isn't a valid email address (" + e.getMessage() + ")");
-			}
-			String link = getClaimVerifierLink(viewpoint, user, resource);
-			MimeMessage message = mailer.createMessage(viewpoint, Mailer.SpecialSender.VERIFIER, resource.getEmail());
-			
-			StringBuilder bodyText = new StringBuilder();
-			XmlBuilder bodyHtml = new XmlBuilder();
-			
-			bodyText.append("\n");
-			bodyText.append("Click this link to add '" + resource.getEmail() + "' to your account: " + link + "\n");
-			bodyText.append("\n");
-			
-			bodyHtml.appendHtmlHead("");
-			bodyHtml.append("<body>\n");
-			bodyHtml.appendTextNode("a", "Click here to add '" + resource.getEmail() + "' to your account", "href", link);
-			bodyHtml.append("</body>\n</html>\n");
-			
-			mailer.setMessageContent(message, "Add address '" + resource.getEmail() + "' to your Mugshot account",
-					bodyText.toString(), bodyHtml.toString(), false);
-			mailer.sendMessage(message);
-		} else {
-			AimResource resource;
-			try {
-				resource = identitySpider.getAim(address);
-			} catch (ValidationException e) {
-				throw new HumanVisibleException(e.getMessage());
-			}
-			String link = getClaimVerifierLink(viewpoint, user, resource);
-			XmlBuilder bodyHtml = new XmlBuilder();
-			bodyHtml.appendTextNode("a", "Click to add '" + resource.getScreenName() + "' to your Mugshot account", "href", link);
-			bodyHtml.appendTextNode("p", "NOTE: anyone with access to this AIM account will be able to log in to your Mugshot account.");
-			
-			BotTaskMessage message = new BotTaskMessage(null, resource.getScreenName(), bodyHtml.toString());
-			aimQueueSender.sendMessage(message);
+		
+		EmailResource resource;
+		try {
+			resource = identitySpider.getEmail(address);
+		} catch (ValidationException e) {
+			throw new HumanVisibleException("That isn't a valid email address (" + e.getMessage() + ")");
 		}
+		String link = getClaimVerifierLink(viewpoint, user, resource);
+		MimeMessage message = mailer.createMessage(viewpoint, Mailer.SpecialSender.VERIFIER, resource.getEmail());
+		
+		StringBuilder bodyText = new StringBuilder();
+		XmlBuilder bodyHtml = new XmlBuilder();
+		
+		bodyText.append("\n");
+		bodyText.append("Click this link to add '" + resource.getEmail() + "' to your account: " + link + "\n");
+		bodyText.append("\n");
+		
+		bodyHtml.appendHtmlHead("");
+		bodyHtml.append("<body>\n");
+		bodyHtml.appendTextNode("a", "Click here to add '" + resource.getEmail() + "' to your account", "href", link);
+		bodyHtml.append("</body>\n</html>\n");
+		
+		mailer.setMessageContent(message, "Add address '" + resource.getEmail() + "' to your Mugshot account",
+				bodyText.toString(), bodyHtml.toString(), false);
+		mailer.sendMessage(message);
 	}
 	
+	public void sendClaimVerifierLinkAim(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException, RetryException {
+		if (!viewpoint.isOfUser(user)) {
+			throw new HumanVisibleException("You aren't signed in as the person you want to add an address for");
+		}
+
+		AimResource resource;
+		try {
+			resource = identitySpider.getAim(address);
+		} catch (ValidationException e) {
+			throw new HumanVisibleException(e.getMessage());
+		}
+		String link = getClaimVerifierLink(viewpoint, user, resource);
+		XmlBuilder bodyHtml = new XmlBuilder();
+		bodyHtml.appendTextNode("a", "Click to add '" + resource.getScreenName() + "' to your Mugshot account", "href", link);
+		bodyHtml.appendTextNode("p", "NOTE: anyone with access to this AIM account will be able to log in to your Mugshot account.");
+		
+		BotTaskMessage message = new BotTaskMessage(null, resource.getScreenName(), bodyHtml.toString());
+		aimQueueSender.sendMessage(message);
+	}
+	
+	public void sendClaimVerifierLinkXmpp(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException, RetryException {
+		if (!viewpoint.isOfUser(user)) {
+			throw new HumanVisibleException("You aren't signed in as the person you want to add an address for");
+		}
+
+		XmppResource resource;
+		try {
+			resource = identitySpider.getXmpp(address);
+		} catch (ValidationException e) {
+			throw new HumanVisibleException("That isn't a valid email address (" + e.getMessage() + ")");
+		}
+
+		String link = getClaimVerifierLink(viewpoint, user, resource);
+		String adminJid = configuration.getAdminJid(viewpoint);
+		
+		xmppMessageSender.sendAdminFriendRequest(resource.getJid(), adminJid);
+	}
+	
+
 	public void verify(Viewpoint viewpoint, ResourceClaimToken token, Resource resource) throws HumanVisibleException { 
 		User user;
 		if (viewpoint instanceof UserViewpoint) {
@@ -180,5 +235,26 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		}
 		
 		identitySpider.addVerifiedOwnershipClaim(user, resource);
+	}
+
+	private void sendXmppLink(Site site, ResourceClaimToken token) {
+		XmppResource resource = (XmppResource)token.getResource();
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("Click this link to add '" + resource.getHumanReadableString() + "' to your account: " + token.getAuthURL(configuration.getBaseUrl(site)) + "\n");
+		
+		// We include a timestamp in the message, to make it harder for someone 
+		// to make a claim link, then invite the owner to create an account and fool
+		// them into clicking on the old claim link
+		sb.append("(Requested from the account page ");
+		sb.append(DateUtils.formatTimeAgo(token.getCreationDate()));
+		sb.append(")\n");
+	}
+
+	public void sendQueuedXmppLinks(String friendedJid, XmppResource fromResource) {
+		for (ResourceClaimToken token : getOutstandingTokens(fromResource)) {
+			if (token.getResource() instanceof XmppResource)
+				sendXmppLink(configuration.siteFromAdminJid(friendedJid), token);
+		}
 	}
 }

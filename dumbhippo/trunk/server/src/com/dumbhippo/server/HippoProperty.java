@@ -18,6 +18,8 @@ public enum HippoProperty {
 	LUCENE_INDEXDIR("dumbhippo.server.lucene.indexdir", null),
 	AIMBOT_NAME("dumbhippo.server.aimbot.name", null),
 	AIM_PRESENCE_KEY("dumbhippo.server.aim.presence.key", null),
+	ADMIN_JID_MUGSHOT("dumbhippo.server.adminjid.mugshot", "admin@mugshot.org"),
+	ADMIN_JID_GNOME("dumbhippo.server.adminjid.gnome", "admin@online.gnome.org"),
 	AMAZON_ACCESS_KEY_ID("dumbhippo.server.amazon.accesskeyid", null),
 	AMAZON_SECRET_KEY("dumbhippo.server.amazon.secretkey", null),
 	AMAZON_ASSOCIATE_TAG_ID("dumbhippo.server.amazon.associatetag", null),
