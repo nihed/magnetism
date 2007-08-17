@@ -25,7 +25,9 @@ import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
@@ -49,6 +51,9 @@ public class MessengerGlueBean implements MessengerGlue {
 	
 	static private final Logger logger = GlobalSetup.getLogger(MessengerGlueBean.class);
 	
+	@EJB
+	private ClaimVerifier claimVerifier;
+
 	@EJB
 	private IdentitySpider identitySpider;
 	
@@ -368,5 +373,16 @@ public class MessengerGlueBean implements MessengerGlue {
 		// don't do this again
 		identitySpider.setMusicSharingPrimed(user, true);
 		logger.debug("Primed user with {} tracks", tracks.size());	
+	}
+
+	public void sendQueuedXmppMessages(String to, String from) {
+		XmppResource fromResource;
+		try {
+			fromResource = identitySpider.lookupXmpp(from);
+		} catch (NotFoundException e) {
+			return; // Ignore
+		}
+		
+		claimVerifier.sendQueuedXmppLinks(to, fromResource);
 	}
 }

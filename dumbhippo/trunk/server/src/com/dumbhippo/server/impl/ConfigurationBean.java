@@ -227,4 +227,30 @@ public class ConfigurationBean implements Configuration, SimpleServiceMBean {
 	public DownloadConfiguration getDownloads() {
 		return downloads;
 	}
+
+	public String getAdminJid(Site site) {
+		if (site == Site.GNOME) {
+			return getPropertyFatalIfUnset(HippoProperty.ADMIN_JID_GNOME);
+		} else if (site == Site.MUGSHOT) {
+			return getPropertyFatalIfUnset(HippoProperty.ADMIN_JID_MUGSHOT);
+		} else {
+			warnOncePerUniqueTrace(new Throwable("admin JID requested from context where we don't know which one to use, site=" + site.name()));
+			return getPropertyFatalIfUnset(HippoProperty.ADMIN_JID_MUGSHOT);
+		}
+	}
+
+	public String getAdminJid(Viewpoint viewpoint) {
+		return getAdminJid(viewpoint.getSite());
+	}
+	
+	public Site siteFromAdminJid(String adminJid) {
+		if (getAdminJid(Site.GNOME).equals(adminJid))
+			return Site.GNOME;
+		else if (getAdminJid(Site.MUGSHOT).equals(adminJid))
+			return Site.MUGSHOT;
+		else {
+			logger.warn("Can't map JID {} onto a site", adminJid);
+			return Site.NONE;
+		}
+	}
 }

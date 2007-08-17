@@ -46,6 +46,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBioChangedRevision;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.Validators;
+import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.Enabled;
@@ -207,6 +208,32 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		});
 	}
 
+	public XmppResource getXmpp(final String jidRaw) throws ValidationException, RetryException {
+		final String screenName = XmppResource.canonicalize(jidRaw);
+		return TxUtils.runNeedsRetry(new TxCallable<XmppResource>() {
+			public XmppResource call() {
+				Query q;
+
+				q = em.createQuery("from XmppResource a where a.screenName = :name");
+				q.setParameter("name", screenName);
+
+				XmppResource res;
+				try {
+					res = (XmppResource) q.getSingleResult();
+				} catch (NoResultException e) {
+					try {
+						res = new XmppResource(screenName);
+					} catch (ValidationException v) {
+						throw new RuntimeException(v); // Already validated above
+					}
+					em.persist(res);
+				}
+
+				return res;
+			}
+		});
+	}
+
 	private <T extends Resource> T lookupResourceByName(Class<T> klass,	String identifier, String name) throws NotFoundException {
 		Query q;
 		String className = klass.getName();
@@ -240,6 +267,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			throw new NotFoundException("Not a valid email address", e);
 		}
 		return lookupResourceByName(EmailResource.class, "email", email);
+	}
+
+	public XmppResource lookupXmpp(String jid) throws NotFoundException {
+		try {
+			jid = XmppResource.canonicalize(jid);
+		} catch (ValidationException e) {
+			throw new NotFoundException("Not a valid AIM address", e);
+		}
+		return lookupResourceByName(XmppResource.class, "jid", jid);
 	}
 
 	public LinkResource lookupLink(final URL url) throws NotFoundException {
@@ -349,6 +385,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "email");
 		else if (res instanceof AimResource)
 			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "aim");
+		else if (res instanceof XmppResource)
+			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "xmpp");
 		
 		// People may have listed the newly claimed resource as a contact
 		Collection<Guid> newContacters = findResourceContacters(res);
@@ -386,6 +424,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 					DataService.currentSessionRW().changed(UserDMO.class, owner.getGuid(), "email");
 				else if (res instanceof AimResource)
 					DataService.currentSessionRW().changed(UserDMO.class, owner.getGuid(), "aim");
+				else if (res instanceof XmppResource)
+					DataService.currentSessionRW().changed(UserDMO.class, owner.getGuid(), "xmpp");
 				
 				// People may have listed resource as a contact
 				if (!oldContacters.isEmpty()) {

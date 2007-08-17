@@ -28,6 +28,7 @@ import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.VersionedEntity;
+import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.web.ListBean;
 
 /**
@@ -290,6 +291,10 @@ public class PersonView extends EntityView {
 	
 	public Collection<AimResource> getAllAims() {
 		return getMany(AimResource.class);
+	}
+	
+	public Collection<XmppResource> getAllXmpps() {
+		return getMany(XmppResource.class);
 	}
 	
 	public Collection<Resource> getAllResources() {

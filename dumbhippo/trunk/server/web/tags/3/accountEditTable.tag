@@ -111,6 +111,30 @@
                          </tbody>
 		    </table>
 	    </dht2:formTableRow>
+	    <dht2:formTableRow label="Google Talk / Jabber" icon="/images3/${buildStamp}/mail_icon.png" info="Only your Mugshot friends see this.">
+		    <table cellpadding="0" cellspacing="0" class="dh-address-table">
+			    <tbody>
+				<c:forEach items="${account.person.allXmpps}" var="xmpp">
+					<tr>
+						<td><c:out value="${xmpp.jid}"/></td>
+						<td>
+							<c:set var="xmppJs" scope="page">
+								<jsp:attribute name="value">
+									<dh:jsString value="${xmpp.jidl}"/>
+								</jsp:attribute>
+							</c:set>
+							<a href="javascript:dh.account.removeClaimXmpp(${xmppJs});">remove</a>
+						</td>
+					</tr>
+					<tr class="dh-email-address-spacer">
+						<td></td>
+						<td></td>
+					</tr>
+				</c:forEach>
+				<tr><td><dht2:textInput id='dhXmppEntry'/></td><td><img id='dhXmppVerifyButton' src="/${siteImageDir}/${buildStamp}/verify_button.gif" onclick="dh.account.verifyXmpp();"/></td></tr>
+                         </tbody>
+		    </table>
+	    </dht2:formTableRow>
 	    <dht2:formTableRow label="AIM" icon="/images3/${buildStamp}/aim_icon.png" info="Only your Mugshot friends see this.">
 		    <c:forEach items="${account.person.allAims}" var="aim" varStatus="status">
 			    <div class="dh-aim-address">

@@ -164,4 +164,6 @@ public interface MessengerGlue {
 	public void handleMusicChanged(UserViewpoint viewpoint, Map<String, String> properties) throws RetryException;
 
 	public void handleMusicPriming(UserViewpoint viewpoint, List<Map<String, String>> primingTracks) throws RetryException;
+
+	public void sendQueuedXmppMessages(String to, String from);
 }

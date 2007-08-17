@@ -168,7 +168,7 @@ public class InvitationToken extends Token {
 	public long getExpirationPeriodInSeconds() {
 		if (invitee instanceof EmailResource) {
 			return 60*60*24*90; // 90 days 
-		} else if (invitee instanceof AimResource) {
+		} else if (invitee instanceof AimResource || invitee instanceof XmppResource) {
 			return 60*60*24*7; // 7 days
 		} else {
 			return super.getExpirationPeriodInSeconds();
