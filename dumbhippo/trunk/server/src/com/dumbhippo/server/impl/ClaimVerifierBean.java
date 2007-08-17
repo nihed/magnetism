@@ -253,8 +253,11 @@ public class ClaimVerifierBean implements ClaimVerifier {
 
 	public void sendQueuedXmppLinks(String friendedJid, XmppResource fromResource) {
 		for (ResourceClaimToken token : getOutstandingTokens(fromResource)) {
-			if (token.getResource() instanceof XmppResource)
+			if (token.getResource() instanceof XmppResource) {
+				logger.debug("Having an ResourceClaimToken for {} for user {} sending a claim link",
+						     fromResource, token.getUser());				
 				sendXmppLink(configuration.siteFromAdminJid(friendedJid), token);
+			}
 		}
 	}
 }

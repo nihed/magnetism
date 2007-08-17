@@ -376,10 +376,12 @@ public class MessengerGlueBean implements MessengerGlue {
 	}
 
 	public void sendQueuedXmppMessages(String to, String from) {
+		logger.debug("{} has now added us to their roster, sending queued messages from {}" , from , to);
 		XmppResource fromResource;
 		try {
 			fromResource = identitySpider.lookupXmpp(from);
 		} catch (NotFoundException e) {
+			logger.debug("Couldn't find XmppResource for {}, ignoring", from);
 			return; // Ignore
 		}
 		

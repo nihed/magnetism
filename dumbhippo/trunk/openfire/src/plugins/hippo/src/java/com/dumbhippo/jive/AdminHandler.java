@@ -81,8 +81,18 @@ public class AdminHandler implements RoutableChannelHandler{
 		        
 		        XMPPServer.getInstance().getPacketRouter().route(reply);
 		        
-		        EJBUtil.defaultLookup(MessengerGlue.class).sendQueuedXmppMessages(packet.getTo().toString(), packet.getFrom().toString());
+		        // Not really sure this is necessary
 		        
+				Presence initialPresence = new Presence();
+				
+		        initialPresence.setFrom(packet.getTo());
+		        initialPresence.setTo(packet.getFrom());
+		        
+		        XMPPServer.getInstance().getPacketRouter().route(initialPresence);
+
+			} else if (presence.getType() == Presence.Type.subscribed) {
+		        EJBUtil.defaultLookup(MessengerGlue.class).sendQueuedXmppMessages(packet.getTo().toString(), packet.getFrom().toString());
+
 			} else if (presence.getType() == Presence.Type.probe) {
 				Presence reply = new Presence();
 				
