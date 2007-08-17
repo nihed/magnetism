@@ -250,12 +250,14 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		sb.append("(Requested from the account page ");
 		sb.append(DateUtils.formatTimeAgo(token.getCreationDate()));
 		sb.append(")\n");
+		
+		xmppMessageSender.sendAdminMessage(resource.getJid(), configuration.getAdminJid(site), sb.toString());
 	}
 
 	public void sendQueuedXmppLinks(String friendedJid, XmppResource fromResource) {
 		for (ResourceClaimToken token : getOutstandingTokens(fromResource)) {
 			if (token.getResource() instanceof XmppResource) {
-				logger.debug("Having an ResourceClaimToken for {} for user {} sending a claim link",
+				logger.debug("Have an ResourceClaimToken for {} for user {} sending a claim link",
 						     fromResource, token.getUser());				
 				sendXmppLink(configuration.siteFromAdminJid(friendedJid), token);
 			}
