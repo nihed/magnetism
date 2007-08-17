@@ -1843,30 +1843,54 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
         const char *key = lm_message_node_get_attribute(child, "key");
         const char *value = lm_message_node_get_value(child);
         gboolean emit;
-
+        gboolean value_parsed;
+        
         if (key == NULL) {
             g_debug("ignoring node '%s' with no 'key' attribute in prefs reply",
                     child->name);
             continue;
         }
+
+        value_parsed = value != NULL && parse_bool(value);
         
         emit = TRUE;
         if (strcmp(key, "musicSharingEnabled") == 0) {
-            music_sharing_enabled = value != NULL && parse_bool(value);
+            music_sharing_enabled = value_parsed;
             saw_music_sharing_enabled = TRUE;
+
+            /* For now, always assume it's disabled if we aren't logged in
+             * to the mugshot.org server, since there's no UI for this
+             * otherwise.
+             */
+            if (connection->auth_server_type == HIPPO_SERVER_DESKTOP)
+                music_sharing_enabled = FALSE;
+            
         } else if (strcmp(key, "musicSharingPrimed") == 0) {
-            music_sharing_primed = value != NULL && parse_bool(value);
+            music_sharing_primed = value_parsed;
             saw_music_sharing_primed = TRUE;
+
+            /* For now, always assume it's already primed if we aren't
+             * logged in to the mugshot.org server, since there's no
+             * UI for this otherwise.
+             */
+            if (connection->auth_server_type == HIPPO_SERVER_DESKTOP)
+                music_sharing_primed = TRUE;
+            
         } else if (strcmp(key, "applicationUsageEnabled") == 0) {
-            application_usage_enabled = value != NULL && parse_bool(value);
+            application_usage_enabled = value_parsed;
             saw_application_usage_enabled = TRUE;
+
+            /* We collect app usage even for online.gnome.org since BigBoard
+             * need it, so it's exposed in the UI there
+             */
+            
         } else {
             g_debug("Unknown pref '%s'", key);
             emit = FALSE;
         }
         if (emit)
         	g_signal_emit(G_OBJECT(connection), signals[PREF_CHANGED], 0,
-        	              key, parse_bool(value));
+        	              key, value_parsed);
     }
     
     /* Important to set primed then enabled, so when the signal is emitted from the 
