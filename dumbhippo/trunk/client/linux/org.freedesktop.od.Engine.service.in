@@ -1,3 +1,4 @@
 [D-BUS Service]
-Name=org.mugshot.Mugshot
+Name=org.freedesktop.od.Engine
 Exec=@bindir@/mugshot --no-show-window
+
