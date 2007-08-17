@@ -5,11 +5,48 @@ import hippo
 
 import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
+import bigboard.logins
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox, ActionLink
 import bigboard.stock
 
 import appbrowser, apps_widgets, apps_directory
 
+class WebApplication(object):
+    def __init__(self, url, name, description, iconurl):
+        self.url = url
+        self.name = name
+        self.description = description
+        self.iconurl = iconurl
+        
+    def get_id(self):
+        return self.url
+    
+    def get_name(self):
+        return self.name
+    
+    def get_generic_name(self):
+        return self.get_description()
+    
+    def get_icon_url(self):
+        return self.iconurl
+    
+    def get_local_pixbuf(self):
+        return None
+    
+    def get_description(self):
+        return self.description
+    
+    def get_category(self):
+        return "Web"
+    
+    def is_installed(self):
+        return True
+    
+    def launch(self):
+        return libbig.show_url(self.url)
+
+WEB_APPS = {'gmail.com': WebApplication('http://mail.google.com', 'GMail', 'Mail', 'http://mail.google.com/mail/images/favicon.ico')}
+        
 class Application(object):
     __slots__ = ['__app', '__install_checked', '__desktop_entry', '__menu_entry']
     def __init__(self, mugshot_app=None, menu_entry=None):
@@ -54,6 +91,9 @@ class Application(object):
 
     def get_is_excluded(self):
         return self.__menu_entry and self.__menu_entry.get_is_excluded()
+        
+    def get_icon_url(self):
+        return self.__app and self.__app.get_icon_url()
         
     def get_local_pixbuf(self):
         if self.__desktop_entry:
@@ -133,8 +173,9 @@ class AppDisplayLauncher(apps_widgets.AppDisplay):
   
 
 class AppsStock(bigboard.stock.AbstractMugshotStock):
+    WEBAPPS_SET_SIZE = 3
     STATIC_SET_SIZE = 7
-    DYNAMIC_SET_SIZE = 7    
+    DYNAMIC_SET_SIZE = 1
     STATIFICATION_TIME_SEC = 60 * 60 #* 24 * 3; # 3 days
     __gsignals__ = {
         "all-apps-loaded" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
@@ -148,13 +189,15 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__message_link.connect("button-press-event", lambda link, event: self.__on_message_link())
         self.__message_link_url = None
         self.__subtitle = hippo.CanvasText(font="Bold 12px")
+        self.__web_set = CanvasVBox()
         self.__static_set = CanvasVBox()
         self.__dynamic_set = CanvasVBox()
         
         self.__box.append(self.__message)
         self.__box.append(self.__message_link)        
         self.__box.append(self.__subtitle)        
-        
+ 
+        self.__box.append(self.__web_set)
         self.__box.append(self.__static_set)
         self.__box.append(self.__dynamic_set)        
         self.__box.set_child_visible(self.__dynamic_set, False)
@@ -176,6 +219,8 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__apps = {} # mugshot app -> app
         # apps installed locally and not known in Mugshot
         self.__local_apps = {} # desktop -> app
+
+        bigboard.logins.get_logins().connect('changed', lambda *args: self.__sync())
 
         ad = apps_directory.get_app_directory()
         ad.connect('changed', self.__on_local_apps_changed)
@@ -320,6 +365,12 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__set_message(None)        
              
         self.__box.set_child_visible(self.__dynamic_set, False)
+        
+        self.__web_set.remove_all()
+        for domain,login in bigboard.logins.get_logins().iter_logins():
+            if WEB_APPS.has_key(domain):
+                self.__web_set.append(apps_widgets.AppDisplay(WEB_APPS[domain]))
+        
         self.__static_set.remove_all()
         self.__static_set_ids = {}
         for i, mugshot_app in enumerate(self._mugshot.get_pinned_apps() or []):

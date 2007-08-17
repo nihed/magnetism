@@ -310,6 +310,9 @@ class Google(gobject.GObject):
     def have_auth(self):
         return (self.__username is not None) and (self.__password is not None)
 
+    def get_auth(self):
+        return (self.__username, self.__password)
+
     def __with_login_info(self, func, reauth=False):
         """Call func after we get username and password"""
 
