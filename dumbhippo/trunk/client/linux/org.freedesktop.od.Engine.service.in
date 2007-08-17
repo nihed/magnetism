@@ -1,4 +1,5 @@
 [D-BUS Service]
+## This is the Online Desktop Engine, a D-Bus service that proxies to an Internet server
 Name=org.freedesktop.od.Engine
 Exec=@bindir@/mugshot --no-show-window
 
