@@ -87,6 +87,7 @@ public class ClaimVerifierBean implements ClaimVerifier {
 					token = (ResourceClaimToken) q.getSingleResult();
 					if (token.isExpired()) {
 						em.remove(token);
+						em.flush();
 						throw new NoResultException("found expired token, making a new one");
 					}
 				} catch (NoResultException e) {
