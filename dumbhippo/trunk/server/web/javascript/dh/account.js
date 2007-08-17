@@ -85,8 +85,8 @@ dh.account.verifyXmpp = function() {
   	dh.server.doPOST("sendclaimlinkxmpp",
 			 	     { "address" : address },
   					 function(type, data, http) {
-	  					 dh.formtable.showStatusMessage('dhXmppEntry', "We sent mail to '" + address + "', click on the link in that mail.");
-	  					 xmpppEntryNode.value = "";
+	  					 dh.formtable.showStatusMessage('dhXmppEntry', "We've send a verification link to '" + address "'; you may need to approve adding us as friend first.");
+	  					 xmppEntryNode.value = "";
 					 },
 					 function(type, error, http) {
 						 dh.formtable.showStatusMessage('dhXmppEntry', "Failed to talk to '" + address + "'- check the address, or just try again...");
