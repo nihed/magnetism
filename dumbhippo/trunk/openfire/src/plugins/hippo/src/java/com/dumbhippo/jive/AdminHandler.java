@@ -18,7 +18,6 @@ import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
 import com.dumbhippo.server.MessengerGlue;
-import com.dumbhippo.server.impl.MessengerGlueBean;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class AdminHandler implements RoutableChannelHandler{
