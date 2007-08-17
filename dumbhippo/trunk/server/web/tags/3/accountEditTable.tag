@@ -121,7 +121,7 @@
 						<td>
 							<c:set var="xmppJs" scope="page">
 								<jsp:attribute name="value">
-									<dh:jsString value="${xmpp.jidl}"/>
+									<dh:jsString value="${xmpp.jid}"/>
 								</jsp:attribute>
 							</c:set>
 							<a href="javascript:dh.account.removeClaimXmpp(${xmppJs});">remove</a>
