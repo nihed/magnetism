@@ -122,6 +122,13 @@ public interface AccountSystem {
 	 */
 	public User getCharacter(Character whichOne);
 	
+	/** 
+	 * Checks whether the given user is one of the special characters.
+	 * @param user
+	 * @return
+	 */
+	public boolean isSpecialCharacter(User user);	
+	
 	/**
 	 * Returns the "main" character for the site, which is the Mugshot or GNOME 
 	 *  character. Should never fail since characters are created on startup.

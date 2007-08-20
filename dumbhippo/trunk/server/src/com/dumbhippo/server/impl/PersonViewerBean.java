@@ -198,11 +198,9 @@ public class PersonViewerBean implements PersonViewer {
 		case SPECIAL_CHARACTER_STATUS:
 			boolean isSpecialCharacter = false;
 			if (pv.getUser() != null) {
-				for (com.dumbhippo.server.Character c : com.dumbhippo.server.Character.values()) {
-					if (pv.getUser().equals(accountSystem.getCharacter(c))) {
+				if (accountSystem.isSpecialCharacter(pv.getUser())) {
 						isSpecialCharacter = true;
 						break;
-					}
 				}
 			}
 			

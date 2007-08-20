@@ -86,7 +86,6 @@ import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.AmazonUpdater;
-import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.ClaimVerifier;
@@ -889,71 +888,47 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		out.flush();
 	}
 	
-	public void doInviteSelf(OutputStream out, HttpResponseData contentType, String address, String promotion) throws IOException, RetryException {
+	public void doInviteSelf(OutputStream out, HttpResponseData contentType, Viewpoint viewpoint, String address, String promotion) throws IOException, RetryException {
 		if (contentType != HttpResponseData.XML)
 			throw new IllegalArgumentException("only support XML replies");
 
-		String note = null;
+		String note = null;		
 		
-		Character character;
-		
-		PromotionCode promotionCode = null;
-		
+		PromotionCode promotionCode;
 		try {
 			promotionCode = PromotionCode.check(promotion);
-			switch (promotionCode) {
-			case MUSIC_INVITE_PAGE_200602:
-				// not valid at the moment
-				character = null;
-				// character = Character.MUSIC_GEEK;
-				break;
-			case GENERIC_LANDING_200606:
-                // not valid at the moment
-				character = null;
-				// character = Character.MUGSHOT;
-				break;
-			case SUMMIT_LANDING_200606:
-				// not valid at the moment
-				character = null;
-				// character = Character.MUGSHOT;
-				break;
-			case OPEN_SIGNUP_200609:
-				character = Character.MUGSHOT;
-				break;
-			default:
-				character = null;
-				break;
-			}
-		
 		} catch (NotFoundException e) {
-			character = null;
+			// we should probably throw an exception here, but we ignore 
+			// the code anyway so not worth figuring out
+			promotionCode = PromotionCode.OPEN_SIGNUP_200609;
 		}
 		
-		if (character == null) {
-			note = "The limited-time offer has expired!";
-		} else {
-			User inviter = accountSystem.getCharacter(character);
-			
-			try {
-				if (!inviter.getAccount().canSendInvitations(1)) {
-					wantsInSystem.addWantsIn(address);				    
-					note = "Sorry, someone got there first! No more invitations available right now. We saved your address and will let you know when we have room for more.";
-				} else {
-					// this does NOT check whether the account has invitations left,
-					// that's why we do it above.
-					// FIXME handle a "GNOME" rather than "MUGSHOT" invite
-					note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter, Site.MUGSHOT), promotionCode, address,
-								"Mugshot Invitation", "");
-					if (note == null)
-						note = "Your invitation is on its way (check your email)";
-				}
-			} catch (ValidationException e) {
-			    // FIXME should switch this over to XmlMethod so we can display a custom error
-				//   to the user; right now we validate in Javascript
-				//   so this (and the resulting "Something went wrong! Reload the page and try again.")
-				//   shouldn't get hit in normal operation.
-			    throw new RuntimeException("Invalid email address", e);				
+		User inviter = accountSystem.getSiteCharacter(viewpoint.getSite());
+		
+		try {
+			if (!inviter.getAccount().canSendInvitations(1)) {
+				wantsInSystem.addWantsIn(address);				    
+				note = "Sorry, someone got there first! No more invitations available right now. We saved your address and will let you know when we have room for more.";
+			} else {
+				// this does NOT check whether the account has invitations left,
+				// that's why we do it above.
+				String subject;
+				if (viewpoint.getSite() == Site.GNOME)
+					subject = "GNOME Online Invitation";
+				else
+					subject = "Mugshot Invitation"; 
+						
+				note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter, viewpoint.getSite()), promotionCode, address,
+							subject, "");
+				if (note == null)
+					note = "Your invitation is on its way (check your email)";
 			}
+		} catch (ValidationException e) {
+		    // FIXME should switch this over to XmlMethod so we can display a custom error
+			//   to the user; right now we validate in Javascript
+			//   so this (and the resulting "Something went wrong! Reload the page and try again.")
+			//   shouldn't get hit in normal operation.
+		    throw new RuntimeException("Invalid email address", e);				
 		}
 		
 		if (note == null)

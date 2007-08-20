@@ -564,8 +564,14 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			return "Your invitation was not sent because you are out of invitation vouchers."; 
 		} else if (result == CreateInvitationResult.ALREADY_HAS_ACCOUNT) {
 			User user = spider.lookupUserByResource(viewpoint, invitee);
-			return invitee.getHumanReadableString() + " already has an account '" + user.getNickname() + "', now added to your friends list.";
-		} else { 
+			String hasAccount = invitee.getHumanReadableString() + " already has an account '" + user.getNickname() + "'";
+			
+			// special character invites you on the /signup page if you have no account
+			if (!accounts.isSpecialCharacter(inviter))
+				return hasAccount + "(now added to your friends list).";
+			else
+				return hasAccount + ".";
+		} else {
 			// note should be null or contain INVITATION_SUCCESS_STRING to indicate a successful invitation
 			if (result == CreateInvitationResult.REPEAT_INVITE) {
 				note = INVITATION_SUCCESS_STRING + ", another invitation was sent to " + invitee.getHumanReadableString() + ".";				
@@ -777,13 +783,15 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	static private class InviteMessageContent extends MessageContent {
 
+		private Site site;
 		private String subject;
 		private String message;
 		private String inviteUrl;
 		private String inviterName;
 		private String inviterPageUrl;
 		
-		InviteMessageContent(String subject, String message, String inviteUrl, String inviterName, String inviterPageUrl) {
+		InviteMessageContent(Site site, String subject, String message, String inviteUrl, String inviterName, String inviterPageUrl) {
+			this.site = site;
 			this.subject = subject;
 			this.message = message != null ? message.trim() : "";
 			this.inviteUrl = inviteUrl;
@@ -804,9 +812,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			
 			String intro;
 			if (inviterName != null)
-				intro = "This is an invitation to join the Mugshot service from " + inviterName + ".";
+				intro = "This is an invitation to join the " + site.getSiteName() + " service from " + inviterName + ".";
 			else
-				intro = "This is an invitation to join the Mugshot service.";
+				intro = "This is an invitation to join the " + site.getSiteName() + " service.";
 			
 			appendParagraph(messageText, messageHtml, intro);
 			
@@ -820,13 +828,13 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			appendLinkAsBlock(messageText, messageHtml, null, inviteUrl);
 			
 			if (inviterName != null && inviterPageUrl != null) {
-				appendParagraph(messageText, messageHtml, "See " + inviterName + "'s Mugshot page:");
+				appendParagraph(messageText, messageHtml, "See " + inviterName + "'s page:");
 				appendLinkAsBlock(messageText, messageHtml, null, inviterPageUrl);
 			}
 			
 			appendParagraph(messageText, messageHtml, "Thanks!");
 			
-			appendParagraph(messageText, messageHtml, "- Mugshot.org");
+			appendParagraph(messageText, messageHtml, "- " + site.getSiteName());
 			
 			closeStandardHtmlTemplate(messageHtml);
 		}
@@ -864,9 +872,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		
 		if (subject == null || subject.trim().length() == 0) {
 			if (isMugshotInvite)
-				subject = "Your Mugshot Invitation";
+				subject = "Your " + viewpoint.getSite().getSiteName() + " Invitation";
 			else
-				subject = "Invitation from " + inviterName + " to join Mugshot";				
+				subject = "Invitation from " + inviterName + " to join " + viewpoint.getSite().getSiteName();				
 		}
 				
 		String inviteUrl = invite.getAuthURL(baseurlObject);
@@ -877,11 +885,15 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			inviteUrl += "&inviter=";
 			inviteUrl += inviter.getId();
 		}
-				
-		mailer.setMessageContent(msg,
-				new InviteMessageContent(subject, message, inviteUrl,
+		
+		String inviterPageUrl = null;
+		if (!isMugshotInvite && viewpoint.getSite() != Site.GNOME)
+			inviterPageUrl = baseurl + viewedInviter.getHomeUrl();
+		
+		mailer.setMessageContent(msg, viewpoint.getSite(),
+				new InviteMessageContent(viewpoint.getSite(), subject, message, inviteUrl,
 						isMugshotInvite ? null : inviterName,
-						isMugshotInvite ? null : baseurl + viewedInviter.getHomeUrl()));
+						inviterPageUrl));
 		
 		final MimeMessage finalizedMessage = msg;
 		

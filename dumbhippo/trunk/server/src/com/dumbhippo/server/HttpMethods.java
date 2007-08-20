@@ -180,7 +180,7 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "address", "promotion" })
-	public void doInviteSelf(OutputStream out, HttpResponseData contentType, String address, String promotion) throws IOException, RetryException;
+	public void doInviteSelf(OutputStream out, HttpResponseData contentType, Viewpoint viewpoint, String address, String promotion) throws IOException, RetryException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "address", "subject", "message", "suggestedGroupIds" })
