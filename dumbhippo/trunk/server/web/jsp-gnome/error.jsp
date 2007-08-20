@@ -24,7 +24,7 @@
 	<gnome:stylesheet name="error"/>
 </head>
 <body>
-	<gnome:page>
+	<gnome:page currentPageLink="error">
 		<p class="gnome-error-header">
 			<c:choose>
 				<c:when test="${!empty errorHtml}">

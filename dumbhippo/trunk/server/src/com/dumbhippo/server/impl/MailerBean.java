@@ -101,7 +101,7 @@ public class MailerBean implements Mailer {
 				// have an AIM, when we allow such users in practice, we can change this to possibly
 				// use users's @aol.com address, though it's quite possible that the person does not
 				// really use this address
-				internetAddress = new InternetAddress(fallbackAddress.toString());
+				internetAddress = new InternetAddress(fallbackAddress.getSiteAddress(viewpoint.getSite()));
 			}
 		} catch (AddressException e) {
 			throw new RuntimeException(e);	
@@ -135,7 +135,7 @@ public class MailerBean implements Mailer {
 
 	public MimeMessage createMessage(Viewpoint viewpoint, SpecialSender from, String to) {
 		
-		InternetAddress fromAddress = createAddressFromString(from.toString());
+		InternetAddress fromAddress = createAddressFromString(from.getSiteAddress(viewpoint.getSite()));
 		InternetAddress toAddress = createAddressFromString(to);
 		
 		return createMessage(viewpoint.getSite(), fromAddress, toAddress);
@@ -144,14 +144,14 @@ public class MailerBean implements Mailer {
 	public MimeMessage createMessage(SpecialSender from, UserViewpoint viewpointReplyTo, 
 			                         SpecialSender viewpointFallbackAddress, String to) {
 		
-		InternetAddress fromAddress = createAddressFromString(from.toString());
+		InternetAddress fromAddress = createAddressFromString(from.getSiteAddress(viewpointReplyTo.getSite()));
 		InternetAddress replyToAddress = createAddressFromViewpoint(viewpointReplyTo, viewpointFallbackAddress);
 		InternetAddress toAddress = createAddressFromString(to);
 		
 		return createMessage(viewpointReplyTo.getSite(), fromAddress, replyToAddress, toAddress);
 	}
 
-	private MimeBodyPart createHtmlBodyPart(String bodyHtml, boolean htmlUsesMugshotLogo) throws MessagingException {
+	private MimeBodyPart createHtmlBodyPart(Site site, String bodyHtml, boolean htmlUsesMugshotLogo) throws MessagingException {
 		// htmlPart contains htmlMultipart contains htmlMessagePart/htmlImagePart
 		MimeBodyPart htmlPart = new MimeBodyPart();
 		
@@ -164,7 +164,12 @@ public class MailerBean implements Mailer {
 		
 		if (htmlUsesMugshotLogo) {
 			MimeBodyPart htmlImagePart = new MimeBodyPart();
-			DataSource fds = new FileDataSource(new File(configuration.getWebRealPath(), "/images3/mugshot_logo_email.gif"));
+			String img;
+			if (site == Site.GNOME)
+				img = "/images-gnome/gnome_logo.png";
+			else
+				img = "/images3/mugshot_logo_email.gif";
+			DataSource fds = new FileDataSource(new File(configuration.getWebRealPath(), img));
 			htmlImagePart.setDataHandler(new DataHandler(fds));
 			htmlImagePart.setHeader("Content-ID", "<mugshotlogo>");
 			htmlMultipart.addBodyPart(htmlImagePart);
@@ -175,14 +180,14 @@ public class MailerBean implements Mailer {
 		return htmlPart;
 	}
 	
-	public void setMessageContent(MimeMessage message, String subject, String bodyText, String bodyHtml, boolean htmlUsesMugshotLogo) {
+	public void setMessageContent(MimeMessage message, Site site, String subject, String bodyText, String bodyHtml, boolean htmlUsesMugshotLogo) {
 		try {
 			message.setSubject(subject);
 			
 			MimeBodyPart textPart = new MimeBodyPart();
 			textPart.setText(bodyText.toString(), "UTF-8");
 	
-			MimeBodyPart htmlPart = createHtmlBodyPart(bodyHtml, htmlUsesMugshotLogo);
+			MimeBodyPart htmlPart = createHtmlBodyPart(site, bodyHtml, htmlUsesMugshotLogo);
 			
 			// "alternative" means display only one or the other, "mixed" means both
 			MimeMultipart textOrHtmlPart = new MimeMultipart("alternative");
@@ -198,8 +203,8 @@ public class MailerBean implements Mailer {
 		}
 	}
 	
-	public void setMessageContent(MimeMessage message, MessageContent content) {
-		setMessageContent(message, content.getSubject(), content.getTextAlternative(), content.getHtmlAlternative(), content.getHtmlReferencesLogoImage());
+	public void setMessageContent(MimeMessage message, Site site, MessageContent content) {
+		setMessageContent(message, site, content.getSubject(), content.getTextAlternative(), content.getHtmlAlternative(), content.getHtmlReferencesLogoImage());
 	}
 	
 	public void sendMessage(final MimeMessage message) {

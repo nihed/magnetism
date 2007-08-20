@@ -202,6 +202,16 @@ public class AccountSystemBean implements AccountSystem {
 			return getCharacter(Character.MUGSHOT);
 	}
 
+	public boolean isSpecialCharacter(User user) {
+		for (com.dumbhippo.server.Character c : com.dumbhippo.server.Character.values()) {
+			if (user.equals(getCharacter(c))) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	public Map<String, String> getPrefs(Account account) {
 		Map<String,String> prefs = new HashMap<String, String>();
 		// account.isMusicSharingEnabled() could return null, so we should use getMusicSharingEnabled()

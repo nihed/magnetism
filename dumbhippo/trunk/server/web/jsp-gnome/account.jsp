@@ -29,7 +29,7 @@
 	<dh:script module="dh.textinput"/>
 </head>
 <body>
-	<gnome:page>
+	<gnome:page currentPageLink="account">
 		<dht3:accountStatus enableControl="true" includeDownload="false"/>
 		<div id="gnomeAccountContents" class="${signin.active ? 'gnome-account-contents' : 'gnome-account-contents-disabled'}">
 			<div style="margin-right: 100px;"><%-- avoid foot logo --%>

@@ -17,7 +17,7 @@
 </head>
 
 <body>
-	<gnome:page>
+	<gnome:page currentPageLink="who-are-you">
 		<div style="float: left; width: 50%;">
 			<div class="gnome-title">Log In to Your Account</div>
 			<div style="height: 1em; width: 1px;"></div>
