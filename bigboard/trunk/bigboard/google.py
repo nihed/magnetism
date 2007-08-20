@@ -266,14 +266,20 @@ class Google(gobject.GObject):
 
         k = keyring.get_keyring()
         # this line allows to enter new Google account information on bigboard restarts    
-        # k.store_login('google', "", "")
+        # k.remove_logins('google')
         self.__mail_checker = None
         
         try:
-            username, password = k.get_login("google")
-            self.__username = username
-            self.__password = password
-            self.__on_auth_ok(username, password)
+            username_password_dict = k.get_logins("google")  
+            if len(username_password_dict) > 0:
+                # dictionaries are not ordered, so here we are getting a random 
+                # item, but normally, we'll be getting the whole set
+                self.__username = username_password_dict.keys()[0]
+                self.__password = username_password_dict[self.__username]
+            else:
+                self.__username = None
+                self.__password = None
+            self.__on_auth_ok(self.__username, self.__password)
         except TypeError:
             self.__username = None
             self.__password = None
