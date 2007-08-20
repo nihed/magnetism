@@ -83,200 +83,82 @@
 		<div class="dh-grow-div-around-floats"><div></div></div>
 	</dht2:formTableRow>
 	<dht2:formTableRow label="Accounts" altRow="true">
-		<dht2:formTable tableId="dhAccounts" hasInfoCells="true">
-	    <dht2:formTableRowStatus controlId='dhEmailEntry'></dht2:formTableRowStatus>
-	    <dht2:formTableRow label="Email" icon="/images3/${buildStamp}/mail_icon.png" info="Only your Mugshot friends see this.">
-		    <table cellpadding="0" cellspacing="0" class="dh-address-table">
-			    <tbody>
-				<c:forEach items="${account.person.allEmails}" var="email">
-					<tr>
-						<td><c:out value="${email.email}"/></td>
-						<td>
-							<c:if test="${account.canRemoveEmails}">
-								<c:set var="emailJs" scope="page">
-									<jsp:attribute name="value">
-										<dh:jsString value="${email.email}"/>
-									</jsp:attribute>
-								</c:set>
-								<a href="javascript:dh.account.removeClaimEmail(${emailJs});">remove</a>
-							</c:if>										    
-						</td>
-					</tr>
-					<tr class="dh-email-address-spacer">
-						<td></td>
-						<td></td>
-					</tr>
-				</c:forEach>
-				<tr><td><dht2:textInput id='dhEmailEntry'/></td><td><img id='dhEmailVerifyButton' src="/${siteImageDir}/${buildStamp}/verify_button.gif" onclick="dh.account.verifyEmail();"/></td></tr>
-                         </tbody>
-		    </table>
-	    </dht2:formTableRow>
-	    <dht2:formTableRowStatus controlId='dhXmppEntry'></dht2:formTableRowStatus>
-	    <dht2:formTableRow label="Google Talk / Jabber" icon="/images3/${buildStamp}/mail_icon.png" info="Only your Mugshot friends see this.">
-		    <table cellpadding="0" cellspacing="0" class="dh-address-table">
-			    <tbody>
-				<c:forEach items="${account.person.allXmpps}" var="xmpp">
-					<tr>
-						<td><c:out value="${xmpp.jid}"/></td>
-						<td>
-							<c:set var="xmppJs" scope="page">
-								<jsp:attribute name="value">
-									<dh:jsString value="${xmpp.jid}"/>
-								</jsp:attribute>
-							</c:set>
-							<a href="javascript:dh.account.removeClaimXmpp(${xmppJs});">remove</a>
-						</td>
-					</tr>
-					<tr class="dh-email-address-spacer">
-						<td></td>
-						<td></td>
-					</tr>
-				</c:forEach>
-				<tr><td><dht2:textInput id='dhXmppEntry'/></td><td><img id='dhXmppVerifyButton' src="/${siteImageDir}/${buildStamp}/verify_button.gif" onclick="dh.account.verifyXmpp();"/></td></tr>
-                         </tbody>
-		    </table>
-	    </dht2:formTableRow>
-	    <dht2:formTableRow label="AIM" icon="/images3/${buildStamp}/aim_icon.png" info="Only your Mugshot friends see this.">
-		    <c:forEach items="${account.person.allAims}" var="aim" varStatus="status">
-			    <div class="dh-aim-address">
-				    <c:set var="aimJs" scope="page">
-					    <jsp:attribute name="value">
-						    <dh:jsString value="${aim.screenName}"/>
-					    </jsp:attribute>
-				    </c:set>
-				    <c:out value="${aim.screenName}"/>
-				    <c:if test="${!empty account.aimPresenceKey}">
-					    <a href="aim:GoIM?screenname=${aim.screenName}"><img src="http://api.oscar.aol.com/SOA/key=${account.aimPresenceKey}/presence/${aim.screenName}" border="0"/></a>
-				    </c:if>
-				    <a href="javascript:dh.account.removeClaimAim(${aimJs});">remove</a>
-			    </div>
-		    </c:forEach>
-		    <div>
-			    <a href="javascript:dh.account.aimVerify()"><dh:png klass="dh-add-icon" src="/images3/${buildStamp}/add_icon.png" style="width: 10; height: 10; overflow: hidden;"/>IM our friendly bot to add a new screen name</a>
-		    </div>
-	    </dht2:formTableRow>				
-	    <dht2:formTableRow label="Website" icon="/images3/${buildStamp}/homepage_icon.png" controlId="dhWebsiteEntry">
-		    <dht2:textInput id="dhWebsiteEntry" maxlength="255"/>
-		    <div id="dhWebsiteEntryDescription" style="display: none"></div>
-	    </dht2:formTableRow>
-	    <dht2:formTableRow label="Blog" icon="/images3/${buildStamp}/blog_icon.png" controlId='dhBlogEntry'>
-		    <dht2:textInput id="dhBlogEntry" maxlength="255"/>
-		    <div id="dhBlogEntryDescription" style="display: none"></div>
-	    </dht2:formTableRow>				
-	    <c:forEach items="${account.supportedAccounts.list}" var="supportedAccount">
-	        <c:if test="${supportedAccount.siteName == 'Facebook'}">
-	            <tr valign="top">
-                          <td colspan="3">
-                              <c:choose>
-                                  <c:when test="${account.facebookErrorMessage != null}">
-                                         <div id="dhFacebookNote">
-                                             <c:out value="${account.facebookErrorMessage}"/>
-                                             <a href="http://facebook.com">Log out from Facebook first</a> to re-login here.
-                                         </div>                     
-                                     </c:when>   	     
-                                  <c:when test="${account.facebookAuthToken != null}">
-                                         <div id="dhFacebookNote">Thank you for logging in to Facebook! You will now be getting Facebook updates.</div>                     
-                                     </c:when>
-                                 </c:choose>       	                
-                             </td>
-                          </tr>     
-                     </c:if>
-	        <c:set var="prefixIcon" value=""/>
-	        <c:set var="prefixIconWidth" value=""/>
-	        <c:set var="prefixIconHeight" value=""/>
-	        <c:if test="${supportedAccount.externalAccountType.new}">
-	            <c:set var="prefixIcon" value="/images3/${buildStamp}/new_icon.png"/>
-	            <c:set var="prefixIconWidth" value="31"/>
-	            <c:set var="prefixIconHeight" value="10"/>
-	        </c:if>
-                     <dht2:formTableRow controlId="dh${supportedAccount.domNodeIdName}" 
-                                       label="${supportedAccount.siteName}" icon="/images3/${buildStamp}/${supportedAccount.iconName}"
-                                       prefixIcon="${prefixIcon}" prefixIconWidth="${prefixIconWidth}" prefixIconHeight="${prefixIconHeight}">
-                         <c:choose>
-                             <c:when test="${supportedAccount.siteName == 'Facebook'}">
-                                 <c:choose>
-	                        <c:when test="${account.loggedInToFacebook}">
-	                            You are logged in <a href="javascript:dh.account.disableFacebookSession();">Log out</a>
-	                        </c:when>
-	                        <c:otherwise>
-	                            <a href="http://api.facebook.com/login.php?api_key=${account.facebookApiKey}&v=1.0&next=/facebook-verify-from-account">Log in to receive updates</a>
-	                        </c:otherwise>
-	                    </c:choose>    	
-                             </c:when>
-                             <c:otherwise>              
-                           <dht2:loveHateEntry 
-                   	        name="${supportedAccount.siteName}"
-                   	        userInfoType="${supportedAccount.siteUserInfoType}"
-                   	        isInfoTypeProvidedBySite="${supportedAccount.infoTypeProvidedBySite}"
-                   	        link="${supportedAccount.externalAccountType.siteLink}"
-                   	        baseId="dh${supportedAccount.domNodeIdName}" 
-                   	        mode="${supportedAccount.sentiment}">
-                   	        
-                   	        <c:if test="${supportedAccount.siteName == 'Amazon'}">   
-                   	            <div class="dh-amazon-details">
-                   	                <c:forEach items="${account.amazonLinks}" var="amazonLinkPair">
-                   	                    <div>		                    	        
-                   	                        <a href="${amazonLinkPair.second}">${amazonLinkPair.first}</a>
-                   	                    </div>
-                   	                </c:forEach>    
-                   	            </div>
-                   	        </c:if>
-                   	        
-                   	    </dht2:loveHateEntry>    
-                       </c:otherwise>
-                   </c:choose>    	
-	        </dht2:formTableRow>	
-           </c:forEach>
-	</dht2:formTable>    	
-	</dht2:formTableRow>	
-	<dht2:formTableRow label="Music Radar preferences">
-	    <div id="dhMusicRadarPreferences" class="dh-account-preferences-row">
-	    Music sharing: 
-	    <c:choose>
-		<c:when test="${signin.musicSharingEnabled}">
-			<dh:script module="dh.actions"/>
-			<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
-			<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>			
-		</c:when>
-		<c:otherwise>
-			<dh:script module="dh.actions"/>
-			<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
-			<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>
-		</c:otherwise>
-		</c:choose>
-		<div>
-		<a href="/radar-themes">Edit my Music Radar theme</a> | <a href="/getradar">Get Music Radar HTML</a>
-		</div>	
-		</div>    
+		<dht3:accountEditTableExternals account="${account}"/>
 	</dht2:formTableRow>
+	<c:if test="${dh:enumIs(site, 'MUGSHOT')}">	
+		<dht2:formTableRow label="Music Radar preferences">
+			<div id="dhMusicRadarPreferences" class="dh-account-preferences-row">
+		    Music sharing: 
+		    <c:choose>
+				<c:when test="${signin.musicSharingEnabled}">
+					<dh:script module="dh.actions" />
+					<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled"
+						checked="true" onclick="dh.actions.setMusicSharingEnabled(true);">
+					<label for="dhMusicOn">On</label>
+					<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled"
+						onclick="dh.actions.setMusicSharingEnabled(false);">
+					<label for="dhMusicOff">Off</label>
+				</c:when>
+				<c:otherwise>
+					<dh:script module="dh.actions" />
+					<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled"
+						onclick="dh.actions.setMusicSharingEnabled(true);">
+					<label for="dhMusicOn">On</label>
+					<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled"
+						checked="true" onclick="dh.actions.setMusicSharingEnabled(false);">
+					<label for="dhMusicOff">Off</label>
+				</c:otherwise>
+			</c:choose>
+			<div>
+			<a href="/radar-themes">Edit my Music Radar theme</a> | <a
+				href="/getradar">Get Music Radar HTML</a>
+			</div>
+			</div>
+		</dht2:formTableRow>
+	</c:if><%-- End of !GNOME site --%>
 	<dht2:formTableRow label="Application statistics" altRow="true">
-	    <div class="dh-explanation">
-		Share information about which applications you use. <a href="/applications">Read more</a>
+		<div class="dh-explanation">
+			Share information about which applications you use. <a
+			href="/applications">Read more</a>
 		</div>
-	    <div id="dhApplicationUsagePreferences" class="dh-account-preferences-row">
-	    Application usage statistics: 
-	    <c:choose>
-		<c:when test="${signin.user.account.applicationUsageEnabledWithDefault}">
-			<dh:script module="dh.actions"/>
-			<input type="radio" name="dhApplicationUsageEnabled" id="dhApplicationUsageOn" checked="true" onclick="dh.actions.setApplicationUsageEnabled(true);"> <label for="dhApplicationUsageOn">On</label>
-			<input type="radio" name="dhApplicationUsageEnabled" id="dhApplicationUsageOff" onclick="dh.actions.setApplicationUsageEnabled(false);">	<label for="dhApplicationUsageOff">Off</label>			
-		</c:when>
-		<c:otherwise>
-			<dh:script module="dh.actions"/>
-			<input type="radio" name="dhApplicationUsageEnabled" id="dhApplicationUsageOn" onclick="dh.actions.setApplicationUsageEnabled(true);"> <label for="dhApplicationUsageOn">On</label>
-			<input type="radio" name="dhApplicationUsageEnabled" id="dhApplicationUsageOff" checked="true" onclick="dh.actions.setApplicationUsageEnabled(false);">	<label for="dhApplicationUsageOff">Off</label>
-		</c:otherwise>
+		<div id="dhApplicationUsagePreferences"
+			class="dh-account-preferences-row">
+		    Application usage statistics: 
+		    <c:choose>
+			<c:when
+				test="${signin.user.account.applicationUsageEnabledWithDefault}">
+				<dh:script module="dh.actions" />
+				<input type="radio" name="dhApplicationUsageEnabled"
+					id="dhApplicationUsageOn" checked="true"
+					onclick="dh.actions.setApplicationUsageEnabled(true);">
+				<label for="dhApplicationUsageOn">On</label>
+				<input type="radio" name="dhApplicationUsageEnabled"
+					id="dhApplicationUsageOff"
+					onclick="dh.actions.setApplicationUsageEnabled(false);">
+				<label for="dhApplicationUsageOff">Off</label>
+			</c:when>
+			<c:otherwise>
+				<dh:script module="dh.actions" />
+				<input type="radio" name="dhApplicationUsageEnabled"
+					id="dhApplicationUsageOn"
+					onclick="dh.actions.setApplicationUsageEnabled(true);">
+				<label for="dhApplicationUsageOn">On</label>
+				<input type="radio" name="dhApplicationUsageEnabled"
+					id="dhApplicationUsageOff" checked="true"
+					onclick="dh.actions.setApplicationUsageEnabled(false);">
+				<label for="dhApplicationUsageOff">Off</label>
+			</c:otherwise>
 		</c:choose>
-		</div>    
-	</dht2:formTableRow>
+		</div>
+	</dht2:formTableRow>	
 	<dht3:formTableRowSeparator>
 	    <div class="dh-section-header">Private Info</div>
 	    <div class="dh-section-explanation">Nobody sees this stuff but you.</div>
-             </dht3:formTableRowSeparator>
+    </dht3:formTableRowSeparator>
 	<dht2:formTableRowStatus controlId='dhPasswordEntry'></dht2:formTableRowStatus>
 	<dht2:formTableRow label="Set a password">
 	    <div class="dh-explanation">
-		A password is optional. You can also log into Mugshot by having a log in link sent to any of your
+		A password is optional. You can also log into ${dh:xmlEscape(site.siteName)} by having a log in link sent to any of your
 		email addresses or screen names from the <i>Log In</i> screen.
 		</div>
 		Enter password:
