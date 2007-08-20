@@ -142,7 +142,7 @@ tr.dh-email-address-spacer {
 	height:			5px;
 }
 
-#dhEmailEntry {
+#dhEmailEntry, #dhXmppEntry {
 	margin-right:	10px;
 }
 
