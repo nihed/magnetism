@@ -287,7 +287,7 @@ public class MessageSenderBean implements MessageSender {
 					
 			MimeMessage msg = mailer.createMessage(viewpoint, recipient.getEmail());
 			
-			mailer.setMessageContent(msg, postView.getTitle(), messageText.toString(), messageHtml.toString(), false);
+			mailer.setMessageContent(msg, viewpoint.getSite(), postView.getTitle(), messageText.toString(), messageHtml.toString(), false);
 			
 			logger.debug("Sending mail to {}", recipient);
 			mailer.sendMessage(msg);
