@@ -156,7 +156,8 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		bodyHtml.appendTextNode("a", "Click here to add '" + resource.getEmail() + "' to your account", "href", link);
 		bodyHtml.append("</body>\n</html>\n");
 		
-		mailer.setMessageContent(message, "Add address '" + resource.getEmail() + "' to your Mugshot account",
+		mailer.setMessageContent(message, viewpoint.getSite(),
+				"Add address '" + resource.getEmail() + "' to your " + viewpoint.getSite().getSiteName() + " account",
 				bodyText.toString(), bodyHtml.toString(), false);
 		mailer.sendMessage(message);
 	}
