@@ -13,7 +13,7 @@
 </c:choose>
 
 <div id="gnomeHeader">
-	<div>
+	<div id="gnomeHeaderLeft" style="float: left;">
 		<c:choose>
 			<c:when test="${dogfoodMode}">
 				<a class="gnome-header" href="">GNOME Online <span style="color: red;">DOGFOOD</span></a>
@@ -23,7 +23,7 @@
 			</c:otherwise>
 		</c:choose>
 	</div>		
-	<div>
+	<div id="gnomeHeaderRight" style="float: right;">
 		<c:choose>
 			<c:when test="${disableToggleLoginLink}">				
 			</c:when>
@@ -36,5 +36,7 @@
 			</c:otherwise>
 		</c:choose>
 	</div>
+	<%-- grow around float --%>
+	<div style="clear: both; height: 1px;"><div></div></div>
 </div>
 <gnome:fixedLogo/>
