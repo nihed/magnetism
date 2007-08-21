@@ -22,6 +22,7 @@ bigboard_PYTHON = __init__.py \
 		  databound.py \
                   deskbar_embed.py \
                   google.py \
+                  logins.py \
                   keyring.py \
                   layout_utils.py \
                   libgimmie.py \
