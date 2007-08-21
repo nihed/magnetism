@@ -1,5 +1,9 @@
 package com.dumbhippo.persistence;
 
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
+
 /**
  * XmppSubscription is used to track subscriptions between our XMPP admin address 
  * and users. We need to subscribe to user's presence in order to have permissions
@@ -17,6 +21,11 @@ package com.dumbhippo.persistence;
  * 
  * @author otaylor
  */
+@Entity
+@Table(name="XmppSubscription", 
+		   uniqueConstraints = 
+			      {@UniqueConstraint(columnNames={"localJid", "remoteResource_id"})}
+		   )
 public class XmppSubscription extends GuidPersistable {
 	String localJid;
 	XmppResource remoteResource;
