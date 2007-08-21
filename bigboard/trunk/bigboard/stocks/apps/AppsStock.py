@@ -369,7 +369,9 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__web_set.remove_all()
         for domain,login in bigboard.logins.get_logins().iter_logins():
             if WEB_APPS.has_key(domain):
-                self.__web_set.append(apps_widgets.AppDisplay(WEB_APPS[domain]))
+                display = apps_widgets.AppDisplay(WEB_APPS[domain])
+                display.connect("button-press-event", lambda display, event: display.launch())    
+                self.__web_set.append(display)
         
         self.__static_set.remove_all()
         self.__static_set_ids = {}
