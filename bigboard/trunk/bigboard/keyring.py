@@ -100,7 +100,7 @@ if __name__ == '__main__':
     ring.store_login('frap', 'qxr', 'def')
 
     print "getting"
-    print ring.get_login('frap')
+    print ring.get_logins('frap')
 
     print "done"
     

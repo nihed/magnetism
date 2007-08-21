@@ -11,6 +11,7 @@ import bigboard.keyring as keyring
 import libbig.logutil
 from libbig.struct import AutoStruct, AutoSignallingStruct
 import libbig.polling
+import htmllib
 
 _logger = logging.getLogger("bigboard.Google")
 
@@ -70,6 +71,28 @@ class DocumentsParser(xml.sax.ContentHandler):
     def get_documents(self):
         return self.__docs
 
+#class RemoveTagsParser(xml.sax.ContentHandler):
+#    def __init__(self):
+#        self.__content = ''
+#
+#    def characters(self, content):
+#        self.__content = self.__content + content
+#
+#    def get_content(self):
+#        return self.__content
+
+def html_to_text(html):
+    p = htmllib.HTMLParser(None)
+    p.save_bgn()
+    p.feed(html)
+    text = p.save_end()
+
+    ## HTMLParser helpfully replaces &hellip; with &#8230; in output
+    ## that is not supposed to be HTML or XML
+    text = text.replace("&#8230;", "...")
+    
+    return text
+
 class NewMail(AutoStruct):
     def __init__(self):
         super(NewMail, self).__init__({ 'title' : '', 'summary' : '', 'issued' : '',
@@ -120,12 +143,21 @@ class NewMailParser(xml.sax.ContentHandler):
         
         if name == 'title':
             self.__inside_title = False
+            ## parse the HTML
+            if len(self.__mails) > 0:
+                d = self.__mails[-1]
+                d.update({'title' : html_to_text(d.get_title())})
         elif name == 'summary':
             self.__inside_summary = False
+            ## parse the HTML
+            if len(self.__mails) > 0:
+                d = self.__mails[-1]
+                d.update({'summary' : html_to_text(d.get_summary())})            
         elif name == 'id':
             self.__inside_id = False
         elif name == 'name':
             self.__inside_author_name = False
+            ## Should the author name be HTML-unescaped?
         elif name == 'email':
             self.__inside_author_email = False            
         elif name == 'author':
@@ -264,13 +296,14 @@ class Google(gobject.GObject):
         self.__auth_requested = False
         self.__post_auth_hooks = []
 
-        k = keyring.get_keyring()
+        k = bigboard.keyring.get_keyring()
+
         # this line allows to enter new Google account information on bigboard restarts    
         # k.remove_logins('google')
         self.__mail_checker = None
         
         try:
-            username_password_dict = k.get_logins("google")  
+            username_password_dict = k.get_logins("google") 
             if len(username_password_dict) > 0:
                 # dictionaries are not ordered, so here we are getting a random 
                 # item, but normally, we'll be getting the whole set
@@ -460,20 +493,26 @@ if __name__ == '__main__':
 
     bignative.set_application_name("BigBoard")
 
-    keyring.get_keyring().store_login('google', 'havoc.pennington', 'wrong')
+    # to test, you have to change this temporarily to store your correct
+    # password, then comment it out again
+    #keyring.get_keyring().store_login('google', 'havoc.pennington', 'wrong')
 
     #AuthDialog().present('foo', 'bar')
     #gtk.main()
-    sys.exit(0)
+    #sys.exit(0)
 
     g = get_google()
 
     def display(x):
         print x
+        for nm in x:
+            print "Title: " + nm.get_title()
+            print "Summary: " + nm.get_summary()
+            print "Sender: " + nm.get_sender_name()
     
     #g.fetch_documents(display, display)
-    g.fetch_calendar(display, display)
-    #g.fetch_new_mail(display, display)
+    #g.fetch_calendar(display, display)
+    g.fetch_new_mail(display, display)
 
     gtk.main()
 
