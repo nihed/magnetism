@@ -11,7 +11,9 @@ import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.Sentiment;
+import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.AmazonUpdater;
+import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystem;
@@ -41,6 +43,7 @@ public class AccountPage {
 	
 	private PersonViewer personViewer;
 	private PersonView person;
+	private ClaimVerifier claimVerifier;
 	private Configuration config;
 	private ExternalAccountSystem externalAccounts;
 	private FacebookSystem facebookSystem;
@@ -49,6 +52,7 @@ public class AccountPage {
 	private AmazonUpdater amazonUpdater;
 	
 	public AccountPage() {
+		claimVerifier = WebEJBUtil.defaultLookup(ClaimVerifier.class);
 		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
 		config = WebEJBUtil.defaultLookup(Configuration.class);
 		externalAccounts = WebEJBUtil.defaultLookup(ExternalAccountSystem.class);
@@ -397,5 +401,9 @@ public class AccountPage {
     
     public String getFacebookApiKey() {
         return facebookSystem.getApiKey();
+    }
+    
+    public List<XmppResource> getClaimedXmppResources() {
+    	return claimVerifier.getPendingClaimedResources(signin.getUser(), XmppResource.class);
     }
 }

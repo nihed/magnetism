@@ -178,7 +178,8 @@ public interface IdentitySpider {
 	public void addVerifiedOwnershipClaim(User owner, Resource res);
 	
 	/** 
-	 * Remove the verification of this ownership claim.
+	 * Remove the verification of this ownership claim; this also will remove any not-yet-verified
+	 * claim tokens for this resource.
 	 * 
 	 * @param owner the owner in the claim
 	 * @param res the resource they currently may own

@@ -97,7 +97,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	this.setDefaultText = function(defaultText) {
 		this.defaultText = defaultText;
 		if (this.showingDefaultText)
-			this.elem.value = value;
+			this.elem.value = defaultText;
 	}
 	
 	this.setValue = function(value, noEmitChanged) {

@@ -1,5 +1,7 @@
 package com.dumbhippo.server;
 
+import java.util.List;
+
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.Resource;
@@ -85,5 +87,23 @@ public interface ClaimVerifier {
 	 */
 	public void sendClaimVerifierLinkXmpp(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException, RetryException;
 
+	/**
+	 * Cancel any pending claim tokens for the given user/resource pair
+	 * 
+	 * @param user user claiming the resource
+	 * @param resource the resource being claimed
+	 */
+	public void cancelClaimToken(User user, Resource resource);
+	
+	/**
+	 * Get a list of resources of a particular type the user has claimed but not yet verified the claim for,
+	 *
+	 * @param user the user to get the pending claimed resources for
+	 * @param klass subclass of resource
+	 * @return a list of pending claimed resources
+	 */
+	public <T extends Resource> List<T> getPendingClaimedResources(User user, Class<T> klass);
+
 	public void sendQueuedXmppLinks(String friendedJid, XmppResource fromResource);
+	
 }
