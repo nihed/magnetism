@@ -1,6 +1,8 @@
 package com.dumbhippo.persistence;
 
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -26,7 +28,7 @@ import javax.persistence.UniqueConstraint;
 		   uniqueConstraints = 
 			      {@UniqueConstraint(columnNames={"localJid", "remoteResource_id"})}
 		   )
-public class XmppSubscription extends GuidPersistable {
+public class XmppSubscription extends DBUnique {
 	String localJid;
 	XmppResource remoteResource;
 	SubscriptionStatus status;
@@ -45,6 +47,8 @@ public class XmppSubscription extends GuidPersistable {
 		this.localJid = localJid;
 	}
 	
+	@JoinColumn(nullable=false)
+	@ManyToOne
 	public XmppResource getRemoteResource() {
 		return remoteResource;
 	}
