@@ -39,7 +39,7 @@ class LoginItem(hippo.CanvasBox):
         box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
         self.append(box)
 
-        box.append(hippo.CanvasText(text="Username:", xalign=hippo.ALIGNMENT_START, border_right=3))
+        box.append(hippo.CanvasText(text="Email:", xalign=hippo.ALIGNMENT_START, border_right=29))
         self.__username_entry = hippo.CanvasEntry()
         self.__username_entry.set_property("xalign", hippo.ALIGNMENT_FILL)
         box.append(self.__username_entry, hippo.PACK_EXPAND)
