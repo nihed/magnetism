@@ -276,14 +276,14 @@ class Google(gobject.GObject):
                 # item, but normally, we'll be getting the whole set
                 self.__username = username_password_dict.keys()[0]
                 self.__password = username_password_dict[self.__username]
-            else:
-                self.__username = None
-                self.__password = None
-            self.__on_auth_ok(self.__username, self.__password)
+                self.__on_auth_ok(self.__username, self.__password)
+                return
         except TypeError:
-            self.__username = None
-            self.__password = None
-            self.__on_auth_cancel()
+             pass
+
+        self.__username = None
+        self.__password = None
+        self.__on_auth_cancel()
 
     def __consider_checking_mail(self):
         if self.__username and self.__password:
