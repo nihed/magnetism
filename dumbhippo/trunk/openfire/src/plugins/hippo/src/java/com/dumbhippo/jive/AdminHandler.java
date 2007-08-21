@@ -19,6 +19,9 @@ import org.xmpp.packet.Presence;
 
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 public class AdminHandler implements RoutableChannelHandler{
 	JID address;
@@ -34,7 +37,7 @@ public class AdminHandler implements RoutableChannelHandler{
 		return address;
 	}
 
-	public void process(Packet packet) throws UnauthorizedException, PacketException {
+	public void process(final Packet packet) throws UnauthorizedException, PacketException {
 		Log.debug("processing packet sent to admin user: " + packet);
 		
 		if (packet instanceof Message) {
@@ -70,37 +73,18 @@ public class AdminHandler implements RoutableChannelHandler{
 			
 			XMPPServer.getInstance().getPacketRouter().route(reply);
 		} else if (packet instanceof Presence) {
-			Presence presence = (Presence)packet;
-			
-			if (presence.getType() == Presence.Type.subscribe) {
-				Presence reply = new Presence();
+			TxUtils.runInTransaction(new TxRunnable() {
+				public void run() throws RetryException {
+					Presence presence = (Presence)packet;
+					String typeString;
+					if (presence.getType() != null)
+						typeString = presence.getType().toString();
+					else
+						typeString = null;
 				
-		        reply.setFrom(packet.getTo());
-		        reply.setTo(packet.getFrom());
-		        reply.setType(Presence.Type.subscribed);
-		        
-		        XMPPServer.getInstance().getPacketRouter().route(reply);
-		        
-		        // Not really sure this is necessary
-		        
-				Presence initialPresence = new Presence();
-				
-		        initialPresence.setFrom(packet.getTo());
-		        initialPresence.setTo(packet.getFrom());
-		        
-		        XMPPServer.getInstance().getPacketRouter().route(initialPresence);
-
-			} else if (presence.getType() == Presence.Type.subscribed) {
-		        EJBUtil.defaultLookup(MessengerGlue.class).sendQueuedXmppMessages(packet.getTo().toString(), packet.getFrom().toString());
-
-			} else if (presence.getType() == Presence.Type.probe) {
-				Presence reply = new Presence();
-				
-		        reply.setFrom(packet.getTo());
-		        reply.setTo(packet.getFrom());
-		        
-		        XMPPServer.getInstance().getPacketRouter().route(reply);
-			}
+			        EJBUtil.defaultLookup(MessengerGlue.class).handlePresence(packet.getTo().toString(), packet.getFrom().toString(), typeString);
+				}
+			});
 		}
 	}
 
