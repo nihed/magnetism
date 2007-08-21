@@ -9,6 +9,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.tx.RetryException;
 
@@ -164,6 +165,6 @@ public interface MessengerGlue {
 	public void handleMusicChanged(UserViewpoint viewpoint, Map<String, String> properties) throws RetryException;
 
 	public void handleMusicPriming(UserViewpoint viewpoint, List<Map<String, String>> primingTracks) throws RetryException;
-
-	public void sendQueuedXmppMessages(String to, String from);
+	
+	public void handlePresence(String localJid, String remoteJid, String type) throws RetryException;
 }

@@ -24,7 +24,9 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.SubscriptionStatus;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.ClaimVerifier;
@@ -39,6 +41,7 @@ import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.ServerStatus;
+import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
@@ -81,6 +84,9 @@ public class MessengerGlueBean implements MessengerGlue {
 	@EJB
 	private ServerStatus serverStatus;
 	
+	@EJB
+	private XmppMessageSender xmppMessageSender;
+		
 	static final private long EXECUTION_WARN_MILLISECONDS = 5000;
 	
 	static private long tooBusyCount;
@@ -375,16 +381,96 @@ public class MessengerGlueBean implements MessengerGlue {
 		logger.debug("Primed user with {} tracks", tracks.size());	
 	}
 
-	public void sendQueuedXmppMessages(String to, String from) {
-		logger.debug("{} has now added us to their roster, sending queued messages from {}" , from , to);
-		XmppResource fromResource;
+	public void handlePresence(String localJid, String remoteJid, String type) throws RetryException {
+		// FIXME: we aren't going to do exactly the right thing here if we get a RetryException when
+		// saving the new status, since messages will get sent out multiple times. Our response XMPP
+		// messages really should be done post-transaction
+		
+		logger.debug("Got presence of type '{}' from '{}' to local user '{}'", new Object[] { type, remoteJid, localJid });
+		XmppResource remoteResource;
 		try {
-			fromResource = identitySpider.lookupXmpp(from);
-		} catch (NotFoundException e) {
-			logger.debug("Couldn't find XmppResource for {}, ignoring", from);
+			remoteResource = identitySpider.getXmpp(remoteJid);
+		} catch (ValidationException e) {
+			logger.debug("Remote JID doesn't validate, ignoring", remoteJid);
 			return; // Ignore
 		}
 		
-		claimVerifier.sendQueuedXmppLinks(to, fromResource);
+		SubscriptionStatus oldStatus = xmppMessageSender.getSubscriptionStatus(localJid, remoteResource);
+		SubscriptionStatus newStatus = oldStatus;
+		
+		if ("subscribed".equals(type)) {
+			switch (oldStatus) {
+			case NONE:
+				newStatus = SubscriptionStatus.TO;
+				break;
+			case TO:
+				break;
+			case FROM:
+				newStatus = SubscriptionStatus.BOTH;
+				break;
+			case BOTH:
+				break;
+			}
+			
+			// Now that we've succesfully subscribed to the presence of the remote resource, we should
+			// have the perms to send them a message, so check if we need to send anything out
+			if (newStatus != oldStatus)
+				claimVerifier.sendQueuedXmppLinks(localJid, remoteResource);
+			
+		} else if ("subscribe".equals(type)) {
+			switch (oldStatus) {
+			case NONE:
+				newStatus = SubscriptionStatus.FROM;
+				break;
+			case TO:
+				newStatus = SubscriptionStatus.BOTH;
+				break;
+			case FROM:
+				break;
+			case BOTH:
+				break;
+			}
+			
+			xmppMessageSender.sendAdminPresence(remoteResource.getJid(), localJid, "subscribed");
+			
+			/* Send an initial presence for ourself */
+			xmppMessageSender.sendAdminPresence(remoteResource.getJid(), localJid, null);
+			
+		} else if ("unsubscribe".equals(type)) {
+			switch (oldStatus) {
+			case NONE:
+				break;
+			case TO:
+				break;
+			case FROM:
+				newStatus = SubscriptionStatus.NONE;
+				break;
+			case BOTH:
+				newStatus = SubscriptionStatus.TO;
+				break;
+			}
+			
+			xmppMessageSender.sendAdminPresence(remoteResource.getJid(), localJid, "unsubscribed");
+
+		} else if ("unsubscribed".equals(type)) {
+			switch (oldStatus) {
+			case NONE:
+				break;
+			case TO:
+				newStatus = SubscriptionStatus.NONE;
+				break;
+			case FROM:
+				break;
+			case BOTH:
+				newStatus = SubscriptionStatus.FROM;
+				break;
+			}
+		} else if ("probe".equals(type)) {
+			// We're always available
+			xmppMessageSender.sendAdminPresence(remoteResource.getJid(), localJid, null);
+		}
+		
+		if (newStatus != oldStatus)
+			xmppMessageSender.setSubscriptionStatus(localJid, remoteResource, newStatus);
 	}
 }

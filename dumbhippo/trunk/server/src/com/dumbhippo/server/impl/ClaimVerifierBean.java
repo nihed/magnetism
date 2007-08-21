@@ -14,7 +14,6 @@ import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
-import com.dumbhippo.DateUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Site;
 import com.dumbhippo.XmlBuilder;
@@ -23,6 +22,7 @@ import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.ResourceClaimToken;
+import com.dumbhippo.persistence.SubscriptionStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.XmppResource;
@@ -194,10 +194,14 @@ public class ClaimVerifierBean implements ClaimVerifier {
 			throw new HumanVisibleException("That isn't a valid email address (" + e.getMessage() + ")");
 		}
 
-		String link = getClaimVerifierLink(viewpoint, user, resource);
+		ResourceClaimToken token = getToken(user, resource);
 		String adminJid = configuration.getAdminJid(viewpoint);
 		
-		xmppMessageSender.sendAdminFriendRequest(resource.getJid(), adminJid);
+		SubscriptionStatus status = xmppMessageSender.getSubscriptionStatus(adminJid, resource);
+		if (!status.isSubscribedTo())
+			xmppMessageSender.sendAdminPresence(resource.getJid(), adminJid, "subscribe");
+		else
+			sendXmppLink(viewpoint.getSite(), token);
 	}
 	
 
@@ -243,14 +247,17 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		XmppResource resource = (XmppResource)token.getResource();
 		StringBuilder sb = new StringBuilder();
 		
-		sb.append("Click this link to add '" + resource.getHumanReadableString() + "' to your account: " + token.getAuthURL(configuration.getBaseUrl(site)) + "\n");
+		// We include the account's email (which is verified data) in the 
+		// message to make it hard for someone else to fool you into adding your IM account
+		// into their mugshot account
+		String email = personViewer.getPersonView(SystemViewpoint.getInstance(), token.getUser()).getEmail().getEmail();
 		
-		// We include a timestamp in the message, to make it harder for someone 
-		// to make a claim link, then invite the owner to create an account and fool
-		// them into clicking on the old claim link
-		sb.append("(Requested from the account page ");
-		sb.append(DateUtils.formatTimeAgo(token.getCreationDate()));
-		sb.append(")\n");
+		sb.append("Click this link to add this IM account to the Mugshot account for ");
+		sb.append(token.getUser().getNickname());
+		sb.append("<");
+		sb.append(email);
+		sb.append(">;\n");
+		sb.append(token.getAuthURL(configuration.getBaseUrl(site)) + "\n");
 		
 		xmppMessageSender.sendAdminMessage(resource.getJid(), configuration.getAdminJid(site), sb.toString());
 	}
