@@ -6,7 +6,10 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.SubscriptionStatus;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.XmppResource;
+import com.dumbhippo.tx.RetryException;
 
 /**
  * This interface is used to send out XMPP messages from the session beans.
@@ -76,6 +79,37 @@ public interface XmppMessageSender {
 	 * @param body body of the message
 	 */
 	public void sendAdminMessage(String to, String from, String body);
+
+	/**
+	 * Send a presence message to an arbitrary external JID. 
+	 * 
+	 * @param to to recipient of the message
+	 * @param from from sender of the message (must be a JID on this server domain or alias domain)
+	 * @param type type type of presence (or null for a normal "available" presence). This really 
+	 *  should  be an enum, except for laziness.
+	 */
+	public void sendAdminPresence(String to, String from, String type);	
+
+	/**
+	 * Get the current subscription status for the pair of the given local JID (admin@mugshot.org, say)
+	 * and a remote JID.
+	 *  
+	 * @param localJid
+	 * @param remoteResource
+	 * @return the current subscription status
+	 */
+	public SubscriptionStatus getSubscriptionStatus(String localJid, XmppResource remoteResource);
 	
-	public void sendAdminFriendRequest(String to, String from);
+	/**
+	 * Sets the subscription status in the database for the pair of the given local JID (admin@mugshot.org, say)
+	 * and a remote JID. Note that this *only* changes the data in the database, and doesn't do the protocol.
+	 * So you never want to call this directly. Instead, use @{link {@link #sendAdminPresence(String, String, String)},
+	 * and the status will be set when the other end responds. 
+	 * 
+	 * @param localJid
+	 * @param remoteResource
+	 * @param status
+	 * @throws RetryException
+	 */
+	public void setSubscriptionStatus(final String localJid, final XmppResource remoteResource, final SubscriptionStatus status) throws RetryException;
 }
