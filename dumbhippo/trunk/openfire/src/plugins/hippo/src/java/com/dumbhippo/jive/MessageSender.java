@@ -336,8 +336,19 @@ public class MessageSender implements XmppMessageSenderProvider {
 		XMPPServer.getInstance().getPacketRouter().route(message);
 	}
 
-	public void sendAdminFriendRequest(String to, String from) {
-		Presence presence = new Presence(Presence.Type.subscribe);
+	public void sendAdminPresence(String to, String from, String type) {
+		Presence.Type typeEnum;
+		
+		try {
+			if (type != null)
+				typeEnum = Presence.Type.valueOf(type);
+			else 
+				typeEnum = null;
+		} catch (IllegalArgumentException e) {
+			throw new RuntimeException("Type string '" + type + "' invalid");
+		}
+		
+		Presence presence = new Presence(typeEnum);
 		presence.setTo(new JID(to));
 		presence.setFrom(new JID(from));
 		
