@@ -99,7 +99,7 @@ dh.account.verifyXmpp = function() {
 						 row.appendChild(cell);
 						 var anchor = document.createElement("a");
 						 cell.appendChild(anchor);
-						 anchor.appendChild(document.createTextNode("(cancel)"));
+						 anchor.appendChild(document.createTextNode("cancel"));
 						 anchor.href = "javascript:void";
 						 anchor.onclick = function() { dh.account.removeClaimXmpp(address) };
 						 

@@ -110,7 +110,7 @@
 					<dh:jsString value="${xmpp.jid}" />
 				</jsp:attribute>
 			</c:set>
-			<a href="javascript:dh.account.removeClaimXmpp(${xmppJs});">(cancel)</a>
+			<a href="javascript:dh.account.removeClaimXmpp(${xmppJs});">cancel</a>
 			</td>
 			</tr>
 			<tr>
