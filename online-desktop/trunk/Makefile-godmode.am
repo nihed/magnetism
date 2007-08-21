@@ -1,5 +1,5 @@
 
-bin_SCRIPTS = god-mode/od-mode god-mode/od-session
+bin_SCRIPTS = god-mode/od-session
 
 pylibdir = $(pythondir)/godmode
 pylib_PYTHON = god-mode/godmode/*.py
