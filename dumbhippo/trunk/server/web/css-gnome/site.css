@@ -26,14 +26,14 @@ img {
 	border-style:		none;	
 }
 
-input[type="text"], input[type="password"] {
+input[type="text"], input[type="password"], textarea {
 	padding: 		  0.1em;
 	border: 		  1px solid #777777;
 	background-color: #f5f5f5;
 	color: 			  #222222;
 }
 
-input[type="submit"] {
+input[type="submit"], input[type="button"] {
 	font-size:      	12pt;
 	font-weight:    	bold;
 	padding: 			0 1em 0.1em 1em;

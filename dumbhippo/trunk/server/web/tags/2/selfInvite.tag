@@ -88,7 +88,7 @@
 				</c:choose>
 				    
 				<input type="text" class="dh-text-entry" id="dhSelfInviteAddress${N}" size="30"/>
-			    <input type="button" value="Send" onclick="dhSelfInvite${N}()"/>
+			    <input type="button" id="dhSelfInviteButton" value="Send" onclick="dhSelfInvite${N}()"/>
 			</c:when>
 			<c:otherwise>
 		        <div class="dh-special-subtitle">
