@@ -6,3 +6,23 @@
 	color: 				#666666;
 	margin-bottom:		10px;
 }
+
+#dhSelfInviteButton {
+	background-color: #5cc400;
+	border: 2px outset #57e925;
+	color: #fff;
+}
+
+#dhSelfInviteButton:hover {
+	background-color: #7ee600;
+}
+
+#dhLoginButton {
+	background-color: #0066dd;
+	border: 2px outset #0033aa;
+	color: #fff;
+}
+
+#dhLoginButton:hover {
+	background-color: #0099ff;
+}
