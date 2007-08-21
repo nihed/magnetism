@@ -40,7 +40,7 @@ public class XmppResource extends Resource {
 		
 		int slash = str.indexOf('/');
 		if (slash >= 0)
-			str = str.substring(slash + 1);
+			str = str.substring(0, slash);
 		
 		// A JID without a node is acceptable in some circumstances, but not for us
 		int at = str.indexOf('@');
