@@ -32,6 +32,10 @@ public class XmppSubscription extends DBUnique {
 	String localJid;
 	XmppResource remoteResource;
 	SubscriptionStatus status;
+	
+	// For hibernate
+	protected XmppSubscription() {
+	}
 
 	public XmppSubscription(String localJid, XmppResource remoteResource) {
 		this.localJid = localJid;
