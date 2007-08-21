@@ -1,6 +1,7 @@
 @CHARSET "UTF-8";
 /* Hrm, no build stamp */
 @IMPORT url("/css3/photo-chooser.css");
+@IMPORT url("/css3/im-account.css");
 
 .gnome-account-contents-disabled * { 
 	color:				gray;

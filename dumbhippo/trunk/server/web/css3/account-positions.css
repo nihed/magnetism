@@ -110,6 +110,15 @@ div.dh-notification {
 	bottom:         -12px;	
 }
 
+#dhAddImLink {
+	position:       relative;
+}	
+
+#dhAddImPopup {
+	position:       absolute;
+	bottom:			-12px;
+}	
+
 .dh-form-table .dh-control-cell .dh-password-input {
 	width:			260px;
 }

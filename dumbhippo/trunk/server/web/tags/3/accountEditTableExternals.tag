@@ -47,11 +47,39 @@
 		</table>
 	</dht2:formTableRow>
 	<dht2:formTableRowStatus controlId='dhXmppEntry'></dht2:formTableRowStatus>
-	<dht2:formTableRow label="Google Talk / Jabber"
-		icon="/images3/${buildStamp}/mail_icon.png"
+	<dht2:formTableRow label="IM"
+		icon="/images3/${buildStamp}/aim_icon.png"
 		info="Only your ${dh:xmlEscape(site.siteName)} friends see this.">
-		<table cellpadding="0" cellspacing="0" class="dh-address-table">
-		<tbody>
+		<table id="dhImTable" cellpadding="0" cellspacing="0" class="dh-address-table">
+		<tbody id="dhImTableBody">
+		<c:forEach items="${account.person.allAims}" var="aim" varStatus="status">
+			<tr>
+			<td>
+			<div class="dh-aim-address">
+			<c:set var="aimJs" scope="page">
+				<jsp:attribute name="value">
+						    <dh:jsString value="${aim.screenName}" />
+					    </jsp:attribute>
+			</c:set>
+			<c:out value="${aim.screenName}" />
+			<c:if test="${!empty account.aimPresenceKey}">
+				<a href="aim:GoIM?screenname=${aim.screenName}">
+				<img
+					src="http://api.oscar.aol.com/SOA/key=${account.aimPresenceKey}/presence/${aim.screenName}"
+					border="0" />
+				</a>
+			</c:if>
+			</div>
+			</td>
+			<td>
+			<a href="javascript:dh.account.removeClaimAim(${aimJs});">remove</a>
+			</td>
+			</tr>
+			<tr class="dh-email-address-spacer">
+			<td></td>
+			<td></td>
+			</tr>
+		</c:forEach>
 		<c:forEach items="${account.person.allXmpps}" var="xmpp">
 			<tr>
 			<td>
@@ -71,46 +99,32 @@
 			<td></td>
 			</tr>
 		</c:forEach>
-		<tr>
-		<td>
-		<dht2:textInput id='dhXmppEntry' />
-		</td>
-		<td>
-		<img id='dhXmppVerifyButton'
-			src="/${siteImageDir}/${buildStamp}/verify_button.gif"
-			onclick="dh.account.verifyXmpp();" />
-		</td>
-		</tr>
+		<c:forEach items="${account.claimedXmppResources}" var="xmpp">
+			<tr>
+			<td class="dh-im-pending-address">
+			<c:out value="${xmpp.jid}" />
+			</td>
+			<td>
+			<c:set var="xmppJs" scope="page">
+				<jsp:attribute name="value">
+					<dh:jsString value="${xmpp.jid}" />
+				</jsp:attribute>
+			</c:set>
+			<a href="javascript:dh.account.removeClaimXmpp(${xmppJs});">(cancel)</a>
+			</td>
+			</tr>
+			<tr>
+			<td class="dh-im-verify-message">You've been sent a verify link</td>
+			<td></td>
+			</tr>
+			<tr class="dh-email-address-spacer">
+			<td></td>
+			<td></td>
+			</tr>
+		</c:forEach>
 		</tbody>
 		</table>
-	</dht2:formTableRow>
-	<dht2:formTableRow label="AIM"
-		icon="/images3/${buildStamp}/aim_icon.png"
-		info="Only your ${dh:xmlEscape(site.siteName)} friends see this.">
-		<c:forEach items="${account.person.allAims}" var="aim"
-			varStatus="status">
-			<div class="dh-aim-address">
-			<c:set var="aimJs" scope="page">
-				<jsp:attribute name="value">
-						    <dh:jsString value="${aim.screenName}" />
-					    </jsp:attribute>
-			</c:set>
-			<c:out value="${aim.screenName}" />
-			<c:if test="${!empty account.aimPresenceKey}">
-				<a href="aim:GoIM?screenname=${aim.screenName}">
-				<img
-					src="http://api.oscar.aol.com/SOA/key=${account.aimPresenceKey}/presence/${aim.screenName}"
-					border="0" />
-				</a>
-			</c:if>
-			<a href="javascript:dh.account.removeClaimAim(${aimJs});">remove</a>
-			</div>
-		</c:forEach>
-		<div>
-		<a href="javascript:dh.account.aimVerify()">
-		<dh:png klass="dh-add-icon" src="/images3/${buildStamp}/add_icon.png"
-			style="width: 10; height: 10; overflow: hidden;" />IM our friendly bot to add a new screen name</a>
-		</div>
+		<dht3:addImAccount/>
 	</dht2:formTableRow>
 	<c:if test="${dh:enumIs(site, 'MUGSHOT')}">
 		<dht2:formTableRow label="Website"

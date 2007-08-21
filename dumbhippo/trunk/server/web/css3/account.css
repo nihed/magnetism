@@ -2,6 +2,7 @@
 @IMPORT url("styled-form.css");
 @IMPORT url("account-positions.css");
 @IMPORT url("photo-chooser.css");
+@IMPORT url("im-account.css");
 
 #dhAccounts, #dhAccounts .dh-address-table {
 	font-size:	13px;

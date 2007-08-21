@@ -85,11 +85,37 @@ dh.account.verifyXmpp = function() {
   	dh.server.doPOST("sendclaimlinkxmpp",
 			 	     { "address" : address },
   					 function(type, data, http) {
-	  					 dh.formtable.showStatusMessage('dhXmppEntry', "We've send a verification link to '" + address + "'; you may need to approve adding us as friend first.");
 	  					 xmppEntryNode.value = "";
+						 dh.account.closeImAccountPopup();
+						 
+						 var imTableBody = document.getElementById("dhImTableBody");
+						 var row = document.createElement("tr");
+						 imTableBody.appendChild(row);
+						 var cell = document.createElement("td");
+ 						 cell.className = "dh-im-pending-address";
+						 row.appendChild(cell);
+						 cell.appendChild(document.createTextNode(address));
+						 cell = document.createElement("td");
+						 row.appendChild(cell);
+						 var anchor = document.createElement("a");
+						 cell.appendChild(anchor);
+						 anchor.appendChild(document.createTextNode("(cancel)"));
+						 anchor.href = "javascript:void";
+						 anchor.onclick = function() { dh.account.removeClaimXmpp(address) };
+						 
+						 row = document.createElement("tr");
+						 imTableBody.appendChild(row);
+						 cell = document.createElement("td");
+						 row.appendChild(cell);
+						 cell.appendChild(document.createTextNode("You've been sent a verify link"));
+						 cell.className = "dh-im-verify-message";
+						 
+						 row = document.createElement("tr");
+						 row.className = "dh-email-address-spacer";
+						 imTableBody.appendChild(row);
 					 },
 					 function(type, error, http) {
-						 dh.formtable.showStatusMessage('dhXmppEntry', "Failed to talk to '" + address + "'- check the address, or just try again...");
+					 	 alert("Internal error talking to '" + address + "'");
 					 });
 }
 
@@ -102,6 +128,36 @@ dh.account.removeClaimXmpp = function(address) {
 					 function(type, error, http) {
 						 alert("Couldn't remove this address.");
 					 });
+}
+
+dh.account.createImEntry = function() {
+    dh.account.imEntry = new dh.textinput.Entry(document.getElementById('dhXmppEntry'), 'your.name@example.com', '');
+}
+
+dh.account.showImAccountPopup = function() {
+	var aboveNode = document.getElementById("dhAddImLink");
+	dh.popup.show("dhAddImPopup", aboveNode);
+    dh.account.imPopupRefresh = false;
+}
+
+dh.account.closeImAccountPopup = function() {
+	dh.popup.hide("dhAddImPopup");
+	if (dh.account.imPopupRefresh)
+		dh.util.refresh();
+}
+
+dh.account.setImAccountType = function(type) {
+	var aimContent = document.getElementById("dhAddAimContent");
+	aimContent.style.display = (type == "aim") ? "block" : "none";
+
+	var xmppContent = document.getElementById("dhAddXmppContent");
+	xmppContent.style.display = (type != "aim") ? "block" : "none";
+	
+	if (type == 'gtalk') {
+		dh.account.imEntry.setDefaultText("your.name@gmail.com");
+	} else {
+		dh.account.imEntry.setDefaultText("your.name@example.com");
+	}
 }
 
 dh.account.hateExternalAccount = function(type, quip, loadFunc, errorFunc) {
@@ -614,6 +670,10 @@ dh.account.aimVerify = function() {
 						function(type, error, http) {
 							alert("Couldn't get link to verify AIM account");
 						});
+
+	// Once you've IM'ed our bot, we want to refresh the page after the IM popup is closed						
+    dh.account.imPopupRefresh = true;
+						
 }
 
 dh.account.disableFacebookSession = function() {   
@@ -787,6 +847,7 @@ dhAccountInit = function() {
 	
 	dh.photochooser.init("user", dh.account.userId)
 
+    dh.account.createImEntry();
     dh.account.createMyspaceEntry();
 	dh.account.createYouTubeEntry();
 	dh.account.createLastFmEntry();

@@ -48,6 +48,7 @@ import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.ExternalAccountSystem;
@@ -79,6 +80,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
+
+	@EJB
+	@IgnoreDependency
+	private ClaimVerifier claimVerifier;
 
 	@EJB
 	@IgnoreDependency
@@ -438,7 +443,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				return;
 			}
 		}
-		logger.warn("Tried but failed to remove claim for {} on {}", owner,	res);
+		
+		logger.warn("No current claims for {} on {}, cancelling pending claims", owner,	res);
+
+		claimVerifier.cancelClaimToken(owner, res);
 	}
 
 	private Collection<Guid> findResourceContacters(Resource res) {

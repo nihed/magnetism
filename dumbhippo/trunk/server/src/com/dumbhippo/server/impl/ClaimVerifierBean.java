@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Site;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.botcom.BotTaskMessage;
 import com.dumbhippo.persistence.AimResource;
@@ -119,6 +120,33 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		}
 		
 		return results;
+	}
+	
+	public void cancelClaimToken(User user, Resource resource) {
+		Query q = em.createQuery("SELECT t FROM ResourceClaimToken t WHERE t.user = :user AND t.resource = :resource");
+		q.setParameter("user", user);
+		q.setParameter("resource", resource);
+		
+		for (Object o : q.getResultList()) {
+			ResourceClaimToken token = (ResourceClaimToken)o;
+			token.setDeleted(true);
+		}
+	}
+	
+	public <T extends Resource> List<T> getPendingClaimedResources(User user, Class<T> klass) {
+		Query q = em.createQuery("SELECT t FROM ResourceClaimToken t WHERE t.user = :user");
+		q.setParameter("user", user);
+		
+		List<Resource> results = new ArrayList<Resource>();
+		for (Object o : q.getResultList()) {
+			ResourceClaimToken token = (ResourceClaimToken)o;
+			if (token.getResource() != null && klass.isAssignableFrom(token.getResource().getClass())) {
+				if (token.isValid())
+					results.add(token.getResource());
+			}
+		}
+		
+		return TypeUtils.castList(klass, results); 
 	}
 	
 	public String getAuthKey(final User user, final Resource resource) throws RetryException {
