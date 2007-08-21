@@ -140,7 +140,9 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		List<Resource> results = new ArrayList<Resource>();
 		for (Object o : q.getResultList()) {
 			ResourceClaimToken token = (ResourceClaimToken)o;
-			if (token.getResource() != null && klass.isAssignableFrom(token.getResource().getClass())) {
+			if (token.getResource() != null &&
+				token.getResource().getAccountClaim() == null &&
+				klass.isAssignableFrom(token.getResource().getClass())) {
 				if (token.isValid())
 					results.add(token.getResource());
 			}
