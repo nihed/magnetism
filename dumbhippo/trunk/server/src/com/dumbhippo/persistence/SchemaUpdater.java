@@ -78,8 +78,10 @@ public class SchemaUpdater {
 		connection.close();
 	}
 	
+	// This needs fixing, obviously...
 	static private final String PERSISTENCE_PREFIX = "com/dumbhippo/persistence/";
 	static private final String PERSISTENCE_CACHES_PREFIX = "com/dumbhippo/persistence/caches/";
+	static private final String PERSISTENCE_TOMBOY_PREFIX = "com/dumbhippo/persistence/tomboy/";
 	static private final String CLASS_SUFFIX = ".class";
 	
 	/**
@@ -121,6 +123,10 @@ public class SchemaUpdater {
 					className = ("com.dumbhippo.persistence.caches." +
 							entryName.substring(PERSISTENCE_CACHES_PREFIX.length(),
 									entryName.length() - CLASS_SUFFIX.length()));
+				} else if (entryName.startsWith(PERSISTENCE_TOMBOY_PREFIX) && entryName.endsWith(CLASS_SUFFIX)) {
+						className = ("com.dumbhippo.persistence.tomboy." +
+								entryName.substring(PERSISTENCE_TOMBOY_PREFIX.length(),
+										entryName.length() - CLASS_SUFFIX.length()));
 				} else if (entryName.startsWith(PERSISTENCE_PREFIX) && entryName.endsWith(CLASS_SUFFIX)) {
 					className = ("com.dumbhippo.persistence." +
 							entryName.substring(PERSISTENCE_PREFIX.length(),

@@ -215,6 +215,7 @@
 			</metainf>
 			<fileset dir="${build}">
 				<include name="**/persistence/*.class" />
+				<include name="**/persistence/tomboy/*.class" />
 			</fileset>
 			<manifest>
 				<attribute name="Class-Path" value="${bundled-classpath}" />
