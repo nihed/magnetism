@@ -812,6 +812,10 @@ dh.account.createAmazonEntry = function() {
 }
 
 dhAccountInit = function() {
+	function exists(id) {
+		return document.getElementById(id) != null;
+	}
+
 	if (!dh.account.active) {
 		dh.dom.disableChildren(document.getElementById("dhAccountContents"));
 		return;
@@ -823,13 +827,17 @@ dhAccountInit = function() {
 	var bioEntry = new dh.formtable.ExpandableTextInput('dhBioEntry', "I grew up in Kansas.");
 	bioEntry.setChangedPost('setbio', 'bio');
 	
-	var websiteEntry = new dh.formtable.ExpandableTextInput('dhWebsiteEntry', 'Your website URL');
-	websiteEntry.setDescription("Your website will be linked from your Mugshot page.");
-	websiteEntry.setChangedXmlMethod('setwebsite', 'url');
+	if (exists('dhWebsiteEntry')) {
+		var websiteEntry = new dh.formtable.ExpandableTextInput('dhWebsiteEntry', 'Your website URL');
+		websiteEntry.setDescription("Your website will be linked from your Mugshot page.");
+		websiteEntry.setChangedXmlMethod('setwebsite', 'url');
+	}
 	
-	var blogEntry = new dh.formtable.ExpandableTextInput('dhBlogEntry', 'Your blog URL');
-	blogEntry.setDescription("Your friends will get updates when you post to your blog.")
-	blogEntry.setChangedXmlMethod('setblog', 'url');
+	if (exists('dhBlogEntry')) {
+		var blogEntry = new dh.formtable.ExpandableTextInput('dhBlogEntry', 'Your blog URL');
+		blogEntry.setDescription("Your friends will get updates when you post to your blog.")
+		blogEntry.setChangedXmlMethod('setblog', 'url');
+	}
 	
 	// add some event handlers on the file input
 	dh.account.photoEntry = new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));
@@ -845,23 +853,29 @@ dhAccountInit = function() {
 		}
 	}
 	
+    dh.account.createImEntry();
+
 	dh.photochooser.init("user", dh.account.userId)
 
-    dh.account.createImEntry();
-    dh.account.createMyspaceEntry();
-	dh.account.createYouTubeEntry();
-	dh.account.createLastFmEntry();
-	dh.account.createFlickrEntry();
-	dh.account.createLinkedInEntry();
-	dh.account.createRhapsodyEntry();
-	dh.account.createDeliciousEntry();
-	dh.account.createTwitterEntry();
-	dh.account.createDiggEntry();
-	dh.account.createRedditEntry();
-	dh.account.createNetflixEntry();
-	dh.account.createGoogleReaderEntry();
-	dh.account.createPicasaEntry();	
-	dh.account.createAmazonEntry();
+	// We assume if one of these exists, they all exist. If the division between the
+	// online.gnome.org and mugshot version of the account page changes, then this needs
+	// to be adjusted
+	if (exists('dhMySpace')) {
+	    dh.account.createMyspaceEntry();
+		dh.account.createYouTubeEntry();
+		dh.account.createLastFmEntry();
+		dh.account.createFlickrEntry();
+		dh.account.createLinkedInEntry();
+		dh.account.createRhapsodyEntry();
+		dh.account.createDeliciousEntry();
+		dh.account.createTwitterEntry();
+		dh.account.createDiggEntry();
+		dh.account.createRedditEntry();
+		dh.account.createNetflixEntry();
+		dh.account.createGoogleReaderEntry();
+		dh.account.createPicasaEntry();	
+		dh.account.createAmazonEntry();
+	}
 }
 
 dh.event.addPageLoadListener(dhAccountInit);
