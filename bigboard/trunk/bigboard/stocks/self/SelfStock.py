@@ -92,7 +92,8 @@ class LoginSlideout(CanvasVBox):
     def __init__(self):
         super(LoginSlideout, self).__init__(border=1, border_color=0x0000000ff,
                                            spacing=4, padding=4)
-        self.__requests = {}
+        self.__requests_ok = {}
+        self.__requests_cancel = {}
         self.__myself = None
         # This is necessary because we need to hold a ref to our own
         # bound method; the workboard uses weak references.
@@ -104,34 +105,53 @@ class LoginSlideout(CanvasVBox):
         myself.connect(self.__on_self_changed)
         self.__sync()
     
-    def __service_pwauth(self, svc, cb, username=None, reauth=False):
+    def __service_pwauth(self, svc, cb_ok=None, cb_cancel=None, username=None, reauth=False):
         _logger.debug("handling pwauth for %s username=%s reauth=%s", svc, username, reauth)
-        if svc in self.__requests:
-            self.__requests[svc][1].add(cb)
+        if svc in self.__requests_ok and cb_ok is not None:
+            self.__requests_ok[svc][1].add(cb_ok)
             if reauth:
-                self.__requests[svc][0].set_reauth()
-            return
-        req = LoginItem(svc)
-        self.__requests[svc] = (req, set([cb]))
-        self.append(req)
-        if username:
-            req.set_username(username)
-        if reauth:
-            req.set_reauth()
-        req.connect('login', self.__on_req_login)
-        self.emit("visible", len(self.__requests) > 0)
+                self.__requests_ok[svc][0].set_reauth()
+        elif cb_ok is not None: 
+            req = LoginItem(svc)
+            self.__requests_ok[svc] = (req, set([cb_ok]))
+            self.append(req)
+            if username:
+                req.set_username(username)
+            if reauth:
+                req.set_reauth()
+            req.connect('login', self.__on_req_login)
+
+        if svc in self.__requests_cancel and cb_cancel is not None:
+            self.__requests_cancel[svc].add(cb_cancel)
+        elif cb_cancel is not None:
+            self.__requests_cancel[svc] = set([cb_cancel])
+
+        _logger.debug("length self.__requests_ok %s", len(self.__requests_ok)) 
+        self.emit("visible", len(self.__requests_ok) > 0)
         self.__sync()
         
     def __on_req_login(self, r, username, password):
         pwhidden = ''.join(['*' for x in xrange(len(password))]) # elaborate, but fun
         _logger.debug("got u=%s p=%s for svc=%s", username, pwhidden, r.svcname) 
-        (_, cbs) = self.__requests[r.svcname]
+        (_, cbs) = self.__requests_ok[r.svcname]
         for cb in cbs:
             cb(username, password)
-        del self.__requests[r.svcname]
+        del self.__requests_ok[r.svcname]
         self.remove(r)
-        self.emit("visible", len(self.__requests) > 0)
+        self.emit("visible", len(self.__requests_ok) > 0)
         
+    def logout_requested(self):
+        _logger.debug("email logout requested")
+        # this logout currently affects all services
+        for cb_cancel_list in self.__requests_cancel.values():
+            for cb_cancel in cb_cancel_list:
+                cb_cancel()
+        self.__requests_cancel = {}      
+
+        for cb_requests_info in self.__requests_ok.values(): 
+            self.remove(cb_requests_info[0])            
+        self.__requests_ok = {}  
+
     def __accountsvc_username_from_external(self, external):
         if external.accountType == 'PICASA':
             return os.path.split(external.link)[1]
@@ -140,7 +160,7 @@ class LoginSlideout(CanvasVBox):
     def __sync(self):
         if not self.__myself:
             return
-        for (svc,(req, cbs)) in self.__requests.iteritems():
+        for (svc,(req, cbs)) in self.__requests_ok.iteritems():
             for external in self.__myself.lovedAccounts:
                 uname = self.__accountsvc_username_from_external(external)
                 if uname:
@@ -152,7 +172,7 @@ class LoginSlideout(CanvasVBox):
         self.__sync()
         
     def focus(self):
-        for (svc,(req, cbs)) in self.__requests.iteritems():
+        for (svc,(req, cbs)) in self.__requests_ok.iteritems():
             (username, password) = req.get_login()
             if username:
                 req.focus_password()
@@ -420,6 +440,10 @@ class SelfStock(AbstractMugshotStock):
         authq_button.connect('activated', self.__on_authq_button_activated)
         self.__auth_section.append(authq_button)
 
+        self.__logout_link = ActionLink(text="Logout From Your Accounts", xalign=hippo.ALIGNMENT_START)
+        self.__logout_link.connect("button-press-event", lambda b,e: self.__on_logout_activated())
+        self.__auth_section_container.append(self.__logout_link, hippo.PACK_EXPAND)        
+
         self.__authq_slideout_visible = False
         self.__authq_slideout_window = None
         self.__authq_slideout = LoginSlideout()
@@ -433,12 +457,23 @@ class SelfStock(AbstractMugshotStock):
         self.__sync_authq_visible()
         
     def __sync_authq_visible(self):
-        vis = self.__authq_visible and self.__myself
-        self._box.set_child_visible(self.__auth_section_container, not not vis)
-        if not vis:
-            if self.__authq_slideout_window:
-                self.__authq_slideout_window.hide()
-                self.__authq_slideout_visible = False
+        self._box.set_child_visible(self.__auth_section_container, not not self.__myself)        
+        can_auth = self.__authq_visible and self.__myself
+        if not can_auth and self.__authq_slideout_window:
+            self.__authq_slideout_window.hide()
+            self.__authq_slideout_visible = False
+                 
+        if self.__myself:
+            if self.__authq_visible:
+                self.__auth_section_container.set_child_visible(self.__auth_section, True)
+                self.__auth_section_container.set_child_visible(self.__logout_link, False)     
+            elif self.__auth_section_container.get_child_visible(self.__auth_section):
+                # offer a link to log out from accounts 
+                self.__auth_section_container.set_child_visible(self.__auth_section, False)
+                self.__auth_section_container.set_child_visible(self.__logout_link, True)     
+
+    def __on_logout_activated(self):
+        self.__authq_slideout.logout_requested()
 
     def __on_authq_button_activated(self, b):
         if not self.__authq_slideout_visible:

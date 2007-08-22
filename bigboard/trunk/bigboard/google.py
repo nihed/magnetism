@@ -296,7 +296,7 @@ class Google(gobject.GObject):
         self.__auth_requested = False
         self.__post_auth_hooks = []
 
-        k = bigboard.keyring.get_keyring()
+        k = keyring.get_keyring()
 
         # this line allows to enter new Google account information on bigboard restarts    
         # k.remove_logins('google')
@@ -305,6 +305,8 @@ class Google(gobject.GObject):
         try:
             username_password_dict = k.get_logins("google") 
             if len(username_password_dict) > 0:
+                # this sets up callback in case authentication is cancelled
+                WorkBoard().append('service.pwauth', 'Google', cb_cancel=self.__on_auth_cancel)
                 # dictionaries are not ordered, so here we are getting a random 
                 # item, but normally, we'll be getting the whole set
                 self.__username = username_password_dict.keys()[0]
@@ -345,6 +347,8 @@ class Google(gobject.GObject):
         self.__password = None
         self.emit("auth", False)        
         self.__consider_checking_mail()
+        self.__auth_requested = False
+        self.__with_login_info(lambda: True)
 
     def have_auth(self):
         return (self.__username is not None) and (self.__password is not None)
@@ -362,7 +366,7 @@ class Google(gobject.GObject):
             
         if not self.__auth_requested:
             self.__auth_requested = True
-            WorkBoard().append('service.pwauth', 'Google', self.__on_auth_ok, reauth=reauth)
+            WorkBoard().append('service.pwauth', 'Google', self.__on_auth_ok, self.__on_auth_cancel, reauth=reauth)
         else:
             _logger.debug("auth request pending; not resending")            
         self.__post_auth_hooks.append(func)
@@ -371,6 +375,7 @@ class Google(gobject.GObject):
         _logger.debug("got bad auth; invoking reauth")
         # don't null username, leave it filled inf
         self.__password = None
+        self.__auth_requested = False
         self.__with_login_info(lambda: True, reauth=True)
 
     ### Calendar
