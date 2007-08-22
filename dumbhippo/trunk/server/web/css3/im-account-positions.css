@@ -20,6 +20,11 @@
 	margin-top:    8px;
 }
 
+#dhAddImPopup .im-account-note {
+	margin-top:			4px;
+	margin-bottom:		4px;
+}
+
 #dhAddImPopup .im-action-row {
 	margin-top:	8px;
 	text-align: right;
