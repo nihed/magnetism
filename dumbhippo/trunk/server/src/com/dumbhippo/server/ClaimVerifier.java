@@ -104,6 +104,16 @@ public interface ClaimVerifier {
 	 */
 	public <T extends Resource> List<T> getPendingClaimedResources(User user, Class<T> klass);
 
+	/**
+	 * When we first try to verify an XMPP address, we might not yet be subscribed to that
+	 * user's presence and thus able to send them messages, so we first send out a presence
+	 * subscription request (a friend request, really). When we get the reply, we call
+	 * this method to check if there are any claim tokens for the newly-subscribed-to
+	 * XMPP address, and, if so, send out the links to that address.
+	 * 
+	 * @param friendedJid the JID of the local address that has newly been subscribed
+	 * @param fromResource the address to which it was subscribed
+	 */
 	public void sendQueuedXmppLinks(String friendedJid, XmppResource fromResource);
 	
 }
