@@ -859,7 +859,7 @@ dhAccountInit = function() {
 	// We assume if one of these exists, they all exist. If the division between the
 	// online.gnome.org and mugshot version of the account page changes, then this needs
 	// to be adjusted
-	if (exists('dhMySpace')) {
+	if (exists('dhMySpaceFormContainer')) {
 	    dh.account.createMyspaceEntry();
 		dh.account.createYouTubeEntry();
 		dh.account.createLastFmEntry();
