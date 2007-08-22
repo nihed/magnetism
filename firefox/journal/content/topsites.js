@@ -11,7 +11,7 @@ TopSitesSidebar.prototype = {
   },
   redisplay: function(search) {
     var journal = getJournalInstance();
-    var topSiteLimit = 10;
+    var topSiteLimit = 5;
     var i = 0;
     var tsc = $("topsites");
     if (!tsc)
