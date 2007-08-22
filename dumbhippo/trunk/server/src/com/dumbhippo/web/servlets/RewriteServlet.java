@@ -177,8 +177,8 @@ public class RewriteServlet extends HttpServlet {
 		// handling of <jsp:forward/> and is generally unreliable
 		handleJsp(request, response, getVersionedJspPath(SigninBean.getSiteForRequest(request), name));		
 	}
-    
-	public void handleJsp(HttpServletRequest request, HttpServletResponse response, String newPath) throws IOException, ServletException {
+
+	private void setRequestAttributes(HttpServletRequest request) {
 		SigninBean signin = SigninBean.getForRequest(request);
 		Configuration configuration = EJBUtil.defaultLookup(Configuration.class);
 		
@@ -188,6 +188,12 @@ public class RewriteServlet extends HttpServlet {
 		request.setAttribute("site", signin.getSite());
 		request.setAttribute("siteImageDir", signin.getSite() == Site.GNOME ? 
 											  "images-gnome" : "images3");
+	}
+	
+	public void handleJsp(HttpServletRequest request, HttpServletResponse response, String newPath) throws IOException, ServletException {
+		setRequestAttributes(request);
+		
+		SigninBean signin = SigninBean.getForRequest(request);
 		
 		// Instead of just forwarding JSP's to the right handler, we surround
 		// them in a transaction; this doesn't have anything to do with 
@@ -442,6 +448,11 @@ public class RewriteServlet extends HttpServlet {
 				// config.js is special and handled by a JSP, but it doesn't need
 				// our usual error/transaction stuff in handleJsp since it's just text 
 				// substitution
+				//
+				// We do, however, need to set the attributes on the request that we 
+				// use in the text substitution
+				setRequestAttributes(request);
+				
 				String configPath = getVersionedJspPath(SigninBean.getSiteForRequest(request), "configjs");
 				context.getRequestDispatcher(configPath).forward(request, response);
 			} else if (path.equals("/javascript/whereimat.js")) {
