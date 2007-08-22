@@ -43,7 +43,8 @@
         <div class="dh-section-header">Create a Group for Specific Interests and Friends</div>
         <div class="dh-section-explanation">
             Sharing links with Web Swarm using a group name is easier than selecting friends' names one by one. Groups can be public to be seen by everyone 
-            or private for just group members. Any group member can invite new people and change account settings.
+            or private for just group members. Any group member can invite new people and change group settings. The Privacy setting cannot be changed once 
+            the group is created.
         </div>
         <dht:messageArea/>
 		<dht:formTable tableClass="dh-form-table-orange">
