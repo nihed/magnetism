@@ -636,14 +636,13 @@ public class Room implements PresenceListener {
 	 */
 	public boolean checkUserCanJoin(String username) {
 		ChatSystem chatSystem = EJBUtil.defaultLookup(ChatSystem.class);
-		IdentitySpider spider = EJBUtil.defaultLookup(IdentitySpider.class);
 		Guid userId;
 		try {
 			userId = Guid.parseJabberId(username);
 		} catch (ParseException e) {
 			return false;
 		}
-		return chatSystem.canJoinChat(roomGuid, kind, new UserViewpoint(spider.lookupUser(userId), Site.XMPP));
+		return chatSystem.canJoinChat(roomGuid, kind, new UserViewpoint(userId, Site.XMPP));
 	}
 
 	/**
