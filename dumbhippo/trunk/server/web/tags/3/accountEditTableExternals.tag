@@ -82,7 +82,7 @@
 		</c:forEach>
 		<c:forEach items="${account.person.allXmpps}" var="xmpp">
 			<tr>
-			<td>
+			<td class="dh-im-address">
 			<c:out value="${xmpp.jid}" />
 			</td>
 			<td>
@@ -101,7 +101,7 @@
 		</c:forEach>
 		<c:forEach items="${account.claimedXmppResources}" var="xmpp">
 			<tr>
-			<td class="dh-im-pending-address">
+			<td class="dh-im-address dh-im-pending-address">
 			<c:out value="${xmpp.jid}" />
 			</td>
 			<td>

@@ -76,16 +76,15 @@ dh.account.removeClaimAim = function(address) {
 }
 
 dh.account.verifyXmpp = function() {
-	var xmppEntryNode = document.getElementById('dhXmppEntry');
-	if (xmppEntryNode.value.indexOf("@") < 0) {
-		dh.formtable.showStatusMessage('dhXmppEntry', "Enter an address, then click Verify");
+	var address = dh.account.imEntry.getValue();
+	if (address.indexOf("@") < 0) {
+		alert("Enter an address, then click Verify");
 		return;
 	}
-	var address = xmppEntryNode.value;
   	dh.server.doPOST("sendclaimlinkxmpp",
 			 	     { "address" : address },
   					 function(type, data, http) {
-	  					 xmppEntryNode.value = "";
+  					 	 dh.account.imEntry.setValue(""); 
 						 dh.account.closeImAccountPopup();
 						 
 						 var imTableBody = document.getElementById("dhImTableBody");

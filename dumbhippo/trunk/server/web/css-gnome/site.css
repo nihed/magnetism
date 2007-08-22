@@ -96,11 +96,15 @@ a.gnome-header {
  * stuff for the dh* tags shared with mugshot site 
  */
  
-.dh-text-input-showing-default {
+textarea.dh-text-input-showing-default {
 	color:				#aaaaaa;
 } 
- 
- /* This isn't precision, just "kind of next to"
+
+input.dh-text-input-showing-default {
+	color:				#aaaaaa;
+} 
+
+/* This isn't precision, just "kind of next to"
  * IE considers a scrollbar click as mouse input ergo it doesn't allow people to scroll horizontally 
  * and see the rest of the popup under 800x600
  */
