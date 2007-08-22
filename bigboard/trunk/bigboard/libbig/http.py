@@ -145,6 +145,8 @@ class AsyncHTTPFetcher(Singleton):
             headers['Cookie'] = cookie_str
         if is_refetch:
             headers['Cache-Control'] = 'only-if-cached'
+        if 'no_store' in kwargs:
+            headers['Cache-Control'] = 'no-store'
         (response, content) = h.request(url, **http_kwargs)
         if response.status == 200:
             gobject.idle_add(lambda: self.__emit_results(url, kwargs['cb'], content, is_refetch=is_refetch))
