@@ -179,6 +179,16 @@ public class RewriteServlet extends HttpServlet {
 	}
     
 	public void handleJsp(HttpServletRequest request, HttpServletResponse response, String newPath) throws IOException, ServletException {
+		SigninBean signin = SigninBean.getForRequest(request);
+		Configuration configuration = EJBUtil.defaultLookup(Configuration.class);
+		
+        // Store the server's base URL for reference from JSP pages
+        String baseUrl = configuration.getBaseUrl(signin.getSite());
+        request.setAttribute("baseUrl", baseUrl);
+		request.setAttribute("site", signin.getSite());
+		request.setAttribute("siteImageDir", signin.getSite() == Site.GNOME ? 
+											  "images-gnome" : "images3");
+		
 		// Instead of just forwarding JSP's to the right handler, we surround
 		// them in a transaction; this doesn't have anything to do with 
 		// making atomic modifications - JSP pages are pretty much entirely
@@ -224,8 +234,6 @@ public class RewriteServlet extends HttpServlet {
 		
 		try {
 			request.setAttribute("webVersion", webVersion);
-
-			SigninBean signin = SigninBean.getForRequest(request);
 
 			if (signin.isValid()) {
 				// When the user is logged in, we want to disable all caching of
@@ -326,15 +334,6 @@ public class RewriteServlet extends HttpServlet {
 	@Override
 	public void service(HttpServletRequest request,	HttpServletResponse response) throws IOException, ServletException {
 
-		SigninBean signin = SigninBean.getForRequest(request);
-		Configuration configuration = EJBUtil.defaultLookup(Configuration.class);
-		
-        // Store the server's base URL for reference from JSP pages
-        String baseUrl = configuration.getBaseUrl(signin.getSite());
-        request.setAttribute("baseUrl", baseUrl);
-		request.setAttribute("site", signin.getSite());
-		request.setAttribute("siteImageDir", signin.getSite() == Site.GNOME ? 
-											  "images-gnome" : "images3");
         
 		// be sure we only handle appropriate http methods, not e.g. DAV methods.
 		// also, appropriately implement OPTIONS method.
@@ -371,6 +370,8 @@ public class RewriteServlet extends HttpServlet {
 		// configuration.
 				
 		if (path.equals("/")) {
+			SigninBean signin = SigninBean.getForRequest(request);
+			
 			String requestQueryString = request.getQueryString();			
 			if (signin.getSite() == Site.MUGSHOT) {
 				Guid signinUserGuid = getSigninGuid(request);
@@ -474,6 +475,8 @@ public class RewriteServlet extends HttpServlet {
 			return;
 		}
 		
+		SigninBean signin = SigninBean.getForRequest(request);
+		
 		doSigninRedirect = (isRequiresSignin || (stealthMode && isRequiresSigninStealth)) && 
 						   !signin.isValid();
 
@@ -518,6 +521,8 @@ public class RewriteServlet extends HttpServlet {
 		if (jspPages.containsKey(afterSlash)) {
 			handleVersionedJsp(request, response, afterSlash);
 		} else if (htmlPages.contains(afterSlash)) {
+			Configuration configuration = EJBUtil.defaultLookup(Configuration.class);
+			
 			String newPath;
 			// We could eliminate the use of RewrittenRequest entirely by
 			// adding a mapping for *.html to servlet-info.xml
