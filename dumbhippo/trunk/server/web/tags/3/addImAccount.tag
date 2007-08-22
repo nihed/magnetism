@@ -14,7 +14,7 @@
 		</div>
 		<div id="dhAddImPopupHeader">ADD AN IM ACCOUNT</div>
 		<form>
-			<div class="im-account-type"><input type="radio" name="imAccountType" onclick="dh.account.setImAccountType('aim')" checked="1">AIM</input></div>
+			<div class="im-account-type"><input type="radio" name="imAccountType" onclick="dh.account.setImAccountType('aim')" checked="1">AIM / ICQ</input></div>
 			<div class="im-account-type"><input type="radio" name="imAccountType" onclick="dh.account.setImAccountType('gtalk')">Google Talk</input></div>
 			<div class="im-account-type"><input type="radio" name="imAccountType" onclick="dh.account.setImAccountType('xmpp')">Other Jabber / XMPP</input><br/></div>
 			<div class="im-account-content" id="dhAddAimContent">
@@ -22,6 +22,7 @@
 					<dh:png klass="dh-add-icon" src="/images3/${buildStamp}/add_icon.png" style="width: 10; height: 10; overflow: hidden;" />
 					IM our friendly bot to add a new screen name
 				</a><br/>
+				<div class="im-account-note">Note: we don't support email-address AIM accounts yet.</div>
 				<div class="im-action-row">
 					<input type="button" value="Close" onclick="dh.account.closeImAccountPopup()"></input>
 				</div>
