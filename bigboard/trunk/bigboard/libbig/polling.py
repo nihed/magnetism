@@ -31,5 +31,6 @@ class Task:
             return
         gobject.source_remove(self.__id)
         self.__id = 0
-
-
+          
+    def is_running(self):
+        return self.__id != 0

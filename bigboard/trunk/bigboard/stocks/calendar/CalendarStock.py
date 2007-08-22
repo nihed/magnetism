@@ -415,10 +415,12 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
     def __on_google_auth(self, gobj, have_auth):
         _logger.debug("google auth state: %s", have_auth)
-        if have_auth:
+        if have_auth:           
+            self.__update_calendar_list_and_events()
             self.start()
         else:
             self.stop()
+            self.__box.remove_all()
 
     def do_periodic_task(self):
         self.__update_calendar_list_and_events()
@@ -516,6 +518,9 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
     def __refresh_events(self):      
         self.__box.remove_all()
+
+        if not self.is_running():
+            return
 
         title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         title.set_property("text", fmt_date(self.__day_displayed))
@@ -737,7 +742,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         pass
 
     def __update_calendar_list_and_events(self):
-        _logger.debug("retreiving calendar list")
+        _logger.debug("retrieving calendar list")
         # we update events in __on_calendar_list_load()            
         google.get_google().fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)      
 
