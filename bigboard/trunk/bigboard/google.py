@@ -189,6 +189,7 @@ class AsyncHTTPFetcherWithAuth(object):
         
     def fetch(self, url, username, password, cb, errcb, authcb):
         self.__fetcher.fetch_extended(url=url, cb=cb, 
+                                      no_store=True,
                                       response_errcb=functools.partial(self.__handle_response_error, authcb, errcb),
                                       setupfn=functools.partial(self.__http_setupfn, username, password))
         
