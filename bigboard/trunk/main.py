@@ -200,11 +200,11 @@ class Exchange(hippo.CanvasBox):
             self.__ticker_container.append(self.__ticker_text, hippo.PACK_EXPAND)
             
             if stock.has_more_button():
-                more_button = Button(label='More', label_ypadding=-2)              
+                more_button = Button(label='More', label_ypadding=-2)
                 more_button.set_property('yalign', hippo.ALIGNMENT_CENTER)
                 more_button.connect("activated", lambda l: stock.on_more_clicked())
                 self.__ticker_container.append(more_button)
-                self.__mini_more_button = Button(label='More', label_ypadding=-1)          
+                self.__mini_more_button = Button(label='More', label_ypadding=-1)
                 self.__mini_more_button.set_property('yalign', hippo.ALIGNMENT_CENTER)                   
                 self.__mini_more_button.connect("activated", lambda l: stock.on_more_clicked())
                 self.append(self.__mini_more_button)

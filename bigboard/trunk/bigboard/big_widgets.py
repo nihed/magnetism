@@ -52,6 +52,7 @@ class ButtonLabel(gtk.Label):
     def do_size_request(self, req):
         gtk.Label.do_size_request(self, req)
         req.height += (self.__ypadding*2)
+
 gobject.type_register(ButtonLabel)
 
 class Button(hippo.CanvasButton):
@@ -60,11 +61,14 @@ class Button(hippo.CanvasButton):
         button = self.get_property('widget')
         button.set_property('border-width', 0)
         button.unset_flags(gtk.CAN_DEFAULT)
+
+        # this causes the GtkButton inside the CanvasButton
+        # to create a label widget
+        self.set_property('text', label)        
+
         # Avoid some padding
         button.set_name('bigboard-nopad-button')
-        child = gtk.Label() #ButtonLabel(ypadding=label_ypadding)
-        child.set_text(label)
-        button.add(child)
+        child = button.get_child() #gtk.Label() #ButtonLabel(ypadding=label_ypadding)
         child.set_alignment(0.5, 0)
         child.set_padding(0, 0)
 
