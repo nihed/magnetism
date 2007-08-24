@@ -634,6 +634,10 @@ def main():
             usage()
             sys.exit()
 
+    if not os.environ.has_key('OD_SESSION'):
+        sys.stderr.write("OD_SESSION not set - are you running under od-session?\n")
+        exit(1)
+
     signal.signal(signal.SIGINT, lambda i,frame: sys.stderr.write('Caught SIGINT, departing this dear world\n') or os._exit(0))
 
     def logger(domain, priority, msg):
