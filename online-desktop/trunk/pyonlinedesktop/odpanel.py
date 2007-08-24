@@ -1,4 +1,4 @@
-from godmode import gnomepanel
+from pyonlinedesktop import gnomepanel
 
 NAME = 'OD'
 

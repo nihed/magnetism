@@ -1,7 +1,0 @@
-
-bin_SCRIPTS += god-mode/od-session
-
-pylibdir = $(pythondir)/godmode
-pylib_PYTHON = god-mode/godmode/*.py
-
-EXTRA_DIST += god-mode/od-session

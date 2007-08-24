@@ -1,0 +1,11 @@
+bin_SCRIPTS += od-autostart od-session
+
+autostartdir=$(datadir)/online-desktop/autostart
+autostart_DATA = autostart/*.desktop
+presessiondir=$(datadir)/online-desktop/presession
+presession_SCRIPTS = presession/*.py
+
+EXTRA_DIST += od-autostart od-session
+
+EXTRA_DIST += $(autostart_DATA) $(presession_SCRIPTS)
+
