@@ -237,7 +237,10 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self._logger.debug("more!")
         if self.__app_browser is None:
             self.__app_browser = appbrowser.AppBrowser(self)            
-        self.__app_browser.present()
+        if self.__app_browser.get_property('is-active'):
+            self.__app_browser.hide()
+        else:
+            self.__app_browser.present()
         
     def __on_message_link(self):
         libbig.show_url(self.__message_link_url)

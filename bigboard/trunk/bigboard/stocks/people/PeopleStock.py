@@ -143,4 +143,7 @@ class PeopleStock(AbstractMugshotStock):
     def __on_more_button(self):
         if self.__people_browser is None:
             self.__people_browser = peoplebrowser.PeopleBrowser(self)
-        self.__people_browser.present()
+        if self.__people_browser.get_property('is-active'):
+            self.__people_browser.hide()
+        else:
+            self.__people_browser.present()
