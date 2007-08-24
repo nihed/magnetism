@@ -110,8 +110,9 @@ class DataModel(AbstractModel):
             self._set_self_id(self_id)
 
     def __get_connected_reply(self, connected):
-        if connected:
-            self._on_connected()
+#        if connected:
+         if self.self_id != None:
+             self._on_connected()
 
     def _get_proxy(self):
         return self._proxy

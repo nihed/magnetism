@@ -634,11 +634,22 @@ def main():
             usage()
             sys.exit()
 
-    if (not replace) and (not os.environ.has_key('OD_SESSION')):
-        sys.stderr.write("OD_SESSION not set - are you running under od-session?\n")
-        exit(1)
-
     signal.signal(signal.SIGINT, lambda i,frame: sys.stderr.write('Caught SIGINT, departing this dear world\n') or os._exit(0))
+
+    if (not os.environ.has_key('OD_SESSION')):
+        warn = gconf.client_get_default().get_without_default(GCONF_PREFIX + 'warn_outside_online_desktop')
+        if warn == None or warn.get_bool():
+            dialog = gtk.MessageDialog(type=gtk.MESSAGE_WARNING, message_format="Online desktop session isn't running")
+            dialog.format_secondary_text("You should log into the online desktop session rather than running Big Board directly.")
+            dialog.add_buttons("Exit", gtk.RESPONSE_CANCEL, "Continue", gtk.RESPONSE_OK)
+            checkbutton = gtk.CheckButton("Don't show this warning again")
+            checkbutton.show()
+            dialog.vbox.pack_end(checkbutton)
+            response = dialog.run()
+            if checkbutton.get_active():
+                warn = gconf.client_get_default().set_bool(GCONF_PREFIX + 'warn_outside_online_desktop', False)
+            if response == gtk.RESPONSE_CANCEL:
+                exit(1)
 
     def logger(domain, priority, msg):
         print msg

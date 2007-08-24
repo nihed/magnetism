@@ -18,7 +18,7 @@ def compute_lengths(allocated, min_lengths, natural_lengths, expand_map=None):
         shrinks = []
         for i in xrange(0, count):
             shrinks.append((i, natural_lengths[i] - min_lengths[i]))
-            shrinks.sort(key=lambda t: t[1])
+        shrinks.sort(key=lambda t: t[1])
             
         lines_remaining = count
         for (i, shrink) in shrinks:
