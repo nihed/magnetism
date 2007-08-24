@@ -1,0 +1,3 @@
+pylibdir = $(pythondir)/pyonlinedesktop
+pylib_PYTHON = pyonlinedesktop/*.py
+

@@ -1,0 +1,2 @@
+bin_SCRIPTS += mailto/od-mailto
+EXTRA_DIST += mailto/od-mailto

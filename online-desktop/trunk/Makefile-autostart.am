@@ -1,7 +1,0 @@
-bin_SCRIPTS += od-autostart
-
-autostartdir=$(datadir)/online-desktop/autostart
-autostart_DATA = autostart/*.desktop
-
-EXTRA_DIST += $(autostart_DATA)
-

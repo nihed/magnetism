@@ -1,0 +1,15 @@
+#!/usr/bin/python
+import os,sys,subprocess
+
+import pyonlinedesktop
+from pyonlinedesktop.iterdird import iterdir_d
+
+os.environ['OD_SESSION'] = "1"
+
+# do pre-configuration
+for fpath in iterdir_d('online-desktop/presession'):
+  if os.access(fpath, os.X_OK):
+    subprocess.call([fpath], stdout=sys.stdout, stderr=sys.stderr)
+
+os.execvp('gnome-session', ['gnome-session'])
+sys.exit(1)
