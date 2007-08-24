@@ -28,7 +28,7 @@ def handle_gmail(url):
 handlers = {'gmail': handle_gmail}
 
 def usage():
-    print "Usage: mailto-handler [APP] [MAILTO-URL]\n";
+    print "Usage: od-mailto [APP] [MAILTO-URL]\n";
     print "Available apps: %s" % (string.join(handlers.iterkeys(), ' '),)
 
 def main():
