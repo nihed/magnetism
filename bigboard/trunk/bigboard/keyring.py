@@ -63,6 +63,7 @@ class Keyring:
                 pass
  
     def store_login(self, whatfor, username, password):
+        _logger.debug("storing login " + username)
         if not self.is_available():
             self.__fallback[whatfor] = (username, password)
             if self.__fallback.has_key(whatfor):

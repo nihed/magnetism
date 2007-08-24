@@ -312,6 +312,12 @@ class Google(gobject.GObject):
                 # item, but normally, we'll be getting the whole set
                 self.__username = username_password_dict.keys()[0]
                 self.__password = username_password_dict[self.__username]
+
+               ## this is just for old cruft in the keyring, we don't store without
+               ## an @ anymore
+                if '@' not in self.__username:
+                    self.__username = self.__username + '@gmail.com'
+                
                 self.__on_auth_ok(self.__username, self.__password)
                 return
         except TypeError:
@@ -330,7 +336,9 @@ class Google(gobject.GObject):
             self.__mail_checker.stop()
 
     def __on_auth_ok(self, username, password):
-        self.__username = username.find('@') >= 0 and username or username + '@gmail.com'
+        if '@' not in username:
+            username = username + '@gmail.com'
+        self.__username = username
         self.__password = password
         self.__auth_requested = False
         keyring.get_keyring().store_login('google', self.__username, self.__password)
@@ -346,6 +354,8 @@ class Google(gobject.GObject):
     def __on_auth_cancel(self):
         self.__username = None
         self.__password = None
+        # delete it persistently
+        keyring.get_keyring().remove_logins('google')        
         self.emit("auth", False)        
         self.__consider_checking_mail()
         self.__auth_requested = False
@@ -465,8 +475,14 @@ class Google(gobject.GObject):
         errcb(exc_info)
 
     def __have_login_fetch_new_mail(self, cb, errcb):
+        at_sign = self.__username.find('@')
 
-        uri = 'http://mail.google.com/mail/feed/atom'
+        domain = self.__username[at_sign+1:]
+
+        if not domain.endswith('gmail.com'):
+            uri = 'http://mail.google.com/a/' + domain + '/feed/atom'
+        else:
+            uri = 'http://mail.google.com/mail/feed/atom'
 
         self.__fetcher.fetch(uri, self.__username, self.__password,
                              lambda url, data: self.__on_new_mail_load(url, data, cb, errcb),
@@ -495,13 +511,14 @@ if __name__ == '__main__':
 
     gtk.gdk.threads_init()
 
-    libbig.logutil.init('DEBUG', ['AsyncHTTP2LibFetcher'])
+    libbig.logutil.init('DEBUG', ['AsyncHTTP2LibFetcher', 'bigboard.Keyring'])
 
     bignative.set_application_name("BigBoard")
+    bignative.set_program_name("bigboard")
 
     # to test, you have to change this temporarily to store your correct
     # password, then comment it out again
-    #keyring.get_keyring().store_login('google', 'havoc.pennington', 'wrong')
+    # keyring.get_keyring().store_login('google', 'hp@redhat.com', 'wrong')
 
     #AuthDialog().present('foo', 'bar')
     #gtk.main()
@@ -515,6 +532,7 @@ if __name__ == '__main__':
             print "Title: " + nm.get_title()
             print "Summary: " + nm.get_summary()
             print "Sender: " + nm.get_sender_name()
+            print "Link: " + nm.get_link()
     
     #g.fetch_documents(display, display)
     #g.fetch_calendar(display, display)
