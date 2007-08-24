@@ -634,7 +634,7 @@ def main():
             usage()
             sys.exit()
 
-    if not os.environ.has_key('OD_SESSION'):
+    if (not replace) and (not os.environ.has_key('OD_SESSION')):
         sys.stderr.write("OD_SESSION not set - are you running under od-session?\n")
         exit(1)
 
