@@ -19,6 +19,7 @@ distclean-local:
 #.PHONY: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mugshot-dist-hook
 
 # These are added to using += in the included files
+bin_SCRIPTS =
 bin_PROGRAMS =
 noinst_PROGRAMS =
 noinst_LTLIBRARIES =
@@ -27,8 +28,9 @@ MAINTAINERCLEANFILES =
 BUILT_SOURCES =
 
 include Makefile-gmail.am
-#include Makefile-mailto.am
+include Makefile-mailto.am
 include Makefile-desktop.am
 include Makefile-icons.am
 include Makefile-godmode.am
 include Makefile-autostart.am
+
