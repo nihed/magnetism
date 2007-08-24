@@ -106,8 +106,8 @@ class PeopleStock(AbstractMugshotStock):
         self.__remove_user(contact, self.__contact_box, self.__contact_items)
         
     def __on_local_user_added(self, list, user):
-#        if user.resource_id == self.__model.self_id:
-#            return
+        if user.resource_id == self.__model.self_id:
+            return
         
         self.__add_user(user, self.__local_box, self.__local_items)
         
