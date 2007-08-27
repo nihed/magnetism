@@ -15,6 +15,35 @@ import htmllib
 
 _logger = logging.getLogger("bigboard.Google")
 
+## this is from the "Wuja" applet code, GPL v2
+def parse_timestamp(timestamp, tz=None):
+    """ Convert internet timestamp (RFC 3339) into a Python datetime
+    object.
+    """
+    date_str = None
+    hour = None
+    minute = None
+    second = None
+    # Single occurrence all day events return with only a date:
+    if timestamp.count('T') > 0:
+        date_str, time_str = timestamp.split('T')
+        time_str = time_str.split('.')[0]
+        if time_str.find(':') >= 0:
+            hour, minute, second = time_str.split(':')
+            if second.endswith('Z'):
+                second = second[:-1]
+        else:
+            hour, minute, second = (time_str[0:2], time_str[2:4], time_str[4:6])
+    else:
+        date_str = timestamp
+        hour, minute, second = 0, 0, 0
+
+    if date_str.find('-') >= 0:
+        year, month, day = date_str.split('-')
+    else:
+        year, month, day = (date_str[0:4], date_str[4:6], date_str[6:8])
+    return datetime.datetime(int(year), int(month), int(day), int(hour), int(minute),
+        int(second), tzinfo=tz)
 
 def fmt_date_for_feed_request(date):
     return datetime.datetime.utcfromtimestamp(time.mktime(date.timetuple())).strftime("%Y-%m-%dT%H:%M:%S")
@@ -97,7 +126,7 @@ class NewMail(AutoStruct):
     def __init__(self):
         super(NewMail, self).__init__({ 'title' : '', 'summary' : '', 'issued' : '',
                                         'link' : '', 'id' : '', 'sender_name' : '',
-                                        'sender_email' : ''})
+                                        'sender_email' : '', 'modified' : datetime.datetime(1980, 8, 8)})
 
 class NewMailParser(xml.sax.ContentHandler):
     def __init__(self):
@@ -108,6 +137,8 @@ class NewMailParser(xml.sax.ContentHandler):
         self.__inside_author = False
         self.__inside_author_name = False
         self.__inside_author_email = False
+        self.__inside_modified = False
+        self.__modified_content = ''
 
     def startElement(self, name, attrs):
         #print "<" + name + ">"
@@ -126,6 +157,8 @@ class NewMailParser(xml.sax.ContentHandler):
                 self.__inside_id = True
             elif name == 'author':
                 self.__inside_author = True
+            elif name == 'modified':
+                self.__inside_modified = True                
             elif self.__inside_author and name == 'name':
                 self.__inside_author_name = True
             elif self.__inside_author and name == 'email':
@@ -162,6 +195,12 @@ class NewMailParser(xml.sax.ContentHandler):
             self.__inside_author_email = False            
         elif name == 'author':
             self.__inside_author = False
+        elif name == 'modified':            
+            self.__inside_modified = False
+            if len(self.__mails) > 0:
+                d = self.__mails[-1]
+                d.update({'modified' : parse_timestamp(self.__modified_content) })
+            self.__modified_content = ''
 
     def characters(self, content):
         if len(self.__mails) > 0:
@@ -176,6 +215,8 @@ class NewMailParser(xml.sax.ContentHandler):
                 d.update({'sender_name' : d.get_sender_name() + content })
             elif self.__inside_author_email:
                 d.update({'sender_email' : d.get_sender_email() + content })
+            elif self.__inside_modified:
+                self.__modified_content = self.__modified_content + content
 
     def get_new_mails(self):
         return self.__mails
@@ -211,6 +252,7 @@ class CheckMailTask(libbig.polling.Task):
         libbig.polling.Task.__init__(self, 1000 * 120, initial_interval=1000*5)
         self.__google = google
         self.__ids_seen = {}
+        self.__newest_modified_seen = None
 
         # we use dbus directly instead of libnotify because
         # older versions of libnotify crashed us when an action
@@ -246,11 +288,35 @@ class CheckMailTask(libbig.polling.Task):
     def __on_fetched_mail(self, mails):
         not_yet_seen = 0
         for m in mails:
+
+            ## Save latest timestamp and record if we were
+            ## the newest mail yet seen
+            was_newer = False
+            if not self.__newest_modified_seen or \
+               m.get_modified() > self.__newest_modified_seen:
+                self.__newest_modified_seen = m.get_modified()
+                was_newer = True
+
+            ## record this mail ID and if we are EITHER a new ID,
+            ## or were just modified, notify. We may have to
+            ## tweak this depending on what "modified" turns out
+            ## to mean. 
+            notify_on_this = False
             if self.__ids_seen.has_key(m.get_id()):
-                pass
+                if was_newer:
+                    notify_on_this = True
             else:
-                not_yet_seen = not_yet_seen + 1
                 self.__ids_seen[m.get_id()] = True
+                notify_on_this = True
+
+            ## Never notify on something that's more than a few days
+            ## old, though, since some people keep tons of stuff
+            ## unread forever in gmail.                
+            if notify_on_this and m.get_modified() < (datetime.datetime.today() - datetime.timedelta(days=3)):
+                notify_on_this = False
+
+            if notify_on_this:
+                not_yet_seen = not_yet_seen + 1
 
         if not_yet_seen > 0:
             first = mails[0]
@@ -530,6 +596,7 @@ if __name__ == '__main__':
             print "Summary: " + nm.get_summary()
             print "Sender: " + nm.get_sender_name()
             print "Link: " + nm.get_link()
+            print "Modified: " + str(nm.get_modified())
     
     #g.fetch_documents(display, display)
     #g.fetch_calendar(display, display)
