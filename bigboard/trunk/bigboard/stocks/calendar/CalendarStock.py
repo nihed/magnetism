@@ -24,34 +24,6 @@ _events_polling_periodicity_seconds = 120
 _default_events_range = 14
 _prepare_events_days = 10
 
-## this is from the "Wuja" applet code, GPL v2
-def parse_timestamp(timestamp, tz=None):
-    """ Convert internet timestamp (RFC 3339) into a Python datetime
-    object.
-    """
-    date_str = None
-    hour = None
-    minute = None
-    second = None
-    # Single occurrence all day events return with only a date:
-    if timestamp.count('T') > 0:
-        date_str, time_str = timestamp.split('T')
-        time_str = time_str.split('.')[0]
-        if time_str.find(':') >= 0:
-            hour, minute, second = time_str.split(':')
-        else:
-            hour, minute, second = (time_str[0:2], time_str[2:4], time_str[4:6])
-    else:
-        date_str = timestamp
-        hour, minute, second = 0, 0, 0
-
-    if date_str.find('-') >= 0:
-        year, month, day = date_str.split('-')
-    else:
-        year, month, day = (date_str[0:4], date_str[4:6], date_str[6:8])
-    return datetime.datetime(int(year), int(month), int(day), int(hour), int(minute),
-        int(second), tzinfo=tz)
-
 def fmt_datetime(dt):
     today = datetime.date.today()
     if today == dt.date():
@@ -189,10 +161,10 @@ class EventsParser:
                            'calendar_link' : calendar_link, 
                            'title' : entry_title, 
                            'link' : entry.GetHtmlLink().href })  
-                # _logger.debug("start time %s\n" % (parse_timestamp(when.start_time),))
-                # _logger.debug("end time %s\n" % (parse_timestamp(when.end_time),))     
-                e.update({ 'start_time' : parse_timestamp(when.start_time),
-                           'end_time' : parse_timestamp(when.end_time) })
+                # _logger.debug("start time %s\n" % (google.parse_timestamp(when.start_time),))
+                # _logger.debug("end time %s\n" % (google.parse_timestamp(when.end_time),))     
+                e.update({ 'start_time' : google.parse_timestamp(when.start_time),
+                           'end_time' : google.parse_timestamp(when.end_time) })
                 if e.get_start_time().time() == datetime.time(0) and e.get_end_time().time() == datetime.time(0) and e.get_start_time() < e.get_end_time():
                     e.update({ 'is_all_day' : True})
                 # for reminder in when.reminder:
@@ -221,10 +193,10 @@ class EventsParser:
                     e.update({ 'calendar_title' : calendar_title, 
                                'title' : entry_title, 
                                'link' : entry.GetHtmlLink().href }) 
-                    # _logger.debug("recurrence start time %s\n" % (parse_timestamp(dt_start),))
-                    # _logger.debug("recurrence end time %s\n" % (parse_timestamp(dt_end),))   
-                    e.update({ 'start_time' : parse_timestamp(dt_start),
-                               'end_time' : parse_timestamp(dt_end) })
+                    # _logger.debug("recurrence start time %s\n" % (google.parse_timestamp(dt_start),))
+                    # _logger.debug("recurrence end time %s\n" % (google.parse_timestamp(dt_end),))   
+                    e.update({ 'start_time' : google.parse_timestamp(dt_start),
+                               'end_time' : google.parse_timestamp(dt_end) })
 
             if original_events_length == len(self.__events):
                 _logger.warn("could not parse event %s\n" % (entry,))
