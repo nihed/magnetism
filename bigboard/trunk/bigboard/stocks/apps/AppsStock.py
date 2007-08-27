@@ -173,7 +173,7 @@ class AppDisplayLauncher(apps_widgets.AppDisplay):
   
 
 class AppsStock(bigboard.stock.AbstractMugshotStock):
-    WEBAPPS_SET_SIZE = 3
+    WEBAPPS_SET_SIZE = 0
     STATIC_SET_SIZE = 7
     DYNAMIC_SET_SIZE = 1
     STATIFICATION_TIME_SEC = 60 * 60 #* 24 * 3; # 3 days
