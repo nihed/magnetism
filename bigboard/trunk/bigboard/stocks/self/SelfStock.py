@@ -391,16 +391,14 @@ class SelfStock(AbstractMugshotStock):
 
         self._namephoto_box = PhotoContentItem()
         self._namephoto_box.set_clickable(True)        
+        self._namephoto_box.connect("button-press-event", lambda button, event: self.__on_activate())
         
         self._photo = CanvasMugshotURLImage(scale_width=48, scale_height=48)
         self._photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
-        self._photo.connect("button-press-event", lambda button, event: self.__on_activate())
-            
         self._namephoto_box.set_photo(self._photo)
         
         self._name = hippo.CanvasText(text="Nobody")
         self._name.set_property("font", "14px Bold")
-        self._name.connect("button-press-event", lambda button, event: self.__on_activate())        
         self._namephoto_box.set_child(self._name)        
         
         self._box.append(self._namephoto_box)
