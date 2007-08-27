@@ -49,9 +49,9 @@ class WorkBoard(Singleton):
                         deleted.add(j)
                     else:
                         observers_deleted.add(i)
-        for i in deleted:
-            del self.__queue[i]
-        for i in observers_deleted:
-            del self.__observers[i]
+        for i,delidx in enumerate(deleted):
+            del self.__queue[delidx-i]
+        for i,delidx in enumerate(observers_deleted):
+            del self.__observers[delidx-i]
         _logger.debug("Processing complete, %d messages remain and %d observers", len(self.__queue), len(self.__observers))
            
