@@ -351,7 +351,7 @@ class Google(gobject.GObject):
         "auth" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))
     }
 
-    def __init__(self):
+    def __init__(self, login_label, storage_key, default_domain='gmail.com'):
         super(Google, self).__init__()
         self.__logger = logging.getLogger("bigboard.Google")
         self.__username = None
@@ -359,18 +359,21 @@ class Google(gobject.GObject):
         self.__fetcher = AsyncHTTPFetcherWithAuth()
         self.__auth_requested = False
         self.__post_auth_hooks = []
+        self.__login_label = login_label
+        self.__storage_key = storage_key
+        self.__default_domain = default_domain
 
         k = keyring.get_keyring()
 
         # this line allows to enter new Google account information on bigboard restarts    
-        # k.remove_logins('google')
+        # k.remove_logins(self.__default_domain)
         self.__mail_checker = None
         
         try:
-            username_password_dict = k.get_logins("google") 
+            username_password_dict = k.get_logins(self.__default_domain) 
             if len(username_password_dict) > 0:
                 # this sets up callback in case authentication is cancelled
-                WorkBoard().append('service.pwauth', 'Google', cb_cancel=self.__on_auth_cancel)
+                WorkBoard().append('service.pwauth', self.__login_label, cb_cancel=self.__on_auth_cancel)
                 # dictionaries are not ordered, so here we are getting a random 
                 # item, but normally, we'll be getting the whole set
                 self.__username = username_password_dict.keys()[0]
@@ -379,7 +382,7 @@ class Google(gobject.GObject):
                ## this is just for old cruft in the keyring, we don't store without
                ## an @ anymore
                 if '@' not in self.__username:
-                    self.__username = self.__username + '@gmail.com'
+                    self.__username = self.__username + '@' + self.__default_domain
                 
                 self.__on_auth_ok(self.__username, self.__password)
                 return
@@ -400,11 +403,11 @@ class Google(gobject.GObject):
 
     def __on_auth_ok(self, username, password):
         if '@' not in username:
-            username = username + '@gmail.com'
+            username = username + '@' + self.__default_domain
         self.__username = username
         self.__password = password
         self.__auth_requested = False
-        keyring.get_keyring().store_login('google', self.__username, self.__password)
+        keyring.get_keyring().store_login(self.__default_domain, self.__username, self.__password)
 
         hooks = self.__post_auth_hooks
         self.__post_auth_hooks = []
@@ -418,7 +421,7 @@ class Google(gobject.GObject):
         self.__username = None
         self.__password = None
         # delete it persistently
-        keyring.get_keyring().remove_logins('google')        
+        keyring.get_keyring().remove_logins(self.__default_domain) 
         self.emit("auth", False)        
         self.__consider_checking_mail()
         self.__auth_requested = False
@@ -440,7 +443,8 @@ class Google(gobject.GObject):
             
         if not self.__auth_requested:
             self.__auth_requested = True
-            WorkBoard().append('service.pwauth', 'Google', self.__on_auth_ok, self.__on_auth_cancel, reauth=reauth)
+            WorkBoard().append('service.pwauth', self.__login_label,
+                               self.__on_auth_ok, self.__on_auth_cancel, reauth=reauth)
         else:
             _logger.debug("auth request pending; not resending")            
         self.__post_auth_hooks.append(func)
@@ -555,12 +559,31 @@ class Google(gobject.GObject):
     def fetch_new_mail(self, cb, errcb):
         self.__with_login_info(lambda: self.__have_login_fetch_new_mail(cb, errcb))
 
-_google_instance = None
+_google_personal_instance = None
+def get_google_at_personal():
+    global _google_personal_instance
+    if _google_personal_instance is None:
+        _google_personal_instance = Google(login_label='Google Personal', storage_key='google')
+    return _google_personal_instance
+
+_google_work_instance = None
+def get_google_at_work():
+    global _google_work_instance
+    if _google_work_instance is None:
+        _google_work_instance = Google(login_label='Google Work', storage_key='google-work')
+    return _google_work_instance
+
+## this is a hack to allow incrementally porting code to multiple
+## google accounts, it doesn't really make any sense long-term
 def get_google():
-    global _google_instance
-    if _google_instance is None:
-        _google_instance = Google()
-    return _google_instance
+    personal = get_google_at_personal()
+    work = get_google_at_work()
+    if personal.have_auth():
+        return personal
+    elif work.have_auth():
+        return work
+    else:
+        return personal
         
 if __name__ == '__main__':
 
@@ -580,7 +603,7 @@ if __name__ == '__main__':
     bignative.set_program_name("bigboard")
 
     # to test, you have to change this temporarily to store your correct
-    # password, then comment it out again
+    # password, then comment it out again.
     # keyring.get_keyring().store_login('google', 'hp@redhat.com', 'wrong')
 
     #AuthDialog().present('foo', 'bar')
