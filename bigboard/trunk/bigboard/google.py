@@ -296,7 +296,7 @@ class CheckMailTask(libbig.polling.Task):
             if self.__latest_mail:
                 libbig.show_url(self.__latest_mail.get_link())
         elif action == 'inbox-no-icon' or action == 'default':
-            libbig.show_url("http://mail.google.com/mail")
+            libbig.show_url(self.__google.get_mail_base_url())
         else:
             print "unknown action " + action
 
@@ -545,6 +545,21 @@ class Google(gobject.GObject):
 
     ### New Mail
 
+    def get_mail_base_url(self):
+        if not self.__username:
+            return None
+            
+        at_sign = self.__username.find('@')
+
+        domain = self.__username[at_sign+1:]
+
+        if not domain.endswith('gmail.com'):
+            uri = 'http://mail.google.com/a/' + domain
+        else:
+            uri = 'http://mail.google.com/mail'
+
+        return uri
+
     def __on_new_mail_load(self, url, data, cb, errcb):
         #self.__logger.debug("loaded new mail from " + url)
         #print data
@@ -560,14 +575,8 @@ class Google(gobject.GObject):
         errcb(exc_info)
 
     def __have_login_fetch_new_mail(self, cb, errcb):
-        at_sign = self.__username.find('@')
 
-        domain = self.__username[at_sign+1:]
-
-        if not domain.endswith('gmail.com'):
-            uri = 'http://mail.google.com/a/' + domain + '/feed/atom'
-        else:
-            uri = 'http://mail.google.com/mail/feed/atom'
+        uri = self.get_mail_base_url() + '/feed/atom'
 
         self.__fetcher.fetch(uri, self.__username, self.__password,
                              lambda url, data: self.__on_new_mail_load(url, data, cb, errcb),
