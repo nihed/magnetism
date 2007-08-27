@@ -370,11 +370,15 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__box.set_child_visible(self.__dynamic_set, False)
         
         self.__web_set.remove_all()
+        webapp_count = 0
         for domain,login in bigboard.logins.get_logins().iter_logins():
+            if webapp_count >= self.WEBAPPS_SET_SIZE:
+                break
             if WEB_APPS.has_key(domain):
                 display = apps_widgets.AppDisplay(WEB_APPS[domain])
                 display.connect("button-press-event", lambda display, event: display.launch())    
                 self.__web_set.append(display)
+                webapp_count += 1
         
         self.__static_set.remove_all()
         self.__static_set_ids = {}
