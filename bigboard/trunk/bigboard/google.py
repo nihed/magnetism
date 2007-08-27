@@ -42,8 +42,23 @@ def parse_timestamp(timestamp, tz=None):
         year, month, day = date_str.split('-')
     else:
         year, month, day = (date_str[0:4], date_str[4:6], date_str[6:8])
-    return datetime.datetime(int(year), int(month), int(day), int(hour), int(minute),
-        int(second), tzinfo=tz)
+
+    year = int(year)
+    month = int(month)
+    day = int(day)
+    hour = int(hour)
+    minute = int(minute)
+    second = int(second)
+
+    _logger.debug("%d-%d-%d %d:%d:%d  (original '%s')" % (year, month, day, hour, minute, second, timestamp))
+
+    ## google appears to return hour 24 in the gmail feed ... but RFC 3339 and Python are both 0-23.
+    ## for now just "fix it" but not sure what it really means. Does it mean 0 on the next day?
+    if hour > 23:
+        hour = 23
+        _logger.debug("*** adjusted hour down to 23???")
+    
+    return datetime.datetime(year, month, day, hour, minute, second, tzinfo=tz)
 
 def fmt_date_for_feed_request(date):
     return datetime.datetime.utcfromtimestamp(time.mktime(date.timetuple())).strftime("%Y-%m-%dT%H:%M:%S")
@@ -370,7 +385,7 @@ class Google(gobject.GObject):
         self.__mail_checker = None
         
         try:
-            username_password_dict = k.get_logins(self.__default_domain) 
+            username_password_dict = k.get_logins(self.__storage_key) 
             if len(username_password_dict) > 0:
                 # this sets up callback in case authentication is cancelled
                 WorkBoard().append('service.pwauth', self.__login_label, cb_cancel=self.__on_auth_cancel)
@@ -407,7 +422,7 @@ class Google(gobject.GObject):
         self.__username = username
         self.__password = password
         self.__auth_requested = False
-        keyring.get_keyring().store_login(self.__default_domain, self.__username, self.__password)
+        keyring.get_keyring().store_login(self.__storage_key, self.__username, self.__password)
 
         hooks = self.__post_auth_hooks
         self.__post_auth_hooks = []
@@ -421,7 +436,7 @@ class Google(gobject.GObject):
         self.__username = None
         self.__password = None
         # delete it persistently
-        keyring.get_keyring().remove_logins(self.__default_domain) 
+        keyring.get_keyring().remove_logins(self.__storage_key) 
         self.emit("auth", False)        
         self.__consider_checking_mail()
         self.__auth_requested = False
@@ -432,6 +447,9 @@ class Google(gobject.GObject):
 
     def get_auth(self):
         return (self.__username, self.__password)
+
+    def get_storage_key(self):
+        return self.__storage_key
 
     def __with_login_info(self, func, reauth=False):
         """Call func after we get username and password"""
@@ -573,6 +591,9 @@ def get_google_at_work():
         _google_work_instance = Google(login_label='Google Work', storage_key='google-work')
     return _google_work_instance
 
+def get_googles():
+    return [get_google_at_personal(), get_google_at_work()]
+
 ## this is a hack to allow incrementally porting code to multiple
 ## google accounts, it doesn't really make any sense long-term
 def get_google():
@@ -597,7 +618,7 @@ if __name__ == '__main__':
 
     gtk.gdk.threads_init()
 
-    libbig.logutil.init('DEBUG', ['AsyncHTTP2LibFetcher', 'bigboard.Keyring'])
+    libbig.logutil.init('DEBUG', ['AsyncHTTP2LibFetcher', 'bigboard.Keyring', 'bigboard.Google'])
 
     bignative.set_application_name("BigBoard")
     bignative.set_program_name("bigboard")
@@ -610,7 +631,7 @@ if __name__ == '__main__':
     #gtk.main()
     #sys.exit(0)
 
-    g = get_google()
+    g = get_google_at_personal()
 
     def display(x):
         print x
