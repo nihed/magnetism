@@ -396,7 +396,7 @@ hippo_dbus_init_services(HippoDBus   *dbus)
 
     dbus_error_init(&derror);
     
-    /* Grab ownership of the Mugshot interface */
+    /* Grab ownership of the Mugshot bus name */
     hippo_dbus_try_acquire_mugshot(connection, FALSE);
 
     /* Acquire online prefs manager; we continue even if this
