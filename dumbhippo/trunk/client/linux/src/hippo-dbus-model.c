@@ -883,6 +883,53 @@ handle_get_self_id(void            *object,
     return TRUE;
 }
 
+static dbus_bool_t
+handle_get_server(void            *object,
+                  const char      *prop_name,
+                  DBusMessageIter *append_iter,
+                  DBusError       *error)
+{
+    char *server;
+    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoConnection *hippo_connection = hippo_data_cache_get_connection(cache);
+    HippoPlatform *platform = hippo_connection_get_platform(hippo_connection);
+
+    /* DESKTOP hardcoded here since this is the data model API, nothing to do with stacker */    
+    server = hippo_platform_get_web_server(platform,
+                                           HIPPO_SERVER_DESKTOP);
+    
+    dbus_message_iter_append_basic(append_iter, DBUS_TYPE_STRING, &server);
+    
+    g_free(server);
+    
+    return TRUE;
+}
+
+static dbus_bool_t
+handle_get_web_base_url(void            *object,
+                        const char      *prop_name,
+                        DBusMessageIter *append_iter,
+                        DBusError       *error)
+{
+    char *server;
+    char *url;
+    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoConnection *hippo_connection = hippo_data_cache_get_connection(cache);
+    HippoPlatform *platform = hippo_connection_get_platform(hippo_connection);
+
+    /* DESKTOP hardcoded here since this is the data model API, nothing to do with stacker */
+    server = hippo_platform_get_web_server(platform, HIPPO_SERVER_DESKTOP);
+
+    url = g_strdup_printf("http://%s", server);
+    
+    dbus_message_iter_append_basic(append_iter, DBUS_TYPE_STRING, &url);
+    
+    g_free(server);
+    g_free(url);
+    
+    return TRUE;
+}
+
 static const HippoDBusMember model_members[] = {
     /* Query: Send a query to the server
      *
@@ -942,8 +989,17 @@ static const HippoDBusMember model_members[] = {
 };
 
 static const HippoDBusProperty model_properties[] = {
-    { "Connected", "b", handle_get_connected, NULL },
-    { "SelfId",    "s", handle_get_self_id, NULL },
+    { "Connected",  "b", handle_get_connected, NULL },
+    { "SelfId",     "s", handle_get_self_id, NULL },
+
+    /* this should return the server we are encoding in the dbus bus name, like foo.bar.org:8080 */
+    { "Server",     "s", handle_get_server, NULL },
+
+    /* right now this will be the server with http:// in front, but
+       in theory could have https or a path on the host or
+       something */
+    
+    { "WebBaseUrl", "s", handle_get_web_base_url, NULL },
     { NULL }
 };
 
