@@ -210,7 +210,7 @@ class CheckMailTask(libbig.polling.Task):
     def __init__(self, google):
         libbig.polling.Task.__init__(self, 1000 * 120, initial_interval=1000*5)
         self.__google = google
-        self.__mails = {}
+        self.__ids_seen = {}
 
         # we use dbus directly instead of libnotify because
         # older versions of libnotify crashed us when an action
@@ -244,16 +244,13 @@ class CheckMailTask(libbig.polling.Task):
             print "unknown action " + action
 
     def __on_fetched_mail(self, mails):
-        currently_new = {}
         not_yet_seen = 0
         for m in mails:
-            currently_new[m.get_id()] = m
-            if self.__mails.has_key(m.get_id()):
+            if self.__ids_seen.has_key(m.get_id()):
                 pass
             else:
                 not_yet_seen = not_yet_seen + 1
-
-        self.__mails = currently_new
+                self.__ids_seen[m.get_id()] = True
 
         if not_yet_seen > 0:
             first = mails[0]
@@ -270,7 +267,7 @@ class CheckMailTask(libbig.polling.Task):
                                                           ['mail',
                                                            "Open Message",
                                                            'inbox-no-icon',
-                                                           "Inbox (%d)" % len(self.__mails)], # action array
+                                                           "Inbox (%d)" % len(mails)], # action array
                                                           {'foo' : 'bar'}, # hints (pydbus barfs if empty)
                                                           10000) # timeout, 10 seconds
 
