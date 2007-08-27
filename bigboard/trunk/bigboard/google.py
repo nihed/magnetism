@@ -208,7 +208,7 @@ class AsyncHTTPFetcherWithAuth(object):
 
 class CheckMailTask(libbig.polling.Task):
     def __init__(self, google):
-        libbig.polling.Task.__init__(self, 1000 * 120)
+        libbig.polling.Task.__init__(self, 1000 * 120, initial_interval=1000*5)
         self.__google = google
         self.__mails = {}
 
