@@ -279,7 +279,7 @@ class BigBoardPanel(dbus.service.Object):
         self._dw.get_content().add(self._canvas)
         self._canvas.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))
                 
-        self._main_box = hippo.CanvasBox(border_right=1, border_color=0x999999FF)
+        self._main_box = hippo.CanvasBox(border_right=1, border_color=0x999999FF, padding_bottom=4)
         self._canvas.set_root(self._main_box)
      
         self._header_box = GradientHeader()
