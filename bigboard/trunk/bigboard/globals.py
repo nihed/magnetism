@@ -46,4 +46,9 @@ def get_baseurl():
     ## for now we don't have a way to do it right (see DataModel.WebBaseUrl
     ## property, but we don't rely on a new client daemon yet)
 
+    ## the old API leaves trailing '/', once we drop deprecated stuff
+    ## above this should not be needed
+    if url and url.endswith('/'):
+        url = url[:-1]
+
     return url
