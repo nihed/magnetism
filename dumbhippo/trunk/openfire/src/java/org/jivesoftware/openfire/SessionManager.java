@@ -1535,6 +1535,18 @@ public class SessionManager extends BasicModule {
         // If the user is still available then send an unavailable presence
         Presence presence = session.getPresence();
         if (presence.isAvailable()) {
+        	// Clean up routes we added when the user came available. Note that this
+        	// *doesn't* dispatch an event via PresenceEventDispatcher. If you instead
+        	// called session.setPresence(), then that would fire the event, which
+        	// would be inappropriate after dispatching 
+        	// SessionEventDispatcher.EventType.session_destroyed, though fine if ordered
+        	// earlier. (If the Presence packet was synthesized before removing the
+        	// session from sessions, it wouldn't even be necessary to call setPresence())
+        	// Not dispatching the event is consistent with trunk which just removes the
+        	// routes directly from within this function.
+        	//
+        	sessionUnavailable(session);
+        	
             Presence offline = new Presence();
             offline.setFrom(session.getAddress());
             offline.setTo(new JID(null, serverName, null));
