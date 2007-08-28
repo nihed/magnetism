@@ -1,4 +1,4 @@
-import logging, os, subprocess
+import logging, os, subprocess, urlparse
 
 import gobject, gtk, pango
 import gconf
@@ -7,9 +7,8 @@ import dbus, dbus.glib
 import hippo
 
 from mugshot import DataModel
-import bigboard.globals
+import bigboard.globals as globals
 import bigboard.slideout
-import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock, AbstractMugshotStock
@@ -412,7 +411,7 @@ class SelfStock(AbstractMugshotStock):
         self._box.append(self._signin)
         self._signin.connect("button-press-event", lambda signin, event: self.__do_account())
 
-        self._model = DataModel(bigboard.globals.server_name)
+        self._model = DataModel(globals.server_name)
         
         self.__myself = None
         self._model.add_connected_handler(self.__on_connected)
@@ -537,7 +536,7 @@ class SelfStock(AbstractMugshotStock):
             url = "/account"
         else:
             url = "/who-are-you"
-        libbig.show_url(global_mugshot.get_mugshot().get_baseurl() + url)
+        libbig.show_url(urlparse.urljoin(globals.get_baseurl(), url))
             
     def __on_activate(self):
         if self.__slideout:
