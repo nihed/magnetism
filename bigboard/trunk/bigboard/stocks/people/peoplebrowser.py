@@ -10,6 +10,10 @@ import bigboard.libbig as libbig
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, ActionLink, PrelightingCanvasBox
 from bigboard.overview_table import OverviewTable
 from bigboard.people_tracker import PeopleTracker
+try:
+    import bigboard.bignative as bignative
+except:
+    import bignative
 
 from peoplewidgets import PersonItem, ProfileItem
 
@@ -50,7 +54,7 @@ class PeopleList(OverviewTable):
         item = PersonItem(user)
         item.connect("button-press-event", self.__on_item_click)
                 
-        self.add_column_item(section, item, lambda a,b: cmp(a.resource.name, b.resource.name))
+        self.add_column_item(section, item, lambda a,b: bignative.utf8_collate(a.resource.name, b.resource.name))
         self.__section_counts[section] += 1
         if self.__section_counts[section] == 1:
             self.__section_headers[section].set_visible(True)

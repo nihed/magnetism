@@ -21,7 +21,9 @@ PyMethodDef bignative_functions[] = {
     {"install_focus_docks_hack", bigboard_install_focus_docks_hack, METH_VARARGS,
      "Focus dock windows when clicking focusable widgets in them."},    
     {"keyring_find_items_sync", (PyCFunction) bigboard_gnomekeyring_find_items_sync, METH_VARARGS | METH_KEYWORDS,
-     "Find gnomekeyring items."},    
+     "Find gnomekeyring items."},
+    {"utf8_collate", (PyCFunction) bigboard_utf8_collate, METH_VARARGS,
+     "Compare strings in lexical order."},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

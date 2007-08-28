@@ -237,3 +237,17 @@ bigboard_gnomekeyring_find_items_sync(PyObject *self, PyObject *args, PyObject *
         return NULL;
     }
 }
+
+PyObject*
+bigboard_utf8_collate(PyObject *self, PyObject *args)
+{
+    PyObject *result = NULL;
+    char *a, *b;
+
+    if (PyArg_ParseTuple(args, "ss:bigboard_utf8_collate", &a, &b)) {
+        result = PyInt_FromLong(g_utf8_collate(a, b));
+    }
+    
+    return result;
+}
+
