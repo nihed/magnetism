@@ -9,7 +9,7 @@ import hippo
 
 from libgimmie import DockWindow
 from libbig.imagecache import URLImageCache
-import libbig, stock, global_mugshot, bigboard
+import libbig, stock, globals, bigboard
 from table_layout import TableLayout
 
 class CanvasVBox(hippo.CanvasBox):
@@ -120,7 +120,7 @@ class CanvasMugshotURLImageMixin:
             self.__sync()
         
     def __sync(self):
-        baseurl = global_mugshot.get_mugshot().get_baseurl()
+        baseurl = globals.get_baseurl()
         if not (baseurl is None or self.__rel_url is None):
             CanvasURLImageMixin.set_url(self, urlparse.urljoin(baseurl, self.__rel_url))
 

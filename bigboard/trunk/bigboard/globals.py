@@ -1,4 +1,5 @@
 import re
+import global_mugshot
 
 bus_name = 'org.mugshot.Mugshot'
 server_name = None
@@ -34,3 +35,15 @@ def set_do_autolaunch(value):
     global _do_autolaunch_raw
     do_autolaunch = value
     do_autolaunch = _do_autolaunch_raw and server_name == None
+
+def get_baseurl():
+    ## this is the deprecated way to do it and leaves a bogus trailing '/'
+    url = global_mugshot.get_mugshot().get_baseurl()
+    ## this is also wrong
+    if server_name and not url:
+        url = "http://" + server_name
+
+    ## for now we don't have a way to do it right (see DataModel.WebBaseUrl
+    ## property, but we don't rely on a new client daemon yet)
+
+    return url

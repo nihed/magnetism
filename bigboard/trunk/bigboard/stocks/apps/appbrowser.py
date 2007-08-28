@@ -3,6 +3,7 @@ import logging, time, urlparse, urllib, time
 import gobject, gtk
 import hippo
 
+import bigboard.globals as globals
 import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, CanvasTable, \
@@ -218,7 +219,7 @@ class AppExtras(CanvasVBox):
         subquery = (self.__search and ("?q=" + urllib.quote(self.__search))) \
                     or self.__catname and ("?category=" + urllib.quote(self.__catname)) \
                     or ''
-        libbig.show_url(urlparse.urljoin(global_mugshot.get_mugshot().get_baseurl(),
+        libbig.show_url(urlparse.urljoin(globals.get_baseurl(),
                                          "applications%s" % (subquery,)))
         # more-info with None just means hide window
         self.emit("more-info", None)
@@ -510,7 +511,7 @@ class AppBrowser(hippo.CanvasWindow):
 
     def __on_show_more_info(self, app):
         if app:
-            libbig.show_url(urlparse.urljoin(global_mugshot.get_mugshot().get_baseurl(), "application?id=" + app.get_mugshot_app().get_id()))
+            libbig.show_url(urlparse.urljoin(globals.get_baseurl(), "application?id=" + app.get_mugshot_app().get_id()))
         self.__hide_reset()
 
     def __on_app_launch(self):
@@ -522,7 +523,7 @@ class AppBrowser(hippo.CanvasWindow):
             self.__hide_reset()
 
     def __on_browse_popular_apps(self):
-        libbig.show_url(urlparse.urljoin(global_mugshot.get_mugshot().get_baseurl(), "applications"))
+        libbig.show_url(urlparse.urljoin(globals.get_baseurl(), "applications"))
         self.__hide_reset()
             
     def __on_search_changed(self, input, text):
