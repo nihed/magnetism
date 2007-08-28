@@ -319,8 +319,10 @@ class SelfSlideout(CanvasVBox):
     def update_self(self, myself):
         self.__myself = myself
         if myself:
-            self.__photo.set_url(myself.photoUrl)
-            self.__name.set_property("text", myself.name)
+            if myself.photoUrl:
+                self.__photo.set_url(myself.photoUrl)
+            if myself.name:
+                self.__name.set_property("text", myself.name)
             self.__mugshot_link.set_property("text", 'Visit account page')
         else:
             self.__photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
