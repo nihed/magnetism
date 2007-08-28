@@ -12,6 +12,7 @@ PyObject*  bigboard_set_application_name                (PyObject *self, PyObjec
 PyObject*  bigboard_set_program_name                    (PyObject *self, PyObject *args);
 PyObject*  bigboard_gnomekeyring_find_items_sync        (PyObject *self, PyObject *args, PyObject *kwargs);
 PyObject*  bigboard_install_focus_docks_hack            (PyObject *self, PyObject *args);
+PyObject*  bigboard_utf8_collate                        (PyObject *self, PyObject *args);
 
 G_END_DECLS
 
