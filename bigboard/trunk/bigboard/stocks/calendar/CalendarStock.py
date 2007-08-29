@@ -258,9 +258,18 @@ class EventDisplay(CanvasVBox):
 class CalendarStock(AbstractMugshotStock, polling.Task):
     def __init__(self, *args, **kwargs):
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
-        # we keep calendars in a dictionary, referenced by calendar feed links,
+        # A dictionary of authenticated google accounts, with keys that are used
+        # to identify those accounts within CalendarStock.
+        self.__googles = {}
+        self.__google_key = 0; 
+        # We keep calendars in a dictionary, referenced by calendar feed links,
         # so that we can get calendar names without updating events that are
-        # currently not in range; we also use it to get calendar color for events 
+        # currently not in range. We also use it to get calendar color for events. 
+        # The values in this dictionary are dictionaries themselves, with keys that
+        # identify google accounts and values that are Calendar objects received
+        # for those accounts. This structure allows to keep track of calendars that
+        # are shared across multiple accounts and make sure we don't display duplicate
+        # events if they are from the same calendar. 
         self.__calendars = {}
         self.__events = []
         self.__events_for_day_displayed = None
@@ -286,12 +295,13 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self.__notifications_proxy = dbus.Interface(o, 'org.freedesktop.Notifications')
         self.__notifications_proxy.connect_to_signal('ActionInvoked', self.__on_action)
         
-        gobj = google.get_google()
-        gobj.connect("auth", self.__on_google_auth)
-        if gobj.have_auth():
-            self.__on_google_auth(gobj, True) 
-        else:
-            gobj.request_auth()
+        gobj_list = google.get_googles()
+        for gobj in gobj_list:
+            gobj.connect("auth", self.__on_google_auth)
+            if gobj.have_auth():
+                self.__on_google_auth(gobj, True) 
+            else:
+                gobj.request_auth()
 
         self._add_more_button(self.__on_more_button)
 
@@ -379,24 +389,41 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             print "unknown action " + action
 
     def __on_more_button(self):
+        # TODO: need to change this somehow
         libbig.show_url('http://calendar.google.com')
 
     def _on_mugshot_ready(self):
         super(CalendarStock, self)._on_mugshot_ready()
         self.__update_calendar_list_and_events()
 
+    def __get_google_key(self, gobj):
+        for google_item in self.__googles.items():
+            if google_item[1] == gobj:
+                return google_item[0]
+        return None 
+
     def __on_google_auth(self, gobj, have_auth):
         _logger.debug("google auth state: %s", have_auth)
         if have_auth:           
-            self.__update_calendar_list_and_events()
-            self.start()
+            if self.__googles.values().count(gobj) == 0:
+                self.__googles[self.__google_key] = gobj   
+            self.__update_calendar_list_and_events(self.__google_key)
+            self.__google_key = self.__google_key + 1
+            if not self.is_running():
+                self.start()
         else:
-            self.stop()
-            self.__box.remove_all()
+            key = self.__get_google_key(gobj)
+            if key is not None:
+                if len(self.__googles) == 1: 
+                    self.stop()
+                self.__remove_calendar_list_and_events(key)
+                del self.__googles[key]                   
+            
+            # Possibly do this if we want to completely clear the box
+            # self.__box.remove_all()
 
     def do_periodic_task(self):
-        self.__update_calendar_list_and_events()
-        # self.__update_events()        
+        self.__update_calendar_list_and_events()   
 
     def get_authed_content(self, size):
         return size == self.SIZE_BULL and self.__box or None
@@ -404,35 +431,85 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
     def set_size(self, size):
         super(CalendarStock, self).set_size(size)
 
-    def __on_calendar_list_load(self, url, data):
-        # parse calendar list feed into a list of Calendar objects
-        calendar_list = gcalendar.CalendarListFeedFromString(data)
-        calendar_dictionary = {}
-        for calendar_entry in calendar_list.entry:
-            calendar_entry_id = create_calendar_feed_url(calendar_entry)
-            _logger.debug("calendar feed id: %s", calendar_entry_id) 
-            calendar_dictionary[calendar_entry_id] = calendar_entry
-            # we delete entries from the old dictionary if they were not deselected
-            if self.__calendars.has_key(calendar_entry_id) and (include_calendar(calendar_entry) or not include_calendar(self.__calendars[calendar_entry_id])):
-                del self.__calendars[calendar_entry_id]
+    def __remove_calendar_list_and_events(self, google_key):
+        removed_calendar_dictionary = {}
+        affected_calendar_ids = [] 
+        for calendar_item in self.__calendars.items():
+            if calendar_item[1].has_key(google_key):
+                if len(calendar_item[1]) == 1:
+                    removed_calendar_dictionary[calendar_item[0]] = calendar_item[1][google_key]     
+                else:
+                    affected_calendar_ids.append(calendar_item[0])    
+        
+        for removed_calendar_item in removed_calendar_dictionary.items():
+            del self.__calendars[removed_calendar_item[0]]
 
+        for affected_calendar_id in affected_calendar_ids:
+            del self.__calendars[affected_calendar_id][google_key]        
+         
         events = copy.copy(self.__events)
-        # remove items from calendars that are no longer returned or are no longer selected  
-        # this should still keep events list sorted by event time
-        for calendar_link in self.__calendars.keys():  
+        for calendar_link in removed_calendar_dictionary.keys():  
             for event in events:
                 if event.get_calendar_link() == calendar_link:
-                    self.__events.remove(event)             
-       
-        self.__calendars = calendar_dictionary
-     
-        self.__update_events()
+                    self.__events.remove(event)    
+
+        self.__refresh_events()
+
+    def __on_calendar_list_load(self, url, data, gobj):
+        google_key = self.__get_google_key(gobj)
+        if google_key is None:
+            _logger.warn("didn't find google_key for %s", gobj)
+            return 
+        # parse calendar list feed into a list of Calendar objects
+        calendar_list = gcalendar.CalendarListFeedFromString(data)
+        updated_calendar_dictionary = {}
+        for calendar_entry in calendar_list.entry:
+            calendar_entry_id = create_calendar_feed_url(calendar_entry)
+            _logger.debug("calendar feed id: %s", calendar_entry_id)
  
-    def __on_calendar_load(self, url, data, calendar_feed_url, event_range_start, event_range_end):
+            updated_calendar_dictionary[calendar_entry_id] = calendar_entry
+            # we delete entries from the old dictionary if they were not deselected
+            if self.__calendars.has_key(calendar_entry_id) and self.__calendars[calendar_entry_id].has_key(google_key) and (include_calendar(calendar_entry) or not include_calendar(self.__calendars[calendar_entry_id][google_key])):
+                if len(self.__calendars[calendar_entry_id]) == 1:
+                    del self.__calendars[calendar_entry_id]
+                else:
+                    del self.__calendars[calendar_entry_id][google_key]
+
+        events = copy.copy(self.__events)
+        calendars_to_remove = []
+        # remove items from calendars for this google object that are no longer returned 
+        # or are no longer selected; this should still keep events list sorted by event time
+        for calendar_item in self.__calendars.items():  
+            if calendar_item[1].has_key(google_key):
+                calendar_link = calendar_item[0]
+                if len(calendar_item[1]) == 1:
+                    for event in events:
+                        if event.get_calendar_link() == calendar_link:
+                            self.__events.remove(event)             
+                    calendars_to_remove.append(calendar_link)
+                else:
+                    del self.__calendars[calendar_link][google_key]
+
+        for calendar_to_remove in calendars_to_remove:
+             del self.__calendars[calendar_to_remove]
+
+        for updated_calendar in updated_calendar_dictionary.items():
+            if self.__calendars.has_key(updated_calendar[0]):
+                self.__calendars[updated_calendar[0]][google_key] = updated_calendar[1]
+            else:
+                self.__calendars[updated_calendar[0]] = {google_key: updated_calendar[1]}
+     
+        self.__update_events(google_key)
+ 
+    def __on_calendar_load(self, url, data, calendar_feed_url, event_range_start, event_range_end, gobj):
         _logger.debug("loaded calendar from " + url)
+        google_key = self.__get_google_key(gobj)
+        if google_key is None:
+            _logger.warn("didn't find google_key for %s", gobj)
+            return 
         try:
             p = EventsParser(data)
-            color = self.__calendars[calendar_feed_url].color.value 
+            color = self.__calendars[calendar_feed_url][google_key].color.value 
             for event in p.get_events(): 
                 event.update({ 'color' : color})
             self.__on_load_events(p.get_events(), calendar_feed_url, event_range_start, event_range_end)
@@ -713,14 +790,23 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
     def __on_failed_load(self, response):
         pass
 
-    def __update_calendar_list_and_events(self):
+    def __update_calendar_list_and_events(self, google_key = None):
         _logger.debug("retrieving calendar list")
-        # we update events in __on_calendar_list_load()            
-        google.get_google().fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)      
+        # we update events in __on_calendar_list_load() 
+        if google_key is not None:
+            self.__googles[google_key].fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)
+        else:            
+            for gobj in self.__googles.values():
+                gobj.fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)      
 
-    def __update_events(self):
+    def __update_events(self, google_key = None):
         _logger.debug("retrieving events")
-        for calendar in self.__calendars.values():   
-            if include_calendar(calendar):
-                calendar_feed_url =  create_calendar_feed_url(calendar)
-                google.get_google().fetch_calendar(self.__on_calendar_load, self.__on_failed_load, calendar_feed_url, self.__event_range_start, self.__event_range_end)
+        for google_calendar_dict in self.__calendars.values():  
+            if google_key is None or google_calendar_dict.has_key(google_key):
+                local_google_key = google_key
+                if google_key is None:
+                    local_google_key = google_calendar_dict.keys()[0]
+                calendar = google_calendar_dict[local_google_key]  
+                if include_calendar(calendar):
+                    calendar_feed_url =  create_calendar_feed_url(calendar)
+                    self.__googles[local_google_key].fetch_calendar(self.__on_calendar_load, self.__on_failed_load, calendar_feed_url, self.__event_range_start, self.__event_range_end)

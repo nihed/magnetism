@@ -50,7 +50,7 @@ def parse_timestamp(timestamp, tz=None):
     minute = int(minute)
     second = int(second)
 
-    _logger.debug("%d-%d-%d %d:%d:%d  (original '%s')" % (year, month, day, hour, minute, second, timestamp))
+    # _logger.debug("%d-%d-%d %d:%d:%d  (original '%s')" % (year, month, day, hour, minute, second, timestamp))
 
     ## google appears to return hour 24 in the gmail feed ... but RFC 3339 and Python are both 0-23.
     ## for now just "fix it" but not sure what it really means. Does it mean 0 on the next day?
@@ -483,7 +483,7 @@ class Google(gobject.GObject):
         uri = 'http://www.google.com/calendar/feeds/' + self.__username + '?max-results=1000'
 
         self.__fetcher.fetch(uri, self.__username, self.__password,
-                             lambda url, data: cb(url, data),
+                             lambda url, data: cb(url, data, self),
                              lambda url, resp: errcb(resp),
                              lambda url: self.__on_bad_auth())
 
@@ -506,7 +506,7 @@ class Google(gobject.GObject):
             uri = calendar_feed_url + min_and_max_str
 
         self.__fetcher.fetch(uri, self.__username, self.__password,
-                             lambda url, data: cb(url, data, calendar_feed_url, event_range_start, event_range_end),
+                             lambda url, data: cb(url, data, calendar_feed_url, event_range_start, event_range_end, self),
                              lambda url, resp: errcb(resp),
                              lambda url: self.__on_bad_auth())
 
