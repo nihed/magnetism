@@ -244,4 +244,4 @@ class PeopleBrowser(hippo.CanvasWindow):
         self.__people_list.add_user(user, LOCAL_PEOPLE)
         
     def __on_local_user_removed(self, list, user):
-        self.__remove_user(user, LOCAL_PEOPLE)
+        self.__people_list.remove_user(user, LOCAL_PEOPLE)
