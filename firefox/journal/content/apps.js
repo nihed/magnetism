@@ -1,3 +1,40 @@
+var FdLocalApp = Class.create();
+FdLocalApp.prototype = {
+  initialize: function(dfile) {
+    this.desktopFile = dfile;
+    this.desktopFile.QueryInterface(Components.interfaces.nsILocalFile)
+  },
+  launch: function() {
+    console.log("launching %s", this.desktopFile);
+  },
+};
+
+var FdMenuSystem = Class.create();
+FdMenuSystem.prototype = {
+  DESKTOP_DIRS: ['/usr/share/applications'],
+  initialize: function() {
+    
+  },
+  findAppByDesktopName: function(fname) {
+    var result;
+    this.DESKTOP_DIRS.each(function (ddir) {
+      var ddirFile = Components.classes["@mozilla.org/file/local;1"]
+                     .createInstance(Components.interfaces.nsILocalFile);
+      ddirFile.initWithPath(ddir);
+      var entries = ddirFile.directoryEntries;
+      while (entries.hasMoreElements()) {
+        var desktopFile = entries.getNext();
+        desktopFile.QueryInterface(Components.interfaces.nsIFile);
+        if (desktopFile.leafName == fname) {
+          result = desktopFile;
+          throw $break;
+        }
+      }
+    });
+    return new FdLocalApp(result);
+  },
+};
+
 var AppsSidebar = Class.create();
 AppsSidebar.prototype = {
   sidebarId: "AppsSidebar",
@@ -41,6 +78,7 @@ AppsSidebar.prototype = {
   },
   onAppClick: function(e, appData) {
     alert("app click");
+
     Event.stop(e);
   },
   redisplay: function(search) {
