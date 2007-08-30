@@ -1,0 +1,7 @@
+#include "nsISupports.idl"
+
+[scriptable, uuid(38fbce87-8d59-40ad-84e7-9f0c0b3490b5)]
+interface nsIJournalHome : nsISupports
+{
+  string greeting();
+};
