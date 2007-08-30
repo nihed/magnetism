@@ -470,6 +470,8 @@ public class MessengerGlueBean implements MessengerGlue {
 			xmppMessageSender.sendAdminPresence(remoteResource.getJid(), localJid, null);
 		}
 		
+		logger.debug("Old status was {}, new status is {}", oldStatus, newStatus);
+			
 		if (newStatus != oldStatus)
 			xmppMessageSender.setSubscriptionStatus(localJid, remoteResource, newStatus);
 	}
