@@ -423,17 +423,19 @@ public interface HttpMethods {
 	public void getUserSummary(XmlBuilder xml, Viewpoint viewpoint, User who, boolean includeStack, boolean participantOnly) throws XmlMethodException;
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
-	@HttpParams({ "category" })
-	@HttpOptions( optionalParams = { "category" } )	
-	public void getPopularApplications(XmlBuilder xml, Viewpoint viewpoint, String category) throws XmlMethodException;
+	@HttpParams({ "category", "distribution", "lang" })
+	@HttpOptions( optionalParams = { "category", "distribution", "lang" } )	
+	public void getPopularApplications(XmlBuilder xml, Viewpoint viewpoint, String category, String distribution, String lang) throws XmlMethodException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
-	@HttpParams({ "search" })	
-	public void getSearchApplications(XmlBuilder xml, Viewpoint viewpoint, String search) throws XmlMethodException;
+	@HttpParams({ "search", "distribution", "lang" })
+	@HttpOptions( optionalParams = { "distribution", "lang" } )	
+	public void getSearchApplications(XmlBuilder xml, Viewpoint viewpoint, String search, String distribution, String lang) throws XmlMethodException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
-	@HttpParams({ })	
-	public void getAllApplications(XmlBuilder xml, Viewpoint viewpoint) throws XmlMethodException;		
+	@HttpParams({ "distribution", "lang" })
+	@HttpOptions( optionalParams = { "distribution", "lang" } )	
+	public void getAllApplications(XmlBuilder xml, Viewpoint viewpoint, String distribution, String lang) throws XmlMethodException;		
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "who", "participantOnly" })

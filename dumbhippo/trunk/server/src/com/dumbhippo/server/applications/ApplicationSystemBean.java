@@ -574,9 +574,24 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		return new File(saveUri);
 	}
 
+	/** pass -1 for desiredSize if you want the icon urls to be unsized 
+	 *
+	 * @param application
+	 * @param desiredSize -1 for unsized
+	 * @return
+	 */
 	private ApplicationIconView getIcon(Application application, int desiredSize) {
 		ApplicationIcon unsizedIcon = null;
 		ApplicationIcon sizedIcon = null;
+		int searchSize;
+		
+		// the "desired size" is the size we want munged into ApplicationIconView.getUrl(), 
+		// and the "search size" is the size we'll look for in the list of available icons
+		
+		if (desiredSize < 0)
+			searchSize = 24;
+		else
+			searchSize = desiredSize;
 		
 		// We try to fine the icon with the nominal size closest
 		// to the desired size, except that we always prefer a
@@ -587,11 +602,11 @@ public class ApplicationSystemBean implements ApplicationSystem {
 				unsizedIcon = icon;
 			} else if (sizedIcon == null) {
 				sizedIcon = icon;
-			} else {
+			} else if (searchSize >= 0){
 				int oldSize = sizedIcon.getSize();
-				if (oldSize < desiredSize && iconSize >= desiredSize)
+				if (oldSize < searchSize && iconSize >= searchSize)
 					sizedIcon = icon;
-				else if (Math.abs(oldSize - desiredSize) > Math.abs(iconSize - desiredSize))
+				else if (Math.abs(oldSize - searchSize) > Math.abs(iconSize - searchSize))
 					sizedIcon = icon;
 			}
 		}
@@ -605,7 +620,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 				String url;
 				int actualSize;
 				
-				if (desiredSize >= 22 && desiredSize <= 26) {
+				if (searchSize >= 22 && searchSize <= 26) {
 					url = "/images3/unknownapp24.png";
 					actualSize = 24;
 				} else {
@@ -621,10 +636,10 @@ public class ApplicationSystemBean implements ApplicationSystem {
 			// use a smaller size, we double check to see if we have a
 			// icon without a specified nominal size that is actually
 			// larger than the desired size.
-			if (sizedIcon.getSize() < desiredSize &&
+			if (sizedIcon.getSize() < searchSize &&
 				unsizedIcon != null &&
-				unsizedIcon.getActualHeight() >= desiredSize &&
-				unsizedIcon.getActualWidth() >= desiredSize)
+				unsizedIcon.getActualHeight() >= searchSize &&
+				unsizedIcon.getActualWidth() >= searchSize)
 				icon = unsizedIcon;
 			else
 				icon = sizedIcon;
@@ -1020,15 +1035,16 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	}
 	
 
-	public void writeAllApplicationsToXml(int iconSize, XmlBuilder xml) {
+	public void writeAllApplicationsToXml(XmlBuilder xml, String distribution, String lang) {
 		List<Application> apps = TypeUtils.castList(Application.class,
 													em.createQuery("SELECT a FROM Application a").getResultList());
 		for (Application app : apps) {
 			ApplicationView viewedApp = new ApplicationView(app);
-			setViewIcon(viewedApp, iconSize);
-			viewedApp.writeToXmlBuilder(xml);
+			setViewIcon(viewedApp, -1);
+			// distribution and lang can be null
+			viewedApp.writeToXmlBuilder(xml, distribution, lang);
 		}
-	}	
+	}
 
 	public void updateUsages() {
 		Set<String> usedApps = new HashSet<String>();

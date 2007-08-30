@@ -59,7 +59,7 @@ public interface ApplicationSystem {
 	
 	public List<ApplicationView> viewApplications(UserViewpoint viewpoint, List<Application> apps, int iconSize);
 	
-	public void writeAllApplicationsToXml(int iconSize, XmlBuilder xml);	
+	public void writeAllApplicationsToXml(XmlBuilder xml, String distribution, String lang);	
 	
 	public List<Application> getPinnedApplications(User user); 
 	public ApplicationUserState getUserState(User user, Application app) throws RetryException;
