@@ -5,6 +5,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import javax.persistence.Version;
 
 /**
  * XmppSubscription is used to track subscriptions between our XMPP admin address 
@@ -74,6 +75,7 @@ public class XmppSubscription extends DBUnique {
 	// current modifications of the status from NONE => TO and NONE => FROM or
 	// BOTH => TO and BOTH => FROM.
 
+	@Version
 	protected Integer getVersion() {
 		return version;
 	}
