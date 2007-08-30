@@ -76,6 +76,10 @@ dh.account.removeClaimAim = function(address) {
 }
 
 dh.account.verifyXmpp = function() {
+	// Form got submitted when the XMPP entry wasn't active
+	if (dh.account.imAccountType == 'aim')
+		return;
+
 	var address = dh.account.imEntry.getValue();
 	if (address.indexOf("@") < 0) {
 		alert("Enter an address, then click Verify");
@@ -131,6 +135,7 @@ dh.account.removeClaimXmpp = function(address) {
 
 dh.account.createImEntry = function() {
     dh.account.imEntry = new dh.textinput.Entry(document.getElementById('dhXmppEntry'), 'your.name@example.com', '');
+   	dh.account.imAccountType = 'aim';
 }
 
 dh.account.showImAccountPopup = function() {
@@ -146,6 +151,8 @@ dh.account.closeImAccountPopup = function() {
 }
 
 dh.account.setImAccountType = function(type) {
+	dh.account.imAccountType = type;
+
 	var aimContent = document.getElementById("dhAddAimContent");
 	aimContent.style.display = (type == "aim") ? "block" : "none";
 
