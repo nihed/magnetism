@@ -4,4 +4,6 @@
 interface nsIJournalHome : nsISupports
 {
   string greeting();
+  nsISupports getHistory();
 };
+

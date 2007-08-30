@@ -118,6 +118,8 @@ input.green-button:hover {
 
 #history {
   float: left;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
 #q {
@@ -215,24 +217,24 @@ input.green-button:hover {
 
 /* ==== Sidebars ==== */
 .sidebars {
-  float: right;
+
 }
 .sidebar {
+  float: left;
   font-size: 10pt;
   min-width: 200px;
   min-height: 400px;
-  /* border: 1px solid black; */
+  border: 1px solid #999;
+  padding: 1em;
+  margin: 1em;
 }
 .sidebar-header {
-  font-size: 14pt;
-  background-color: #ABABFF;
-  border: 1px solid black;
-  width: 100%;
+  border-bottom: 1px dotted #222;
 }
 /* ==== Google Search ==== */
 
 #google-q {
-  width: 800px;
+  width: 775px;
   min-height: 800px;
   height; 100%:
   padding: 0;

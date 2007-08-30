@@ -35,7 +35,8 @@
  * ***** END LICENSE BLOCK ***** */
 
 const JOURNAL_SERVICE = Components.classes["@redhat.com/journalhome;1"].getService(Components.interfaces["nsIJournalHome"]);
- 
+const HISTORY_SERVICE = Components.classes["@mozilla.org/browser/nav-history-service;1"].getService(Components.interfaces.nsINavHistoryService);
+
 const JOURNAL_CHROME = "chrome://firefoxjournal/content/journal.html"; 
 
 const FIREFOX_FAVICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAHWSURBVHjaYvz//z8DJQAggJiQOe/fv2fv7Oz8rays/N+VkfG/iYnJfyD/1+rVq7ffu3dPFpsBAAHEAHIBCJ85c8bN2Nj4vwsDw/8zQLwKiO8CcRoQu0DxqlWrdsHUwzBAAIGJmTNnPgYa9j8UqhFElwPxf2MIDeIrKSn9FwSJoRkAEEAM0DD4DzMAyPi/G+QKY4hh5WAXGf8PDQ0FGwJ22d27CjADAAIIrLmjo+MXA9R2kAHvGBA2wwx6B8W7od6CeQcggKCmCEL8bgwxYCbUIGTDVkHDBia+CuotgACCueD3TDQN75D4xmAvCoK9ARMHBzAw0AECiBHkAlC0Mdy7x9ABNA3obAZXIAa6iKEcGlMVQHwWyjYuL2d4v2cPg8vZswx7gHyAAAK7AOif7SAbOqCmn4Ha3AHFsIDtgPq/vLz8P4MSkJ2W9h8ggBjevXvHDo4FQUQg/kdypqCg4H8lUIACnQ/SOBMYI8bAsAJFPcj1AAEEjwVQqLpAbXmH5BJjqI0gi9DTAAgDBBCcAVLkgmQ7yKCZxpCQxqUZhAECCJ4XgMl493ug21ZD+aDAXH0WLM4A9MZPXJkJIIAwTAR5pQMalaCABQUULttBGCCAGCnNzgABBgAMJ5THwGvJLAAAAABJRU5ErkJggg==";
@@ -46,93 +47,6 @@ function LOG(msg) {
   var dl = $("debuglog");
   dl.appendChild(document.createTextNode(msg));
   dl.appendChild(document.createElement("br"));
-}
-
-/***** History wrapper API *****/
-
-var HistoryItem = Class.create();
-HistoryItem.prototype = {
-  initialize: function(url, title, lastVisitDate, visitCount) {
-    this.url = url;
-    this.title = title;
-    this.lastVisitDate = lastVisitDate;
-    this.visitCount = visitCount;
-  }
-}
- 
-const RDF = Components.classes["@mozilla.org/rdf/rdf-service;1"].getService(Components.interfaces.nsIRDFService); 
-const BOOKMARK_NAME = RDF.GetResource("http://home.netscape.com/NC-rdf#Name");
-const BOOKMARK_DATE = RDF.GetResource("http://home.netscape.com/NC-rdf#Date");
-const BOOKMARK_VISITCOUNT = RDF.GetResource("http://home.netscape.com/NC-rdf#VisitCount");
-
-function readRDFThingy(ds,res,prop,qi,def) {
-  var val = ds.GetTarget(res, prop, true);
-  if (val)
-    return val.QueryInterface(qi).Value;
-  else
-    return def;
-}
-
-function readRDFString(ds,res,prop) {
-  return readRDFThingy(ds,res,prop,Components.interfaces.nsIRDFLiteral,"")
-}
-
-function readRDFDate(ds,res,prop) {
-  return new Date(readRDFThingy(ds,res,prop,Components.interfaces.nsIRDFDate,null)/1000);
-}
-
-function readRDFInt(ds,res,prop) {
-  return readRDFThingy(ds,res,prop,Components.interfaces.nsIRDFInt,-1);
-}
-
-var History = Class.create();
-Object.extend(History.prototype, Enumerable);
-
-Object.extend(History.prototype, {
-  initialize: function() {
-    this.history = Components.classes["@mozilla.org/browser/global-history;2"].getService(Components.interfaces.nsIRDFDataSource);
-    this.cachedHistoryCount = -1;
-    this.observers = [];
-    this.timeout = null;
-  },
-  _each: function(iterator) {
-    var historyRdf = Components.classes["@mozilla.org/browser/global-history;2"].getService(Components.interfaces.nsIRDFDataSource);
-    var iter = this.history.GetAllResources();
-    var result = [];
-    while (iter.hasMoreElements()) {
-      var resource = iter.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
-      var histItem = new HistoryItem(resource.Value, 
-                                     readRDFString(this.history, resource, BOOKMARK_NAME),
-                                     readRDFDate(this.history, resource, BOOKMARK_DATE),
-                                     readRDFInt(this.history, resource, BOOKMARK_VISITCOUNT));
-      iterator(histItem);
-    }
-  },
-  observeChange: function(observer) {
-    this.observers.push(observer);
-    if (!this.timeout) {
-      var me = this;
-      this.timeout = new PeriodicalExecuter(function(pe) { me.checkChanged(); }, 5);
-    }
-  },
-  checkChanged: function(pe) {
-    if (!this.observers) {
-      pe.stop();  
-      return;
-    }
-    if (this.cachedHistoryCount != this.history.count) {
-      this.cachedHistoryCount = this.history.count;
-      var me = this;
-      this.observers.each(function (it) { it(me); });
-    }
-  }
-});
-
-var theHistory;
-var getHistoryInstance = function() {
-  if (theHistory == null)
-    theHistory = new History();
-  return theHistory;
 }
 
 // Used to recognize search URLs, so we can display them as a "search" with icon
@@ -148,7 +62,7 @@ var searchMapping = $H({
                        "qparams": ["q"]},
   "eBay": {"urlStart": "http://search.ebay.com/",
            "qparams": ["satitle", "query"]},
-  "netFlix": {"urlStart": "http://www.netflix.com/Search",
+  "Net Flix": {"urlStart": "http://www.netflix.com/Search",
            "qparams": ["v1"]},
 });
 
@@ -212,68 +126,30 @@ var getLocalDayOffset = function(date, tzoffset) {
 var Journal = Class.create();
 Journal.prototype = {
   initialize: function () {
-    this.history = getHistoryInstance();
-    var me = this;
-    this.history.observeChange(function () { me.onHistoryChange(); });
-    this.journalEntries = null;
-    this.topSites = [];
-    this.topSitesLimit = 10;
-    this.onHistoryChange();
   },
-  onHistoryChange: function() {
-    var me = this;
-    var tzoffset = (new Date().getTimezoneOffset() * 60 * 1000);
-    
-    var topSitesCount = 0;
-    // Generate a hash mapping day offset to set of journal entries, and
-    // the array of all entries for the top sites
-    var days = $H();
-    this.topSites = [];
-    this.history.each(function (hi) {
-      var timeday = getLocalDayOffset(hi.lastVisitDate, tzoffset);
-      if (!days[timeday])
-        days[timeday] = [];
-      var journalEntry = new JournalEntry(hi);
-      days[timeday].push(journalEntry);
-      me.topSites.push(journalEntry);
-    });
+  _getBaseQueryOptions: function() {
+    var options = HISTORY_SERVICE.getNewQueryOptions();
+    options.resultType = options.RESULTS_AS_VISIT;
+    options.setGroupingMode([options.GROUP_BY_DAY], 1);
+    options.sortingMode = options.SORT_BY_DATE_ASCENDING;
+    return options;
+  },
+  getToday: function() {
+    var options = this._getBaseQueryOptions();
+    var histq = HISTORY_SERVICE.getNewQuery();
+    histq.beginTimeReference = histq.TIME_RELATIVE_NOW;
+    histq.beginTime = -24 * 60 * 60 * 1000000; // 24 hours ago in microseconds
+    histq.endTimeReference = histq.TIME_RELATIVE_NOW;
+    histq.endTime = 0; // now
 
-    this.topSites.sort(function (a,b) { if (a.histitem.visitCount > b.histitem.visitCount) { return -1; } else { return 1; } });
-        
-    // Now sort those day offsets
-    this.journalEntries = days.entries();
-    this.journalEntries.sort(function (a,b) { if (a[0] < b[0]) { return 1; } else { return -1; } });
-    
-    // Strip the day offset, finally generating an ordered list of journal entries grouped by day
-    for (var i = 0; i < this.journalEntries.length; i++) {
-      var tmpGroup = this.journalEntries[i];
-      var entrySet = tmpGroup[1];
-      entrySet.sort(function (a,b) { if (a.date > b.date) { return -1; } else { return 1; }});
-      this.journalEntries[i] = entrySet;
-    }
+    return HISTORY_SERVICE.executeQuery(histq, options);
   },
-  iterTopSites: function(iterator) {
-    this.topSites.each(iterator);
-  },
-  search: function(q, limit, it) {
-  	var count = 0;  
-    q = q.toLowerCase();
-    this.journalEntries.each(function (entrySet) {
-  	  var space = limit - count;
-	    if (space == 0)
-	      throw $break;    
-      var filteredSet = [];    
-      entrySet.each(function (entry) {
-        if (entry.matches(q)) {
-          filteredSet.push(entry);
-          count = count+1;
-          if (limit - count == 0)
-            throw $break;
-        }
-      });
-      if (filteredSet.length > 0)
-        it(filteredSet);
-    });
+  search: function(q, limit) {
+    var options = this._getBaseQueryOptions();
+    var histq = HISTORY_SERVICE.getNewQuery();
+    histq.searchTerms = q;
+    options.maxResults = limit;
+    return HISTORY_SERVICE.executeQuery(histq, options);
   },
 }
 
@@ -353,7 +229,9 @@ JournalPage.prototype = {
     this.sidebars = $A();
   },
   appendDaySet: function(dayset) {
-    var date = dayset[0].date;
+    dayset.QueryInterface(Components.interfaces.nsINavHistoryContainerResultNode);
+    dayset.containerOpen = true;
+    var date = new Date(dayset.getChild(0).time/1000);
     var today = new Date();
 
     var content = $('history');    
@@ -367,9 +245,10 @@ JournalPage.prototype = {
     histnode.className = 'set';
     content.appendChild(histnode);
 
-    for (var i = 0; i < dayset.length; i++) {
-      histnode.appendChild(this.renderJournalItem(dayset[i]));
+    for (var i = 0; i < dayset.childCount; i++) {
+      histnode.appendChild(this.renderJournalItem(dayset.getChild(i)));
     }
+    dayset.containerOpen = false;
   },
   renderJournalItemContent: function(entry) {
     var urlSection = document.createElement('div');
@@ -378,7 +257,7 @@ JournalPage.prototype = {
     titleDiv.appendChild(createSpanText(entry.title,'title'));
     urlSection.appendChild(titleDiv);
     var hrefDiv = document.createElement('div');
-    hrefDiv.appendChild(createSpanText(entry.displayUrl,'url'));
+    hrefDiv.appendChild(createSpanText(entry.uri || entry.displayUrl,'url'));
     urlSection.appendChild(hrefDiv);
     return urlSection;
   },
@@ -387,7 +266,7 @@ JournalPage.prototype = {
     var isTarget = entry == this.targetHistoryItem;
 
     var item = document.createElement('a');
-    item.href = entry.url;
+    item.href = entry.uri;
     item.className = 'item';
     item.setAttribute('tabindex', 1); 
 
@@ -400,20 +279,22 @@ JournalPage.prototype = {
     item.addEventListener("blur", function(e) { me.onResultFocus(e, false); }, false);             
     
     var timeText;
-    if (entry.date)
-      timeText = twelveHour(entry.date.getHours()) + ":" + pad(entry.date.getMinutes()) + " " + meridiem(entry.date.getHours());
-    else
+    if (entry.time) {
+      var dateTime = new Date(entry.time);
+      timeText = twelveHour(dateTime.getHours()) + ":" + pad(dateTime.getMinutes()) + " " + meridiem(dateTime.getHours());
+    } else {
       timeText = ' '.times(15);
+    }
     item.appendChild(createSpanText(timeText, 'time'));
     var actionDiv = document.createElement('div');
     actionDiv.className = 'action';
-    if (entry.actionIcon) {
+    if (entry.icon) {
       var icon = document.createElement("img");
       icon.setAttribute("src", entry.actionIcon);
       actionDiv.appendChild(icon);
       actionDiv.appendChild(document.createTextNode(" "));
     }
-    actionDiv.appendChild(document.createTextNode(entry.action));
+    actionDiv.appendChild(document.createTextNode('visited' || entry.action));
     item.appendChild(actionDiv);
 
     item.appendChild(this.renderJournalItemContent(entry));
@@ -493,25 +374,24 @@ JournalPage.prototype = {
       $("search-info-bar").style.display = "block";
       this.renderSearchInfoBar(search, searchIsWeblink);
 
-      viewedItems = [];
-      this.journal.search(search, 6, function (entrySet) { viewedItems.push(entrySet); });
-      this.targetHistoryItem = findHighestVisited(viewedItems);
+      viewedItems = this.journal.search(search, 6);
+      this.targetHistoryItem = null; // FIXME findHighestVisited(viewedItems);
       if (viewedItems.length == 0) {
         content.appendChild(createSpanText("(No results)", "no-results"))
       }
     } else {
       $("search-info-bar").style.display = "none";
-      viewedItems = this.journal.journalEntries;
-      for (var i = 0; i < viewedItems.length; i++) {
-        if (viewedItems[i].length > 0) {
-          viewedItems = [viewedItems[i]]
-          break;
-        }
-      }
+      viewedItems = this.journal.getToday();
     }
 
-    for (var i = 0; i < viewedItems.length; i++) {
-      this.appendDaySet(viewedItems[i]);
+    if (viewedItems.root.hasChildren) {
+      viewedItems.root.containerOpen = true;
+      for (var i = 0; i < viewedItems.root.childCount; i++) {
+        this.appendDaySet(viewedItems.root.getChild(i));
+      }
+      viewedItems.root.containerOpen = false;
+    } else {
+      alert("no kids!"); 
     }
 
     this.sidebars.each(function (sb) {
@@ -607,7 +487,7 @@ JournalPage.prototype = {
       var div = document.createElement("div");
       div.setAttribute("id", sb.sidebarId);
       div.className = "sidebar";
-      var header = document.createElement("span");
+      var header = document.createElement("h4");
       header.className = "sidebar-header";
       header.appendChild(document.createTextNode(sb.sidebarTitle));
       div.appendChild(header);
