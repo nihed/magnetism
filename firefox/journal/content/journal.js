@@ -33,6 +33,8 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  * 
  * ***** END LICENSE BLOCK ***** */
+
+const JOURNAL_SERVICE = Components.classes["@redhat.com/journalhome;1"].getService(Components.interfaces["nsIJournalHome"]);
  
 const JOURNAL_CHROME = "chrome://firefoxjournal/content/journal.html"; 
 

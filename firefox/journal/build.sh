@@ -34,7 +34,7 @@ APP_NAME=          # short-name, jar and xpi files name. Must be lowercase with 
 CHROME_PROVIDERS=  # which chrome providers we have (space-separated list)
 CLEAN_UP=          # delete the jar / "files" when done?       (1/0)
 ROOT_FILES=        # put these files in root of xpi (space separated list of leaf filenames)
-ROOT_DIRS=         # ...and these directories       (space separated list)
+ROOT_DIRS=        # ...and these directories       (space separated list)
 BEFORE_BUILD=      # run this before building       (bash command)
 AFTER_BUILD=       # ...and this after the build    (bash command)
 
@@ -54,7 +54,7 @@ ROOT_DIR=`pwd`
 TMP_DIR=build
 
 #uncomment to debug
-#set -x
+set -x
 
 # remove any left-over files from previous build
 rm -f $APP_NAME.jar $APP_NAME.xpi files
@@ -74,6 +74,15 @@ done
 zip -0 -r $JAR_FILE -@ < files
 # The following statement should be used instead if you don't wish to use the JAR file
 #cp --verbose --parents `cat files` $TMP_DIR/chrome
+
+for IDL in components/*.idl; do
+  ffxpcom=`pkg-config --variable=libdir firefox-xpcom`
+  idldir=`pkg-config --variable=idldir firefox-xpcom`
+  xpidl=$ffxpcom/xpidl
+  target=components/$(basename $IDL .idl).xpt
+  echo "Compiling ${IDL} to ${target}"
+  $xpidl -m typelib -w -v -I ${idldir} -e ${target} ${IDL}
+done
 
 # prepare components and defaults
 echo "Copying various files to $TMP_DIR folder..."
