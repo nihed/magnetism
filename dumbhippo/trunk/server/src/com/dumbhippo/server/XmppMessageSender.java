@@ -77,8 +77,10 @@ public interface XmppMessageSender {
 	 * @param to recipient of the message
 	 * @param from sender of the message (must be a JID on this server domain or alias domain)
 	 * @param body body of the message
+	 * @param htmlBody HTML version of body (optional, can be null). This should have
+	 *   a single outer <body/> element.
 	 */
-	public void sendAdminMessage(String to, String from, String body);
+	public void sendAdminMessage(String to, String from, String body, String htmlBody);
 
 	/**
 	 * Send a presence message to an arbitrary external JID. 

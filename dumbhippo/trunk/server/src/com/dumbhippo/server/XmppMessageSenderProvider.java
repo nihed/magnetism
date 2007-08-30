@@ -15,6 +15,6 @@ import com.dumbhippo.persistence.User;
 public interface XmppMessageSenderProvider {
 	public void sendMessage(Set<Guid> to, String payload);
 	public void sendNewPostMessage(User recipient, Post post);
-	public void sendAdminMessage(String to, String from, String body);
+	public void sendAdminMessage(String to, String from, String body, String htmlBody);
 	public void sendAdminPresence(String to, String from, String type);
 }

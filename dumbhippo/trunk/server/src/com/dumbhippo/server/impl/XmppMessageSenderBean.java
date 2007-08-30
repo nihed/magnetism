@@ -16,8 +16,8 @@ import com.dumbhippo.persistence.SubscriptionStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.persistence.XmppSubscription;
-import com.dumbhippo.server.XmppMessageSenderProvider;
 import com.dumbhippo.server.XmppMessageSender;
+import com.dumbhippo.server.XmppMessageSenderProvider;
 import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.tx.TxRunnable;
 import com.dumbhippo.tx.TxUtils;
@@ -42,15 +42,27 @@ public class XmppMessageSenderBean implements XmppMessageSender {
 		if (provider != null)
 			provider.sendNewPostMessage(recipient, post);
 	}
+	
+	// We do sendAdminMessage and sendAdminPresence onCommit because we have concrete
+	// cases where retrying transactions will cause duplicate messages. There really
+	// isn't any conceptual difference between these and the methods above, however.
 
-	public void sendAdminMessage(String to, String from, String body) {
+	public void sendAdminMessage(final String to, final String from, final String body, final String htmlBody) {
 		if (provider != null)
-			provider.sendAdminMessage(to, from, body);
+			TxUtils.runOnCommit(new Runnable() {
+				public void run() {
+					provider.sendAdminMessage(to, from, body, htmlBody);
+				}
+			});
 	}
 
-	public void sendAdminPresence(String to, String from, String type) {
+	public void sendAdminPresence(final String to, final String from, final String type) {
 		if (provider != null)
-			provider.sendAdminPresence(to, from, type);
+			TxUtils.runOnCommit(new Runnable() {
+				public void run() {
+					provider.sendAdminPresence(to, from, type);
+				}
+			});
 	}
 
 	public void setProvider(XmppMessageSenderProvider provider) {
@@ -85,7 +97,7 @@ public class XmppMessageSenderBean implements XmppMessageSender {
 					subscription = new XmppSubscription(localJid, remoteResource);
 					em.persist(subscription);
 				}
-
+	
 				subscription.setStatus(status);
 			}
 		});

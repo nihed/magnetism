@@ -398,7 +398,14 @@ public class MessengerGlueBean implements MessengerGlue {
 		SubscriptionStatus oldStatus = xmppMessageSender.getSubscriptionStatus(localJid, remoteResource);
 		SubscriptionStatus newStatus = oldStatus;
 		
-		if ("subscribed".equals(type)) {
+		// For unknown reasons, when we succesfully subscribe to a Google Talk user's
+		// account, we sometimes dont' get a "subscribed" presence, we just immediately
+		// get sent the user's current presence. This may have something to do with
+		// us doing something wrong, but not knowing what, we just handle it by treating
+		// getting a presence from a user we don't think we are yet subscribed to like
+		// a "subscribed" presence
+		// 
+		if ("subscribed".equals(type) || (null == type && !oldStatus.isSubscribedTo())) {
 			switch (oldStatus) {
 			case NONE:
 				newStatus = SubscriptionStatus.TO;
