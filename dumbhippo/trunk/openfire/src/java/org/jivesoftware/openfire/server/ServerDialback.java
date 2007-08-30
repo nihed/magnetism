@@ -81,7 +81,8 @@ public class ServerDialback {
     }
 
     private Connection connection;
-    private String serverName;
+//  No use for this at the moment, see comment in isHostUnknown    
+//  private String serverName;
     private SessionManager sessionManager = SessionManager.getInstance();
     private RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
 
@@ -123,7 +124,7 @@ public class ServerDialback {
      */
     public ServerDialback(Connection connection, String serverName) {
         this.connection = connection;
-        this.serverName = serverName;
+//        this.serverName = serverName;
     }
 
     public ServerDialback() {
@@ -517,11 +518,17 @@ public class ServerDialback {
 	}
 
 	private boolean isHostUnknown(String recipient) {
-        boolean host_unknown = !serverName.equals(recipient);
+		// It turns out that the serverName used to create the ServerDialback is not reliable; 
+		// the Google Talk servers don't pass a to="" when creating the XMPP stream for server
+		// dialback; the first time we see the domain that they are validating for is when
+		// they try to validate it.
+		String verifyServerName = XMPPServer.getInstance().getDomainForHostname(recipient);
+		
+        boolean host_unknown = !verifyServerName.equals(recipient);
         // If the recipient does not match the serverName then check if it matches a subdomain. This
         // trick is useful when subdomains of this server are registered in the DNS so remote
         // servers may establish connections directly to a subdomain of this server
-        if (host_unknown && recipient.contains(serverName)) {
+        if (host_unknown && recipient.contains(verifyServerName)) {
             RoutableChannelHandler route = routingTable.getRoute(new JID(recipient));
             if (route == null || route instanceof OutgoingSessionPromise) {
                 host_unknown = true;
