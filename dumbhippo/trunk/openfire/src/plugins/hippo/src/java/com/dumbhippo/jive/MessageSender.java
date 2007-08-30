@@ -14,6 +14,7 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.ChannelHandler;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -326,12 +327,19 @@ public class MessageSender implements XmppMessageSenderProvider {
         
 		sendMessage(recipient.getGuid(), message);
 	}
+	
+	public final QName HTML_IM_WRAPPER = QName.get("html", "http://jabber.org/protocol/xhtml-im");
 
-	public void sendAdminMessage(String to, String from, String body) {
+	public void sendAdminMessage(String to, String from, String body, String htmlBody) {
 		Message message = new Message();
 		message.setTo(new JID(to));
 		message.setFrom(new JID(from));
 		message.setBody(body);
+		
+		if (htmlBody != null) {
+			Element htmlElement = message.getElement().addElement(HTML_IM_WRAPPER);
+			htmlElement.add(elementFromXml(htmlBody));
+		}
 		
 		XMPPServer.getInstance().getPacketRouter().route(message);
 	}

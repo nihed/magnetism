@@ -32,6 +32,7 @@ public class XmppSubscription extends DBUnique {
 	String localJid;
 	XmppResource remoteResource;
 	SubscriptionStatus status;
+	Integer version;
 	
 	// For hibernate
 	protected XmppSubscription() {
@@ -67,5 +68,17 @@ public class XmppSubscription extends DBUnique {
 	
 	public void setStatus(SubscriptionStatus status) {
 		this.status = status;
+	}
+	
+	// we use automatic versioning on this table since we need to protect against
+	// current modifications of the status from NONE => TO and NONE => FROM or
+	// BOTH => TO and BOTH => FROM.
+
+	protected Integer getVersion() {
+		return version;
+	}
+
+	protected void setVersion(Integer version) {
+		this.version = version;
 	}
 }

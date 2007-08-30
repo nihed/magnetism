@@ -273,23 +273,41 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		identitySpider.addVerifiedOwnershipClaim(user, resource);
 	}
 
-	private void sendXmppLink(Site site, ResourceClaimToken token) {
-		XmppResource resource = (XmppResource)token.getResource();
-		StringBuilder sb = new StringBuilder();
-		
+	private void sendXmppLink(final Site site, ResourceClaimToken token) {
+		final XmppResource resource = (XmppResource)token.getResource();
 		// We include the account's email (which is verified data) in the 
-		// message to make it hard for someone else to fool you into adding your IM account
+		// message to make it hard for someone else to fool you into adding your IM address
 		// into their mugshot account
 		String email = personViewer.getPersonView(SystemViewpoint.getInstance(), token.getUser()).getEmail().getEmail();
 		
-		sb.append("Click this link to add this IM account to the Mugshot account for ");
-		sb.append(token.getUser().getNickname());
-		sb.append("<");
-		sb.append(email);
-		sb.append(">;\n");
-		sb.append(token.getAuthURL(configuration.getBaseUrl(site)) + "\n");
+		String url = token.getAuthURL(configuration.getBaseUrl(site));
 		
-		xmppMessageSender.sendAdminMessage(resource.getJid(), configuration.getAdminJid(site), sb.toString());
+		StringBuilder body = new StringBuilder();
+		body.append("Click this link to add your IM address to the ");
+		body.append(site.getSiteName());
+		body.append(" account for ");
+		body.append(token.getUser().getNickname());
+		body.append(" <");
+		body.append(email);
+		body.append(">: ");
+		body.append(url);
+
+		XmlBuilder bodyHtml = new XmlBuilder();
+		bodyHtml.openElement("body");
+		bodyHtml.openElement("p");
+		bodyHtml.appendEscaped("Click ");
+		bodyHtml.appendTextNode("a", "this link", "href", url);
+		bodyHtml.appendEscaped(" to add your IM address to the ");
+		bodyHtml.appendEscaped(site.getSiteName());
+		bodyHtml.appendEscaped(" account for ");
+		bodyHtml.appendEscaped(token.getUser().getNickname());
+		bodyHtml.appendEscaped(" <");
+		bodyHtml.appendEscaped(email);
+		bodyHtml.appendEscaped(">");
+		bodyHtml.closeElement();
+		bodyHtml.closeElement();
+		
+		xmppMessageSender.sendAdminMessage(resource.getJid(), configuration.getAdminJid(site), body.toString(), bodyHtml.toString());
 	}
 
 	public void sendQueuedXmppLinks(String friendedJid, XmppResource fromResource) {
