@@ -86,10 +86,10 @@ public class ClaimVerifierBean implements ClaimVerifier {
 				ResourceClaimToken token;
 				try {
 					token = (ResourceClaimToken) q.getSingleResult();
-					if (token.isExpired()) {
+					if (!token.isValid()) {
 						em.remove(token);
 						em.flush();
-						throw new NoResultException("found expired token, making a new one");
+						throw new NoResultException("found expired/deleted token, making a new one");
 					}
 				} catch (NoResultException e) {
 					token = new ResourceClaimToken(user, resource);
@@ -293,6 +293,7 @@ public class ClaimVerifierBean implements ClaimVerifier {
 	}
 
 	public void sendQueuedXmppLinks(String friendedJid, XmppResource fromResource) {
+		logger.debug("Checking for outstanding Xmpp claim tokens for {}", fromResource);
 		for (ResourceClaimToken token : getOutstandingTokens(fromResource)) {
 			if (token.getResource() instanceof XmppResource) {
 				logger.debug("Have an ResourceClaimToken for {} for user {} sending a claim link",
