@@ -46,12 +46,12 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEv
 		super("Hippo application usage IQ Handler");
 	}
 	
-	private void appendApplicationViews(Element elt, Collection<ApplicationView> views) {
+	private void appendApplicationViews(Element elt, Collection<ApplicationView> views, String distribution, String lang) {
 		for (ApplicationView application : views) {
 			XmlBuilder builder = new XmlBuilder();
-			application.writeToXmlBuilder(builder);
+			application.writeToXmlBuilder(builder, distribution, lang);
 			elt.add(XmlParser.elementFromXml(builder.toString()));			
-		}		
+		}
 	}
 
 	@IQMethod(name="myTopApplications", type=IQ.Type.get)
@@ -69,7 +69,10 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEv
 		pageable.setPosition(0);
 		pageable.setInitialPerPage(30);		
 		applicationSystem.pageMyApplications(viewpoint, null, DEFAULT_ICON_SIZE, null, pageable);
-		appendApplicationViews(childElement, pageable.getResults());
+		
+		// FIXME parse distribution and lang from IQ request
+		
+		appendApplicationViews(childElement, pageable.getResults(), null, null);
 		
 		reply.setChildElement(childElement);		
 	}
@@ -80,7 +83,10 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEv
 		Element childElement = document.addElement("pinned", APPLICATIONS_NAMESPACE);		
 		List<Application> pinned = applicationSystem.getPinnedApplications(viewpoint.getViewer());
 		List<ApplicationView> pinnedViewed = applicationSystem.viewApplications(viewpoint, pinned, DEFAULT_ICON_SIZE);
-		appendApplicationViews(childElement, pinnedViewed);
+		
+		// FIXME parse distribution and lang from IQ request
+		
+		appendApplicationViews(childElement, pinnedViewed, null, null);
 		
 		reply.setChildElement(childElement);			
 	}
@@ -126,7 +132,10 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEv
 		pageable.setPosition(position);
 		pageable.setInitialPerPage(30);		
 		applicationSystem.pagePopularApplications(null, 24, null, pageable);
-		appendApplicationViews(childElement, pageable.getResults());
+		
+		// FIXME parse distribution and lang from IQ request
+		
+		appendApplicationViews(childElement, pageable.getResults(), null, null);
 		
 		reply.setChildElement(childElement);		
 	}	
