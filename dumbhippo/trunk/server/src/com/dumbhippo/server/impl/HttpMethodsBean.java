@@ -2320,7 +2320,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			if (cat == null)
 				cat = ApplicationCategory.fromRaw(Collections.singleton(category));
 		}
-		applicationSystem.pagePopularApplications(null, 24, cat, pageable);
+		applicationSystem.pagePopularApplications(null, -1, cat, pageable);
 		// Keep in sync with ApplicationsIQHandler
 		xml.openElement("topApplications", "xmlns", APPLICATIONS_NAMESPACE,
 						"category", cat != null ? cat.getDisplayName() : null,
@@ -2335,7 +2335,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Pageable<ApplicationView> pageable = new Pageable<ApplicationView>("applications");
 		pageable.setPosition(0);
 		pageable.setInitialPerPage(30);		
-		applicationSystem.search(search, 24, null, pageable);
+		applicationSystem.search(search, -1, null, pageable);
 		xml.openElement("applications", "xmlns", APPLICATIONS_NAMESPACE);
 		for (ApplicationView application : pageable.getResults()) {
 			application.writeToXmlBuilder(xml, distribution, lang);		

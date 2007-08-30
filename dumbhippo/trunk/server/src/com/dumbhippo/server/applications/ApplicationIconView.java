@@ -3,11 +3,11 @@ package com.dumbhippo.server.applications;
 import com.dumbhippo.persistence.ApplicationIcon;
 
 public class ApplicationIconView {
-	String url;
-	ApplicationIcon icon;
-	int desiredSize;
-	int displayWidth;
-	int displayHeight;
+	private String url;
+	private ApplicationIcon icon;
+	private int desiredSize;
+	private int displayWidth;
+	private int displayHeight;
 	
 	public ApplicationIconView(ApplicationIcon icon) {
 		this(icon, -1);
@@ -23,10 +23,8 @@ public class ApplicationIconView {
 		}
 		
 		// for computing scale, if desiredSize is -1 that means "use the effective size" 
-		if (desiredSize < 0)
-			desiredSize = effectiveSize;
-		
-		double scale = (double)desiredSize / effectiveSize;
+
+		double scale = desiredSize >= 0 ? ((double)desiredSize / effectiveSize) : 1.0;
 		if (scale > 0.9 && scale < 1.1)
 			scale = 1.0;
 		
@@ -44,9 +42,7 @@ public class ApplicationIconView {
 		this.desiredSize = -1;
 	
 		// (but used passed-in desiredSize to scale)
-		if (desiredSize < 0)
-			desiredSize = actualSize;
-		double scale = (double)desiredSize / actualSize;
+		double scale = desiredSize >= 0 ? ((double)desiredSize / actualSize) : 1.0;		
 		if (scale > 0.9 && scale < 1.1)
 			scale = 1.0;
 		
@@ -54,12 +50,8 @@ public class ApplicationIconView {
 		displayHeight = (int)Math.round(actualSize * scale);
 	}
 
-	public ApplicationIcon getIcon() {
-		return icon;
-	}
-
-	public int getDesiredSize() {
-		return desiredSize;
+	public String getIconKey() {
+		return icon != null ? icon.getIconKey() : null;
 	}
 
 	/**
