@@ -104,7 +104,7 @@ public class ApplicationIconServlet extends AbstractServlet {
 		// The ApplicationIconView normally points directly to the icon, and we
 		// want to serve that icon, but if the application doesn't have an icon,
 		// then we need to forward to the URL. 
-		if (iconView.getIcon() == null)
+		if (iconView.getIconKey() == null)
 			return iconView.getUrl();
 		
 		// If the requester passes a version with the URL, that's a signal that
@@ -113,7 +113,7 @@ public class ApplicationIconServlet extends AbstractServlet {
 		if (request.getParameter("v") != null)
 			setInfiniteExpires(response);
 		
-		File toServe = new File(saveDir, iconView.getIcon().getIconKey() + ".png");		
+		File toServe = new File(saveDir, iconView.getIconKey() + ".png");		
 		sendFile(request, response, "image/png", toServe);
 		
 		return null;
