@@ -29,7 +29,31 @@ public class ApplicationView {
 		this.icon = icon;
 	}
 
-	public void writeToXmlBuilder(XmlBuilder builder) {
+	// this could be more sophisticated eventually, e.g. know that "fedora7" matches "fedora" or 
+	// things of that nature. For now this is mostly pointless, clients could easily do it 
+	// themselves.
+	private String extractPackageName(String packageNames, String forDistribution) {
+		String[] distPackagePairs = packageNames.split(";");
+		for (String pair : distPackagePairs) {
+			int eq = pair.indexOf('=');
+			if (eq < 0)
+				continue;
+			String dist = pair.substring(0, eq);
+			if (dist.equals(forDistribution))
+				return pair.substring(eq+1);
+		}
+		return null;
+	}
+	
+	/**
+	 *  distribution and lang can be null if unknown
+	 */
+	public void writeToXmlBuilder(XmlBuilder builder, String distribution, String lang) {
+		String packageName = null;
+		if (distribution != null) {
+			packageName = extractPackageName(application.getPackageNames(), distribution);
+		}
+		
 		builder.openElement("application",
 							"id", application.getId(),
 				            "name", application.getName(),
@@ -37,6 +61,12 @@ public class ApplicationView {
 				            "tooltip", application.getTooltip(),
 				            "category", application.getCategory().getDisplayName(),
 				            "desktopNames", application.getDesktopNames(),
+				            // only include the full packageNames if distribution was unspecified, 
+				            // if distribution was given we provide packageName if there's a useful 
+				            // name
+				            "packageNames", distribution == null ? application.getPackageNames() : null,
+				            // openElement just skips this if it's null
+				            "packageName", packageName,
 				            "iconUrl", getIconUrl(),
 				            "usageCount", "" + application.getUsageCount(),
 				            "rank", "" + application.getRank());

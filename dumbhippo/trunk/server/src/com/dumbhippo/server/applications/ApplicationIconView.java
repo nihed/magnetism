@@ -9,14 +9,22 @@ public class ApplicationIconView {
 	int displayWidth;
 	int displayHeight;
 	
+	public ApplicationIconView(ApplicationIcon icon) {
+		this(icon, -1);
+	}
+	
 	public ApplicationIconView(ApplicationIcon icon, int desiredSize) {
 		this.icon = icon;
-		this.desiredSize = desiredSize;
-
+		this.desiredSize = desiredSize; // we want the field to remain -1 even if we override it below
+		
 		int effectiveSize = icon.getSize();
 		if (effectiveSize == -1) {
 			effectiveSize = Math.max(icon.getActualWidth(), icon.getActualHeight());
 		}
+		
+		// for computing scale, if desiredSize is -1 that means "use the effective size" 
+		if (desiredSize < 0)
+			desiredSize = effectiveSize;
 		
 		double scale = (double)desiredSize / effectiveSize;
 		if (scale > 0.9 && scale < 1.1)
@@ -28,7 +36,16 @@ public class ApplicationIconView {
 	
 	public ApplicationIconView(String url, int actualSize, int desiredSize) {
 		this.url = url;
-		
+	
+		// always set desiredSize to -1 since the url is fixed anyway
+		// (this is used for the "unknown icon") we don't want to add the 
+		// size= param ... we ignore this.desiredSize completely in getUrl() 
+		// in this case, in fact.
+		this.desiredSize = -1;
+	
+		// (but used passed-in desiredSize to scale)
+		if (desiredSize < 0)
+			desiredSize = actualSize;
 		double scale = (double)desiredSize / actualSize;
 		if (scale > 0.9 && scale < 1.1)
 			scale = 1.0;
@@ -69,7 +86,18 @@ public class ApplicationIconView {
 		} else {
 			// The database ID should work fine here as a version to allow web-server
 			// caching; it will change iff. the image changes.
-			return "/files/appicons/" + icon.getApplication().getId() + "?size=" + desiredSize + "&v=" + icon.getId();
+			StringBuilder sb = new StringBuilder("/files/appicons/");
+			sb.append(icon.getApplication().getId());
+			if (desiredSize >= 0) {
+				sb.append("?size=");
+				sb.append(desiredSize);
+				sb.append("&v=");
+				sb.append(icon.getId());
+			} else {
+				sb.append("?v=");
+				sb.append(icon.getId());
+			}
+			return sb.toString();
 		}
 	}
 }

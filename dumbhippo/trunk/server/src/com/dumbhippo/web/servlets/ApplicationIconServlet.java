@@ -54,6 +54,8 @@ public class ApplicationIconServlet extends AbstractServlet {
 	// this may be Tomcat being bug-compatible with the Sun J2EE implementation
 	static final Pattern PATH_INFO_REGEX = Pattern.compile("(?:([0-9]+)/)?([A-Za-z0-9-.]+)(?:.png|.PNG)?");
 	
+	// In the future we might want to support &theme=Bluecurve&distribution=whatever, for 
+	// now we ignore unknown params
 	@Override
 	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 			IOException {
@@ -61,8 +63,8 @@ public class ApplicationIconServlet extends AbstractServlet {
 		/* We support either 
 		 * 
 		 *  /files/appicons/<appname>           default to size=48
-		 *  /files/headshots/<appname>&size=48  choose size 48
-		 *  /files/headshots/48/userid          old form, supported for consistency
+		 *  /files/appicons/<appname>&size=48  choose size 48
+		 *  /files/appicons/48/userid          old form, supported for consistency
 		 */
 		
 		if (request.getPathInfo() == null)
@@ -100,7 +102,7 @@ public class ApplicationIconServlet extends AbstractServlet {
 		}
 
 		// The ApplicationIconView normally points directly to the icon, and we
-		// want to server that icon, but if the application doesn't have an icon,
+		// want to serve that icon, but if the application doesn't have an icon,
 		// then we need to forward to the URL. 
 		if (iconView.getIcon() == null)
 			return iconView.getUrl();

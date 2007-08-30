@@ -2305,7 +2305,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	private static final String APPLICATIONS_NAMESPACE = "http://dumbhippo.com/protocol/applications";
 	
-	public void getPopularApplications(XmlBuilder xml, Viewpoint viewpoint, String category) throws XmlMethodException {
+	public void getPopularApplications(XmlBuilder xml, Viewpoint viewpoint, String category, String distribution, String lang) throws XmlMethodException {
 		Pageable<ApplicationView> pageable = new Pageable<ApplicationView>("applications");
 		pageable.setPosition(0);
 		pageable.setInitialPerPage(30);		
@@ -2326,29 +2326,32 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 						"category", cat != null ? cat.getDisplayName() : null,
 						"origCategory", category);
 		for (ApplicationView application : pageable.getResults()) {
-			application.writeToXmlBuilder(xml);		
+			application.writeToXmlBuilder(xml, distribution, lang);		
 		}		
 		xml.closeElement();
 	}
 	
-	public void getSearchApplications(XmlBuilder xml, Viewpoint viewpoint, String search) throws XmlMethodException {	
+	public void getSearchApplications(XmlBuilder xml, Viewpoint viewpoint, String search, String distribution, String lang) throws XmlMethodException {	
 		Pageable<ApplicationView> pageable = new Pageable<ApplicationView>("applications");
 		pageable.setPosition(0);
 		pageable.setInitialPerPage(30);		
 		applicationSystem.search(search, 24, null, pageable);
 		xml.openElement("applications", "xmlns", APPLICATIONS_NAMESPACE);
 		for (ApplicationView application : pageable.getResults()) {
-			application.writeToXmlBuilder(xml);		
+			application.writeToXmlBuilder(xml, distribution, lang);		
 		}		
 		xml.closeElement();			
 	}
-	
-	public void getAllApplications(XmlBuilder xml, Viewpoint viewpoint) throws XmlMethodException {
-		xml.openElement("applications", "xmlns", APPLICATIONS_NAMESPACE);		
-		applicationSystem.writeAllApplicationsToXml(24, xml);
-		xml.closeElement();			
-	}
 
+	// distribution and lang are hints that we don't take advantage of right now; the theory 
+	// is that they would "prebake" the results a bit more by throwing out irrelevant ones, giving the 
+	// best URL for the icons, etc.
+	public void getAllApplications(XmlBuilder xml, Viewpoint viewpoint, String distribution, String lang) throws XmlMethodException {
+		xml.openElement("applications", "xmlns", APPLICATIONS_NAMESPACE);		
+		applicationSystem.writeAllApplicationsToXml(xml, distribution, lang);
+		xml.closeElement();
+	}
+	
 	public void getUserRSS(OutputStream out, HttpResponseData contentType, Viewpoint viewpoint, User who, boolean participantOnly) throws IOException, XmlMethodException {
 		
 		// anonymize while keeping Site
