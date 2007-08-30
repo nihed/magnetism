@@ -16,6 +16,7 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
+import javax.persistence.OptimisticLockException;
 
 import org.hibernate.JDBCException;
 import org.hibernate.NonUniqueObjectException;
@@ -345,9 +346,10 @@ public class EJBUtil {
 		// on some other field, and throws EntityExistsException for all
 		CONSTRAINT_VIOLATION_EXCEPTIONS.add(EntityExistsException.class);
 		
-		// This isn't really a constraint violation, but something else we need
+		// These aren't really a constraint violations, but other things we need
 		// to retry on in similar places
 		CONSTRAINT_VIOLATION_EXCEPTIONS.add(LockAcquisitionException.class);
+		CONSTRAINT_VIOLATION_EXCEPTIONS.add(OptimisticLockException.class);
 	}
 	
 	public static boolean isDatabaseException(Exception e) {
