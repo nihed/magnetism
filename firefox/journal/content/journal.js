@@ -131,7 +131,7 @@ Journal.prototype = {
     var options = HISTORY_SERVICE.getNewQueryOptions();
     options.resultType = options.RESULTS_AS_VISIT;
     options.setGroupingMode([options.GROUP_BY_DAY], 1);
-    options.sortingMode = options.SORT_BY_DATE_ASCENDING;
+    options.sortingMode = options.SORT_BY_DATE_DESCENDING;
     return options;
   },
   getToday: function() {
@@ -148,7 +148,7 @@ Journal.prototype = {
     var options = this._getBaseQueryOptions();
     var histq = HISTORY_SERVICE.getNewQuery();
     histq.searchTerms = q;
-    options.maxResults = limit;
+    //options.maxResults = limit;
     return HISTORY_SERVICE.executeQuery(histq, options);
   },
 }
@@ -280,7 +280,7 @@ JournalPage.prototype = {
     
     var timeText;
     if (entry.time) {
-      var dateTime = new Date(entry.time);
+      var dateTime = new Date(entry.time/1000);
       timeText = twelveHour(dateTime.getHours()) + ":" + pad(dateTime.getMinutes()) + " " + meridiem(dateTime.getHours());
     } else {
       timeText = ' '.times(15);
