@@ -1,0 +1,10 @@
+<Root>
+  <popups>
+    <popup name="button3">
+      <menuitem name="BigBoard Button Help Item" verb="BigBoardButtonHelp" _label="_Help"
+    		    pixtype="stock" pixname="gtk-help"/>
+      <menuitem name="BigBoard Button About Item" verb="BigBoardButtonAbout" _label="_About"
+    		    pixtype="stock" pixname="gnome-stock-about"/>
+    </popup>
+  </popups>
+</Root>
