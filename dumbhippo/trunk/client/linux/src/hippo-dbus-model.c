@@ -920,6 +920,9 @@ handle_get_web_base_url(void            *object,
     /* DESKTOP hardcoded here since this is the data model API, nothing to do with stacker */
     server = hippo_platform_get_web_server(platform, HIPPO_SERVER_DESKTOP);
 
+    /* Note, no trailing '/', don't add one here because relative urls are given
+     * starting with '/' and so you want to be able to do baseurl + relativeurl
+     */
     url = g_strdup_printf("http://%s", server);
     
     dbus_message_iter_append_basic(append_iter, DBUS_TYPE_STRING, &url);
@@ -996,8 +999,10 @@ static const HippoDBusProperty model_properties[] = {
     { "Server",     "s", handle_get_server, NULL },
 
     /* right now this will be the server with http:// in front, but
-       in theory could have https or a path on the host or
-       something */
+     * in theory could have https or a path on the host or
+     * something. The url should NOT have a trailing '/', though
+     * the one returned by the old "org.mugshot.Mugshot" API does.
+     */
     
     { "WebBaseUrl", "s", handle_get_web_base_url, NULL },
     { NULL }

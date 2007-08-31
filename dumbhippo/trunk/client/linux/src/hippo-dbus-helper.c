@@ -1751,6 +1751,20 @@ hippo_dbus_proxy_finish_method_call_keeping_reply (DBusMessage *reply,
     }
 }
 
+dbus_bool_t
+hippo_dbus_proxy_VOID__VOID(HippoDBusProxy *proxy,
+                            const char     *method)
+{
+    DBusMessage *reply;
+    DBusError derror;
+    
+    dbus_error_init(&derror);    
+    reply = hippo_dbus_proxy_call_method_sync(proxy, method, &derror,
+                                              DBUS_TYPE_INVALID);
+    
+    return hippo_dbus_proxy_finish_method_call_freeing_reply(reply, method, &derror,
+                                                             DBUS_TYPE_INVALID);
+}
 
 dbus_bool_t
 hippo_dbus_proxy_INT32__VOID(HippoDBusProxy *proxy,

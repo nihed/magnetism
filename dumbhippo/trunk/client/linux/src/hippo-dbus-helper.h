@@ -203,6 +203,8 @@ dbus_bool_t       hippo_dbus_proxy_finish_method_call_keeping_reply (DBusMessage
                                                                      int          first_arg_type,
                                                                      ...);
 
+dbus_bool_t hippo_dbus_proxy_VOID__VOID               (HippoDBusProxy  *proxy,
+                                                       const char      *method);
 dbus_bool_t hippo_dbus_proxy_INT32__VOID              (HippoDBusProxy  *proxy,
                                                        const char      *method,
                                                        dbus_int32_t    *out1_p);
