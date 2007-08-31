@@ -68,28 +68,6 @@ a.header {
 	background-color: inherit;
 }
 
-form {
-	margin: 0;
-	padding: 0;
-	border: 0;
-	display: table;
-}
-
-form div {
-	display: table-row;
-	vertical-align: middle;
-}
-
-form div label, form div span {
-	display: table-cell;
-	padding: 0.1em;
-	vertical-align: middle;
-}
-
-form div label {
-	text-align: right;
-}
-
 input.blue-button {
 	background-color: #0066dd;
 	border: 2px outset #0033aa;
@@ -113,6 +91,18 @@ input.green-button:hover {
 #debuglog {
   font-size: 10px;
   font-weight: normal;	
+}
+
+#search-actions {
+  padding-top: 4px;
+  font-size: 12px;
+}
+
+#search-secondary {
+  display: none;
+  position: absolute;
+  top: 50px;
+  left: 50px;
 }
 
 /* ==== HISTORY ==== */
