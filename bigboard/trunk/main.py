@@ -507,9 +507,9 @@ class BigBoardPanel(dbus.service.Object):
         return self.__do_expand()
 
     @dbus.service.method(BUS_IFACE_PANEL)
-    def SignalExpanded(self):
-        self.__logger.debug("got signalExpanded method call")
-        self.Expanded(gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible'))
+    def EmitExpandedChanged(self):
+        self.__logger.debug("got emitExpandedChanged method call")
+        self.ExpandedChanged(gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible'))
 
     @dbus.service.method(BUS_IFACE_PANEL)
     def Reboot(self):
@@ -566,7 +566,7 @@ class BigBoardPanel(dbus.service.Object):
 
     @dbus.service.signal(BUS_IFACE_PANEL,
                          signature='b')
-    def Expanded(self, is_expanded):
+    def ExpandedChanged(self, is_expanded):
         pass
 
 def load_image_hook(img_name):

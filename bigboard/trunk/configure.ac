@@ -5,11 +5,17 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
 GNOME_COMMON_INIT
 
+AM_CONFIG_HEADER(config.h)
+
 AM_MAINTAINER_MODE
 AM_DISABLE_STATIC
 AM_PROG_LIBTOOL
 AC_SUBST(ACLOCAL_AMFLAGS, "$ACLOCAL_FLAGS -I m4")
 AC_PROG_CC
+AC_PROG_LIBTOOL
+AC_ISC_POSIX
+AC_HEADER_STDC
+AM_PROG_CC_C_O
 
 AC_CHECK_PROG(HAVE_PKGCONFIG, pkg-config, yes, no)
 
@@ -18,15 +24,6 @@ IT_PROG_INTLTOOL([0.35.0])
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE",[The name of the gettext domain])
 AM_GLIB_GNU_GETTEXT
-
- ## must come before we use the $USE_MAINTAINER_MODE variable later
-AM_MAINTAINER_MODE
-
-AC_PROG_CC
-AC_PROG_CXX
-AC_PROG_LIBTOOL
-AC_ISC_POSIX
-AC_HEADER_STDC
 
 #### gcc warning flags
 
@@ -156,9 +153,17 @@ AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(LDFLAGS)
 
+## whether to do the applet as a shared lib, which it probably should be eventually, 
+## it just isn't doing enough stuff to be another process
+AM_CONDITIONAL(APPLET_INPROCESS, false)
+
 PKG_CHECK_MODULES(BIGBOARD, gtk+-2.0 >= 2.8 pygtk-2.0 >= 2.8 gnome-keyring-1)
 AC_SUBST(BIGBOARD_LIBS)
 AC_SUBST(BIGBOARD_CFLAGS)
+
+PKG_CHECK_MODULES(BIGBOARD_APPLET, libpanelapplet-2.0 gtk+-2.0 >= 2.8 dbus-1)
+AC_SUBST(BIGBOARD_APPLET_LIBS)
+AC_SUBST(BIGBOARD_APPLET_CFLAGS)
 
 AC_PATH_PROG(GCONFTOOL, gconftool-2)
 AM_GCONF_SOURCE_2
@@ -174,7 +179,6 @@ AC_ARG_ENABLE(pymod_checks,
               
 if test x${enable_pymod_checks} = xyes; then
   AM_CHECK_PYMOD(hippo,,,AC_MSG_ERROR([hippo module required (hippo-canvas)]))
-  AM_CHECK_PYMOD(gnomeapplet,,,AC_MSG_ERROR([gnomeapplet module required]))
   AM_CHECK_PYMOD(gconf,,,AC_MSG_ERROR([gconf module required]))
   AM_CHECK_PYMOD(gnome.ui,,,AC_MSG_ERROR([gnome.ui module required]))
   AM_CHECK_PYMOD(dbus,,,AC_MSG_ERROR([dbus module required]))
