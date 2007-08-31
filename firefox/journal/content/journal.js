@@ -34,8 +34,15 @@
  * 
  * ***** END LICENSE BLOCK ***** */
 
-const JOURNAL_SERVICE = Components.classes["@redhat.com/journalhome;1"].getService(Components.interfaces["nsIJournalHome"]);
-const HISTORY_SERVICE = Components.classes["@mozilla.org/browser/nav-history-service;1"].getService(Components.interfaces.nsINavHistoryService);
+const Ci = Components.interfaces;
+const Cc = Components.classes;
+
+const JOURNAL_SERVICE = Cc["@redhat.com/journalhome;1"].getService(Ci["nsIJournalHome"]);
+const HISTORY_SERVICE = Cc["@mozilla.org/browser/nav-history-service;1"].getService(Ci.nsINavHistoryService);
+const IO_SERVICE = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
+const ANNOTATION_SERVICE = Cc["@mozilla.org/browser/annotation-service;1"].getService(Ci.nsIAnnotationService);
+const SEARCH_SERVICE = Cc["@mozilla.org/browser/search-service;1"].getService(Ci.nsIBrowserSearchService);
+const TAGGING_SERVICE = Cc["@mozilla.org/browser/tagging-service;1"].getService(Ci.nsITaggingService);
 
 const JOURNAL_CHROME = "chrome://firefoxjournal/content/journal.html"; 
 
@@ -52,7 +59,11 @@ function LOG(msg) {
 // Used to recognize search URLs, so we can display them as a "search" with icon
 var searchMapping = $H({
   // TODO: are these names returned translated?  Also the URLs here probably need translation
-  "Google": {"urlStart": "http://www.google.com",
+  "Google Web Search": {"urlStart": "http://www.google.com/search",
+             "qparams": ["q"]},
+  "Google Code Search": {"urlStart": "http://www.google.com/codesearch",
+             "qparams": ["q"]},
+  "Google Maps Search": {"urlStart": "http://maps.google.com/maps",
              "qparams": ["q"]},
   "Yahoo": {"urlStart": "http://search.yahoo.com/search",
             "qparams": ["p"]},
@@ -62,7 +73,7 @@ var searchMapping = $H({
                        "qparams": ["q"]},
   "eBay": {"urlStart": "http://search.ebay.com/",
            "qparams": ["satitle", "query"]},
-  "Net Flix": {"urlStart": "http://www.netflix.com/Search",
+  "Netflix": {"urlStart": "http://www.netflix.com/Search",
            "qparams": ["v1"]},
 });
 
@@ -83,8 +94,7 @@ JournalEntry.prototype = {
     
     var queryParams = histitem.url.toQueryParams();
     
-    var searchService = Components.classes["@mozilla.org/browser/search-service;1"].getService(Components.interfaces.nsIBrowserSearchService);
-    var engines = searchService.getEngines(Object()); /* NS strongly desires an Out argument to be an object */
+    var engines = SEARCH_SERVICE.getEngines(Object()); /* NS strongly desires an Out argument to be an object */
     searchMapping.each(function (kv) {
       if (!me.url.startsWith(kv[1]['urlStart']))
         return;
@@ -229,7 +239,7 @@ JournalPage.prototype = {
     this.sidebars = $A();
   },
   appendDaySet: function(dayset) {
-    dayset.QueryInterface(Components.interfaces.nsINavHistoryContainerResultNode);
+    dayset.QueryInterface(Ci.nsINavHistoryContainerResultNode);
     dayset.containerOpen = true;
     var date = new Date(dayset.getChild(0).time/1000);
     var today = new Date();
@@ -265,10 +275,10 @@ JournalPage.prototype = {
     var urlSection = document.createElement('div');
     urlSection.className = 'urls';
     var titleDiv = document.createElement('div');
-    titleDiv.appendChild(createSpanText(entry.title,'title'));
+    titleDiv.appendChild(createSpanText(this.getTitle(entry),'title'));
     urlSection.appendChild(titleDiv);
     var hrefDiv = document.createElement('div');
-    hrefDiv.appendChild(createSpanText(entry.uri || entry.displayUrl,'url'));
+    hrefDiv.appendChild(createSpanText(entry.displayUrl || entry.uri,'url'));
     urlSection.appendChild(hrefDiv);
     item.appendChild(urlSection);
   },
@@ -301,11 +311,11 @@ JournalPage.prototype = {
     actionDiv.className = 'action';
     if (entry.icon) {
       var icon = document.createElement("img");
-      icon.setAttribute("src", entry.actionIcon);
+      icon.setAttribute("src", entry.icon);
       actionDiv.appendChild(icon);
       actionDiv.appendChild(document.createTextNode(" "));
     }
-    actionDiv.appendChild(document.createTextNode('visited' || entry.action));
+    actionDiv.appendChild(document.createTextNode(this.getAction(entry)));
     item.appendChild(actionDiv);
 
     
@@ -328,32 +338,111 @@ JournalPage.prototype = {
       clearSearch.setAttribute("title", "Clear this search [ESC]");
       clearSearch.appendChild(document.createTextNode("[clear]"));
       node.appendChild(clearSearch);
-      
-      var searchService = Components.classes["@mozilla.org/browser/search-service;1"].getService(Components.interfaces.nsIBrowserSearchService);
-      var currentEngine = searchService.currentEngine;
-      if (searchIsWeblink || (currentEngine && currentEngine.name)) {
-        var searchUri = searchIsWeblink ? searchIsWeblink : currentEngine.getSubmission(q, null).uri.spec;
-        var searchIcon = searchIsWeblink ? FIREFOX_FAVICON : currentEngine.iconURI.spec;
-        var searchName = searchIsWeblink ? "Web link" : currentEngine.name;
+  },
+  getAction: function(entry) {
+    try {
+      /* FIXME: need to get the correct annotation for the uri */
+      return entry.action || "visited";
+/*
+      var flags = {}, exp = {}, mimeType = {}, type = {};
+      ANNOTATION_SERVICE.getPageAnnotationInfo(uri, "journal/action", flags, exp, mimeType, type);
+      LOG("flags: " + flags.value + " exp: " + exp.value + " mimeType: " + mimeType.value + " type: " + type.value);
+      var action = ANNOTATION_SERVICE.getPageAnnotationString(uri, "journal/action");
+      ANNOTATION_SERVICE.removePageAnnotations(uri);
+*/
+      var uri = new String(entry.uri);
+      LOG("uri: " + uri);      
+      LOG("action retrieved: " + ANNOTATION_SERVICE.getPageAnnotation(uri, "journal/action"));
+      $("debuglog").appendChild(document.createElement("br"));
 
-        node.appendChild(document.createTextNode(" | "));  
-        var searchNode = document.createElement("span");     
-        searchNode.addClassName("search-provider");
-        var a = document.createElement("a");
-        a.setAttribute("href", searchUri);
-        var img = document.createElement("img");
-        img.setAttribute("src", searchIcon);
-        a.appendChild(img);
-        searchNode.appendChild(a);
-        searchNode.appendChild(document.createTextNode(" "));
-        a = document.createElement("a");
-        a.setAttribute("id", "search-provider");        
-        a.setAttribute("href", searchUri);   
-        a.appendChild(document.createTextNode(searchName + ": " + q));
-        searchNode.appendChild(a);
-        searchNode.appendChild(createSpanText(" (Ctrl-Enter)", "keybinding-hint"));
-        node.appendChild(searchNode);
-      }
+      /* we're not getting the correct action here, instead we're getting the action from first uri returned every time */
+      var annon = ANNOTATION_SERVICE.getPageAnnotation(uri, "journal/action");
+      if (!annon) throw annon;
+      return annon;
+    } catch (e) {
+      return this._getActionTitle(entry).action;
+    }
+    return "!visited";
+  },
+  getTitle: function(entry) {
+    try {
+      /* FIXME: need to retrieve the correct title from the annotations */
+     return entry.title;
+/*
+      var flags = {}, exp = {}, mimeType = {}, type = {};
+      ANNOTATION_SERVICE.getPageAnnotationInfo(uri, "journal/title", flags, exp, mimeType, type);
+      LOG("flags: " + flags.value + " exp: " + exp.value + " mimeType: " + mimeType.value + " type: " + type.value);
+      var action = ANNOTATION_SERVICE.getPageAnnotationString(uri, "journal/title");
+*/
+      var uri = new String(entry.uri);
+      LOG("uri: " + uri);      
+      LOG("title retrieved: " + ANNOTATION_SERVICE.getPageAnnotation(uri, "journal/title"));
+      $("debuglog").appendChild(document.createElement("br"));
+
+      /* we're not getting the correct title here, instead we're getting the title from first uri returned every time */
+      var annon = ANNOTATION_SERVICE.getPageAnnotation(uri, "journal/title");
+      if (!annon) throw annon;
+      return annon;
+    } catch (e) {
+      return this._getActionTitle(entry).title;
+    }
+    return "!" + entry.title;
+  },
+  _getActionTitle: function(entry) {
+      var ret = { action : "visited", title : entry.title };
+      var uri = new String(entry.uri);
+      var queryParams = uri.toQueryParams();
+      var newTitle = null;
+
+      searchMapping.each(function (kv) {
+        if (!uri.startsWith(kv[1]['urlStart']))
+          return;
+
+        var qps = kv[1]['qparams'];
+        var qp = null;
+        for (var i = 0; i < qps.length; i++) {
+          if (queryParams[qps[i]]) {
+            qp = qps[i];
+            break;
+          }
+        }
+
+        if (!qp) 
+          return;
+
+        ret.title = decodeURIComponent(queryParams[qp].replace(/\+/g," "));
+
+        ret.action = "search";
+
+        LOG("qp: " + qp + " params: " + queryParams[qp]);
+
+/*      FIXME: commented out for now
+        var engines = SEARCH_SERVICE.getEngines(Object());
+        var engine = null;
+        engines.each(function (eng) {
+          if (eng.name == kv[0]) {
+            engine = eng;
+            throw $break;
+          }
+*/
+      });
+
+      LOG("action: " + ret.action + " title: " + ret.title);
+
+      try {
+        ANNOTATION_SERVICE.setPageAnnotation( uri, "journal/title",  ret.title, 0, 0 ); // ANNOTATION_SERVICE.EXPIRE_WITH_HISTORY );
+      } catch (e) { LOG("title error: " + e + " : " + entry.uri); }
+
+      try {
+        ANNOTATION_SERVICE.setPageAnnotation( uri, "journal/action", ret.action, 0, 0 ); // ANNOTATION_SERVICE.EXPIRE_WITH_HISTORY );
+      } catch(e) { LOG("action error: " + e + " : " + uri); }
+
+      /* We're retrieving the correct title/action here after setting it above */
+      LOG("uri: " + uri);
+      LOG("action saved: " + ANNOTATION_SERVICE.getPageAnnotation(uri, "journal/action") + " title: " + ANNOTATION_SERVICE.getPageAnnotation(uri, "journal/title"));
+      $("debuglog").appendChild(document.createElement("br"));
+
+    return ret;
   },
   setAsTargetItem: function (node) {
     node.addClassName("target-item");
@@ -412,24 +501,49 @@ JournalPage.prototype = {
 
     if (search) {    
       // Now add the alternative search links
-      var searchService = Components.classes["@mozilla.org/browser/search-service;1"].getService(Components.interfaces.nsIBrowserSearchService);
-      var engines = searchService.getEngines(Object()); /* NS strongly desires an Out argument to be an object */
+      var engines = SEARCH_SERVICE.getEngines(Object()); /* NS strongly desires an Out argument to be an object */
       var set = document.createElement("div");
       set.className = "set";
-      // Skip first engine, we displayed that above; unless it was a web link
-      var offset = searchIsWeblink ? 0 : 1;
-      for (var i = offset; i < engines.length; i++) {
+
+      if (searchIsWeblink) {
+        var altSearchH4 = document.createElement("h4");
+        altSearchH4.appendChild(document.createTextNode("Go To Website:"));
+        $("history").appendChild(altSearchH4);
+        var linkItem = this.renderJournalItem({'title': search,
+                                               'uri': searchIsWeblink,
+                                               'displayUrl': searchIsWeblink,
+                                               'action': "[ctrl-enter]",
+                                               'icon' : FIREFOX_FAVICON
+                                             });
+        linkItem.setAttribute("id", "search-provider");
+        var gt = document.createElement("div");
+        gt.className = "set";
+        $("history").appendChild(gt);
+        gt.appendChild(linkItem);
+      } else {
+        var currentEngine = SEARCH_SERVICE.currentEngine;
+        var linkItem = this.renderJournalItem({'title': currentEngine.name,
+                                               'uri': currentEngine.getSubmission(search, null).uri.spec,
+                                               'displayUrl': currentEngine.description,
+                                               'action': "[ctrl-enter]",
+                                               'icon' : currentEngine.iconURI.spec
+                                             });
+        linkItem.setAttribute("id", "search-provider");
+        set.appendChild(linkItem);
+      }
+      for (var i = 1; i < engines.length; i++) {
         var engine = engines[i];
         var linkItem = this.renderJournalItem({'title': engine.name,
-                                               'url': engine.getSubmission(search, null).uri.spec,
+                                               'uri': engine.getSubmission(search, null).uri.spec,
                                                'displayUrl': engine.description,
-                                               'action': "[ctrl-" + i + "]"
+                                               'action': "[ctrl-" + i + "]",
+                                               'icon' : engine.iconURI.spec
                                              });
         linkItem.setAttribute("id", "altsearch-" + i);
         set.appendChild(linkItem);
       }
       var altSearchH4 = document.createElement("h4");
-      altSearchH4.appendChild(document.createTextNode("Alternative Searches"));
+      altSearchH4.appendChild(document.createTextNode("Search:"));
       $("history").appendChild(altSearchH4);
       $("history").appendChild(set);
     }
@@ -478,8 +592,8 @@ JournalPage.prototype = {
     this.targetHistoryItem = null;
     this.journal = getJournalInstance();
 
-    var prefs = Components.classes["@mozilla.org/preferences-service;1"].
-                  getService(Components.interfaces.nsIPrefBranch);
+    var prefs = Cc["@mozilla.org/preferences-service;1"].
+                  getService(Ci.nsIPrefBranch);
     
     window.addEventListener("keyup", function (e) { me.handleWindowKey(e); }, false);    
     
@@ -517,8 +631,8 @@ JournalPage.prototype = {
     var intVal = parseInt(val);
     if (!intVal)
       return;
-    var prefs = Components.classes["@mozilla.org/preferences-service;1"].
-                  getService(Components.interfaces.nsIPrefBranch);
+    var prefs = Cc["@mozilla.org/preferences-service;1"].
+                  getService(Ci.nsIPrefBranch);
     prefs.setIntPref("browser.history_expire_days", intVal);    
   },
   clearSearchTimeouts: function() {
