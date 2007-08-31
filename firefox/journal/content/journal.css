@@ -157,7 +157,14 @@ input.green-button:hover {
 .item:hover {
   background-color: #f9f9f9;
 }
-.time, .action, .urls {
+.favicon {
+  text-align: right;
+}
+.favicon-img {
+  max-width: 20px;
+  max-height: 20px;
+}
+.time, .favicon, .action, .urls {
 	display: table-cell;
 	padding: 0.2em;
 	vertical-align: top;

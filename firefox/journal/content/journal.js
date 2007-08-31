@@ -250,7 +250,18 @@ JournalPage.prototype = {
     }
     dayset.containerOpen = false;
   },
-  renderJournalItemContent: function(entry) {
+  renderJournalItemContent: function(entry, item) {
+    var iconSection = document.createElement('div');
+    iconSection.className = 'favicon';
+    var a = document.createElement('a');
+    a.href = entry.uri;
+    iconSection.appendChild(a);
+    var img = document.createElement('img');
+    img.className = 'favicon-img';
+    img.src = entry.icon.spec;
+    a.appendChild(img);
+    item.appendChild(iconSection);     
+
     var urlSection = document.createElement('div');
     urlSection.className = 'urls';
     var titleDiv = document.createElement('div');
@@ -259,7 +270,7 @@ JournalPage.prototype = {
     var hrefDiv = document.createElement('div');
     hrefDiv.appendChild(createSpanText(entry.uri || entry.displayUrl,'url'));
     urlSection.appendChild(hrefDiv);
-    return urlSection;
+    item.appendChild(urlSection);
   },
   renderJournalItem: function(entry) {
     var me = this;  
@@ -297,7 +308,8 @@ JournalPage.prototype = {
     actionDiv.appendChild(document.createTextNode('visited' || entry.action));
     item.appendChild(actionDiv);
 
-    item.appendChild(this.renderJournalItemContent(entry));
+    
+    this.renderJournalItemContent(entry, item);
 
     return item;
   },
