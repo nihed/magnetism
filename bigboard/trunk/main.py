@@ -32,7 +32,7 @@ import bigboard.libbig.xmlquery
 import bigboard.libbig.stdout_logger
 import bigboard.keybinder
 
-BUS_NAME_STR='org.mugshot.BigBoard'
+BUS_NAME_STR='org.gnome.BigBoard'
 BUS_IFACE=BUS_NAME_STR
 BUS_IFACE_PANEL=BUS_IFACE + ".Panel"
 
@@ -307,7 +307,7 @@ class BigBoardPanel(dbus.service.Object):
         self.__stockreader.load()        
 
         try:
-            search = self.get_stock('org.mugshot.bigboard.SearchStock')
+            search = self.get_stock('org.gnome.bigboard.SearchStock')
             search.connect('match-selected', self.__on_search_match_selected)
         except KeyError, e:
             pass
@@ -479,7 +479,7 @@ class BigBoardPanel(dbus.service.Object):
         if self.__get_size() == Stock.SIZE_BEAR:
             self._toggle_size()
         try:
-            search = self.get_stock('org.mugshot.bigboard.SearchStock')
+            search = self.get_stock('org.gnome.bigboard.SearchStock')
         except KeyError, e:
             _logger.debug("Couldn't find search stock")
             return
@@ -685,11 +685,30 @@ widget "*bigboard-nopad-button" style "bigboard-nopad-button"
 ''')
 
     listings = gconf.client_get_default().get_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING)
+
+    ## we used to use ids with "org.mugshot" instead of "org.gnome", migrate them
+    if listings:
+        new_listings = []
+        fixed_listing = False
+        for id in listings:
+            if 'org.mugshot' in id:
+                new_id = id.replace('org.mugshot', 'org.gnome')
+                _logger.debug("Replacing %s with %s" % (id, new_id))
+                new_listings.append(new_id)
+                fixed_listing = True
+            else:
+                new_listings.append(id)
+
+        if fixed_listing:
+            gconf.client_get_default().set_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING, new_listings)
+
+        listings = new_listings
+    
     ## this is a bad hack for now since we'll often not have schemas and there's no way
     ## to add stocks to a blank bigboard
     if not listings or len(listings) == 0:
         gconf.client_get_default().set_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING,
-                                            ['org.mugshot.bigboard.SelfStock','org.mugshot.bigboard.SearchStock','org.mugshot.bigboard.AppsStock','org.mugshot.bigboard.PeopleStock','org.mugshot.bigboard.PhotosStock'])
+                                            ['org.gnome.bigboard.SelfStock','org.gnome.bigboard.SearchStock','org.gnome.bigboard.AppsStock','org.gnome.bigboard.PeopleStock','org.gnome.bigboard.PhotosStock'])
 
     if not stockdirs:
         stockdirs = [os.path.join(os.path.dirname(bigboard.__file__), 'stocks')]
