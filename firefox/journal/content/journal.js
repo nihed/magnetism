@@ -172,15 +172,22 @@ var getJournalInstance = function() {
  
 var findHighestVisited = function(journalEntries) {
   var highest;
-  journalEntries.each(function (entryList) {
-    entryList.each(function (histitem) {
+  journalEntries.containerOpen = true;
+  for (var i = 0; i < journalEntries.childCount; i++) {
+    var dayset = journalEntries.getChild(i);
+    dayset.QueryInterface(Ci.nsINavHistoryContainerResultNode);
+    dayset.containerOpen = true;
+    for (var j = 0; j < dayset.childCount; j++) {
+      var histitem = dayset.getChild(j);
       if (!highest) {
         highest = histitem;
-      } else if (highest.visitcount < histitem.visitcount) {
+      } else if (highest.accessCount < histitem.accessCount) {
         highest = histitem;
       }
-    });
-  });
+    }
+    dayset.containerOpen = false;
+  }
+  journalEntries.containerOpen = false;
   return highest;
 }
 
@@ -317,7 +324,6 @@ JournalPage.prototype = {
     }
     actionDiv.appendChild(document.createTextNode(this.getAction(entry)));
     item.appendChild(actionDiv);
-
     
     this.renderJournalItemContent(entry, item);
 
@@ -476,7 +482,7 @@ JournalPage.prototype = {
       this.renderSearchInfoBar(search, searchIsWeblink);
 
       viewedItems = this.journal.search(search, 6);
-      this.targetHistoryItem = null; // FIXME findHighestVisited(viewedItems);
+      this.targetHistoryItem = findHighestVisited(viewedItems.root);
       if (viewedItems.length == 0) {
         content.appendChild(createSpanText("(No results)", "no-results"))
       }
@@ -648,7 +654,7 @@ JournalPage.prototype = {
   onsubmit: function() {
     this.clearSearchTimeouts();
     if (this.targetHistoryItem) {
-      window.location.href = this.targetHistoryItem.url;
+      window.location.href = this.targetHistoryItem.uri;
     }
   },
   idleDoSearch: function() {
