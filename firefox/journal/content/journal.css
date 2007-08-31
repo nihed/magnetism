@@ -2,7 +2,7 @@
 body {
 	font-family: "Bitstream Vera Sans", "Liberation Sans", sans-serif;
 	margin: 20px;
-	font-size: 14pt;
+	font-size: 12pt;
 	color: #222;
 }
 
@@ -16,6 +16,7 @@ input[type="text"], input[type="password"] {
 	background-color: #f5f5f5;
 	color: #222;
 	font-family: inherit;
+	font-size: 12pt;
 }
 
 input[type="submit"] {
@@ -127,8 +128,8 @@ input.green-button:hover {
 }
 #search-info-bar {
   border: 1px solid #ccc;
-  padding: 10px;
-  font-size: 18pt;
+  padding: 0.5em;
+  font-size: 10pt;
   color: #666;
   background-color: #eee;
   display: none;
@@ -138,7 +139,7 @@ input.green-button:hover {
   color: #000;
 }
 .search-provider {
-  font-size: 14pt;			
+  font-size: 10pt;			
 }
 .date {
 
@@ -199,7 +200,7 @@ input.green-button:hover {
 	background-color: #FFFF99;	
 }
 .clear-search {
-  font-size: 14pt;
+  font-size: 10pt;
   text-decoration: none;
   padding-left: 10px;
 }
