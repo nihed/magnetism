@@ -16,6 +16,13 @@ def _escape_server_name(server_name):
     return re.sub(r"[^a-zA-Z0-9]", _escape_byte, server_name.encode("UTF-8"))
 
 def _make_bus_name(server_name):
+
+    ## FIXME this is broken; in the new plan we use
+    ## com.dumbhippo.Client if we mean the stacker and
+    ## org.freedesktop.od.Engine if we mean Online Desktop Engine.
+    ## which means both the use of Mugshot and dumbhippo.Client
+    ## here are wrong.
+    
     if server_name == None:
         return "org.mugshot.Mugshot";
 

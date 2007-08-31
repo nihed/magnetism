@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
 <stock>
-  <id>org.mugshot.bigboard.SelfStock</id>
+  <id>org.gnome.bigboard.SelfStock</id>
   <ticker></ticker>
 </stock>
