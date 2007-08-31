@@ -9,8 +9,9 @@ import bigboard.libbig as libbig
 import bigboard.global_mugshot as global_mugshot
 import bigboard.stock as stock
 import bigboard.google as google
+import bigboard.slideout as slideout
 from bigboard.stock import AbstractMugshotStock
-from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, Button
+from bigboard.big_widgets import CanvasMugshotURLImage, CanvasVBox, CanvasHBox, ActionLink, Button, PrelightingCanvasBox
 from bigboard.libbig.struct import AutoStruct
 import bigboard.libbig.polling as polling
 
@@ -207,9 +208,12 @@ class EventsParser:
             self.__events_sorted = True
         return self.__events
 
-class EventDisplay(CanvasVBox):
+class EventDisplay(PrelightingCanvasBox):
     def __init__(self, event, day_displayed):
-        super(EventDisplay, self).__init__(border_right=2)
+        PrelightingCanvasBox.__init__(self,
+                                      orientation=hippo.ORIENTATION_VERTICAL,
+                                      padding_top=1, padding_bottom=1,
+                                      border_right=2)
         self.__event = None
         self.__day_displayed = day_displayed   
 
@@ -228,6 +232,9 @@ class EventDisplay(CanvasVBox):
         #self.__event.connect("changed", lambda event: self.__event_display_sync())
         self.__event_display_sync()
     
+    def get_event(self):
+        return self.__event
+
     def __get_title(self):
         if self.__event is None:
             return "unknown"
@@ -252,8 +259,30 @@ class EventDisplay(CanvasVBox):
             return False
         
         _logger.debug("activated event %s", self)
-
+    
         os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', self.__event.get_link())
+
+    def get_screen_coords(self):
+        return self.get_context().translate_to_screen(self)
+
+class EventDetailsDisplay(hippo.CanvasBox):
+    __gsignals__ = {
+        "close": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+       }
+       
+    def __init__(self, event, **kwargs):
+        kwargs['orientation'] = hippo.ORIENTATION_VERTICAL
+        hippo.CanvasBox.__init__(self, **kwargs)
+
+        self.__header = hippo.CanvasGradient(orientation=hippo.ORIENTATION_HORIZONTAL,
+                                             start_color=0xf2f2f2f2,
+                                             end_color=0xc8c8c8ff)
+        self.append(self.__header)
+        self.__name = hippo.CanvasText(font="22px", padding=6)
+        self.__header.append(self.__name)
+
+        self.__top_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
+        self.append(self.__top_box)
 
 class CalendarStock(AbstractMugshotStock, polling.Task):
     def __init__(self, *args, **kwargs):
@@ -277,6 +306,9 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self.__top_event_displayed = None
         self.__move_up = False
         self.__move_down = False
+
+        self.__slideout = None
+        self.__slideout_event = None
 
         self.__event_alerts = {}
         self.__event_notify_ids = {}
@@ -581,8 +613,8 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
         arrows_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
         arrows_box.set_property("box-height", 95)
-        arrows_box.set_property("padding-top", 3)
-        arrows_box.set_property("padding-bottom", 2)
+        arrows_box.set_property("padding-top", 4)
+        arrows_box.set_property("padding-bottom", 1)
         arrows_box.set_property("padding-right", 2)
  
         # we set the button images below, because we want to have them enabled or disabled 
@@ -599,7 +631,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
         content_box.append(arrows_box) 
 
-        events_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, yalign=hippo.ALIGNMENT_START, spacing=3)
+        events_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, yalign=hippo.ALIGNMENT_START, spacing=1)
         events_box.set_property("box-height", 95)
 
         events_available = self.__min_event_range_start <= self.__day_displayed and self.__max_event_range_end > self.__day_displayed
@@ -692,6 +724,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                 # self.__calendars[event.get_calendar_link()].color.value
                 # if we want to make sure we always use the updated color
                 display = EventDisplay(event, self.__day_displayed)
+                # display.connect('button_press_event', self.__handle_event_pressed)
                 events_box.append(display)
 
             if self.__move_up or self.__move_down or self.__top_event_displayed is not None:
@@ -810,3 +843,29 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                 if include_calendar(calendar):
                     calendar_feed_url =  create_calendar_feed_url(calendar)
                     self.__googles[local_google_key].fetch_calendar(self.__on_calendar_load, self.__on_failed_load, calendar_feed_url, self.__event_range_start, self.__event_range_end)
+
+    def __close_slideout(self, *args):
+        if self.__slideout:
+            self.__slideout.destroy()
+            self.__slideout = None
+            self.__slideout_event = None
+                
+    def __handle_event_pressed(self, event, *args):
+        same_event = self.__slideout_event == event
+        self.__close_slideout()
+        if same_event:
+            return True
+
+        self.__slideout = slideout.Slideout()
+        self.__slideout_event = event
+        coords = event.get_screen_coords()
+        _logger.debug("coords are %s %s", coords[0] + event.get_allocation()[0] + 4, coords[1])
+        self.__slideout.slideout_from(coords[0] + event.get_allocation()[0] + 4, coords[1])
+
+        p = EventDetailsDisplay(event.get_event())
+
+        self.__slideout.get_root().append(p)
+        p.connect("close", self.__close_slideout)
+
+        return True
+
