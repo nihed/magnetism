@@ -159,7 +159,7 @@ Journal.prototype = {
     var options = this._getBaseQueryOptions();
     var histq = HISTORY_SERVICE.getNewQuery();
     histq.searchTerms = q;
-    //options.maxResults = limit;
+    options.maxResults = limit;
     return HISTORY_SERVICE.executeQuery(histq, options);
   },
 }
@@ -507,6 +507,11 @@ JournalPage.prototype = {
       sb.redisplay(search);
     });
 
+    var searchPrimary = $("search-primary");
+    while (searchPrimary.firstChild) { searchPrimary.removeChild(searchPrimary.firstChild); };
+    var searchSecondary = $("search-secondary");
+    while (searchSecondary.firstChild) { searchSecondary.removeChild(searchSecondary.firstChild); };
+    searchSecondary.style.display = "none";
     if (search) {
       // Now add the alternative search links
       var engines = SEARCH_SERVICE.getEngines(Object()); /* NS strongly desires an Out argument to be an object */
@@ -514,46 +519,35 @@ JournalPage.prototype = {
       set.className = "set";
 
       if (searchIsWeblink) {
-        var altSearchH4 = document.createElement("h4");
-        altSearchH4.appendChild(document.createTextNode("Go To Website:"));
-        $("history").appendChild(altSearchH4);
-        var linkItem = this.renderJournalItem({'title': search,
-                                               'uri': searchIsWeblink,
-                                               'displayUrl': searchIsWeblink,
-                                               'action': "[ctrl-enter]",
-                                               'icon' : FIREFOX_FAVICON
-                                             });
-        linkItem.setAttribute("id", "search-provider");
-        var gt = document.createElement("div");
-        gt.className = "set";
-        $("history").appendChild(gt);
-        gt.appendChild(linkItem);
+        searchPrimary.appendChild(createAText("Go To Website", searchIsWeblink));
       } else {
         var currentEngine = SEARCH_SERVICE.currentEngine;
-        var linkItem = this.renderJournalItem({'title': currentEngine.name,
-                                               'uri': currentEngine.getSubmission(search, null).uri.spec,
-                                               'displayUrl': currentEngine.description,
-                                               'action': "[ctrl-enter]",
-                                               'icon' : currentEngine.iconURI.spec
-                                             });
-        linkItem.setAttribute("id", "search-provider");
-        set.appendChild(linkItem);
+        var a = document.createElement("a");
+        a.setAttribute("id", "search-provider");
+        a.href = currentEngine.getSubmission(search, null).uri.spec;
+        a.appendChild(document.createTextNode("Search "));
+        var img = document.createElement("img");
+        img.src = currentEngine.iconURI.spec;
+        a.appendChild(img);
+        a.appendChild(document.createTextNode(currentEngine.name));
+        searchPrimary.appendChild(a);
       }
+      searchPrimary.appendChild(document.createTextNode(" (Ctrl-Enter)"));
+
       for (var i = 1; i < engines.length; i++) {
         var engine = engines[i];
-        var linkItem = this.renderJournalItem({'title': engine.name,
-                                               'uri': engine.getSubmission(search, null).uri.spec,
-                                               'displayUrl': engine.description,
-                                               'action': "[ctrl-" + i + "]",
-                                               'icon' : engine.iconURI.spec
-                                             });
-        linkItem.setAttribute("id", "altsearch-" + i);
-        set.appendChild(linkItem);
+        var div = document.createElement("div");
+        var a = document.createElement("a");
+        a.href = engine.getSubmission(search, null).uri.spec;
+        a.appendChild(document.createTextNode("Search "));
+        var img = document.createElement("img");
+        img.src = engine.iconURI.spec;
+        a.appendChild(img);
+        a.appendChild(document.createTextNode(engine.name));
+        div.appendChild(a);
+        searchSecondary.appendChild(div);
+        a.setAttribute("id", "altsearch-" + i);
       }
-      var altSearchH4 = document.createElement("h4");
-      altSearchH4.appendChild(document.createTextNode("Search:"));
-      $("history").appendChild(altSearchH4);
-      $("history").appendChild(set);
     }
   },
   clearSearch : function() {

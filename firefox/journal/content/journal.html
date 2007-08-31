@@ -18,9 +18,12 @@
 
   	<div id="header">
       <form name="qform" tabindex="0">
-        <div><span><input autocomplete="off" type="text" name="q" id="q" tabindex="1"/></span><span><input class="blue-button" type="submit" value="Search" tabindex="0"/></span></div>
-        <div><span style="font-size: 10pt" class="explanatory">e.g. history, urls, titles, downloads</span></div>
+        <table>
+        <tr><td><label for="q">Search: </label></td><td><input autocomplete="off" type="text" name="q" id="q" tabindex="1"/></span></td></tr>
+        <tr><td></td><td><div id="search-actions"><span id="search-primary"></span></td></tr>
+        </table>
       </form>
+      <div id="search-secondary"></div>
       <!-- <div id="histcountform">History saved for <form name="histcount" tabindex="0"><input type="text" name="count" id="histcountentry"></input></form></div> -->
   	</div>
 
