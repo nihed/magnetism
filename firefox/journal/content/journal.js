@@ -46,6 +46,7 @@ const TAGGING_SERVICE = Cc["@mozilla.org/browser/tagging-service;1"].getService(
 
 const JOURNAL_CHROME = "chrome://firefoxjournal/content/journal.html"; 
 
+const BLANK_FAVICON = "chrome://mozapps/skin/places/defaultFavicon.png"
 const FIREFOX_FAVICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAHWSURBVHjaYvz//z8DJQAggJiQOe/fv2fv7Oz8rays/N+VkfG/iYnJfyD/1+rVq7ffu3dPFpsBAAHEAHIBCJ85c8bN2Nj4vwsDw/8zQLwKiO8CcRoQu0DxqlWrdsHUwzBAAIGJmTNnPgYa9j8UqhFElwPxf2MIDeIrKSn9FwSJoRkAEEAM0DD4DzMAyPi/G+QKY4hh5WAXGf8PDQ0FGwJ22d27CjADAAIIrLmjo+MXA9R2kAHvGBA2wwx6B8W7od6CeQcggKCmCEL8bgwxYCbUIGTDVkHDBia+CuotgACCueD3TDQN75D4xmAvCoK9ARMHBzAw0AECiBHkAlC0Mdy7x9ABNA3obAZXIAa6iKEcGlMVQHwWyjYuL2d4v2cPg8vZswx7gHyAAAK7AOif7SAbOqCmn4Ha3AHFsIDtgPq/vLz8P4MSkJ2W9h8ggBjevXvHDo4FQUQg/kdypqCg4H8lUIACnQ/SOBMYI8bAsAJFPcj1AAEEjwVQqLpAbXmH5BJjqI0gi9DTAAgDBBCcAVLkgmQ7yKCZxpCQxqUZhAECCJ4XgMl493ug21ZD+aDAXH0WLM4A9MZPXJkJIIAwTAR5pQMalaCABQUULttBGCCAGCnNzgABBgAMJ5THwGvJLAAAAABJRU5ErkJggg==";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -275,7 +276,10 @@ JournalPage.prototype = {
     iconSection.appendChild(a);
     var img = document.createElement('img');
     img.className = 'favicon-img';
-    img.src = entry.icon.spec;
+    if (entry.icon)
+      img.src = entry.icon.spec;
+    else
+      img.src = BLANK_FAVICON;
     a.appendChild(img);
     item.appendChild(iconSection);     
 
@@ -497,15 +501,13 @@ JournalPage.prototype = {
         this.appendDaySet(viewedItems.root.getChild(i));
       }
       viewedItems.root.containerOpen = false;
-    } else {
-      alert("no kids!"); 
     }
 
     this.sidebars.each(function (sb) {
       sb.redisplay(search);
     });
 
-    if (search) {    
+    if (search) {
       // Now add the alternative search links
       var engines = SEARCH_SERVICE.getEngines(Object()); /* NS strongly desires an Out argument to be an object */
       var set = document.createElement("div");
@@ -630,7 +632,7 @@ JournalPage.prototype = {
     searchbox.focus();
     
     $("history").appendChild(document.createTextNode("Loading journal..."))
-    window.setTimeout(function () { me.redisplay(); }, 150);    
+    window.setTimeout(function () { try { me.redisplay(); } catch (e) { LOG("exception: " + e); }  }, 150);    
   },
   onHistValueChanged: function () {
     var val = $("histcountentry").value;
