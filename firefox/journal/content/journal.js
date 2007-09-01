@@ -88,7 +88,7 @@ JournalEntry.prototype = {
 
     this.url = histitem.url;
     this.date = histitem.lastVisitDate;
-    this.displayUrl = ellipsize(histitem.url.split("?")[0], 50);
+    this.displayUrl = formatUtils.ellipsize(histitem.url.split("?")[0], 50);
     this.title = this.histitem.title;
     this.actionIcon = null;
     this.action = 'visited';
@@ -129,11 +129,6 @@ JournalEntry.prototype = {
   },
 } 
 
-var getLocalDayOffset = function(date, tzoffset) {
-  var tzoff = tzoffset || (new Date().getTimezoneOffset() * 60 * 1000);
-  return Math.floor((date.getTime() - tzoff) / DAY_MS)  
-}
-
 var Journal = Class.create();
 Journal.prototype = {
   initialize: function () {
@@ -170,82 +165,32 @@ var getJournalInstance = function() {
     theJournal = new Journal();
   return theJournal;
 }
- 
-var findHighestVisited = function(journalEntries) {
-  var highest;
-  journalEntries.containerOpen = true;
-  for (var i = 0; i < journalEntries.childCount; i++) {
-    var dayset = journalEntries.getChild(i);
-    dayset.QueryInterface(Ci.nsINavHistoryContainerResultNode);
-    dayset.containerOpen = true;
-    for (var j = 0; j < dayset.childCount; j++) {
-      var histitem = dayset.getChild(j);
-      if (!highest) {
-        highest = histitem;
-      } else if (highest.accessCount < histitem.accessCount) {
-        highest = histitem;
-      }
-    }
-    dayset.containerOpen = false;
-  }
-  journalEntries.containerOpen = false;
-  return highest;
-}
-
-// FIXME replace this stuff with the same rules Firefox uses internally
-var domainSuffixes = [".com", ".org", ".net", ".uk", ".us", ".cn", ".fm"];
-var prependHttp = function (text, def) {
-  if (text.startsWith("http://") || text.startsWith("https://")) 
-    return text;
-  return "http://" + text;
-}
-var parseWebLink = function(text) {
-  for (var i = 0; i < domainSuffixes.length; i++) {
-    var suffix = domainSuffixes[i];
-    if (text.indexOf(suffix) > 0) {
-      if (text.startsWith("http://") || text.startsWith("https://")) 
-        return text;
-      return "http://" + text;
-    } 
-  };
-  if (text.startsWith("http://") || text.startsWith("https://")) 
-    return text;
-  return null;
-}
-
-var createSpanText = function(text, className) {
-  var span = document.createElement('span')
-  if (className) span.className = className
-  span.appendChild(document.createTextNode(text))
-  return span
-}
-
-var createAText = function(text, href, className) {
-  var a = document.createElement('a');
-  if (className) a.setAttribute('class' , className);
-  a.setAttribute('href', href);
-  a.appendChild(document.createTextNode(text));
-  return a;
-}
-
-var ellipsize = function(s, l) {
-  var substr = s.substring(0, l);
-  if (s.length > l) {
-    substr += "...";
-  }
-  return substr;
-}
-var pad = function(x) { return x < 10 ? "0" + x : "" + x };
-var twelveHour = function(x) { return (x > 12) ? (x % 12) : x };
-var meridiem = function(x) { return (x > 12) ? "pm" : "am" };
-
-var formatMonth = function(i) { return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][i]};
 
 var JournalPage = Class.create();
 JournalPage.prototype = {
   initialize: function() {
     this.sidebars = $A();
   },
+  findHighestVisited: function(journalEntries) {
+    var highest;
+    journalEntries.containerOpen = true;
+    for (var i = 0; i < journalEntries.childCount; i++) {
+      var dayset = journalEntries.getChild(i);
+      dayset.QueryInterface(Ci.nsINavHistoryContainerResultNode);
+      dayset.containerOpen = true;
+      for (var j = 0; j < dayset.childCount; j++) {
+        var histitem = dayset.getChild(j);
+        if (!highest) {
+          highest = histitem;
+        } else if (highest.accessCount < histitem.accessCount) {
+          highest = histitem;
+        }
+      }
+      dayset.containerOpen = false;
+    }
+    journalEntries.containerOpen = false;
+    return highest;
+  }, 
   appendDaySet: function(dayset) {
     dayset.QueryInterface(Ci.nsINavHistoryContainerResultNode);
     dayset.containerOpen = true;
@@ -255,9 +200,9 @@ JournalPage.prototype = {
     var content = $('history');    
     var headernode = document.createElement('h4');
     headernode.className = 'date';
-    if (getLocalDayOffset(today) == getLocalDayOffset(date))
+    if (dateTimeUtils.getLocalDayOffset(today) == dateTimeUtils.getLocalDayOffset(date))
       headernode.appendChild(document.createTextNode("Today, "))
-    headernode.appendChild(document.createTextNode(formatMonth(date.getMonth()) + " " + pad(date.getDate()) + " " + date.getFullYear()));
+    headernode.appendChild(document.createTextNode(formatUtils.monthName(date.getMonth()) + " " + formatUtils.pad(date.getDate()) + " " + date.getFullYear()));
     content.appendChild(headernode);
     var histnode = document.createElement('div');
     histnode.className = 'set';
@@ -286,10 +231,10 @@ JournalPage.prototype = {
     var urlSection = document.createElement('div');
     urlSection.className = 'urls';
     var titleDiv = document.createElement('div');
-    titleDiv.appendChild(createSpanText(this.getTitle(entry),'title'));
+    titleDiv.appendChild(domUtils.createSpanText(this.getTitle(entry),'title'));
     urlSection.appendChild(titleDiv);
     var hrefDiv = document.createElement('div');
-    hrefDiv.appendChild(createSpanText(entry.displayUrl || entry.uri,'url'));
+    hrefDiv.appendChild(domUtils.createSpanText(entry.displayUrl || entry.uri,'url'));
     urlSection.appendChild(hrefDiv);
     item.appendChild(urlSection);
   },
@@ -313,11 +258,11 @@ JournalPage.prototype = {
     var timeText;
     if (entry.time) {
       var dateTime = new Date(entry.time/1000);
-      timeText = twelveHour(dateTime.getHours()) + ":" + pad(dateTime.getMinutes()) + " " + meridiem(dateTime.getHours());
+      timeText = formatUtils.twelveHour(dateTime.getHours()) + ":" + formatUtils.pad(dateTime.getMinutes()) + " " + formatUtils.meridiem(dateTime.getHours());
     } else {
       timeText = ' '.times(15);
     }
-    item.appendChild(createSpanText(timeText, 'time'));
+    item.appendChild(domUtils.createSpanText(timeText, 'time'));
     var actionDiv = document.createElement('div');
     actionDiv.className = 'action';
     if (entry.icon) {
@@ -338,8 +283,8 @@ JournalPage.prototype = {
       var node = $("search-info-bar");
       while (node.firstChild) { node.removeChild(node.firstChild); };
  
-      node.appendChild(createSpanText("Searching history for ", "search-pre-term"));
-      node.appendChild(createSpanText(q,"search-term"));
+      node.appendChild(domUtils.createSpanText("Searching history for ", "search-pre-term"));
+      node.appendChild(domUtils.createSpanText(q,"search-term"));
       var clearSearch = document.createElement("a");
       clearSearch.addEventListener("click", function() { me.clearSearch(); }, false);
       clearSearch.href = "javascript:void(0);";
@@ -480,15 +425,15 @@ JournalPage.prototype = {
     var search = searchbox.value;
     if (search)
       search = search.strip();
-    var searchIsWeblink = parseWebLink(search);
+    var searchIsWeblink = urlUtils.parseWebLink(search);
     if (search) {
       $("search-info-bar").style.display = "block";
       this.renderSearchInfoBar(search, searchIsWeblink);
 
       viewedItems = this.journal.search(search, 6);
-      this.targetHistoryItem = findHighestVisited(viewedItems.root);
+      this.targetHistoryItem = this.findHighestVisited(viewedItems.root);
       if (viewedItems.length == 0) {
-        content.appendChild(createSpanText("(No results)", "no-results"))
+        content.appendChild(domUtils.createSpanText("(No results)", "no-results"))
       }
     } else {
       $("search-info-bar").style.display = "none";
@@ -519,7 +464,7 @@ JournalPage.prototype = {
       set.className = "set";
 
       if (searchIsWeblink) {
-        searchPrimary.appendChild(createAText("Go To Website", searchIsWeblink));
+        searchPrimary.appendChild(domUtils.createAText("Go To Website", searchIsWeblink));
       } else {
         var currentEngine = SEARCH_SERVICE.currentEngine;
         var a = document.createElement("a");
@@ -527,9 +472,10 @@ JournalPage.prototype = {
         a.href = currentEngine.getSubmission(search, null).uri.spec;
         a.appendChild(document.createTextNode("Search "));
         var img = document.createElement("img");
+        img.className = "search-engine";
         img.src = currentEngine.iconURI.spec;
         a.appendChild(img);
-        a.appendChild(document.createTextNode(currentEngine.name));
+        a.appendChild(document.createTextNode(" " + currentEngine.name));
         searchPrimary.appendChild(a);
       }
       searchPrimary.appendChild(document.createTextNode(" (Ctrl-Enter)"));
@@ -541,9 +487,10 @@ JournalPage.prototype = {
         a.href = engine.getSubmission(search, null).uri.spec;
         a.appendChild(document.createTextNode("Search "));
         var img = document.createElement("img");
+        img.className = "search-engine";
         img.src = engine.iconURI.spec;
         a.appendChild(img);
-        a.appendChild(document.createTextNode(engine.name));
+        a.appendChild(document.createTextNode(" " + engine.name));
         div.appendChild(a);
         searchSecondary.appendChild(div);
         a.setAttribute("id", "altsearch-" + i);
