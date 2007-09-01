@@ -154,7 +154,7 @@ Journal.prototype = {
     var options = this._getBaseQueryOptions();
     var histq = HISTORY_SERVICE.getNewQuery();
     histq.searchTerms = q;
-    options.maxResults = limit;
+    //options.maxResults = limit;
     return HISTORY_SERVICE.executeQuery(histq, options);
   },
 }
