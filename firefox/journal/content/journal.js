@@ -140,13 +140,27 @@ Journal.prototype = {
     options.sortingMode = options.SORT_BY_DATE_DESCENDING;
     return options;
   },
-  getToday: function() {
-    var options = this._getBaseQueryOptions();
-    var histq = HISTORY_SERVICE.getNewQuery();
-    histq.beginTimeReference = histq.TIME_RELATIVE_NOW;
-    histq.beginTime = -24 * 60 * 60 * 1000000; // 24 hours ago in microseconds
-    histq.endTimeReference = histq.TIME_RELATIVE_NOW;
-    histq.endTime = 0; // now
+  getLastHistoryDay: function() {
+    var options = HISTORY_SERVICE.getNewQueryOptions();
+    options.maxResults = 1;
+    options.sortingMode = options.SORT_BY_DATE_DESCENDING;
+    var histq = HISTORY_SERVICE.getNewQuery();    
+   
+    var lastHistoryItemResults = HISTORY_SERVICE.executeQuery(histq, options);
+    var lastHistoryTime;
+    if (!lastHistoryItemResults.root.hasChildren)
+      return null;
+    lastHistoryItemResults.root.containerOpen = true;
+    var lastHistoryItem = lastHistoryItemResults.root.getChild(0);
+    lastHistoryTime = lastHistoryItem.time;
+    lastHistoryItemResults.root.containerOpen = false;
+
+    histq = HISTORY_SERVICE.getNewQuery();
+    options = this._getBaseQueryOptions();
+    histq.beginTimeReference = histq.TIME_RELATIVE_EPOCH;
+    histq.beginTime = lastHistoryTime  - (24 * 60 * 60 * 1000000); // a day
+    histq.endTimeReference = histq.TIME_RELATIVE_EPOCH;
+    histq.endTime = lastHistoryTime;
 
     return HISTORY_SERVICE.executeQuery(histq, options);
   },
@@ -437,10 +451,10 @@ JournalPage.prototype = {
       }
     } else {
       $("search-info-bar").style.display = "none";
-      viewedItems = this.journal.getToday();
+      viewedItems = this.journal.getLastHistoryDay();
     }
 
-    if (viewedItems.root.hasChildren) {
+    if (viewedItems && viewedItems.root.hasChildren) {
       viewedItems.root.containerOpen = true;
       for (var i = 0; i < viewedItems.root.childCount; i++) {
         this.appendDaySet(viewedItems.root.getChild(i));
