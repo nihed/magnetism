@@ -478,7 +478,9 @@ JournalPage.prototype = {
       set.className = "set";
 
       if (searchIsWeblink) {
-        searchPrimary.appendChild(domUtils.createAText("Go To Website", searchIsWeblink));
+        var a = domUtils.createAText("Go To Website", searchIsWeblink);
+        a.setAttribute("id", "search-provider");
+        searchPrimary.appendChild(a);
       } else {
         var currentEngine = SEARCH_SERVICE.currentEngine;
         var a = document.createElement("a");
@@ -518,13 +520,20 @@ JournalPage.prototype = {
     searchbox.select();
     searchbox.focus();
   },
-  handleWindowKey: function(e) {
+  handleWindowKeyUp: function(e) {
 
     // ESC or Ctrl-c is clear search
     if (e.keyCode == 27 || (e.ctrlKey && e.keyCode == 67)) {
       this.clearSearch();
       Event.stop(e);
       return;
+    }
+
+    // LOG("handling window KEYUP" + e + " " + e.keyCode + " " + e.ctrlKey);
+    
+    if (!e.ctrlKey && e.keyCode == 13) {
+      me.onSubmit();
+      return true;
     }
 
     if (!e.ctrlKey)
@@ -546,6 +555,7 @@ JournalPage.prototype = {
       target.focus();
       target.dispatchEvent(click);
       Event.stop(e);
+      return true;
     }    
   },
   onload: function() {
@@ -557,14 +567,14 @@ JournalPage.prototype = {
 
     var prefs = Cc["@mozilla.org/preferences-service;1"].
                   getService(Ci.nsIPrefBranch);
-    
-    window.addEventListener("keyup", function (e) { me.handleWindowKey(e); }, false);    
+   
+    window.addEventListener("keyup", function (e) { me.handleWindowKeyUp(e); }, false);    
     
     var searchbox = document.getElementById('q');
     var searchform = document.forms['qform'];
     
     searchbox.addEventListener("keyup", function (e) { me.handleSearchChanged(e) }, false);
-    searchform.addEventListener("submit", function (e) { me.onsubmit(); Event.stop(e); }, true);
+    searchform.addEventListener("submit", function (e) { Event.stop(e); }, true);
     
     var histcount = document.forms['histcount']; 
     if (histcount) {
