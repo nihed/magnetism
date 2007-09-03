@@ -7,8 +7,8 @@ mugshot_CPPFLAGS = 			\
 	$(CANVAS_CFLAGS)		\
        -DHOST_CPU=\"$(host_cpu)\"
 
-mugshot_LDFLAGS=$(MUGSHOT_LIBS)
-mugshot_LDADD= libhippoipc.la libhippo.la $(CANVAS_LIBADD)
+mugshot_LDFLAGS=
+mugshot_LDADD= libhippoipc.la libhippo.la $(MUGSHOT_LIBS) $(CANVAS_LIBADD)
 
 if !HAVE_GTK210
 mugshot_CPPFLAGS += -I$(top_srcdir)/gtkcopy
