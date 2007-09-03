@@ -10,10 +10,8 @@ hippo_la_CPPFLAGS =			\
 
 PYTHONSRCDIR=$(top_srcdir)/python
 
-hippodir = $(pyexecdir)
-pkgpyexecdir = $(hippodir)
-
-pkgpyexec_LTLIBRARIES=hippo.la
+pyhippodir = $(pyexecdir)
+pyhippo_LTLIBRARIES=hippo.la
 
 hippo_la_LDFLAGS = -module -avoid-version
 hippo_la_LIBADD =					\
