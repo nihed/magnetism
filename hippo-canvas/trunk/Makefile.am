@@ -54,6 +54,8 @@ libhippocanvasinclude_HEADERS=$(COMMON_CANVAS_HEADERFILES) $(LINUX_CANVAS_HEADER
 libhippocanvas_1_la_SOURCES=$(COMMON_CANVAS_SOURCEFILES) $(LINUX_CANVAS_SOURCEFILES)
 nodist_libhippocanvas_1_la_SOURCES=$(CANVAS_BUILT_SOURCEFILES)
 
+if HAVE_PYTHON
 include Makefile-python.am
+endif
 
 DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-doc

@@ -154,15 +154,28 @@ AC_SUBST(GLIB_MKENUMS)
 GTK_DOC_CHECK([1.6])
 
 ## Python bindings
-AM_PATH_PYTHON
-AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])
+AC_ARG_ENABLE(python,
+              [AC_HELP_STRING([--enable-python], [Python bindings [default=auto]])])
+if test "x$enable_python" = "xno" ; then
+  have_python=no
+else
+  have_python=no
+  AM_PATH_PYTHON
+  if test "x$PYTHON" = "x" ; then
+    AC_MSG_WARN([Python not found])
+  else
+    AM_CHECK_PYTHON_HEADERS([
+      AC_PATH_PROG(PYGTK_CODEGEN, pygtk-codegen-2.0, no)
+      PKG_CHECK_MODULES(PYTHON_BINDINGS, pygtk-2.0 pycairo, [
+        PYGTK_DEFSDIR=`$PKG_CONFIG --variable=defsdir pygtk-2.0`
+        AC_SUBST(PYGTK_DEFSDIR)
+        have_python=yes
+      ], [AC_MSG_WARN(could not find pygtk-2.0 or pycairo)])
+    ],[AC_MSG_WARN(could not find Python headers)])
+  fi
+fi
 
-AC_PATH_PROG(PYGTK_CODEGEN, pygtk-codegen-2.0, no)
-
-PKG_CHECK_MODULES(PYTHON_BINDINGS, pygtk-2.0 pycairo)
-
-PYGTK_DEFSDIR=`$PKG_CONFIG --variable=defsdir pygtk-2.0`
-AC_SUBST(PYGTK_DEFSDIR)
+AM_CONDITIONAL(HAVE_PYTHON, test "x$have_python" = "xyes")
 
 AC_OUTPUT([
 Makefile
@@ -179,6 +192,7 @@ echo "
         prefix:                   ${prefix}
         compiler:                 ${CC}
         LIBHIPPOCANVAS_CFLAGS:    ${LIBHIPPOCANVAS_CFLAGS}
+        Python bindings:          ${have_python}
 
         Now type 'make' to build $PACKAGE
 "
