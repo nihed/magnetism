@@ -25,6 +25,9 @@ _events_polling_periodicity_seconds = 120
 _default_events_range = 14
 _prepare_events_days = 10
 
+def is_midnight(dt):
+    return dt.time().hour == 0 and dt.time().minute == 0 and dt.time().second == 0
+
 def fmt_datetime(dt):
     today = datetime.date.today()
     if today == dt.date():
@@ -34,13 +37,36 @@ def fmt_datetime(dt):
     else: 
         date_str = str(dt.date())
      
-    if dt.time().hour == 0 and dt.time().minute == 0 and  dt.time().second == 0:
+    if is_midnight(dt):
         return date_str
-    return date_str + " " + fmt_time(dt)
+    return date_str + " " + fmt_time(dt, False)
 
-def fmt_time(dt):     
+def fmt_datetime_interval(dt_start, dt_end):
+    first_part = fmt_datetime(dt_start)
+    if is_midnight(dt_start) and not is_midnight(dt_end):
+        first_part = first_part + " " + fmt_time(dt_start, False)
+
+    if dt_start.date() == dt_end.date():
+        second_part = " - " + fmt_time(dt_end, False)
+    elif dt_start.date() + datetime.timedelta(1) == dt_end.date() and is_midnight(dt_start) and is_midnight(dt_end):
+        second_part = " all day"
+    elif is_midnight(dt_start) and is_midnight(dt_end):
+        second_part = " - " + fmt_datetime(dt_end - datetime.timedelta(1))
+    else:
+        second_part = " - " + fmt_datetime(dt_end)
+    
+    if is_midnight(dt_end) and not is_midnight(dt_start):
+        second_part = second_part + " " + fmt_time(dt_end, False)
+
+    return first_part + second_part
+   
+def fmt_time(dt, right_justify = True):
+    if right_justify:
+        extra_space = "  "
+    else:
+        extra_space = ""    
     time = dt.time().strftime("%I:%M%p")
-    return time.find("0") == 0 and (time[1:].lower() + "  ") or time.lower()
+    return time.find("0") == 0 and (time[1:].lower() + extra_space) or time.lower()
 
 def fmt_date(date):
     today = datetime.date.today()
@@ -223,7 +249,7 @@ class EventDisplay(PrelightingCanvasBox):
         
         self.append(self.__box)
     
-        self.connect("button-press-event", lambda self, event: self.__on_button_press(event))
+        # self.connect("button-press-event", lambda self, event: self.__on_button_press(event))
         
         self.set_event(event)
         
@@ -272,17 +298,53 @@ class EventDetailsDisplay(hippo.CanvasBox):
        
     def __init__(self, event, **kwargs):
         kwargs['orientation'] = hippo.ORIENTATION_VERTICAL
+        kwargs['border'] = 1
+        kwargs['border-color'] = 0x000000ff
         hippo.CanvasBox.__init__(self, **kwargs)
+        self.__event = event
+        
+        color = event.get_color()
+        end_color=0xc8c8c8ff
+        if color is not None:
+            # the color is in the format '#FFFFFF' 
+            end_color = int(color[1:7], 16) * 0x100 + 0xff
 
         self.__header = hippo.CanvasGradient(orientation=hippo.ORIENTATION_HORIZONTAL,
                                              start_color=0xf2f2f2f2,
-                                             end_color=0xc8c8c8ff)
-        self.append(self.__header)
-        self.__name = hippo.CanvasText(font="22px", padding=6)
-        self.__header.append(self.__name)
+                                             end_color=end_color)
 
-        self.__top_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
+        self.append(self.__header)
+        event_link = ActionLink(text=self.__get_title(), font="14px", padding=4)
+        self.__header.append(event_link)
+        event_link.connect("activated", self.__on_activate_web)
+
+        attrs = pango.AttrList()
+        attrs.insert(pango.AttrForeground(0xFFFF, 0xFFFF, 0xFFFF, 0, 0xFFFF))
+        event_link.set_property("attributes", attrs)   
+
+        self.__header.append(event_link)
+
+        self.__top_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4, border_top=4, border_bottom=4)
         self.append(self.__top_box)
+
+        event_time = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, padding_left=4, padding_right=4, text="for: " + fmt_datetime_interval(event.get_start_time(), event.get_end_time()))
+        self.__top_box.append(event_time)
+
+        event_calendar = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, padding_left=4, padding_right=4, text="from: " + xml.sax.saxutils.escape(event.get_calendar_title()))
+        self.__top_box.append(event_calendar)
+
+    def __on_activate_web(self, canvas_item):
+        self.emit("close")
+        _logger.debug("activated event %s", self)
+        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', self.__event.get_link())
+
+    def __get_title(self):
+        if self.__event is None:
+            return "unknown"
+        return self.__event.get_title()
+
+    def __str__(self):
+        return '<EventDetailsDisplay name="%s">' % (self.__get_title())
 
 class CalendarStock(AbstractMugshotStock, polling.Task):
     def __init__(self, *args, **kwargs):
@@ -724,7 +786,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                 # self.__calendars[event.get_calendar_link()].color.value
                 # if we want to make sure we always use the updated color
                 display = EventDisplay(event, self.__day_displayed)
-                # display.connect('button_press_event', self.__handle_event_pressed)
+                display.connect('button_press_event', self.__handle_event_pressed)
                 events_box.append(display)
 
             if self.__move_up or self.__move_down or self.__top_event_displayed is not None:
@@ -859,8 +921,8 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self.__slideout = slideout.Slideout()
         self.__slideout_event = event
         coords = event.get_screen_coords()
-        _logger.debug("coords are %s %s", coords[0] + event.get_allocation()[0] + 4, coords[1])
-        self.__slideout.slideout_from(coords[0] + event.get_allocation()[0] + 4, coords[1])
+        _logger.debug("coords are %s %s; allocation alone %s", self.__box.get_context().translate_to_screen(self.__box)[0] + self.__box.get_allocation()[0] + 4, coords[1], event.get_allocation())
+        self.__slideout.slideout_from(self.__box.get_context().translate_to_screen(self.__box)[0] + self.__box.get_allocation()[0] + 4, coords[1])
 
         p = EventDetailsDisplay(event.get_event())
 
