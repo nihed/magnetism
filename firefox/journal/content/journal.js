@@ -478,23 +478,25 @@ JournalPage.prototype = {
       set.className = "set";
 
       if (searchIsWeblink) {
-        var a = domUtils.createAText("Go To Website", searchIsWeblink);
-        a.setAttribute("id", "search-provider");
-        searchPrimary.appendChild(a);
+        var button = document.createElement("button");
+        button.setAttribute("id", "search-provider");
+        Event.observe(button, 'click', function() { window.location.href = searchIsWeblink; } );
+        button.appendChild(document.createTextNode("Go To Website"));
+        searchPrimary.appendChild(button);
       } else {
         var currentEngine = SEARCH_SERVICE.currentEngine;
-        var a = document.createElement("a");
-        a.setAttribute("id", "search-provider");
-        a.href = currentEngine.getSubmission(search, null).uri.spec;
-        a.appendChild(document.createTextNode("Search "));
+        var button = document.createElement("button");
+        button.setAttribute("id", "search-provider");
+        Event.observe(button, 'click', function() { window.location.href = currentEngine.getSubmission(search, null).uri.spec; } );
         var img = document.createElement("img");
         img.className = "search-engine";
         img.src = currentEngine.iconURI.spec;
-        a.appendChild(img);
-        a.appendChild(document.createTextNode(" " + currentEngine.name));
-        searchPrimary.appendChild(a);
+        button.appendChild(img);
+        button.appendChild(document.createTextNode(" Search " + currentEngine.name));
       }
-      searchPrimary.appendChild(document.createTextNode(" (Ctrl-Enter)"));
+        var hint = domUtils.createSpanText(" (Ctrl-Enter)", "keybinding-hint");
+        button.appendChild(hint);
+        searchPrimary.appendChild(button);
 
       for (var i = 1; i < engines.length; i++) {
         var engine = engines[i];
