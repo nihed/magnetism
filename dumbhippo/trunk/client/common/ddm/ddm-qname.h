@@ -14,16 +14,17 @@ G_BEGIN_DECLS
 
 typedef struct _DDMQName DDMQName;
 
+/* this is a "qualified name" i.e. namespace uri + name */
 struct _DDMQName {
     const char *uri;
     const char *name;
 };
 
-DDMQName *ddm_qname_get(const char *uri,
-                        const char *name);
+DDMQName *ddm_qname_get      (const char *uri,
+                              const char *name);
 
 /* Create a QName from a representation in <uri>#<name> form */
-DDMQName *ddm_qname_from_uri(const char *full_uri);
+DDMQName *ddm_qname_from_uri (const char *full_uri);
 
 G_END_DECLS
 

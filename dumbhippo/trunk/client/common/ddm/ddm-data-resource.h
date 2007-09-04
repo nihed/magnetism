@@ -72,30 +72,31 @@ void ddm_data_value_get_element(DDMDataValue *value,
 const char *ddm_data_resource_get_resource_id (DDMDataResource *resource);
 const char *ddm_data_resource_get_class_id    (DDMDataResource *resource);
 
-void ddm_data_resource_get          (DDMDataResource *resource,
-                                     ...) G_GNUC_NULL_TERMINATED;
-void ddm_data_resource_get_by_qname (DDMDataResource *resource,
-                                     ...) G_GNUC_NULL_TERMINATED;
+void ddm_data_resource_get               (DDMDataResource *resource,
+                                          ...) G_GNUC_NULL_TERMINATED;
+void ddm_data_resource_get_by_qname      (DDMDataResource *resource,
+                                          ...) G_GNUC_NULL_TERMINATED;
 
-void ddm_data_resource_connect          (DDMDataResource *resource,
+void ddm_data_resource_connect          (DDMDataResource   *resource,
                                          const char        *property,
-                                         DDMDataFunction  function,
+                                         DDMDataFunction    function,
                                          gpointer           user_data);
 void ddm_data_resource_connect_by_qname (DDMDataResource *resource,
                                          DDMQName        *property,
                                          DDMDataFunction  function,
-                                         gpointer           user_data);
+                                         gpointer         user_data);
 void ddm_data_resource_disconnect       (DDMDataResource *resource,
                                          DDMDataFunction  function,
-                                         gpointer           user_data);
+                                         gpointer         user_data);
 
 DDMQName *         ddm_data_property_get_qname            (DDMDataProperty *property);
-void                 ddm_data_property_get_value            (DDMDataProperty *property,
-                                                             DDMDataValue    *value);
+void               ddm_data_property_get_value            (DDMDataProperty *property,
+                                                           DDMDataValue    *value);
 DDMDataType        ddm_data_property_get_type             (DDMDataProperty *property);
 DDMDataCardinality ddm_data_property_get_cardinality      (DDMDataProperty *property);
-gboolean             ddm_data_property_get_default_include  (DDMDataProperty *property);
+gboolean           ddm_data_property_get_default_include  (DDMDataProperty *property);
 DDMDataFetch      *ddm_data_property_get_default_children (DDMDataProperty *property);
+
 
 G_END_DECLS
 

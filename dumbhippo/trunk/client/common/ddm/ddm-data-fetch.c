@@ -252,7 +252,7 @@ fetch_property_from_string(const char     *str,
     /* First thing is always a property name or property URI */
 
     if (!parse_property_qname(&p, &qname) && !parse_property_name(&p, &name)) {
-        g_warning("Couldn't parse '%s': at position %d, expected <name> or <uri>#<name>", str, p - str);
+        g_warning("Couldn't parse '%s': at position %ld, expected <name> or <uri>#<name>", str, p - str);
         goto error;
     }
 
@@ -283,7 +283,7 @@ fetch_property_from_string(const char     *str,
         if (bracketed) {
             skip_whitespace(&p);
             if (*p != ']') {
-                g_warning("Couldn't parse '%s': at position %d, expected ']'", str, p - str);
+                g_warning("Couldn't parse '%s': at position %ld, expected ']'", str, p - str);
                 goto error;
             }
             p++;
@@ -331,7 +331,7 @@ fetch_from_string_internal(const char      *str,
 
         if (properties->len > 0 || include_default) {
             if (*p != ';') {
-                g_warning("Couldn't parse '%s': at position %d, expected ';'", str, p - str);
+                g_warning("Couldn't parse '%s': at position %ld, expected ';'", str, p - str);
                 goto error;
             }
             p++;
@@ -386,7 +386,7 @@ ddm_data_fetch_from_string(const char *str)
     skip_whitespace(&p);
 
     if (*p != '\0') {
-        g_warning("Couldn't parse '%s': at position %d, expected <EOF>", str, p - str);
+        g_warning("Couldn't parse '%s': at position %ld, expected <EOF>", str, p - str);
         ddm_data_fetch_unref(result);
         return NULL;
     }

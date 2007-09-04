@@ -45,7 +45,7 @@ struct _DDMDataResource
 
 void
 ddm_data_value_get_element(DDMDataValue *value,
-                           GSList         *node,
+                           GSList       *node,
                            DDMDataValue *element)
 {
     g_return_if_fail(DDM_DATA_IS_LIST(value->type));

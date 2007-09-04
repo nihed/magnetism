@@ -10,7 +10,7 @@ endif
 # note that target-specific CPPFLAGS will REPLACE
 # not augment these default flags by default,
 # so we manually put AM_CPPFLAGS in the target flags
-AM_CPPFLAGS=-DHIPPO_COMPILATION -DHIPPO_OS_LINUX -DVERSION_FILE=\"$(pkgdatadir)/version\" -I$(top_builddir)/config -I$(COMMONSRCDIR) -I$(COMMONSRCDIR)/canvas
+AM_CPPFLAGS=-DHIPPO_COMPILATION -DHIPPO_OS_LINUX -DVERSION_FILE=\"$(pkgdatadir)/version\" -I$(top_builddir)/config -I$(COMMONSRCDIR) -I$(COMMONSRCDIR)/canvas -DDDM_COMPILATION=1
 
 # the "config" dir seems like a convenient place that's already 
 # in everyone's include path ... I dunno
@@ -60,6 +60,7 @@ else
 EXTRA_DIST += $(CANVASSRCDIR)/common/hippo/hippo-canvas-marshal.list
 endif
 
+include Makefile-libddm.am
 include Makefile-libhippoipc.am
 include Makefile-libhippo.am
 include Makefile-libgtkcopy.am
