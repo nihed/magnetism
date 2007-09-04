@@ -992,6 +992,11 @@ static const HippoDBusMember model_members[] = {
 
 static const HippoDBusProperty model_properties[] = {
     { "Connected",  "b", handle_get_connected, NULL },
+
+
+    /* FIXME This is probably broken to have here, since it's just a special
+     * case of something that should be in the data model anyway, right?
+     */
     { "SelfId",     "s", handle_get_self_id, NULL },
 
     /* this should return the server we are encoding in the dbus bus name, like foo.bar.org:8080 */
@@ -1002,7 +1007,11 @@ static const HippoDBusProperty model_properties[] = {
      * something. The url should NOT have a trailing '/', though
      * the one returned by the old "org.mugshot.Mugshot" API does.
      */
-    
+
+    /* FIXME Maybe this is broken - instead, we should be making all URLs absolute
+     * as they leave the process, making the data model independent of the server
+     * it came from
+     */
     { "WebBaseUrl", "s", handle_get_web_base_url, NULL },
     { NULL }
 };
