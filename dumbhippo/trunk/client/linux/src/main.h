@@ -36,6 +36,7 @@ void       hippo_app_quit           (HippoApp   *app);
 
 HippoDataCache *hippo_app_get_data_cache (HippoApp *app);
 HippoDBus      *hippo_app_get_dbus       (HippoApp *app);
+DDMDataModel   *hippo_app_get_data_model (HippoApp *app);
 
 void       hippo_app_set_show_stacker (HippoApp *app,
                                        gboolean  value);

@@ -2108,9 +2108,7 @@ hippo_dbus_notify_xmpp_connected(HippoDBus   *dbus,
 
     message = hippo_dbus_mugshot_signal_connection_changed(dbus);
     dbus_connection_send(dbus->connection, message, NULL);
-    dbus_message_unref(message);	
-
-    hippo_dbus_model_notify_connected_changed(dbus->xmpp_connected);
+    dbus_message_unref(message);
         
     if (dbus->xmpp_connected) {
         /* notify all the listeners */
