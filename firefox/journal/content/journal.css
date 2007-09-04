@@ -36,10 +36,13 @@ img {
 
 #page {
 	min-height: 600px;
+  // Set this to test layout
+  // max-width: 1000px;
 }
 
 #content {
-
+  width: 100%;
+  float: left;
 }
 
 #header {
@@ -104,10 +107,12 @@ input.green-button:hover {
 
 /* ==== HISTORY ==== */
 
-#history {
+#historycolumn {
   float: left;
-  margin-left: 10px;
-  margin-right: 10px;
+  margin-right: 350px;
+}
+
+#history {
 }
 
 #q {
@@ -211,8 +216,10 @@ input.green-button:hover {
 }
 
 /* ==== Sidebars ==== */
-.sidebars {
-
+#sidebars {
+  float: left;
+  width: 350px;
+  margin-left: -350px;
 }
 .sidebar {
   float: right;
@@ -229,8 +236,7 @@ input.green-button:hover {
 /* ==== Google Search ==== */
 
 #google-q {
-  width: 500px;
-  min-height: 800px;
+  min-height: 600px;
   height; 100%:
   padding: 0;
   margin: 0; 
