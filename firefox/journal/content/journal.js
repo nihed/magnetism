@@ -166,6 +166,7 @@ Journal.prototype = {
   },
   search: function(q, limit) {
     var options = this._getBaseQueryOptions();
+    options.resultType = options.RESULTS_AS_URI;
     var histq = HISTORY_SERVICE.getNewQuery();
     histq.searchTerms = q;
     //options.maxResults = limit;
