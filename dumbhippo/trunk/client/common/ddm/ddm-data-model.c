@@ -6,7 +6,6 @@
 #include <string.h>
 
 #include "ddm-data-model-internal.h"
-#include "ddm-data-model-dbus.h"
 #include "ddm-data-model-backend.h"
 #include "ddm-data-resource-internal.h"
 #include "ddm-data-query-internal.h"
@@ -91,20 +90,6 @@ ddm_data_model_finalize(GObject *object)
 #endif
 
     G_OBJECT_CLASS(ddm_data_model_parent_class)->finalize(object);
-}
-
-static DDMDataModel *default_model = NULL;
-
-DDMDataModel*
-ddm_data_model_get_default (void)
-{
-    if (default_model == NULL) {
-        default_model = ddm_data_model_new_with_backend(ddm_data_model_get_dbus_backend(),
-                                                        NULL, NULL);
-    }
-
-    g_object_ref(default_model);
-    return default_model;
 }
 
 DDMDataModel*

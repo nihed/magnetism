@@ -59,3 +59,21 @@ ddm_data_model_get_dbus_backend(void)
 {
     return &dbus_backend;
 }
+
+/* This is the default model for platforms that have dbus only.
+ * Other platforms will have to do something else.
+ */
+
+static DDMDataModel *default_model = NULL;
+
+DDMDataModel*
+ddm_data_model_get_default (void)
+{
+    if (default_model == NULL) {
+        default_model = ddm_data_model_new_with_backend(ddm_data_model_get_dbus_backend(),
+                                                        NULL, NULL);
+    }
+
+    g_object_ref(default_model);
+    return default_model;
+}
