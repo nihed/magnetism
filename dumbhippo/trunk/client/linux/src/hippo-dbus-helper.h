@@ -8,6 +8,8 @@
 #include <dbus/dbus.h>
 #include <glib-object.h>
 
+#include "hippo-dbus-helper-rename.h"
+
 G_BEGIN_DECLS
 
 typedef enum {

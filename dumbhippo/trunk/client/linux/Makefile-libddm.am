@@ -43,7 +43,10 @@ LIBDDM_SOURCEFILES =						\
 	$(COMMONSRCDIR)/ddm/ddm-data-resource-internal.h	\
 	$(COMMONSRCDIR)/ddm/ddm-data-query.c			\
 	$(COMMONSRCDIR)/ddm/ddm-data-query-internal.h		\
-	$(COMMONSRCDIR)/ddm/ddm-qname.c
+	$(COMMONSRCDIR)/ddm/ddm-qname.c				\
+	$(COMMONSRCDIR)/ddm/hippo-dbus-helper.c			\
+	$(COMMONSRCDIR)/ddm/hippo-dbus-helper.h			\
+	$(COMMONSRCDIR)/ddm/hippo-dbus-helper-rename.h
 
 LIBDDM_BUILT_SOURCEFILES =			\
 	$(COMMON_MARSHAL_HEADER)		\
