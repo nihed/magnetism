@@ -8,6 +8,8 @@
 #include "ddm-data-model-dbus.h"
 #include "ddm-data-model-backend.h"
 
+#include <dbus/dbus.h>
+
 static void
 ddm_dbus_add_model    (DDMDataModel *model,
                        void         *backend_data)
