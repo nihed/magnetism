@@ -1343,10 +1343,12 @@ _hippo_disk_cache_new(HippoDataCache *data_cache)
 void
 _hippo_disk_cache_close(HippoDiskCache *cache)
 {
+#ifdef HAVE_SQLITE
     close_database(cache);
     
     if (cache->heartbeat_id) {
         g_source_remove(cache->heartbeat_id);
         cache->heartbeat_id = 0;
     }
+#endif    
 }
