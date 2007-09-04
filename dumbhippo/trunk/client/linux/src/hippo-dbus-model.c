@@ -5,8 +5,7 @@
 #include <string.h>
 #include "hippo-dbus-helper.h"
 #include <hippo/hippo-data-cache.h>
-#include <hippo/hippo-data-fetch.h>
-#include <hippo/hippo-data-model-internal.h>
+#include <ddm/ddm.h>
 #include "hippo-dbus-model.h"
 #include "main.h"
 
@@ -31,8 +30,8 @@ struct _DataClientId {
 
 struct _DataClientConnection {
     DataClient *client;
-    HippoDataResource *resource;
-    HippoDataFetch *fetch;
+    DDMDataResource *resource;
+    DDMDataFetch *fetch;
 };
 
 struct _DataClient {
@@ -52,7 +51,7 @@ struct _DataClientMap {
 struct _DataClientQueryClosure {
     DataClient *client;
     DBusMessage *message;
-    HippoDataFetch *fetch;
+    DDMDataFetch *fetch;
 };
 
 static DataClient *data_client_ref   (DataClient *client);
@@ -60,14 +59,14 @@ static void        data_client_unref (DataClient *client);
 
 static void add_resource_to_message(DataClient        *client,
                                     DBusMessageIter   *resource_array_iter,
-                                    HippoDataResource *resource,
-                                    HippoDataFetch    *fetch,
+                                    DDMDataResource *resource,
+                                    DDMDataFetch    *fetch,
                                     gboolean           indirect,
                                     gboolean           is_notification,
                                     GSList            *changed_properties);
 
 static void
-on_resource_changed(HippoDataResource *resource,
+on_resource_changed(DDMDataResource *resource,
                     GSList            *changed_properties,
                     gpointer           data)
 {
@@ -114,7 +113,7 @@ data_client_id_equal(const DataClientId *a,
 
 static DataClientConnection *
 data_client_connection_new(DataClient        *client,
-                           HippoDataResource *resource)
+                           DDMDataResource *resource)
 {
     DataClientConnection *connection = g_new0(DataClientConnection, 1);
 
@@ -122,7 +121,7 @@ data_client_connection_new(DataClient        *client,
     connection->resource = resource;
     connection->fetch = NULL;
 
-    hippo_data_resource_connect(connection->resource, NULL,
+    ddm_data_resource_connect(connection->resource, NULL,
                                 on_resource_changed, connection);
 
     return connection;
@@ -130,13 +129,13 @@ data_client_connection_new(DataClient        *client,
 
 static void
 data_client_connection_set_fetch(DataClientConnection *connection,
-                                 HippoDataFetch       *fetch)
+                                 DDMDataFetch       *fetch)
 {
     if (fetch)
-        hippo_data_fetch_ref(fetch);
+        ddm_data_fetch_ref(fetch);
     
     if (connection->fetch)
-        hippo_data_fetch_unref(connection->fetch);
+        ddm_data_fetch_unref(connection->fetch);
 
     connection->fetch = fetch;
 }
@@ -144,22 +143,22 @@ data_client_connection_set_fetch(DataClientConnection *connection,
 static void
 data_client_connection_destroy(DataClientConnection *connection)
 {
-    hippo_data_resource_disconnect(connection->resource,
+    ddm_data_resource_disconnect(connection->resource,
                                    on_resource_changed, connection);
     
-    hippo_data_fetch_unref(connection->fetch);
+    ddm_data_fetch_unref(connection->fetch);
     g_free(connection);
 }
 
 static DataClientQueryClosure *
 data_client_query_closure_new(DataClient     *client,
                               DBusMessage    *message,
-                              HippoDataFetch *fetch)
+                              DDMDataFetch *fetch)
 {
     DataClientQueryClosure *closure = g_new0(DataClientQueryClosure, 1);
     closure->client = data_client_ref(client);
     closure->message = dbus_message_ref(message);
-    closure->fetch = hippo_data_fetch_ref(fetch);
+    closure->fetch = ddm_data_fetch_ref(fetch);
 
     return closure;
 }
@@ -168,7 +167,7 @@ static void
 data_client_query_closure_destroy(DataClientQueryClosure *closure)
 {
     data_client_unref(closure->client);
-    hippo_data_fetch_unref(closure->fetch);
+    ddm_data_fetch_unref(closure->fetch);
     dbus_message_unref(closure->message);
     g_free(closure);
 }
@@ -302,10 +301,10 @@ read_params_dictionary(DBusMessageIter *iter)
 
 static void
 add_property_value_to_message(DBusMessageIter      *property_array_iter,
-                              HippoQName           *property_qname,
-                              HippoDataUpdate       update,
-                              HippoDataValue       *value,
-                              HippoDataCardinality  cardinality)
+                              DDMQName           *property_qname,
+                              DDMDataUpdate       update,
+                              DDMDataValue       *value,
+                              DDMDataCardinality  cardinality)
 {
     DBusMessageIter property_iter;
     DBusMessageIter value_iter;
@@ -315,64 +314,64 @@ add_property_value_to_message(DBusMessageIter      *property_array_iter,
     const char *value_signature = NULL;
     
     switch (update) {
-    case HIPPO_DATA_UPDATE_ADD:
+    case DDM_DATA_UPDATE_ADD:
         update_byte = 'a';
         break;
-    case HIPPO_DATA_UPDATE_REPLACE:
+    case DDM_DATA_UPDATE_REPLACE:
         update_byte = 'r';
         break;
-    case HIPPO_DATA_UPDATE_DELETE:
+    case DDM_DATA_UPDATE_DELETE:
         update_byte = 'd';
         break;
-    case HIPPO_DATA_UPDATE_CLEAR:
+    case DDM_DATA_UPDATE_CLEAR:
         update_byte = 'c';
         break;
     }
     
     switch (value->type) {
-    case HIPPO_DATA_BOOLEAN:
+    case DDM_DATA_BOOLEAN:
         type_byte = 'b';
         value_signature = "b";
         break;
-    case HIPPO_DATA_INTEGER:
+    case DDM_DATA_INTEGER:
         type_byte = 'i';
         value_signature = "i";
         break;
-    case HIPPO_DATA_LONG:
+    case DDM_DATA_LONG:
         type_byte = 'l';
         value_signature = "x";
         break;
-    case HIPPO_DATA_FLOAT:
+    case DDM_DATA_FLOAT:
         type_byte = 'f';
         value_signature = "d";
         break;
-    case HIPPO_DATA_NONE: /* Empty list, type doesn't matter */
-    case HIPPO_DATA_STRING:
+    case DDM_DATA_NONE: /* Empty list, type doesn't matter */
+    case DDM_DATA_STRING:
         type_byte = 's';
         value_signature = "s";
         break;
-    case HIPPO_DATA_RESOURCE:
+    case DDM_DATA_RESOURCE:
         type_byte = 'r';
         value_signature = "s";
         break;
-    case HIPPO_DATA_URL:
+    case DDM_DATA_URL:
         type_byte = 'u';
         value_signature = "s";
         break;
-    case HIPPO_DATA_LIST:
+    case DDM_DATA_LIST:
         break;
     }
 
     g_assert(value_signature != NULL);
     
     switch (cardinality) {
-    case HIPPO_DATA_CARDINALITY_01:
+    case DDM_DATA_CARDINALITY_01:
         cardinality_byte = '?';
         break;
-    case HIPPO_DATA_CARDINALITY_1:
+    case DDM_DATA_CARDINALITY_1:
         cardinality_byte = '.';
         break;
-    case HIPPO_DATA_CARDINALITY_N:
+    case DDM_DATA_CARDINALITY_N:
         cardinality_byte = '*';
         break;
     }
@@ -387,40 +386,40 @@ add_property_value_to_message(DBusMessageIter      *property_array_iter,
     dbus_message_iter_open_container(&property_iter, DBUS_TYPE_VARIANT, value_signature, &value_iter);
     
     switch (value->type) {
-    case HIPPO_DATA_BOOLEAN:
+    case DDM_DATA_BOOLEAN:
         {
             dbus_bool_t v = value->u.boolean;
             dbus_message_iter_append_basic(&value_iter, DBUS_TYPE_BOOLEAN, &v);
         }
         break;
-    case HIPPO_DATA_INTEGER:
+    case DDM_DATA_INTEGER:
         dbus_message_iter_append_basic(&value_iter, DBUS_TYPE_INT32, &value->u.integer);
         break;
-    case HIPPO_DATA_LONG:
+    case DDM_DATA_LONG:
         dbus_message_iter_append_basic(&value_iter, DBUS_TYPE_INT64, &value->u.long_);
         break;
-    case HIPPO_DATA_FLOAT:
+    case DDM_DATA_FLOAT:
         dbus_message_iter_append_basic(&value_iter, DBUS_TYPE_DOUBLE, &value->u.float_);
         break;
-    case HIPPO_DATA_NONE:
+    case DDM_DATA_NONE:
         {
             const char *v = "";
             dbus_message_iter_append_basic(&value_iter, DBUS_TYPE_STRING, &v);
         }
         break;
-    case HIPPO_DATA_STRING:
-    case HIPPO_DATA_URL:
+    case DDM_DATA_STRING:
+    case DDM_DATA_URL:
         dbus_message_iter_append_basic(&value_iter, DBUS_TYPE_STRING, &value->u.string);
         break;
-    case HIPPO_DATA_RESOURCE:
+    case DDM_DATA_RESOURCE:
         {
-            const char *v = hippo_data_resource_get_resource_id(value->u.resource);
+            const char *v = ddm_data_resource_get_resource_id(value->u.resource);
 
             dbus_message_iter_append_basic(&value_iter, DBUS_TYPE_STRING, &v);
             
         }
         break;
-    case HIPPO_DATA_LIST:
+    case DDM_DATA_LIST:
         break;
     }
     
@@ -431,16 +430,16 @@ add_property_value_to_message(DBusMessageIter      *property_array_iter,
 static void
 add_property_children_to_message(DataClient        *client,
                                  DBusMessageIter   *resource_array_iter,
-                                 HippoDataProperty *property,
-                                 HippoDataFetch    *children)
+                                 DDMDataProperty *property,
+                                 DDMDataFetch    *children)
 {
-    HippoDataValue value;
+    DDMDataValue value;
             
-    hippo_data_property_get_value(property, &value);
+    ddm_data_property_get_value(property, &value);
     
-    if (value.type == HIPPO_DATA_RESOURCE) {
+    if (value.type == DDM_DATA_RESOURCE) {
         add_resource_to_message(client, resource_array_iter, value.u.resource, children, TRUE, FALSE, NULL);
-    } else if (value.type == (HIPPO_DATA_RESOURCE | HIPPO_DATA_LIST)) {
+    } else if (value.type == (DDM_DATA_RESOURCE | DDM_DATA_LIST)) {
         GSList *l;
         for (l = value.u.list; l; l = l->next)
             add_resource_to_message(client, resource_array_iter, l->data, children, TRUE, FALSE, NULL);
@@ -449,34 +448,34 @@ add_property_children_to_message(DataClient        *client,
 
 static void
 add_property_to_message(DBusMessageIter   *property_array_iter,
-                        HippoDataProperty *property)
+                        DDMDataProperty *property)
 {
-    HippoDataCardinality cardinality;
-    HippoDataValue value;
-    HippoQName *property_qname;
+    DDMDataCardinality cardinality;
+    DDMDataValue value;
+    DDMQName *property_qname;
     
-    hippo_data_property_get_value(property, &value);
-    cardinality = hippo_data_property_get_cardinality(property);
-    property_qname = hippo_data_property_get_qname(property);
+    ddm_data_property_get_value(property, &value);
+    cardinality = ddm_data_property_get_cardinality(property);
+    property_qname = ddm_data_property_get_qname(property);
     
-    if (value.type == HIPPO_DATA_NONE) {
+    if (value.type == DDM_DATA_NONE) {
         add_property_value_to_message(property_array_iter, property_qname,
-                                      HIPPO_DATA_UPDATE_CLEAR,
+                                      DDM_DATA_UPDATE_CLEAR,
                                       &value, cardinality);
-    } else if (HIPPO_DATA_IS_LIST(value.type)) {
+    } else if (DDM_DATA_IS_LIST(value.type)) {
         GSList *l;
         
         for (l = value.u.list; l; l = l->next) {
-            HippoDataValue element;
-            hippo_data_value_get_element(&value, l, &element);
+            DDMDataValue element;
+            ddm_data_value_get_element(&value, l, &element);
             
             add_property_value_to_message(property_array_iter, property_qname,
-                                          l == value.u.list ? HIPPO_DATA_UPDATE_REPLACE : HIPPO_DATA_UPDATE_ADD,
+                                          l == value.u.list ? DDM_DATA_UPDATE_REPLACE : DDM_DATA_UPDATE_ADD,
                                           &element, cardinality);
         }
     } else {
         add_property_value_to_message(property_array_iter, property_qname,
-                                      HIPPO_DATA_UPDATE_REPLACE,
+                                      DDM_DATA_UPDATE_REPLACE,
                                       &value, cardinality);
     }
 }
@@ -484,55 +483,55 @@ add_property_to_message(DBusMessageIter   *property_array_iter,
 static void
 add_resource_to_message(DataClient        *client,
                         DBusMessageIter   *resource_array_iter,
-                        HippoDataResource *resource,
-                        HippoDataFetch    *fetch,
+                        DDMDataResource *resource,
+                        DDMDataFetch    *fetch,
                         gboolean           indirect,
                         gboolean           is_notification,
                         GSList            *changed_properties)
 {
-    HippoDataFetchIter fetch_iter;
+    DDMDataFetchIter fetch_iter;
     DataClientConnection *connection;
-    HippoDataFetch *new_fetch;
-    HippoDataFetch *total_fetch;
+    DDMDataFetch *new_fetch;
+    DDMDataFetch *total_fetch;
     DBusMessageIter resource_iter;
     DBusMessageIter property_array_iter;
     const char *resource_id;
     const char *class_id;
     dbus_bool_t indirect_bool;
 
-    connection = g_hash_table_lookup(client->connections, hippo_data_resource_get_resource_id(resource));
+    connection = g_hash_table_lookup(client->connections, ddm_data_resource_get_resource_id(resource));
     if (connection == NULL) {
         connection = data_client_connection_new(client, resource);
-        g_hash_table_insert(client->connections, (char *)hippo_data_resource_get_resource_id(resource), connection);
+        g_hash_table_insert(client->connections, (char *)ddm_data_resource_get_resource_id(resource), connection);
     }
 
     if (is_notification) {
-        new_fetch = hippo_data_fetch_ref(fetch);
-        total_fetch = hippo_data_fetch_ref(fetch);
+        new_fetch = ddm_data_fetch_ref(fetch);
+        total_fetch = ddm_data_fetch_ref(fetch);
     } else {
         if (connection->fetch)
-            new_fetch = hippo_data_fetch_subtract(fetch, connection->fetch);
+            new_fetch = ddm_data_fetch_subtract(fetch, connection->fetch);
         else
-            new_fetch = hippo_data_fetch_ref(fetch);
+            new_fetch = ddm_data_fetch_ref(fetch);
         
         if (new_fetch == NULL && indirect)
             return;
         
         if (connection->fetch)
-            total_fetch = hippo_data_fetch_merge(fetch, connection->fetch);
+            total_fetch = ddm_data_fetch_merge(fetch, connection->fetch);
         else
-            total_fetch = hippo_data_fetch_ref(fetch);
+            total_fetch = ddm_data_fetch_ref(fetch);
         
         data_client_connection_set_fetch(connection, total_fetch);
     }
 
     if (new_fetch) {
-        hippo_data_fetch_iter_init(&fetch_iter, resource, new_fetch);
-        while (hippo_data_fetch_iter_has_next(&fetch_iter)) {
-            HippoDataProperty *property;
-            HippoDataFetch *children;
+        ddm_data_fetch_iter_init(&fetch_iter, resource, new_fetch);
+        while (ddm_data_fetch_iter_has_next(&fetch_iter)) {
+            DDMDataProperty *property;
+            DDMDataFetch *children;
 
-            hippo_data_fetch_iter_next(&fetch_iter, &property, &children);
+            ddm_data_fetch_iter_next(&fetch_iter, &property, &children);
 
             /* FIXME: This check on children isn't really right ... if we have a resource-value
              * property that is default-fetched without default-children, then we should
@@ -541,16 +540,16 @@ add_resource_to_message(DataClient        *client,
             if (!children)
                 continue;
             
-            if (is_notification && g_slist_find(changed_properties, hippo_data_property_get_qname(property)) == NULL)
+            if (is_notification && g_slist_find(changed_properties, ddm_data_property_get_qname(property)) == NULL)
                 continue;
             
             add_property_children_to_message(client, resource_array_iter, property, children);
         }
-        hippo_data_fetch_iter_clear(&fetch_iter);
+        ddm_data_fetch_iter_clear(&fetch_iter);
     }
     
-    resource_id = hippo_data_resource_get_resource_id(resource);
-    class_id = hippo_data_resource_get_class_id(resource);
+    resource_id = ddm_data_resource_get_resource_id(resource);
+    class_id = ddm_data_resource_get_class_id(resource);
     indirect_bool = indirect;
 
     dbus_message_iter_open_container(resource_array_iter, DBUS_TYPE_STRUCT, NULL, &resource_iter);
@@ -561,27 +560,27 @@ add_resource_to_message(DataClient        *client,
     dbus_message_iter_open_container(&resource_iter, DBUS_TYPE_ARRAY, "(ssyyyv)", &property_array_iter);
 
     if (new_fetch) {
-        hippo_data_fetch_iter_init(&fetch_iter, resource, new_fetch);
-        while (hippo_data_fetch_iter_has_next(&fetch_iter)) {
-            HippoDataProperty *property;
+        ddm_data_fetch_iter_init(&fetch_iter, resource, new_fetch);
+        while (ddm_data_fetch_iter_has_next(&fetch_iter)) {
+            DDMDataProperty *property;
 
-            hippo_data_fetch_iter_next(&fetch_iter, &property, NULL);
+            ddm_data_fetch_iter_next(&fetch_iter, &property, NULL);
 
-            if (is_notification && g_slist_find(changed_properties, hippo_data_property_get_qname(property)) == NULL)
+            if (is_notification && g_slist_find(changed_properties, ddm_data_property_get_qname(property)) == NULL)
                 continue;
             
             add_property_to_message(&property_array_iter, property);
         }
         
-        hippo_data_fetch_iter_clear(&fetch_iter);
+        ddm_data_fetch_iter_clear(&fetch_iter);
     }
     
     dbus_message_iter_close_container(&resource_iter, &property_array_iter);
     dbus_message_iter_close_container(resource_array_iter, &resource_iter);
 
     if (new_fetch)
-        hippo_data_fetch_unref(new_fetch);
-    hippo_data_fetch_unref(total_fetch);
+        ddm_data_fetch_unref(new_fetch);
+    ddm_data_fetch_unref(total_fetch);
 }
 
 static void
@@ -613,7 +612,7 @@ on_query_success(GSList  *results,
 }
 
 static void
-on_query_error(HippoDataError  error,
+on_query_error(DDMDataError  error,
                const char     *message,
                gpointer        data)
 {
@@ -637,14 +636,14 @@ handle_query (void            *object,
 {
     HippoDataCache *cache;
     DBusConnection *connection;
-    HippoDataModel *model;
+    DDMDataModel *model;
     const char *notification_path;
     const char *method_uri;
     const char *fetch_string;
-    HippoDataFetch *fetch;
+    DDMDataFetch *fetch;
     GHashTable *params = NULL;
     DBusMessageIter iter;
-    HippoDataQuery *query;
+    DDMDataQuery *query;
     DataClientMap *client_map;
     DataClient *client;
     DataClientQueryClosure *closure;
@@ -690,7 +689,7 @@ handle_query (void            *object,
                                       DBUS_ERROR_INVALID_ARGS,
                                       _("Too many arguments"));
 
-    fetch = hippo_data_fetch_from_string(fetch_string);
+    fetch = ddm_data_fetch_from_string(fetch_string);
     if (fetch == NULL) {
         return dbus_message_new_error(message,
                                       DBUS_ERROR_INVALID_ARGS,
@@ -715,7 +714,7 @@ handle_query (void            *object,
         }
 
         if (g_str_has_prefix(resource_id, "online-desktop:")) {
-            HippoDataResource *resource = _hippo_data_model_get_resource(model, resource_id);
+            DDMDataResource *resource = ddm_data_model_lookup_resource(model, resource_id);
             GSList *results;
 
             if (resource == NULL) {
@@ -733,7 +732,7 @@ handle_query (void            *object,
         }
     }
 
-    query = hippo_data_model_query_params(model, method_uri, fetch_string, params);
+    query = ddm_data_model_query_params(model, method_uri, fetch_string, params);
     g_hash_table_destroy(params);
     
     if (query == NULL) {
@@ -743,10 +742,10 @@ handle_query (void            *object,
                                       _("Couldn't send query"));
     }
 
-    hippo_data_query_set_multi_handler(query, on_query_success, closure);
-    hippo_data_query_set_error_handler(query, on_query_error, closure);
+    ddm_data_query_set_multi_handler(query, on_query_success, closure);
+    ddm_data_query_set_error_handler(query, on_query_error, closure);
 
-    hippo_data_fetch_unref(fetch);
+    ddm_data_fetch_unref(fetch);
 
     return NULL;
 }

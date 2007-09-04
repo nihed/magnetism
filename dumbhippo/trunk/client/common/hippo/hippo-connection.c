@@ -2,13 +2,12 @@
 #include "hippo-common-internal.h"
 #include "hippo-connection.h"
 #include "hippo-data-cache-internal.h"
-#include "hippo-data-model-internal.h"
-#include "hippo-data-resource-internal.h"
-#include "hippo-data-query-internal.h"
 #include "hippo-common-marshal.h"
 #include "hippo-external-account.h"
 #include "hippo-title-pattern.h"
 #include "hippo-xml-utils.h"
+#include "hippo-notification-set.h"
+#include "hippo-disk-cache.h"
 #include <loudmouth/loudmouth.h>
 #include <string.h>
 #include <stdlib.h>
@@ -4488,7 +4487,7 @@ typedef struct {
 
 typedef struct {
     HippoConnection *connection;
-    HippoDataModel *model;
+    DDMDataModel *model;
     const char *system_uri;
     GSList *nodes;
     GSList *resource_bases;
@@ -4666,37 +4665,37 @@ dm_context_get_indirect(DMContext *context)
         return FALSE;
 }
 
-static HippoDataUpdate
+static DDMDataUpdate
 dm_context_get_update(DMContext *context)
 {
     const char *update_attr = dm_context_get_system_attribute(context, "update");
     if (update_attr != NULL) {
         if (strcmp(update_attr, "add") == 0)
-            return HIPPO_DATA_UPDATE_ADD;
+            return DDM_DATA_UPDATE_ADD;
         else if (strcmp(update_attr, "replace") == 0)
-            return HIPPO_DATA_UPDATE_REPLACE;
+            return DDM_DATA_UPDATE_REPLACE;
         else if (strcmp(update_attr,"delete") == 0)
-            return HIPPO_DATA_UPDATE_DELETE;
+            return DDM_DATA_UPDATE_DELETE;
         else if (strcmp(update_attr, "clear") == 0)
-            return HIPPO_DATA_UPDATE_CLEAR;
+            return DDM_DATA_UPDATE_CLEAR;
         else {
             g_warning("Unknown value for m:update attribute. Assuming 'replace'");
         }
     }
 
-    return HIPPO_DATA_UPDATE_REPLACE;
+    return DDM_DATA_UPDATE_REPLACE;
 }
 
 static gboolean
 dm_context_get_type(DMContext            *context,
-                    HippoDataType        *type,
-                    HippoDataCardinality *cardinality,
+                    DDMDataType          *type,
+                    DDMDataCardinality   *cardinality,
                     gboolean             *default_include)
 {
     const char *type_attr = dm_context_get_system_attribute(context, "type");
 
     if (type_attr == NULL) {
-        if (*type != HIPPO_DATA_NONE) {
+        if (*type != DDM_DATA_NONE) {
             /* we already had a type */
             return TRUE;
         } else {
@@ -4705,25 +4704,25 @@ dm_context_get_type(DMContext            *context,
         }
     }
 
-    return _hippo_data_parse_type(type_attr, type, cardinality, default_include);
+    return ddm_data_parse_type(type_attr, type, cardinality, default_include);
 }
 
 static gboolean
 dm_context_get_value(DMContext      *context,
-                     HippoDataType   type,
-                     HippoDataValue *value)
+                     DDMDataType     type,
+                     DDMDataValue   *value)
 {
     char *resource_id = dm_context_get_resource_id(context);
     
     if (resource_id != NULL) {
-        HippoDataResource *resource;
+        DDMDataResource *resource;
 
-        if (type != HIPPO_DATA_RESOURCE) {
+        if (type != DDM_DATA_RESOURCE) {
             g_warning("m:resourceId found for non-resource property value");
             return FALSE;
         }
 
-        resource = _hippo_data_model_get_resource(context->model, resource_id);
+        resource = ddm_data_model_lookup_resource(context->model, resource_id);
         
         if (resource == NULL) {
             // FIXME: We need to handle circular references
@@ -4733,7 +4732,7 @@ dm_context_get_value(DMContext      *context,
         }
         g_free(resource_id);
 
-        value->type = HIPPO_DATA_RESOURCE;
+        value->type = DDM_DATA_RESOURCE;
         value->u.resource = resource;
 
         return TRUE;
@@ -4742,7 +4741,7 @@ dm_context_get_value(DMContext      *context,
         gboolean result = TRUE;
         char *str;
         
-        if (type == HIPPO_DATA_RESOURCE) {
+        if (type == DDM_DATA_RESOURCE) {
             g_warning("m:resourceId not found for a resource property value");
             return FALSE;
         }
@@ -4752,10 +4751,10 @@ dm_context_get_value(DMContext      *context,
 
         value->type = type;
         switch (type) {
-        case HIPPO_DATA_BOOLEAN:
+        case DDM_DATA_BOOLEAN:
             value->u.boolean = g_ascii_strcasecmp(str, "true") == 0;
             break;
-        case HIPPO_DATA_INTEGER:
+        case DDM_DATA_INTEGER:
             {
                 char *end;
                 long v = strtol(str, &end, 10);
@@ -4766,7 +4765,7 @@ dm_context_get_value(DMContext      *context,
                 value->u.integer = CLAMP(v, G_MININT, G_MAXINT);
             }
             break;
-        case HIPPO_DATA_LONG:
+        case DDM_DATA_LONG:
             {
                 char *end;
                 value->u.long_ = g_ascii_strtoll(str, &end, 10);
@@ -4776,7 +4775,7 @@ dm_context_get_value(DMContext      *context,
                 }
             }
             break;
-        case HIPPO_DATA_FLOAT:
+        case DDM_DATA_FLOAT:
             {
                 char *end;
                 value->u.float_ = g_ascii_strtod(str, &end);
@@ -4786,15 +4785,15 @@ dm_context_get_value(DMContext      *context,
                 }
             }
             break;
-        case HIPPO_DATA_STRING:
+        case DDM_DATA_STRING:
             value->u.string = node->value != NULL ? node->value : "";
             break;
-        case HIPPO_DATA_URL:
+        case DDM_DATA_URL:
             value->u.string = hippo_connection_make_absolute_url(context->connection, str);
             break;
-        case HIPPO_DATA_NONE:
-        case HIPPO_DATA_RESOURCE:
-        case HIPPO_DATA_LIST:
+        case DDM_DATA_NONE:
+        case DDM_DATA_RESOURCE:
+        case DDM_DATA_LIST:
             g_assert_not_reached();
             break;
         }
@@ -4808,39 +4807,39 @@ dm_context_get_value(DMContext      *context,
 
 static void
 update_property(DMContext            *context,
-                HippoDataResource    *resource,
+                DDMDataResource    *resource,
                 HippoNotificationSet *broadcast_notifications,
                 HippoNotificationSet *save_notifications)
 {
     const char *property_uri;
     const char *property_name;
-    HippoQName *property_qname;
-    HippoDataProperty *old_property;
-    HippoDataType type = HIPPO_DATA_NONE;
-    HippoDataUpdate update;
-    HippoDataCardinality cardinality = HIPPO_DATA_CARDINALITY_1;
+    DDMQName *property_qname;
+    DDMDataProperty *old_property;
+    DDMDataType type = DDM_DATA_NONE;
+    DDMDataUpdate update;
+    DDMDataCardinality cardinality = DDM_DATA_CARDINALITY_1;
     gboolean default_include = FALSE;
     const char *default_children;
     gboolean changed = FALSE;
     
     if (!dm_context_node_info(context, &property_uri, &property_name) || property_uri == NULL) {
         g_warning("Couldn't resolve the namespace for child element of a resource %s",
-                  hippo_data_resource_get_resource_id(resource));
+                  ddm_data_resource_get_resource_id(resource));
         return;
     }
     
-    property_qname = hippo_qname_get(property_uri, property_name);
+    property_qname = ddm_qname_get(property_uri, property_name);
     
     update = dm_context_get_update(context);
 
     /* Look for an old value to get the type as a default if the server doesn't send it. (In particular,
      * the type won't be sent for UPDATE_ADD
      */
-    old_property = _hippo_data_resource_get_property_by_qname(resource, property_qname);
+    old_property = ddm_data_resource_get_property_by_qname(resource, property_qname);
     if (old_property != NULL) {
-        type = hippo_data_property_get_type(old_property);
-        cardinality = hippo_data_property_get_cardinality(old_property);
-        default_include = hippo_data_property_get_default_include(old_property);
+        type = ddm_data_property_get_type(old_property);
+        cardinality = ddm_data_property_get_cardinality(old_property);
+        default_include = ddm_data_property_get_default_include(old_property);
     }
 
     if (!dm_context_get_type(context, &type, &cardinality, &default_include))
@@ -4851,17 +4850,17 @@ update_property(DMContext            *context,
     else
         default_children = NULL;
     
-    if (update == HIPPO_DATA_UPDATE_CLEAR) {
-        changed = _hippo_data_resource_update_property(resource, property_qname, update, cardinality,
-                                                       default_include, default_children,
-                                                       NULL);
+    if (update == DDM_DATA_UPDATE_CLEAR) {
+        changed = ddm_data_resource_update_property(resource, property_qname, update, cardinality,
+                                                     default_include, default_children,
+                                                     NULL);
     } else {
-        HippoDataValue value;
+        DDMDataValue value;
         
         if (dm_context_get_value(context, type, &value)) {
-            _hippo_data_resource_update_property(resource, property_qname, update, cardinality,
-                                                 default_include, default_children,
-                                                 &value);
+            ddm_data_resource_update_property(resource, property_qname, update, cardinality,
+                                               default_include, default_children,
+                                               &value);
             changed = TRUE;
         }
     }
@@ -4874,7 +4873,7 @@ update_property(DMContext            *context,
     }
 }
 
-static HippoDataResource *
+static DDMDataResource *
 update_resource(DMContext            *context,
                 HippoNotificationSet *broadcast_notifications,
                 HippoNotificationSet *save_notifications)
@@ -4882,7 +4881,7 @@ update_resource(DMContext            *context,
     const char *uri;
     const char *name;
     char *resource_id = NULL;
-    HippoDataResource *resource;
+    DDMDataResource *resource;
     LmMessageNode *node = context->nodes->data;
     LmMessageNode *property_node;
     gboolean indirect;
@@ -4902,7 +4901,7 @@ update_resource(DMContext            *context,
         return NULL;
     }
 
-    resource = _hippo_data_model_ensure_resource(context->model, resource_id, uri); 
+    resource = ddm_data_model_ensure_resource(context->model, resource_id, uri); 
     indirect = dm_context_get_indirect(context);
 
     for (property_node = node->children; property_node; property_node = property_node->next) {
@@ -4926,9 +4925,9 @@ on_query_reply(LmMessageHandler *handler,
                gpointer          data)
 {
     MessageContext *message_context = data;
-    HippoDataQuery *query = message_context->data;
+    DDMDataQuery *query = message_context->data;
     HippoDiskCache *disk_cache;
-    HippoQName *query_qname = hippo_data_query_get_qname(query);
+    DDMQName *query_qname = ddm_data_query_get_qname(query);
     LmMessageNode *node = lm_message_get_node(message);
     DMContext context;
     LmMessageNode *child;
@@ -4963,7 +4962,7 @@ on_query_reply(LmMessageHandler *handler,
     notifications = _hippo_notification_set_new(context.model);
     
     for (resource_node = child->children; resource_node; resource_node = resource_node->next) {
-        HippoDataResource *resource;
+        DDMDataResource *resource;
 
         dm_context_push_node(&context, resource_node);
         resource = update_resource(&context, NULL, notifications);
@@ -4979,7 +4978,7 @@ on_query_reply(LmMessageHandler *handler,
     
     _hippo_notification_set_free(notifications);
     
-    _hippo_data_query_response(query, results);
+    ddm_data_query_response(query, results);
     
     g_slist_free(results);
 
@@ -4990,7 +4989,7 @@ on_query_reply(LmMessageHandler *handler,
     dm_context_pop_node(&context);
     g_assert(context.nodes == NULL);
     
-    // FIXME: _hippo_data_query_error() if we had a validation error above
+    // FIXME: ddm_data_query_error() if we had a validation error above
     
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -5012,14 +5011,14 @@ add_param_foreach(gpointer key,
 
 void
 hippo_connection_send_query(HippoConnection *connection,
-                            HippoDataQuery  *query)
+                            DDMDataQuery    *query)
 {
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *child;
-    HippoQName *query_qname = hippo_data_query_get_qname(query);
-    GHashTable *params = _hippo_data_query_get_params(query);
-    const char *fetch = hippo_data_query_get_fetch(query);
+    DDMQName *query_qname = ddm_data_query_get_qname(query);
+    GHashTable *params = ddm_data_query_get_params(query);
+    const char *fetch = ddm_data_query_get_fetch(query);
     
     message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);

@@ -1,6 +1,4 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#ifndef __DDM_DATA_RESOURCE_H__
-#define __DDM_DATA_RESOURCE_H__
 
 #ifndef DDM_COMPILATION
 #ifndef DDM_INSIDE_DDM_H
@@ -8,6 +6,8 @@
 #endif /* DDM_INSIDE_DDM_H */
 #endif /* DDM_COMPILATION */
 
+#ifndef __DDM_DATA_RESOURCE_H__
+#define __DDM_DATA_RESOURCE_H__
 
 #include <ddm/ddm-qname.h>
 #include <glib.h>
@@ -44,8 +44,8 @@ typedef enum {
 
 typedef struct _DDMDataValue         DDMDataValue;
 typedef struct _DDMDataProperty      DDMDataProperty;
-typedef struct _DDMDataResource      DDMDataResource;
 typedef struct _DDMDataFetch         DDMDataFetch; /* Avoid circular include */
+typedef struct _DDMDataResource      DDMDataResource;
 
 typedef void (*DDMDataFunction) (DDMDataResource *resource,
                                  GSList            *changed_properties,
@@ -89,14 +89,36 @@ void ddm_data_resource_disconnect       (DDMDataResource *resource,
                                          DDMDataFunction  function,
                                          gpointer         user_data);
 
-DDMQName *         ddm_data_property_get_qname            (DDMDataProperty *property);
-void               ddm_data_property_get_value            (DDMDataProperty *property,
-                                                           DDMDataValue    *value);
-DDMDataType        ddm_data_property_get_type             (DDMDataProperty *property);
-DDMDataCardinality ddm_data_property_get_cardinality      (DDMDataProperty *property);
-gboolean           ddm_data_property_get_default_include  (DDMDataProperty *property);
-DDMDataFetch      *ddm_data_property_get_default_children (DDMDataProperty *property);
+DDMQName *         ddm_data_property_get_qname             (DDMDataProperty    *property);
+void               ddm_data_property_get_value             (DDMDataProperty    *property,
+                                                            DDMDataValue       *value);
+DDMDataType        ddm_data_property_get_type              (DDMDataProperty    *property);
+DDMDataCardinality ddm_data_property_get_cardinality       (DDMDataProperty    *property);
+gboolean           ddm_data_property_get_default_include   (DDMDataProperty    *property);
+DDMDataFetch      *ddm_data_property_get_default_children  (DDMDataProperty    *property);
+gboolean           ddm_data_resource_update_property       (DDMDataResource    *resource,
+                                                            DDMQName           *property_id,
+                                                            DDMDataUpdate       update,
+                                                            DDMDataCardinality  cardinality,
+                                                            gboolean            default_include,
+                                                            const char         *default_children,
+                                                            DDMDataValue       *value);
+DDMDataProperty *  ddm_data_resource_get_property          (DDMDataResource    *resource,
+                                                            const char         *name);
+DDMDataProperty *  ddm_data_resource_get_property_by_qname (DDMDataResource    *resource,
+                                                            DDMQName           *qname);
+void               ddm_data_resource_on_resource_change    (DDMDataResource    *resource,
+                                                            GSList             *changed_properties);
 
+/* Sometimes it's useful to create the resource object first, and set the class_id later */
+void     ddm_data_resource_set_class_id    (DDMDataResource    *resource,
+                                            const char         *class_id);
+
+/* utility function useful to some backends */
+gboolean      ddm_data_parse_type             (const char         *type_string,
+                                               DDMDataType        *type,
+                                               DDMDataCardinality *cardinality,
+                                               gboolean           *default_include);
 
 G_END_DECLS
 

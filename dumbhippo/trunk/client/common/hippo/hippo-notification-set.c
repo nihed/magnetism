@@ -1,20 +1,20 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
-#include "hippo-data-model-internal.h"
-#include "hippo-data-resource-internal.h"
+#include <ddm/ddm.h>
 #include "hippo-notification-set.h"
+#include "hippo-disk-cache.h"
 
 typedef struct _ResourceInfo ResourceInfo;
 
 struct _ResourceInfo
 {
-    HippoDataResource *resource;
+    DDMDataResource *resource;
     GSList *changed_properties;
 };
 
 struct _HippoNotificationSet
 {
-    HippoDataModel *model;
+    DDMDataModel *model;
     GHashTable     *resources;
 };
 
@@ -26,7 +26,7 @@ free_resource_info (ResourceInfo *info)
 }
 
 HippoNotificationSet *
-_hippo_notification_set_new (HippoDataModel *model)
+_hippo_notification_set_new (DDMDataModel *model)
 {
     HippoNotificationSet *notifications = g_new0(HippoNotificationSet, 1);
 
@@ -38,10 +38,10 @@ _hippo_notification_set_new (HippoDataModel *model)
 
 void
 _hippo_notification_set_add (HippoNotificationSet *notifications,
-                             HippoDataResource    *resource,
-                             HippoQName           *property_id)
+                             DDMDataResource      *resource,
+                             DDMQName             *property_id)
 {
-    const char *resource_id = hippo_data_resource_get_resource_id(resource);
+    const char *resource_id = ddm_data_resource_get_resource_id(resource);
     
     ResourceInfo *info = g_hash_table_lookup(notifications->resources, resource_id);
     if (info == NULL) {
@@ -60,7 +60,7 @@ _hippo_notification_set_add (HippoNotificationSet *notifications,
 gboolean
 _hippo_notification_set_has_property (HippoNotificationSet *notifications,
                                       const char           *resource_id,
-                                      HippoQName           *property_id)
+                                      DDMQName           *property_id)
 {
     ResourceInfo *info = g_hash_table_lookup(notifications->resources, resource_id);
     if (info == NULL)
@@ -77,7 +77,7 @@ send_notification_foreach(gpointer key,
     /* HippoNotificationSet *notifications = data; */
     ResourceInfo *info = value;
 
-    _hippo_data_resource_on_resource_change(info->resource, info->changed_properties);
+    ddm_data_resource_on_resource_change(info->resource, info->changed_properties);
 }
 
 void

@@ -162,14 +162,14 @@ _ddm_data_resource_new(const char *resource_id,
     DDMDataResource *resource = g_new0(DDMDataResource, 1);
 
     resource->resource_id = g_strdup(resource_id);
-    _ddm_data_resource_set_class_id(resource, class_id);
+    ddm_data_resource_set_class_id(resource, class_id);
 
     return resource;
 }
 
 void
-_ddm_data_resource_set_class_id(DDMDataResource    *resource,
-                                const char           *class_id)
+ddm_data_resource_set_class_id(DDMDataResource    *resource,
+                               const char         *class_id)
 {
     if (resource->class_id != NULL)
         g_free(resource->class_id);
@@ -345,8 +345,8 @@ ddm_data_resource_get_by_qname(DDMDataResource *resource,
 }
 
 DDMDataProperty *
-_ddm_data_resource_get_property(DDMDataResource *resource,
-                                const char        *name)
+ddm_data_resource_get_property(DDMDataResource *resource,
+                               const char        *name)
 {
     GSList *l;
     
@@ -361,8 +361,8 @@ _ddm_data_resource_get_property(DDMDataResource *resource,
 }
 
 DDMDataProperty *
-_ddm_data_resource_get_property_by_qname(DDMDataResource *resource,
-                                         DDMQName        *qname)
+ddm_data_resource_get_property_by_qname(DDMDataResource *resource,
+                                        DDMQName        *qname)
 {
     GSList *l;
     
@@ -656,13 +656,13 @@ remove_property(DDMDataResource *resource,
 }
 
 gboolean
-_ddm_data_resource_update_property(DDMDataResource    *resource,
-                                   DDMQName           *property_id,
-                                   DDMDataUpdate       update,
-                                   DDMDataCardinality  cardinality,
-                                   gboolean              default_include,
-                                   const char           *default_children,
-                                   DDMDataValue       *value)
+ddm_data_resource_update_property(DDMDataResource    *resource,
+                                  DDMQName           *property_id,
+                                  DDMDataUpdate       update,
+                                  DDMDataCardinality  cardinality,
+                                  gboolean              default_include,
+                                  const char           *default_children,
+                                  DDMDataValue       *value)
 {
     DDMDataProperty *property = NULL;
     GSList *l;
@@ -783,8 +783,8 @@ _ddm_data_resource_update_property(DDMDataResource    *resource,
 }
 
 void
-_ddm_data_resource_on_resource_change(DDMDataResource *resource,
-                                      GSList            *changed_properties)
+ddm_data_resource_on_resource_change(DDMDataResource *resource,
+                                     GSList            *changed_properties)
 {
     GSList *connection_node = resource->connections;
     GSList *property_node;
@@ -819,6 +819,74 @@ _ddm_data_resource_on_resource_change(DDMDataResource *resource,
             connection_node = next;
         }
     }
+}
+
+gboolean
+ddm_data_parse_type(const char           *type_string,
+                    DDMDataType          *type,
+                    DDMDataCardinality   *cardinality,
+                    gboolean             *default_include)
+{
+    const char *p = type_string;
+    if (*p == '+') {
+        *default_include = TRUE;
+        p++;
+    } else {
+        *default_include = FALSE;
+    }
+
+    switch (*p) {
+    case 'b':
+        *type = DDM_DATA_BOOLEAN;
+        break;
+    case 'i':
+        *type = DDM_DATA_INTEGER;
+        break;
+    case 'l':
+        *type = DDM_DATA_LONG;
+        break;
+    case 'f':
+        *type = DDM_DATA_FLOAT;
+        break;
+    case 's':
+        *type = DDM_DATA_STRING;
+        break;
+    case 'r':
+        *type = DDM_DATA_RESOURCE;
+        break;
+    case 'u':
+        *type = DDM_DATA_URL;
+        break;
+    default:
+        g_warning("Can't understand type string '%s'", type_string);
+        return FALSE;
+    }
+
+    p++;
+
+    switch (*p) {
+    case '*':
+        *cardinality = DDM_DATA_CARDINALITY_N;
+        p++;
+        break;
+    case '?':
+        *cardinality = DDM_DATA_CARDINALITY_01;
+        p++;
+        break;
+    case '\0':
+        *cardinality = DDM_DATA_CARDINALITY_1;
+        break;
+    default:
+        g_warning("Can't understand type string '%s'", type_string);
+        return FALSE;
+    }
+
+    if (*p != '\0') {
+        g_warning("Can't understand type string '%s'", type_string);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 static void
@@ -892,3 +960,4 @@ _ddm_data_resource_dump(DDMDataResource *resource)
         
     }
 }
+

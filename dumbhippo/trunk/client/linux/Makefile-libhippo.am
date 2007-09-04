@@ -4,10 +4,12 @@ libhippo_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)			\
 	-I $(MARSHAL_DIR)		\
 	$(CANVAS_CFLAGS)		\
-	$(LIBHIPPO_CFLAGS)
+	$(LIBHIPPO_CFLAGS)		\
+	-DDDM_I_KNOW_THIS_IS_UNSTABLE=1
 
 libhippo_la_LIBADD = 			\
-	$(LIBHIPPO_LIBS)
+	$(LIBHIPPO_LIBS)		\
+	libddm-1.la
 
 # none of this actually matters since it's just a convenience library, keeping it 
 # for future reference
@@ -125,19 +127,10 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-data-cache.c		\
 	$(COMMONSRCDIR)/hippo/hippo-data-cache.h		\
 	$(COMMONSRCDIR)/hippo/hippo-data-cache-internal.h	\
-	$(COMMONSRCDIR)/hippo/hippo-data-fetch.c		\
-	$(COMMONSRCDIR)/hippo/hippo-data-fetch.h		\
-	$(COMMONSRCDIR)/hippo/hippo-data-model.c		\
-	$(COMMONSRCDIR)/hippo/hippo-data-model.h		\
-	$(COMMONSRCDIR)/hippo/hippo-data-model-internal.h	\
-	$(COMMONSRCDIR)/hippo/hippo-data-resource.c		\
-	$(COMMONSRCDIR)/hippo/hippo-data-resource.h		\
-	$(COMMONSRCDIR)/hippo/hippo-data-resource-internal.h	\
-	$(COMMONSRCDIR)/hippo/hippo-data-query.c		\
-	$(COMMONSRCDIR)/hippo/hippo-data-query.h		\
-	$(COMMONSRCDIR)/hippo/hippo-data-query-internal.h	\
 	$(COMMONSRCDIR)/hippo/hippo-disk-cache.c		\
 	$(COMMONSRCDIR)/hippo/hippo-disk-cache.h		\
+	$(COMMONSRCDIR)/hippo/hippo-data-model-backend.c	\
+	$(COMMONSRCDIR)/hippo/hippo-data-model-backend.h	\
 	$(COMMONSRCDIR)/hippo/hippo-entity.c			\
 	$(COMMONSRCDIR)/hippo/hippo-entity.h			\
 	$(COMMONSRCDIR)/hippo/hippo-external-account.c		\
@@ -169,8 +162,6 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-platform.h			\
 	$(COMMONSRCDIR)/hippo/hippo-post.c			\
 	$(COMMONSRCDIR)/hippo/hippo-post.h			\
-	$(COMMONSRCDIR)/hippo/hippo-qname.c			\
-	$(COMMONSRCDIR)/hippo/hippo-qname.h			\
 	$(COMMONSRCDIR)/hippo/hippo-quip-window.c		\
 	$(COMMONSRCDIR)/hippo/hippo-quip-window.h		\
 	$(COMMONSRCDIR)/hippo/hippo-resource.c			\

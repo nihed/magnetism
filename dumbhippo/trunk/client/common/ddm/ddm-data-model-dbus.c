@@ -6,16 +6,19 @@
 #include <string.h>
 
 #include "ddm-data-model-dbus.h"
+#include "ddm-data-model-backend.h"
 
 static void
-ddm_dbus_add_model    (DDMDataModel *model)
+ddm_dbus_add_model    (DDMDataModel *model,
+                       void         *backend_data)
 {
 
 
 }
 
 static void
-ddm_dbus_remove_model (DDMDataModel *model)
+ddm_dbus_remove_model (DDMDataModel *model,
+                       void         *backend_data)
 {
 
 
@@ -23,7 +26,8 @@ ddm_dbus_remove_model (DDMDataModel *model)
 
 static void
 ddm_dbus_send_query   (DDMDataModel *model,
-                       DDMDataQuery *query)
+                       DDMDataQuery *query,
+                       void         *backend_data)
 {
 
 
@@ -34,7 +38,8 @@ static void
 ddm_dbus_send_update (DDMDataModel *model,
                       DDMDataQuery *query,
                       const char   *method,
-                      GHashTable   *params)
+                      GHashTable   *params,
+                      void         *backend_data)
 {
 
 
@@ -43,7 +48,7 @@ ddm_dbus_send_update (DDMDataModel *model,
 
 static const DDMDataModelBackend dbus_backend = {
     ddm_dbus_add_model,
-    ddm_dbus_remove_model
+    ddm_dbus_remove_model,
     ddm_dbus_send_query,
     ddm_dbus_send_update,
     NULL,

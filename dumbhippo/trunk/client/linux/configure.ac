@@ -638,6 +638,7 @@ AC_DEFINE_UNQUOTED(HIPPO_ABOUT_MESSAGE, "$with_about_message", [additional messa
 AC_OUTPUT([
 Makefile
 version
+ddm-1.pc
 ])
 
 dnl ==========================================================================
@@ -652,9 +653,13 @@ echo "
 	Gecko includes:		  ${GECKO_INCLUDEDIR}
 	Gecko idl files:	  ${GECKO_IDLDIR}
 	Full Gecko:	  	  ${have_full_gecko}
+
         LIBHIPPO_CFLAGS:          ${LIBHIPPO_CFLAGS}
+        LIBDDM_CFLAGS:            ${LIBDDM_CFLAGS}
         MUGSHOT_CFLAGS:           ${MUGSHOT_CFLAGS}
+
         LIBHIPPO_LIBS:            ${LIBHIPPO_LIBS}
+        LIBDDM_LIBS:              ${LIBDDM_LIBS}
         MUGSHOT_LIBS:             ${MUGSHOT_LIBS}
 
         Now type 'make' to build $PACKAGE

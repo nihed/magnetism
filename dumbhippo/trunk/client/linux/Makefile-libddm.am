@@ -1,14 +1,15 @@
-noinst_LTLIBRARIES += libddm.la
+noinst_LTLIBRARIES += libddm-1.la
 
-libddm_la_CPPFLAGS =			\
+libddm_1_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)			\
 	-I $(MARSHAL_DIR)		\
-	$(LIBDDM_CFLAGS)
+	$(LIBDDM_CFLAGS)		\
+	 -DDDM_COMPILATION=1
 
-libddm_la_LIBADD = 			\
+libddm_1_la_LIBADD = 			\
 	$(LIBDDM_LIBS)
 
-libddm_la_LDFLAGS= -export-symbols-regex "^[^_].*" -version-info $(DDM_LT_CURRENT):$(DDM_LT_REVISION):$(DDM_LT_AGE) -no-undefined
+libddm_1_la_LDFLAGS= -export-symbols-regex "^[^_].*" -version-info $(DDM_LT_CURRENT):$(DDM_LT_REVISION):$(DDM_LT_AGE) -no-undefined
 
 #COMMON_MARSHAL_LIST=$(COMMONSRCDIR)/ddm/ddm-common-marshal.list
 #COMMON_MARSHAL_HEADER=$(MARSHAL_DIR)/ddm-common-marshal.h
@@ -23,17 +24,20 @@ libddm_la_LDFLAGS= -export-symbols-regex "^[^_].*" -version-info $(DDM_LT_CURREN
 #	(echo "#include \"ddm-common-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=ddm_common_marshal $(COMMON_MARSHAL_LIST) --body) > $(COMMON_MARSHAL_BODY)
 
 libddmincludedir = $(includedir)/ddm-1/ddm
-libddminclude_HEADERS=				\
-	$(COMMONSRCDIR)/ddm/ddm.h		\
-	$(COMMONSRCDIR)/ddm/ddm-data-fetch.h	\
-	$(COMMONSRCDIR)/ddm/ddm-data-model.h	\
-	$(COMMONSRCDIR)/ddm/ddm-data-resource.h	\
-	$(COMMONSRCDIR)/ddm/ddm-data-query.h	\
+libddminclude_HEADERS=					\
+	$(COMMONSRCDIR)/ddm/ddm.h			\
+	$(COMMONSRCDIR)/ddm/ddm-data-fetch.h		\
+	$(COMMONSRCDIR)/ddm/ddm-data-model.h		\
+	$(COMMONSRCDIR)/ddm/ddm-data-model-backend.h	\
+	$(COMMONSRCDIR)/ddm/ddm-data-model-dbus.h	\
+	$(COMMONSRCDIR)/ddm/ddm-data-resource.h		\
+	$(COMMONSRCDIR)/ddm/ddm-data-query.h		\
 	$(COMMONSRCDIR)/ddm/ddm-qname.h
 
 LIBDDM_SOURCEFILES =						\
 	$(COMMONSRCDIR)/ddm/ddm-data-fetch.c			\
 	$(COMMONSRCDIR)/ddm/ddm-data-model.c			\
+	$(COMMONSRCDIR)/ddm/ddm-data-model-dbus.c		\
 	$(COMMONSRCDIR)/ddm/ddm-data-model-internal.h		\
 	$(COMMONSRCDIR)/ddm/ddm-data-resource.c			\
 	$(COMMONSRCDIR)/ddm/ddm-data-resource-internal.h	\
@@ -51,7 +55,7 @@ BUILT_SOURCES += $(LIBDDM_BUILT_SOURCEFILES)
 ## we need to nodist these because otherwise automake would copy 
 ## ../common to distdir/../common which puts common outside of distdir.
 ## so we handle the disting manually so the destination is always distdir/common-dist
-nodist_libddm_la_SOURCES=$(LIBDDM_SOURCEFILES) $(LIBDDM_BUILT_SOURCEFILES)
+nodist_libddm_1_la_SOURCES=$(LIBDDM_SOURCEFILES) $(LIBDDM_BUILT_SOURCEFILES)
 libddm-dist-hook:
 	-mkdir $(distdir)/common-dist
 	mkdir $(distdir)/common-dist/ddm

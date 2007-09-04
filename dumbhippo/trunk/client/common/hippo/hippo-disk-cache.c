@@ -9,10 +9,10 @@
 #include <sqlite3.h>
 #endif
 
-#include "hippo-data-model-internal.h"
-#include "hippo-data-resource-internal.h"
-#include "hippo-data-query-internal.h"
+#include <ddm/ddm.h>
 #include "hippo-connection.h"
+#include "hippo-disk-cache.h"
+#include "hippo-data-cache.h"
 
 /* How often to touch a field in the database indicating the last time the
  * current session was used
@@ -32,7 +32,7 @@ struct _HippoDiskCache {
     GObject parent;
 
     HippoDataCache *data_cache;
-    HippoDataModel *model;
+    DDMDataModel *model;
 
 #ifdef HAVE_SQLITE
     sqlite3 *db;
@@ -479,51 +479,51 @@ database_heartbeat(void *data)
 }
 
 static char *
-make_type_string(HippoDataProperty *property)
+make_type_string(DDMDataProperty *property)
 {
     char type[4];
     char *p = type;
 
-    if (hippo_data_property_get_default_include(property))
+    if (ddm_data_property_get_default_include(property))
         *(p++) = '+';
     
-    switch (hippo_data_property_get_type(property)) {
-    case HIPPO_DATA_BOOLEAN:
+    switch (ddm_data_property_get_type(property)) {
+    case DDM_DATA_BOOLEAN:
         *(p++) = 'b';
         break;
-    case HIPPO_DATA_INTEGER:
+    case DDM_DATA_INTEGER:
         *(p++) = 'i';
         break;
-    case HIPPO_DATA_LONG:
+    case DDM_DATA_LONG:
         *(p++) = 'l';
         break;
-    case HIPPO_DATA_FLOAT:
+    case DDM_DATA_FLOAT:
         *(p++) = 'f';
         break;
-    case HIPPO_DATA_STRING:
+    case DDM_DATA_STRING:
         *(p++) = 's';
         break;
-    case HIPPO_DATA_RESOURCE:
+    case DDM_DATA_RESOURCE:
         *(p++) = 'r';
         break;
-    case HIPPO_DATA_URL:
+    case DDM_DATA_URL:
         *(p++) = 'u';
         break;
-    case HIPPO_DATA_NONE:
+    case DDM_DATA_NONE:
         *(p++) = 's'; /* Used only for empty lists, tpye doesn't matter */
         break;
-    case HIPPO_DATA_LIST:
+    case DDM_DATA_LIST:
         g_assert_not_reached();
         break;
     }
 
-    switch (hippo_data_property_get_cardinality(property)) {
-    case HIPPO_DATA_CARDINALITY_01:
+    switch (ddm_data_property_get_cardinality(property)) {
+    case DDM_DATA_CARDINALITY_01:
         *(p++) = '?';
         break;
-    case HIPPO_DATA_CARDINALITY_1:
+    case DDM_DATA_CARDINALITY_1:
         break;
-    case HIPPO_DATA_CARDINALITY_N:
+    case DDM_DATA_CARDINALITY_N:
         *(p++) = '*';
         break;
     }
@@ -534,24 +534,24 @@ make_type_string(HippoDataProperty *property)
 }
 
 static char *
-make_default_children_string(HippoDataProperty *property)
+make_default_children_string(DDMDataProperty *property)
 {
-    HippoDataFetch *default_children = hippo_data_property_get_default_children(property);
+    DDMDataFetch *default_children = ddm_data_property_get_default_children(property);
     if (default_children == NULL)
         return NULL;
     else {
-        return hippo_data_fetch_to_string(default_children);
+        return ddm_data_fetch_to_string(default_children);
     }
 }
 
 static void
 save_class_id_to_disk(HippoDiskCache    *cache,
-                      HippoDataResource *resource,
+                      DDMDataResource *resource,
                       gint64             timestamp)
 {
-    const char *resource_id = hippo_data_resource_get_resource_id(resource);
+    const char *resource_id = ddm_data_resource_get_resource_id(resource);
     static const char *property_id = "http://mugshot.org/p/system#classId";
-    const char *class_id = hippo_data_resource_get_class_id(resource);
+    const char *class_id = ddm_data_resource_get_class_id(resource);
     
     execute_sql(cache,
                 "DELETE FROM Property WHERE resourceId = :resourceId AND propertyId = :propertyId",
@@ -575,8 +575,8 @@ static void
 save_property_value_to_disk(HippoDiskCache    *cache,
                             const char        *resource_id,
                             const char        *property_id,
-                            HippoDataProperty *property,
-                            HippoDataValue    *value,
+                            DDMDataProperty *property,
+                            DDMDataValue    *value,
                             const char        *type,
                             const char        *default_children,
                             gint64             timestamp)
@@ -588,37 +588,37 @@ save_property_value_to_disk(HippoDiskCache    *cache,
     gboolean is_string = FALSE;
     const char *value_string = NULL;
 
-    switch (hippo_data_property_get_type(property)) {
-    case HIPPO_DATA_BOOLEAN:
+    switch (ddm_data_property_get_type(property)) {
+    case DDM_DATA_BOOLEAN:
         is_long = TRUE;
         value_long = value->u.boolean;
         break;
-    case HIPPO_DATA_INTEGER:
+    case DDM_DATA_INTEGER:
         is_long = TRUE;
         value_long = value->u.integer;
         break;
-    case HIPPO_DATA_LONG:
+    case DDM_DATA_LONG:
         is_long = TRUE;
         value_long = value->u.long_;
         break;
-    case HIPPO_DATA_FLOAT:
+    case DDM_DATA_FLOAT:
         is_float = TRUE;
         value_float = value->u.float_;
         break;
-    case HIPPO_DATA_STRING:
+    case DDM_DATA_STRING:
         is_string = TRUE;
         value_string = value->u.string;
         break;
-    case HIPPO_DATA_RESOURCE:
+    case DDM_DATA_RESOURCE:
         is_string = TRUE;
-        value_string = hippo_data_resource_get_resource_id(value->u.resource);
+        value_string = ddm_data_resource_get_resource_id(value->u.resource);
         break;
-    case HIPPO_DATA_URL:
+    case DDM_DATA_URL:
         is_string = TRUE;
         value_string = value->u.string;
         break;
-    case HIPPO_DATA_LIST:
-    case HIPPO_DATA_NONE:
+    case DDM_DATA_LIST:
+    case DDM_DATA_NONE:
         g_assert_not_reached();
         break;
     }
@@ -662,9 +662,9 @@ save_property_value_to_disk(HippoDiskCache    *cache,
 }
 
 typedef struct {
-    HippoDataResource *resource;
-    HippoQName *property_qname;
-    HippoDataCardinality cardinality;
+    DDMDataResource *resource;
+    DDMQName *property_qname;
+    DDMDataCardinality cardinality;
     gboolean default_include;
     char *default_children;
 } QueuedResourceProperty;
@@ -681,9 +681,9 @@ typedef struct {
 } ResourceTracking;
 
 static QueuedResourceProperty *
-queued_resource_property_new(HippoDataResource   *resource,
-                             HippoQName          *property_qname,
-                             HippoDataCardinality cardinality,
+queued_resource_property_new(DDMDataResource   *resource,
+                             DDMQName          *property_qname,
+                             DDMDataCardinality cardinality,
                              gboolean             default_include,
                              const char          *default_children)
 {
@@ -746,7 +746,7 @@ resource_tracking_free(ResourceTracking *tracking)
     g_free(tracking);
 }
 
-static HippoDataResource *
+static DDMDataResource *
 resource_tracking_lookup_resource(ResourceTracking       *tracking,
                                   const char             *resource_id)
 {
@@ -771,16 +771,16 @@ resource_tracking_queue_resource(ResourceTracking       *tracking,
         queued->properties = g_slist_prepend(queued->properties, property);
 }
 
-static HippoDataResource *
+static DDMDataResource *
 load_resource_from_db(HippoDiskCache   *cache,
                       ResourceTracking *tracking,
                       const char       *resource_id)
 {
-    HippoDataResource *resource;
+    DDMDataResource *resource;
     sqlite3_stmt *stmt = NULL;
     gboolean result = FALSE;
     GHashTable *seen_properties = g_hash_table_new(g_direct_hash, NULL);
-    HippoQName *class_id_qname = hippo_qname_get("http://mugshot.org/p/system", "classId");
+    DDMQName *class_id_qname = ddm_qname_get("http://mugshot.org/p/system", "classId");
 
     stmt  = prepare_sql(cache,
                         "SELECT propertyId, type,defaultChildren, value FROM Property WHERE resourceId = :resourceId",
@@ -791,17 +791,17 @@ load_resource_from_db(HippoDiskCache   *cache,
         goto out;
 
     /* We'll set the class_id later when we find the property for it */
-    resource = _hippo_data_model_ensure_resource(cache->model, resource_id, NULL);
+    resource = ddm_data_model_ensure_resource(cache->model, resource_id, NULL);
     
     while (TRUE) {
         char *property_id;
         char *type_string;
         char *default_children;
 
-        HippoQName *property_qname;
+        DDMQName *property_qname;
         
-        HippoDataType type;
-        HippoDataCardinality cardinality;
+        DDMDataType type;
+        DDMDataCardinality cardinality;
         gboolean default_include;
 
         gboolean is_float = FALSE;
@@ -825,28 +825,28 @@ load_resource_from_db(HippoDiskCache   *cache,
         if (!get_row_data(stmt, "sss", &property_id, &type_string, &default_children))
             goto next;
 
-        property_qname = hippo_qname_from_uri(property_id);
+        property_qname = ddm_qname_from_uri(property_id);
         if (property_qname == NULL)
             goto next;
 
-        if (!_hippo_data_parse_type(type_string, &type, &cardinality, &default_include))
+        if (!ddm_data_parse_type(type_string, &type, &cardinality, &default_include))
             goto next;
         
         switch (type) {
-        case HIPPO_DATA_BOOLEAN:
-        case HIPPO_DATA_INTEGER:
-        case HIPPO_DATA_LONG:
+        case DDM_DATA_BOOLEAN:
+        case DDM_DATA_INTEGER:
+        case DDM_DATA_LONG:
             break;
-        case HIPPO_DATA_FLOAT:
+        case DDM_DATA_FLOAT:
             is_float = TRUE;
             break;
-        case HIPPO_DATA_STRING:
-        case HIPPO_DATA_RESOURCE:
-        case HIPPO_DATA_URL:
+        case DDM_DATA_STRING:
+        case DDM_DATA_RESOURCE:
+        case DDM_DATA_URL:
             is_string = TRUE;
             break;
-        case HIPPO_DATA_LIST:
-        case HIPPO_DATA_NONE:
+        case DDM_DATA_LIST:
+        case DDM_DATA_NONE:
             g_assert_not_reached();
             break;
         }
@@ -862,29 +862,29 @@ load_resource_from_db(HippoDiskCache   *cache,
             g_assert_not_reached();
         }
 
-        if (cardinality == HIPPO_DATA_CARDINALITY_N) {
+        if (cardinality == DDM_DATA_CARDINALITY_N) {
             if (g_hash_table_lookup(seen_properties, property_qname) == NULL) {
                 g_hash_table_insert(seen_properties, property_qname, property_qname);
                 
-                _hippo_data_resource_update_property(resource, property_qname,
-                                                     HIPPO_DATA_UPDATE_CLEAR,
+                ddm_data_resource_update_property(resource, property_qname,
+                                                     DDM_DATA_UPDATE_CLEAR,
                                                      cardinality,
                                                      default_include, default_children,
                                                      NULL);
             }
         }
 
-        if (type == HIPPO_DATA_RESOURCE) {
-            HippoDataResource *referenced_resource;
+        if (type == DDM_DATA_RESOURCE) {
+            DDMDataResource *referenced_resource;
             referenced_resource = resource_tracking_lookup_resource(tracking, value_string);
             if (referenced_resource) {
-                HippoDataValue value;
+                DDMDataValue value;
 
                 value.type = type;
                 value.u.resource = referenced_resource;
                 
-                _hippo_data_resource_update_property(resource, property_qname,
-                                                     (cardinality == HIPPO_DATA_CARDINALITY_N) ? HIPPO_DATA_UPDATE_ADD : HIPPO_DATA_UPDATE_REPLACE,
+                ddm_data_resource_update_property(resource, property_qname,
+                                                     (cardinality == DDM_DATA_CARDINALITY_N) ? DDM_DATA_UPDATE_ADD : DDM_DATA_UPDATE_REPLACE,
                                                      cardinality,
                                                      default_include, default_children,
                                                      &value);
@@ -895,43 +895,43 @@ load_resource_from_db(HippoDiskCache   *cache,
                 resource_tracking_queue_resource(tracking, value_string, property);
             }
         } else {
-            HippoDataValue value;
+            DDMDataValue value;
 
             value.type = type;
         
             switch (type) {
-            case HIPPO_DATA_BOOLEAN:
+            case DDM_DATA_BOOLEAN:
                 value.u.boolean = value_long != 0;
                 break;
-            case HIPPO_DATA_INTEGER:
+            case DDM_DATA_INTEGER:
                 value.u.integer = (int)value_long;
                 break;
-            case HIPPO_DATA_LONG:
+            case DDM_DATA_LONG:
                 value.u.long_ = value_long;
                 break;
-            case HIPPO_DATA_FLOAT:
+            case DDM_DATA_FLOAT:
                 value.u.float_ = value_float;
                 break;
-            case HIPPO_DATA_STRING:
-            case HIPPO_DATA_URL:
+            case DDM_DATA_STRING:
+            case DDM_DATA_URL:
                 value.u.string = value_string;
                 break;
-            case HIPPO_DATA_RESOURCE:
-            case HIPPO_DATA_LIST:
-            case HIPPO_DATA_NONE:
+            case DDM_DATA_RESOURCE:
+            case DDM_DATA_LIST:
+            case DDM_DATA_NONE:
                 g_assert_not_reached();
                 break;
             }
 
             if (property_qname == class_id_qname) {
-                if (type == HIPPO_DATA_URL) {
-                    _hippo_data_resource_set_class_id(resource, value.u.string);
+                if (type == DDM_DATA_URL) {
+                    ddm_data_resource_set_class_id(resource, value.u.string);
                 } else {
                     g_warning("class_id property must have URL type");
                 }
             } else {
-                _hippo_data_resource_update_property(resource, property_qname,
-                                                     (cardinality == HIPPO_DATA_CARDINALITY_N) ? HIPPO_DATA_UPDATE_ADD : HIPPO_DATA_UPDATE_REPLACE,
+                ddm_data_resource_update_property(resource, property_qname,
+                                                     (cardinality == DDM_DATA_CARDINALITY_N) ? DDM_DATA_UPDATE_ADD : DDM_DATA_UPDATE_REPLACE,
                                                      cardinality,
                                                      default_include, default_children,
                                                      &value);
@@ -946,7 +946,7 @@ load_resource_from_db(HippoDiskCache   *cache,
         g_free(value_string);
     }
 
-    if (hippo_data_resource_get_class_id(resource) == NULL)
+    if (ddm_data_resource_get_class_id(resource) == NULL)
         goto out;
     
     result = TRUE;
@@ -993,20 +993,20 @@ resource_tracking_resolve(ResourceTracking *tracking,
 
         for (l = to_fetch; l; l = l->next) {
             QueuedResource *queued = l->data;
-            HippoDataResource *resource = load_resource_from_db(cache, tracking, queued->resource_id);
+            DDMDataResource *resource = load_resource_from_db(cache, tracking, queued->resource_id);
 
             if (resource != NULL) {
                 GSList *properties;
 
                 for (properties = queued->properties; properties; properties = properties->next) {
                     QueuedResourceProperty *queued_property = properties->data;
-                    HippoDataValue value;
+                    DDMDataValue value;
                     
-                    value.type = HIPPO_DATA_RESOURCE;
+                    value.type = DDM_DATA_RESOURCE;
                     value.u.resource = resource;
 
-                    _hippo_data_resource_update_property(queued_property->resource, queued_property->property_qname,
-                                                         (queued_property->cardinality == HIPPO_DATA_CARDINALITY_N) ? HIPPO_DATA_UPDATE_ADD : HIPPO_DATA_UPDATE_REPLACE,
+                    ddm_data_resource_update_property(queued_property->resource, queued_property->property_qname,
+                                                         (queued_property->cardinality == DDM_DATA_CARDINALITY_N) ? DDM_DATA_UPDATE_ADD : DDM_DATA_UPDATE_REPLACE,
                                                          queued_property->cardinality,
                                                          queued_property->default_include, queued_property->default_children,
                                                          &value);
@@ -1056,9 +1056,9 @@ append_escaped(GString    *str,
 }
 
 static char *
-build_param_string(HippoDataQuery *query)
+build_param_string(DDMDataQuery *query)
 {
-    GHashTable *params = _hippo_data_query_get_params(query);
+    GHashTable *params = ddm_data_query_get_params(query);
     GSList *param_names = NULL;
     GSList *l;
     GString *str = g_string_new(NULL);
@@ -1084,16 +1084,16 @@ build_param_string(HippoDataQuery *query)
 }
 
 static char *
-build_query_uri(HippoDataQuery *query)
+build_query_uri(DDMDataQuery *query)
 {
-    HippoQName *qname = hippo_data_query_get_qname(query);
+    DDMQName *qname = ddm_data_query_get_qname(query);
     return g_strconcat(qname->uri, "#", qname->name, NULL);
 }
 #endif /* HAVE_SQLITE */
 
 void
 _hippo_disk_cache_do_query(HippoDiskCache *cache,
-                           HippoDataQuery *query)
+                           DDMDataQuery *query)
 {
 #ifdef HAVE_SQLITE
     char *params = build_param_string(query);
@@ -1112,8 +1112,8 @@ _hippo_disk_cache_do_query(HippoDiskCache *cache,
                                    NULL,
                                    "l", &query_id))
     {
-        _hippo_data_query_error(query,
-                                HIPPO_DATA_ERROR_NO_CONNECTION,
+        ddm_data_query_error(query,
+                                DDM_DATA_ERROR_NO_CONNECTION,
                                 "No connection and query is not cached");
         goto out;
     }
@@ -1124,8 +1124,8 @@ _hippo_disk_cache_do_query(HippoDiskCache *cache,
                         NULL);
     
     if (stmt == NULL) {
-        _hippo_data_query_error(query,
-                                HIPPO_DATA_ERROR_INTERNAL,
+        ddm_data_query_error(query,
+                                DDM_DATA_ERROR_INTERNAL,
                                 "Error reading cached result form database");
         goto out;
     }
@@ -1159,14 +1159,14 @@ _hippo_disk_cache_do_query(HippoDiskCache *cache,
     /* Two g_slist_prepend reverses gets things in the right order
      */
     for (l = resource_ids; l; l = l->next) {
-        HippoDataResource *resource = resource_tracking_lookup_resource(tracking, l->data);
+        DDMDataResource *resource = resource_tracking_lookup_resource(tracking, l->data);
         if (resource)
             resources = g_slist_prepend(resources, resource);
     }
     
     resource_tracking_free(tracking);
         
-    _hippo_data_query_response(query, resources);
+    ddm_data_query_response(query, resources);
     
  out:
     if (stmt)
@@ -1182,7 +1182,7 @@ _hippo_disk_cache_do_query(HippoDiskCache *cache,
 
 void
 _hippo_disk_cache_save_properties_to_disk(HippoDiskCache    *cache,
-                                          HippoDataResource *resource,
+                                          DDMDataResource *resource,
                                           GSList            *properties,
                                           gint64             timestamp)
 {
@@ -1193,13 +1193,13 @@ _hippo_disk_cache_save_properties_to_disk(HippoDiskCache    *cache,
     if (cache->db_session == -1)
         return;
 
-    resource_id = hippo_data_resource_get_resource_id (resource);
+    resource_id = ddm_data_resource_get_resource_id (resource);
     save_class_id_to_disk(cache, resource, timestamp);
     
     for (l = properties; l; l = l->next) {
-        HippoQName *qname = l->data;
+        DDMQName *qname = l->data;
         char *property_id = g_strdup_printf("%s#%s", qname->uri, qname->name);
-        HippoDataProperty *property;
+        DDMDataProperty *property;
         
         execute_sql(cache,
                     "DELETE FROM Property WHERE resourceId = :resourceId AND propertyId = :propertyId",
@@ -1207,21 +1207,21 @@ _hippo_disk_cache_save_properties_to_disk(HippoDiskCache    *cache,
                     "s:propertyId", property_id,
                     NULL);
         
-        property = _hippo_data_resource_get_property_by_qname(resource, qname);
+        property = ddm_data_resource_get_property_by_qname(resource, qname);
         if (property) {
-            HippoDataValue value;
+            DDMDataValue value;
             char *type = make_type_string(property);
             char *default_children = make_default_children_string(property);
 
-            hippo_data_property_get_value(property, &value);
+            ddm_data_property_get_value(property, &value);
             
-            if (hippo_data_property_get_cardinality(property) == HIPPO_DATA_CARDINALITY_N) {
+            if (ddm_data_property_get_cardinality(property) == DDM_DATA_CARDINALITY_N) {
                 GSList *ll;
 
                 for (ll = value.u.list; ll; ll = ll->next) {
-                    HippoDataValue element;
+                    DDMDataValue element;
                     
-                    hippo_data_value_get_element(&value, ll, &element);
+                    ddm_data_value_get_element(&value, ll, &element);
 
                     save_property_value_to_disk(cache, resource_id, property_id,
                                                 property, &element, type, default_children, timestamp);
@@ -1257,7 +1257,7 @@ _hippo_disk_cache_save_update_to_disk(HippoDiskCache       *cache,
 
 void
 _hippo_disk_cache_save_query_to_disk(HippoDiskCache       *cache,
-                                     HippoDataQuery       *query,
+                                     DDMDataQuery         *query,
                                      GSList               *resources,
                                      HippoNotificationSet *properties)
 {
@@ -1295,12 +1295,12 @@ _hippo_disk_cache_save_query_to_disk(HippoDiskCache       *cache,
     query_id = sqlite3_last_insert_rowid(cache->db);
 
     for (l = resources; l; l = l->next) {
-        HippoDataResource *resource = l->data;
+        DDMDataResource *resource = l->data;
 
         execute_sql(cache,
                     "INSERT INTO QueryResult (query, resourceId) VALUES (:query, :resourceId)",
                     "l:query", query_id,
-                    "s:resourceId", hippo_data_resource_get_resource_id(resource),
+                    "s:resourceId", ddm_data_resource_get_resource_id(resource),
                     NULL);
     }
     

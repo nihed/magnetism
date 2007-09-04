@@ -4,7 +4,7 @@
 
 #include <loudmouth/loudmouth.h>
 #include <hippo/hippo-connection.h>
-#include <hippo/hippo-data-model.h>
+#include <ddm/ddm.h>
 #include <hippo/hippo-person.h>
 #include <hippo/hippo-post.h>
 #include <hippo/hippo-block.h>
@@ -96,7 +96,8 @@ void             hippo_data_cache_add_debug_data            (HippoDataCache   *c
 const char *     hippo_data_cache_match_application_title   (HippoDataCache   *cache,
                                                              const char       *title);
 
-HippoDataModel * hippo_data_cache_get_model                 (HippoDataCache   *cache);
+DDMDataModel*    hippo_data_cache_get_model                 (HippoDataCache   *cache);
+HippoDataCache*  hippo_data_model_get_data_cache            (DDMDataModel     *model);
 
 G_END_DECLS
 
