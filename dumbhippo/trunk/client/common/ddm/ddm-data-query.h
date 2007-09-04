@@ -2,6 +2,13 @@
 #ifndef __DDM_DATA_QUERY_H__
 #define __DDM_DATA_QUERY_H__
 
+#ifndef DDM_COMPILATION
+#ifndef DDM_INSIDE_DDM_H
+#error "Do not include this file directly, include ddm.h instead"
+#endif /* DDM_INSIDE_DDM_H */
+#endif /* DDM_COMPILATION */
+
+
 #include <ddm/ddm-data-model.h>
 #include <ddm/ddm-data-resource.h>
 

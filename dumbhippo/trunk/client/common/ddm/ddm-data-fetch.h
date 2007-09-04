@@ -2,6 +2,12 @@
 #ifndef __DDM_DATA_FETCH_H__
 #define __DDM_DATA_FETCH_H__
 
+#ifndef DDM_COMPILATION
+#ifndef DDM_INSIDE_DDM_H
+#error "Do not include this file directly, include ddm.h instead"
+#endif /* DDM_INSIDE_DDM_H */
+#endif /* DDM_COMPILATION */
+
 #include <ddm/ddm-data-resource.h>
 
 G_BEGIN_DECLS
