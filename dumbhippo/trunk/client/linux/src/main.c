@@ -73,6 +73,12 @@ hippo_app_get_dbus (HippoApp *app)
     return app->dbus;
 }
 
+DDMDataModel*
+hippo_app_get_data_model (HippoApp *app)
+{
+    return hippo_data_cache_get_model(app->cache);
+}
+
 void
 hippo_app_set_show_stacker (HippoApp *app,
                             gboolean  value)

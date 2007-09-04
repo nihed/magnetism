@@ -4,10 +4,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include "hippo-dbus-helper.h"
-#include <hippo/hippo-data-cache.h>
 #include <ddm/ddm.h>
 #include "hippo-dbus-model.h"
 #include "main.h"
+
+/* FIXME it's probably a broken layering whenever we need
+ * HippoDataCache in here, because in principle this file just proxies
+ * the ddm.h API over dbus, which means we should only need the ddm.h
+ * API.
+ */
+
+#include <hippo/hippo-data-cache.h>
 
 typedef struct _DataClientId           DataClientId;
 typedef struct _DataClientConnection   DataClientConnection;
@@ -54,16 +61,19 @@ struct _DataClientQueryClosure {
     DDMDataFetch *fetch;
 };
 
-static DataClient *data_client_ref   (DataClient *client);
-static void        data_client_unref (DataClient *client);
+static DataClient *data_client_ref         (DataClient      *client);
+static void        data_client_unref       (DataClient      *client);
+static void        add_resource_to_message (DataClient      *client,
+                                            DBusMessageIter *resource_array_iter,
+                                            DDMDataResource *resource,
+                                            DDMDataFetch    *fetch,
+                                            gboolean         indirect,
+                                            gboolean         is_notification,
+                                            GSList          *changed_properties);
+static void        on_connected_changed    (DDMDataModel    *ddm_model,
+                                            gboolean         connected,
+                                            void            *data);
 
-static void add_resource_to_message(DataClient        *client,
-                                    DBusMessageIter   *resource_array_iter,
-                                    DDMDataResource *resource,
-                                    DDMDataFetch    *fetch,
-                                    gboolean           indirect,
-                                    gboolean           is_notification,
-                                    GSList            *changed_properties);
 
 static void
 on_resource_changed(DDMDataResource *resource,
@@ -122,7 +132,7 @@ data_client_connection_new(DataClient        *client,
     connection->fetch = NULL;
 
     ddm_data_resource_connect(connection->resource, NULL,
-                                on_resource_changed, connection);
+                              on_resource_changed, connection);
 
     return connection;
 }
@@ -224,14 +234,15 @@ data_client_map_destroy(DataClientMap *map)
 }
 
 static DataClientMap *
-data_client_map_get(HippoDataCache *cache)
+data_client_map_get(DDMDataModel *ddm_model)
 {
-    DataClientMap *map = g_object_get_data(G_OBJECT(cache), "hippo-client-map");
+    DataClientMap *map = g_object_get_data(G_OBJECT(ddm_model), "hippo-client-map");
     if (map == NULL) {
         map = g_new0(DataClientMap, 1);
         map->clients = g_hash_table_new_full((GHashFunc)data_client_id_hash, (GEqualFunc)data_client_id_equal,
                                              NULL, (GDestroyNotify)data_client_unref);
-        g_object_set_data_full(G_OBJECT(cache), "hippo-client-map", map, (GDestroyNotify)data_client_map_destroy);
+        g_object_set_data_full(G_OBJECT(ddm_model), "hippo-client-map",
+                               map, (GDestroyNotify)data_client_map_destroy);
     }
 
     return map;
@@ -634,7 +645,6 @@ handle_query (void            *object,
               DBusMessage     *message,
               DBusError       *error)
 {
-    HippoDataCache *cache;
     DBusConnection *connection;
     DDMDataModel *model;
     const char *notification_path;
@@ -649,8 +659,7 @@ handle_query (void            *object,
     DataClientQueryClosure *closure;
     
     connection = hippo_dbus_get_connection(hippo_app_get_dbus(hippo_get_app()));
-    cache = hippo_app_get_data_cache(hippo_get_app());
-    model = hippo_data_cache_get_model(cache);
+    model = hippo_app_get_data_model(hippo_get_app());
 
     dbus_message_iter_init (message, &iter);
 
@@ -696,7 +705,7 @@ handle_query (void            *object,
                                       _("Couldn't parse fetch string"));
     }
         
-    client_map = data_client_map_get(cache);
+    client_map = data_client_map_get(model);
     client = data_client_map_get_client(client_map, dbus_message_get_sender(message), notification_path);
 
     closure = data_client_query_closure_new(client, message, fetch);
@@ -755,14 +764,12 @@ handle_update (void            *object,
               DBusMessage     *message,
               DBusError       *error)
 {
-    HippoDataCache *cache;
     DBusConnection *connection;
     const char *method_uri;
     GHashTable *params = NULL;
     DBusMessageIter iter;
     
     connection = hippo_dbus_get_connection(hippo_app_get_dbus(hippo_get_app()));
-    cache = hippo_app_get_data_cache(hippo_get_app());
 
     dbus_message_iter_init (message, &iter);
     
@@ -800,14 +807,12 @@ handle_forget (void            *object,
                DBusMessage     *message,
                DBusError       *error)
 {
-    HippoDataCache *cache;
     DBusConnection *connection;
     const char *notification_path;
     const char *resource_id;
     DBusMessageIter iter;
     
     connection = hippo_dbus_get_connection(hippo_app_get_dbus(hippo_get_app()));
-    cache = hippo_app_get_data_cache(hippo_get_app());
 
     dbus_message_iter_init (message, &iter);
 
@@ -843,10 +848,12 @@ handle_get_connected(void            *object,
                      DBusMessageIter *append_iter,
                      DBusError       *error)
 {
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
-    HippoConnection *hippo_connection = hippo_data_cache_get_connection(cache);
+    DDMDataModel *ddm_model;
+    dbus_bool_t connected;
     
-    dbus_bool_t connected = hippo_connection_get_connected(hippo_connection);
+    ddm_model = hippo_app_get_data_model(hippo_get_app());
+
+    connected = ddm_data_model_get_connected(ddm_model);
 
     dbus_message_iter_append_basic(append_iter, DBUS_TYPE_BOOLEAN, &connected);
 
@@ -1019,12 +1026,19 @@ static const HippoDBusProperty model_properties[] = {
 void
 hippo_dbus_init_model(DBusConnection *connection)
 {
+    DDMDataModel *ddm_model;
+    
     hippo_dbus_helper_register_interface(connection, HIPPO_DBUS_MODEL_INTERFACE,
                                          model_members, model_properties);
     
     hippo_dbus_helper_register_object(connection, HIPPO_DBUS_MODEL_PATH,
                                       NULL, HIPPO_DBUS_MODEL_INTERFACE,
                                       NULL);
+
+    ddm_model = hippo_app_get_data_model(hippo_get_app());
+    
+    g_signal_connect(G_OBJECT(ddm_model), "connected-changed", G_CALLBACK(on_connected_changed),
+                     connection);
 }
 
 static gboolean
@@ -1046,17 +1060,19 @@ name_gone_foreach(gpointer key,
 void
 hippo_dbus_model_name_gone(const char *name)
 {
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
-    DataClientMap *client_map = data_client_map_get(cache);
+    DDMDataModel *model = hippo_app_get_data_model(hippo_get_app());
+    DataClientMap *client_map = data_client_map_get(model);
 
     g_hash_table_foreach_remove(client_map->clients, name_gone_foreach, (gpointer)name);
 }
 
-void
-hippo_dbus_model_notify_connected_changed(gboolean connected)
+static void
+on_connected_changed(DDMDataModel *ddm_model,
+                     gboolean      connected,
+                     void         *data)
 {
-    DBusConnection *connection = hippo_dbus_get_connection(hippo_app_get_dbus(hippo_get_app()));
-
+    DBusConnection *connection = data;
+    
     if (connected) {
         char *resource_id = get_self_id();
 

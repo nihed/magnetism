@@ -25,6 +25,8 @@ struct _DDMDataModel {
     GFreeFunc                  free_backend_data_func;
     
     GHashTable *resources;
+
+    guint connected : 1;
 };
 
 struct _DDMDataModelClass {
@@ -32,8 +34,7 @@ struct _DDMDataModelClass {
 };
 
 enum {
-    CONNECTED,
-    DISCONNECTED,
+    CONNECTED_CHANGED,
     LAST_SIGNAL
 };
 
@@ -55,23 +56,14 @@ ddm_data_model_class_init(DDMDataModelClass *klass)
     object_class->dispose = ddm_data_model_dispose;
     object_class->finalize = ddm_data_model_finalize;
 
-    signals[CONNECTED] =
-        g_signal_new ("connected",
+    signals[CONNECTED_CHANGED] =
+        g_signal_new ("connected-changed",
                       G_TYPE_FROM_CLASS (object_class),
                       G_SIGNAL_RUN_LAST,
                       0,
                       NULL, NULL,
-                      g_cclosure_marshal_VOID__VOID,
-                      G_TYPE_NONE, 0);
-
-    signals[DISCONNECTED] =
-        g_signal_new ("disconnected",
-                      G_TYPE_FROM_CLASS (object_class),
-                      G_SIGNAL_RUN_LAST,
-                      0,
-                      NULL, NULL,
-                      g_cclosure_marshal_VOID__VOID,
-                      G_TYPE_NONE, 0);
+                      g_cclosure_marshal_VOID__BOOLEAN,
+                      G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 }
 
 static void
@@ -133,6 +125,14 @@ ddm_data_model_new_with_backend (const DDMDataModelBackend *backend,
     model->backend->add_model (model, model->backend_data);
     
     return model;
+}
+
+gboolean
+ddm_data_model_get_connected(DDMDataModel   *model)
+{
+    g_return_val_if_fail(DDM_IS_DATA_MODEL(model), FALSE);
+
+    return model->connected;
 }
 
 static GHashTable *
@@ -264,4 +264,16 @@ ddm_data_model_ensure_resource(DDMDataModel *model,
     }
 
     return resource;
+}
+
+void
+ddm_data_model_set_connected (DDMDataModel   *model,
+                              gboolean        connected)
+{
+    connected = connected != FALSE;
+    if (connected == model->connected)
+        return;
+
+    model->connected = connected;
+    g_signal_emit(G_OBJECT(model), signals[CONNECTED_CHANGED], 0, connected);
 }

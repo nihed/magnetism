@@ -4,6 +4,7 @@
 #include "hippo-disk-cache.h"
 
 typedef struct {
+    DDMDataModel   *ddm_model;
     HippoDataCache *data_cache;
     HippoDiskCache *disk_cache;
     
@@ -68,6 +69,14 @@ on_connection_has_auth_changed(HippoConnection *connection,
 }
 
 static void
+on_connection_connected_changed(HippoConnection *connection,
+                                gboolean         connected,
+                                HippoModel      *hippo_model)
+{
+    ddm_data_model_set_connected(hippo_model->ddm_model, connected);
+}
+
+static void
 hippo_add_model    (DDMDataModel *ddm_model,
                     void         *backend_data)
 {
@@ -78,11 +87,18 @@ hippo_add_model    (DDMDataModel *ddm_model,
     g_assert(get_hippo_model(ddm_model) == NULL);
     
     hippo_model = g_new0(HippoModel, 1);
+    hippo_model->ddm_model = ddm_model;
     hippo_model->data_cache = cache;
     
     g_object_set_data(G_OBJECT(ddm_model), "hippo-data-model", hippo_model);
 
     connection = hippo_data_cache_get_connection(cache);
+
+    ddm_data_model_set_connected(hippo_model->ddm_model,
+                                 hippo_connection_get_connected(connection));
+    
+    g_signal_connect(connection, "connected-changed",
+                     G_CALLBACK(on_connection_connected_changed), hippo_model);
     
     g_signal_connect(connection, "has-auth-changed",
                      G_CALLBACK(on_connection_has_auth_changed), hippo_model);

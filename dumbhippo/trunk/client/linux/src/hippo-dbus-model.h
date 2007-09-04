@@ -17,7 +17,6 @@ G_BEGIN_DECLS
 
 void hippo_dbus_init_model                     (DBusConnection *connection);
 void hippo_dbus_model_name_gone                (const char     *name);
-void hippo_dbus_model_notify_connected_changed (gboolean        connected);
 
 G_END_DECLS
 

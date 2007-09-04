@@ -29,11 +29,11 @@ typedef struct _DDMDataQuery         DDMDataQuery;
 
 GType            ddm_data_model_get_type               (void) G_GNUC_CONST;
 
-DDMDataModel *ddm_data_model_get_default      (void);
-DDMDataModel *ddm_data_model_new_with_backend (const DDMDataModelBackend *backend,
-                                               void                      *backend_data,
-                                               GFreeFunc                  free_backend_data_func);
-
+DDMDataModel *ddm_data_model_get_default        (void);
+DDMDataModel *ddm_data_model_new_with_backend   (const DDMDataModelBackend *backend,
+                                                 void                      *backend_data,
+                                                 GFreeFunc                  free_backend_data_func);
+gboolean      ddm_data_model_get_connected      (DDMDataModel   *model);
 DDMDataQuery *ddm_data_model_query              (DDMDataModel   *model,
                                                  const char     *method,
                                                  const char     *fetch,
@@ -56,6 +56,9 @@ DDMDataResource *ddm_data_model_lookup_resource (DDMDataModel   *model,
 DDMDataResource *ddm_data_model_ensure_resource (DDMDataModel   *model,
                                                  const char     *resource_id,
                                                  const char     *class_id);
+/* should only be called by backends */
+void          ddm_data_model_set_connected      (DDMDataModel   *model,
+                                                 gboolean        connected);
 
 
 G_END_DECLS
