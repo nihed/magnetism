@@ -1,0 +1,2 @@
+xml:readwrite:$(HOME)/.gconf
+xml:readonly:/usr/share/online-desktop/gconf.xml.online-desktop
