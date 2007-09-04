@@ -1,0 +1,3 @@
+devilspiedir=$(datadir)/online-desktop/devilspie
+devilspie_DATA = devilspie/*.ds
+EXTRA_DIST += $(devilspie_DATA)
