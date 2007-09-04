@@ -4,7 +4,7 @@
 
 #include <hippo/hippo-platform.h>
 #include <hippo/hippo-chat-room.h>
-#include <hippo/hippo-data-query.h>
+#include <ddm/ddm.h>
 
 G_BEGIN_DECLS
 
@@ -141,7 +141,7 @@ void hippo_connection_send_account_question_response(HippoConnection *connection
                                                      const char      *response);
 
 void hippo_connection_send_query (HippoConnection *connection,
-                                  HippoDataQuery  *query);
+                                  DDMDataQuery    *query);
 
 /* Gets the number of milliseconds to add to the local time to get the server time */
 gint64   hippo_connection_get_server_time_offset    (HippoConnection *connection);

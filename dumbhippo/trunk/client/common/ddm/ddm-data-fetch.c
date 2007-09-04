@@ -628,13 +628,13 @@ ddm_data_fetch_iter_advance(DDMDataFetchIter *iter)
                 break;
 
             if (iter->fetch->properties[iter->property_index].qname) {
-                iter->next_property = _ddm_data_resource_get_property_by_qname(iter->resource, iter->fetch->properties[iter->property_index].qname);
+                iter->next_property = ddm_data_resource_get_property_by_qname(iter->resource, iter->fetch->properties[iter->property_index].qname);
                 if (iter->next_property) {
                     iter->next_children = iter->fetch->properties[iter->property_index].children;
                     return;
                 }
             } else {
-                iter->next_property = _ddm_data_resource_get_property(iter->resource, iter->fetch->properties[iter->property_index].name);
+                iter->next_property = ddm_data_resource_get_property(iter->resource, iter->fetch->properties[iter->property_index].name);
                 if (iter->next_property) {
                     iter->next_children = iter->fetch->properties[iter->property_index].children;
                     return;

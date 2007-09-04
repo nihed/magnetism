@@ -51,7 +51,7 @@ ddm_data_query_get_fetch (DDMDataQuery *query)
 }
 
 GHashTable *
-_ddm_data_query_get_params (DDMDataQuery *query)
+ddm_data_query_get_params (DDMDataQuery *query)
 {
     g_return_val_if_fail(query != NULL, NULL);
 
@@ -146,8 +146,8 @@ ddm_data_query_free (DDMDataQuery *query)
 }
 
 void
-_ddm_data_query_response (DDMDataQuery  *query,
-                          GSList          *results)
+ddm_data_query_response (DDMDataQuery  *query,
+                         GSList          *results)
 {
     g_return_if_fail(query != NULL);
 
@@ -156,15 +156,15 @@ _ddm_data_query_response (DDMDataQuery  *query,
         return;
     case HANDLER_SINGLE:
         if (results == NULL) {
-            _ddm_data_query_error(query,
-                                  DDM_DATA_ERROR_ITEM_NOT_FOUND,
-                                  "No result for a query expecting a single result");
+            ddm_data_query_error(query,
+                                 DDM_DATA_ERROR_ITEM_NOT_FOUND,
+                                 "No result for a query expecting a single result");
             return;
         }
         if (g_slist_length(results) > 1) {
-            _ddm_data_query_error(query,
-                                  DDM_DATA_ERROR_BAD_REPLY,
-                                  "Too many results for a query expecting a single result");
+            ddm_data_query_error(query,
+                                 DDM_DATA_ERROR_BAD_REPLY,
+                                 "Too many results for a query expecting a single result");
             return;
         }
         query->handler.single(results->data, query->handler_data);
@@ -174,9 +174,9 @@ _ddm_data_query_response (DDMDataQuery  *query,
         break;
     case HANDLER_UPDATE:
         if (results != NULL) {
-            _ddm_data_query_error(query,
-                                  DDM_DATA_ERROR_BAD_REPLY,
-                                  "Got results for a query expecting no results");
+            ddm_data_query_error(query,
+                                 DDM_DATA_ERROR_BAD_REPLY,
+                                 "Got results for a query expecting no results");
             return;
         }
         query->handler.update(query->handler_data);
@@ -187,9 +187,9 @@ _ddm_data_query_response (DDMDataQuery  *query,
 }
 
 void
-_ddm_data_query_error (DDMDataQuery  *query,
-                       DDMDataError   error,
-                       const char      *message)
+ddm_data_query_error (DDMDataQuery  *query,
+                      DDMDataError   error,
+                      const char      *message)
 {
     g_return_if_fail(query != NULL);
 

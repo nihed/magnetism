@@ -3,8 +3,9 @@
 #define __HIPPO_DISK_CACHE_H__
 
 #include <glib-object.h>
-#include "hippo-data-resource.h"
+#include <ddm/ddm.h>
 #include "hippo-notification-set.h"
+#include "hippo-data-cache.h"
 
 G_BEGIN_DECLS
 
@@ -25,18 +26,20 @@ HippoDiskCache *_hippo_disk_cache_new (HippoDataCache *data_cache);
 void _hippo_disk_cache_close (HippoDiskCache *disk_cache);
 
 void _hippo_disk_cache_do_query (HippoDiskCache *cache,
-                                 HippoDataQuery *query);
+                                 DDMDataQuery   *query);
 
 void _hippo_disk_cache_save_properties_to_disk (HippoDiskCache       *cache,
-                                                HippoDataResource    *resource,
+                                                DDMDataResource      *resource,
                                                 GSList               *properties,
                                                 gint64                timestamp);
 void _hippo_disk_cache_save_query_to_disk      (HippoDiskCache       *cache,
-                                                HippoDataQuery       *query,
+                                                DDMDataQuery       *query,
                                                 GSList               *resources,
                                                 HippoNotificationSet *properties);
 void _hippo_disk_cache_save_update_to_disk     (HippoDiskCache       *cache,
                                                 HippoNotificationSet *properties);
+
+HippoDiskCache*  _hippo_data_model_get_disk_cache (DDMDataModel     *model);
 
 G_END_DECLS
 

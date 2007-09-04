@@ -1,6 +1,4 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#ifndef __DDM_DATA_QUERY_H__
-#define __DDM_DATA_QUERY_H__
 
 #ifndef DDM_COMPILATION
 #ifndef DDM_INSIDE_DDM_H
@@ -8,6 +6,9 @@
 #endif /* DDM_INSIDE_DDM_H */
 #endif /* DDM_COMPILATION */
 
+
+#ifndef __DDM_DATA_QUERY_H__
+#define __DDM_DATA_QUERY_H__
 
 #include <ddm/ddm-data-model.h>
 #include <ddm/ddm-data-resource.h>
@@ -48,6 +49,15 @@ void          ddm_data_query_set_update_handler (DDMDataQuery     *query,
 void          ddm_data_query_set_error_handler  (DDMDataQuery     *query,
                                                  DDMErrorHandler   handler,
                                                  gpointer          user_data);
+
+GHashTable *ddm_data_query_get_params (DDMDataQuery *query);
+void        ddm_data_query_response   (DDMDataQuery *query,
+                                       GSList       *results);
+void        ddm_data_query_error      (DDMDataQuery *query,
+                                       DDMDataError  error,
+                                       const char   *message);
+
+
 
 G_END_DECLS
 

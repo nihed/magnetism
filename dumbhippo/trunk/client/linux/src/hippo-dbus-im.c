@@ -5,8 +5,7 @@
 #include <string.h>
 
 #include <hippo/hippo-notification-set.h>
-#include <hippo/hippo-data-model-internal.h>
-#include <hippo/hippo-data-resource-internal.h>
+#include <ddm/ddm.h>
 
 #include "hippo-dbus-helper.h"
 #include "hippo-dbus-im.h"
@@ -184,10 +183,10 @@ hippo_dbus_im_append_buddy(DBusMessageIter        *append_iter,
     dbus_message_iter_close_container(append_iter, &dict_iter);
 }
 
-static HippoDataResource *
-get_system_resource(HippoDataModel *model)
+static DDMDataResource *
+get_system_resource(DDMDataModel *model)
 {
-    return _hippo_data_model_ensure_resource(model, GLOBAL_RESOURCE, GLOBAL_CLASS);
+    return ddm_data_model_ensure_resource(model, GLOBAL_RESOURCE, GLOBAL_CLASS);
 }
 
 static gboolean
@@ -207,7 +206,7 @@ hippo_dbus_im_start_notifications(void)
 {
     HippoApp *app = hippo_get_app();
     HippoDataCache *cache;
-    HippoDataModel *model;
+    DDMDataModel *model;
     
     if (!app)
         return NULL;
@@ -219,18 +218,18 @@ hippo_dbus_im_start_notifications(void)
 }
 
 static void
-update_property (HippoDataResource    *resource,
-                 HippoQName           *property_id,
-                 HippoDataUpdate       update,
-                 HippoDataCardinality  cardinality,
+update_property (DDMDataResource    *resource,
+                 DDMQName           *property_id,
+                 DDMDataUpdate       update,
+                 DDMDataCardinality  cardinality,
                  gboolean              default_include,
                  const char           *default_children,
-                 HippoDataValue       *value,
+                 DDMDataValue       *value,
                  HippoNotificationSet *notifications)
 {
-    if (_hippo_data_resource_update_property(resource, property_id, update,
-                                             cardinality, default_include, default_children,
-                                             value))
+    if (ddm_data_resource_update_property(resource, property_id, update,
+                                           cardinality, default_include, default_children,
+                                           value))
         _hippo_notification_set_add(notifications, resource, property_id);
 }
 
@@ -245,11 +244,11 @@ hippo_dbus_im_update_buddy(HippoNotificationSet *notifications,
 {
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
     HippoDBusIm *im = hippo_dbus_im_get(cache);
-    HippoDataModel *model = hippo_data_cache_get_model(cache);
+    DDMDataModel *model = hippo_data_cache_get_model(cache);
     gboolean new_buddy = FALSE;
     gboolean online_changed;
-    HippoDataResource *buddy_resource;
-    HippoDataValue value;
+    DDMDataResource *buddy_resource;
+    DDMDataValue value;
     gboolean buddy_changed = FALSE;
 
     HippoDBusImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
@@ -260,19 +259,19 @@ hippo_dbus_im_update_buddy(HippoNotificationSet *notifications,
         new_buddy = TRUE;
     }
 
-    buddy_resource = _hippo_data_model_ensure_resource(model, buddy_id, BUDDY_CLASS);
+    buddy_resource = ddm_data_model_ensure_resource(model, buddy_id, BUDDY_CLASS);
 
     if (new_buddy || !compare_strings(protocol, buddy->protocol)) {
         g_free(buddy->protocol);
         buddy->protocol = g_strdup(protocol);
 
-        value.type = HIPPO_DATA_STRING;
+        value.type = DDM_DATA_STRING;
         value.u.string = buddy->protocol;
         
         update_property(buddy_resource,
-                        hippo_qname_get(BUDDY_CLASS, "protocol"),
-                        HIPPO_DATA_UPDATE_REPLACE,
-                        HIPPO_DATA_CARDINALITY_1,
+                        ddm_qname_get(BUDDY_CLASS, "protocol"),
+                        DDM_DATA_UPDATE_REPLACE,
+                        DDM_DATA_CARDINALITY_1,
                         TRUE, NULL,
                         &value,
                         notifications);
@@ -284,13 +283,13 @@ hippo_dbus_im_update_buddy(HippoNotificationSet *notifications,
         g_free(buddy->name);
         buddy->name = g_strdup(name);
 
-        value.type = HIPPO_DATA_STRING;
+        value.type = DDM_DATA_STRING;
         value.u.string = buddy->name;
         
         update_property(buddy_resource,
-                        hippo_qname_get(BUDDY_CLASS, "name"),
-                        HIPPO_DATA_UPDATE_REPLACE,
-                        HIPPO_DATA_CARDINALITY_1,
+                        ddm_qname_get(BUDDY_CLASS, "name"),
+                        DDM_DATA_UPDATE_REPLACE,
+                        DDM_DATA_CARDINALITY_1,
                         TRUE, NULL,
                         &value,
                         notifications);
@@ -303,13 +302,13 @@ hippo_dbus_im_update_buddy(HippoNotificationSet *notifications,
     if (new_buddy || is_online != buddy->is_online) {
         buddy->is_online = is_online;
 
-        value.type = HIPPO_DATA_BOOLEAN;
+        value.type = DDM_DATA_BOOLEAN;
         value.u.boolean = buddy->is_online;
         
         update_property(buddy_resource,
-                        hippo_qname_get(BUDDY_CLASS, "isOnline"),
-                        HIPPO_DATA_UPDATE_REPLACE,
-                        HIPPO_DATA_CARDINALITY_1,
+                        ddm_qname_get(BUDDY_CLASS, "isOnline"),
+                        DDM_DATA_UPDATE_REPLACE,
+                        DDM_DATA_CARDINALITY_1,
                         TRUE, NULL,
                         &value,
                         notifications);
@@ -321,13 +320,13 @@ hippo_dbus_im_update_buddy(HippoNotificationSet *notifications,
         g_free(buddy->status);
         buddy->status = g_strdup(status);
 
-        value.type = HIPPO_DATA_STRING;
+        value.type = DDM_DATA_STRING;
         value.u.string = buddy->status;
 
         update_property(buddy_resource,
-                                             hippo_qname_get(BUDDY_CLASS, "status"),
-                                             buddy->status ? HIPPO_DATA_UPDATE_REPLACE : HIPPO_DATA_UPDATE_CLEAR,
-                                             HIPPO_DATA_CARDINALITY_01,
+                                             ddm_qname_get(BUDDY_CLASS, "status"),
+                                             buddy->status ? DDM_DATA_UPDATE_REPLACE : DDM_DATA_UPDATE_CLEAR,
+                                             DDM_DATA_CARDINALITY_01,
                                              TRUE, NULL,
                                              &value,
                                              notifications);
@@ -339,13 +338,13 @@ hippo_dbus_im_update_buddy(HippoNotificationSet *notifications,
         g_free(buddy->webdav_url);
         buddy->webdav_url = g_strdup(webdav_url);
 
-        value.type = HIPPO_DATA_STRING;
+        value.type = DDM_DATA_STRING;
         value.u.string = buddy->webdav_url;
 
         update_property(buddy_resource,
-                                             hippo_qname_get(BUDDY_CLASS, "webdavUrl"),
-                                             buddy->webdav_url ? HIPPO_DATA_UPDATE_REPLACE : HIPPO_DATA_UPDATE_CLEAR,
-                                             HIPPO_DATA_CARDINALITY_01,
+                                             ddm_qname_get(BUDDY_CLASS, "webdavUrl"),
+                                             buddy->webdav_url ? DDM_DATA_UPDATE_REPLACE : DDM_DATA_UPDATE_CLEAR,
+                                             DDM_DATA_CARDINALITY_01,
                                              TRUE, NULL,
                                              &value,
                                              notifications);
@@ -354,16 +353,16 @@ hippo_dbus_im_update_buddy(HippoNotificationSet *notifications,
     }
 
     if (online_changed || (new_buddy && buddy->is_online)) {
-        HippoDataResource *system_resource = get_system_resource(model);
-        HippoDataValue value;
+        DDMDataResource *system_resource = get_system_resource(model);
+        DDMDataValue value;
 
-        value.type = HIPPO_DATA_RESOURCE;
+        value.type = DDM_DATA_RESOURCE;
         value.u.resource = buddy_resource;
         
         update_property(system_resource,
-                                             hippo_qname_get(GLOBAL_CLASS, "onlineBuddies"),
-                                             buddy->is_online ? HIPPO_DATA_UPDATE_ADD : HIPPO_DATA_UPDATE_DELETE,
-                                             HIPPO_DATA_CARDINALITY_N,
+                                             ddm_qname_get(GLOBAL_CLASS, "onlineBuddies"),
+                                             buddy->is_online ? DDM_DATA_UPDATE_ADD : DDM_DATA_UPDATE_DELETE,
+                                             DDM_DATA_CARDINALITY_N,
                                              FALSE, NULL,
                                              &value,
                                              notifications);
@@ -382,8 +381,8 @@ hippo_dbus_im_remove_buddy(HippoNotificationSet *notifications,
 {
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
     HippoDBusIm *im = hippo_dbus_im_get(cache);
-    HippoDataModel *model = hippo_data_cache_get_model(cache);
-    HippoDataResource *system_resource = get_system_resource(model);
+    DDMDataModel *model = hippo_data_cache_get_model(cache);
+    DDMDataResource *system_resource = get_system_resource(model);
 
     HippoDBusImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
 
@@ -391,19 +390,19 @@ hippo_dbus_im_remove_buddy(HippoNotificationSet *notifications,
         return;
 
     if (buddy->is_online) {
-        HippoDataResource *buddy_resource = _hippo_data_model_get_resource(model, buddy_id);
-        HippoDataValue value;
+        DDMDataResource *buddy_resource = ddm_data_model_lookup_resource(model, buddy_id);
+        DDMDataValue value;
 
-        value.type = HIPPO_DATA_RESOURCE;
+        value.type = DDM_DATA_RESOURCE;
         value.u.resource = buddy_resource;
         
         update_property(system_resource,
-                                             hippo_qname_get(GLOBAL_CLASS, "onlineBuddies"),
-                                             HIPPO_DATA_UPDATE_DELETE,
-                                             HIPPO_DATA_CARDINALITY_N,
-                                             FALSE, NULL,
-                                             &value,
-                                             notifications);
+                        ddm_qname_get(GLOBAL_CLASS, "onlineBuddies"),
+                        DDM_DATA_UPDATE_DELETE,
+                        DDM_DATA_CARDINALITY_N,
+                        FALSE, NULL,
+                        &value,
+                        notifications);
     }
 
     g_hash_table_remove(im->buddies, buddy_id);
@@ -414,7 +413,7 @@ hippo_dbus_im_send_notifications(HippoNotificationSet *notifications)
 {
     if (_hippo_notification_set_has_property(notifications,
                                              GLOBAL_RESOURCE,
-                                             hippo_qname_get(GLOBAL_CLASS, "onlineBuddies"))) {
+                                             ddm_qname_get(GLOBAL_CLASS, "onlineBuddies"))) {
         DBusConnection *connection = hippo_dbus_get_connection(hippo_app_get_dbus(hippo_get_app()));
         hippo_dbus_im_emit_buddy_list_changed (connection);        
     }

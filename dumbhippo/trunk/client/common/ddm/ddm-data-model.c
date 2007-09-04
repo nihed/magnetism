@@ -21,7 +21,9 @@ struct _DDMDataModel {
     GObject parent;
 
     const DDMDataModelBackend *backend;
-
+    void                      *backend_data;
+    GFreeFunc                  free_backend_data_func;
+    
     GHashTable *resources;
 };
 
@@ -78,8 +80,12 @@ ddm_data_model_dispose(GObject *object)
     DDMDataModel *model = DDM_DATA_MODEL(object);
 
     if (model->backend != NULL) {
-        model->backend->remove_model(model);
+        model->backend->remove_model(model, model->backend_data);
+        if (model->free_backend_data_func)
+            (* model->free_backend_data_func) (model->backend_data);
         model->backend = NULL;
+        model->backend_data = NULL;
+        model->free_backend_data_func = NULL;
     }
     
     G_OBJECT_CLASS(ddm_data_model_parent_class)->dispose(object);
@@ -101,7 +107,8 @@ DDMDataModel*
 ddm_data_model_get_default (void)
 {
     if (default_model == NULL) {
-        default_model = ddm_data_model_new_with_backend(ddm_data_model_get_dbus_backend());
+        default_model = ddm_data_model_new_with_backend(ddm_data_model_get_dbus_backend(),
+                                                        NULL, NULL);
     }
 
     g_object_ref(default_model);
@@ -109,7 +116,9 @@ ddm_data_model_get_default (void)
 }
 
 DDMDataModel*
-ddm_data_model_new_with_backend (const DDMDataModelBackend *backend)
+ddm_data_model_new_with_backend (const DDMDataModelBackend *backend,
+                                 void                      *backend_data,
+                                 GFreeFunc                  free_backend_data_func)
 {
     DDMDataModel *model;
 
@@ -118,8 +127,10 @@ ddm_data_model_new_with_backend (const DDMDataModelBackend *backend)
     model = g_object_new(DDM_TYPE_DATA_MODEL, NULL);
 
     model->backend = backend;
+    model->backend_data = backend_data;
+    model->free_backend_data_func = free_backend_data_func;
 
-    model->backend->add_model (model);
+    model->backend->add_model (model, model->backend_data);
     
     return model;
 }
@@ -160,7 +171,7 @@ ddm_data_model_query_params(DDMDataModel *model,
 
     query = _ddm_data_query_new(model, method_qname, fetch, params);
 
-    model->backend->send_query(model, query);
+    model->backend->send_query(model, query, model->backend_data);
     return query;
 }
 
@@ -206,7 +217,7 @@ ddm_data_model_update_params(DDMDataModel *model,
 
 #if 0
     /* FIXME */
-    model->backend->send_update(model, query, method, params);
+    model->backend->send_update(model, query, method, params, model->backend_data);
 #endif
     
     return NULL;
@@ -233,16 +244,16 @@ ddm_data_model_update(DDMDataModel *model,
 }
 
 DDMDataResource *
-_ddm_data_model_get_resource(DDMDataModel *model,
-                             const char     *resource_id)
+ddm_data_model_lookup_resource(DDMDataModel *model,
+                               const char     *resource_id)
 {
     return g_hash_table_lookup(model->resources, resource_id);
 }
 
 DDMDataResource *
-_ddm_data_model_ensure_resource(DDMDataModel *model,
-                                const char     *resource_id,
-                                const char     *class_id)
+ddm_data_model_ensure_resource(DDMDataModel *model,
+                               const char   *resource_id,
+                               const char   *class_id)
 {
     DDMDataResource *resource;
 
@@ -254,72 +265,3 @@ _ddm_data_model_ensure_resource(DDMDataModel *model,
 
     return resource;
 }
-
-gboolean
-_ddm_data_parse_type(const char           *type_string,
-                     DDMDataType        *type,
-                     DDMDataCardinality *cardinality,
-                     gboolean             *default_include)
-{
-    const char *p = type_string;
-    if (*p == '+') {
-        *default_include = TRUE;
-        p++;
-    } else {
-        *default_include = FALSE;
-    }
-
-    switch (*p) {
-    case 'b':
-        *type = DDM_DATA_BOOLEAN;
-        break;
-    case 'i':
-        *type = DDM_DATA_INTEGER;
-        break;
-    case 'l':
-        *type = DDM_DATA_LONG;
-        break;
-    case 'f':
-        *type = DDM_DATA_FLOAT;
-        break;
-    case 's':
-        *type = DDM_DATA_STRING;
-        break;
-    case 'r':
-        *type = DDM_DATA_RESOURCE;
-        break;
-    case 'u':
-        *type = DDM_DATA_URL;
-        break;
-    default:
-        g_warning("Can't understand type string '%s'", type_string);
-        return FALSE;
-    }
-
-    p++;
-
-    switch (*p) {
-    case '*':
-        *cardinality = DDM_DATA_CARDINALITY_N;
-        p++;
-        break;
-    case '?':
-        *cardinality = DDM_DATA_CARDINALITY_01;
-        p++;
-        break;
-    case '\0':
-        *cardinality = DDM_DATA_CARDINALITY_1;
-        break;
-    default:
-        g_warning("Can't understand type string '%s'", type_string);
-        return FALSE;
-    }
-
-    if (*p != '\0') {
-        g_warning("Can't understand type string '%s'", type_string);
-        return FALSE;
-    }
-
-    return TRUE;
-}
-

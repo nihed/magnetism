@@ -5,7 +5,8 @@ mugshot_CPPFLAGS = 			\
 	-I $(top_srcdir)		\
 	$(MUGSHOT_CFLAGS)		\
 	$(CANVAS_CFLAGS)		\
-       -DHOST_CPU=\"$(host_cpu)\"
+       -DHOST_CPU=\"$(host_cpu)\"	\
+	-DDDM_I_KNOW_THIS_IS_UNSTABLE=1
 
 mugshot_LDFLAGS=
 mugshot_LDADD= libhippoipc.la libhippo.la $(MUGSHOT_LIBS) $(CANVAS_LIBADD)

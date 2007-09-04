@@ -7,17 +7,10 @@
 
 G_BEGIN_DECLS
 
-DDMDataQuery *_ddm_data_query_new(DDMDataModel *model,
-                                  DDMQName     *qname,
+DDMDataQuery *_ddm_data_query_new(DDMDataModel   *model,
+                                  DDMQName       *qname,
                                   const char     *fetch,
                                   GHashTable     *params);
-
-GHashTable *_ddm_data_query_get_params (DDMDataQuery *query);
-void        _ddm_data_query_response   (DDMDataQuery *query,
-                                        GSList         *results);
-void        _ddm_data_query_error      (DDMDataQuery *query,
-                                        DDMDataError  error,
-                                        const char     *message);
 
 G_END_DECLS
 

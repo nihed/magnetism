@@ -1,11 +1,12 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-data-cache-internal.h"
-#include "hippo-data-model-internal.h"
+#include <ddm/ddm.h>
 #include "hippo-connection.h"
 #include "hippo-group.h"
 #include "hippo-block-post.h"
 #include "hippo-title-pattern.h"
 #include "hippo-xml-utils.h"
+#include "hippo-data-model-backend.h"
 #include <string.h>
 
 typedef void (* HippoChatRoomFunc) (HippoChatRoom *room,
@@ -43,7 +44,7 @@ struct _HippoDataCache {
     unsigned int     application_usage_enabled : 1;
     HippoClientInfo  client_info;
     GSList          *title_patterns;
-    HippoDataModel  *model;
+    DDMDataModel    *model;
 };
 
 struct _HippoDataCacheClass {
@@ -226,7 +227,7 @@ hippo_data_cache_finalize(GObject *object)
     HippoDataCache *cache = HIPPO_DATA_CACHE(object);
 
     g_debug("Finalizing data cache");
-
+    
     hippo_data_cache_set_myspace_name(cache, NULL);
     hippo_data_cache_set_myspace_blog_comments(cache, NULL);
     hippo_data_cache_set_myspace_contacts(cache, NULL);
@@ -253,6 +254,8 @@ hippo_data_cache_finalize(GObject *object)
         cache->cached_self = NULL;
     }
 
+    g_object_unref (cache->model);
+    
     g_signal_handlers_disconnect_by_func(cache->connection,
                                          G_CALLBACK(hippo_data_cache_on_connect), cache);
     hippo_connection_set_cache(cache->connection, NULL);
@@ -270,7 +273,8 @@ hippo_data_cache_new(HippoConnection *connection)
     g_object_ref(cache->connection);
     hippo_connection_set_cache(cache->connection, cache);
 
-    cache->model = _hippo_data_model_new(cache);
+    cache->model = ddm_data_model_new_with_backend(hippo_data_model_get_backend(),
+                                                   cache, NULL);
 
     g_signal_connect(cache->connection, "connected-changed",
                      G_CALLBACK(hippo_data_cache_on_connect), cache);
@@ -1168,7 +1172,7 @@ hippo_data_cache_match_application_title(HippoDataCache *cache,
     return NULL;
 }
     
-HippoDataModel *
+DDMDataModel *
 hippo_data_cache_get_model(HippoDataCache   *cache)
 {
     g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
