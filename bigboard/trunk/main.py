@@ -417,13 +417,13 @@ class BigBoardPanel(dbus.service.Object):
         self.__queue_strut()
         if vis:
             self._dw.show()
-            self.Expanded(True)
+            self.ExpandedChanged(True)
         else:
             self._dw.hide()
             if not gconf.client_get_default().get_bool(GCONF_PREFIX + 'first_time_minimize_seen'):
                 dialog = FirstTimeMinimizeDialog(True)
                 dialog.show_all()        
-            self.Expanded(False)
+            self.ExpandedChanged(False)
         
     @log_except()
     def _toggle_size(self):
