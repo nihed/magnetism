@@ -19,14 +19,11 @@ input[type="text"], input[type="password"] {
 	font-size: 12pt;
 }
 
-input[type="submit"] {
+input[type="submit"], button {
 	font-size: 12pt;
-	font-weight: bold;
 	padding: 0 1em 0.1em 1em;
-	background-color: #222;
-	color: #fff;
-	border: 0;
 	font-family: inherit;
+  vertical-align: middle;
 }
 
 input[type="submit"]:hover {
@@ -206,7 +203,7 @@ input.green-button:hover {
 }
 .keybinding-hint {
   color: green;
-  font-size: smaller;	
+  font-size: small;	
 }
 .visitcount {
   font-size: smaller;
