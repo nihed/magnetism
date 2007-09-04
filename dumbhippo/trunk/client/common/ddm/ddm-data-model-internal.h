@@ -2,10 +2,7 @@
 #ifndef __DDM_DATA_MODEL_INTERNAL_H__
 #define __DDM_DATA_MODEL_INTERNAL_H__
 
-#include "ddm-data-cache.h"
-#include "ddm-disk-cache.h"
 #include "ddm-data-model.h"
-#include "ddm-notification-set.h"
 
 G_BEGIN_DECLS
 

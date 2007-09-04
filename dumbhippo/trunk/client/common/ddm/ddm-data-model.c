@@ -8,7 +8,6 @@
 #include "ddm-data-model-internal.h"
 #include "ddm-data-resource-internal.h"
 #include "ddm-data-query-internal.h"
-#include "ddm-connection.h"
 
 static void      ddm_data_model_init                (DDMDataModel       *model);
 static void      ddm_data_model_class_init          (DDMDataModelClass  *klass);
