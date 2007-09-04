@@ -16,6 +16,7 @@ G_BEGIN_DECLS
 
 #include <ddm/ddm-data-fetch.h>
 #include <ddm/ddm-data-model.h>
+#include <ddm/ddm-data-model-backend.h>
 #include <ddm/ddm-data-query.h>
 #include <ddm/ddm-data-resource.h>
 #include <ddm/ddm-qname.h>

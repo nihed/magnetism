@@ -15,7 +15,9 @@ G_BEGIN_DECLS
 
 typedef struct _DDMDataModel      DDMDataModel;
 typedef struct _DDMDataModelClass DDMDataModelClass;
-typedef struct _DDMDataQuery      DDMDataQuery;
+
+typedef struct _DDMDataQuery        DDMDataQuery;
+typedef struct _DDMDataModelBackend DDMDataModelBackend;
 
 #define DDM_TYPE_DATA_MODEL              (ddm_data_model_get_type ())
 #define DDM_DATA_MODEL(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), DDM_TYPE_DATA_MODEL, DDMDataModel))
@@ -26,23 +28,26 @@ typedef struct _DDMDataQuery      DDMDataQuery;
 
 GType            ddm_data_model_get_type               (void) G_GNUC_CONST;
 
-DDMDataQuery *ddm_data_model_query          (DDMDataModel *model,
-                                             const char     *method,
-                                             const char     *fetch,
-                                             ...) G_GNUC_NULL_TERMINATED;
-DDMDataQuery *ddm_data_model_query_params   (DDMDataModel *model,
-                                             const char     *method,
-                                             const char     *fetch,
-                                             GHashTable     *params);
-DDMDataQuery *ddm_data_model_query_resource (DDMDataModel *model,
-                                             const char     *resource_id,
-                                             const char     *fetch);
-DDMDataQuery *ddm_data_model_update         (DDMDataModel *model,
-                                             const char     *method,
-                                             ...) G_GNUC_NULL_TERMINATED;
-DDMDataQuery *ddm_data_model_update_params  (DDMDataModel *model,
-                                             const char     *method,
-                                             GHashTable     *params);
+DDMDataModel *ddm_data_model_get_default      (void);
+DDMDataModel *ddm_data_model_new_with_backend (const DDMDataModelBackend *backend);
+
+DDMDataQuery *ddm_data_model_query            (DDMDataModel   *model,
+                                               const char     *method,
+                                               const char     *fetch,
+                                               ...) G_GNUC_NULL_TERMINATED;
+DDMDataQuery *ddm_data_model_query_params     (DDMDataModel   *model,
+                                               const char     *method,
+                                               const char     *fetch,
+                                               GHashTable     *params);
+DDMDataQuery *ddm_data_model_query_resource   (DDMDataModel   *model,
+                                               const char     *resource_id,
+                                               const char     *fetch);
+DDMDataQuery *ddm_data_model_update           (DDMDataModel   *model,
+                                               const char     *method,
+                                               ...) G_GNUC_NULL_TERMINATED;
+DDMDataQuery *ddm_data_model_update_params    (DDMDataModel   *model,
+                                               const char     *method,
+                                               GHashTable     *params);
 
 G_END_DECLS
 

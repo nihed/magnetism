@@ -33,22 +33,21 @@ typedef void (*DDMErrorHandler)  (DDMDataError     error,
                                   const char        *message,
                                   gpointer           user_data);
 
-DDMDataModel *ddm_data_query_get_model (DDMDataQuery *query);
-DDMQName *    ddm_data_query_get_qname (DDMDataQuery *query);
-const char *    ddm_data_query_get_fetch (DDMDataQuery *query);
-
-void ddm_data_query_set_single_handler (DDMDataQuery     *query,
-                                        DDMSingleHandler  handler,
-                                        gpointer            user_data);
-void ddm_data_query_set_multi_handler  (DDMDataQuery     *query,
-                                        DDMMultiHandler   handler,
-                                        gpointer            user_data);
-void ddm_data_query_set_update_handler (DDMDataQuery     *query,
-                                        DDMUpdateHandler  handler,
-                                        gpointer            user_data);
-void ddm_data_query_set_error_handler  (DDMDataQuery     *query,
-                                        DDMErrorHandler   handler,
-                                        gpointer            user_data);
+DDMDataModel *ddm_data_query_get_model          (DDMDataQuery     *query);
+DDMQName *    ddm_data_query_get_qname          (DDMDataQuery     *query);
+const char *  ddm_data_query_get_fetch          (DDMDataQuery     *query);
+void          ddm_data_query_set_single_handler (DDMDataQuery     *query,
+                                                 DDMSingleHandler  handler,
+                                                 gpointer          user_data);
+void          ddm_data_query_set_multi_handler  (DDMDataQuery     *query,
+                                                 DDMMultiHandler   handler,
+                                                 gpointer          user_data);
+void          ddm_data_query_set_update_handler (DDMDataQuery     *query,
+                                                 DDMUpdateHandler  handler,
+                                                 gpointer          user_data);
+void          ddm_data_query_set_error_handler  (DDMDataQuery     *query,
+                                                 DDMErrorHandler   handler,
+                                                 gpointer          user_data);
 
 G_END_DECLS
 

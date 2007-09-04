@@ -6,6 +6,8 @@
 #include <string.h>
 
 #include "ddm-data-model-internal.h"
+#include "ddm-data-model-dbus.h"
+#include "ddm-data-model-backend.h"
 #include "ddm-data-resource-internal.h"
 #include "ddm-data-query-internal.h"
 
@@ -18,8 +20,8 @@ static void      ddm_data_model_finalize            (GObject              *objec
 struct _DDMDataModel {
     GObject parent;
 
-    DDMDataCache *data_cache;
-    DDMDiskCache *disk_cache;
+    const DDMDataModelBackend *backend;
+
     GHashTable *resources;
 };
 
@@ -73,10 +75,13 @@ ddm_data_model_class_init(DDMDataModelClass *klass)
 static void
 ddm_data_model_dispose(GObject *object)
 {
-#if 0
     DDMDataModel *model = DDM_DATA_MODEL(object);
-#endif
 
+    if (model->backend != NULL) {
+        model->backend->remove_model(model);
+        model->backend = NULL;
+    }
+    
     G_OBJECT_CLASS(ddm_data_model_parent_class)->dispose(object);
 }
 
@@ -90,61 +95,33 @@ ddm_data_model_finalize(GObject *object)
     G_OBJECT_CLASS(ddm_data_model_parent_class)->finalize(object);
 }
 
-static void
-open_disk_cache(DDMDataModel *model)
-{
-    model->disk_cache = _ddm_disk_cache_new(model->data_cache);
-}
+static DDMDataModel *default_model = NULL;
 
-static void
-close_disk_cache(DDMDataModel *model)
+DDMDataModel*
+ddm_data_model_get_default (void)
 {
-    if (model->disk_cache) {
-        _ddm_disk_cache_close(model->disk_cache);
-        g_object_unref(model->disk_cache);
-        model->disk_cache = NULL;
+    if (default_model == NULL) {
+        default_model = ddm_data_model_new_with_backend(ddm_data_model_get_dbus_backend());
     }
+
+    g_object_ref(default_model);
+    return default_model;
 }
 
-static void
-on_connection_has_auth_changed(DDMConnection *connection,
-                               DDMDataModel  *model)
+DDMDataModel*
+ddm_data_model_new_with_backend (const DDMDataModelBackend *backend)
 {
-    gboolean has_auth = ddm_connection_get_has_auth(connection);
+    DDMDataModel *model;
 
-    /* A change in auth normally comes as a !has_auth / has_auth pair,
-     * though this isn't enforced in DDMConnection; for now, don't
-     * worry about the possibility of a change to the username without
-     * forgetting the auth in between.
-     */
-    if (has_auth && !model->disk_cache)
-        open_disk_cache(model);
-    else if (!has_auth && model->disk_cache)
-        close_disk_cache(model);
-}
+    g_return_val_if_fail(backend != NULL, NULL);
+    
+    model = g_object_new(DDM_TYPE_DATA_MODEL, NULL);
 
-DDMDataModel *
-_ddm_data_model_new(DDMDataCache *cache)
-{
-    DDMDataModel *model = g_object_new(DDM_TYPE_DATA_MODEL, NULL);
-    DDMConnection *connection = ddm_data_cache_get_connection(cache);
+    model->backend = backend;
 
-    model->data_cache = cache;
-
-    g_signal_connect(connection, "has-auth-changed",
-                     G_CALLBACK(on_connection_has_auth_changed), model);
-
-    open_disk_cache(model);
-
+    model->backend->add_model (model);
+    
     return model;
-}
-
-DDMDiskCache *
-_ddm_data_model_get_disk_cache(DDMDataModel *model)
-{
-    g_return_val_if_fail(DDM_IS_DATA_MODEL(model), NULL);
-
-    return model->disk_cache;
 }
 
 static GHashTable *
@@ -166,37 +143,16 @@ params_from_valist(va_list vap)
     return params;
 }
 
-static gboolean
-do_offline_query(gpointer data)
-{
-    DDMDataQuery *query = data;
-    DDMDataModel *model = ddm_data_query_get_model(data);
-
-    _ddm_disk_cache_do_query(model->disk_cache, query);
-
-    return FALSE;
-}
-
-static void
-queue_offline_query(DDMDataModel *model,
-                    DDMDataQuery *query)
-{
-    g_idle_add(do_offline_query, query);
-}
-
 DDMDataQuery *
 ddm_data_model_query_params(DDMDataModel *model,
                             const char     *method,
                             const char     *fetch,
                             GHashTable     *params)
 {
-    DDMConnection *connection;
     DDMDataQuery *query;
     DDMQName *method_qname;
 
     g_return_val_if_fail (DDM_IS_DATA_MODEL(model), NULL);
-
-    connection = ddm_data_cache_get_connection(model->data_cache);
 
     method_qname = ddm_qname_from_uri(method);
     if (method_qname == NULL)
@@ -204,11 +160,7 @@ ddm_data_model_query_params(DDMDataModel *model,
 
     query = _ddm_data_query_new(model, method_qname, fetch, params);
 
-    if (ddm_connection_get_connected(connection))
-        ddm_connection_send_query(connection, query);
-    else
-        queue_offline_query(model, query);
-
+    model->backend->send_query(model, query);
     return query;
 }
 
@@ -247,13 +199,16 @@ ddm_data_model_query_resource(DDMDataModel *model,
 
 DDMDataQuery *
 ddm_data_model_update_params(DDMDataModel *model,
-                             const char     *method,
-                             GHashTable     *params)
+                             const char   *method,
+                             GHashTable   *params)
 {
     g_return_val_if_fail (DDM_IS_DATA_MODEL(model), NULL);
 
-    g_warning("%s is not implemented", G_STRFUNC);
-
+#if 0
+    /* FIXME */
+    model->backend->send_update(model, query, method, params);
+#endif
+    
     return NULL;
 }
 
@@ -366,6 +321,5 @@ _ddm_data_parse_type(const char           *type_string,
     }
 
     return TRUE;
-
 }
 

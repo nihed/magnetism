@@ -23,26 +23,26 @@ AM_MAINTAINER_MODE
 ## don't rerun to this point if we abort
 AC_CACHE_SAVE
 
-# libtool versioning
+# libtool versioning for libddm
 #
 # See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details
 #
 
 ## increment if the interface has additions, changes, removals.
-LT_CURRENT=0
+DDM_LT_CURRENT=0
 
 ## increment any time the source changes; set to
 ##  0 if you increment CURRENT
-LT_REVISION=0
+DDM_LT_REVISION=0
 
 ## increment if any interfaces have been added; set to 0
 ## if any interfaces have been changed or removed. removal has
 ## precedence over adding, so set to 0 if both happened.
-LT_AGE=0
+DDM_LT_AGE=0
 
-AC_SUBST(LT_CURRENT)
-AC_SUBST(LT_REVISION)
-AC_SUBST(LT_AGE)
+AC_SUBST(DDM_LT_CURRENT)
+AC_SUBST(DDM_LT_REVISION)
+AC_SUBST(DDM_LT_AGE)
 
 
 AC_PROG_CC
@@ -419,6 +419,7 @@ fi
 
 AM_CONDITIONAL(USE_INCLUDED_CANVAS, test "x$with_included_canvas" = xyes)
 
+PKG_CHECK_MODULES(LIBDDM, gobject-2.0 >= $GLIB2_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(LIBHIPPOCANVAS, gtk+-2.0 >= $GTK2_REQUIRED gobject-2.0 >= $GLIB2_REQUIRED cairo pango)
 PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED cairo pango $PCRE_MODULES $SQLITE_MODULES $CANVAS_MODULES)
 AC_DEFINE(HIPPO_LOUDMOUTH_IS_10, 1, [Define if Loudmouth is version 1.0 or below])
