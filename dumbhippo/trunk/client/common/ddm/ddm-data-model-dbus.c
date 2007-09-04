@@ -10,11 +10,37 @@
 
 #include <dbus/dbus.h>
 
-static void
-ddm_dbus_add_model    (DDMDataModel *model,
-                       void         *backend_data)
-{
+typedef struct {
+    DDMDataModel   *ddm_model;
+    DBusConnection *connection;
 
+} DBusModel;
+
+
+static DBusModel*
+get_dbus_model(DDMDataModel *ddm_model)
+{
+    DBusModel *dbus_model = g_object_get_data(G_OBJECT(ddm_model), "dbus-data-model");
+
+    return dbus_model;
+}
+
+static void
+ddm_dbus_add_model (DDMDataModel *model,
+                    void         *backend_data)
+{
+#if 0
+    dbus_model = g_new0(DbusModel, 1);
+    dbus_model->ddm_model = ddm_model;
+    dbus_model->data_cache = cache;
+    
+    g_object_set_data(G_OBJECT(ddm_model), "dbus-data-model", dbus_model);
+
+    connection = dbus_data_cache_get_connection(cache);
+
+    ddm_data_model_set_connected(dbus_model->ddm_model,
+                                 dbus_connection_get_connected(connection));
+#endif
 
 }
 

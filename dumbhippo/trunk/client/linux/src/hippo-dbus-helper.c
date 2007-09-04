@@ -29,7 +29,18 @@ typedef struct {
     GHashTable *interfaces;
     GHashTable *services_by_well_known;
     GHashTable *services_by_owner;
+    GSList *connection_trackers;
 } HippoDBusHelper;
+
+typedef struct {
+    const HippoDBusConnectionTracker *tracker;
+    void *data;
+    DBusConnection *connection;
+} HippoDBusConnection;
+
+static guint try_session_connect_timeout = 0;
+static GSList *session_connection_trackers = NULL;
+static gboolean session_ever_attempted = FALSE;
 
 static DBusHandlerResult hippo_dbus_helper_handle_object_message(DBusConnection  *connection,
                                                                  DBusMessage     *message,
@@ -182,6 +193,16 @@ helper_free(void *data)
 {
     HippoDBusHelper *helper = data;
 
+    /* we should be disconnected, so these should have been notified...
+     * unless we managed to unref the connection without ever
+     * completing dispatch. This warning probably isn't hard to
+     * fix but since it's probably an app bug if it happens,
+     * let's leave it for now.
+     */
+    if (helper->connection_trackers != NULL) {
+        g_warning("DBusConnection finalized without dispatching the incoming queue, which is not supported by hippo-dbus-helper.c right now (are you sure you meant to finalize it?)");
+    }
+    
     /* FIXME free the hash contents */
 
     g_hash_table_destroy(helper->services_by_well_known);
@@ -1283,6 +1304,132 @@ hippo_dbus_helper_unregister_service_tracker (DBusConnection                *con
     service_free(service);
 }
 
+static gboolean attempt_session_connect_timeout(void *data);
+
+static void
+ensure_session_connect_attempt(void)
+{
+    if (try_session_connect_timeout == 0 &&
+        session_connection_trackers != NULL) {
+        int interval_secs;
+        if (session_ever_attempted) {
+            interval_secs = 15; /* retry periodically */
+        } else {
+            interval_secs = 0;  /* on startup, try immediately */
+        }
+        /* FIXME use g_timeout_add_seconds() once it's been available longer */
+        try_session_connect_timeout =            
+            g_timeout_add(interval_secs * 1000, attempt_session_connect_timeout, NULL);
+    }
+}
+
+static gboolean
+attempt_session_connect_timeout(void *data)
+{
+    DBusConnection *connection;
+    GSList *tmp;
+    GSList *copy;
+    HippoDBusHelper *helper;
+
+    /* we always return FALSE to remove ourselves */
+    try_session_connect_timeout = 0;
+    
+    session_ever_attempted = TRUE;
+    
+    connection = dbus_bus_get(DBUS_BUS_SESSION, NULL);
+    if (connection == NULL) {
+        /* try again (since we set session_ever_attempted = TRUE, this
+         * will be after a timeout; also we may exit if that's what the
+         * app normally does on session bus disconnect)
+         */
+        ensure_session_connect_attempt();
+        return FALSE; /* remove ourselves */
+    }
+
+    helper = get_helper(connection);
+    
+    /* this is broken of course, since it means
+     * we can invoke a handler after it's removed.
+     */
+    copy = g_slist_copy(session_connection_trackers);
+
+    for (tmp = copy; tmp != NULL; tmp = tmp->next) {
+        HippoDBusConnection *closure = tmp->data;
+
+        closure->connection = connection;
+        dbus_connection_ref(closure->connection);
+        
+        (* closure->tracker->connected_handler) (closure->connection, closure->data);
+
+        helper->connection_trackers = g_slist_prepend(helper->connection_trackers,
+                                                      closure);
+    }
+
+    g_slist_free(copy);
+
+    dbus_connection_unref(connection);
+
+    return FALSE;
+}
+
+void
+hippo_dbus_helper_register_connection_tracker (DBusBusType                       bus_type,
+                                               const HippoDBusConnectionTracker *tracker,
+                                               void                             *data)
+{
+    HippoDBusConnection *closure;
+    
+    if (bus_type != DBUS_BUS_SESSION) {
+        g_warning ("Only the session bus is supported in %s for now", __FUNCTION__);
+        return;
+    }
+
+    closure = g_new0(HippoDBusConnection, 1);
+    closure->tracker = tracker;
+    closure->data = data;
+    
+    session_connection_trackers = g_slist_append(session_connection_trackers, closure);
+
+    ensure_session_connect_attempt();
+}
+
+void
+hippo_dbus_helper_unregister_connection_tracker (DBusBusType                       bus_type,
+                                                 const HippoDBusConnectionTracker *tracker,
+                                                 void                             *data)
+{
+    GSList *tmp;
+    HippoDBusConnection *closure;
+
+    closure = NULL;
+    for (tmp = session_connection_trackers; tmp != NULL; tmp = tmp->next) {
+        closure = tmp->data;
+        if (closure->tracker == tracker && closure->data == data)
+            break;
+    }
+
+    if (closure == NULL) {
+        g_warning("attempted to unregister not-registered connection tracker");
+        return;
+    }
+
+    session_connection_trackers = g_slist_remove(session_connection_trackers, closure);
+
+    if (closure->connection) {
+        HippoDBusHelper *helper;
+        
+        helper = get_helper(closure->connection);
+
+        helper->connection_trackers = g_slist_remove(helper->connection_trackers, closure);
+        
+        (* closure->tracker->disconnected_handler) (closure->connection, closure->data);
+        dbus_connection_unref(closure->connection);
+        closure->connection = NULL;
+    }
+    
+    g_free(closure);
+}
+
 static DBusHandlerResult
 hippo_dbus_helper_filter_message(DBusConnection *connection,
                                  DBusMessage    *message,
@@ -1324,6 +1471,24 @@ hippo_dbus_helper_filter_message(DBusConnection *connection,
                     tracker->handler(connection, message, service->data);
                 }
             }
+        }
+
+        if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL, "Disconnected")) {
+            while (helper->connection_trackers != NULL) {
+                HippoDBusConnection *closure;
+
+                closure = helper->connection_trackers->data;
+                helper->connection_trackers = g_slist_remove(helper->connection_trackers, closure);
+                
+                (* closure->tracker->disconnected_handler) (closure->connection, closure->data);
+                dbus_connection_unref(closure->connection);
+                closure->connection = NULL;
+            }
+
+            /* If we don't exit (since someone told libdbus not to), then we'll try connecting
+             * again in a while
+             */
+            ensure_session_connect_attempt();
         }
     }
     
