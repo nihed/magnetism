@@ -445,6 +445,9 @@ hippo_platform_impl_open_url(HippoPlatform     *platform,
     case HIPPO_BROWSER_EPIPHANY:
         command = g_strdup_printf("epiphany %s", quoted);
         break;
+    case HIPPO_BROWSER_GALEON:
+        command = g_strdup_printf("galeon %s", quoted);
+        break;
     case HIPPO_BROWSER_FIREFOX:
     case HIPPO_BROWSER_UNKNOWN: /* FIXME get user's default from gnome */
     default:
