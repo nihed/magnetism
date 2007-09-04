@@ -1,0 +1,6 @@
+(if
+    (or (is (application_name) "firefox-bin") (is (application_name) "Firefox"))
+    (begin
+       (maximize)
+    )
+)

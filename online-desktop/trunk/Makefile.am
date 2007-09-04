@@ -32,5 +32,6 @@ include Makefile-mailto.am
 include Makefile-desktop.am
 include Makefile-icons.am
 include Makefile-pyonlinedesktop.am
+include Makefile-devilspie.am
 include Makefile-session.am
 
