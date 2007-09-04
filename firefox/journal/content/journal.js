@@ -584,6 +584,15 @@ JournalPage.prototype = {
       histcount.addEventListener("submit", function (e) { me.onHistValueChanged(); Event.stop(e); }, true);
     }
 
+    searchbox.focus();
+    
+    $("history").appendChild(document.createTextNode("Loading journal..."));
+    window.setTimeout(function () { try { me.initializeSidebars(); } catch (e) { LOG("exception: " + e); }  }, 50);  
+    window.setTimeout(function () { try { me.redisplay(); } catch (e) { LOG("exception: " + e); }  }, 150);    
+  },
+  initializeSidebars: function() {
+    // This function is separated out so internal IFRAMEs don't pollute the browser history, c.f.:
+    // http://codinginparadise.org/weblog/2005/08/ajax-tutorial-tale-of-two-iframes-or.html
     this.sidebars.each(function (sb) {
       var div = document.createElement("div");
       div.setAttribute("id", sb.sidebarId);
@@ -595,11 +604,6 @@ JournalPage.prototype = {
       sb.setupDom(div);
       $("sidebars").appendChild(div);
     });
-
-    searchbox.focus();
-    
-    $("history").appendChild(document.createTextNode("Loading journal..."))
-    window.setTimeout(function () { try { me.redisplay(); } catch (e) { LOG("exception: " + e); }  }, 150);    
   },
   onHistValueChanged: function () {
     var val = $("histcountentry").value;
