@@ -1,5 +1,11 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
+
+/* Don't include dbus.h in here because on Windows we just don't build
+ * the .c file for this, and there's no dbus.h for now
+ */
+
+
 #ifndef DDM_COMPILATION
 #ifndef DDM_INSIDE_DDM_H
 #error "Do not include this file directly, include ddm.h instead"
