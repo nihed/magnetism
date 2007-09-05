@@ -16,14 +16,14 @@ GoogleSidebar.prototype = {
     div.appendChild(ifr);
     div.style.display = "none";
   },
-  redisplay: function(q) {
+  searchQuery: function(q) {
     if (q) {
      frames["google-q"].location.href = "http://www.gnome.org/~clarkbw/google/?q=" + escape(q.strip());
       $("GoogleSidebar").style.display = "block";
     } else {
       $("GoogleSidebar").style.display = "none";
     }
-  }
+  },
 }
 
 getJournalPageInstance().appendSidebar(new GoogleSidebar());
