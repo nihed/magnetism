@@ -13,10 +13,16 @@ GoogleSidebar.prototype = {
     ifr.setAttribute("src", "");
     ifr.setAttribute("marginwidth", "0");
     ifr.setAttribute("marginheight", "0");
-    div.appendChild(ifr);   
+    div.appendChild(ifr);
+    div.style.display = "none";
   },
   redisplay: function(q) {
-    frames["google-q"].location.href = "http://www.gnome.org/~clarkbw/google/?q=" + escape(q.strip());
+    if (q) {
+     frames["google-q"].location.href = "http://www.gnome.org/~clarkbw/google/?q=" + escape(q.strip());
+      $("GoogleSidebar").style.display = "block";
+    } else {
+      $("GoogleSidebar").style.display = "none";
+    }
   }
 }
 
