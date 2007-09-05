@@ -148,9 +148,11 @@ Journal.prototype = {
    
     var lastHistoryItemResults = HISTORY_SERVICE.executeQuery(histq, options);
     var lastHistoryTime;
-    if (!lastHistoryItemResults.root.hasChildren)
-      return null;
     lastHistoryItemResults.root.containerOpen = true;
+    if (!lastHistoryItemResults.root.hasChildren) {
+      lastHistoryItemResults.root.containerOpen = false;
+      return null;
+    }
     var lastHistoryItem = lastHistoryItemResults.root.getChild(0);
     lastHistoryTime = lastHistoryItem.time;
     lastHistoryItemResults.root.containerOpen = false;
