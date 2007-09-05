@@ -1,0 +1,4 @@
+pyddmdir = $(pyexecdir)/pyddm
+pyddm_PYTHON = pyddm/pyddm/*.py 
+
+EXTRA_DIST += pyddm/test.py pyddm/test-session.py
