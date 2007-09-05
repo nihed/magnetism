@@ -376,6 +376,12 @@ ddm_data_resource_get_property_by_qname(DDMDataResource *resource,
     return NULL;
 }
 
+GSList*
+ddm_data_resource_get_properties(DDMDataResource    *resource)
+{
+    return g_slist_copy(resource->properties);
+}
+
 GSList *
 _ddm_data_resource_get_default_properties(DDMDataResource *resource)
 {
@@ -889,44 +895,69 @@ ddm_data_parse_type(const char           *type_string,
     return TRUE;
 }
 
+char*
+ddm_data_value_to_string(DDMDataValue *value)
+{
+    if (DDM_DATA_IS_LIST(value->type)) {
+        GSList *l;
+        GString *str;
+
+        str = g_string_new(NULL);
+        g_string_append(str, "[");
+
+        for (l = value->u.list; l; l = l->next) {
+            DDMDataValue element;
+            char *s;
+            
+            ddm_data_value_get_element(value, l, &element);
+
+            s = ddm_data_value_to_string(&element);
+            g_string_append(str, s);
+            g_free(s);
+            
+            if (l->next)
+                g_string_append(str, ", ");
+        }
+        g_string_append(str, "]");
+
+        return g_string_free(str, FALSE);
+    }
+    
+    switch (value->type) {
+    case DDM_DATA_NONE:
+        return g_strdup("[]");
+    case DDM_DATA_BOOLEAN:
+        return g_strdup_printf("'%s'", value->u.boolean ? "true" : "false");
+    case DDM_DATA_INTEGER:
+        return g_strdup_printf("%d", value->u.integer);
+    case DDM_DATA_LONG:
+        return g_strdup_printf("%" G_GINT64_FORMAT "\n", value->u.long_);
+    case DDM_DATA_FLOAT:
+        return g_strdup_printf("%f", value->u.float_);
+    case DDM_DATA_STRING:
+        return g_strdup_printf("'%s'", value->u.string);
+    case DDM_DATA_RESOURCE:
+        return g_strdup_printf("%s", value->u.resource->resource_id);
+    case DDM_DATA_URL:
+        return g_strdup_printf("%s", value->u.string);
+    default:
+        return g_strdup("UNKNOWN");
+    }
+}
+
 static void
 print_value(DDMDataValue *value)
 {
-    switch (value->type) {
-    case DDM_DATA_NONE:
-        g_print("[]\n");
-        break;
-    case DDM_DATA_BOOLEAN:
-        g_print("'%s'\n", value->u.boolean ? "true" : "false");
-        break;
-    case DDM_DATA_INTEGER:
-        g_print("%d\n", value->u.integer);
-        break;
-    case DDM_DATA_LONG:
-        g_print("%" G_GINT64_FORMAT "\n", value->u.long_);
-        break;
-    case DDM_DATA_FLOAT:
-        g_print("%f\n", value->u.float_);
-        break;
-    case DDM_DATA_STRING:
-        g_print("'%s'\n", value->u.string);
-        break;
-    case DDM_DATA_RESOURCE:
-        g_print("%s\n", value->u.resource->resource_id);
-        break;
-    case DDM_DATA_URL:
-        g_print("%s\n", value->u.string);
-        break;
-    case DDM_DATA_LIST:
-        break;
-    }
+    char *s;
+    s = ddm_data_value_to_string(value);
+    g_print("%s\n", s);
+    g_free(s);
 }
 
 void
 _ddm_data_resource_dump(DDMDataResource *resource)
 {
     GSList *property_node;
-    GSList *l;
     
     g_print("%s %s\n", resource->resource_id, resource->class_id);
 
@@ -942,22 +973,7 @@ _ddm_data_resource_dump(DDMDataResource *resource)
         g_print("   %s: ", display);
         g_free(display);
 
-        if (DDM_DATA_IS_LIST(property->value.type)) {
-            g_print("[");
-            for (l = property->value.u.list; l; l = l->next) {
-                DDMDataValue element;
-                ddm_data_value_get_element(&property->value, l, &element);
-                print_value(&element);
-                
-                if (l->next)
-                    g_print(", ");
-            }
-            g_print("]");
-        } else {
-            print_value(&property->value);
-            g_print("\n");
-        }
-        
+        print_value(&property->value);        
     }
 }
 

@@ -17,6 +17,9 @@ typedef enum {
     HIPPO_DBUS_MEMBER_SIGNAL
 } HippoDBusMemberType;
 
+typedef enum {
+    HIPPO_DBUS_SERVICE_START_IF_NOT_RUNNING = 1 << 0
+} HippoDBusServiceTrackerFlags;
 
 typedef struct HippoDBusProxy HippoDBusProxy;
 typedef struct HippoDBusMember HippoDBusMember;
@@ -86,6 +89,7 @@ struct HippoDBusProperty
 
 struct HippoDBusServiceTracker
 {
+    HippoDBusServiceTrackerFlags flags;
     HippoDBusServiceAvailableHandler available_handler;
     HippoDBusServiceUnavailableHandler unavailable_handler;
 };

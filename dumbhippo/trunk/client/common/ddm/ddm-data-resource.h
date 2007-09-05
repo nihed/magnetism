@@ -107,8 +107,12 @@ DDMDataProperty *  ddm_data_resource_get_property          (DDMDataResource    *
                                                             const char         *name);
 DDMDataProperty *  ddm_data_resource_get_property_by_qname (DDMDataResource    *resource,
                                                             DDMQName           *qname);
+GSList          *  ddm_data_resource_get_properties        (DDMDataResource    *resource);
 void               ddm_data_resource_on_resource_change    (DDMDataResource    *resource,
                                                             GSList             *changed_properties);
+
+/* for debugging */
+char* ddm_data_value_to_string (DDMDataValue *value);
 
 /* Sometimes it's useful to create the resource object first, and set the class_id later */
 void     ddm_data_resource_set_class_id    (DDMDataResource    *resource,

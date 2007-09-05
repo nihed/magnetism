@@ -660,6 +660,7 @@ static const HippoDBusSignalTracker pidgin_signal_handlers[] = {
 };
 
 static const HippoDBusServiceTracker service_tracker = {
+    0,
     handle_service_available,
     handle_service_unavailable
 };

@@ -13,6 +13,18 @@
 
 #include <dbus/dbus.h>
 
+typedef enum {
+    PENDING_REQUEST_QUERY,
+    PENDING_REQUEST_UPDATE
+} PendingRequestType;
+
+typedef struct {
+    PendingRequestType type;
+    DDMDataQuery *query;
+    char         *method;
+    GHashTable   *params;
+} PendingRequest;
+
 typedef struct {
     int             refcount;
     char           *path;
@@ -20,7 +32,17 @@ typedef struct {
     DBusConnection *connection;
     HippoDBusProxy *engine_proxy;
     HippoDBusProxy *engine_props_proxy;
+    GSList *pending_requests;
 } DBusModel;
+
+static void ddm_dbus_send_query   (DDMDataModel *ddm_model,
+                                   DDMDataQuery *query,
+                                   void         *backend_data);
+static void ddm_dbus_send_update  (DDMDataModel *ddm_model,
+                                   DDMDataQuery *query,
+                                   const char   *method,
+                                   GHashTable   *params,
+                                   void         *backend_data);
 
 static void
 model_ref(DBusModel *dbus_model)
@@ -50,6 +72,88 @@ get_dbus_model(DDMDataModel *ddm_model)
     DBusModel *dbus_model = g_object_get_data(G_OBJECT(ddm_model), "dbus-data-model");
 
     return dbus_model;
+}
+
+static void
+model_add_pending_query(DBusModel    *dbus_model,
+                        DDMDataQuery *query)
+{
+    PendingRequest *pr;
+
+    g_debug("delaying Query to org.freedesktop.od.Engine until we connect");
+    
+    pr = g_new0(PendingRequest, 1);
+    pr->type = PENDING_REQUEST_QUERY;
+    pr->query = query;
+
+    dbus_model->pending_requests = g_slist_append(dbus_model->pending_requests, pr);
+}
+
+static void
+copy_foreach(void *key,
+             void *value,
+             void *data)
+{
+    GHashTable *copy = data;
+    g_hash_table_replace(copy, g_strdup(key), g_strdup(value));
+}
+
+static GHashTable*
+deep_copy_string_hash(GHashTable *orig)
+{
+    GHashTable *copy;
+    
+    copy = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                 (GDestroyNotify)g_free, (GDestroyNotify)g_free);
+
+    g_hash_table_foreach(orig, copy_foreach, copy);
+
+    return copy;
+}
+
+static void
+model_add_pending_update(DBusModel    *dbus_model,
+                         DDMDataQuery *query,
+                         const char   *method,
+                         GHashTable   *params)
+{
+    PendingRequest *pr;
+
+    g_debug("delaying Update to org.freedesktop.od.Engine until we connect");
+    
+    pr = g_new0(PendingRequest, 1);
+    pr->type = PENDING_REQUEST_UPDATE;
+    pr->query = query;
+    pr->method = g_strdup(method);
+    pr->params = deep_copy_string_hash(params);
+    
+    dbus_model->pending_requests = g_slist_append(dbus_model->pending_requests, pr);
+}
+
+static void
+model_send_pending(DBusModel *dbus_model)
+{
+    g_debug("Sending %d pending requests to org.freedesktop.od.engine",
+            g_slist_length(dbus_model->pending_requests));
+    
+    while (dbus_model->pending_requests != NULL) {
+        PendingRequest *pr = dbus_model->pending_requests->data;
+        dbus_model->pending_requests = g_slist_remove(dbus_model->pending_requests,
+                                                      dbus_model->pending_requests->data);
+        
+        if (pr->type == PENDING_REQUEST_QUERY) {
+            ddm_dbus_send_query(dbus_model->ddm_model, pr->query, NULL);
+            g_free(pr);
+        } else if (pr->type == PENDING_REQUEST_UPDATE) {
+            ddm_dbus_send_update(dbus_model->ddm_model, pr->query,
+                                 pr->method, pr->params, NULL);
+            g_free(pr->method);
+            g_hash_table_destroy(pr->params);
+            g_free(pr);
+        } else {
+            g_warning("unknown pending request type");
+        }
+    }
 }
 
 static gboolean
@@ -264,6 +368,7 @@ update_property(DBusModel          *dbus_model,
         return;
 
     dbus_message_iter_recurse(prop_struct_iter, &variant_iter);
+    value.type = data_type;
     if (!read_variant_value(dbus_model->ddm_model, &variant_iter, data_type, &value))
         return;
 
@@ -381,6 +486,9 @@ handle_incoming_resource_updates(DBusModel          *dbus_model,
     }
     
     if (query_to_respond_to) {
+
+        g_debug("Query had %d resources in reply", g_slist_length(resources));
+        
         resources = g_slist_reverse(resources);
         ddm_data_query_response(query_to_respond_to, resources);
         g_slist_free(resources);
@@ -429,6 +537,9 @@ handle_get_connected_reply(DBusMessage *reply,
     DBusMessageIter variant_iter;
     DBusMessageIter toplevel_iter;
     dbus_bool_t connected;
+
+    if (dbus_model->ddm_model == NULL) /* happens if the reply comes in after we nuke the model */
+        return;
     
     if (dbus_message_get_type(reply) != DBUS_MESSAGE_TYPE_METHOD_RETURN) {
         return;        
@@ -465,12 +576,23 @@ handle_engine_available(DBusConnection *connection,
                         void           *data)
 {
     DBusModel *dbus_model = data;
+    const char *iface;
+    const char *method;
 
+    g_debug("org.freedesktop.od.Engine available");
+    
+    dbus_model->engine_proxy = hippo_dbus_proxy_new(dbus_model->connection,
+                                                    unique_name,
+                                                    "/org/freedesktop/od/data_model",
+                                                    "org.freedesktop.od.Model");
+    
     dbus_model->engine_props_proxy = hippo_dbus_proxy_new(dbus_model->connection,
                                                           unique_name,
                                                           "/org/freedesktop/od/data_model",
                                                           DBUS_INTERFACE_PROPERTIES);
-    
+
+    iface = "org.freedesktop.od.Model";
+    method = "Connected";
     model_ref(dbus_model);
     hippo_dbus_proxy_call_method_async(dbus_model->engine_props_proxy,
                                        "Get",
@@ -478,10 +600,12 @@ handle_engine_available(DBusConnection *connection,
                                        dbus_model,
                                        (GFreeFunc) model_unref,
                                        DBUS_TYPE_STRING,
-                                       "org.freedesktop.od.Model",
+                                       &iface,
                                        DBUS_TYPE_STRING,
-                                       "Connected",
+                                       &method,
                                        DBUS_TYPE_INVALID);
+
+    model_send_pending(dbus_model);
 }
 
 static void
@@ -492,15 +616,21 @@ handle_engine_unavailable(DBusConnection *connection,
 {
     DBusModel *dbus_model = data;
 
+    g_debug("org.freedesktop.od.Engine went away");
+    
     g_assert(dbus_model->engine_props_proxy != NULL);
     
     hippo_dbus_proxy_unref(dbus_model->engine_props_proxy);
     dbus_model->engine_props_proxy = NULL;
+
+    hippo_dbus_proxy_unref(dbus_model->engine_proxy);
+    dbus_model->engine_proxy = NULL;
     
     ddm_data_model_set_connected(dbus_model->ddm_model, FALSE);
 }
 
 static HippoDBusServiceTracker engine_tracker = {
+    HIPPO_DBUS_SERVICE_START_IF_NOT_RUNNING,
     handle_engine_available,
     handle_engine_unavailable
 };
@@ -550,6 +680,8 @@ handle_session_bus_connected(DBusConnection *connection,
 {
     DBusModel *dbus_model = data;
 
+    g_debug("Connected to session bus");
+    
     g_assert(dbus_model->connection == NULL);
     
     dbus_model->connection = connection;
@@ -569,12 +701,7 @@ handle_session_bus_connected(DBusConnection *connection,
                                                "org.freedesktop.od.Engine",
                                                &engine_tracker,
                                                engine_signal_handlers,
-                                               dbus_model);
-
-    dbus_model->engine_proxy = hippo_dbus_proxy_new(dbus_model->connection,
-                                                    "org.freedesktop.od.Engine",
-                                                    "/org/freedesktop/od/data_model",
-                                                    "org.freedesktop.od.Model");
+                                               dbus_model);                                   
 }
 
 static void
@@ -583,6 +710,8 @@ handle_session_bus_disconnected(DBusConnection *connection,
 {
     DBusModel *dbus_model = data;
 
+    g_debug("Disconnected from session bus");
+    
     g_assert(dbus_model->connection != NULL);
     g_assert(dbus_model->connection == connection);
 
@@ -599,9 +728,6 @@ handle_session_bus_disconnected(DBusConnection *connection,
     /* there's no interface unregistration right now */
     
     ddm_data_model_set_connected(dbus_model->ddm_model, FALSE);
-
-    hippo_dbus_proxy_unref(dbus_model->engine_proxy);
-    dbus_model->engine_proxy = NULL;
     
     dbus_connection_unref(dbus_model->connection);
     dbus_model->connection = NULL;
@@ -700,7 +826,11 @@ handle_query_reply(DBusMessage *reply,
                    void        *data)
 {
     QueryData *qd = data;
+    DBusMessageIter toplevel_iter;
     DBusMessageIter resource_array_iter;
+
+    if (qd->dbus_model->ddm_model == NULL) /* happens if the reply comes in after we nuke the model */
+        return;
     
     if (dbus_message_get_type(reply) != DBUS_MESSAGE_TYPE_METHOD_RETURN) {
         /* the dbus API does not give us the error code right now */
@@ -719,7 +849,8 @@ handle_query_reply(DBusMessage *reply,
         return;
     }
     
-    dbus_message_iter_init(reply, &resource_array_iter);
+    dbus_message_iter_init(reply, &toplevel_iter);
+    dbus_message_iter_recurse(&toplevel_iter, &resource_array_iter);
 
     handle_incoming_resource_updates(qd->dbus_model, &resource_array_iter, qd->query);
 }
@@ -737,7 +868,7 @@ append_query_args(DBusMessage *message,
 
     /* notification path */
     if (!dbus_message_iter_append_basic(&toplevel_iter,
-                                        DBUS_TYPE_STRING, &qd->dbus_model->path))
+                                        DBUS_TYPE_OBJECT_PATH, &qd->dbus_model->path))
         return FALSE;
 
     /* method uri */
@@ -780,13 +911,13 @@ ddm_dbus_send_query   (DDMDataModel *ddm_model,
 
     dbus_model = get_dbus_model(ddm_model);
 
-    if (dbus_model->connection == NULL) {
-        ddm_data_query_error(query,
-                             DDM_DATA_ERROR_NO_CONNECTION,
-                             "Not connected to message bus");
-        return;                             
+    if (dbus_model->engine_proxy == NULL) {
+        model_add_pending_query(dbus_model, query);
+        return;
     }
 
+    g_debug("sending Query to org.freedesktop.od.Engine");
+    
     g_assert(dbus_model->engine_proxy != NULL); /* since connection != NULL */
 
     qd = g_new(QueryData, 1);
@@ -810,6 +941,9 @@ handle_update_reply(DBusMessage *reply,
                     void        *data)
 {
     QueryData *qd = data;
+
+    if (qd->dbus_model->ddm_model == NULL) /* happens if the reply comes in after we nuke the model */
+        return;
     
     if (dbus_message_get_type(reply) != DBUS_MESSAGE_TYPE_METHOD_RETURN) {
         /* the dbus API does not give us the error code right now */
@@ -871,13 +1005,13 @@ ddm_dbus_send_update (DDMDataModel *ddm_model,
 
     dbus_model = get_dbus_model(ddm_model);
 
-    if (dbus_model->connection == NULL) {
-        ddm_data_query_error(query,
-                             DDM_DATA_ERROR_NO_CONNECTION,
-                             "Not connected to message bus");
-        return;                             
+    if (dbus_model->engine_proxy == NULL) {
+        model_add_pending_update(dbus_model, query, method, params);
+        return;
     }
 
+    g_debug("sending Update to org.freedesktop.od.Engine");
+    
     g_assert(dbus_model->engine_proxy != NULL); /* since connection != NULL */
 
     qd = g_new(QueryData, 1);

@@ -147,7 +147,7 @@ ddm_data_query_free (DDMDataQuery *query)
 
 void
 ddm_data_query_response (DDMDataQuery  *query,
-                         GSList          *results)
+                         GSList        *results)
 {
     g_return_if_fail(query != NULL);
 
@@ -189,11 +189,12 @@ ddm_data_query_response (DDMDataQuery  *query,
 void
 ddm_data_query_error (DDMDataQuery  *query,
                       DDMDataError   error,
-                      const char      *message)
+                      const char    *message)
 {
     g_return_if_fail(query != NULL);
 
-    query->error_handler(error, message, query->error_handler_data);
-
+    if (query->error_handler)    
+        query->error_handler(error, message, query->error_handler_data);
+    
     ddm_data_query_free(query);
 }
