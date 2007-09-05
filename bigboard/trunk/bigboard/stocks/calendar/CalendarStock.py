@@ -330,13 +330,37 @@ class EventDetailsDisplay(hippo.CanvasBox):
         event_time = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, padding_left=4, padding_right=4, text="for: " + fmt_datetime_interval(event.get_start_time(), event.get_end_time()))
         self.__top_box.append(event_time)
 
+        if len(event.get_event_entry().where) > 0:
+            where_string = event.get_event_entry().where[0].value_string
+            if where_string is not None and len(where_string.strip()) > 0:
+                event_where_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL, padding_left=4, padding_right=4)
+                event_where = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, text="where: " + where_string + "   (")
+
+                event_map_link = ActionLink(text="map")
+                event_map_link.connect("activated", self.__on_activated_event_map_link)
+
+                event_map_link_parenthesis = hippo.CanvasText(text=")")
+ 
+                event_where_box.append(event_where)
+                event_where_box.append(event_map_link)
+                event_where_box.append(event_map_link_parenthesis) 
+                self.__top_box.append(event_where_box)
+
         event_calendar = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, padding_left=4, padding_right=4, text="from: " + xml.sax.saxutils.escape(event.get_calendar_title()))
         self.__top_box.append(event_calendar)
+
+        if event.get_event_entry().content.text is not None:
+            # TODO: description might have urls which it would be nice to detect and display 
+            event_description = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, padding_left=4, padding_right=4, size_mode=hippo.CANVAS_SIZE_WRAP_WORD, text=xml.sax.saxutils.escape(google.html_to_text(event.get_event_entry().content.text)))
+            self.__top_box.append(event_description)
 
     def __on_activate_web(self, canvas_item):
         self.emit("close")
         _logger.debug("activated event %s", self)
         os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', self.__event.get_link())
+
+    def __on_activated_event_map_link(self, canvas_item):
+        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', "http://maps.google.com/maps?q=" + self.__event.get_event_entry().where[0].value_string)
 
     def __get_title(self):
         if self.__event is None:
@@ -866,7 +890,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                "\nfrom: " + xml.sax.saxutils.escape(event.get_calendar_title()) + "</i>"
 
         if event.get_event_entry().content.text is not None:
-            body = body + "\n\n" + xml.sax.saxutils.escape(event.get_event_entry().content.text)
+            body = body + "\n\n" + xml.sax.saxutils.escape(google.html_to_text(event.get_event_entry().content.text))
 
         self.__event_notify_ids[event.get_link()] = self.__notifications_proxy.Notify(
                                                         "BigBoard",
