@@ -32,6 +32,7 @@ libddminclude_HEADERS=					\
 	$(COMMONSRCDIR)/ddm/ddm-data-model-dbus.h	\
 	$(COMMONSRCDIR)/ddm/ddm-data-resource.h		\
 	$(COMMONSRCDIR)/ddm/ddm-data-query.h		\
+	$(COMMONSRCDIR)/ddm/ddm-notification-set.h	\
 	$(COMMONSRCDIR)/ddm/ddm-qname.h
 
 LIBDDM_SOURCEFILES =						\
@@ -43,6 +44,7 @@ LIBDDM_SOURCEFILES =						\
 	$(COMMONSRCDIR)/ddm/ddm-data-resource-internal.h	\
 	$(COMMONSRCDIR)/ddm/ddm-data-query.c			\
 	$(COMMONSRCDIR)/ddm/ddm-data-query-internal.h		\
+	$(COMMONSRCDIR)/ddm/ddm-notification-set.c		\
 	$(COMMONSRCDIR)/ddm/ddm-qname.c				\
 	$(COMMONSRCDIR)/ddm/hippo-dbus-helper.c			\
 	$(COMMONSRCDIR)/ddm/hippo-dbus-helper.h			\

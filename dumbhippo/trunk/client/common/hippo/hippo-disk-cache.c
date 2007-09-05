@@ -1238,28 +1238,58 @@ _hippo_disk_cache_save_properties_to_disk(HippoDiskCache    *cache,
 #endif    
 }
 
+typedef struct {
+    HippoDiskCache *disk_cache;
+    gint64 timestamp;
+} SaveNotificationsClosure;
+
+static void
+save_notification_foreach(DDMNotificationSet *notifications,
+                          DDMDataResource      *resource,
+                          GSList               *changed_properties,
+                          void                 *data)
+{
+    SaveNotificationsClosure *snc = data;
+    
+    _hippo_disk_cache_save_properties_to_disk(snc->disk_cache, resource, changed_properties,
+                                              snc->timestamp);
+}
+
+static void
+save_notifications_to_disk_without_transaction(HippoDiskCache       *cache,
+                                               DDMNotificationSet   *notifications,
+                                               guint64               timestamp)
+{
+    SaveNotificationsClosure snc;
+    
+    snc.disk_cache = cache;
+    snc.timestamp = timestamp;
+    
+    ddm_notification_set_foreach(notifications, save_notification_foreach, &snc);
+}
+
 void
 _hippo_disk_cache_save_update_to_disk(HippoDiskCache       *cache,
-                                      HippoNotificationSet *properties)
+                                      DDMNotificationSet   *notifications)
 {
 #ifdef HAVE_SQLITE
     execute_sql(cache,
                 "BEGIN TRANSACTION",
                 NULL);
-    
-    _hippo_notification_set_save_to_disk(properties, get_current_timestamp());
+
+    save_notifications_to_disk_without_transaction(cache, notifications, get_current_timestamp());
     
     execute_sql(cache,
                 "END TRANSACTION",
                 NULL);
-#endif    
+#endif
 }
 
 void
 _hippo_disk_cache_save_query_to_disk(HippoDiskCache       *cache,
                                      DDMDataQuery         *query,
                                      GSList               *resources,
-                                     HippoNotificationSet *properties)
+                                     DDMNotificationSet   *properties)
 {
 #ifdef HAVE_SQLITE
     char *uri;
@@ -1272,7 +1302,7 @@ _hippo_disk_cache_save_query_to_disk(HippoDiskCache       *cache,
                 "BEGIN TRANSACTION",
                 NULL);
 
-    _hippo_notification_set_save_to_disk(properties, timestamp);
+    save_notifications_to_disk_without_transaction(cache, properties, timestamp);
     
     uri = build_query_uri(query); 
     params = build_param_string(query);

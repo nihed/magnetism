@@ -1,21 +1,18 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
-#include <ddm/ddm.h>
-#include "hippo-notification-set.h"
-#include "hippo-disk-cache.h"
+#include "ddm-data-resource.h"
+#include "ddm-notification-set.h"
 
-typedef struct _ResourceInfo ResourceInfo;
-
-struct _ResourceInfo
+typedef struct
 {
     DDMDataResource *resource;
     GSList *changed_properties;
-};
+} ResourceInfo;
 
-struct _HippoNotificationSet
+struct _DDMNotificationSet
 {
     DDMDataModel *model;
-    GHashTable     *resources;
+    GHashTable   *resources;
 };
 
 static void
@@ -25,10 +22,10 @@ free_resource_info (ResourceInfo *info)
     g_free(info);
 }
 
-HippoNotificationSet *
-_hippo_notification_set_new (DDMDataModel *model)
+DDMNotificationSet *
+ddm_notification_set_new (DDMDataModel *model)
 {
-    HippoNotificationSet *notifications = g_new0(HippoNotificationSet, 1);
+    DDMNotificationSet *notifications = g_new0(DDMNotificationSet, 1);
 
     notifications->model = model;
     notifications->resources = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, (GDestroyNotify)free_resource_info);
@@ -37,16 +34,16 @@ _hippo_notification_set_new (DDMDataModel *model)
 }
 
 void
-_hippo_notification_set_add (HippoNotificationSet *notifications,
+ddm_notification_set_add (DDMNotificationSet *notifications,
                              DDMDataResource      *resource,
                              DDMQName             *property_id)
 {
     const char *resource_id = ddm_data_resource_get_resource_id(resource);
-    
+
     ResourceInfo *info = g_hash_table_lookup(notifications->resources, resource_id);
     if (info == NULL) {
         info = g_new0(ResourceInfo, 1);
-        
+
         info->resource = resource;
         info->changed_properties = NULL;
 
@@ -58,7 +55,7 @@ _hippo_notification_set_add (HippoNotificationSet *notifications,
 }
 
 gboolean
-_hippo_notification_set_has_property (HippoNotificationSet *notifications,
+ddm_notification_set_has_property (DDMNotificationSet *notifications,
                                       const char           *resource_id,
                                       DDMQName           *property_id)
 {
@@ -74,54 +71,51 @@ send_notification_foreach(gpointer key,
                           gpointer value,
                           gpointer data)
 {
-    /* HippoNotificationSet *notifications = data; */
+    /* DDMNotificationSet *notifications = data; */
     ResourceInfo *info = value;
 
     ddm_data_resource_on_resource_change(info->resource, info->changed_properties);
 }
 
 void
-_hippo_notification_set_send (HippoNotificationSet *notifications)
+ddm_notification_set_send (DDMNotificationSet *notifications)
 {
     g_hash_table_foreach(notifications->resources, send_notification_foreach, notifications);
 }
 
 typedef struct {
-    HippoDiskCache *disk_cache;
-    HippoNotificationSet *notifications;
-    gint64 timestamp;
-} SaveNotificationsClosure;
+    DDMNotificationSet *notifications;
+    DDMNotificationSetForeachFunc func;
+    void *func_data;
+} ForeachClosure;
 
 static void
-save_notification_foreach(gpointer key,
-                          gpointer value,
-                          gpointer data)
+foreach_notification_foreach(gpointer key,
+                             gpointer value,
+                             gpointer data)
 {
-    SaveNotificationsClosure *snc = data;
+    ForeachClosure *fec = data;
     ResourceInfo *info = value;
 
-    _hippo_disk_cache_save_properties_to_disk(snc->disk_cache, info->resource, info->changed_properties,
-                                              snc->timestamp);
+    (* fec->func) (fec->notifications, info->resource, info->changed_properties, fec->func_data);
 }
 
 void
-_hippo_notification_set_save_to_disk (HippoNotificationSet *notifications,
-                                      gint64                timestamp)
+ddm_notification_set_foreach (DDMNotificationSet            *notifications,
+                              DDMNotificationSetForeachFunc  func,
+                              void                          *data)
 {
-    SaveNotificationsClosure snc;
+    ForeachClosure fec;
 
-    snc.disk_cache = _hippo_data_model_get_disk_cache(notifications->model);
-    if (snc.disk_cache == NULL)
-        return;
-    
-    snc.notifications = notifications;
-    snc.timestamp = timestamp;
-    
-    g_hash_table_foreach(notifications->resources, save_notification_foreach, &snc);
+    fec.notifications = notifications;
+    fec.func = func;
+    fec.func_data = data;
+
+    g_hash_table_foreach(notifications->resources, foreach_notification_foreach, &fec);
 }
 
 void
-_hippo_notification_set_free (HippoNotificationSet *notifications)
+ddm_notification_set_free (DDMNotificationSet *notifications)
 {
     g_hash_table_destroy(notifications->resources);
     g_free(notifications);

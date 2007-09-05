@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <hippo/hippo-notification-set.h>
 #include <ddm/ddm.h>
 
 #include "hippo-dbus-helper.h"
@@ -201,7 +200,7 @@ compare_strings(const char *a, const char *b)
     return strcmp(a, b) == 0;
 }
 
-HippoNotificationSet *
+DDMNotificationSet *
 hippo_dbus_im_start_notifications(void)
 {
     HippoApp *app = hippo_get_app();
@@ -214,7 +213,7 @@ hippo_dbus_im_start_notifications(void)
     cache = hippo_app_get_data_cache(hippo_get_app());
     model = hippo_data_cache_get_model(cache);
     
-    return _hippo_notification_set_new(model);
+    return ddm_notification_set_new(model);
 }
 
 static void
@@ -225,16 +224,16 @@ update_property (DDMDataResource    *resource,
                  gboolean              default_include,
                  const char           *default_children,
                  DDMDataValue       *value,
-                 HippoNotificationSet *notifications)
+                 DDMNotificationSet *notifications)
 {
     if (ddm_data_resource_update_property(resource, property_id, update,
                                            cardinality, default_include, default_children,
                                            value))
-        _hippo_notification_set_add(notifications, resource, property_id);
+        ddm_notification_set_add(notifications, resource, property_id);
 }
 
 void
-hippo_dbus_im_update_buddy(HippoNotificationSet *notifications,
+hippo_dbus_im_update_buddy(DDMNotificationSet *notifications,
                            const char           *buddy_id,
                            const char           *protocol,
                            const char           *name,
@@ -376,7 +375,7 @@ hippo_dbus_im_update_buddy(HippoNotificationSet *notifications,
 }
 
 void 
-hippo_dbus_im_remove_buddy(HippoNotificationSet *notifications,
+hippo_dbus_im_remove_buddy(DDMNotificationSet *notifications,
                            const char           *buddy_id)
 {
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
@@ -409,15 +408,15 @@ hippo_dbus_im_remove_buddy(HippoNotificationSet *notifications,
 }
     
 void
-hippo_dbus_im_send_notifications(HippoNotificationSet *notifications)
+hippo_dbus_im_send_notifications(DDMNotificationSet *notifications)
 {
-    if (_hippo_notification_set_has_property(notifications,
+    if (ddm_notification_set_has_property(notifications,
                                              GLOBAL_RESOURCE,
                                              ddm_qname_get(GLOBAL_CLASS, "onlineBuddies"))) {
         DBusConnection *connection = hippo_dbus_get_connection(hippo_app_get_dbus(hippo_get_app()));
         hippo_dbus_im_emit_buddy_list_changed (connection);        
     }
     
-    _hippo_notification_set_send(notifications);
-    _hippo_notification_set_free(notifications);
+    ddm_notification_set_send(notifications);
+    ddm_notification_set_free(notifications);
 }
