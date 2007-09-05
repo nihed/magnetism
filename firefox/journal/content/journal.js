@@ -186,6 +186,10 @@ var JournalPage = Class.create();
 JournalPage.prototype = {
   initialize: function() {
     this.sidebars = $A();
+    this.searchTimeout = null;
+    this.searchQueryTimeout = null;
+    this.searchValue = null;
+    this.targetHistoryItem = null;
   },
   findHighestVisited: function(journalEntries) {
     var highest;
@@ -465,7 +469,8 @@ JournalPage.prototype = {
     }
 
     this.sidebars.each(function (sb) {
-      sb.redisplay(search);
+      if (sb.searchInteractive)
+        sb.searchInteractive(search);
     });
 
     var searchPrimary = $("search-primary");
@@ -520,7 +525,8 @@ JournalPage.prototype = {
   clearSearch : function() {
     var searchbox = $('q');
     searchbox.value='';
-    this.redisplay();
+    this.doSearch();
+    this.doSearchQuery();
     searchbox.select();
     searchbox.focus();
   },
@@ -564,9 +570,7 @@ JournalPage.prototype = {
   },
   onload: function() {
     var me = this;  
-    this.searchTimeout = null;
-    this.searchValue = null;
-    this.targetHistoryItem = null;
+
     this.journal = getJournalInstance();
 
     var prefs = Cc["@mozilla.org/preferences-service;1"].
@@ -632,9 +636,15 @@ JournalPage.prototype = {
       window.location.href = this.targetHistoryItem.uri;
     }
   },
-  idleDoSearch: function() {
-    this.searchTimeout = null;
+  doSearch: function() {
     this.redisplay(); 
+  },
+  doSearchQuery: function() {
+    var me = this;
+    this.sidebars.each(function (sb) {
+      if (sb.searchQuery)
+        sb.searchQuery(me.searchValue);
+    });
   },
   handleSearchChanged: function(e) {
     var q = e.target;
@@ -642,10 +652,15 @@ JournalPage.prototype = {
     if (search == this.searchValue)
       return;
     this.searchValue = search;
+    var me = this;
     if (!this.searchTimeout) {
-      var me = this;
-      this.searchTimeout = window.setTimeout(function () { me.idleDoSearch() }, 350);
+      this.searchTimeout = window.setTimeout(function () { me.searchTimeout = null; me.doSearch() }, 350);
     }
+    // This second query happens when the user stops typing
+    if (this.searchQueryTimeout) {
+      window.clearTimeout(this.searchQueryTimeout);
+    }
+    this.searchQueryTimeout = window.setTimeout(function () { me.searchQueryTimeout = null; me.doSearchQuery() }, 700);
   },
   appendSidebar: function(sb) {
     // test
