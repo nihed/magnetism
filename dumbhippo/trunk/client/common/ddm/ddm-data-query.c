@@ -61,7 +61,7 @@ ddm_data_query_get_params (DDMDataQuery *query)
 void
 ddm_data_query_set_single_handler (DDMDataQuery     *query,
                                    DDMSingleHandler  handler,
-                                   gpointer            user_data)
+                                   gpointer          user_data)
 {
     g_return_if_fail(query != NULL);
 
@@ -120,8 +120,8 @@ add_param_foreach(gpointer key,
 DDMDataQuery *
 _ddm_data_query_new (DDMDataModel *model,
                      DDMQName     *qname,
-                     const char     *fetch,
-                     GHashTable     *params)
+                     const char   *fetch,
+                     GHashTable   *params)
 {
     DDMDataQuery *query =  g_new0(DDMDataQuery, 1);
 

@@ -7,17 +7,40 @@
 
 #include "ddm-data-model-dbus.h"
 #include "ddm-data-model-backend.h"
+#include "ddm-data-query.h"
 #include "hippo-dbus-helper.h"
 
 #include <dbus/dbus.h>
 
 typedef struct {
+    int             refcount;
     char           *path;
     DDMDataModel   *ddm_model;
     DBusConnection *connection;
-
+    HippoDBusProxy *engine_proxy;
 } DBusModel;
 
+static void
+model_ref(DBusModel *dbus_model)
+{
+    g_return_if_fail(dbus_model->refcount > 0);
+    
+    dbus_model->refcount += 1;
+}
+
+static void
+model_unref(DBusModel *dbus_model)
+{
+    g_return_if_fail(dbus_model->refcount > 0);
+
+    dbus_model->refcount -= 1;
+    if (dbus_model->refcount == 0) {
+        g_assert(dbus_model->connection == NULL);
+        g_assert(dbus_model->path == NULL);
+
+        g_free(dbus_model);
+    }
+}
 
 static DBusModel*
 get_dbus_model(DDMDataModel *ddm_model)
@@ -27,14 +50,42 @@ get_dbus_model(DDMDataModel *ddm_model)
     return dbus_model;
 }
 
+/* query_to_respond_to is NULL for a notification */
+static void
+handle_incoming_resource_updates(DBusModel       *dbus_model,
+                                 DBusMessageIter *resource_array_iter,
+                                 DDMDataQuery    *query_to_respond_to)
+{
+    /*
+     *   Array of resources:
+     *     Resource ID
+     *     Resource class ID
+     *     Indirect? (boolean)
+     *     Array of parameters:
+     *        Parameter ID namespace uri
+     *        Parameter ID local name
+     *        Update type ('a'=add, 'r'=replace, 'd'=delete, 'c'=clear)
+     *        Data type ('s'=string, 'r'=resource)
+     *        Cardinality ('.'=1, '?'=01, '*'=N)
+     *        Value (variant)
+     */
+
+    
+    /* FIXME */
+}
+
 static DBusMessage*
 handle_notify (void            *object,
                DBusMessage     *message,
                DBusError       *error)
 {
+    DBusModel *dbus_model = object;    
+    DBusMessageIter resource_array_iter;
     
+    dbus_message_iter_init(message, &resource_array_iter);
 
-    /* with no error set, returns a plain ack */
+    handle_incoming_resource_updates(dbus_model, &resource_array_iter, NULL);
+    
     return NULL;
 }
 
@@ -142,6 +193,11 @@ handle_session_bus_connected(DBusConnection *connection,
                                                &engine_tracker,
                                                engine_signal_handlers,
                                                dbus_model);
+
+    dbus_model->engine_proxy = hippo_dbus_proxy_new(dbus_model->connection,
+                                                    "org.freedesktop.od.Engine",
+                                                    "/org/freedesktop/od/data_model",
+                                                    "org.freedesktop.od.Model");
 }
 
 static void
@@ -159,11 +215,17 @@ handle_session_bus_disconnected(DBusConnection *connection,
                                                  dbus_model);
 
     hippo_dbus_helper_unregister_object(connection, dbus_model->path);
+
+    g_free(dbus_model->path);
+    dbus_model->path = NULL;
     
     /* there's no interface unregistration right now */
     
     ddm_data_model_set_connected(dbus_model->ddm_model, FALSE);
 
+    hippo_dbus_proxy_unref(dbus_model->engine_proxy);
+    dbus_model->engine_proxy = NULL;
+    
     dbus_connection_unref(dbus_model->connection);
     dbus_model->connection = NULL;
 }
@@ -180,6 +242,7 @@ ddm_dbus_add_model (DDMDataModel *ddm_model,
     DBusModel *dbus_model;
     
     dbus_model = g_new0(DBusModel, 1);
+    dbus_model->refcount = 1;
     dbus_model->ddm_model = ddm_model;
     
     g_object_set_data(G_OBJECT(ddm_model), "dbus-data-model", dbus_model);
@@ -204,30 +267,248 @@ ddm_dbus_remove_model (DDMDataModel *ddm_model,
                                                     dbus_model);
 
     g_object_set_data(G_OBJECT(ddm_model), "dbus-data-model", NULL);
+
+    g_assert(dbus_model->connection == NULL);
+    g_assert(dbus_model->path == NULL);
+
+    dbus_model->ddm_model = NULL; /* indicates we are removed */
     
-    g_free(dbus_model);
+    model_unref(dbus_model);
 }
 
 static void
-ddm_dbus_send_query   (DDMDataModel *model,
+append_param(void *key,
+             void *value,
+             void *data)
+{
+    DBusMessageIter *params_dict_iter = data;
+    DBusMessageIter param_entry_iter;
+    
+    /* out-of-memory is ignored in here */
+    
+    dbus_message_iter_open_container(params_dict_iter, DBUS_TYPE_DICT_ENTRY,
+                                     NULL, &param_entry_iter);
+    
+    dbus_message_iter_append_basic(&param_entry_iter, DBUS_TYPE_STRING, &key);
+    dbus_message_iter_append_basic(&param_entry_iter, DBUS_TYPE_STRING, &value);    
+    
+    dbus_message_iter_close_container(params_dict_iter, &param_entry_iter);
+}
+
+static dbus_bool_t
+append_params(DBusMessageIter *params_dict_iter,
+              GHashTable      *params)
+{
+    g_hash_table_foreach(params, append_param, params_dict_iter);
+
+    return TRUE;
+}
+
+typedef struct {
+    DBusModel *dbus_model;
+    DDMDataQuery *query;
+} QueryData;
+
+static void
+free_query_data(void *data)
+{
+    QueryData *qd = data;
+
+    model_unref(qd->dbus_model);
+    g_free(qd);
+}
+
+static void
+handle_query_reply(DBusMessage *reply,
+                   void        *data)
+{
+    QueryData *qd = data;
+    DBusMessageIter resource_array_iter;
+    
+    if (dbus_message_get_type(reply) != DBUS_MESSAGE_TYPE_METHOD_RETURN) {
+        /* the dbus API does not give us the error code right now */
+        const char *message = NULL;
+        dbus_message_get_args(reply, NULL, DBUS_TYPE_STRING, &message, DBUS_TYPE_INVALID);
+        ddm_data_query_error(qd->query,
+                             DDM_DATA_ERROR_INTERNAL_SERVER_ERROR, /* arbitrary */
+                             message ? message : "unknown error");
+        return;
+    }
+    
+    dbus_message_iter_init(reply, &resource_array_iter);
+
+    handle_incoming_resource_updates(qd->dbus_model, &resource_array_iter, qd->query);
+}
+
+static dbus_bool_t
+append_query_args(DBusMessage *message,
+                  void        *data)
+{
+    QueryData *qd = data;
+    DBusMessageIter toplevel_iter, params_dict_iter;
+    char *s;
+    const char *cs;
+    
+    dbus_message_iter_init_append(message, &toplevel_iter);
+
+    /* notification path */
+    if (!dbus_message_iter_append_basic(&toplevel_iter,
+                                        DBUS_TYPE_STRING, &qd->dbus_model->path))
+        return FALSE;
+
+    /* method uri */
+    s = ddm_qname_to_uri(ddm_data_query_get_qname(qd->query));
+    if (!dbus_message_iter_append_basic(&toplevel_iter,
+                                        DBUS_TYPE_STRING, &s)) {
+        g_free(s);
+        return FALSE;
+    }
+    g_free(s);
+
+    /* fetch string */
+    cs = ddm_data_query_get_fetch(qd->query);
+    if (!dbus_message_iter_append_basic(&toplevel_iter,
+                                        DBUS_TYPE_STRING, &cs))
+        return FALSE;
+
+    /* dictionary of params, string:string */
+
+    if (!dbus_message_iter_open_container(&toplevel_iter, DBUS_TYPE_ARRAY,
+                                          "{ss}", &params_dict_iter))
+        return FALSE;
+
+    if (!append_params(&params_dict_iter, ddm_data_query_get_params(qd->query)))
+        return FALSE;
+    
+    if (!dbus_message_iter_close_container(&toplevel_iter, &params_dict_iter))
+        return FALSE;
+
+    return TRUE;
+}
+
+static void
+ddm_dbus_send_query   (DDMDataModel *ddm_model,
                        DDMDataQuery *query,
                        void         *backend_data)
 {
+    DBusModel *dbus_model;
+    QueryData *qd;
+
+    dbus_model = get_dbus_model(ddm_model);
+
+    if (dbus_model->connection == NULL) {
+        ddm_data_query_error(query,
+                             DDM_DATA_ERROR_NO_CONNECTION,
+                             "Not connected to message bus");
+        return;                             
+    }
+
+    g_assert(dbus_model->engine_proxy != NULL); /* since connection != NULL */
+
+    qd = g_new(QueryData, 1);
+
+    model_ref(dbus_model);
+    qd->dbus_model = dbus_model;
+    qd->query = query;
     
+    hippo_dbus_proxy_call_method_async_appender(dbus_model->engine_proxy,
+                                                "Query",
+                                                handle_query_reply,
+                                                qd,
+                                                free_query_data,
+                                                append_query_args,
+                                                qd);
+}
 
 
+static void
+handle_update_reply(DBusMessage *reply,
+                    void        *data)
+{
+    QueryData *qd = data;
+    
+    if (dbus_message_get_type(reply) != DBUS_MESSAGE_TYPE_METHOD_RETURN) {
+        /* the dbus API does not give us the error code right now */
+        const char *message = NULL;
+        dbus_message_get_args(reply, NULL, DBUS_TYPE_STRING, &message, DBUS_TYPE_INVALID);
+        ddm_data_query_error(qd->query,
+                             DDM_DATA_ERROR_INTERNAL_SERVER_ERROR, /* arbitrary */
+                             message ? message : "unknown error");
+        return;
+    }
+
+    /* a successful "ack" reply */
+    ddm_data_query_response(qd->query, NULL);
+}
+
+static dbus_bool_t
+append_update_args(DBusMessage *message,
+                   void        *data)
+{
+    QueryData *qd = data;
+    DBusMessageIter toplevel_iter, params_dict_iter;
+    char *s;
+    
+    dbus_message_iter_init_append(message, &toplevel_iter);
+
+    /* method uri */
+    s = ddm_qname_to_uri(ddm_data_query_get_qname(qd->query));
+    if (!dbus_message_iter_append_basic(&toplevel_iter,
+                                        DBUS_TYPE_STRING, &s)) {
+        g_free(s);
+        return FALSE;
+    }
+    g_free(s);
+
+    /* dictionary of params, string:string */
+
+    if (!dbus_message_iter_open_container(&toplevel_iter, DBUS_TYPE_ARRAY,
+                                          "{ss}", &params_dict_iter))
+        return FALSE;
+
+    if (!append_params(&params_dict_iter, ddm_data_query_get_params(qd->query)))
+        return FALSE;
+    
+    if (!dbus_message_iter_close_container(&toplevel_iter, &params_dict_iter))
+        return FALSE;
+
+    return TRUE;
 }
 
 static void
-ddm_dbus_send_update (DDMDataModel *model,
+ddm_dbus_send_update (DDMDataModel *ddm_model,
                       DDMDataQuery *query,
                       const char   *method,
                       GHashTable   *params,
                       void         *backend_data)
 {
+    DBusModel *dbus_model;
+    QueryData *qd;
 
+    dbus_model = get_dbus_model(ddm_model);
 
+    if (dbus_model->connection == NULL) {
+        ddm_data_query_error(query,
+                             DDM_DATA_ERROR_NO_CONNECTION,
+                             "Not connected to message bus");
+        return;                             
+    }
 
+    g_assert(dbus_model->engine_proxy != NULL); /* since connection != NULL */
+
+    qd = g_new(QueryData, 1);
+
+    model_ref(dbus_model);
+    qd->dbus_model = dbus_model;
+    qd->query = query;
+    
+    hippo_dbus_proxy_call_method_async_appender(dbus_model->engine_proxy,
+                                                "Update",
+                                                handle_update_reply,
+                                                qd,
+                                                free_query_data,
+                                                append_update_args,
+                                                qd);
 }
 
 static const DDMDataModelBackend dbus_backend = {

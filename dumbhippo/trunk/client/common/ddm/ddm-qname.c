@@ -68,3 +68,9 @@ ddm_qname_from_uri(const char *full_uri)
 
     return qname;
 }
+
+char*
+ddm_qname_to_uri(DDMQName *qname)
+{
+    return g_strconcat(qname->uri, "#", qname->name, NULL);
+}
