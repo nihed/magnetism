@@ -141,9 +141,9 @@ params_from_valist(va_list vap)
 
 DDMDataQuery *
 ddm_data_model_query_params(DDMDataModel *model,
-                            const char     *method,
-                            const char     *fetch,
-                            GHashTable     *params)
+                            const char   *method,
+                            const char   *fetch,
+                            GHashTable   *params)
 {
     DDMDataQuery *query;
     DDMQName *method_qname;

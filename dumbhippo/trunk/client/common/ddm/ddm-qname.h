@@ -26,6 +26,7 @@ DDMQName *ddm_qname_get      (const char *uri,
 
 /* Create a QName from a representation in <uri>#<name> form */
 DDMQName *ddm_qname_from_uri (const char *full_uri);
+char     *ddm_qname_to_uri   (DDMQName   *qname);
 
 G_END_DECLS
 
