@@ -36,8 +36,65 @@
 
 const JOURNAL_CHROME = "chrome://firefoxjournal/content/journal.html";
 
+const console = Components.classes["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
+
+var HistoryBlacklist = [
+ {domainEnd: 'google.com',
+  pathStart: '/accounts/'},
+];
+
+// stolen from prototype - TODO find equivalent in Firefox
+var stringEndsWith = function(str, pattern) {
+  var d = str.length - pattern.length;
+  return d >= 0 && str.lastIndexOf(pattern) === d;
+};
+
+var theHistoryMonkey;
+var HistoryMonkey = function() {
+  this.navHistoryService = Components.classes["@mozilla.org/browser/nav-history-service;1"].getService(Components.interfaces.nsINavHistoryService);
+  this.browserHistory = Components.classes["@mozilla.org/browser/global-history;2"].getService(Components.interfaces.nsIBrowserHistory);
+  this.navHistoryService.addObserver(this, false);
+  theHistoryMonkey = this;
+};
+HistoryMonkey.prototype = {
+  queryHideUri: function(uri) {
+    console.logStringMessage("evaluating: " + uri.spec);
+    for (var i = 0; i < HistoryBlacklist.length; i++) {
+      var blacklistItem = HistoryBlacklist[i];
+      if (blacklistItem.domainEnd && !stringEndsWith(uri.host, blacklistItem.domainEnd))
+        continue;
+      if (blacklistItem.pathStart && !uri.path.indexOf(blacklistItem.pathStart) == 0)
+        continue;
+      return true;
+    }
+    return false;
+  },
+  possiblyHideUri: function(uri) {
+    if (this.queryHideUri(uri)) {
+      console.logStringMessage("hiding: " + uri.spec);
+      try {
+        this.browserHistory.removePage(uri); 
+      } catch (e) {
+        console.logStringMessage("failed to hide page: " + e);
+      }
+    }
+  },
+  onBeginUpdateBatch: function() { },
+  onEndUpdateBatch: function() { },
+  onVisit: function(uri, visitId, time, sessid, referid, transtype) {
+    console.logStringMessage("visit: " + uri.spec);
+    theHistoryMonkey.possiblyHideUri(uri);
+  },
+  onTitleChanged: function() { },
+  onDeleteURI: function() { } ,
+  onClearHistory: function() { },
+  onPageChanged: function(uri, what, val) { },
+  onPageExpired: function(uri, visitTime, wholeEntry) { },
+};
+
 var firefoxjournal = {
   onLoad: function() {
+    console.logStringMessage("initializing");
     // initialization code
     this.initialized = true;
     // Do first time bits
@@ -46,7 +103,9 @@ var firefoxjournal = {
     var container = gBrowser.tabContainer;
     var me = this;
     container.addEventListener("TabOpen", function(e) { me.onTabOpen(e); }, false);
-
+    console.logStringMessage("creating history monkey");
+    theHistoryMonkey = new HistoryMonkey();   
+    console.logStringMessage("journal initialized");
   },
   onTabOpen: function(e) {
     var browser = e.target.linkedBrowser;
@@ -74,6 +133,7 @@ var firefoxjournal = {
     prefs.setIntPref("browser.startup.page", 1);
 
     jprefs.setBoolPref("firstTime", true);     
-  }
+  },
 };
 window.addEventListener("load", function(e) { firefoxjournal.onLoad(e); }, false);
+
