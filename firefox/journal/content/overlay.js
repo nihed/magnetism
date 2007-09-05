@@ -72,19 +72,8 @@ var firefoxjournal = {
     jprefs.setCharPref("oldHomepage", oldHomepage);
     prefs.setCharPref("browser.startup.homepage", JOURNAL_CHROME);
     prefs.setIntPref("browser.startup.page", 1);
-    
-    this.initDB();
 
     jprefs.setBoolPref("firstTime", true);     
-  },  
-  initDB : function() {
-    var f = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("ProfD", Components.interfaces.nsIFile);
-    f.append("journal.sqlite");
-    var fService = Components.classes["@mozilla.org/storage/service;1"].getService(Components.interfaces.mozIStorageService);
-    var historyConn = fService.openDatabase(f);
-
-    historyConn.executeSimpleSQL("CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, title TEXT, tstamp DOUBLE, host TEXT, domain TEXT);");
-
-  },
+  }
 };
 window.addEventListener("load", function(e) { firefoxjournal.onLoad(e); }, false);
