@@ -3,10 +3,10 @@ import re,logging
 import dbus
 import dbus.service
 
-from mugshot.AbstractModel import *
-from mugshot.Query import *
-from mugshot.NotificationSet import *
-from mugshot.Resource import *
+from pyddm.AbstractModel import *
+from pyddm.Query import *
+from pyddm.NotificationSet import *
+from pyddm.Resource import *
 
 _logger = logging.getLogger('mugshot.DataModel')
 
