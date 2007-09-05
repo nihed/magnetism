@@ -173,6 +173,17 @@ Journal.prototype = {
     // options.maxResults = limit;
     return HISTORY_SERVICE.executeQuery(histq, options);
   },
+  searchTopSites: function(q) {
+    var options = this._getBaseQueryOptions();
+    options.resultType = options.RESULTS_AS_URI;
+    options.setGroupingMode([], 0);
+    options.sortingMode = options.SORT_BY_VISITCOUNT_DESCENDING;
+    var histq = HISTORY_SERVICE.getNewQuery();
+    if (q) histq.searchTerms = q;
+    histq.minVisits = 3; /* picking a static value for this is a little silly */
+    //options.maxResults = 5;
+    return HISTORY_SERVICE.executeQuery(histq, options);
+  },
 }
 
 var theJournal;
@@ -232,6 +243,60 @@ JournalPage.prototype = {
       histnode.appendChild(this.renderJournalItem(dayset.getChild(i)));
     }
     dayset.containerOpen = false;
+  },
+  appendTopSites: function(siteset) {
+
+    siteset.root.containerOpen = true;
+    var count = (siteset.root.childCount > 5)? 5 : siteset.root.childCount;
+    if (count == 0) return;
+
+    var content = $('top-sites');    
+    var headernode = document.createElement('h4');
+    headernode.appendChild(document.createTextNode("Top Sites"));
+    content.appendChild(headernode);
+    var sitenode = document.createElement('div');
+    sitenode.className = 'set';
+
+    for (var i = 0; i < count; i++) {
+      sitenode.appendChild(this.renderTopItem(siteset.root.getChild(i), (i == 0)));
+    }
+
+    siteset.root.containerOpen = false;
+
+    content.appendChild(sitenode);
+  },
+  renderTopItem: function(entry, isTarget) {
+    var me = this;  
+
+    var item = document.createElement('a');
+    item.href = entry.uri;
+    item.className = 'item';
+    item.setAttribute('tabindex', 1); 
+
+    if (isTarget) {
+      this.setAsTargetItem(item);
+      item.setAttribute('id', 'default-target-item');
+    }
+
+    item.addEventListener("focus", function(e) { me.onResultFocus(e, true); }, false);
+    item.addEventListener("blur", function(e) { me.onResultFocus(e, false); }, false);             
+    
+    var timeText = ' '.times(15);
+    item.appendChild(domUtils.createSpanText(timeText, 'time'));
+    var actionDiv = document.createElement('div');
+    actionDiv.className = 'action';
+    if (entry.icon) {
+      var icon = document.createElement("img");
+      icon.setAttribute("src", entry.icon);
+      actionDiv.appendChild(icon);
+      actionDiv.appendChild(document.createTextNode(" "));
+    }
+    actionDiv.appendChild(document.createTextNode(''));
+    item.appendChild(actionDiv);
+    
+    this.renderJournalItemContent(entry, item);
+
+    return item;
   },
   renderJournalItemContent: function(entry, item) {
     var iconSection = document.createElement('div');
@@ -437,11 +502,16 @@ JournalPage.prototype = {
   },
   redisplay: function() {
     var me = this;    
-    var content = $('history'); 
     var searchbox = $('q');     
+
+    var ts = $('top-sites');
+    while (ts.firstChild) { ts.removeChild(ts.firstChild); }    
+
+    var content = $('history'); 
     while (content.firstChild) { content.removeChild(content.firstChild); }
-    
-    var viewedItems;
+
+
+    var viewedItems, topSites;
     var search = searchbox.value;
     if (search)
       search = search.strip();
@@ -449,15 +519,19 @@ JournalPage.prototype = {
     if (search) {
       $("search-info-bar").style.display = "block";
       this.renderSearchInfoBar(search, searchIsWeblink);
-
+      topSites = this.journal.searchTopSites(search);
       viewedItems = this.journal.search(search, 6);
-      this.targetHistoryItem = this.findHighestVisited(viewedItems.root);
       if (viewedItems.length == 0) {
         content.appendChild(domUtils.createSpanText("(No results)", "no-results"))
       }
     } else {
       $("search-info-bar").style.display = "none";
+      topSites = this.journal.searchTopSites(null);
       viewedItems = this.journal.getLastHistoryDay();
+    }
+
+    if (topSites && topSites.root.hasChildren) {
+        this.appendTopSites(topSites);
     }
 
     if (viewedItems && viewedItems.root.hasChildren) {
