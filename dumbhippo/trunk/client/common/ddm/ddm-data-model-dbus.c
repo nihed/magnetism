@@ -8,6 +8,7 @@
 #include "ddm-data-model-dbus.h"
 #include "ddm-data-model-backend.h"
 #include "ddm-data-query.h"
+#include "ddm-notification-set.h"
 #include "hippo-dbus-helper.h"
 
 #include <dbus/dbus.h>
@@ -50,14 +51,239 @@ get_dbus_model(DDMDataModel *ddm_model)
     return dbus_model;
 }
 
+static gboolean
+read_data_attributes(DBusMessageIter    *prop_struct_iter,
+                     DDMDataUpdate      *update_type_p,
+                     DDMDataType        *data_type_p,
+                     DDMDataCardinality *cardinality_p)
+{
+    DDMDataType data_type;
+    DDMDataUpdate update_type;
+    DDMDataCardinality cardinality;
+    guchar update_type_wire, data_type_wire, cardinality_wire;
+
+    g_assert(dbus_message_iter_get_arg_type(prop_struct_iter) == DBUS_TYPE_BYTE);
+    dbus_message_iter_get_basic(prop_struct_iter, &update_type_wire);
+    dbus_message_iter_next(prop_struct_iter);
+
+    g_assert(dbus_message_iter_get_arg_type(prop_struct_iter) == DBUS_TYPE_BYTE);
+    dbus_message_iter_get_basic(prop_struct_iter, &data_type_wire);
+    dbus_message_iter_next(prop_struct_iter);
+
+    g_assert(dbus_message_iter_get_arg_type(prop_struct_iter) == DBUS_TYPE_BYTE);
+    dbus_message_iter_get_basic(prop_struct_iter, &cardinality_wire);
+    dbus_message_iter_next(prop_struct_iter);
+
+    switch (update_type_wire) {
+    case 'a':
+        update_type = DDM_DATA_UPDATE_ADD;
+        break;
+    case 'r':
+        update_type = DDM_DATA_UPDATE_REPLACE;
+        break;
+    case 'd':
+        update_type = DDM_DATA_UPDATE_DELETE;
+        break;
+    case 'c':
+        update_type = DDM_DATA_UPDATE_CLEAR;
+        break;
+    default:
+        g_warning("Unknown update type %c", update_type_wire);
+        return FALSE;   
+    }
+
+    /* We should get type LIST as a REPLACE of one value, then ADD, ADD, ADD of
+     * multiple values, so LIST is never on the wire. Similarly, type NONE
+     * comes through as a CLEAR. So in short we don't see values of NONE or LIST
+     * on this end.
+     */
+    switch (data_type_wire) {
+    case 's':
+        data_type = DDM_DATA_STRING;
+        break;
+    case 'r':
+        data_type = DDM_DATA_RESOURCE;
+        break;
+    case 'b':
+        data_type = DDM_DATA_BOOLEAN;
+        break;
+    case 'i':
+        data_type = DDM_DATA_INTEGER;
+        break;
+    case 'l':
+        data_type = DDM_DATA_LONG;
+        break;
+    case 'f':
+        data_type = DDM_DATA_FLOAT;
+        break;
+    case 'u':
+        data_type = DDM_DATA_URL;
+        break;
+    default:
+        g_warning("Unknown data type %c", data_type_wire);
+        return FALSE;
+    }
+
+    switch (cardinality_wire) {
+    case '.':
+        cardinality = DDM_DATA_CARDINALITY_1;
+        break;
+    case '?':
+        cardinality = DDM_DATA_CARDINALITY_01;
+        break;
+    case '*':
+        cardinality = DDM_DATA_CARDINALITY_N;
+        break;
+    default:
+        g_warning("Unknown data cardinality %c", cardinality_wire);
+        return FALSE;
+    }
+
+    *update_type_p = update_type;
+    *data_type_p = data_type;
+    *cardinality_p = cardinality;
+
+    return TRUE;
+}
+
+static gboolean
+read_variant_value(DBusMessageIter    *variant_iter,
+                   DDMDataType         data_type,
+                   DDMDataValue       *value)
+{
+
+    return TRUE;
+}
+
+static void
+update_property(DBusModel          *dbus_model,
+                DDMDataResource    *resource,
+                DBusMessageIter    *prop_struct_iter,
+                DDMNotificationSet *notifications)
+{
+    const char *param_namespace = NULL;
+    const char *param_name = NULL;
+    DDMQName *property_qname;
+    DBusMessageIter variant_iter;
+    DDMDataProperty *old_property;
+    DDMDataUpdate update_type;
+    DDMDataType data_type = DDM_DATA_NONE;
+    DDMDataCardinality cardinality = DDM_DATA_CARDINALITY_1;
+    gboolean changed = FALSE;
+    DDMDataValue value;
+    
+    /* "(ssyyyv)"
+     *        Parameter ID namespace uri
+     *        Parameter ID local name
+     *        Update type ('a'=add, 'r'=replace, 'd'=delete, 'c'=clear)
+     *        Data type ('s'=string, 'r'=resource)
+     *        Cardinality ('.'=1, '?'=01, '*'=N)
+     *        Value (variant)
+     */
+    
+    g_assert(dbus_message_iter_get_arg_type(prop_struct_iter) == DBUS_TYPE_STRING);
+    dbus_message_iter_get_basic(prop_struct_iter, &param_namespace);
+    dbus_message_iter_next(prop_struct_iter);
+
+    g_assert(dbus_message_iter_get_arg_type(prop_struct_iter) == DBUS_TYPE_STRING);
+    dbus_message_iter_get_basic(prop_struct_iter, &param_name);
+    dbus_message_iter_next(prop_struct_iter);
+
+    if (!read_data_attributes(prop_struct_iter, &update_type, &data_type, &cardinality))
+        return;
+
+    dbus_message_iter_recurse(prop_struct_iter, &variant_iter);
+    if (!read_variant_value(&variant_iter, data_type, &value))
+        return;
+
+    property_qname = ddm_qname_get(param_namespace, param_name);
+
+    old_property = ddm_data_resource_get_property_by_qname(resource, property_qname);
+    if (old_property != NULL) {
+        data_type = ddm_data_property_get_type(old_property);
+        cardinality = ddm_data_property_get_cardinality(old_property);
+    }
+
+    /* hippo-connection.c has some song and dance with default_include and default_children
+     * here, but nothing in hippo-dbus-model.c sends us anything like that, so...
+     */
+    
+    if (update_type == DDM_DATA_UPDATE_CLEAR) {
+        changed = ddm_data_resource_update_property(resource, property_qname, update_type, cardinality,
+                                                    FALSE, NULL, NULL);
+    } else {
+        /* hippo-connection.c sets changed=TRUE unconditionally here
+         * and doesn't use update_property return value, why?
+         */
+        ddm_data_resource_update_property(resource, property_qname, update_type, cardinality,
+                                          FALSE, NULL, &value);
+        changed = TRUE;
+    }
+
+    if (changed) {
+        if (notifications)
+            ddm_notification_set_add(notifications, resource, property_qname);
+    }
+}
+     
+static DDMDataResource*
+handle_incoming_resource_update(DBusModel          *dbus_model,
+                                DBusMessageIter    *resource_struct_iter,
+                                DDMNotificationSet *notifications)
+{
+    DDMDataResource *resource;    
+    const char *resource_id = NULL;
+    const char *resource_class_id = NULL;
+    dbus_bool_t indirect = FALSE;
+    DBusMessageIter prop_array_iter;
+    
+    g_assert(dbus_message_iter_get_arg_type(resource_struct_iter) == DBUS_TYPE_STRING);
+    dbus_message_iter_get_basic(resource_struct_iter, &resource_id);
+    dbus_message_iter_next(resource_struct_iter);
+    
+    g_assert(dbus_message_iter_get_arg_type(resource_struct_iter) == DBUS_TYPE_STRING);
+    dbus_message_iter_get_basic(resource_struct_iter, &resource_class_id);
+    dbus_message_iter_next(resource_struct_iter);
+
+    g_assert(dbus_message_iter_get_arg_type(resource_struct_iter) == DBUS_TYPE_BOOLEAN);
+    dbus_message_iter_get_basic(resource_struct_iter, &indirect);
+    dbus_message_iter_next(resource_struct_iter);
+
+    resource = ddm_data_model_ensure_resource(dbus_model->ddm_model,
+                                              resource_id,
+                                              resource_class_id);
+
+    /* hippo-connection.c does not bother with notifications if indirect=TRUE,
+     * should we do the same?
+     */
+
+    dbus_message_iter_recurse(resource_struct_iter, &prop_array_iter);
+    while (dbus_message_iter_get_arg_type(&prop_array_iter) != DBUS_TYPE_INVALID) {
+        DBusMessageIter prop_struct_iter;
+
+        dbus_message_iter_recurse(&prop_array_iter, &prop_struct_iter);
+
+        update_property(dbus_model, resource, &prop_struct_iter, notifications);
+        
+        dbus_message_iter_next(&prop_array_iter);
+    }
+    
+    return resource;
+}
+
 /* query_to_respond_to is NULL for a notification */
 static void
-handle_incoming_resource_updates(DBusModel       *dbus_model,
-                                 DBusMessageIter *resource_array_iter,
-                                 DDMDataQuery    *query_to_respond_to)
+handle_incoming_resource_updates(DBusModel          *dbus_model,
+                                 DBusMessageIter    *resource_array_iter_orig,
+                                 DDMDataQuery       *query_to_respond_to)
 {
+    DBusMessageIter resource_array_iter, resource_struct_iter;
+    GSList *resources;
+    DDMNotificationSet *notifications;    
+    
     /*
-     *   Array of resources:
+     *   "a(ssba(ssyyyv))"
+     *   Array of resources: 
      *     Resource ID
      *     Resource class ID
      *     Indirect? (boolean)
@@ -70,8 +296,38 @@ handle_incoming_resource_updates(DBusModel       *dbus_model,
      *        Value (variant)
      */
 
+    notifications = ddm_notification_set_new(dbus_model->ddm_model);
     
-    /* FIXME */
+    resources = NULL;
+    resource_array_iter = *resource_array_iter_orig;
+    
+    while (dbus_message_iter_get_arg_type(&resource_array_iter) != DBUS_TYPE_INVALID) {
+        DDMDataResource *resource;
+        
+        dbus_message_iter_recurse(&resource_array_iter, &resource_struct_iter);
+        
+        resource = handle_incoming_resource_update(dbus_model, &resource_struct_iter, notifications);
+
+        if (query_to_respond_to)
+            resources = g_slist_prepend(resources, resource);
+
+        dbus_message_iter_next(&resource_array_iter);
+    }
+    
+    if (query_to_respond_to) {
+        resources = g_slist_reverse(resources);
+        ddm_data_query_response(query_to_respond_to, resources);
+        g_slist_free(resources);
+    } else {
+        g_assert(resources == NULL);
+    }
+
+    /* hippo-connection.c does not send notifications for a query response,
+     * so maybe we should move this into the !query_to_respond_to case
+     * above?
+     */
+    ddm_notification_set_send(notifications);
+    ddm_notification_set_free(notifications);
 }
 
 static DBusMessage*
@@ -332,6 +588,13 @@ handle_query_reply(DBusMessage *reply,
         ddm_data_query_error(qd->query,
                              DDM_DATA_ERROR_INTERNAL_SERVER_ERROR, /* arbitrary */
                              message ? message : "unknown error");
+        return;
+    }
+
+    if (!dbus_message_has_signature(reply, "a(ssba(ssyyyv))")) {
+        ddm_data_query_error(qd->query,
+                             DDM_DATA_ERROR_BAD_REPLY,
+                             "Received bad reply from desktop engine");
         return;
     }
     
