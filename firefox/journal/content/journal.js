@@ -525,6 +525,7 @@ JournalPage.prototype = {
   clearSearch : function() {
     var searchbox = $('q');
     searchbox.value='';
+    this.searchValue = null;
     this.doSearch();
     this.doSearchQuery();
     searchbox.select();
