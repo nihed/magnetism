@@ -68,3 +68,11 @@ libddm-dist-hook:
 #	mkdir $(distdir)/common-dist/ddm/generated
 #	cp $(COMMONSRCDIR)/ddm/ddm-common-marshal.list $(distdir)/common-dist/ddm
 
+
+noinst_PROGRAMS += test-ddm
+
+test_ddm_CPPFLAGS=$(AM_CPPFLAGS) \
+		$(LIBDDM_CFLAGS)
+test_ddm_LDADD=libddm-1.la
+
+test_ddm_SOURCES=$(COMMONSRCDIR)/ddm/test-ddm.c

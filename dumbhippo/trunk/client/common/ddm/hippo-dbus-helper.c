@@ -1166,16 +1166,19 @@ handle_name_owner_changed(DBusConnection *connection,
 typedef struct {
     DBusConnection *connection;
     char *well_known_name;
+    gboolean start_if_not_running;
 } GetOwnerData;
 
 static GetOwnerData*
 get_owner_data_new(DBusConnection *connection,
-                   const char     *well_known_name)
+                   const char     *well_known_name,
+                   gboolean        start_if_not_running)
 {
     GetOwnerData *god;
     god = g_new0(GetOwnerData, 1);
     god->connection = connection;
     god->well_known_name = g_strdup(well_known_name);
+    god->start_if_not_running = start_if_not_running;
     dbus_connection_ref(connection);
 
     return god;
@@ -1217,10 +1220,33 @@ on_get_owner_reply(DBusPendingCall *pending,
             if (*v_STRING == '\0')
                 v_STRING = NULL;
 
+            /* this will do nothing if going NULL->NULL on startup */
             handle_name_owner_changed(god->connection,
                                       god->well_known_name,
                                       NULL,
                                       v_STRING);
+
+            /* One time on startup, we will start the service if
+             * it's not running, which should lead to a notification.
+             * We don't check the error though and just give up
+             * if it fails.
+             */
+            if (v_STRING == NULL && god->start_if_not_running) {
+                DBusMessage *msg;
+                dbus_uint32_t flags;
+                
+                msg = dbus_message_new_method_call (DBUS_SERVICE_DBUS,
+                                                    DBUS_PATH_DBUS,
+                                                    DBUS_INTERFACE_DBUS,
+                                                    "StartServiceByName");
+
+                flags = 0;
+                if (dbus_message_append_args (msg, DBUS_TYPE_STRING, &god->well_known_name,
+                                              DBUS_TYPE_UINT32, &flags, DBUS_TYPE_INVALID)) {
+                    dbus_connection_send(god->connection, msg, NULL);
+                }
+                dbus_message_unref(msg);
+            }
         }
     }
     
@@ -1266,8 +1292,13 @@ hippo_dbus_helper_register_service_tracker (DBusConnection                *conne
     call = NULL;               
     dbus_connection_send_with_reply(connection, get_owner, &call, -1);
     if (call != NULL) {
+        GetOwnerData *god;
+        
+        god = get_owner_data_new(connection, well_known_name,
+                                 (tracker->flags & HIPPO_DBUS_SERVICE_START_IF_NOT_RUNNING) != 0);
+        
         if (!dbus_pending_call_set_notify(call, on_get_owner_reply,
-                                          get_owner_data_new(connection, well_known_name),
+                                          god,
                                           (DBusFreeFunction) get_owner_data_free))
             g_error("out of memory");
         
@@ -1355,6 +1386,8 @@ attempt_session_connect_timeout(void *data)
         ensure_session_connect_attempt();
         return FALSE; /* remove ourselves */
     }
+
+    dbus_connection_setup_with_g_main(connection, NULL);
 
     helper = get_helper(connection);
     

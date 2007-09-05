@@ -35,8 +35,8 @@ ddm_notification_set_new (DDMDataModel *model)
 
 void
 ddm_notification_set_add (DDMNotificationSet *notifications,
-                             DDMDataResource      *resource,
-                             DDMQName             *property_id)
+                          DDMDataResource    *resource,
+                          DDMQName           *property_id)
 {
     const char *resource_id = ddm_data_resource_get_resource_id(resource);
 
@@ -56,8 +56,8 @@ ddm_notification_set_add (DDMNotificationSet *notifications,
 
 gboolean
 ddm_notification_set_has_property (DDMNotificationSet *notifications,
-                                      const char           *resource_id,
-                                      DDMQName           *property_id)
+                                   const char         *resource_id,
+                                   DDMQName           *property_id)
 {
     ResourceInfo *info = g_hash_table_lookup(notifications->resources, resource_id);
     if (info == NULL)

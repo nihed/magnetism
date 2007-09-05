@@ -751,6 +751,7 @@ static const HippoDBusSignalTracker signal_handlers[] = {
 };
 
 static const HippoDBusServiceTracker service_tracker = {
+    0,
     handle_service_available,
     handle_service_unavailable
 };

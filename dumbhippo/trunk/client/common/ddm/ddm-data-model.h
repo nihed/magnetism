@@ -40,7 +40,7 @@ DDMDataQuery *ddm_data_model_query              (DDMDataModel   *model,
                                                  ...) G_GNUC_NULL_TERMINATED;
 DDMDataQuery *ddm_data_model_query_params       (DDMDataModel   *model,
                                                  const char     *method,
-                                               const char     *fetch,
+                                                 const char     *fetch,
                                                  GHashTable     *params);
 DDMDataQuery *ddm_data_model_query_resource     (DDMDataModel   *model,
                                                  const char     *resource_id,
