@@ -6,7 +6,6 @@
 #include "hippo-external-account.h"
 #include "hippo-title-pattern.h"
 #include "hippo-xml-utils.h"
-#include "hippo-notification-set.h"
 #include "hippo-disk-cache.h"
 #include <loudmouth/loudmouth.h>
 #include <string.h>
@@ -4808,8 +4807,8 @@ dm_context_get_value(DMContext      *context,
 static void
 update_property(DMContext            *context,
                 DDMDataResource    *resource,
-                HippoNotificationSet *broadcast_notifications,
-                HippoNotificationSet *save_notifications)
+                DDMNotificationSet *broadcast_notifications,
+                DDMNotificationSet *save_notifications)
 {
     const char *property_uri;
     const char *property_name;
@@ -4867,16 +4866,16 @@ update_property(DMContext            *context,
 
     if (changed) {
         if (broadcast_notifications)
-            _hippo_notification_set_add(broadcast_notifications, resource, property_qname);
+            ddm_notification_set_add(broadcast_notifications, resource, property_qname);
         if (save_notifications && save_notifications != broadcast_notifications)
-            _hippo_notification_set_add(save_notifications, resource, property_qname);
+            ddm_notification_set_add(save_notifications, resource, property_qname);
     }
 }
 
 static DDMDataResource *
 update_resource(DMContext            *context,
-                HippoNotificationSet *broadcast_notifications,
-                HippoNotificationSet *save_notifications)
+                DDMNotificationSet *broadcast_notifications,
+                DDMNotificationSet *save_notifications)
 {
     const char *uri;
     const char *name;
@@ -4935,7 +4934,7 @@ on_query_reply(LmMessageHandler *handler,
     const char *child_uri;
     const char *child_name;
     GSList *results = NULL;
-    HippoNotificationSet *notifications;
+    DDMNotificationSet *notifications;
     
     dm_context_init(&context, message_context->connection);
     dm_context_push_node(&context, node);
@@ -4959,7 +4958,7 @@ on_query_reply(LmMessageHandler *handler,
         goto pop_child;
     }
 
-    notifications = _hippo_notification_set_new(context.model);
+    notifications = ddm_notification_set_new(context.model);
     
     for (resource_node = child->children; resource_node; resource_node = resource_node->next) {
         DDMDataResource *resource;
@@ -4976,7 +4975,7 @@ on_query_reply(LmMessageHandler *handler,
     if (disk_cache)
         _hippo_disk_cache_save_query_to_disk(disk_cache, query, results, notifications);
     
-    _hippo_notification_set_free(notifications);
+    ddm_notification_set_free(notifications);
     
     ddm_data_query_response(query, results);
     
@@ -5055,8 +5054,8 @@ handle_data_notify (HippoConnection *connection,
     for (child = node->children; !found && child; child = child->next) {
         const char *child_uri;
         const char *child_name;
-        HippoNotificationSet *broadcast_notifications;
-        HippoNotificationSet *save_notifications;
+        DDMNotificationSet *broadcast_notifications;
+        DDMNotificationSet *save_notifications;
     
         dm_context_push_node(&context, child);
         if (!dm_context_node_info(&context, &child_uri, &child_name)) {
@@ -5069,8 +5068,8 @@ handle_data_notify (HippoConnection *connection,
 
         found = TRUE;
 
-        broadcast_notifications = _hippo_notification_set_new(context.model);
-        save_notifications = _hippo_notification_set_new(context.model);
+        broadcast_notifications = ddm_notification_set_new(context.model);
+        save_notifications = ddm_notification_set_new(context.model);
         
         for (resource_node = child->children; resource_node; resource_node = resource_node->next) {
             dm_context_push_node(&context, resource_node);
@@ -5078,14 +5077,14 @@ handle_data_notify (HippoConnection *connection,
             dm_context_pop_node(&context);
         }
 
-        _hippo_notification_set_send(broadcast_notifications);
-        _hippo_notification_set_free(broadcast_notifications);
+        ddm_notification_set_send(broadcast_notifications);
+        ddm_notification_set_free(broadcast_notifications);
         
         disk_cache = _hippo_data_model_get_disk_cache(context.model);
         if (disk_cache)
             _hippo_disk_cache_save_update_to_disk(disk_cache, save_notifications);
         
-        _hippo_notification_set_free(save_notifications);
+        ddm_notification_set_free(save_notifications);
 
     next_child:
         dm_context_pop_node(&context);

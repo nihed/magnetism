@@ -178,7 +178,7 @@ make_resource_id(const char *session_id)
 }
 
 static void
-update_im_buddy(HippoNotificationSet *notifications,
+update_im_buddy(DDMNotificationSet *notifications,
                 const char           *session_id)
 {
     LocalBuddy *local_buddy = get_local_buddy(session_id);
@@ -368,7 +368,7 @@ update_im_buddies_foreach(void *key,
 {
     const char *session_id = key;
     LocalBuddy *local_buddy = value;
-    HippoNotificationSet *notifications = data;
+    DDMNotificationSet *notifications = data;
 
     update_im_buddy(notifications, session_id);
 
@@ -383,7 +383,7 @@ update_im_buddies_foreach(void *key,
 static gboolean
 get_info_from_all_sessions(HippoDBusProxy *proxy)
 {
-    HippoNotificationSet *notifications;
+    DDMNotificationSet *notifications;
     DBusMessage *reply;
     DBusError derror;
     dbus_bool_t retval;
@@ -523,7 +523,7 @@ handle_info_changed(DBusConnection *connection,
                     void           *data)
 {
     DBusMessageIter iter, struct_iter;
-    HippoNotificationSet *notifications;
+    DDMNotificationSet *notifications;
     const char *name;
     char *session_id = NULL;
     
@@ -565,7 +565,7 @@ handle_info_removed(DBusConnection *connection,
                     void           *data)
 {
     DBusMessageIter iter, session_props_iter;
-    HippoNotificationSet *notifications;
+    DDMNotificationSet *notifications;
     const char *name;
     char *machine_id;
     char *session_id;

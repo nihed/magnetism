@@ -46,7 +46,7 @@ typedef struct {
     GHashTable *resource_ids;
 } PidginState;
 
-static void pidgin_buddy_update(HippoNotificationSet *notifications,
+static void pidgin_buddy_update(DDMNotificationSet *notifications,
                                 PidginState          *state,
                                 PidginAccount        *account,
                                 PidginBuddy          *buddy);
@@ -94,7 +94,7 @@ pidgin_state_free(PidginState *state)
 }
 
 typedef struct {
-    HippoNotificationSet *notifications;
+    DDMNotificationSet *notifications;
     GHashTable *new_resource_ids;
 } FindRemovedResourcesClosure;
 
@@ -112,7 +112,7 @@ find_removed_resources_foreach(gpointer key,
 }
 
 static void
-pidgin_store_state(HippoNotificationSet *notifications)
+pidgin_store_state(DDMNotificationSet *notifications)
 {
     GSList *tmp;
 
@@ -140,7 +140,7 @@ pidgin_store_state(HippoNotificationSet *notifications)
 static void
 pidgin_state_set(PidginState *new_state)
 {
-    HippoNotificationSet *notifications;
+    DDMNotificationSet *notifications;
     FindRemovedResourcesClosure closure;
     
     if (new_state == pidgin_state)
@@ -225,7 +225,7 @@ pidgin_buddy_make_resource_id(PidginAccount *account,
 }
 
 static void
-pidgin_buddy_update(HippoNotificationSet *notifications,
+pidgin_buddy_update(DDMNotificationSet *notifications,
                     PidginState          *state,
                     PidginAccount        *account,
                     PidginBuddy          *buddy)
@@ -264,7 +264,7 @@ emit_buddy_changed(PidginState      *state,
                    PidginAccount    *account,
                    PidginBuddy      *buddy)
 {
-    HippoNotificationSet *notifications;
+    DDMNotificationSet *notifications;
 
     notifications = hippo_dbus_im_start_notifications();
     if (notifications) {
