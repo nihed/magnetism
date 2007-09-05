@@ -169,7 +169,8 @@ Journal.prototype = {
     options.resultType = options.RESULTS_AS_URI;
     var histq = HISTORY_SERVICE.getNewQuery();
     histq.searchTerms = q;
-    //options.maxResults = limit;
+    // FIXME - uncomment this when https://bugzilla.mozilla.org/show_bug.cgi?id=394508 is in
+    // options.maxResults = limit;
     return HISTORY_SERVICE.executeQuery(histq, options);
   },
 }
@@ -249,7 +250,7 @@ JournalPage.prototype = {
     titleDiv.appendChild(domUtils.createSpanText(this.getTitle(entry),'title'));
     urlSection.appendChild(titleDiv);
     var hrefDiv = document.createElement('div');
-    hrefDiv.appendChild(domUtils.createSpanText(entry.displayUrl || entry.uri,'url'));
+    hrefDiv.appendChild(domUtils.createSpanText(formatUtils.ellipsize(entry.uri, 80), 'url'));
     urlSection.appendChild(hrefDiv);
     item.appendChild(urlSection);
   },

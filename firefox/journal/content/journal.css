@@ -110,6 +110,7 @@ input.green-button:hover {
 #historycolumn {
   float: left;
   margin-right: 350px;
+  min-width: 600px;
 }
 
 #history {
@@ -141,7 +142,6 @@ input.green-button:hover {
   font-size: 10pt;
 	border-bottom: 1px solid #222 ;
   padding-bottom: 20px;
-  width: 600px;
 }
 .item {
 	display: table-row;
@@ -222,11 +222,9 @@ input.green-button:hover {
   margin-left: -350px;
 }
 .sidebar {
-  float: right;
   font-size: 10pt;
   min-width: 200px;
   min-height: 400px;
-  border: 1px solid #999;
   padding: 1em;
   margin: 1em;
 }
