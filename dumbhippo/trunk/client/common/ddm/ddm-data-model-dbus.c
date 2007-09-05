@@ -19,6 +19,7 @@ typedef struct {
     DDMDataModel   *ddm_model;
     DBusConnection *connection;
     HippoDBusProxy *engine_proxy;
+    HippoDBusProxy *engine_props_proxy;
 } DBusModel;
 
 static void
@@ -147,11 +148,82 @@ read_data_attributes(DBusMessageIter    *prop_struct_iter,
 }
 
 static gboolean
-read_variant_value(DBusMessageIter    *variant_iter,
+read_variant_value(DDMDataModel       *ddm_model,
+                   DBusMessageIter    *variant_iter,
                    DDMDataType         data_type,
                    DDMDataValue       *value)
 {
+    switch (data_type) {
+    case DDM_DATA_BOOLEAN:
+        if (!dbus_message_iter_get_arg_type(variant_iter) == DBUS_TYPE_BOOLEAN) {
+            g_warning("dbus type does not match expected data type");
+            return FALSE;
+        }
+        {
+            dbus_bool_t v_BOOLEAN;
+            dbus_message_iter_get_basic(variant_iter, &v_BOOLEAN);
+            value->u.boolean = v_BOOLEAN;
+        }
+        break;
 
+    case DDM_DATA_INTEGER:
+        if (!dbus_message_iter_get_arg_type(variant_iter) == DBUS_TYPE_INT32) {
+            g_warning("dbus type does not match expected data type");
+            return FALSE;
+        }
+        dbus_message_iter_get_basic(variant_iter, &value->u.integer);
+        break;
+
+    case DDM_DATA_LONG:
+        if (!dbus_message_iter_get_arg_type(variant_iter) == DBUS_TYPE_INT64) {
+            g_warning("dbus type does not match expected data type");
+            return FALSE;
+        }
+        dbus_message_iter_get_basic(variant_iter, &value->u.long_);
+        break;
+
+    case DDM_DATA_FLOAT:
+        if (!dbus_message_iter_get_arg_type(variant_iter) == DBUS_TYPE_DOUBLE) {
+            g_warning("dbus type does not match expected data type");
+            return FALSE;
+        }
+        dbus_message_iter_get_basic(variant_iter, &value->u.float_);
+        break;
+
+    case DDM_DATA_STRING:
+    case DDM_DATA_URL:        
+        if (!dbus_message_iter_get_arg_type(variant_iter) == DBUS_TYPE_STRING) {
+            g_warning("dbus type does not match expected data type");
+            return FALSE;
+        }
+        /* the memory management here is (intended to be) that we call
+         * ddm_data_resource_update_property() before we free
+         * the DBusMessage and it makes a copy.
+         */
+        dbus_message_iter_get_basic(variant_iter, &value->u.string);
+        break;
+        
+    case DDM_DATA_RESOURCE:
+        if (!dbus_message_iter_get_arg_type(variant_iter) == DBUS_TYPE_STRING) {
+            g_warning("dbus type does not match expected data type");
+            return FALSE;
+        }
+        {
+            const char *resource_id;
+            dbus_message_iter_get_basic(variant_iter, &resource_id);
+            value->u.resource = ddm_data_model_lookup_resource(ddm_model, resource_id);
+            if (value->u.resource == NULL) {
+                g_warning("Unknown resource id '%s'", resource_id);
+                return FALSE;
+            }
+        }
+        break;
+
+    default:
+        g_warning("Don't know how to demarshal data type %d from dbus", data_type);
+        return FALSE;
+    }
+    
     return TRUE;
 }
 
@@ -165,7 +237,6 @@ update_property(DBusModel          *dbus_model,
     const char *param_name = NULL;
     DDMQName *property_qname;
     DBusMessageIter variant_iter;
-    DDMDataProperty *old_property;
     DDMDataUpdate update_type;
     DDMDataType data_type = DDM_DATA_NONE;
     DDMDataCardinality cardinality = DDM_DATA_CARDINALITY_1;
@@ -193,19 +264,14 @@ update_property(DBusModel          *dbus_model,
         return;
 
     dbus_message_iter_recurse(prop_struct_iter, &variant_iter);
-    if (!read_variant_value(&variant_iter, data_type, &value))
+    if (!read_variant_value(dbus_model->ddm_model, &variant_iter, data_type, &value))
         return;
 
     property_qname = ddm_qname_get(param_namespace, param_name);
 
-    old_property = ddm_data_resource_get_property_by_qname(resource, property_qname);
-    if (old_property != NULL) {
-        data_type = ddm_data_property_get_type(old_property);
-        cardinality = ddm_data_property_get_cardinality(old_property);
-    }
-
     /* hippo-connection.c has some song and dance with default_include and default_children
-     * here, but nothing in hippo-dbus-model.c sends us anything like that, so...
+     * here, but nothing in hippo-dbus-model.c sends us anything like that, I think
+     * because it's already been "cleaned up" at the XMPP connection level.
      */
     
     if (update_type == DDM_DATA_UPDATE_CLEAR) {
@@ -356,6 +422,43 @@ static const HippoDBusProperty model_client_properties[] = {
 };
 
 static void
+handle_get_connected_reply(DBusMessage *reply,
+                           void        *data)
+{
+    DBusModel *dbus_model = data;
+    DBusMessageIter variant_iter;
+    DBusMessageIter toplevel_iter;
+    dbus_bool_t connected;
+    
+    if (dbus_message_get_type(reply) != DBUS_MESSAGE_TYPE_METHOD_RETURN) {
+        return;        
+    }
+
+    if (!dbus_message_has_signature(reply, "v")) {
+        g_warning("wrong signature on reply to Properties.Get");
+        return;
+    }
+    
+    dbus_message_iter_init(reply, &toplevel_iter);
+    dbus_message_iter_recurse(&toplevel_iter, &variant_iter);
+
+    if (dbus_message_iter_get_arg_type(&variant_iter) != DBUS_TYPE_BOOLEAN) {
+        g_warning("Expecting Connected prop to have type boolean");
+        return;
+    }
+
+    connected = FALSE;
+    dbus_message_iter_get_basic(&variant_iter, &connected);
+
+    /* protect against a race / duplicate effort */
+    if (dbus_model->connection == NULL ||
+        !dbus_connection_get_is_connected(dbus_model->connection))
+        connected = FALSE;
+    
+    ddm_data_model_set_connected(dbus_model->ddm_model, connected);
+}
+
+static void
 handle_engine_available(DBusConnection *connection,
                         const char     *well_known_name,
                         const char     *unique_name,
@@ -363,9 +466,22 @@ handle_engine_available(DBusConnection *connection,
 {
     DBusModel *dbus_model = data;
 
+    dbus_model->engine_props_proxy = hippo_dbus_proxy_new(dbus_model->connection,
+                                                          unique_name,
+                                                          "/org/freedesktop/od/data_model",
+                                                          DBUS_INTERFACE_PROPERTIES);
     
-    
-    /* FIXME get initial connected state */
+    model_ref(dbus_model);
+    hippo_dbus_proxy_call_method_async(dbus_model->engine_props_proxy,
+                                       "Get",
+                                       handle_get_connected_reply,
+                                       dbus_model,
+                                       (GFreeFunc) model_unref,
+                                       DBUS_TYPE_STRING,
+                                       "org.freedesktop.od.Model",
+                                       DBUS_TYPE_STRING,
+                                       "Connected",
+                                       DBUS_TYPE_INVALID);
 }
 
 static void
@@ -376,6 +492,11 @@ handle_engine_unavailable(DBusConnection *connection,
 {
     DBusModel *dbus_model = data;
 
+    g_assert(dbus_model->engine_props_proxy != NULL);
+    
+    hippo_dbus_proxy_unref(dbus_model->engine_props_proxy);
+    dbus_model->engine_props_proxy = NULL;
+    
     ddm_data_model_set_connected(dbus_model->ddm_model, FALSE);
 }
 
