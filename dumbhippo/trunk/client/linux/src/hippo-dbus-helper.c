@@ -251,13 +251,23 @@ hippo_dbus_helper_register_interface(DBusConnection          *connection,
     HippoDBusInterface *iface;
     HippoDBusHelper *helper;
 
-    iface = iface_new(name, members, properties);
-
     helper = get_helper(connection);
-
-    g_return_if_fail(g_hash_table_lookup(helper->interfaces, iface->name) == NULL);
-
-    g_hash_table_replace(helper->interfaces, iface->name, iface);
+    
+    iface = g_hash_table_lookup(helper->interfaces, name);
+    if (iface == NULL) {    
+        iface = iface_new(name, members, properties);
+        g_hash_table_replace(helper->interfaces, iface->name, iface);
+    } else {
+        /* If we ever add unregister_interface() then we'll have to refcount
+         * the interface object and increment the count here.
+         * But since you can't unregister right now, we just do nothing
+         * on a second registration.
+         */
+        if (iface->members != members ||
+            iface->properties != properties) {
+            g_warning("registered an interface twice, differently each time");
+        }
+    }
 }
 
 static void
