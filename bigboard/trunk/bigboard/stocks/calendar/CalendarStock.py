@@ -302,7 +302,6 @@ class EventDetailsDisplay(hippo.CanvasBox):
         kwargs['border-color'] = 0x000000ff
         hippo.CanvasBox.__init__(self, **kwargs)
         self.__event = event
-        
         color = event.get_color()
         end_color=0xc8c8c8ff
         if color is not None:
@@ -315,18 +314,15 @@ class EventDetailsDisplay(hippo.CanvasBox):
 
         self.append(self.__header)
         event_link = ActionLink(text=self.__get_title(), font="14px", padding=4)
-        self.__header.append(event_link)
         event_link.connect("activated", self.__on_activate_web)
 
         attrs = pango.AttrList()
         attrs.insert(pango.AttrForeground(0xFFFF, 0xFFFF, 0xFFFF, 0, 0xFFFF))
         event_link.set_property("attributes", attrs)   
-
         self.__header.append(event_link)
 
         self.__top_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4, border_top=4, border_bottom=4)
         self.append(self.__top_box)
-
         event_time = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, padding_left=4, padding_right=4, text="for: " + fmt_datetime_interval(event.get_start_time(), event.get_end_time()))
         self.__top_box.append(event_time)
 
@@ -424,6 +420,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self._add_more_button(self.__on_more_button)
 
     def __change_day(self):
+        self.__close_slideout()
         self.__events_for_day_displayed = None
         self.__top_event_displayed = None
         self.__refresh_events()
@@ -475,12 +472,14 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self.__change_day()
 
     def __on_up_button(self):
+        self.__close_slideout()
         self.__move_up = True
         self.__refresh_events()
         #__refresh_events() resets it too, but we do it here just in case
         self.__move_up = False
         
     def __on_down_button(self):
+        self.__close_slideout()
         self.__move_down = True
         self.__refresh_events()
         #__refresh_events() resets it too, but we do it here just in case
@@ -937,7 +936,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             self.__slideout_event = None
                 
     def __handle_event_pressed(self, event, *args):
-        same_event = self.__slideout_event == event
+        same_event = (self.__slideout_event is None and [False] or [self.__slideout_event.get_event().get_link() == event.get_event().get_link()])[0]
         self.__close_slideout()
         if same_event:
             return True
@@ -947,11 +946,8 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         coords = event.get_screen_coords()
         _logger.debug("coords are %s %s; allocation alone %s", self.__box.get_context().translate_to_screen(self.__box)[0] + self.__box.get_allocation()[0] + 4, coords[1], event.get_allocation())
         self.__slideout.slideout_from(self.__box.get_context().translate_to_screen(self.__box)[0] + self.__box.get_allocation()[0] + 4, coords[1])
-
         p = EventDetailsDisplay(event.get_event())
-
         self.__slideout.get_root().append(p)
         p.connect("close", self.__close_slideout)
-
         return True
 
