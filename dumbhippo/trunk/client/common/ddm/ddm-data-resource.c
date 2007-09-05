@@ -660,8 +660,8 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
                                   DDMQName           *property_id,
                                   DDMDataUpdate       update,
                                   DDMDataCardinality  cardinality,
-                                  gboolean              default_include,
-                                  const char           *default_children,
+                                  gboolean            default_include,
+                                  const char         *default_children,
                                   DDMDataValue       *value)
 {
     DDMDataProperty *property = NULL;
