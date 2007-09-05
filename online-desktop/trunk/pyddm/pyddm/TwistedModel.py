@@ -6,10 +6,10 @@ from twisted.words.protocols.jabber.client import IQ
 from twisted.words.xish import domish
 from twisted.internet import reactor
 
-from mugshot.AbstractModel import *
-from mugshot.Resource import *
-from mugshot.NotificationSet import *
-from mugshot.Query import *
+from pyddm.AbstractModel import *
+from pyddm.Resource import *
+from pyddm.NotificationSet import *
+from pyddm.Query import *
 
 class MustLoginException(Exception):
     """Raised if the username and password can't be found"""
