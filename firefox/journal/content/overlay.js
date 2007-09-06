@@ -38,16 +38,12 @@ const JOURNAL_CHROME = "chrome://firefoxjournal/content/journal.html";
 
 const console = Components.classes["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
 
-var HistoryBlacklist = [
- {domainEnd: 'google.com',
-  pathStart: '/accounts/'},
+var HistoryBlacklist = [ /* Match what we don't want to see, showing only what we would.  would be nice to use literals, but they don't play well inside an array */
+  new RegExp("^https?:\/\/mail\.google\.com\/(mail|\/.+|a\/.+\/.+)"),
+  new RegExp("^https?:\/\/www\.google\.com\/calendar\/(render\/.+|hosted\/.+/render\/.+)"),
+  new RegExp("^https?:\/\/www\.google\.com\/accounts\/.+"),
+  new RegExp("^javascript:.+"),
 ];
-
-// stolen from prototype - TODO find equivalent in Firefox
-var stringEndsWith = function(str, pattern) {
-  var d = str.length - pattern.length;
-  return d >= 0 && str.lastIndexOf(pattern) === d;
-};
 
 var theHistoryMonkey;
 var HistoryMonkey = function() {
@@ -61,11 +57,9 @@ HistoryMonkey.prototype = {
     console.logStringMessage("evaluating: " + uri.spec);
     for (var i = 0; i < HistoryBlacklist.length; i++) {
       var blacklistItem = HistoryBlacklist[i];
-      if (blacklistItem.domainEnd && !stringEndsWith(uri.host, blacklistItem.domainEnd))
-        continue;
-      if (blacklistItem.pathStart && !uri.path.indexOf(blacklistItem.pathStart) == 0)
-        continue;
-      return true;
+      console.logStringMessage("using regex: " + blacklistItem);
+      if ( blacklistItem.test(uri.spec) )
+        return true;
     }
     return false;
   },
@@ -73,6 +67,10 @@ HistoryMonkey.prototype = {
     if (this.queryHideUri(uri)) {
       console.logStringMessage("hiding: " + uri.spec);
       try {
+        /* 
+         *  It might be worthwhile to try inserting the version of the URI that is ok, in case we don't have it already... 
+         *  If we used the () match facility of the regex properly we could get the objects back needed to strip the URL of what we don't want
+         */
         this.browserHistory.removePage(uri); 
       } catch (e) {
         console.logStringMessage("failed to hide page: " + e);
@@ -85,7 +83,7 @@ HistoryMonkey.prototype = {
     console.logStringMessage("visit: " + uri.spec);
     theHistoryMonkey.possiblyHideUri(uri);
   },
-  onTitleChanged: function() { },
+  onTitleChanged: function(uri, title) { console.logStringMessage("onTitleChanged" + uri.prePath + " : " + title); },
   onDeleteURI: function() { } ,
   onClearHistory: function() { },
   onPageChanged: function(uri, what, val) { },
