@@ -1,4 +1,8 @@
-noinst_LTLIBRARIES += libddm-1.la
+pkgconfig_DATA += ddm-1.pc
+
+EXTRA_DIST += ddm-1.pc.in
+
+lib_LTLIBRARIES += libddm-1.la
 
 libddm_1_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)			\

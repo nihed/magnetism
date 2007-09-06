@@ -41,9 +41,12 @@ dist-hook: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mu
 bin_PROGRAMS = 
 noinst_PROGRAMS =
 noinst_LTLIBRARIES =
+lib_LTLIBRARIES =
 DISTCLEANFILES =
 MAINTAINERCLEANFILES =
 BUILT_SOURCES =
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = 
 
 CANVASSRCDIR=$(top_srcdir)/canvas-dist
 

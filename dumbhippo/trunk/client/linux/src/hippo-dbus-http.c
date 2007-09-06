@@ -39,7 +39,7 @@ append_bytes(DBusMessage *message,
                                         &buf->estimated_remaining))
         return FALSE;
     
-    if (!dbus_message_iter_open_container(&toplevel_iter, DBUS_TYPE_ARRAY, "ay", &array_iter))
+    if (!dbus_message_iter_open_container(&toplevel_iter, DBUS_TYPE_ARRAY, "y", &array_iter))
         return FALSE;
     
     if (!dbus_message_iter_append_fixed_array(&array_iter, DBUS_TYPE_BYTE,
@@ -110,8 +110,10 @@ http_result(const char *content_type,
                                            &content_or_error->len,
                                            DBUS_TYPE_INVALID);
 
-        /* FIXME the chunk size here is silly-small, for testing */
-#define CHUNK_SIZE 64
+        /* FIXME the chunk size here should be larger for efficiency, this is small
+         * to start in order to reveal bugs
+         */
+#define CHUNK_SIZE 1024
         bytes_to_send = content_or_error->len;
         bytes_sent = 0;
 

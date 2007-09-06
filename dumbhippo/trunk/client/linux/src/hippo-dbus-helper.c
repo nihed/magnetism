@@ -665,7 +665,8 @@ handle_method(DBusConnection  *connection,
                        member_name, member->in_args, dbus_message_get_signature(message));
         goto out;
     }
-    
+
+    /* Object could be destroyed during this callback! */
     reply = (* member->handler) (o->object, message, &derror);
 
     if (reply != NULL && dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_METHOD_RETURN) {
@@ -1762,7 +1763,11 @@ hippo_dbus_helper_filter_message(DBusConnection *connection,
     if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_SIGNAL) {
         HippoDBusHelper *helper = get_helper(connection); 
         const char *sender = dbus_message_get_sender(message);
-        HippoDBusService *service = g_hash_table_lookup(helper->services_by_owner, sender);
+        HippoDBusService *service;
+
+        service = NULL;
+        if (sender)
+            service = g_hash_table_lookup(helper->services_by_owner, sender);
 
         if (service != NULL) {
             int i;

@@ -323,12 +323,12 @@ hippo_dbus_im_update_buddy(DDMNotificationSet *notifications,
         value.u.string = buddy->status;
 
         update_property(buddy_resource,
-                                             ddm_qname_get(BUDDY_CLASS, "status"),
-                                             buddy->status ? DDM_DATA_UPDATE_REPLACE : DDM_DATA_UPDATE_CLEAR,
-                                             DDM_DATA_CARDINALITY_01,
-                                             TRUE, NULL,
-                                             &value,
-                                             notifications);
+                        ddm_qname_get(BUDDY_CLASS, "status"),
+                        buddy->status ? DDM_DATA_UPDATE_REPLACE : DDM_DATA_UPDATE_CLEAR,
+                        DDM_DATA_CARDINALITY_01,
+                        TRUE, NULL,
+                        &value,
+                        notifications);
         
         buddy_changed = !new_buddy;
     }
@@ -341,12 +341,12 @@ hippo_dbus_im_update_buddy(DDMNotificationSet *notifications,
         value.u.string = buddy->webdav_url;
 
         update_property(buddy_resource,
-                                             ddm_qname_get(BUDDY_CLASS, "webdavUrl"),
-                                             buddy->webdav_url ? DDM_DATA_UPDATE_REPLACE : DDM_DATA_UPDATE_CLEAR,
-                                             DDM_DATA_CARDINALITY_01,
-                                             TRUE, NULL,
-                                             &value,
-                                             notifications);
+                        ddm_qname_get(BUDDY_CLASS, "webdavUrl"),
+                        buddy->webdav_url ? DDM_DATA_UPDATE_REPLACE : DDM_DATA_UPDATE_CLEAR,
+                        DDM_DATA_CARDINALITY_01,
+                        TRUE, NULL,
+                        &value,
+                        notifications);
         
         buddy_changed = !new_buddy;
     }
@@ -359,12 +359,12 @@ hippo_dbus_im_update_buddy(DDMNotificationSet *notifications,
         value.u.resource = buddy_resource;
         
         update_property(system_resource,
-                                             ddm_qname_get(GLOBAL_CLASS, "onlineBuddies"),
-                                             buddy->is_online ? DDM_DATA_UPDATE_ADD : DDM_DATA_UPDATE_DELETE,
-                                             DDM_DATA_CARDINALITY_N,
-                                             FALSE, NULL,
-                                             &value,
-                                             notifications);
+                        ddm_qname_get(GLOBAL_CLASS, "onlineBuddies"),
+                        buddy->is_online ? DDM_DATA_UPDATE_ADD : DDM_DATA_UPDATE_DELETE,
+                        DDM_DATA_CARDINALITY_N,
+                        FALSE, NULL,
+                        &value,
+                        notifications);
         
     }
     
