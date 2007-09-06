@@ -204,26 +204,6 @@ JournalPage.prototype = {
     this.searchValue = null;
     this.targetHistoryItem = null;
   },
-  findHighestVisited: function(journalEntries) {
-    var highest;
-    journalEntries.containerOpen = true;
-    for (var i = 0; i < journalEntries.childCount; i++) {
-      var dayset = journalEntries.getChild(i);
-      dayset.QueryInterface(Ci.nsINavHistoryContainerResultNode);
-      dayset.containerOpen = true;
-      for (var j = 0; j < dayset.childCount; j++) {
-        var histitem = dayset.getChild(j);
-        if (!highest) {
-          highest = histitem;
-        } else if (highest.accessCount < histitem.accessCount) {
-          highest = histitem;
-        }
-      }
-      dayset.containerOpen = false;
-    }
-    journalEntries.containerOpen = false;
-    return highest;
-  }, 
   appendDaySet: function(dayset) {
     dayset.QueryInterface(Ci.nsINavHistoryContainerResultNode);
     dayset.containerOpen = true;
@@ -276,7 +256,6 @@ JournalPage.prototype = {
     item.setAttribute('tabindex', 1); 
 
     if (isTarget) {
-      this.setAsTargetItem(item);
       item.setAttribute('id', 'default-target-item');
     }
 
@@ -327,17 +306,11 @@ JournalPage.prototype = {
   },
   renderJournalItem: function(entry) {
     var me = this;  
-    var isTarget = entry == this.targetHistoryItem;
 
     var item = document.createElement('a');
     item.href = entry.uri;
     item.className = 'item';
     item.setAttribute('tabindex', 1); 
-
-    if (isTarget) {
-      this.setAsTargetItem(item);
-      item.setAttribute('id', 'default-target-item');
-    }
 
     item.addEventListener("focus", function(e) { me.onResultFocus(e, true); }, false);
     item.addEventListener("blur", function(e) { me.onResultFocus(e, false); }, false);             

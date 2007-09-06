@@ -82,6 +82,13 @@ HistoryMonkey.prototype = {
   onVisit: function(uri, visitId, time, sessid, referid, transtype) {
     console.logStringMessage("visit: " + uri.spec);
     theHistoryMonkey.possiblyHideUri(uri);
+/*  
+    var feeds = gBrowser.selectedBrowser.feeds;  //   gBrowser.mCurrentBrowser.feeds;
+    for ( var i = 0; i < feeds.length; i++ ) {
+      var title = feeds[i].title;
+      var href = feeds[i].href;
+    }
+*/
   },
   onTitleChanged: function(uri, title) { console.logStringMessage("onTitleChanged" + uri.prePath + " : " + title); },
   onDeleteURI: function() { } ,
