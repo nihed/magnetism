@@ -1,2 +1,0 @@
-from DataModel import DataModel
-

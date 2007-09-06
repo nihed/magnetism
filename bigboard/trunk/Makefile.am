@@ -1,6 +1,6 @@
 include $(top_srcdir)/Makefile-include.am
 
-SUBDIRS = applet data bigboard scripts po mugshot-python
+SUBDIRS = applet data bigboard scripts po
 
 mainscript_PYTHON = main.py
 
@@ -57,3 +57,4 @@ gdatabasedir = $(gdatadir)/base
 gdatabase_PYTHON = gdata/base/__init__.py gdata/base/service.py
 gdatacalendardir = $(gdatadir)/calendar
 gdatacalendar_PYTHON = gdata/calendar/__init__.py gdata/calendar/service.py
+

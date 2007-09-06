@@ -6,7 +6,7 @@ import gnome.ui
 import dbus, dbus.glib
 import hippo
 
-from mugshot import DataModel
+from pyddm import DataModel
 import bigboard.globals as globals
 import bigboard.slideout
 import bigboard.libbig as libbig

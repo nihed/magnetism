@@ -1,7 +1,7 @@
 import logging
 
 import hippo
-from mugshot import DataModel
+from pyddm import DataModel
 
 import bigboard
 from bigboard.people_tracker import PeopleTracker

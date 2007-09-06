@@ -197,6 +197,5 @@ bigboard/keybinder/Makefile
 data/Makefile
 scripts/Makefile
 po/Makefile.in
-mugshot-python/Makefile
 version
 ])
