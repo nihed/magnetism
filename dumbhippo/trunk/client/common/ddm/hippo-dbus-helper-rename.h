@@ -16,6 +16,8 @@ G_BEGIN_DECLS
  * confuse indentation engines.
  */
 
+#define hippo_dbus_helper_register_name_owner _ddm_dbus_dbus_helper_register_name_owner
+#define hippo_dbus_helper_unregister_name_owner _ddm_dbus_dbus_helper_unregister_name_owner
 #define hippo_dbus_helper_emit_signal _ddm_dbus_dbus_helper_emit_signal
 #define hippo_dbus_helper_emit_signal_appender _ddm_dbus_dbus_helper_emit_signal_appender
 #define hippo_dbus_helper_emit_signal_valist _ddm_dbus_dbus_helper_emit_signal_valist
