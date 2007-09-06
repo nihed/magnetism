@@ -57,17 +57,7 @@ LIBDDM_BUILT_SOURCEFILES =			\
 MAINTAINERCLEANFILES +=	$(LIBDDM_BUILT_SOURCEFILES)
 BUILT_SOURCES += $(LIBDDM_BUILT_SOURCEFILES)
 
-## we need to nodist these because otherwise automake would copy 
-## ../common to distdir/../common which puts common outside of distdir.
-## so we handle the disting manually so the destination is always distdir/common-dist
 nodist_libddm_1_la_SOURCES=$(LIBDDM_SOURCEFILES) $(LIBDDM_BUILT_SOURCEFILES)
-libddm-dist-hook:
-	-mkdir $(distdir)/common-dist
-	mkdir $(distdir)/common-dist/ddm
-	cp $(LIBDDM_SOURCEFILES) $(libddminclude_HEADERS) $(distdir)/common-dist/ddm
-#	mkdir $(distdir)/common-dist/ddm/generated
-#	cp $(COMMONSRCDIR)/ddm/ddm-common-marshal.list $(distdir)/common-dist/ddm
-
 
 noinst_PROGRAMS += test-ddm
 
@@ -75,4 +65,15 @@ test_ddm_CPPFLAGS=$(AM_CPPFLAGS) \
 		$(LIBDDM_CFLAGS)
 test_ddm_LDADD=libddm-1.la
 
-test_ddm_SOURCES=$(COMMONSRCDIR)/ddm/test-ddm.c
+nodist_test_ddm_SOURCES=$(COMMONSRCDIR)/ddm/test-ddm.c
+
+## we need to nodist these because otherwise automake would copy 
+## ../common to distdir/../common which puts common outside of distdir.
+## so we handle the disting manually so the destination is always distdir/common-dist
+libddm-dist-hook:
+	-mkdir $(distdir)/common-dist
+	mkdir $(distdir)/common-dist/ddm
+	cp $(LIBDDM_SOURCEFILES) $(libddminclude_HEADERS) $(nodist_test_ddm_SOURCES) $(distdir)/common-dist/ddm
+#	mkdir $(distdir)/common-dist/ddm/generated
+#	cp $(COMMONSRCDIR)/ddm/ddm-common-marshal.list $(distdir)/common-dist/ddm
+
