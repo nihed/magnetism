@@ -318,7 +318,7 @@ JournalPage.prototype = {
     var urlSection = document.createElement('div');
     urlSection.className = 'urls';
     var titleDiv = document.createElement('div');
-    titleDiv.appendChild(domUtils.createSpanText(this.getTitle(entry),'title'));
+    titleDiv.appendChild(domUtils.createSpanText(entry.title,'title'));
     urlSection.appendChild(titleDiv);
     var hrefDiv = document.createElement('div');
     hrefDiv.appendChild(domUtils.createSpanText(formatUtils.ellipsize(entry.uri, 80), 'url'));
@@ -402,39 +402,14 @@ JournalPage.prototype = {
       if (!annon) throw annon;
       return annon;
     } catch (e) {
-      return this._getActionTitle(entry).action;
+      return this._getAction(entry);
     }
     return "!visited";
   },
-  getTitle: function(entry) {
-    try {
-      /* FIXME: need to retrieve the correct title from the annotations */
-     return entry.title;
-/*
-      var flags = {}, exp = {}, mimeType = {}, type = {};
-      ANNOTATION_SERVICE.getPageAnnotationInfo(uri, "journal/title", flags, exp, mimeType, type);
-      LOG("flags: " + flags.value + " exp: " + exp.value + " mimeType: " + mimeType.value + " type: " + type.value);
-      var action = ANNOTATION_SERVICE.getPageAnnotationString(uri, "journal/title");
-*/
-      var uri = new String(entry.uri);
-      LOG("uri: " + uri);      
-      LOG("title retrieved: " + ANNOTATION_SERVICE.getPageAnnotation(uri, "journal/title"));
-      $("debuglog").appendChild(document.createElement("br"));
-
-      /* we're not getting the correct title here, instead we're getting the title from first uri returned every time */
-      var annon = ANNOTATION_SERVICE.getPageAnnotation(uri, "journal/title");
-      if (!annon) throw annon;
-      return annon;
-    } catch (e) {
-      return this._getActionTitle(entry).title;
-    }
-    return "!" + entry.title;
-  },
-  _getActionTitle: function(entry) {
-      var ret = { action : "visited", title : entry.title };
+  _getAction: function(entry) {
+      var action : "visited";
       var uri = new String(entry.uri);
       var queryParams = uri.toQueryParams();
-      var newTitle = null;
 
       searchMapping.each(function (kv) {
         if (!uri.startsWith(kv[1]['urlStart']))
@@ -452,9 +427,7 @@ JournalPage.prototype = {
         if (!qp) 
           return;
 
-        ret.title = decodeURIComponent(queryParams[qp].replace(/\+/g," "));
-
-        ret.action = "search";
+        action = "search";
 
         LOG("qp: " + qp + " params: " + queryParams[qp]);
 
@@ -469,22 +442,18 @@ JournalPage.prototype = {
 */
       });
 
-      LOG("action: " + ret.action + " title: " + ret.title);
+      LOG("action: " + action);
 
       try {
-        ANNOTATION_SERVICE.setPageAnnotation( uri, "journal/title",  ret.title, 0, 0 ); // ANNOTATION_SERVICE.EXPIRE_WITH_HISTORY );
-      } catch (e) { LOG("title error: " + e + " : " + entry.uri); }
-
-      try {
-        ANNOTATION_SERVICE.setPageAnnotation( uri, "journal/action", ret.action, 0, 0 ); // ANNOTATION_SERVICE.EXPIRE_WITH_HISTORY );
+        ANNOTATION_SERVICE.setPageAnnotation( uri, "journal/action", action, 0, 0 ); // ANNOTATION_SERVICE.EXPIRE_WITH_HISTORY );
       } catch(e) { LOG("action error: " + e + " : " + uri); }
 
-      /* We're retrieving the correct title/action here after setting it above */
+      /* We're retrieving the correct action here after setting it above */
       LOG("uri: " + uri);
-      LOG("action saved: " + ANNOTATION_SERVICE.getPageAnnotation(uri, "journal/action") + " title: " + ANNOTATION_SERVICE.getPageAnnotation(uri, "journal/title"));
+      LOG("action saved: " + ANNOTATION_SERVICE.getPageAnnotation(uri, "journal/action"));
       $("debuglog").appendChild(document.createElement("br"));
 
-    return ret;
+    return action;
   },
   setAsTargetItem: function (node) {
     node.addClassName("target-item");
