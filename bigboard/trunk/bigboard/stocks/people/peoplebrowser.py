@@ -3,7 +3,7 @@ import logging, time, urlparse, urllib
 import gobject, gtk
 import hippo
 
-from mugshot import DataModel
+from pyddm import DataModel
 
 import bigboard.globals
 import bigboard.libbig as libbig
