@@ -56,7 +56,7 @@ class OldDeskbar(AbstractDeskbar):
         enabled_handlers.set_list_type(gconf.VALUE_STRING)
         enabled_handlers.set_list(map(make_str_val, ['ProgramsHandler', 'MozillaBookmarksHandler', 'YahooHandler']))
         self.__deskbar.on_config_handlers(enabled_handlers)  
-        self._logger.debug("idle override modules complete")
+        _logger.debug("idle override modules complete")
 
     def focus(self):
         self.__deskbar.on_keybinding_button_press(None, gtk.get_current_event_time())
