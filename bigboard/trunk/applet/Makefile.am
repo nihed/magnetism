@@ -25,7 +25,10 @@ $(server_in_files): $(server_in_files).in Makefile
 BIGBOARD_APPLET_SOURCES=			\
 	bigboard-button.c			\
 	hippo-dbus-helper.c			\
-	hippo-dbus-helper.h
+	hippo-dbus-helper.h			\
+	hippo-dbus-helper-rename.h		\
+	http.c					\
+	http.h
 
 BIGBOARD_APPLET_CPPFLAGS =					\
 	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"	\

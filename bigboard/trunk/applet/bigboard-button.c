@@ -26,6 +26,8 @@
 #include <gtk/gtk.h>
 #include <panel-applet.h>
 #include "hippo-dbus-helper.h"
+#include <dbus/dbus-glib-lowlevel.h>
+#include "http.h"
 
 #include <string.h>
 
@@ -243,6 +245,7 @@ static const HippoDBusSignalTracker signal_handlers[] = {
 };
 
 static const HippoDBusServiceTracker bigboard_tracker = {
+        0,
         handle_bigboard_available,
         handle_bigboard_unavailable
 };
@@ -650,6 +653,9 @@ bigboard_button_add_to_widget (GtkWidget *applet)
 
         button_data->connection = dbus_bus_get (DBUS_BUS_SESSION, NULL);
         if (button_data->connection) {
+
+                dbus_connection_setup_with_g_main(button_data->connection, NULL);
+
                 hippo_dbus_helper_register_service_tracker(button_data->connection,
                                                            "org.gnome.BigBoard",
                                                            &bigboard_tracker,
@@ -802,11 +808,29 @@ PANEL_APPLET_BONOBO_FACTORY ("OAFIID:GNOME_OnlineDesktop_Factory",
 #error "You won't be able to test if you build a shared lib"
 #endif
 
+#include <stdlib.h>
+
+static void
+print_http_result_func(const char *content_type,
+                       GString    *content_or_error,
+                       void       *data)
+{
+        if (content_type == NULL) {
+                g_printerr("Error getting url: %s\n", content_or_error->str);
+                exit(1);
+        } else {
+                g_print("Received HTTP data, %d bytes content type %s\n",
+                        (int) content_or_error->len, content_type);
+                exit(0);
+        }   
+}
+
 int
 main (int argc, char **argv)
 {
+#if 0
         GtkWidget *window;
-
+        
         gtk_init (&argc, &argv);
 
         window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -823,5 +847,26 @@ main (int argc, char **argv)
         gtk_main ();
 
         return 0;
+#else
+        GMainLoop *loop;
+        DBusConnection *connection;
+        
+        g_type_init();
+        
+        connection = dbus_bus_get (DBUS_BUS_SESSION, NULL);
+        dbus_connection_setup_with_g_main(connection, NULL);
+        
+        http_get(connection, "http://www.yahoo.com/",
+                 print_http_result_func,
+                 NULL);
+        
+        loop = g_main_loop_new(NULL, FALSE);
+
+        g_main_loop_run(loop);
+
+        dbus_connection_unref(connection);
+        
+        return 0;
+#endif  
 }
 #endif /* main() test mode */

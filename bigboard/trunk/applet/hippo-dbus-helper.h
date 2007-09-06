@@ -8,6 +8,8 @@
 #include <dbus/dbus.h>
 #include <glib-object.h>
 
+#include "hippo-dbus-helper-rename.h"
+
 G_BEGIN_DECLS
 
 typedef enum {
@@ -15,12 +17,24 @@ typedef enum {
     HIPPO_DBUS_MEMBER_SIGNAL
 } HippoDBusMemberType;
 
+typedef enum {
+    HIPPO_DBUS_SERVICE_START_IF_NOT_RUNNING = 1 << 0
+} HippoDBusServiceTrackerFlags;
+
+typedef enum {
+    HIPPO_DBUS_NAME_SINGLE_INSTANCE_REPLACING_CURRENT_OWNER,
+    HIPPO_DBUS_NAME_SINGLE_INSTANCE,
+    HIPPO_DBUS_NAME_OWNED_OPTIONALLY
+} HippoDBusNameOwnershipStyle;
+
 
 typedef struct HippoDBusProxy HippoDBusProxy;
 typedef struct HippoDBusMember HippoDBusMember;
 typedef struct HippoDBusProperty HippoDBusProperty;
 typedef struct HippoDBusServiceTracker HippoDBusServiceTracker;
 typedef struct HippoDBusSignalTracker HippoDBusSignalTracker;
+typedef struct HippoDBusConnectionTracker HippoDBusConnectionTracker;
+typedef struct HippoDBusNameOwner HippoDBusNameOwner;
 
 
 typedef void        (* HippoDBusReplyHandler) (DBusMessage *reply,
@@ -56,6 +70,16 @@ typedef void (* HippoDBusSignalHandler)             (DBusConnection *connection,
                                                      DBusMessage    *message,
                                                      void           *data);
 
+typedef void (* HippoDBusConnectedHandler)          (DBusConnection *connection,
+                                                     void           *data);
+typedef void (* HippoDBusDisconnectedHandler)       (DBusConnection *connection,
+                                                     void           *data);
+
+typedef void (* HippoDBusNameOwnedHandler)          (DBusConnection *connection,
+                                                     void           *data);
+typedef void (* HippoDBusNameNotOwnedHandler)       (DBusConnection *connection,
+                                                     void           *data);
+
 struct HippoDBusMember
 {
     HippoDBusMemberType member_type;
@@ -78,6 +102,7 @@ struct HippoDBusProperty
 
 struct HippoDBusServiceTracker
 {
+    HippoDBusServiceTrackerFlags flags;
     HippoDBusServiceAvailableHandler available_handler;
     HippoDBusServiceUnavailableHandler unavailable_handler;
 };
@@ -87,6 +112,18 @@ struct HippoDBusSignalTracker
     const char *interface;
     const char *signal;
     HippoDBusSignalHandler handler;
+};
+
+struct HippoDBusConnectionTracker
+{
+    HippoDBusConnectedHandler connected_handler;
+    HippoDBusDisconnectedHandler disconnected_handler;
+};
+
+struct HippoDBusNameOwner
+{
+    HippoDBusNameOwnedHandler owned_handler;
+    HippoDBusNameNotOwnedHandler  not_owned_handler;
 };
 
 void              hippo_dbus_helper_register_interface   (DBusConnection          *connection,
@@ -126,16 +163,42 @@ void              hippo_dbus_helper_emit_signal_appender (DBusConnection        
                                                           HippoDBusArgAppender     appender,
                                                           void                    *appender_data);
                                                           
+void hippo_dbus_helper_register_service_tracker      (DBusConnection                   *connection,
+                                                      const char                       *well_known_name,
+                                                      const HippoDBusServiceTracker    *tracker,
+                                                      const HippoDBusSignalTracker     *signal_handlers,
+                                                      void                             *data);
+void hippo_dbus_helper_unregister_service_tracker    (DBusConnection                   *connection,
+                                                      const char                       *well_known_name,
+                                                      const HippoDBusServiceTracker    *tracker,
+                                                      void                             *data);
+void hippo_dbus_helper_register_connection_tracker   (DBusBusType                       bus_type,
+                                                      const HippoDBusConnectionTracker *tracker,
+                                                      void                             *data);
+void hippo_dbus_helper_unregister_connection_tracker (DBusBusType                       bus_type,
+                                                      const HippoDBusConnectionTracker *tracker,
+                                                      void                             *data);
+void hippo_dbus_helper_register_name_owner           (DBusConnection                   *connection,
+                                                      const char                       *well_known_name,
+                                                      HippoDBusNameOwnershipStyle       ownership_style,
+                                                      const HippoDBusNameOwner         *owner,
+                                                      void                             *data);
+void hippo_dbus_helper_unregister_name_owner         (DBusConnection                   *connection,
+                                                      const char                       *well_known_name,
+                                                      const HippoDBusNameOwner         *owner,
+                                                      void                             *data);
+/* these two aren't implemented yet */
+void hippo_dbus_helper_register_name_owner_on_bus    (DBusBusType                       bus_type,
+                                                      const char                       *well_known_name,
+                                                      HippoDBusNameOwnershipStyle       ownership_style,
+                                                      const HippoDBusNameOwner         *owner,
+                                                      void                             *data);
+void hippo_dbus_helper_unregister_name_owner_on_bus  (DBusBusType                       bus_type,
+                                                      const char                       *well_known_name,
+                                                      const HippoDBusNameOwner         *owner,
+                                                      void                             *data);
 
-void hippo_dbus_helper_register_service_tracker   (DBusConnection                *connection,
-                                                   const char                    *well_known_name,
-                                                   const HippoDBusServiceTracker *tracker,
-                                                   const HippoDBusSignalTracker  *signal_handlers,
-                                                   void                          *data);
-void hippo_dbus_helper_unregister_service_tracker (DBusConnection                *connection,
-                                                   const char                    *well_known_name,
-                                                   const HippoDBusServiceTracker *tracker,
-                                                   void                          *data);
+
 
 HippoDBusProxy*   hippo_dbus_proxy_new                     (DBusConnection          *connection,
                                                             const char              *bus_name,
