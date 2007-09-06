@@ -1075,7 +1075,7 @@ on_connected_changed(DDMDataModel *ddm_model,
     
     if (connected) {
         char *resource_id = get_self_id();
-
+        
         hippo_dbus_helper_emit_signal(connection,
                                       HIPPO_DBUS_MODEL_PATH, HIPPO_DBUS_MODEL_INTERFACE,
                                       "ConnectedChanged",

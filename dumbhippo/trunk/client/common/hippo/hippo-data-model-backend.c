@@ -72,7 +72,42 @@ static void
 on_connection_connected_changed(HippoConnection *connection,
                                 gboolean         connected,
                                 HippoModel      *hippo_model)
-{
+{   
+    DDMDataResource *global_resource;
+    const char *self_id;
+    DDMQName *self_id_prop;
+    DDMDataValue value;
+    
+    global_resource = ddm_data_model_ensure_resource(hippo_model->ddm_model,
+                                                     DDM_GLOBAL_RESOURCE, DDM_GLOBAL_RESOURCE_CLASS);
+    if (connected) {
+        self_id = hippo_connection_get_self_resource_id(connection);
+    } else {
+        self_id = NULL;
+    }
+
+    self_id_prop = ddm_qname_get(DDM_GLOBAL_RESOURCE_CLASS,
+                                 "self");
+    if (self_id) {
+        value.type = DDM_DATA_RESOURCE;
+        value.u.resource = ddm_data_model_ensure_resource(hippo_model->ddm_model,
+                                                          self_id, "http://mugshot.org/p/o/user");
+    } else {
+        value.type = DDM_DATA_NONE;
+    }
+
+    if (ddm_data_resource_update_property(global_resource,
+                                          self_id_prop,
+                                          self_id ? DDM_DATA_UPDATE_REPLACE : DDM_DATA_UPDATE_DELETE,
+                                          DDM_DATA_CARDINALITY_1,
+                                          FALSE, NULL,
+                                          &value)) {
+        GSList *changed_list;
+        changed_list = g_slist_prepend(NULL, self_id_prop);
+        ddm_data_resource_on_resource_change(global_resource, changed_list);
+        g_slist_free(changed_list);
+    }
+    
     ddm_data_model_set_connected(hippo_model->ddm_model, connected);
 }
 

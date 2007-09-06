@@ -14,6 +14,9 @@
 
 G_BEGIN_DECLS
 
+#define DDM_GLOBAL_RESOURCE       "online-desktop:/o/global"
+#define DDM_GLOBAL_RESOURCE_CLASS "online-desktop:/p/o/global"
+
 typedef struct _DDMDataModel      DDMDataModel;
 typedef struct _DDMDataModelClass DDMDataModelClass;
 

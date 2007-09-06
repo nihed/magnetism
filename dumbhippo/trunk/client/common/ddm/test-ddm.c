@@ -102,7 +102,7 @@ main(int argc, char **argv)
     ddm_model = ddm_data_model_get_default();
     
     global_resource_query = ddm_data_model_query_resource(ddm_model,
-                                                          "online-desktop:/o/global", "onlineBuddies +");
+                                                          "online-desktop:/o/global", "self [ photoUrl ]");
     if (global_resource_query == NULL) {
         g_printerr("Failed to query global resource\n");
         return 1;

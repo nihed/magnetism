@@ -10,8 +10,6 @@
 #include "hippo-dbus-im.h"
 #include "main.h"
 
-#define GLOBAL_RESOURCE "online-desktop:/o/global"
-#define GLOBAL_CLASS "online-desktop:/p/o/global"
 #define BUDDY_CLASS "online-desktop:/p/o/buddy"
 
 typedef struct {
@@ -185,7 +183,7 @@ hippo_dbus_im_append_buddy(DBusMessageIter        *append_iter,
 static DDMDataResource *
 get_system_resource(DDMDataModel *model)
 {
-    return ddm_data_model_ensure_resource(model, GLOBAL_RESOURCE, GLOBAL_CLASS);
+    return ddm_data_model_ensure_resource(model, DDM_GLOBAL_RESOURCE, DDM_GLOBAL_RESOURCE_CLASS);
 }
 
 static gboolean
@@ -227,8 +225,8 @@ update_property (DDMDataResource    *resource,
                  DDMNotificationSet *notifications)
 {
     if (ddm_data_resource_update_property(resource, property_id, update,
-                                           cardinality, default_include, default_children,
-                                           value))
+                                          cardinality, default_include, default_children,
+                                          value))
         ddm_notification_set_add(notifications, resource, property_id);
 }
 
@@ -359,7 +357,7 @@ hippo_dbus_im_update_buddy(DDMNotificationSet *notifications,
         value.u.resource = buddy_resource;
         
         update_property(system_resource,
-                        ddm_qname_get(GLOBAL_CLASS, "onlineBuddies"),
+                        ddm_qname_get(DDM_GLOBAL_RESOURCE_CLASS, "onlineBuddies"),
                         buddy->is_online ? DDM_DATA_UPDATE_ADD : DDM_DATA_UPDATE_DELETE,
                         DDM_DATA_CARDINALITY_N,
                         FALSE, NULL,
@@ -396,7 +394,7 @@ hippo_dbus_im_remove_buddy(DDMNotificationSet *notifications,
         value.u.resource = buddy_resource;
         
         update_property(system_resource,
-                        ddm_qname_get(GLOBAL_CLASS, "onlineBuddies"),
+                        ddm_qname_get(DDM_GLOBAL_RESOURCE_CLASS, "onlineBuddies"),
                         DDM_DATA_UPDATE_DELETE,
                         DDM_DATA_CARDINALITY_N,
                         FALSE, NULL,
@@ -411,10 +409,10 @@ void
 hippo_dbus_im_send_notifications(DDMNotificationSet *notifications)
 {
     if (ddm_notification_set_has_property(notifications,
-                                             GLOBAL_RESOURCE,
-                                             ddm_qname_get(GLOBAL_CLASS, "onlineBuddies"))) {
+                                          DDM_GLOBAL_RESOURCE,
+                                          ddm_qname_get(DDM_GLOBAL_RESOURCE_CLASS, "onlineBuddies"))) {
         DBusConnection *connection = hippo_dbus_get_connection(hippo_app_get_dbus(hippo_get_app()));
-        hippo_dbus_im_emit_buddy_list_changed (connection);        
+        hippo_dbus_im_emit_buddy_list_changed (connection);     
     }
     
     ddm_notification_set_send(notifications);
