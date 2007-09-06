@@ -142,7 +142,7 @@ def include_calendar(calendar):
 
 class Event(AutoStruct):
     def __init__(self):
-        super(Event, self).__init__({ 'calendar_title' : '', 'calendar_link' : '', 'color' : '', 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '', 'is_all_day' : False })
+        super(Event, self).__init__({ 'calendar_titles' : [], 'calendar_links' : [], 'color' : '', 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '', 'is_all_day' : False })
         self.__event_entry = None
 
     def set_event_entry(self, event_entry):
@@ -160,7 +160,7 @@ class EventsParser:
 
     def __parseEvents(self, data):
         calendar = gcalendar.CalendarEventFeedFromString(data)
-        _logger.debug("number of entries: %s ", len(calendar.entry)) 
+        # _logger.debug("number of entries: %s data: %s", len(calendar.entry), data) 
 
         calendar_title = calendar.title.text and calendar.title.text or "<No Title>"
         calendar_link = calendar.id.text
@@ -184,8 +184,8 @@ class EventsParser:
                     entry_copy.when.append(when)
   
                 e.set_event_entry(entry_copy)
-                e.update({ 'calendar_title' : calendar_title,
-                           'calendar_link' : calendar_link, 
+                e.update({ 'calendar_titles' : [calendar_title],
+                           'calendar_links' : [calendar_link], 
                            'title' : entry_title, 
                            'link' : entry.GetHtmlLink().href })  
                 # _logger.debug("start time %s\n" % (google.parse_timestamp(when.start_time),))
@@ -217,7 +217,8 @@ class EventsParser:
                     e = Event()
                     self.__events.append(e) 
                     e.set_event_entry(entry)
-                    e.update({ 'calendar_title' : calendar_title, 
+                    e.update({ 'calendar_titles' : [calendar_title],
+                               'calendar_links' : [calendar_link],  
                                'title' : entry_title, 
                                'link' : entry.GetHtmlLink().href }) 
                     # _logger.debug("recurrence start time %s\n" % (google.parse_timestamp(dt_start),))
@@ -342,7 +343,8 @@ class EventDetailsDisplay(hippo.CanvasBox):
                 event_where_box.append(event_map_link_parenthesis) 
                 self.__top_box.append(event_where_box)
 
-        event_calendar = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, padding_left=4, padding_right=4, text="from: " + xml.sax.saxutils.escape(event.get_calendar_title()))
+        # TODO: list the calendars nicely  
+        event_calendar = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, padding_left=4, padding_right=4, text="from: " + xml.sax.saxutils.escape(event.get_calendar_titles()[0]))
         self.__top_box.append(event_calendar)
 
         if event.get_event_entry().content.text is not None:
@@ -383,6 +385,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         # events if they are from the same calendar. 
         self.__calendars = {}
         self.__events = []
+        self.__events_to_display = []
         self.__events_for_day_displayed = None
         self.__day_displayed = datetime.date.today()
         self.__top_event_displayed = None
@@ -567,7 +570,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         events = copy.copy(self.__events)
         for calendar_link in removed_calendar_dictionary.keys():  
             for event in events:
-                if event.get_calendar_link() == calendar_link:
+                if event.get_calendar_links()[0] == calendar_link:
                     self.__events.remove(event)    
 
         self.__refresh_events()
@@ -601,7 +604,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                 calendar_link = calendar_item[0]
                 if len(calendar_item[1]) == 1:
                     for event in events:
-                        if event.get_calendar_link() == calendar_link:
+                        if event.get_calendar_links()[0] == calendar_link:
                             self.__events.remove(event)             
                     calendars_to_remove.append(calendar_link)
                 else:
@@ -642,7 +645,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             # keep events from other date ranges and calendars, as we are only updating
             # events from a particular calendar and date range (this should work too if we are
             # updating events from all the calendars if calendar_feed_url is None) 
-            if datetime.datetime.combine(event_range_start, datetime.time(0)) > event.get_end_time() or datetime.datetime.combine(event_range_end, datetime.time(0)) <= event.get_start_time() or calendar_feed_url is not None and calendar_feed_url != event.get_calendar_link():
+            if datetime.datetime.combine(event_range_start, datetime.time(0)) > event.get_end_time() or datetime.datetime.combine(event_range_end, datetime.time(0)) <= event.get_start_time() or calendar_feed_url is not None and calendar_feed_url != event.get_calendar_links()[0]:
                 events_to_keep.append(event)
         self.__events = events_to_keep
         _logger.debug("events_to_keep length %s", len(self.__events))
@@ -653,6 +656,9 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self.__max_event_range_end = max(event_range_end, self.__max_event_range_end) 
         self.__events_for_day_displayed = None
 
+        # self.__events_to_display = copy.deepcopy(self.__events)
+        # this contains event ids that map to a list of events
+        events_at_current_time = {}         
         for event in self.__events:
             now = datetime.datetime.now()            
             if event.get_end_time() >= now:
@@ -678,6 +684,18 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                                gobject.timeout_add((delta_seconds - reminder_seconds) * 1000, self.__create_notification, event)
                            else:
                                self.__create_notification(event)
+
+            if len(events_at_current_time) > 0:
+                 start_time = events_at_current_time.values()[0][0].get_start_time()
+                 if start_time == event.get_start_time():
+                     if events_at_current_time.has_key(event.get_id()):
+                         events_at_current_time[event.get_id()].append(event)
+                     else:
+                         events_at_current_time[event.get_id()] = [event]
+                 else:
+                    # here is where we go over old events_at_current_time and remove
+                    # events that are duplicates
+                    events_at_current_time = {event.get_id(): [event]}
 
         self.__refresh_events()
 
@@ -735,8 +753,11 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         index = 0
         today = datetime.date.today()
         now = datetime.datetime.now()
+        first_current_event_encountered = False
         # we expect the events to be ordered by start time
         for event in self.__events_for_day_displayed:   
+            if event.get_end_time() >= now:
+                first_current_event_encountered = True
             if len(self.__events_for_day_displayed) <= events_to_display:
                 break
             # by default, start with the event that is still happenning if displaying today's agenda,
@@ -755,7 +776,6 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                 finalize_index = True   
 
             if finalize_index:
-
                 if self.__day_displayed == today and self.__top_event_displayed is not None and self.__top_event_displayed.get_end_time() > now and self.__move_up:
                     new_index = max(index - events_to_display, 0)
                     if self.__events_for_day_displayed[new_index].get_end_time() < now:
@@ -781,7 +801,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                     # display the previous page of events if the user wanted to move up
                     index = max(index - events_to_display, 0) 
                   
-                if self.__day_displayed == today and self.__top_event_displayed is not None and self.__top_event_displayed.get_end_time() < now and self.__move_down:
+                if self.__day_displayed == today and self.__top_event_displayed is not None and self.__top_event_displayed.get_end_time() < now and not first_current_event_encountered and self.__move_down:
                     new_index = min(index + events_to_display, len(self.__events_for_day_displayed) - 1)
                     if self.__events_for_day_displayed[new_index].get_end_time() >= now:
                         # we just want to re-center in this case, so don't break and return to default
@@ -806,7 +826,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         
             for event in self.__events_for_day_displayed[index:end_index]:
                 # we can update the event color here by using
-                # self.__calendars[event.get_calendar_link()].color.value
+                # self.__calendars[event.get_calendar_links()[0]].color.value
                 # if we want to make sure we always use the updated color
                 display = EventDisplay(event, self.__day_displayed)
                 display.connect('button_press_event', self.__handle_event_pressed)
@@ -886,7 +906,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             notify_id = self.__event_notify_ids[event.get_link()]
 
         body = "<i>for: " + fmt_datetime(event.get_start_time()) + \
-               "\nfrom: " + xml.sax.saxutils.escape(event.get_calendar_title()) + "</i>"
+               "\nfrom: " + xml.sax.saxutils.escape(event.get_calendar_titles()[0]) + "</i>"
 
         if event.get_event_entry().content.text is not None:
             body = body + "\n\n" + xml.sax.saxutils.escape(google.html_to_text(event.get_event_entry().content.text))
