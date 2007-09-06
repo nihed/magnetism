@@ -17,6 +17,7 @@
 #include "hippo-dbus-local.h"
 #include "hippo-dbus-settings.h"
 #include "hippo-dbus-web.h"
+#include "hippo-dbus-http.h"
 #include "hippo-distribution.h"
 #include <hippo/hippo-endpoint-proxy.h>
 #include <hippo/hippo-stack-manager.h>
