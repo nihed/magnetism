@@ -412,7 +412,8 @@ hippo_dbus_init_services(HippoDBus   *dbus)
     hippo_dbus_init_local(connection);
     hippo_dbus_init_pidgin(connection);    
     hippo_dbus_init_model(connection);
-                        
+    hippo_dbus_init_http(connection);
+    
     /* Add Rhythmbox signal match */
     dbus_bus_add_match(connection,
                        "type='signal',sender='"
