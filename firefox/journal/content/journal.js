@@ -407,7 +407,7 @@ JournalPage.prototype = {
     return "!visited";
   },
   _getAction: function(entry) {
-      var action : "visited";
+      var action = "visited";
       var uri = new String(entry.uri);
       var queryParams = uri.toQueryParams();
 
