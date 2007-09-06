@@ -9,7 +9,7 @@ from bigboard.databound import DataBoundItem
 from bigboard.big_widgets import ActionLink, CanvasMugshotURLImage, CanvasMugshotURLImageButton, PhotoContentItem, CanvasHBox, CanvasVBox
 import bigboard.libbig as libbig
 
-from mugshot import DataModel
+from ddm import DataModel
 
 def _open_aim(aim):
     os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'aim:GoIM?screenname=' + cgi.escape(aim))

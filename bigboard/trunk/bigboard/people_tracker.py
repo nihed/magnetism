@@ -3,9 +3,9 @@ import gobject
 import logging
 import re
 
-from pyddm import DataModel
-from pyddm.NotificationSet import NotificationSet
-import pyddm.Resource
+from ddm import DataModel
+from ddm.NotificationSet import NotificationSet
+import ddm.Resource
 import bigboard.globals
 from libbig.singletonmixin import Singleton
 
@@ -275,11 +275,11 @@ class PeopleTracker(Singleton):
         
         if buddy != None:
             user._update_property(('http://mugshot.org/p/bigboard/user', 'aimBuddy'),
-                                  pyddm.Resource.UPDATE_REPLACE, pyddm.Resource.CARDINALITY_01,
+                                  ddm.Resource.UPDATE_REPLACE, ddm.Resource.CARDINALITY_01,
                                   buddy, notifications)
         else:
             user._update_property(('http://mugshot.org/p/bigboard/user', 'aimBuddy'),
-                                  pyddm.Resource.UPDATE_CLEAR, pyddm.Resource.CARDINALITY_01,
+                                  ddm.Resource.UPDATE_CLEAR, ddm.Resource.CARDINALITY_01,
                                   None, notifications)
         notifications.send()
 
@@ -293,11 +293,11 @@ class PeopleTracker(Singleton):
         
         if buddy != None:
             user._update_property(('http://mugshot.org/p/bigboard/user', 'localBuddy'),
-                                  pyddm.Resource.UPDATE_REPLACE, pyddm.Resource.CARDINALITY_01,
+                                  ddm.Resource.UPDATE_REPLACE, ddm.Resource.CARDINALITY_01,
                                   buddy, notifications)
         else:
             user._update_property(('http://mugshot.org/p/bigboard/user', 'localBuddy'),
-                                  pyddm.Resource.UPDATE_CLEAR, pyddm.Resource.CARDINALITY_01,
+                                  ddm.Resource.UPDATE_CLEAR, ddm.Resource.CARDINALITY_01,
                                   None, notifications)
         notifications.send()
 

@@ -1,7 +1,7 @@
 import logging
 
 import hippo
-from pyddm import DataModel
+from ddm import DataModel
 
 import bigboard
 from bigboard.people_tracker import PeopleTracker
