@@ -1519,6 +1519,9 @@ name_owner_free(NameOwner *no)
     g_free(no);
 }
 
+/* FIXME I think this isn't really needed since the bus always sends us
+ * this signal even if we don't match it
+ */
 static void
 set_name_acquired_matched(DBusConnection *connection,
                           const char     *bus_name,
@@ -1545,6 +1548,9 @@ set_name_acquired_matched(DBusConnection *connection,
     g_free(s);
 }
 
+/* FIXME I think this isn't really needed since the bus always sends us
+ * this signal even if we don't match it
+ */
 static void
 set_name_lost_matched(DBusConnection *connection,
                       const char     *bus_name,
