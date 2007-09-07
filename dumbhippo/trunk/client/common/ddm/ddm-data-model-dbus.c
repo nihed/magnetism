@@ -513,7 +513,7 @@ handle_notify (void            *object,
 
     handle_incoming_resource_updates(dbus_model, &resource_array_iter, NULL);
     
-    return NULL;
+    return dbus_message_new_method_return(message);
 }
 
 static const HippoDBusMember model_client_members[] = {
