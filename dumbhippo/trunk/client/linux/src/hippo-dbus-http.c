@@ -184,7 +184,7 @@ handle_request (void            *object,
     
     request_begin(connection, dbus_message_get_sender(message), url, sink_path);
 
-    return NULL;
+    return dbus_message_new_method_return(message);
 }
 
 static const HippoDBusMember http_members[] = {

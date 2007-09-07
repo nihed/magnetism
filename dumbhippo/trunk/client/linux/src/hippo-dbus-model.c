@@ -756,13 +756,13 @@ handle_query (void            *object,
 
     ddm_data_fetch_unref(fetch);
 
-    return NULL;
+    return dbus_message_new_method_return(message);
 }
 
 static DBusMessage*
 handle_update (void            *object,
-              DBusMessage     *message,
-              DBusError       *error)
+               DBusMessage     *message,
+               DBusError       *error)
 {
     DBusConnection *connection;
     const char *method_uri;
@@ -795,11 +795,11 @@ handle_update (void            *object,
                                       DBUS_ERROR_INVALID_ARGS,
                                       _("Too many arguments"));
 
-    /* Do the update */
+    /* FIXME Do the update */
 
     g_hash_table_destroy(params);
 
-    return NULL;
+    return dbus_message_new_method_return(message);
 }
 
 static DBusMessage*
@@ -839,7 +839,7 @@ handle_forget (void            *object,
 
     /* FIXME: Do the forget */
 
-    return NULL;
+    return dbus_message_new_method_return(message);
 }
 
 static dbus_bool_t
