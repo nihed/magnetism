@@ -7,12 +7,13 @@
     <em:version>0.1</em:version>
     <em:creator>Red Hat, Inc.</em:creator>
     <em:description>See your Firefox use as a timeline</em:description>
-    <em:homepageURL></em:homepageURL>
+    <em:homepageURL>http://online-desktop.org/wiki/Firefox_Journal</em:homepageURL>
+    <em:updateURL>https://online-desktop.org/firefox/update.rdf</em:updateURL>
     <em:targetApplication>
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id> <!-- firefox -->
-        <em:minVersion>3.0a1</em:minVersion>
-        <em:maxVersion>3.0a8</em:maxVersion>
+        <em:minVersion>3.0a8pre</em:minVersion>
+        <em:maxVersion>3.0a9</em:maxVersion>
       </Description>
     </em:targetApplication>
   </Description>
