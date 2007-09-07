@@ -14,7 +14,7 @@ def _escape_byte(m):
     return "_%02X" % ord(m.group(0))
 
 def _escape_server_name(server_name):
-    if (server_name.index(":") < 0):
+    if (server_name.find(":") < 0):
         server_name = server_name + ":80"
         
     return re.sub(r"[^a-zA-Z0-9]", _escape_byte, server_name.encode("UTF-8"))

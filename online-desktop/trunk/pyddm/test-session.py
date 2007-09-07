@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from mugshot import DataModel
+from ddm import DataModel
 from dbus.mainloop.glib import DBusGMainLoop
 import gobject
 
@@ -59,7 +59,7 @@ def on_disconnect():
     print "Disconnected"
 
 parser = OptionParser()
-parser.add_option("-s", "--server", default="localinstance.mugshot.org:8080", help="Mugshot server to connect to (default localinstance.mugshot.org:21020)")
+parser.add_option("-s", "--server", default="localinstance.mugshot.org:8080", help="Mugshot server to connect to (default localinstance.mugshot.org:8080)")
 (options, args) = parser.parse_args()
 if len(args) > 0:
     parser.print_usage()
