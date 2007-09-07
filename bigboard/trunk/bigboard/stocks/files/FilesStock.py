@@ -24,11 +24,19 @@ class FilesStock(Stock):
         self.__display_limit = 3
 
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4, padding_top=2)
+        browsefiles = hippo.CanvasLink(text='Browse Files')
+        browsefiles.connect("activated", lambda l: self.__on_browse_files())
+        self._box.append(browsefiles)
+        self._recentbox = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4)
+        self._box.append(self._recentbox)
 
         gobject.idle_add(self.__redisplay)
         
     def get_content(self, size):
-        return self._box        
+        return self._box
+    
+    def __on_browse_files(self):
+        subprocess.Popen(['gnome-open', os.path.expanduser('~/Desktop')])        
         
     @log_except(logger=_logger)
     def __redisplay(self):
@@ -38,7 +46,7 @@ class FilesStock(Stock):
             return
         f = open(recentf_path, 'r')
         doc = xml.dom.minidom.parseString(f.read())
-        self._box.remove_all()
+        self._recentbox.remove_all()
         for i,child in enumerate(xml_query(doc.documentElement, 'RecentItem*')):         
             if i >= self.__display_limit: break
             url = xml_query(child, 'URI#')
