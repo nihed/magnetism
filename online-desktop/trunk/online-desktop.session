@@ -1,0 +1,11 @@
+[online-desktop]
+num_clients=3
+0,id=default1
+0,Priority=10
+0,RestartCommand=gnome-wm --default-wm gnome-wm --sm-client-id default1
+1,id=default2
+1,Priority=40
+1,RestartCommand=gnome-panel --sm-client-id default2
+2,id=default3
+2,Priority=40
+2,RestartCommand=gnome-volume-manager --sm-client-id default3
