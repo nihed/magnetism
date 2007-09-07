@@ -46,6 +46,7 @@ gconf-online-sync.desktop: gconf-online-sync.desktop.in
 
 EXTRA_DIST += $(autostart_in_files)
 MAINTAINERCLEANFILES +=	$(autostart_files)
+DISTCLEANFILES += $(autostart_files)
 
 # Included gdata, atom modules
 externalsdir = $(pyexecdir)/bigboard_externals

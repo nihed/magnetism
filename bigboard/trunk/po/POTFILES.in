@@ -1,2 +1,5 @@
 [encoding: UTF-8]
-applet/BigBoard_Applet.server.in.in
+applet/GNOME_OnlineDesktop_BigBoardFactory.server.in.in
+applet/GNOME_OnlineDesktop_BigBoardButtonApplet.xml
+
+
