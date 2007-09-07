@@ -373,22 +373,19 @@ update_property(DBusModel          *dbus_model,
         return;
 
     property_qname = ddm_qname_get(param_namespace, param_name);
-
-    /* hippo-connection.c has some song and dance with default_include and default_children
-     * here, but nothing in hippo-dbus-model.c sends us anything like that, I think
-     * because it's already been "cleaned up" at the XMPP connection level.
+    
+    /* The defaultInclude and defaultChildren attributes of a property
+     * are not included in the D-Bus protocol because we only need
+     * them when interpreting a fetch string. Here in a client
+     * application, we just set them to FALSE and NULL respectively.
      */
     
     if (update_type == DDM_DATA_UPDATE_CLEAR) {
         changed = ddm_data_resource_update_property(resource, property_qname, update_type, cardinality,
                                                     FALSE, NULL, NULL);
     } else {
-        /* hippo-connection.c sets changed=TRUE unconditionally here
-         * and doesn't use update_property return value, why?
-         */
-        ddm_data_resource_update_property(resource, property_qname, update_type, cardinality,
-                                          FALSE, NULL, &value);
-        changed = TRUE;
+        changed = ddm_data_resource_update_property(resource, property_qname, update_type, cardinality,
+                                                    FALSE, NULL, &value);
     }
 
     if (changed) {

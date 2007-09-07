@@ -4857,10 +4857,9 @@ update_property(DMContext            *context,
         DDMDataValue value;
         
         if (dm_context_get_value(context, type, &value)) {
-            ddm_data_resource_update_property(resource, property_qname, update, cardinality,
-                                               default_include, default_children,
-                                               &value);
-            changed = TRUE;
+            changed = ddm_data_resource_update_property(resource, property_qname, update, cardinality,
+                                                        default_include, default_children,
+                                                        &value);
         }
     }
 

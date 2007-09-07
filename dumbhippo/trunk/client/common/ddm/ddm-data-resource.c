@@ -498,6 +498,27 @@ data_value_clear(DDMDataValue *value)
     value->type = DDM_DATA_NONE;
 }
 
+/**
+ * Casts a primitive C type to a byte array and then indexes
+ * a particular byte of the array.
+ */
+#define BYTE_OF_PRIMITIVE(p, i) \
+    (((const char*)&(p))[(i)])
+/** On x86 there is an 80-bit FPU, and if you do "a == b" it may have a
+ * or b in an 80-bit register, thus failing to compare the two 64-bit
+ * doubles for bitwise equality. So this macro compares the two doubles
+ * bitwise.
+ */
+#define DOUBLES_BITWISE_EQUAL(a, b)                                       \
+     (BYTE_OF_PRIMITIVE (a, 0) == BYTE_OF_PRIMITIVE (b, 0) &&       \
+      BYTE_OF_PRIMITIVE (a, 1) == BYTE_OF_PRIMITIVE (b, 1) &&       \
+      BYTE_OF_PRIMITIVE (a, 2) == BYTE_OF_PRIMITIVE (b, 2) &&       \
+      BYTE_OF_PRIMITIVE (a, 3) == BYTE_OF_PRIMITIVE (b, 3) &&       \
+      BYTE_OF_PRIMITIVE (a, 4) == BYTE_OF_PRIMITIVE (b, 4) &&       \
+      BYTE_OF_PRIMITIVE (a, 5) == BYTE_OF_PRIMITIVE (b, 5) &&       \
+      BYTE_OF_PRIMITIVE (a, 6) == BYTE_OF_PRIMITIVE (b, 6) &&       \
+      BYTE_OF_PRIMITIVE (a, 7) == BYTE_OF_PRIMITIVE (b, 7))
+
 static gboolean
 data_value_matches(DDMDataValue      *value_a,
                    DDMDataValue      *value_b)
@@ -516,7 +537,7 @@ data_value_matches(DDMDataValue      *value_a,
     case DDM_DATA_LONG:
         return value_a->u.long_ == value_b->u.long_;
     case DDM_DATA_FLOAT:
-        return value_a->u.float_ == value_b->u.float_;
+        return DOUBLES_BITWISE_EQUAL(value_a->u.float_, value_b->u.float_);
     case DDM_DATA_RESOURCE:
         return value_a->u.resource == value_b->u.resource;
     case DDM_DATA_STRING:
@@ -530,7 +551,8 @@ data_value_matches(DDMDataValue      *value_a,
     return FALSE;
 }    
 
-static void
+/* returns whether the property ended up changed */
+static gboolean
 data_property_set(DDMDataProperty *property,
                   DDMDataValue    *value)
 {
@@ -538,15 +560,20 @@ data_property_set(DDMDataProperty *property,
 
     if (DDM_DATA_IS_LIST(property->value.type)) {
         g_warning("data_property_set() called with a list type");
-        return;
+        return FALSE;
     }
 
+    if (data_value_matches(&property->value, value))
+        return FALSE;
+    
     if (value->type == DDM_DATA_STRING || value->type == DDM_DATA_URL) {
         property->value.type = value->type;
         property->value.u.string = g_strdup(value->u.string);
     } else {
         property->value = *value;
     }
+
+    return TRUE;
 }
 
 static void
@@ -661,6 +688,7 @@ remove_property(DDMDataResource *resource,
     g_free(property);
 }
 
+/* return value is whether something changed (we need to emit notification) */
 gboolean
 ddm_data_resource_update_property(DDMDataResource    *resource,
                                   DDMQName           *property_id,
@@ -672,7 +700,23 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
 {
     DDMDataProperty *property = NULL;
     GSList *l;
+    gboolean changed;
 
+#if 1
+    g_debug("updating resource '%s' property %s update %d new value %s",
+            resource->resource_id, property_id->name, update,
+            value ? ddm_data_value_to_string(value) : "NULL" ); /* leak! FIXME remove from production */
+#endif       
+    
+    /* it's important to only ever set this to TRUE,
+     * never assign it a value that could be FALSE,
+     * or you could unset an earlier TRUE. If making
+     * errors, err on the side of changed=TRUE since
+     * duplicate notifications don't break correctness,
+     * just efficiency.
+     */
+    changed = FALSE;
+    
     for (l = resource->properties; l; l = l->next) {
         if (((DDMDataProperty *)l->data)->qname == property_id) {
             property = l->data;
@@ -688,6 +732,7 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
     if (property != NULL && cardinality != property->cardinality) {
         g_warning("Previous cardinality of not compatible with new property, discarding old values");
         remove_property(resource, property);
+        changed = TRUE;
     }
 
     switch (cardinality) {
@@ -700,12 +745,15 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
             }
             property = add_property(resource, property_id, cardinality);
             data_property_set(property, value);
+            changed = TRUE;
             break;
         case DDM_DATA_UPDATE_REPLACE:
             if (property == NULL) {
                 property = add_property(resource, property_id, cardinality);
+                changed = TRUE;
             }
-            data_property_set(property, value);
+            if (data_property_set(property, value))
+                changed = TRUE;
             break;
         case DDM_DATA_UPDATE_DELETE:
             if (property == NULL || !data_value_matches(&property->value, value)) {
@@ -713,10 +761,13 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
                 return FALSE;
             }
             remove_property(resource, property);
+            changed = TRUE;
             break;
         case DDM_DATA_UPDATE_CLEAR:
-            if (property)
+            if (property) {
                 remove_property(resource, property);
+                changed = TRUE;
+            }
             break;
         }
         break;
@@ -729,19 +780,21 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
             }
             property = add_property(resource, property_id, cardinality);
             data_property_set(property, value);
+            changed = TRUE;
             break;
         case DDM_DATA_UPDATE_REPLACE:
             if (property == NULL) {
                 property = add_property(resource, property_id, cardinality);
+                changed = TRUE;
             }
-            data_property_set(property, value);
+            if (data_property_set(property, value))
+                changed = TRUE;
             break;
         case DDM_DATA_UPDATE_DELETE:
             g_warning("Remove of a property with cardinality 1");
             break;
         case DDM_DATA_UPDATE_CLEAR:
             g_warning("Clear of a property with cardinality 1");
-            break;
             break;
         }
         break;
@@ -752,18 +805,21 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
                 property = add_property(resource, property_id, cardinality);
             }
             data_property_append_value(property, value);
+            changed = TRUE;
             break;
         case DDM_DATA_UPDATE_REPLACE:
             if (property != NULL) {
-                data_value_clear(&property->value);
+                data_value_clear(&property->value);                
             } else {
                 property = add_property(resource, property_id, cardinality);
             }
             data_property_append_value(property, value);
+            changed = TRUE;
             break;
         case DDM_DATA_UPDATE_DELETE:
             if (property) {
                 data_property_remove_value(property, value);
+                changed = TRUE;
             } else {
                 g_warning("remove of a property value not there");
             }
@@ -774,6 +830,7 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
             } else {
                 data_value_clear(&property->value);
             }
+            changed = TRUE;
             break;
         }
         break;
@@ -785,7 +842,7 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
             property->default_children = ddm_data_fetch_from_string(default_children);
     }
 
-    return TRUE;
+    return changed;
 }
 
 void
