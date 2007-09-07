@@ -27,14 +27,13 @@
 #include <panel-applet.h>
 #include "hippo-dbus-helper.h"
 #include <dbus/dbus-glib-lowlevel.h>
-#include "http.h"
 
 #include <string.h>
+#include "self.h"
 
 #define TIMEOUT_ACTIVATE 1000
 
-/* FIXME */
-#define ICON_NAME "gnome-fs-desktop"
+#define ICON_NAME GTK_STOCK_MISSING_IMAGE
 
 static void
 wncklet_set_tooltip (GtkWidget  *widget,
@@ -170,27 +169,29 @@ typedef struct {
         guint button_activate;
 
         GtkIconTheme *icon_theme;
+        GdkPixbuf *user_photo;
 
         DBusConnection *connection;
         HippoDBusProxy *bb_proxy;
 } ButtonData;
 
-static void display_help_dialog     (BonoboUIComponent *uic,
-                                     ButtonData        *button_data,
-                                     const gchar       *verbname);
-static void display_about_dialog    (BonoboUIComponent *uic,
-                                     ButtonData        *button_data,
-                                     const gchar       *verbname);
-static void update_icon             (ButtonData        *button_data);
-static void update_button_state     (ButtonData        *button_data);
-static void update_button_display   (ButtonData        *button_data);
-static void update_showing_bigboard (ButtonData        *button_data,
-                                     gboolean           showing_bigboard);
-static void theme_changed_callback  (GtkIconTheme      *icon_theme,
-                                     ButtonData        *button_data);
-static void button_toggled_callback (GtkWidget         *button,
-                                     ButtonData        *button_data);
-
+static void display_help_dialog         (BonoboUIComponent *uic,
+                                         ButtonData        *button_data,
+                                         const gchar       *verbname);
+static void display_about_dialog        (BonoboUIComponent *uic,
+                                         ButtonData        *button_data,
+                                         const gchar       *verbname);
+static void update_icon                 (ButtonData        *button_data);
+static void update_button_state         (ButtonData        *button_data);
+static void update_button_display       (ButtonData        *button_data);
+static void update_showing_bigboard     (ButtonData        *button_data,
+                                         gboolean           showing_bigboard);
+static void theme_changed_callback      (GtkIconTheme      *icon_theme,
+                                         ButtonData        *button_data);
+static void button_toggled_callback     (GtkWidget         *button,
+                                         ButtonData        *button_data);
+static void user_photo_changed_callback (GdkPixbuf         *pixbuf,
+                                         void              *data);
 
 static void
 handle_expanded_changed(DBusConnection *connection,
@@ -325,6 +326,10 @@ update_icon (ButtonData *button_data)
         int	   focus_pad = 0;
         int	   thickness = 0;
 
+        /* FIXME this function could do a lot more short-circuiting and maybe
+         * save some effort
+         */
+        
         if (!button_data->icon_theme)
                 return;
 
@@ -344,17 +349,28 @@ update_icon (ButtonData *button_data)
 
         icon_size = button_data->size - 2 * (focus_width + focus_pad + thickness);
 
+        /* clamp icon size to a max of 60 which is the native server-side size
+         */
         if (icon_size < 22)
                 icon_size = 16;
         else if (icon_size < 32)
                 icon_size = 22;
         else if (icon_size < 48)
                 icon_size = 32;
-
-        error = NULL;
-        icon = gtk_icon_theme_load_icon (button_data->icon_theme,
-                                         ICON_NAME,
-                                         icon_size, 0, &error);
+        else if (icon_size < 60)
+                icon_size = 48;
+        else
+                icon_size = 60;
+        
+        if (button_data->user_photo) {
+                icon = button_data->user_photo;
+                g_object_ref(icon);
+        } else {
+                error = NULL;
+                icon = gtk_icon_theme_load_icon (button_data->icon_theme,
+                                                 ICON_NAME,
+                                                 icon_size, 0, &error);
+        }
 
         if (icon == NULL) {
                 g_printerr (_("Failed to load %s: %s\n"), ICON_NAME,
@@ -363,13 +379,13 @@ update_icon (ButtonData *button_data)
                         g_error_free (error);
                         error = NULL;
                 }
-
+                
                 gtk_image_set_from_stock (GTK_IMAGE (button_data->image),
                                           GTK_STOCK_MISSING_IMAGE,
                                           GTK_ICON_SIZE_SMALL_TOOLBAR);
                 return;
         }
-
+        
         width = gdk_pixbuf_get_width (icon);
         height = gdk_pixbuf_get_height (icon);
 
@@ -399,6 +415,12 @@ update_icon (ButtonData *button_data)
                 gtk_image_set_from_pixbuf (GTK_IMAGE (button_data->image),
                                            icon);
 
+        /* don't put much size request on the image, since we are scaling
+         * to the allocation, if we didn't do this we could a) never be resized
+         * smaller and b) get infinite request/alloc loops
+         */
+        gtk_widget_set_size_request(button_data->image, 12, 12);
+        
         g_object_unref (icon);
 }
 
@@ -498,6 +520,11 @@ applet_destroyed (GtkWidget       *applet,
                 button_data->icon_theme = NULL;
         }
 
+        self_remove_icon_changed_callback(user_photo_changed_callback, button_data);
+
+        if (button_data->user_photo)
+                g_object_unref(button_data->user_photo);
+        
         g_free (button_data);
 }
 
@@ -583,10 +610,27 @@ bigboard_button_applet_realized (PanelApplet *applet,
 
 static void
 theme_changed_callback (GtkIconTheme    *icon_theme,
-			ButtonData *button_data)
+			ButtonData      *button_data)
 {
         update_icon (button_data);
 }
+
+static void
+user_photo_changed_callback (GdkPixbuf         *pixbuf,
+                             void              *data)
+{
+        ButtonData *button_data;
+        button_data = data;
+
+        if (pixbuf)
+                g_object_ref(pixbuf);
+        if (button_data->user_photo)
+                g_object_unref(button_data->user_photo);
+        button_data->user_photo = pixbuf;
+
+        update_icon (button_data);
+}
+
 
 static ButtonData*
 bigboard_button_add_to_widget (GtkWidget *applet)
@@ -608,7 +652,7 @@ bigboard_button_add_to_widget (GtkWidget *applet)
                           G_CALLBACK (bigboard_button_applet_realized), button_data);
 
         button_data->button = gtk_toggle_button_new ();
-
+        
         gtk_widget_set_name (button_data->button, "showdesktop-button");
         gtk_rc_parse_string ("\n"
                              "   style \"showdesktop-button-style\"\n"
@@ -668,6 +712,8 @@ bigboard_button_add_to_widget (GtkWidget *applet)
                                               "org.gnome.BigBoard.Panel");
         }
 
+        self_add_icon_changed_callback(user_photo_changed_callback, button_data);
+        
         gtk_widget_show_all (button_data->button);
 
         return button_data;
@@ -828,7 +874,7 @@ print_http_result_func(const char *content_type,
 int
 main (int argc, char **argv)
 {
-#if 0
+#if 1
         GtkWidget *window;
         
         gtk_init (&argc, &argv);

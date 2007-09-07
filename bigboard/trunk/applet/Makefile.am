@@ -28,7 +28,9 @@ BIGBOARD_APPLET_SOURCES=			\
 	hippo-dbus-helper.h			\
 	hippo-dbus-helper-rename.h		\
 	http.c					\
-	http.h
+	http.h					\
+	self.c					\
+	self.h
 
 BIGBOARD_APPLET_CPPFLAGS =					\
 	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"	\

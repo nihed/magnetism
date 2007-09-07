@@ -22,12 +22,15 @@ typedef struct {
 static void
 request_ref(Request *r)
 {
+    g_return_if_fail(r->refcount > 0);
     r->refcount += 1;
 }
 
 static void
 request_unref(Request *r)
 {
+    g_return_if_fail(r->refcount > 0);
+    
     r->refcount -= 1;
     if (r->refcount == 0) {
         if (r->connection)
@@ -44,8 +47,12 @@ request_unref(Request *r)
 static void
 request_unregister(Request *r)
 {
-    hippo_dbus_helper_unregister_object(r->connection,
-                                        r->sink_path);
+    if (r->sink_path) {
+        hippo_dbus_helper_unregister_object(r->connection,
+                                            r->sink_path);
+        g_free(r->sink_path);
+        r->sink_path = NULL;
+    }
 }
 
 static void
@@ -56,14 +63,16 @@ request_failed(Request    *r,
 
     /* remember the failure could come after a partial success */
 
-    request_unregister(r);
-
-    str = g_string_new(message);
-    (* r->func) (NULL, str, r->data);
-    g_string_free(str, TRUE);
-
-    /* drop ref held by the object registration */
-    request_unref(r);
+    if (r->sink_path) {
+        request_unregister(r);
+        
+        str = g_string_new(message);
+        (* r->func) (NULL, str, r->data);
+        g_string_free(str, TRUE);
+        
+        /* drop ref held by the object registration */
+        request_unref(r);
+    }
 }
 
 static DBusMessage*
@@ -86,7 +95,7 @@ handle_error (void            *object,
     /* call error callback and unregister object */
     request_failed(r, what);
 
-    return NULL;
+    return dbus_message_new_method_return(message);
 }
 
 static DBusMessage*
@@ -120,8 +129,8 @@ handle_begin (void            *object,
     r->content = g_string_sized_new(MIN(estimated_size, 1024*64) + 16);
 
     g_debug("  content-type '%s' estimated size %d", content_type, (int) estimated_size);
-    
-    return NULL;
+
+    return dbus_message_new_method_return(message);
 }
 
 static DBusMessage*
@@ -142,14 +151,16 @@ handle_end (void            *object,
         return NULL;
     }
 
-    request_unregister(r);
+    if (r->sink_path) {
+        request_unregister(r);
+        
+        (* r->func) (r->content_type, r->content, r->data);
+        
+        /* drop ref held by registration */
+        request_unref(r);
+    }
 
-    (* r->func) (r->content_type, r->content, r->data);
-
-    /* drop ref held by registration */
-    request_unref(r);
-
-    return NULL;
+    return dbus_message_new_method_return(message);
 }
 
 static DBusMessage*
@@ -198,7 +209,7 @@ handle_data (void            *object,
 
     g_string_append_len(r->content, bytes, bytes_len);
 
-    return NULL;
+    return dbus_message_new_method_return(message);
 }
 
 static const HippoDBusMember sink_members[] = {
@@ -244,6 +255,9 @@ on_request_reply(DBusMessage *reply,
      * have some kind of timeout. FIXME
      */
 
+    /* drop ref owned by the reply, leaving one owned by the registration
+     * object path
+     */
     request_unref(r);
 }
 
@@ -276,6 +290,7 @@ http_get(DBusConnection *connection,
     r->sink_path = g_strdup_printf("/org/freedesktop/od/http_sinks/%d_%d",
                                    sink_number, (int) getpid());
 
+    /* pass ownership of initial refcount to the registration */
     hippo_dbus_helper_register_object(connection,
                                       r->sink_path,
                                       r,
