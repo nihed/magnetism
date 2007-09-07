@@ -325,6 +325,7 @@ update_icon (ButtonData *button_data)
         int	   focus_width = 0;
         int	   focus_pad = 0;
         int	   thickness = 0;
+        int        xrequest, yrequest;
 
         /* FIXME this function could do a lot more short-circuiting and maybe
          * save some effort
@@ -338,12 +339,17 @@ update_icon (ButtonData *button_data)
                               "focus-padding", &focus_pad,
                               NULL);
 
+        xrequest = -1;
+        yrequest = -1;
         switch (button_data->orient) {
         case GTK_ORIENTATION_HORIZONTAL:
                 thickness = button_data->button->style->ythickness;
+                xrequest = button_data->size;
+                yrequest = 12;
                 break;
         case GTK_ORIENTATION_VERTICAL:
-                thickness = button_data->button->style->xthickness;
+                xrequest = 12;
+                yrequest = button_data->size;
                 break;
         }
 
@@ -419,7 +425,7 @@ update_icon (ButtonData *button_data)
          * to the allocation, if we didn't do this we could a) never be resized
          * smaller and b) get infinite request/alloc loops
          */
-        gtk_widget_set_size_request(button_data->image, 12, 12);
+        gtk_widget_set_size_request(button_data->image, xrequest, yrequest);
         
         g_object_unref (icon);
 }
