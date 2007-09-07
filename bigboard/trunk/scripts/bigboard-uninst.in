@@ -1,10 +1,11 @@
 #!/bin/bash
 builddir=$(dirname $0)
 canvas=${builddir}/@BB_TOPSRCDIR@/../hippo-canvas
+ddm=${builddir}/../../online-desktop/pyddm
 BB_DATADIR=${builddir}/../data
 export BB_DATADIR
 BB_REEXEC=$0
 export BB_REEXEC
-PYTHONPATH=$PYTHONPATH:${builddir}/../bigboard/.libs:${builddir}/../bigboard/keybinder/.libs:${canvas}/.libs:${canvas}/build/.libs:${builddir}/../mugshot-python 
+PYTHONPATH=$PYTHONPATH:${builddir}/../bigboard/.libs:${builddir}/../bigboard/keybinder/.libs:${canvas}/.libs:${canvas}/build/.libs:${ddm}
 export PYTHONPATH
 exec $BB_DEBUG_CMD @PYTHON@ ${builddir}/@BB_TOPSRCDIR@/main.py "$@"
