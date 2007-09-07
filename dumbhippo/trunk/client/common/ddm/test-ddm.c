@@ -73,7 +73,7 @@ on_query_response(GSList            *resources,
         properties = ddm_data_resource_get_properties(resource);
         
         print_resource_properties(resource, properties);
-        
+
         g_slist_free(properties);
         
         ddm_data_resource_connect(resource,
