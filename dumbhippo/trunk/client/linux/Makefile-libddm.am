@@ -28,7 +28,7 @@ libddm_1_la_LDFLAGS= -export-symbols-regex "^[^_].*" -version-info $(DDM_LT_CURR
 #	(echo "#include \"ddm-common-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=ddm_common_marshal $(COMMON_MARSHAL_LIST) --body) > $(COMMON_MARSHAL_BODY)
 
 libddmincludedir = $(includedir)/ddm-1/ddm
-libddminclude_HEADERS=					\
+nodist_libddminclude_HEADERS=				\
 	$(COMMONSRCDIR)/ddm/ddm.h			\
 	$(COMMONSRCDIR)/ddm/ddm-data-fetch.h		\
 	$(COMMONSRCDIR)/ddm/ddm-data-model.h		\
@@ -76,8 +76,8 @@ nodist_test_ddm_SOURCES=$(COMMONSRCDIR)/ddm/test-ddm.c
 ## so we handle the disting manually so the destination is always distdir/common-dist
 libddm-dist-hook:
 	-mkdir $(distdir)/common-dist
-	mkdir $(distdir)/common-dist/ddm
-	cp $(LIBDDM_SOURCEFILES) $(libddminclude_HEADERS) $(nodist_test_ddm_SOURCES) $(distdir)/common-dist/ddm
+	-mkdir $(distdir)/common-dist/ddm
+	cp $(LIBDDM_SOURCEFILES) $(nodist_libddminclude_HEADERS) $(nodist_test_ddm_SOURCES) $(distdir)/common-dist/ddm
 #	mkdir $(distdir)/common-dist/ddm/generated
 #	cp $(COMMONSRCDIR)/ddm/ddm-common-marshal.list $(distdir)/common-dist/ddm
 
