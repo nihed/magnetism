@@ -157,12 +157,12 @@ input.green-button:hover {
   max-width: 20px;
   max-height: 20px;
 }
-.time, .favicon, .action, .urls {
+.time, .favicon, .urls {
 	display: table-cell;
 	padding: 0.2em;
 	vertical-align: top;
 }
-.time, .action {
+.time, .favicon {
   white-space: pre;
   padding-left: 0.5em;
   padding-right: 0.5em;
@@ -173,11 +173,6 @@ input.green-button:hover {
   color: #999;
   text-align: center;
   border-right: 1px solid #ccc;
-}
-.action {
-  color: #666;
-  text-transform: lowercase;  
-  text-align: right;
 }
 .title {
   text-decoration: underline;
