@@ -4,7 +4,7 @@
   <Description about="urn:mozilla:install-manifest">
     <em:id>firefoxjournal@redhat.com</em:id>
     <em:name>Firefox Journal</em:name>
-    <em:version>0.1</em:version>
+    <em:version>0.2</em:version>
     <em:creator>Red Hat, Inc.</em:creator>
     <em:description>See your Firefox use as a timeline</em:description>
     <em:homepageURL>http://online-desktop.org/wiki/Firefox_Journal</em:homepageURL>
