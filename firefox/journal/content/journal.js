@@ -37,7 +37,7 @@
 const Ci = Components.interfaces;
 const Cc = Components.classes;
 
-const JOURNAL_SERVICE = Cc["@redhat.com/journalhome;1"].getService(Ci["nsIJournalHome"]);
+//const JOURNAL_SERVICE = Cc["@redhat.com/journalhome;1"].getService(Ci["nsIJournalHome"]);
 const HISTORY_SERVICE = Cc["@mozilla.org/browser/nav-history-service;1"].getService(Ci.nsINavHistoryService);
 const IO_SERVICE = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
 const ANNOTATION_SERVICE = Cc["@mozilla.org/browser/annotation-service;1"].getService(Ci.nsIAnnotationService);

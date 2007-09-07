@@ -75,6 +75,7 @@ zip -0 -r $JAR_FILE -@ < files
 # The following statement should be used instead if you don't wish to use the JAR file
 #cp --verbose --parents `cat files` $TMP_DIR/chrome
 
+if false; then
 for IDL in components/*.idl; do
   ffxpcom=`pkg-config --variable=libdir firefox-xpcom`
   idldir=`pkg-config --variable=idldir firefox-xpcom`
@@ -83,6 +84,7 @@ for IDL in components/*.idl; do
   echo "Compiling ${IDL} to ${target}"
   $xpidl -m typelib -w -v -I ${idldir} -e ${target} ${IDL}
 done
+fi
 
 # prepare components and defaults
 echo "Copying various files to $TMP_DIR folder..."
