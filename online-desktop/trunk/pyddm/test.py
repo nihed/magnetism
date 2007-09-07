@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from mugshot.TwistedModel import *
+from ddm.TwistedModel import *
 
 def on_name_change(resource):
     print "The name changed: ", resource.name
