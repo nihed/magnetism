@@ -834,13 +834,13 @@ online_desktop_factory (PanelApplet *applet,
 #if 1
 
 #if APPLET_INPROCESS
-PANEL_APPLET_BONOBO_SHLIB_FACTORY ("OAFIID:GNOME_OnlineDesktop_Factory",
+PANEL_APPLET_BONOBO_SHLIB_FACTORY ("OAFIID:GNOME_OnlineDesktop_BigBoardFactory",
 				   PANEL_TYPE_APPLET,
 				   "BigBoardApplets",
 				   online_desktop_factory,
 				   NULL);
 #else
-PANEL_APPLET_BONOBO_FACTORY ("OAFIID:GNOME_OnlineDesktop_Factory",
+PANEL_APPLET_BONOBO_FACTORY ("OAFIID:GNOME_OnlineDesktop_BigBoardFactory",
                              PANEL_TYPE_APPLET,
                              "OnlineDesktopApplets",
                              "0",
