@@ -133,7 +133,7 @@ model_add_pending_update(DBusModel    *dbus_model,
 static void
 model_send_pending(DBusModel *dbus_model)
 {
-    g_debug("Sending %d pending requests to org.freedesktop.od.engine",
+    g_debug("Sending %d pending requests to org.freedesktop.od.Engine",
             g_slist_length(dbus_model->pending_requests));
     
     while (dbus_model->pending_requests != NULL) {
@@ -567,6 +567,8 @@ handle_get_connected_reply(DBusMessage *reply,
         connected = FALSE;
     
     ddm_data_model_set_connected(dbus_model->ddm_model, connected);
+    if (connected)
+        model_send_pending(dbus_model);
 }
 
 static void
@@ -604,8 +606,6 @@ handle_engine_available(DBusConnection *connection,
                                        DBUS_TYPE_STRING,
                                        &method,
                                        DBUS_TYPE_INVALID);
-
-    model_send_pending(dbus_model);
 }
 
 static void
@@ -656,6 +656,8 @@ handle_connected_changed(DBusConnection *connection,
     }
 
     ddm_data_model_set_connected(dbus_model->ddm_model, is_connected);
+    if (is_connected)
+        model_send_pending(dbus_model);
 }
 
 static HippoDBusSignalTracker engine_signal_handlers[] = {

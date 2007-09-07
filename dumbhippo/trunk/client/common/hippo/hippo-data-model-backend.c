@@ -1,13 +1,16 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include <config.h>
 #include "hippo-data-model-backend.h"
 #include "hippo-data-cache.h"
 #include "hippo-disk-cache.h"
+#include <string.h>
 
 typedef struct {
     DDMDataModel   *ddm_model;
     HippoDataCache *data_cache;
     HippoDiskCache *disk_cache;
-    
+    char           *self_id;
+    DDMDataQuery   *self_query;
 } HippoModel;
 
 static HippoModel*
@@ -92,8 +95,28 @@ on_connection_connected_changed(HippoConnection *connection,
         value.type = DDM_DATA_RESOURCE;
         value.u.resource = ddm_data_model_ensure_resource(hippo_model->ddm_model,
                                                           self_id, "http://mugshot.org/p/o/user");
+
+        /* HACK - right now the above ensure_resource does not load any properties
+         * of the self user resource, which means a fetch like "self [photoUrl]" won't
+         * work. The correct fix is to add support for that kind of fetch to the
+         * in-process data model, i.e. do the below query as-needed and automatically.
+         * 
+         * Also, FIXME since we don't really support forgetting queries right now
+         * we end up leaking this if the self id changes
+         */
+        if (hippo_model->self_id == NULL ||
+            strcmp(hippo_model->self_id, self_id) != 0) {            
+            hippo_model->self_query = ddm_data_model_query_resource(hippo_model->ddm_model,
+                                                                    self_id, "+");
+            
+            g_free(hippo_model->self_id);
+            hippo_model->self_id = g_strdup(self_id);
+        }
     } else {
         value.type = DDM_DATA_NONE;
+
+        g_free(hippo_model->self_id);
+        hippo_model->self_id = NULL;
     }
 
     if (ddm_data_resource_update_property(global_resource,
@@ -152,6 +175,7 @@ hippo_remove_model (DDMDataModel *ddm_model,
     
     g_object_set_data(G_OBJECT(ddm_model), "hippo-data-model", NULL);
 
+    g_free(hippo_model->self_id);
     g_free(hippo_model);
 }
 
