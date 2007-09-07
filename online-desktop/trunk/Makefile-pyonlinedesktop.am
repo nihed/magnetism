@@ -1,3 +1,7 @@
 pylibdir = $(pythondir)/pyonlinedesktop
-pylib_PYTHON = pyonlinedesktop/*.py
+pylib_PYTHON =					\
+	pyonlinedesktop/gnomepanel.py		\
+	pyonlinedesktop/__init__.py		\
+	pyonlinedesktop/iterdird.py		\
+	pyonlinedesktop/odpanel.py
 
