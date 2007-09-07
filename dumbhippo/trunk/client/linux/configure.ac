@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(mugshot, 1.1.50)
+AM_INIT_AUTOMAKE(mugshot, 1.1.51)
 
 AM_CONFIG_HEADER(config/config.h)
 
