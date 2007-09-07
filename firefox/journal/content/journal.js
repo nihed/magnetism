@@ -261,20 +261,7 @@ JournalPage.prototype = {
 
     item.addEventListener("focus", function(e) { me.onResultFocus(e, true); }, false);
     item.addEventListener("blur", function(e) { me.onResultFocus(e, false); }, false);             
-    
-    var timeText = ' '.times(15);
-    item.appendChild(domUtils.createSpanText(timeText, 'time'));
-    var actionDiv = document.createElement('div');
-    actionDiv.className = 'action';
-    if (entry.icon) {
-      var icon = document.createElement("img");
-      icon.setAttribute("src", entry.icon);
-      actionDiv.appendChild(icon);
-      actionDiv.appendChild(document.createTextNode(" "));
-    }
-    actionDiv.appendChild(document.createTextNode(''));
-    item.appendChild(actionDiv);
-    
+        
     this.renderJournalItemContent(entry, item);
 
     return item;
@@ -315,24 +302,11 @@ JournalPage.prototype = {
     item.addEventListener("focus", function(e) { me.onResultFocus(e, true); }, false);
     item.addEventListener("blur", function(e) { me.onResultFocus(e, false); }, false);             
     
-    var timeText;
     if (entry.time) {
       var dateTime = new Date(entry.time/1000);
-      timeText = formatUtils.twelveHour(dateTime.getHours()) + ":" + formatUtils.pad(dateTime.getMinutes()) + " " + formatUtils.meridiem(dateTime.getHours());
-    } else {
-      timeText = ' '.times(15);
-    }
-    item.appendChild(domUtils.createSpanText(timeText, 'time'));
-    var actionDiv = document.createElement('div');
-    actionDiv.className = 'action';
-    if (entry.icon) {
-      var icon = document.createElement("img");
-      icon.setAttribute("src", entry.icon);
-      actionDiv.appendChild(icon);
-      actionDiv.appendChild(document.createTextNode(" "));
-    }
-    actionDiv.appendChild(document.createTextNode(this.getAction(entry)));
-    item.appendChild(actionDiv);
+      var timeText = formatUtils.twelveHour(dateTime.getHours()) + ":" + formatUtils.pad(dateTime.getMinutes()) + " " + formatUtils.meridiem(dateTime.getHours());
+      item.appendChild(domUtils.createSpanText(timeText, 'time'));
+    } 
     
     this.renderJournalItemContent(entry, item);
 
