@@ -3,5 +3,5 @@ gconfstuff_DATA = gconf.path
 EXTRA_DIST += $(gconfstuff_DATA)
 
 gconfconfigdir=$(datadir)/online-desktop/gconf.xml.online-desktop
-gconfconfig_DATA = gconf.xml.online-desktop/*.xml
+gconfconfig_DATA = gconf.xml.online-desktop/%gconf-tree.xml
 EXTRA_DIST += $(gconfconfig_DATA)

@@ -1,4 +1,12 @@
 pyddmdir = $(pyexecdir)/ddm
-pyddm_PYTHON = pyddm/ddm/*.py 
+
+pyddm_PYTHON =					\
+	pyddm/ddm/AbstractModel.py		\
+	pyddm/ddm/DataModel.py			\
+	pyddm/ddm/__init__.py			\
+	pyddm/ddm/NotificationSet.py		\
+	pyddm/ddm/Query.py			\
+	pyddm/ddm/Resource.py			\
+	pyddm/ddm/TwistedModel.py
 
 EXTRA_DIST += pyddm/test.py pyddm/test-session.py
