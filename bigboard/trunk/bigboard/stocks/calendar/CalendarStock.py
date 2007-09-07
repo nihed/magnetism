@@ -151,6 +151,12 @@ class Event(AutoStruct):
     def get_event_entry(self):
         return self.__event_entry 
 
+    def get_id(self):
+        # when same event is present in multiple calendars, the full id reflects the calendar the
+        # event is coming from, but the last portion is the actual event id 
+        full_id = self.__event_entry.id.text
+        return full_id[full_id.rfind("/")+1:]
+
 class EventsParser:
     def __init__(self, data):
         self.__events = []
@@ -754,6 +760,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         today = datetime.date.today()
         now = datetime.datetime.now()
         first_current_event_encountered = False
+        # _logger.debug("top event is %s, its id %s", self.__top_event_displayed, self.__top_event_displayed and self.__top_event_displayed.get_id() or "n/a")
         # we expect the events to be ordered by start time
         for event in self.__events_for_day_displayed:   
             if event.get_end_time() >= now:
@@ -768,14 +775,16 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                 # the links to compare events; however, on refresh, an event with a given link might be gone,
                 # so we should include the next one after it timewise; it would be ideal to include all other
                 # events we previously included that have the same time as the removed event, but that would
-                # require a bit more work
-                finalize_index = event.get_link() == self.__top_event_displayed.get_link() or event.get_start_time() > self.__top_event_displayed.get_start_time()                 
+                # require a bit more work               
+                # _logger.debug("event id %s", event.get_id()) 
+                finalize_index = event.get_id() == self.__top_event_displayed.get_id() or event.get_start_time() > self.__top_event_displayed.get_start_time()          
             elif self.__day_displayed == today:
                 finalize_index = event.get_end_time() >= now
             else:
                 finalize_index = True   
 
             if finalize_index:
+                _logger.debug("finalize_index is true, event start time is %s", event.get_start_time())       
                 if self.__day_displayed == today and self.__top_event_displayed is not None and self.__top_event_displayed.get_end_time() > now and self.__move_up:
                     new_index = max(index - events_to_display, 0)
                     if self.__events_for_day_displayed[new_index].get_end_time() < now:
@@ -819,6 +828,10 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                 break
 
             index = index + 1   
+
+        # if all the later events were removed, just go back to the first event
+        if index >= len(self.__events_for_day_displayed):
+            index = 0
 
         end_index = 0  
         if len(self.__events_for_day_displayed) > 0:
