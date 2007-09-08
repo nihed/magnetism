@@ -32,7 +32,8 @@ class FilesStock(Stock):
 
         self.__display_limit = 3
         self.__thumbnails = gnome.ui.ThumbnailFactory(gnome.ui.THUMBNAIL_SIZE_NORMAL)
-        self.__itheme = gtk.icon_theme_get_default()         
+        self.__itheme = gtk.icon_theme_get_default() 
+        self.__recentf_path = os.path.expanduser('~/.recently-used')        
 
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4, padding_top=2)
         browsefiles = IconLink('Browse Files', xalign=hippo.ALIGNMENT_CENTER)
@@ -42,6 +43,7 @@ class FilesStock(Stock):
         self._recentbox = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4)
         self._box.append(self._recentbox)
 
+        gnomevfs.monitor_add(self.__recentf_path, gnomevfs.MONITOR_FILE, lambda *args: self.__redisplay())
         gobject.idle_add(self.__redisplay)
         
     def get_content(self, size):
@@ -52,11 +54,11 @@ class FilesStock(Stock):
         
     @log_except(logger=_logger)
     def __redisplay(self):
-        recentf_path = os.path.expanduser('~/.recently-used')
-        if not os.path.isfile(recentf_path):
+        _logger.debug("doing redisplay")
+        if not os.path.isfile(self.__recentf_path):
             _logger.debug("no recent files")
             return
-        f = open(recentf_path, 'r')
+        f = open(self.__recentf_path, 'r')
         doc = xml.dom.minidom.parseString(f.read())
         self._recentbox.remove_all()
         i = 0
