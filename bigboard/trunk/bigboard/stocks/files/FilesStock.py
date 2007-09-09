@@ -22,7 +22,7 @@ class IconLink(CanvasHBox):
         super(IconLink, self).__init__(**kwargs)
         self.img = hippo.CanvasImage(scale_width=20, scale_height=20)
         self.append(self.img)
-        self.link = hippo.CanvasLink(text=text)
+        self.link = hippo.CanvasLink(text=text, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END,)
         self.append(self.link)
 
 class FilesStock(Stock):
@@ -50,7 +50,7 @@ class FilesStock(Stock):
         return self._box
     
     def __on_browse_files(self):
-        subprocess.Popen(['gnome-open', os.path.expanduser('~/Desktop')])        
+        subprocess.Popen(['nautilus', '--browser', os.path.expanduser('~/Desktop')])        
         
     @log_except(logger=_logger)
     def __redisplay(self):
@@ -81,7 +81,7 @@ class FilesStock(Stock):
             link = IconLink(text)
             link.img.set_property('image-name', result)
             link.link.connect("activated", lambda l: self.__on_recentitem(url))
-            self._box.append(link)
+            self._recentbox.append(link)
             i += 1
         
     def __on_recentitem(self, url):
