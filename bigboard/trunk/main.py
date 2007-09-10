@@ -289,11 +289,12 @@ class BigBoardPanel(dbus.service.Object):
      
         self._header_box.append(self._title, hippo.PACK_EXPAND)
         
-        self._size_button = hippo.CanvasImage(xalign=hippo.ALIGNMENT_END, yalign=hippo.ALIGNMENT_START)
-        self._size_button.set_clickable(True)
-        self._size_button.connect("button-press-event", lambda text, event: self._toggle_size())
-        
-        self._header_box.append(self._size_button, hippo.PACK_END)
+        #self._size_button = hippo.CanvasImage(xalign=hippo.ALIGNMENT_END, yalign=hippo.ALIGNMENT_START)
+        #self._size_button.set_clickable(True)
+        #self._size_button.connect("button-press-event", lambda text, event: self._toggle_size())
+        #
+        #self._header_box.append(self._size_button, hippo.PACK_END)
+        self._size_button = None
         
         self._main_box.append(self._header_box)
         
@@ -341,10 +342,12 @@ class BigBoardPanel(dbus.service.Object):
         self.list(stock)
         
     def __get_size(self):
-        client = gconf.client_get_default()
-        if client.get_bool(GCONF_PREFIX + 'expand'):
-            return Stock.SIZE_BULL
-        return Stock.SIZE_BEAR
+        return Stock.SIZE_BULL
+    
+        #client = gconf.client_get_default()
+        #if client.get_bool(GCONF_PREFIX + 'expand'):
+        #    return Stock.SIZE_BULL
+        #return Stock.SIZE_BEAR
         
     def list(self, stock):
         """Add a stock to an Exchange and append it to the bigboard."""
@@ -434,14 +437,16 @@ class BigBoardPanel(dbus.service.Object):
     def _sync_size(self, *args):       
         self._header_box.set_child_visible(self._title, self.__get_size() == Stock.SIZE_BULL)
         if self.__get_size() == Stock.SIZE_BEAR:
-            self._header_box.remove(self._size_button)
-            self._header_box.append(self._size_button, hippo.PACK_EXPAND)
-            self._size_button.set_property('image-name', 'bigboard-expand.png')
+            if self._size_button:
+                self._header_box.remove(self._size_button)
+                self._header_box.append(self._size_button, hippo.PACK_EXPAND)
+                self._size_button.set_property('image-name', 'bigboard-expand.png')
             self._canvas.set_size_request(Stock.SIZE_BEAR_CONTENT_PX, 42)
         else:
-            self._header_box.remove(self._size_button)
-            self._header_box.append(self._size_button, hippo.PACK_END)            
-            self._size_button.set_property('image-name', 'bigboard-collapse.png')       
+            if self._size_button:
+                self._header_box.remove(self._size_button)
+                self._header_box.append(self._size_button, hippo.PACK_END)            
+                self._size_button.set_property('image-name', 'bigboard-collapse.png')       
             self._canvas.set_size_request(Stock.SIZE_BULL_CONTENT_PX, 42)
             
         for exchange in self._exchanges:
