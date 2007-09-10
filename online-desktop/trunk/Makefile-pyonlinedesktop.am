@@ -5,3 +5,5 @@ pylib_PYTHON =					\
 	pyonlinedesktop/iterdird.py		\
 	pyonlinedesktop/odpanel.py
 
+pyonlinedesktop-check-missing:
+	$(srcdir)/check-have-all-files.sh $(srcdir) 'pyonlinedesktop/*.py' $(pylib_PYTHON)

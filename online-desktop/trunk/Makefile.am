@@ -4,7 +4,7 @@
 AM_CPPFLAGS=-I$(top_builddir)/config
 #ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST=
+EXTRA_DIST=check-have-all-files.sh
 
 #SUBDIRS = po
 
@@ -15,17 +15,19 @@ distclean-local:
 	  rm -f $(MAINTAINERCLEANFILES) ;	\
 	fi
 
-#dist-hook: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mugshot-dist-hook
-#.PHONY: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mugshot-dist-hook
-
 # These are added to using += in the included files
 bin_SCRIPTS =
 bin_PROGRAMS =
 noinst_PROGRAMS =
 noinst_LTLIBRARIES =
+noinst_PYTHON = 
 DISTCLEANFILES =
 MAINTAINERCLEANFILES =
 BUILT_SOURCES =
+
+.PHONY: pyonlinedesktop-check-missing pyddm-check-missing
+all-local: pyonlinedesktop-check-missing pyddm-check-missing
+dist-hook: pyonlinedesktop-check-missing pyddm-check-missing
 
 include Makefile-gmail.am
 include Makefile-mailto.am
