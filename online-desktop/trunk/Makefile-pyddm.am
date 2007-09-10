@@ -9,4 +9,11 @@ pyddm_PYTHON =					\
 	pyddm/ddm/Resource.py			\
 	pyddm/ddm/TwistedModel.py
 
-EXTRA_DIST += pyddm/test.py pyddm/test-session.py
+PYDDM_NOT_INSTALLED=	pyddm/test.py				\
+			pyddm/test-session.py
+
+
+noinst_PYTHON += $(PYDDM_NOT_INSTALLED)
+
+pyddm-check-missing:
+	$(srcdir)/check-have-all-files.sh  $(srcdir) 'pyddm/*.py pyddm/ddm/*.py' $(pyddm_PYTHON) $(PYDDM_NOT_INSTALLED)
