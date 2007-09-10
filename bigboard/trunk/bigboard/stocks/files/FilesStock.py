@@ -36,24 +36,23 @@ class FilesStock(Stock):
         self.__recentf_path = os.path.expanduser('~/.recently-used')        
 
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4, padding_top=2)
-        browsefiles = IconLink('Browse Files', xalign=hippo.ALIGNMENT_CENTER)
-        browsefiles.img.set_property('image-name', 'gtk-directory')
-        browsefiles.link.connect("activated", lambda l: self.__on_browse_files())
-        self._box.append(browsefiles)
         self._recentbox = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4)
         self._box.append(self._recentbox)
 
-        gnomevfs.monitor_add(self.__recentf_path, gnomevfs.MONITOR_FILE, lambda *args: self.__redisplay())
+        self._add_more_button(self.__on_more_button)
+
+        self.__monitor = gnomevfs.monitor_add('file://' + self.__recentf_path, gnomevfs.MONITOR_FILE, self.__redisplay)
         gobject.idle_add(self.__redisplay)
+        
+    def __on_more_button(self):
+        _logger.debug("more!")
+        subprocess.Popen(['nautilus', '--browser', os.path.expanduser('~/Desktop')]) 
         
     def get_content(self, size):
         return self._box
-    
-    def __on_browse_files(self):
-        subprocess.Popen(['nautilus', '--browser', os.path.expanduser('~/Desktop')])        
         
     @log_except(logger=_logger)
-    def __redisplay(self):
+    def __redisplay(self, *args):
         _logger.debug("doing redisplay")
         if not os.path.isfile(self.__recentf_path):
             _logger.debug("no recent files")
