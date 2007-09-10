@@ -27,7 +27,7 @@
       <owner>bigboard</owner>
       <type>list</type>
       <list_type>string</list_type>
-      <default>[org.mugshot.bigboard.SelfStock,org.mugshot.bigboard.SearchStock,org.mugshot.bigboard.AppsStock,org.mugshot.bigboard.PeopleStock,org.mugshot.bigboard.CalendarStock,org.mugshot.bigboard.PhotosStock]</default>
+      <default>[org.mugshot.bigboard.SelfStock,org.mugshot.bigboard.SearchStock,org.mugshot.bigboard.FilesStock,org.mugshot.bigboard.AppsStock,org.mugshot.bigboard.PeopleStock,org.mugshot.bigboard.CalendarStock,org.mugshot.bigboard.PhotosStock]</default>
       <locale name="C">
 		<short>The list of visible stocks</short>
       </locale>
