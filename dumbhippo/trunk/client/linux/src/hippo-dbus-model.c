@@ -756,7 +756,7 @@ handle_query (void            *object,
 
     ddm_data_fetch_unref(fetch);
 
-    return dbus_message_new_method_return(message);
+    return NULL;
 }
 
 static DBusMessage*
@@ -799,7 +799,7 @@ handle_update (void            *object,
 
     g_hash_table_destroy(params);
 
-    return dbus_message_new_method_return(message);
+    return NULL;
 }
 
 static DBusMessage*
@@ -837,9 +837,9 @@ handle_forget (void            *object,
                                       DBUS_ERROR_INVALID_ARGS,
                                       _("Too many arguments"));
 
-    /* FIXME: Do the forget */
+    /* FIXME: Do the forget; change the NULL return to an ACK if we aren't doing something async */
 
-    return dbus_message_new_method_return(message);
+    return NULL;
 }
 
 static dbus_bool_t
