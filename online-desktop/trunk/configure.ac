@@ -4,7 +4,7 @@ AC_PREREQ(2.59)
 AC_INIT(apps/gmail/gmail.desktop.in)
 AC_CONFIG_AUX_DIR(config)
 
-AM_INIT_AUTOMAKE(online-desktop, 0.2.10)
+AM_INIT_AUTOMAKE(online-desktop, 0.2.12)
 
 AM_CONFIG_HEADER(config/config.h)
 
