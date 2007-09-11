@@ -56,6 +56,7 @@ class FilesStock(Stock):
         _logger.debug("doing redisplay")
         if not os.path.isfile(self.__recentf_path):
             _logger.debug("no recent files")
+            self._recentbox.append(hippo.CanvasText(text="No recent files"))            
             return
         f = open(self.__recentf_path, 'r')
         doc = xml.dom.minidom.parseString(f.read())
@@ -82,9 +83,7 @@ class FilesStock(Stock):
             link.link.connect("activated", lambda l: self.__on_recentitem(url))
             self._recentbox.append(link)
             i += 1
-        if i == 0:
-            self._recentbox.append(hippo.CanvasText(text="No recent files"))
-        
+            
     def __on_recentitem(self, url):
         subprocess.Popen(['gnome-open', url])
         
