@@ -2,6 +2,7 @@ package com.dumbhippo.server.dm;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -9,6 +10,7 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 
+import com.dumbhippo.Site;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.annotations.DMFilter;
@@ -28,6 +30,8 @@ import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.DesktopSettings;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.applications.ApplicationSystem;
+import com.dumbhippo.server.views.UserViewpoint;
 
 @DMO(classId="http://mugshot.org/p/o/user", resourceBase="/o/user")
 public abstract class UserDMO extends DMObject<Guid> {
@@ -47,6 +51,9 @@ public abstract class UserDMO extends DMObject<Guid> {
 	
 	@EJB
 	private DesktopSettings settings;
+	
+	@EJB
+	private ApplicationSystem applicationSystem;
 	
 	protected UserDMO(Guid key) {
 		super(key);
@@ -155,6 +162,38 @@ public abstract class UserDMO extends DMObject<Guid> {
 		
 		for (DesktopSetting setting : userSettings) {
 			result.add(session.findUnchecked(DesktopSettingDMO.class, new DesktopSettingKey(setting)));
+		}
+		
+		return result;
+	}
+
+	// the Date here can be null, not sure if that's OK
+	@DMProperty
+	@DMFilter("viewer.canSeePrivate(this)")
+	public Date getApplicationUsageStart() {
+		Date since = applicationSystem.getMyApplicationUsageStart(new UserViewpoint(user, Site.NONE));
+		return since;
+	}
+	
+	@DMProperty
+	@DMFilter("viewer.canSeePrivate(this)")
+	public boolean getApplicationUsageEnabled() {
+		return identitySpider.getApplicationUsageEnabled(user);
+	}
+	
+	@DMProperty
+	@DMFilter("viewer.canSeePrivate(this)")
+	public Set<ApplicationDMO> getTopApplications() {
+		UserViewpoint viewpoint = new UserViewpoint(user, Site.NONE);
+		
+		Set<ApplicationDMO> result = new HashSet<ApplicationDMO>();
+	
+		// returned "since" here can be null, which is OK
+		Date since = applicationSystem.getMyApplicationUsageStart(viewpoint);
+
+		List<String> appIds = applicationSystem.getMyMostUsedApplicationIds(viewpoint, since, 15);
+		for (String appId : appIds) {
+			result.add(session.findUnchecked(ApplicationDMO.class, appId));
 		}
 		
 		return result;

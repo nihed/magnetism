@@ -894,6 +894,33 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		pageApplicationList(getSortedResults(q), iconSize, category, pageable);
 	}
 	
+	public List<String> getMyMostUsedApplicationIds(UserViewpoint viewpoint, Date since, int maxResults) {
+		if (since == null)
+			since = getDefaultSince();
+		Query q = em.createQuery("SELECT au.application.id, COUNT(*) " +
+								 "  FROM ApplicationUsage au  " +
+								 "  WHERE au.date > :since " +
+								 "    AND au.user = :user " +
+								 "  GROUP by au.application.id")
+		    .setParameter("since", since)
+		    .setParameter("user", viewpoint.getViewer());
+		
+		/* this is all a hack since database sorting doesn't work with mysql4, see 
+		 * comment earlier in this file; when db sorting works the maxResults arg 
+		 * will actually be useful 
+		 */
+		
+		List<Object[]> results = getSortedResults(q);
+		List<String> appIds = new ArrayList<String>();
+		for (Object[] r : results) {
+			if (maxResults >= 0 && appIds.size() >= maxResults)
+				break;
+			appIds.add((String) r[0]);
+		}
+		
+		return appIds;
+	}
+	
 	public Date getMyApplicationUsageStart(UserViewpoint viewpoint) {
 		try {
 			Query q = em.createQuery("SELECT MIN(au.date) from ApplicationUsage au where au.user = :user")

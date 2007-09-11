@@ -50,6 +50,7 @@ public interface ApplicationSystem {
 	public void pageRelatedApplications(Application relatedTo, Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable);
 	public void pageMyApplications(UserViewpoint viewpoint, Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable);
 	public Date getMyApplicationUsageStart(UserViewpoint viewpoint);
+	public List<String> getMyMostUsedApplicationIds(UserViewpoint viewpoint, Date since, int maxResults);
 	
 	public List<CategoryView> getPopularCategories(Date since);
 	
