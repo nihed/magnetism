@@ -8,7 +8,8 @@ public enum PropertyType {
 	FLOAT('f'),
 	STRING('s'),
 	RESOURCE('r'),
-	URL('u');
+	URL('u'),
+	DATE('d');
 	
 	private char typeChar;
 

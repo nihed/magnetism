@@ -7,6 +7,7 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.MessageDigest;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -217,7 +218,18 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	
 	public Object getRawPropertyValue(DMObject<?> object) {
 		try {
-			return method.invoke(object);
+			Object value = method.invoke(object);
+			if (value instanceof Date) {
+				// dates convert to Long, conceptually the same 
+				// as conversion of shorts, floats, etc.
+				// but those don't require any explicit conversion 
+				// since no code cares if it gets a Short vs. Integer
+				// The reason code cares about getting a Long not a Date
+				// is that we want Long.toString not Date.toString in XML
+				return ((Date)value).getTime();
+			} else {
+				return value;
+			}
 		} catch (InvocationTargetException e) {
 			throw new RuntimeException("Error getting property value during visit", e);
 		} catch (IllegalArgumentException e) {
@@ -293,10 +305,10 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 
 		if (classInfo != null) {
 			return createResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent, listValued, setValued);
-		} else if (elementType.isPrimitive() || (genericElementType == String.class)) { 
+		} else if (elementType.isPrimitive() || (genericElementType == String.class) || (genericElementType == Date.class)) { 
 			return createPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent, listValued, setValued);
 		} else {
-			throw new RuntimeException("Property type must be DMObject, primitive, or string");
+			throw new RuntimeException("Property type must be DMObject, primitive, Date, or String");
 		}
 	}
 	

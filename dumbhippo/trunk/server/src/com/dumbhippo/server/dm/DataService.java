@@ -60,7 +60,8 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 		model.addDMClass(ExternalAccountDMO.class);
 		model.addDMClass(UserDMO.class);
 		model.addDMClass(DesktopSettingDMO.class);
-	
+		model.addDMClass(ApplicationDMO.class);
+		
 		model.completeDMClasses();
 		
 		topicProducer = new JmsProducer(TOPIC_NAME, JmsConnectionType.NONTRANSACTED_IN_SERVER);
