@@ -101,7 +101,7 @@ def compare_by_date(event_a, event_b):
 # we use calendar feed urls as calendar ids, such urls show up
 # as ids for individual calendars when we get events feed, e.g.
 # in calendar list feed id would be 
-# http://www.google.com/calendar/feeds/example%40gmail.com/example%40gmail.com
+# http://www.google.com/calendar/feeds/account%40gmail.com/example%40gmail.com
 # while id for the same calendar in the calendar events feed woud be
 # http://www.google.com/calendar/feeds/example%40gmail.com/private/full
 # this function converts from the first format to the second one, which
@@ -119,6 +119,25 @@ def create_calendar_feed_url(calendar_entry):
     calendar_id_feeds_index = calendar_id.find("/feeds/")
     calendar_id_slash_index = calendar_id.find("/", calendar_id_feeds_index + len(str("/feeds/")) + 1)
     return calendar_id[:calendar_id_feeds_index + len(str("/feeds"))] + calendar_id[calendar_id_slash_index:] + "/private/" + projection
+
+# since calendar id has a form
+# http://www.google.com/calendar/feeds/account%40gmail.com/example%40gmail.com
+# we can parse out the account and turn it into either
+# http://www.google.com/calendar if it's a gmail address
+# or 
+# https://www.google.com/calendar/hosted/domain.com/
+# if it is an address for a different domain
+def create_account_url(calendar_entry):
+    calendar_id = calendar_entry.id.text
+    _logger.debug("looking at %s", calendar_id)
+    calendar_id_feeds_index = calendar_id.find("/feeds/")
+    calendar_id_slash_index = calendar_id.find("/", calendar_id_feeds_index + len(str("/feeds/")) + 1)
+    account = calendar_id[calendar_id_feeds_index + len(str("/feeds")) + 1:calendar_id_slash_index]
+    domain = account[account.find("@") + 1:]
+    if domain == "gmail.com":
+        return "http://www.google.com/calendar"
+    else:
+        return "https://www.google.com/calendar/hosted/" + domain
 
 # for some reason python library doesn't provide a value
 # for gCal:selected element, so we need to fish it out from
@@ -349,9 +368,21 @@ class EventDetailsDisplay(hippo.CanvasBox):
                 event_where_box.append(event_map_link_parenthesis) 
                 self.__top_box.append(event_where_box)
 
-        # TODO: list the calendars nicely  
-        event_calendar = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, padding_left=4, padding_right=4, text="from: " + xml.sax.saxutils.escape(event.get_calendar_titles()[0]))
-        self.__top_box.append(event_calendar)
+        calendars_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL, padding_left=4, padding_right=4)
+        from_text = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START, text="from: ")
+        calendars_list_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=2)
+        index = 0
+        for calendar_title in event.get_calendar_titles():
+            # TODO: make those links to appropriate accounts once we know what they are here
+            # calendar_link = ActionLink(xalign=hippo.ALIGNMENT_START, text=calendar_title)
+            # calendar_link.connect("activated", lambda i: self.__on_activated_calendar_link(index))
+            calendar_link = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, text=calendar_title)
+            index = index + 1
+            calendars_list_box.append(calendar_link) 
+
+        calendars_box.append(from_text)
+        calendars_box.append(calendars_list_box) 
+        self.__top_box.append(calendars_box)
 
         if event.get_event_entry().content.text is not None:
             # TODO: description might have urls which it would be nice to detect and display 
@@ -365,6 +396,11 @@ class EventDetailsDisplay(hippo.CanvasBox):
 
     def __on_activated_event_map_link(self, canvas_item):
         os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', "http://maps.google.com/maps?q=" + self.__event.get_event_entry().where[0].value_string)
+
+    def __on_activated_calendar_link(self, index):
+        _logger.debug("requested index %s", index) 
+        # TODO: need to add calendar id to each event, so that we can get an account to link to 
+        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', "http://www.google.com/calendar")
 
     def __get_title(self):
         if self.__event is None:
@@ -391,7 +427,6 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         # events if they are from the same calendar. 
         self.__calendars = {}
         self.__events = []
-        self.__events_to_display = []
         self.__events_for_day_displayed = None
         self.__day_displayed = datetime.date.today()
         self.__top_event_displayed = None
@@ -591,7 +626,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         updated_calendar_dictionary = {}
         for calendar_entry in calendar_list.entry:
             calendar_entry_id = create_calendar_feed_url(calendar_entry)
-            _logger.debug("calendar feed id: %s", calendar_entry_id)
+            # _logger.debug("calendar entry: %s", calendar_entry)
  
             updated_calendar_dictionary[calendar_entry_id] = calendar_entry
             # we delete entries from the old dictionary if they were not deselected
@@ -662,7 +697,6 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self.__max_event_range_end = max(event_range_end, self.__max_event_range_end) 
         self.__events_for_day_displayed = None
 
-        # self.__events_to_display = copy.deepcopy(self.__events)
         # this contains event ids that map to a list of events
         events_at_current_time = {}         
         for event in self.__events:
@@ -702,9 +736,27 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                     # here is where we go over old events_at_current_time and remove
                     # events that are duplicates
                     # first choose the one event to display randomly, later pick the
-                    # one from the calendar you own, if available                    
+                    # one from the calendar you own, if available       
+                    for events_list in events_at_current_time.itervalues():
+                        first_event = True
+                        for event_in_list in events_list:
+                            if not first_event:
+                                event_in_list.update({'display_event' : False})
+                                # we need to make sure there are no duplicates
+                                index = 0
+                                for calendar_link in event_in_list.get_calendar_links():
+                                    if events_list[0].get_calendar_links().count(calendar_link) == 0:
+                                        events_list[0].get_calendar_titles().append(event_in_list.get_calendar_titles()[index]) 
+                                        events_list[0].get_calendar_links().append(calendar_link)
+                                    index = index + 1  
+                            else:
+                                event_in_list.update({'display_event' : True})                                
+                                first_event = False     
+                    events_at_current_time.clear()
                     events_at_current_time = {event.get_id(): [event]}
-
+            else: 
+                events_at_current_time = {event.get_id(): [event]}
+       
         self.__refresh_events()
 
 
@@ -751,7 +803,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             self.__events_for_day_displayed = []
             if events_available:   
                 for event in self.__events:
-                    if event.get_start_time().date() == self.__day_displayed or event.get_is_all_day() and event.get_start_time().date() < self.__day_displayed and event.get_end_time().date() > self.__day_displayed and event.get_display_event(): 
+                    if (event.get_start_time().date() == self.__day_displayed or event.get_is_all_day() and event.get_start_time().date() < self.__day_displayed and event.get_end_time().date() > self.__day_displayed) and event.get_display_event(): 
                         self.__events_for_day_displayed.append(event)
                     elif event.get_start_time().date() > self.__day_displayed:
                         # we can break here because events should be ordered by start time
@@ -979,7 +1031,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self.__slideout = slideout.Slideout()
         self.__slideout_event = event
         coords = event.get_screen_coords()
-        _logger.debug("coords are %s %s; allocation alone %s", self.__box.get_context().translate_to_screen(self.__box)[0] + self.__box.get_allocation()[0] + 4, coords[1], event.get_allocation())
+        # _logger.debug("coords are %s %s; allocation alone %s", self.__box.get_context().translate_to_screen(self.__box)[0] + self.__box.get_allocation()[0] + 4, coords[1], event.get_allocation())
         self.__slideout.slideout_from(self.__box.get_context().translate_to_screen(self.__box)[0] + self.__box.get_allocation()[0] + 4, coords[1])
         p = EventDetailsDisplay(event.get_event())
         self.__slideout.get_root().append(p)
