@@ -243,10 +243,11 @@ class Mugshot(gobject.GObject):
     def get_entity(self, guid):
         return self.__entites[guid]
     
+    @log_except(_logger)
     def __on_dbus_error(self, err):
         # TODO - could schedule a "reboot" of this class here to reload
         # information
-        self._logger.exception("D-BUS error: %s" % (err,))
+        self._logger.error("D-BUS error: %s", err)
     
     @log_except(_logger)
     def __on_self_changed(self):
@@ -465,11 +466,16 @@ class Mugshot(gobject.GObject):
                              self.__on_my_top_applications)
     
     def __request_global_top_apps(self):
-        AsyncHTTPFetcher().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/popularapplications'),
+        baseurl = globals.get_baseurl()
+        if not baseurl:
+            _logger.debug("Not doing top apps request; no baseurl")
+            return False
+        AsyncHTTPFetcher().xml_method(urlparse.urljoin(baseurl, '/xml/popularapplications'),
                                       (),
                                       self.__on_top_applications,
                                       self.__on_top_applications_error,
                                       self.__on_top_applications_error)
+        return True
 
     def __on_category_applications(self, url, child_nodes):
         reply_root = child_nodes[0]
@@ -496,14 +502,20 @@ class Mugshot(gobject.GObject):
         self._logger.error("failed to search apps: %s", args)
 
     def __request_category_top_apps(self, category):
-        AsyncHTTPFetcher().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/popularapplications'),
+        baseurl = globals.get_baseurl()
+        if not baseurl:
+            return        
+        AsyncHTTPFetcher().xml_method(urlparse.urljoin(baseurl, '/xml/popularapplications'),
                                       {'category': category},
                                       self.__on_category_applications,
                                       self.__on_category_applications_error,
                                       self.__on_category_applications_error)
 
     def request_app_search(self, search):
-        AsyncHTTPFetcher().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/searchapplications'),
+        baseurl = globals.get_baseurl()
+        if not baseurl:
+            return        
+        AsyncHTTPFetcher().xml_method(urlparse.urljoin(baseurl, '/xml/searchapplications'),
                                       {'search': search},
                                       lambda url, nodes: self.__on_applications_search(search, url, nodes),
                                       self.__on_applications_search_error,
@@ -522,16 +534,23 @@ class Mugshot(gobject.GObject):
         
     def __on_all_applications_error_do_xmlfallback(self, *args):
         self._logger.error("failed to get all apps, falling back to old XML method")
-        AsyncHTTPFetcher().xml_method_refetch(urlparse.urljoin(self.get_baseurl(), '/xml/allapplications'),
+        baseurl = globals.get_baseurl()
+        if not baseurl:
+            return        
+        AsyncHTTPFetcher().xml_method_refetch(urlparse.urljoin(baseurl, '/xml/allapplications'),
                                               {},
                                               self.__on_all_applications,
                                               self.__on_all_applications_error,
                                               self.__on_all_applications_error)        
 
     def request_all_apps(self):
+        baseurl = globals.get_baseurl()
+        if not baseurl:
+            _logger.debug("Not doing all apps request; no baseurl")            
+            return        
         if not self.__all_apps_requested:
             self.__all_apps_requested = True
-            AsyncHTTPFetcher().refetch(urlparse.urljoin(self.get_baseurl(), '/files/allapplications'),
+            AsyncHTTPFetcher().refetch(urlparse.urljoin(baseurl, '/files/allapplications'),
                                        self.__on_all_applications,
                                        self.__on_all_applications_error_do_xmlfallback,)            
 
@@ -592,9 +611,11 @@ class Mugshot(gobject.GObject):
     
     def get_global_top_apps(self, force=False):
         if self.__global_top_apps is None or force:
+            request_made = self.__request_global_top_apps()
+            if not request_made:
+                return None            
             if not force:            
                 self.__global_top_apps = []
-            self.__request_global_top_apps()
             self.__reset_global_apps_poll()
             return None    
         return self.__global_top_apps
