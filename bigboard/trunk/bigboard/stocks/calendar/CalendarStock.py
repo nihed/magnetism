@@ -127,7 +127,7 @@ def create_calendar_feed_url(calendar_entry):
 # or 
 # https://www.google.com/calendar/hosted/domain.com/
 # if it is an address for a different domain
-def create_account_url(calendar_entry):
+def create_account_url_for_calendar_entry(calendar_entry):
     calendar_id = calendar_entry.id.text
     calendar_id_feeds_index = calendar_id.find("/feeds/")
     calendar_id_slash_index = calendar_id.find("/", calendar_id_feeds_index + len(str("/feeds/")) + 1)
@@ -402,7 +402,7 @@ class EventDetailsDisplay(hippo.CanvasBox):
     def __on_activated_calendar_link(self, canvas_item, index):
         self.emit("close")
         _logger.debug("requested index %s", index) 
-        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', create_account_url(self.__calendar_dict_list[index].values()[0]))
+        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', create_account_url_for_calendar_entry(self.__calendar_dict_list[index].values()[0]))
 
     def __get_title(self):
         if self.__event is None:
@@ -544,10 +544,14 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             # we should use a shorter event id in the future
             _logger.debug("will visit %s", action[10:])
             libbig.show_url(action[10:])
-        elif action == 'calendar' or action == 'default':
-            _logger.debug("will visit calendar")
-            # TODO: don't visit the google calendar by default!
-            libbig.show_url("http://calendar.google.com")
+        elif string.find(action, 'view_calendar') >= 0:
+            _logger.debug("will visit %s", action[13:])
+            libbig.show_url(action[13:])
+        elif action == 'default':
+            # 'dafault' corresponds to the notification being clicked in any place,
+            # and we use to go to the site in that case; now clicking on the notification
+            # just closes it  
+            pass
         else:
             _logger.debug("unknown action: %s", action)   
             print "unknown action " + action
@@ -999,7 +1003,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                                                         body, # body
                                                         ['view_event' + event.get_link(),
                                                          "View Event",
-                                                         'calendar',
+                                                         'view_calendar' + create_account_url_for_calendar_entry(self.__calendars[event.get_calendar_links()[0]].values()[0]),
                                                          "View Calendar"], # action array
                                                         {'foo' : 'bar'}, # hints (pydbus barfs if empty)
                                                         10000) # timeout, 10 seconds                  
