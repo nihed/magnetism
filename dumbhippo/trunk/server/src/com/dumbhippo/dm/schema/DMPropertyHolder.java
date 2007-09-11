@@ -218,18 +218,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	
 	public Object getRawPropertyValue(DMObject<?> object) {
 		try {
-			Object value = method.invoke(object);
-			if (value instanceof Date) {
-				// dates convert to Long, conceptually the same 
-				// as conversion of shorts, floats, etc.
-				// but those don't require any explicit conversion 
-				// since no code cares if it gets a Short vs. Integer
-				// The reason code cares about getting a Long not a Date
-				// is that we want Long.toString not Date.toString in XML
-				return ((Date)value).getTime();
-			} else {
-				return value;
-			}
+			return method.invoke(object);
 		} catch (InvocationTargetException e) {
 			throw new RuntimeException("Error getting property value during visit", e);
 		} catch (IllegalArgumentException e) {

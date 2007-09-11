@@ -48,8 +48,6 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 		} else {
 			if (elementType == String.class)
 				derivedType = PropertyType.STRING;
-			else if (elementType == Date.class)
-				derivedType = PropertyType.LONG; // dates are sent as Date.getTime()
 			else
 				throw new RuntimeException("Unexpected type" + elementType);
 		}
@@ -67,11 +65,6 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 			case STRING:
 				if (annotation.type() != derivedType)
 					throw new RuntimeException("type=PropertyType." + annotation.type() + " found but expected " + derivedType + " from the return type"); 
-				break;
-			case DATE:
-				// note that a long return value can be annotated as a date, which is OK
-				if (derivedType != PropertyType.LONG)
-					throw new RuntimeException("PropertyType.DATE for non-Date property");				
 				break;
 			case URL:
 				if (derivedType != PropertyType.STRING)

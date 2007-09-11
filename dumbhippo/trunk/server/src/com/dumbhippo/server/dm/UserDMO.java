@@ -170,9 +170,9 @@ public abstract class UserDMO extends DMObject<Guid> {
 	// the Date here can be null, not sure if that's OK
 	@DMProperty
 	@DMFilter("viewer.canSeePrivate(this)")
-	public Date getApplicationUsageStart() {
+	public long getApplicationUsageStart() {
 		Date since = applicationSystem.getMyApplicationUsageStart(new UserViewpoint(user, Site.NONE));
-		return since;
+		return since == null ? -1 : since.getTime();
 	}
 	
 	@DMProperty
