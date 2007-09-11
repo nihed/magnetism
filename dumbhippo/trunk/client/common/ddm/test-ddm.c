@@ -100,9 +100,16 @@ main(int argc, char **argv)
     g_type_init();
     
     ddm_model = ddm_data_model_get_default();
-    
+
+#if 0
+    global_resource_query = ddm_data_model_query_resource(ddm_model,
+                                                          "http://dogfood.mugshot.org:9080/o/user/c4a3fc1f528070",
+                                                          "topApplications+;contacts+;settings+");
+#else
     global_resource_query = ddm_data_model_query_resource(ddm_model,
                                                           "online-desktop:/o/global", "self [ photoUrl ]");
+#endif
+    
     if (global_resource_query == NULL) {
         g_printerr("Failed to query global resource\n");
         return 1;
