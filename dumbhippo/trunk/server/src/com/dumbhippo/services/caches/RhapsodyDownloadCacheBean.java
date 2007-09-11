@@ -61,14 +61,6 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheWithStorageBean
 		if (canonicalize)
 			s = Normalizer.normalize(s, Normalizer.DECOMP_COMPAT, 0);
 		
-		//  implementing the first is to normalize to Unicode normalization
-		//  form NFKD before doing the stripping below. (java.text.Normalizer
-		//  is new for Java 6, but I think there are alternatives that can be used
-		//  for Java 5.) The harder part is adapting the code that calls this
-		//  to deal with multiple URLs. I think the right way to handle it
-		//  is to make the service  artist/album/track => URL rather than
-		//  URL => boolean.
-		//
 		return s.replaceAll("[^a-zA-Z0-9]","").toLowerCase();
 	}
 	
