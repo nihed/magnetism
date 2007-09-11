@@ -4687,6 +4687,7 @@ dm_context_get_update(DMContext *context)
 
 static gboolean
 dm_context_get_type(DMContext            *context,
+                    DDMQName             *property_qname,
                     DDMDataType          *type,
                     DDMDataCardinality   *cardinality,
                     gboolean             *default_include)
@@ -4698,7 +4699,7 @@ dm_context_get_type(DMContext            *context,
             /* we already had a type */
             return TRUE;
         } else {
-            g_warning("m:type attribute missing");
+            g_warning("m:type attribute missing for %s#%s", property_qname->uri, property_qname->name);
             return FALSE;
         }
     }
@@ -4841,7 +4842,7 @@ update_property(DMContext            *context,
         default_include = ddm_data_property_get_default_include(old_property);
     }
 
-    if (!dm_context_get_type(context, &type, &cardinality, &default_include))
+    if (!dm_context_get_type(context, property_qname, &type, &cardinality, &default_include))
         return;
 
     if (default_include)
