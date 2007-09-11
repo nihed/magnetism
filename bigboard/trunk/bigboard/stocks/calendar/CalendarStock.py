@@ -1,4 +1,4 @@
-import logging, os, datetime, re, string, copy
+import logging, os, datetime, re, string, copy, urllib
 import xml, xml.sax, xml.sax.saxutils
 
 import gobject, pango, dbus, dbus.glib
@@ -129,10 +129,10 @@ def create_calendar_feed_url(calendar_entry):
 # if it is an address for a different domain
 def create_account_url(calendar_entry):
     calendar_id = calendar_entry.id.text
-    _logger.debug("looking at %s", calendar_id)
     calendar_id_feeds_index = calendar_id.find("/feeds/")
     calendar_id_slash_index = calendar_id.find("/", calendar_id_feeds_index + len(str("/feeds/")) + 1)
     account = calendar_id[calendar_id_feeds_index + len(str("/feeds")) + 1:calendar_id_slash_index]
+    account = urllib.unquote(account)
     domain = account[account.find("@") + 1:]
     if domain == "gmail.com":
         return "http://www.google.com/calendar"
@@ -322,12 +322,13 @@ class EventDetailsDisplay(hippo.CanvasBox):
         "close": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
        }
        
-    def __init__(self, event, **kwargs):
+    def __init__(self, event, calendar_dict_list, **kwargs):
         kwargs['orientation'] = hippo.ORIENTATION_VERTICAL
         kwargs['border'] = 1
         kwargs['border-color'] = 0x000000ff
         hippo.CanvasBox.__init__(self, **kwargs)
         self.__event = event
+        self.__calendar_dict_list = calendar_dict_list
         color = event.get_color()
         end_color=0xc8c8c8ff
         if color is not None:
@@ -373,10 +374,8 @@ class EventDetailsDisplay(hippo.CanvasBox):
         calendars_list_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=2)
         index = 0
         for calendar_title in event.get_calendar_titles():
-            # TODO: make those links to appropriate accounts once we know what they are here
-            # calendar_link = ActionLink(xalign=hippo.ALIGNMENT_START, text=calendar_title)
-            # calendar_link.connect("activated", lambda i: self.__on_activated_calendar_link(index))
-            calendar_link = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, text=calendar_title)
+            calendar_link = ActionLink(xalign=hippo.ALIGNMENT_START, text=calendar_title)
+            calendar_link.connect("activated", self.__on_activated_calendar_link, index)
             index = index + 1
             calendars_list_box.append(calendar_link) 
 
@@ -397,10 +396,10 @@ class EventDetailsDisplay(hippo.CanvasBox):
     def __on_activated_event_map_link(self, canvas_item):
         os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', "http://maps.google.com/maps?q=" + self.__event.get_event_entry().where[0].value_string)
 
-    def __on_activated_calendar_link(self, index):
+    def __on_activated_calendar_link(self, canvas_item, index):
+        self.emit("close")
         _logger.debug("requested index %s", index) 
-        # TODO: need to add calendar id to each event, so that we can get an account to link to 
-        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', "http://www.google.com/calendar")
+        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', create_account_url(self.__calendar_dict_list[index].values()[0]))
 
     def __get_title(self):
         if self.__event is None:
@@ -1033,7 +1032,12 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         coords = event.get_screen_coords()
         # _logger.debug("coords are %s %s; allocation alone %s", self.__box.get_context().translate_to_screen(self.__box)[0] + self.__box.get_allocation()[0] + 4, coords[1], event.get_allocation())
         self.__slideout.slideout_from(self.__box.get_context().translate_to_screen(self.__box)[0] + self.__box.get_allocation()[0] + 4, coords[1])
-        p = EventDetailsDisplay(event.get_event())
+
+        calendar_dict_list = []
+        for calendar_link in event.get_event().get_calendar_links():
+            calendar_dict_list.append(self.__calendars[calendar_link])
+
+        p = EventDetailsDisplay(event.get_event(), calendar_dict_list)
         self.__slideout.get_root().append(p)
         p.connect("close", self.__close_slideout)
         return True
