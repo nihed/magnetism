@@ -1,4 +1,4 @@
-import logging, os, datetime, re, string, copy, urllib
+import logging, os, time, datetime, re, string, copy, urllib
 import xml, xml.sax, xml.sax.saxutils
 
 import gobject, pango, dbus, dbus.glib
@@ -132,6 +132,9 @@ def create_account_url(calendar_entry):
     calendar_id_feeds_index = calendar_id.find("/feeds/")
     calendar_id_slash_index = calendar_id.find("/", calendar_id_feeds_index + len(str("/feeds/")) + 1)
     account = calendar_id[calendar_id_feeds_index + len(str("/feeds")) + 1:calendar_id_slash_index]
+    return create_account_url(account) 
+
+def create_account_url(account):
     account = urllib.unquote(account)
     domain = account[account.find("@") + 1:]
     if domain == "gmail.com":
@@ -543,14 +546,25 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             libbig.show_url(action[10:])
         elif action == 'calendar' or action == 'default':
             _logger.debug("will visit calendar")
+            # TODO: don't visit the google calendar by default!
             libbig.show_url("http://calendar.google.com")
         else:
             _logger.debug("unknown action: %s", action)   
             print "unknown action " + action
 
     def __on_more_button(self):
-        # TODO: need to change this somehow
-        libbig.show_url('http://calendar.google.com')
+        done_with_sleep_state = 0
+        for google_account in self.__googles.itervalues():
+            if done_with_sleep_state == 1:
+                # in case the browser is just starting, we should wait a bit, otherwise
+                # Firefox produces this for the second link:  
+                # "Firefox is already running, but is not responding. To open a new window, 
+                #  you must first close the existing Firefox process, or restart your system."
+                time.sleep(2)
+                done_with_sleep_state = 2  
+            libbig.show_url(create_account_url(google_account.get_auth()[0]))
+            if done_with_sleep_state == 0:
+                done_with_sleep_state = 1
 
     def _on_mugshot_ready(self):
         super(CalendarStock, self)._on_mugshot_ready()
