@@ -153,7 +153,7 @@ class AsyncHTTPFetcher(Singleton):
         elif 'response_errcb' in kwargs:
             gobject.idle_add(lambda: kwargs['response_errcb'](url, response, content))
         elif 'refetch' not in kwargs:
-            self.__logger.info("caught error for fetch of %s (status: %s)" % (url, response.status))     
+            self.__logger.info("caught error %s (%s) for fetch of %s: %s" % (url, response.status, response.reason, content))     
             if 'errcb' in kwargs:           
                 gobject.idle_add(lambda: kwargs['errcb'](url, response) and False)
         if is_refetch:
