@@ -205,6 +205,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__app_browser = None
         self._add_more_button(self.__on_more_button)
 
+        self._mugshot.connect("initialized", lambda mugshot: self.__sync())  
         self._mugshot.connect("all-apps-loaded", lambda mugshot: self.__merge_apps())  
         self._mugshot.connect("global-top-apps-changed", lambda mugshot, apps: self.__sync())  
         self._mugshot.connect("my-top-apps-changed", lambda mugshot, apps: self.__sync())      
@@ -379,26 +380,32 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
                 display.connect("button-press-event", lambda display, event: display.launch())    
                 self.__web_set.append(display)
                 webapp_count += 1
-        
+
+        usage = self._mugshot.get_pref('applicationUsageEnabled')
+        self._logger.debug("usage: %s", usage)
+        if usage is False:
+            self.__set_message("Enable application tracking", 
+                               self._mugshot.get_baseurl() + "/account")        
         self.__static_set.remove_all()
         self.__static_set_ids = {}
-        for i, mugshot_app in enumerate(self._mugshot.get_pinned_apps() or []):
+        pinned_apps =  self._mugshot.get_my_top_apps()
+        global_top_apps = self._mugshot.get_global_top_apps()
+        for i, mugshot_app in enumerate((usage and pinned_apps) or global_top_apps or []):
             if i > self.STATIC_SET_SIZE:
                 break
             app = self.get_app(mugshot_app)
             display = apps_widgets.AppDisplay(app)
             display.connect("button-press-event", lambda display, event: display.launch()) 
-            self._logger.debug("setting pinned app: %s", app)
+            self._logger.debug("setting static set app: %s", app)
             self.__static_set.append(display)
             self.__static_set_ids[app.get_id()] = True   
-        self._mugshot.set_my_apps_poll_frequency(30 * 60) # 30 minutes
-        usage = self._mugshot.get_pref('applicationUsageEnabled')
-        self._logger.debug("usage: %s", usage)
-        if usage is False:
-            self.__set_message("Enable application tracking", 
-                               self._mugshot.get_baseurl() + "/account")
+        self.__set_subtitle(None)        
+        if (not pinned_apps) and global_top_apps:
+            self.__set_subtitle("Popular Applications")               
         
-        if not self._mugshot.get_pinned_apps() and usage:          
+        self._mugshot.set_my_apps_poll_frequency(30 * 60) # 30 minutes
+        
+        if (not pinned_apps) and usage:          
             self.__set_message("Finding your application list...")
             self._mugshot.set_my_apps_poll_frequency(3 * 60) # 3 minutes                
             if len(self.__static_set.get_children()) == 0 and self._mugshot.get_my_app_usage_start():
@@ -417,10 +424,5 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
                     self.__set_message("Saving your applications...")
                     self._logger.debug("creating initial pin set: %s", pinned_ids)
                     self._mugshot.set_pinned_apps(pinned_ids, lambda: self.__on_pinned_apps_success(pinned_ids))       
-                    
-        i = 0
-        self.__set_dynamic_set(self._mugshot.get_my_top_apps() or self._mugshot.get_global_top_apps())
-        self.__set_subtitle(None)        
-        if (not self._mugshot.get_my_top_apps()) and self._mugshot.get_global_top_apps():
-            self.__set_subtitle("Popular Applications")     
-    
+  
+
