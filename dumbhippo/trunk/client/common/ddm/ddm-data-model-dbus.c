@@ -471,7 +471,8 @@ handle_incoming_resource_updates(DBusModel          *dbus_model,
     
     while (dbus_message_iter_get_arg_type(&resource_array_iter) != DBUS_TYPE_INVALID) {
         DDMDataResource *resource;
-        
+
+        g_assert(dbus_message_iter_get_arg_type(&resource_array_iter) == DBUS_TYPE_STRUCT);
         dbus_message_iter_recurse(&resource_array_iter, &resource_struct_iter);
         
         resource = handle_incoming_resource_update(dbus_model, &resource_struct_iter, notifications);
@@ -507,9 +508,12 @@ handle_notify (void            *object,
                DBusError       *error)
 {
     DBusModel *dbus_model = object;    
-    DBusMessageIter resource_array_iter;
+    DBusMessageIter toplevel_iter, resource_array_iter;
     
-    dbus_message_iter_init(message, &resource_array_iter);
+    dbus_message_iter_init(message, &toplevel_iter);
+
+    g_assert(dbus_message_iter_get_arg_type(&toplevel_iter) == DBUS_TYPE_ARRAY);
+    dbus_message_iter_recurse(&toplevel_iter, &resource_array_iter);
 
     handle_incoming_resource_updates(dbus_model, &resource_array_iter, NULL);
     
