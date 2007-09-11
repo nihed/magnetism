@@ -713,7 +713,7 @@ widget "*bigboard-nopad-button" style "bigboard-nopad-button"
     ## to add stocks to a blank bigboard
     if not listings or len(listings) == 0:
         gconf.client_get_default().set_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING,
-                                            ['org.gnome.bigboard.SelfStock','org.gnome.bigboard.SearchStock','org.gnome.bigboard.AppsStock','org.gnome.bigboard.PeopleStock','org.gnome.bigboard.PhotosStock'])
+                                            ['org.gnome.bigboard.SelfStock','org.gnome.bigboard.SearchStock','org.gnome.bigboard.FilesStock','org.gnome.bigboard.AppsStock','org.gnome.bigboard.PeopleStock'])
 
     if not stockdirs:
         stockdirs = [os.path.join(os.path.dirname(bigboard.__file__), 'stocks')]
