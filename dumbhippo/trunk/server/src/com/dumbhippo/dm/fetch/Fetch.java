@@ -109,7 +109,12 @@ public final class Fetch<K,T extends DMObject<K>> {
 				classProperties[classIndex].visitChildren(session, newChildren, object, visitor);
 		}
 		
-		if (indirect && !newAnyFetched)
+		// If this resource is part of the direct result, we must always include the resource, 
+		//   even if we aren't fetching any properties
+		// If we've never told the client about this resource at all, then we must send the
+		//   the resource (and in particular, it's class) even if we aren't fetching any properties
+		// Otherwise, if there are no new properties to fetch, we are done 
+		if (indirect && oldFetch != null && !newAnyFetched)
 			return;
 		
 		String fetchString = null;
