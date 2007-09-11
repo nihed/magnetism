@@ -295,8 +295,13 @@ class CheckMailTask(libbig.polling.Task):
         if action == 'mail':
             if self.__latest_mail:
                 libbig.show_url(self.__latest_mail.get_link())
-        elif action == 'inbox-no-icon' or action == 'default':
+        elif action == 'inbox-no-icon':
             libbig.show_url(self.__google.get_mail_base_url())
+        elif action == 'default':
+            # 'dafault' corresponds to the notification being clicked in any place,
+            # and we use to go to the site in that case; now clicking on the notification
+            # just closes it    
+            pass
         else:
             print "unknown action " + action
 
