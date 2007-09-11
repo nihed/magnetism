@@ -89,3 +89,9 @@ peoplestock_PYTHON = \
                 stocks/people/peoplebrowser.py \
                 stocks/people/peoplewidgets.py \
                 stocks/people/listing.xml
+
+filestockdir=$(stocksdir)/files
+filestock_PYTHON = \
+                stocks/files/FilesStock.py \
+                stocks/files/listing.xml
+
