@@ -23,6 +23,8 @@ $(server_in_files): $(server_in_files).in Makefile
 	    $< > $@
 
 BIGBOARD_APPLET_SOURCES=			\
+	apps.c					\
+	apps.h					\
 	bigboard-button.c			\
 	hippo-dbus-helper.c			\
 	hippo-dbus-helper.h			\
