@@ -6,6 +6,7 @@
 #include <ddm/ddm.h>
 
 #include "http.h"
+#include "apps.h"
 #include <string.h>
 
 typedef struct {
@@ -20,6 +21,7 @@ typedef struct {
     char *photo_url;
     GdkPixbuf *icon;
     GSList *icon_changed_closures;
+    GHashTable *apps_by_resource_id;
 } SelfData;
 
 
@@ -114,27 +116,23 @@ download_new_photo_url(SelfData   *sd,
     if (connection == NULL)
         return;
 
-    g_debug("Sending http request for user photo %s", sd->photo_url);
-    http_get(connection,
-             sd->photo_url,
-             on_got_photo,
-             sd);             
+    if (sd->photo_url) {
+        g_debug("Sending http request for user photo %s", sd->photo_url);
+        http_get(connection,
+                 sd->photo_url,
+                 on_got_photo,
+                 sd);
+    }
 }
 
 static void
-on_photo_changed(DDMDataResource *resource,
-                 GSList          *changed_properties,
-                 gpointer         user_data)
+update_photo_from_self(SelfData *sd)
 {
-    SelfData *sd;
-
-    sd = user_data;
-
     if (sd->self_resource) {
         const char *photo_url;
 
         photo_url = NULL;
-        ddm_data_resource_get(resource,
+        ddm_data_resource_get(sd->self_resource,
                               "photoUrl", DDM_DATA_URL, &photo_url,
                               NULL);
         
@@ -147,6 +145,74 @@ on_photo_changed(DDMDataResource *resource,
     }
 }
 
+static void
+on_photo_changed(DDMDataResource *resource,
+                 GSList          *changed_properties,
+                 gpointer         user_data)
+{
+    SelfData *sd;
+
+    sd = user_data;
+
+    if (sd->self_resource == resource)
+        update_photo_from_self(sd);
+    else
+        g_warning("Got photo changed notification for someone else?");
+}
+
+static void
+update_applications_from_self(SelfData *sd)
+{
+    if (sd->self_resource) {
+        GSList *apps;
+        GSList *l;
+
+        /* we don't own the list or its contents (ddm_data_resource_get does not copy it) */
+        apps = NULL;
+        ddm_data_resource_get(sd->self_resource,
+                              "topApplications", DDM_DATA_RESOURCE | DDM_DATA_LIST,
+                              &apps,
+                              NULL);
+
+        g_debug("Got %d top applications", g_slist_length(apps));
+        
+        if (sd->apps_by_resource_id == NULL) {
+            sd->apps_by_resource_id = g_hash_table_new_full(g_str_hash,
+                                                            g_str_equal,
+                                                            (GFreeFunc) g_free,
+                                                            (GFreeFunc) app_unref);
+        }
+        for (l = apps; l != NULL; l = l->next) {
+            DDMDataResource *new_app_resource = l->data;
+            App *old_app;
+
+            old_app = g_hash_table_lookup(sd->apps_by_resource_id,
+                                          ddm_data_resource_get_resource_id(new_app_resource));
+            if (old_app == NULL) {
+                App *new_app;
+                new_app = app_new(new_app_resource);
+                g_hash_table_replace(sd->apps_by_resource_id,
+                                     g_strdup(ddm_data_resource_get_resource_id(new_app_resource)),
+                                     new_app);
+            }
+        }
+    }
+}
+
+static void
+on_applications_changed(DDMDataResource *resource,
+                        GSList          *changed_properties,
+                        gpointer         user_data)
+{
+    SelfData *sd;
+
+    sd = user_data;
+    
+    if (sd->self_resource == resource)
+        update_applications_from_self(sd);
+    else
+        g_warning("Got apps changed notification for someone else?");    
+}
 
 static void
 on_query_response(GSList            *resources,
@@ -177,10 +243,23 @@ on_query_response(GSList            *resources,
             g_printerr("No self resource on global resource");
             return;
         }
+
+        update_photo_from_self(sd);
+        update_applications_from_self(sd);
+        
+        /* FIXME hack since child fetch does not work yet */
+        ddm_data_model_query_resource(sd->ddm_model,
+                                      ddm_data_resource_get_resource_id(sd->self_resource),
+                                      "topApplications+");
         
         ddm_data_resource_connect(sd->self_resource,
-                                  "photoUrl", /* NULL for all props */
+                                  "photoUrl",
                                   on_photo_changed,
+                                  sd);
+
+        ddm_data_resource_connect(sd->self_resource,
+                                  "topApplications",
+                                  on_applications_changed,
                                   sd);
     }
 }
@@ -203,7 +282,9 @@ on_ddm_connected_changed(DDMDataModel *ddm_model,
     if (connected && sd->self_query == NULL) {        
         sd->self_query =
             ddm_data_model_query_resource(ddm_model,
-                                          "online-desktop:/o/global", "self [ photoUrl ]");
+                                          /* the child fetch in [] does not work yet */
+                                          "online-desktop:/o/global", "self [ photoUrl;topApplications+ ]");
+
         ddm_data_query_set_multi_handler(sd->self_query,
                                          on_query_response, sd);    
         
