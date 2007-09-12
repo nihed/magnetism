@@ -49,6 +49,7 @@ public class DMClassInfo<K, T extends DMObject<K>> {
 			
 			if (!(parameterTypes[0].equals(Guid.class) ||
 				  parameterTypes[0].equals(String.class) ||
+				  parameterTypes[0].equals(Long.class) ||
 				  DMKey.class.isAssignableFrom(parameterTypes[0])))
 				  continue;
 			

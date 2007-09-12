@@ -74,7 +74,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		baseClass = classInfo.getObjectClass();
 		keyClass = classInfo.getKeyClass();
 		
-		if (keyClass != Guid.class && keyClass != String.class) {
+		if (keyClass != Guid.class && keyClass != String.class && keyClass != Long.class) {
 			try {
 				keyStringConstructor = keyClass.getConstructor(String.class);
 			} catch (NoSuchMethodException e) {
@@ -245,6 +245,16 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 			@SuppressWarnings("unchecked")
 			StoreKey<K,T> key = new StoreKey(this, string);
 			return key;
+		} else if (keyClass == Long.class) {
+			try {
+				Long l = Long.parseLong(string);
+				
+				@SuppressWarnings("unchecked")
+				StoreKey<K,T> key = new StoreKey(this, l);
+				return key;
+			} catch (NumberFormatException e) {
+				throw new BadIdException("Invalid long in resourceId");
+			}
 		} else {
 			try {
 				Object keyObject = keyStringConstructor.newInstance(string);
