@@ -333,7 +333,8 @@ pixbuf_closure_func(const char *content_type,
 
     g_assert(GDK_IS_PIXBUF(new_icon));
     (* r->pixbuf_func) (new_icon, r->pixbuf_data);
-
+    g_assert(GDK_IS_PIXBUF(new_icon));
+    
     g_object_unref(new_icon);
 }
 

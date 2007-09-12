@@ -49,12 +49,31 @@ find_button_for_app(LaunchersData *ld,
 }
 
 static void
+set_tooltip (GtkWidget  *widget,
+             const char *tip)
+{
+        GtkTooltips *tooltips;
+        
+        tooltips = g_object_get_data (G_OBJECT (widget), "tooltips");
+        if (!tooltips) {
+                tooltips = gtk_tooltips_new ();
+                g_object_ref (tooltips);
+                gtk_object_sink (GTK_OBJECT (tooltips));
+                g_object_set_data_full (G_OBJECT (widget), "tooltips", tooltips,
+                                        (GDestroyNotify) g_object_unref);
+        }
+
+        gtk_tooltips_set_tip (tooltips, widget, tip, NULL);
+}
+
+static void
 app_changed(App  *app,
             void *data)
 {
     GtkWidget *button;
     LaunchersData *ld;
-
+    const char *tooltip;
+    
     ld = data;
 
     button = find_button_for_app(ld, app);
@@ -62,6 +81,11 @@ app_changed(App  *app,
     if (button == NULL)
         return;
 
+    tooltip = app_get_tooltip(app);
+    
+    if (tooltip)
+        set_tooltip(button, tooltip);
+    
     update_button_icon(button);
 }
 

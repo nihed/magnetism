@@ -88,11 +88,7 @@ on_got_icon(GdkPixbuf  *new_icon,
      * specify a matching size= in the url
      */
     scaled = gdk_pixbuf_scale_simple(new_icon, 22, 22, GDK_INTERP_BILINEAR);
-    g_object_unref(new_icon);
-    new_icon = scaled;
-    
-    if (new_icon)
-        g_object_ref(new_icon);
+    new_icon = scaled; /* new_icon not owned by us, no need to unref old one */
     
     if (app->icon)
         g_object_unref(app->icon);
