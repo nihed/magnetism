@@ -2,7 +2,6 @@ package com.dumbhippo.dm;
 
 import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.dm.store.StoreKey;
-import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.server.NotFoundException;
 
 /**
@@ -17,7 +16,6 @@ import com.dumbhippo.server.NotFoundException;
 public abstract class DMObject<KeyType> {
 	private KeyType key;
 	private StoreKey<KeyType,? extends DMObject<KeyType>> storeKey;
-	Guid guid;
 	
 	@SuppressWarnings("unchecked")
 	protected DMObject(KeyType key) {

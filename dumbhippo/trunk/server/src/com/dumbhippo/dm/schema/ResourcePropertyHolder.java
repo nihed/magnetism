@@ -92,7 +92,7 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 	
 	protected Object dehydrateDMO(Object value) {
 		Object key = ((DMObject<?>)value).getKey();
-		if ((key instanceof Guid) || (key instanceof String)) {
+		if ((key instanceof Guid) || (key instanceof String) || (key instanceof Long)) {
 			return key;
 		} else {
 			return ((DMKey)key).clone();

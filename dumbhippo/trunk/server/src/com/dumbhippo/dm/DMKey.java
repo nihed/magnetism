@@ -3,8 +3,8 @@ package com.dumbhippo.dm;
 import java.io.Serializable;
 
 /**
- * DMKey is a base class for all custom key types for DMOs. You can also use Guid or String
- * as a key type. A custom key type:
+ * DMKey is a base class for all custom key types for DMOs. You can also use Guid, String
+ * or Long as the key type. A custom key type:
  * 
  * <ul>
  * <li>Must implement hashCode() and equals()</li>
