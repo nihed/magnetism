@@ -30,6 +30,7 @@
 
 #include <string.h>
 #include "self.h"
+#include "launchers.h"
 
 #define TIMEOUT_ACTIVATE 1000
 
@@ -160,6 +161,7 @@ typedef struct {
         GtkWidget *applet;
         GtkWidget *button;
         GtkWidget *image;
+        GtkWidget *launchers;
         GtkWidget *about_dialog;
 
         PanelAppletOrient orient;
@@ -344,12 +346,13 @@ update_icon (ButtonData *button_data)
         switch (button_data->orient) {
         case GTK_ORIENTATION_HORIZONTAL:
                 thickness = button_data->button->style->ythickness;
-                xrequest = button_data->size;
+                xrequest = button_data->size - 2 * (focus_width + focus_pad + thickness);
                 yrequest = 12;
                 break;
         case GTK_ORIENTATION_VERTICAL:
+                thickness = button_data->button->style->xthickness;
                 xrequest = 12;
-                yrequest = button_data->size;
+                yrequest = button_data->size - 2 * (focus_width + focus_pad + thickness);
                 break;
         }
 
@@ -417,9 +420,10 @@ update_icon (ButtonData *button_data)
                 gtk_image_set_from_pixbuf (GTK_IMAGE (button_data->image),
                                            scaled);
                 g_object_unref (scaled);
-        } else
+        } else {
                 gtk_image_set_from_pixbuf (GTK_IMAGE (button_data->image),
                                            icon);
+        }
 
         /* don't put much size request on the image, since we are scaling
          * to the allocation, if we didn't do this we could a) never be resized
@@ -643,6 +647,7 @@ bigboard_button_add_to_widget (GtkWidget *applet)
 {
         ButtonData *button_data;
         AtkObject  *atk_obj;
+        GtkWidget  *hbox;
 
         button_data = g_new0 (ButtonData, 1);
 
@@ -650,7 +655,7 @@ bigboard_button_add_to_widget (GtkWidget *applet)
 
         button_data->image = gtk_image_new ();
 
-        button_data->orient = GTK_ORIENTATION_VERTICAL;
+        button_data->orient = GTK_ORIENTATION_HORIZONTAL;
 
         button_data->size = 24;
 
@@ -659,19 +664,23 @@ bigboard_button_add_to_widget (GtkWidget *applet)
 
         button_data->button = gtk_toggle_button_new ();
         
-        gtk_widget_set_name (button_data->button, "showdesktop-button");
+        gtk_widget_set_name (button_data->button, "bigboard-button");
         gtk_rc_parse_string ("\n"
-                             "   style \"showdesktop-button-style\"\n"
+                             "   style \"bigboard-button-style\"\n"
                              "   {\n"
                              "      GtkWidget::focus-line-width=0\n"
                              "      GtkWidget::focus-padding=0\n"
+                             "      GtkButton::inner-border=0\n"
+                             "      GtkButton::interior-focus=0\n"
+                             "      GtkButton::default-border=0\n"
+                             "      GtkButton::default-outside-border=0\n"                             
                              "   }\n"
                              "\n"
-                             "    widget \"*.showdesktop-button\" style \"showdesktop-button-style\"\n"
+                             "    widget \"*.bigboard-button\" style \"bigboard-button-style\"\n"
                              "\n");
 
         atk_obj = gtk_widget_get_accessible (button_data->button);
-        atk_object_set_name (atk_obj, _("Show Desktop Button"));
+        atk_object_set_name (atk_obj, _("Show Sidebar Button"));
         g_signal_connect (G_OBJECT (button_data->button), "button_press_event",
                           G_CALLBACK (do_not_eat_button_press), NULL);
 
@@ -680,7 +689,14 @@ bigboard_button_add_to_widget (GtkWidget *applet)
 
         gtk_container_set_border_width (GTK_CONTAINER (button_data->button), 0);
         gtk_container_add (GTK_CONTAINER (button_data->button), button_data->image);
-        gtk_container_add (GTK_CONTAINER (button_data->applet), button_data->button);
+
+        button_data->launchers = launchers_new();
+        
+        hbox = gtk_hbox_new(FALSE, 0);
+        gtk_box_pack_start(GTK_BOX(hbox), button_data->button, FALSE, TRUE, 0);
+        gtk_box_pack_start(GTK_BOX(hbox), button_data->launchers, FALSE, TRUE, 0);
+        
+        gtk_container_add (GTK_CONTAINER (button_data->applet), hbox);
 
         g_signal_connect (G_OBJECT (button_data->button),
                           "size_allocate",
@@ -720,7 +736,7 @@ bigboard_button_add_to_widget (GtkWidget *applet)
 
         self_add_icon_changed_callback(user_photo_changed_callback, button_data);
         
-        gtk_widget_show_all (button_data->button);
+        gtk_widget_show_all (hbox);
 
         return button_data;
 }

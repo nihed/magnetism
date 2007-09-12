@@ -15,90 +15,50 @@ typedef struct {
 } IconChangedClosure;
 
 typedef struct {
+    SelfAppsChangedCallback callback;
+    void *data;
+} AppsChangedClosure;
+
+typedef struct {
     DDMDataModel *ddm_model;
     DDMDataQuery *self_query;
     DDMDataResource *self_resource;
     char *photo_url;
     GdkPixbuf *icon;
-    GSList *icon_changed_closures;
     GHashTable *apps_by_resource_id;
+    GSList *icon_changed_closures;
+    GSList *apps_changed_closures;
+
+    guint apps_changed_idle;
 } SelfData;
 
 
-static GdkPixbuf*
-pixbuf_parse(GString               *content,
-             GError               **error_p)
-{
-    GdkPixbufLoader *loader;
-    GdkPixbuf *pixbuf;
-
-    loader = gdk_pixbuf_loader_new();
-
-    if (!gdk_pixbuf_loader_write(loader, (guchar*) content->str, content->len, error_p))
-        goto failed;
-    
-    if (!gdk_pixbuf_loader_close(loader, error_p))
-        goto failed;
-
-    pixbuf = gdk_pixbuf_loader_get_pixbuf(loader);
-    if (pixbuf == NULL) {
-        g_set_error(error_p,
-                    GDK_PIXBUF_ERROR,
-                    GDK_PIXBUF_ERROR_FAILED,
-                    "Could not load pixbuf");
-        goto failed;
-    }
-
-    g_object_ref(pixbuf);
-    g_object_unref(loader);
-    return pixbuf;
-
-  failed:
-    g_assert(error_p == NULL || *error_p != NULL);
-    
-    if (loader)
-        g_object_unref(loader);
-
-    return NULL;
-}
-
 static void
-on_got_photo(const char *content_type,
-             GString    *content_or_error,
+on_got_photo(GdkPixbuf  *new_icon,
              void       *data)
 {
     SelfData *sd;
-    GdkPixbuf *new_icon;
-    GError *error;
     GSList *l;
 
     g_debug("Got reply to http GET for user photo");
     
     sd = data;
     
-    if (content_type == NULL) {
-        g_printerr("Failed to download user photo: %s\n",
-                   content_or_error->str);
-        return;
-    }
-
-    error = NULL;
-    new_icon = pixbuf_parse(content_or_error, &error);
     if (new_icon == NULL) {
-        g_printerr("Failed to parse user photo: %s\n",
-                   error->message);
-        g_error_free(error);
         return;
     }
 
+    if (new_icon)
+        g_object_ref(new_icon);
+    
     if (sd->icon)
         g_object_unref(sd->icon);
-
+    
     sd->icon = new_icon;
-
+    
     for (l = sd->icon_changed_closures; l != NULL; l = l->next) {
         IconChangedClosure *icc = l->data;
-
+        
         (* icc->callback) (sd->icon, icc->data);
     }
 }
@@ -118,10 +78,10 @@ download_new_photo_url(SelfData   *sd,
 
     if (sd->photo_url) {
         g_debug("Sending http request for user photo %s", sd->photo_url);
-        http_get(connection,
-                 sd->photo_url,
-                 on_got_photo,
-                 sd);
+        http_get_pixbuf(connection,
+                        sd->photo_url,
+                        on_got_photo,
+                        sd);
     }
 }
 
@@ -161,12 +121,53 @@ on_photo_changed(DDMDataResource *resource,
 }
 
 static void
+listify_foreach(void *key,
+                void *value,
+                void *data)
+{
+    GSList **list_p = data;
+
+    app_ref(value);
+    *list_p = g_slist_prepend(*list_p, value);
+}
+                
+
+static gboolean
+apps_changed_idle(void *data)
+{
+    SelfData *sd = data;
+    GSList *apps;
+    GSList *l;
+    
+    sd->apps_changed_idle = 0;
+
+    apps = NULL;
+    g_hash_table_foreach(sd->apps_by_resource_id,
+                         listify_foreach, &apps);
+
+    for (l = sd->apps_changed_closures; l != NULL; l = l->next) {
+        AppsChangedClosure *acc = l->data;
+
+        (* acc->callback) (apps, acc->data);
+    }
+
+    g_slist_foreach(apps, (GFunc) app_unref, NULL);
+    g_slist_free(apps);
+
+    /* remove idle */
+    return FALSE;
+}
+
+static void
 update_applications_from_self(SelfData *sd)
 {
     if (sd->self_resource) {
         GSList *apps;
         GSList *l;
-
+        GHashTable *new_hash;
+        int new_created;
+        int old_count;
+        
         /* we don't own the list or its contents (ddm_data_resource_get does not copy it) */
         apps = NULL;
         ddm_data_resource_get(sd->self_resource,
@@ -176,24 +177,51 @@ update_applications_from_self(SelfData *sd)
 
         g_debug("Got %d top applications", g_slist_length(apps));
         
-        if (sd->apps_by_resource_id == NULL) {
-            sd->apps_by_resource_id = g_hash_table_new_full(g_str_hash,
-                                                            g_str_equal,
-                                                            (GFreeFunc) g_free,
-                                                            (GFreeFunc) app_unref);
-        }
+        new_hash = g_hash_table_new_full(g_str_hash,
+                                         g_str_equal,
+                                         (GFreeFunc) g_free,
+                                         (GFreeFunc) app_unref);
+        new_created = 0;
+        if (sd->apps_by_resource_id)
+            old_count = g_hash_table_size(sd->apps_by_resource_id);
+        else
+            old_count = 0;
+        
         for (l = apps; l != NULL; l = l->next) {
             DDMDataResource *new_app_resource = l->data;
             App *old_app;
+            App *new_app;
 
-            old_app = g_hash_table_lookup(sd->apps_by_resource_id,
-                                          ddm_data_resource_get_resource_id(new_app_resource));
+            if (sd->apps_by_resource_id != NULL)
+                old_app = g_hash_table_lookup(sd->apps_by_resource_id,
+                                              ddm_data_resource_get_resource_id(new_app_resource));
+            else
+                old_app = NULL;
+            
             if (old_app == NULL) {
-                App *new_app;
                 new_app = app_new(new_app_resource);
-                g_hash_table_replace(sd->apps_by_resource_id,
-                                     g_strdup(ddm_data_resource_get_resource_id(new_app_resource)),
-                                     new_app);
+                new_created += 1;
+            } else {
+                app_ref(old_app);
+                new_app = old_app;
+            }
+
+            g_hash_table_replace(new_hash,
+                                 g_strdup(ddm_data_resource_get_resource_id(new_app_resource)),
+                                 new_app);
+        }
+        
+        if (sd->apps_by_resource_id)
+            g_hash_table_destroy(sd->apps_by_resource_id);
+        sd->apps_by_resource_id = new_hash;
+
+        g_debug("created %d new apps, had %d old apps, and now have %d total apps",
+                new_created, old_count, g_hash_table_size(new_hash));
+        
+        if (new_created > 0 || (old_count != (int) g_hash_table_size(new_hash))) {
+            if (sd->apps_changed_idle == 0) {
+                g_debug("Adding apps changed idle handler");
+                sd->apps_changed_idle = g_idle_add(apps_changed_idle, sd);
             }
         }
     }
@@ -350,6 +378,49 @@ self_remove_icon_changed_callback(SelfIconChangedCallback  callback,
     if (icc == NULL) {
         g_warning("Tried to remove nonexistent icon changed callback");
     }
-
+    
     sd->icon_changed_closures = g_slist_remove(sd->icon_changed_closures, icc);
+}
+
+void
+self_add_apps_changed_callback (SelfAppsChangedCallback  callback,
+                                void                    *data)
+{
+    SelfData *sd;
+    AppsChangedClosure *acc;
+
+    sd = get_self_data();
+
+    acc = g_new0(AppsChangedClosure, 1);
+    acc->callback = callback;
+    acc->data = data;
+
+    sd->apps_changed_closures = g_slist_append(sd->apps_changed_closures, acc);
+}
+
+void
+self_remove_apps_changed_callback(SelfAppsChangedCallback  callback,
+                                  void                    *data)
+{
+    SelfData *sd;
+    GSList *l;
+    AppsChangedClosure *acc;
+        
+    sd = get_self_data();
+
+    acc = NULL;
+    for (l = sd->apps_changed_closures; l != NULL; l = l->next) {
+        AppsChangedClosure *item = l->data;
+
+        if (item->callback == callback && item->data) {
+            acc = item;
+            break;
+        }
+    }
+
+    if (acc == NULL) {
+        g_warning("Tried to remove nonexistent apps changed callback");
+    }
+
+    sd->apps_changed_closures = g_slist_remove(sd->apps_changed_closures, acc);
 }
