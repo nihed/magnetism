@@ -9,10 +9,17 @@ G_BEGIN_DECLS
 
 typedef void (* SelfIconChangedCallback) (GdkPixbuf *pixbuf,
                                           void      *data);
+typedef void (* SelfAppsChangedCallback) (GSList    *apps,
+                                          void      *data);
 
 void self_add_icon_changed_callback   (SelfIconChangedCallback  callback,
                                        void                    *data);
 void self_remove_icon_changed_callback(SelfIconChangedCallback  callback,
+                                       void                    *data);
+
+void self_add_apps_changed_callback   (SelfAppsChangedCallback  callback,
+                                       void                    *data);
+void self_remove_apps_changed_callback(SelfAppsChangedCallback  callback,
                                        void                    *data);
 
 

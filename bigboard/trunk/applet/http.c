@@ -16,7 +16,9 @@ typedef struct {
     char *content_type;
     GString *content;    
     HttpFunc func;
+    HttpPixbufFunc pixbuf_func;
     void *data;
+    void *pixbuf_data;
 } Request;
 
 static void
@@ -261,15 +263,93 @@ on_request_reply(DBusMessage *reply,
     request_unref(r);
 }
 
-void
-http_get(DBusConnection *connection,
-         const char     *url,
-         HttpFunc        func,
-         void           *data)
+
+static GdkPixbuf*
+pixbuf_parse(GString               *content,
+             GError               **error_p)
+{
+    GdkPixbufLoader *loader;
+    GdkPixbuf *pixbuf;
+
+    loader = gdk_pixbuf_loader_new();
+
+    if (!gdk_pixbuf_loader_write(loader, (guchar*) content->str, content->len, error_p))
+        goto failed;
+    
+    if (!gdk_pixbuf_loader_close(loader, error_p))
+        goto failed;
+
+    pixbuf = gdk_pixbuf_loader_get_pixbuf(loader);
+    if (pixbuf == NULL) {
+        g_set_error(error_p,
+                    GDK_PIXBUF_ERROR,
+                    GDK_PIXBUF_ERROR_FAILED,
+                    "Could not load pixbuf");
+        goto failed;
+    }
+
+    g_object_ref(pixbuf);
+    g_object_unref(loader);
+    return pixbuf;
+
+  failed:
+    g_assert(error_p == NULL || *error_p != NULL);
+    
+    if (loader)
+        g_object_unref(loader);
+
+    return NULL;
+}
+
+static void
+pixbuf_closure_func(const char *content_type,
+                    GString    *content_or_error,
+                    void       *data)
+{
+    GdkPixbuf *new_icon;
+    GError *error;
+    Request *r;
+
+    r = data;
+    
+    g_debug("Got reply to http GET for pixbuf");
+    
+    if (content_type == NULL) {
+        g_printerr("Failed to download image: %s\n",
+                   content_or_error->str);
+        (* r->pixbuf_func) (NULL, r->pixbuf_data);
+        return;
+    }
+
+    error = NULL;
+    new_icon = pixbuf_parse(content_or_error, &error);
+    if (new_icon == NULL) {
+        g_printerr("Failed to parse image: %s\n",
+                   error->message);
+        g_error_free(error);
+        (* r->pixbuf_func) (NULL, r->pixbuf_data);
+        return;
+    }
+
+    g_assert(GDK_IS_PIXBUF(new_icon));
+    (* r->pixbuf_func) (new_icon, r->pixbuf_data);
+
+    g_object_unref(new_icon);
+}
+
+static void
+http_get_full(DBusConnection *connection,
+              const char     *url,
+              HttpFunc        func,
+              HttpPixbufFunc  pixbuf_func,
+              void           *data)
 {
     Request *r;
     HippoDBusProxy *proxy;
     static int sink_number = 0;
+
+    g_return_if_fail(!(func && pixbuf_func));
+    g_return_if_fail(func || pixbuf_func);
     
     hippo_dbus_helper_register_interface(connection,
                                          HIPPO_DBUS_HTTP_DATA_SINK_INTERFACE,
@@ -280,8 +360,17 @@ http_get(DBusConnection *connection,
     r->connection = connection;
     dbus_connection_ref(r->connection);
     r->url = g_strdup(url);
-    r->func = func;
-    r->data = data;
+
+    if (func) {
+        r->func = func;
+        r->data = data;
+    } else {
+        r->func = pixbuf_closure_func;
+        r->data = r;
+    }
+
+    r->pixbuf_func = pixbuf_func;
+    r->pixbuf_data = data;
 
     /* the pid is to prevent recycling issues when we restart, though
      * in theory the other end should also deal with this by using
@@ -289,7 +378,8 @@ http_get(DBusConnection *connection,
      */
     r->sink_path = g_strdup_printf("/org/freedesktop/od/http_sinks/%d_%d",
                                    sink_number, (int) getpid());
-
+    sink_number += 1;
+    
     /* pass ownership of initial refcount to the registration */
     hippo_dbus_helper_register_object(connection,
                                       r->sink_path,
@@ -314,4 +404,22 @@ http_get(DBusConnection *connection,
 
     g_debug("requesting http url '%s' using sink path '%s'",
             r->url, r->sink_path);
+}
+
+void
+http_get(DBusConnection *connection,
+         const char     *url,
+         HttpFunc        func,
+         void           *data)
+{
+    http_get_full(connection, url, func, NULL, data);
+}
+
+void
+http_get_pixbuf(DBusConnection *connection,
+                const char     *url,
+                HttpPixbufFunc  func,
+                void           *data)
+{
+    http_get_full(connection, url, NULL, func, data);
 }

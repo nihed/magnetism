@@ -1,0 +1,205 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+
+#include <config.h>
+#include "launchers.h"
+#include "self.h"
+#include "apps.h"
+#include <string.h>
+
+typedef struct {
+    GtkWidget *box;
+    GSList *buttons;
+
+} LaunchersData;
+
+static void
+update_button_icon(GtkWidget *button)
+{
+    App *app;
+    GdkPixbuf *icon;
+    GtkWidget *image;
+    
+    app = g_object_get_data(G_OBJECT(button), "launchers-app");
+
+    icon = app_get_icon(app);
+    
+    image = gtk_bin_get_child(GTK_BIN(button));
+    gtk_image_set_from_pixbuf(GTK_IMAGE(image), icon);
+    
+    if (icon == NULL)
+        gtk_widget_hide(button);
+    else
+        gtk_widget_show(button);
+}
+
+static GtkWidget*
+find_button_for_app(LaunchersData *ld,
+                    App *app)
+{
+    GSList *l;
+
+    for (l = ld->buttons; l != NULL; l = l->next) {
+        GtkWidget *button = l->data;
+
+        if (g_object_get_data(G_OBJECT(button), "launchers-app") == app)
+            return button;
+    }
+
+    return NULL;
+}
+
+static void
+app_changed(App  *app,
+            void *data)
+{
+    GtkWidget *button;
+    LaunchersData *ld;
+
+    ld = data;
+
+    button = find_button_for_app(ld, app);
+
+    if (button == NULL)
+        return;
+
+    update_button_icon(button);
+}
+
+static GtkWidget*
+make_button_for_app(LaunchersData *ld,
+                    App *app)
+{
+    GtkWidget *button;
+    GtkWidget *image;
+    
+    button = gtk_button_new();
+    image = gtk_image_new();
+    gtk_widget_show(image);
+
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    gtk_widget_set_name (button, "bigboard-button-launcher-button");
+    gtk_rc_parse_string ("\n"
+                         "   style \"bigboard-button-launcher-button-style\"\n"
+                         "   {\n"
+                         "      GtkWidget::focus-line-width=0\n"
+                         "      GtkWidget::focus-padding=0\n"
+                         "      GtkButton::inner-border=0\n"
+                         "      GtkButton::interior-focus=0\n"
+                         "      GtkButton::default-border=0\n"
+                         "      GtkButton::default-outside-border=0\n"
+                             "   }\n"
+                         "\n"
+                         "    widget \"*.bigboard-button-launcher-button\" style \"bigboard-button-launcher-button-style\"\n"
+                         "\n");
+    
+    gtk_container_add(GTK_CONTAINER(button), image);
+    
+    app_ref(app);
+    g_object_set_data_full(G_OBJECT(button), "launchers-app", app,
+                           (GFreeFunc) app_unref);
+
+    update_button_icon(button);
+
+    g_signal_connect(G_OBJECT(app), "changed",
+                     G_CALLBACK(app_changed), ld);
+    
+    return button;
+}
+
+static void
+apps_changed_callback (GSList    *apps,
+                       void      *data)
+{
+    GSList *l;
+    GSList *buttons;
+    LaunchersData *ld;
+
+    ld = data;
+    buttons = NULL;
+
+    for (l = apps; l != NULL; l = l->next) {
+        App *app = l->data;
+        GtkWidget *button;
+
+        button = find_button_for_app(ld, app);
+        if (button == NULL) {
+            button = make_button_for_app(ld, app);
+        }
+        buttons = g_slist_prepend(buttons, button);
+    }
+
+    buttons = g_slist_reverse(buttons);
+
+    /* ref and remove all the old buttons */
+    for (l = ld->buttons; l != NULL; l = l->next) {
+        GtkWidget *parent;
+        GtkWidget *button;
+
+        button = l->data;
+
+        g_object_ref(button);
+
+        parent = gtk_widget_get_parent(button);
+        gtk_container_remove(GTK_CONTAINER(parent), button);
+    }
+
+    /* pack all the new buttons (which may be some of the same ones) */
+    for (l = buttons; l != NULL; l = l->next) {
+        GtkWidget *button;
+
+        button = l->data;        
+
+        gtk_box_pack_start(GTK_BOX(ld->box), button, TRUE, TRUE, 0);
+    }
+
+    /* unref the old buttons */
+    for (l = ld->buttons; l != NULL; l = l->next) {
+        GtkWidget *button;
+
+        button = l->data;
+
+        g_object_unref(button);
+    }
+
+    /* replace the list */
+    g_slist_free(ld->buttons);
+    ld->buttons = buttons;
+
+    /* don't show all; we show/hide the buttons according to whether we have
+     * the app's icon downloaded.
+     */
+    gtk_widget_show(ld->box);
+}
+
+static void
+launchers_destroyed_callback(GtkWidget *launchers,
+                             void      *data)
+{
+    LaunchersData *ld;
+
+    ld = data;
+
+    self_remove_apps_changed_callback(apps_changed_callback, ld);
+    
+    g_free(ld);
+}
+
+GtkWidget*
+launchers_new(void)
+{
+    GtkWidget *hbox;
+    LaunchersData *ld;
+    
+    hbox = gtk_hbox_new(FALSE, 0);
+
+    ld = g_new0(LaunchersData, 1);
+    ld->box = hbox;
+
+    g_signal_connect(G_OBJECT(hbox), "destroy",
+                     G_CALLBACK(launchers_destroyed_callback),
+                     ld);
+    
+    self_add_apps_changed_callback(apps_changed_callback, ld);
+
+    return hbox;
+}

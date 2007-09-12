@@ -31,6 +31,8 @@ BIGBOARD_APPLET_SOURCES=			\
 	hippo-dbus-helper-rename.h		\
 	http.c					\
 	http.h					\
+	launchers.c				\
+	launchers.h				\
 	self.c					\
 	self.h
 
