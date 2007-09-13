@@ -1,7 +1,5 @@
 package com.dumbhippo.server.views;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
