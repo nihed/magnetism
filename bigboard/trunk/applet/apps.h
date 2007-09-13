@@ -11,12 +11,13 @@
 G_BEGIN_DECLS
 
 typedef struct App App;
+App*        app_new               (DDMDataResource *resource);
+void        app_ref               (App             *app);
+void        app_unref             (App             *app);
+const char *app_get_tooltip       (App             *app);
+GdkPixbuf*  app_get_icon          (App             *app);
+const char *app_get_desktop_names (App             *app);
 
-App*        app_new         (DDMDataResource *resource);
-void        app_ref         (App             *app);
-void        app_unref       (App             *app);
-const char *app_get_tooltip (App             *app);
-GdkPixbuf*  app_get_icon    (App             *app);
 
 G_END_DECLS
 

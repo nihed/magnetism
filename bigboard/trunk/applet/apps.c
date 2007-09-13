@@ -242,3 +242,16 @@ app_get_icon(App *app)
 {
     return app->icon;
 }
+
+const char*
+app_get_desktop_names (App *app)
+{
+    const char *names;
+
+    names = NULL;
+    ddm_data_resource_get(app->resource,
+                          "desktopNames", DDM_DATA_STRING, &names,
+                          NULL);
+    
+    return names;
+}

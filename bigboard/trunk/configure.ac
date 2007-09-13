@@ -161,7 +161,7 @@ PKG_CHECK_MODULES(BIGBOARD, gtk+-2.0 >= 2.8 pygtk-2.0 >= 2.8 gnome-keyring-1)
 AC_SUBST(BIGBOARD_LIBS)
 AC_SUBST(BIGBOARD_CFLAGS)
 
-PKG_CHECK_MODULES(BIGBOARD_APPLET, libpanelapplet-2.0 gtk+-2.0 >= 2.8 dbus-1 ddm-1)
+PKG_CHECK_MODULES(BIGBOARD_APPLET, libpanelapplet-2.0 gtk+-2.0 >= 2.8 dbus-1 ddm-1 gnome-desktop-2.0 gnome-vfs-2.0)
 AC_SUBST(BIGBOARD_APPLET_LIBS)
 AC_SUBST(BIGBOARD_APPLET_CFLAGS)
 
