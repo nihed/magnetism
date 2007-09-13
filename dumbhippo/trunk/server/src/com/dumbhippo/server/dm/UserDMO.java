@@ -212,6 +212,20 @@ public abstract class UserDMO extends DMObject<Guid> {
 		if (!currentTrackFetched) {
 			try {
 				currentTrack = musicSystem.getCurrentTrack(AnonymousViewpoint.getInstance(Site.NONE), user);
+				int duration = currentTrack.getTrack().getDuration();
+				
+				// A negative duration means "unknown". We also treat durations of over an hour as suspect,
+				// and substitute a default duration for determining if the track is still playing
+				if (duration <= 0 || duration > 60 * 60) {
+					duration = 30 * 60;
+				}
+				
+				// While we don't try to notify when tracks stop playing, we want to omit past tracks
+				// to avoid doing web-services work to get the details of "current" tracks that were
+				// played months ago.
+				if (currentTrack.getLastUpdated().getTime() + duration * 1000L <  System.currentTimeMillis())
+					currentTrack = null;
+
 			} catch (NotFoundException e) {
 			}
 			currentTrackFetched = true;
