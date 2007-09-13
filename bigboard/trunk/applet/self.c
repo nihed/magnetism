@@ -131,6 +131,23 @@ listify_foreach(void *key,
     *list_p = g_slist_prepend(*list_p, value);
 }
                 
+static int
+apps_compare_usage_descending_func(const void *a,
+                                   const void *b)
+{
+    int usage_a;
+    int usage_b;
+
+    usage_a = app_get_usage_count(a);
+    usage_b = app_get_usage_count(b);
+
+    if (usage_a < usage_b)
+        return 1;
+    else if (usage_a > usage_b)
+        return -1;
+    else
+        return 0;
+}
 
 static gboolean
 apps_changed_idle(void *data)
@@ -145,6 +162,8 @@ apps_changed_idle(void *data)
     g_hash_table_foreach(sd->apps_by_resource_id,
                          listify_foreach, &apps);
 
+    apps = g_slist_sort(apps, apps_compare_usage_descending_func);
+    
     for (l = sd->apps_changed_closures; l != NULL; l = l->next) {
         AppsChangedClosure *acc = l->data;
 

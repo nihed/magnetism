@@ -17,6 +17,7 @@ void        app_unref             (App             *app);
 const char *app_get_tooltip       (App             *app);
 GdkPixbuf*  app_get_icon          (App             *app);
 const char *app_get_desktop_names (App             *app);
+int         app_get_usage_count   (App             *app);
 
 
 G_END_DECLS

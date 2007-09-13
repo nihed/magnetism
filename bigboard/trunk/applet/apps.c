@@ -255,3 +255,16 @@ app_get_desktop_names (App *app)
     
     return names;
 }
+
+int
+app_get_usage_count (App *app)
+{
+    int usage;
+    
+    usage = 0;
+    ddm_data_resource_get(app->resource,
+                          "usageCount", DDM_DATA_INTEGER, &usage,
+                          NULL);
+    
+    return usage;
+}
