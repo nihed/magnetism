@@ -725,12 +725,12 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
     }
 
     if (update == DDM_DATA_UPDATE_DELETE && property == NULL) {
-        g_warning("Remove of a property we don't have");
+        g_warning("Remove of a property we don't have %s#%s", property_id->uri, property_id->name);
         return FALSE;
     }
 
     if (property != NULL && cardinality != property->cardinality) {
-        g_warning("Previous cardinality of not compatible with new property, discarding old values");
+        g_warning("Previous cardinality of not compatible with new property, discarding old values %s#%s", property_id->uri, property_id->name);
         remove_property(resource, property);
         changed = TRUE;
     }
@@ -740,7 +740,7 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
         switch (update) {
         case DDM_DATA_UPDATE_ADD:
             if (property != NULL) {
-                g_warning("add update for cardinality 01 with a property already there");
+                g_warning("add update for cardinality 01 with a property already there %s#%s", property_id->uri, property_id->name);
                 break;
             }
             property = add_property(resource, property_id, cardinality);
@@ -757,7 +757,7 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
             break;
         case DDM_DATA_UPDATE_DELETE:
             if (property == NULL || !data_value_matches(&property->value, value)) {
-                g_warning("remove of a property value not there");
+                g_warning("remove of a property value not there %s#%s", property_id->uri, property_id->name);
                 return FALSE;
             }
             remove_property(resource, property);
@@ -775,7 +775,7 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
         switch (update) {
         case DDM_DATA_UPDATE_ADD:
             if (property != NULL) {
-                g_warning("add update for cardinality 1 with a property already there");
+                g_warning("add update for cardinality 1 with a property already there %s#%s", property_id->uri, property_id->name);
                 break;
             }
             property = add_property(resource, property_id, cardinality);
@@ -791,10 +791,10 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
                 changed = TRUE;
             break;
         case DDM_DATA_UPDATE_DELETE:
-            g_warning("Remove of a property with cardinality 1");
+            g_warning("Remove of a property %s#%s with cardinality 1", property_id->uri, property_id->name);
             break;
         case DDM_DATA_UPDATE_CLEAR:
-            g_warning("Clear of a property with cardinality 1");
+            g_warning("Clear of a property %s#%s with cardinality 1", property_id->uri, property_id->name);
             break;
         }
         break;
@@ -821,7 +821,7 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
                 data_property_remove_value(property, value);
                 changed = TRUE;
             } else {
-                g_warning("remove of a property value not there");
+                g_warning("remove of a property value not there %s#%s", property_id->uri, property_id->name);
             }
             break;
         case DDM_DATA_UPDATE_CLEAR:
