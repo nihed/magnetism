@@ -460,7 +460,7 @@ class Google(gobject.GObject):
         """Call func after we get username and password"""
 
         if self.__username and self.__password:
-            _logger.debug("auth looks valid")   
+            # _logger.debug("auth looks valid")   
             func()
             return
             
