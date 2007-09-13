@@ -919,7 +919,10 @@ ddm_dbus_send_query   (DDMDataModel *ddm_model,
         return;
     }
 
-    g_debug("sending Query to org.freedesktop.od.Engine");
+    g_debug("sending Query to org.freedesktop.od.Engine %s#%s fetch %s",
+            ddm_data_query_get_qname(query)->uri,
+            ddm_data_query_get_qname(query)->name,
+            ddm_data_query_get_fetch(query));
     
     g_assert(dbus_model->engine_proxy != NULL); /* since connection != NULL */
 
