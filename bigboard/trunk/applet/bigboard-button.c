@@ -970,7 +970,7 @@ main (int argc, char **argv)
         
         gtk_init (&argc, &argv);
                 
-        /* log_debug_messages = TRUE; */
+        log_debug_messages = TRUE;
         g_log_set_default_handler(log_handler, NULL);
         g_log_set_handler(G_LOG_DOMAIN,
                           (GLogLevelFlags) (G_LOG_LEVEL_DEBUG | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION),

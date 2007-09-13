@@ -174,11 +174,14 @@ apps_changed_callback (GSList    *apps,
     GSList *l;
     GSList *buttons;
     LaunchersData *ld;
-
+    int app_count;
+    
     ld = data;
     buttons = NULL;
+    app_count = 0;
 
-    for (l = apps; l != NULL; l = l->next) {
+    /* limit to 7 apps shown in the applet */
+    for (l = apps; l != NULL && app_count < 7; l = l->next) {
         App *app = l->data;
         GtkWidget *button;
 
@@ -187,9 +190,11 @@ apps_changed_callback (GSList    *apps,
             button = make_button_for_app(ld, app);
         }
         buttons = g_slist_prepend(buttons, button);
+
+        app_count += 1;
     }
 
-    buttons = g_slist_reverse(buttons);
+    buttons = g_slist_reverse(buttons); /* put back in order */
 
     /* ref and remove all the old buttons */
     for (l = ld->buttons; l != NULL; l = l->next) {
