@@ -663,6 +663,7 @@ update_local_export_info(DBusConnection *connection)
     if (should_locally_export != have_locally_exported &&
         local_export_unique_name) {
         HippoDBusProxy *proxy;
+        const char *name = MUGSHOT_INFO_NAME;
         
         proxy = hippo_dbus_proxy_new(connection, local_export_unique_name,
                                      "/org/freedesktop/od/LocalExport",
@@ -675,6 +676,7 @@ update_local_export_info(DBusConnection *connection)
         else
             hippo_dbus_proxy_call_method_async(proxy, "RemoveInfoFromOurSession",
                                                NULL, NULL, NULL,
+                                               DBUS_TYPE_STRING, &name,
                                                DBUS_TYPE_INVALID);
         
         hippo_dbus_proxy_unref(proxy);
