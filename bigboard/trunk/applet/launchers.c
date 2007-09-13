@@ -4,6 +4,7 @@
 #include "launchers.h"
 #include "self.h"
 #include "apps.h"
+#include "desktop.h"
 #include <string.h>
 
 typedef struct {
@@ -89,9 +90,44 @@ app_changed(App  *app,
     update_button_icon(button);
 }
 
+static gboolean
+app_launch(App       *app,
+           GdkScreen *screen,
+           GError   **error)
+{
+    const char *desktop_names;
+    
+    desktop_names = app_get_desktop_names(app);
+    if (desktop_names == NULL) {
+        g_set_error(error, G_FILE_ERROR,
+                    G_FILE_ERROR_FAILED,
+                    "Unable to launch this application");
+        return FALSE;
+    }
+
+    return desktop_launch(screen, desktop_names, error);
+}
+
+static void
+on_button_clicked(GtkWidget *button,
+                  void      *data)
+{
+    App *app;
+    GError *error;
+    
+    app = g_object_get_data(G_OBJECT(button), "launchers-app");
+
+    error = NULL;
+    if (!app_launch(app, gtk_widget_get_screen(button),
+                    &error)) {
+        g_printerr("Failed to launch app: %s\n", error->message);
+        g_error_free(error);
+    }
+}
+
 static GtkWidget*
 make_button_for_app(LaunchersData *ld,
-                    App *app)
+                    App           *app)
 {
     GtkWidget *button;
     GtkWidget *image;
@@ -122,6 +158,10 @@ make_button_for_app(LaunchersData *ld,
     g_object_set_data_full(G_OBJECT(button), "launchers-app", app,
                            (GFreeFunc) app_unref);
 
+    g_signal_connect(G_OBJECT(button), "clicked",
+                     G_CALLBACK(on_button_clicked),
+                     NULL);
+    
     update_button_icon(button);
 
     g_signal_connect(G_OBJECT(app), "changed",

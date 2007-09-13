@@ -26,6 +26,8 @@ BIGBOARD_APPLET_SOURCES=			\
 	apps.c					\
 	apps.h					\
 	bigboard-button.c			\
+	desktop.c				\
+	desktop.h				\
 	hippo-dbus-helper.c			\
 	hippo-dbus-helper.h			\
 	hippo-dbus-helper-rename.h		\
@@ -37,6 +39,7 @@ BIGBOARD_APPLET_SOURCES=			\
 	self.h
 
 BIGBOARD_APPLET_CPPFLAGS =					\
+	-DDATADIR=\""$(datadir)"\"				\
 	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"	\
 	$(BIGBOARD_APPLET_CFLAGS) 
 

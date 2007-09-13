@@ -853,7 +853,7 @@ online_desktop_factory (PanelApplet *applet,
 }
 
 
-#if 1
+#if 0
 
 #if APPLET_INPROCESS
 PANEL_APPLET_BONOBO_SHLIB_FACTORY ("OAFIID:GNOME_OnlineDesktop_BigBoardFactory",
