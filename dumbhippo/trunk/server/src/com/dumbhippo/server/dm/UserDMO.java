@@ -25,12 +25,15 @@ import com.dumbhippo.persistence.DesktopSetting;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.DesktopSettings;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.applications.ApplicationSystem;
+import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 
 @DMO(classId="http://mugshot.org/p/o/user", resourceBase="/o/user")
@@ -39,6 +42,9 @@ public abstract class UserDMO extends DMObject<Guid> {
 //	private String email;
 //	private String aim;
 //	private boolean contactOfViewer;
+	
+	private TrackHistory currentTrack;
+	private boolean currentTrackFetched;
 	
 	@Inject
 	private EntityManager em;
@@ -54,6 +60,9 @@ public abstract class UserDMO extends DMObject<Guid> {
 	
 	@EJB
 	private ApplicationSystem applicationSystem;
+	
+	@EJB
+	private MusicSystem musicSystem;
 	
 	protected UserDMO(Guid key) {
 		super(key);
@@ -197,5 +206,35 @@ public abstract class UserDMO extends DMObject<Guid> {
 		}
 		
 		return result;
+	}
+	
+	private void ensureCurrentTrack() {
+		if (!currentTrackFetched) {
+			try {
+				currentTrack = musicSystem.getCurrentTrack(AnonymousViewpoint.getInstance(Site.NONE), user);
+			} catch (NotFoundException e) {
+			}
+			currentTrackFetched = true;
+		}
+	}
+	
+	@DMProperty
+	public TrackDMO getCurrentTrack() {
+		ensureCurrentTrack();
+		
+		if (currentTrack != null)
+			return session.findUnchecked(TrackDMO.class, currentTrack.getTrack().getId());
+		else
+			return null;
+	}
+	
+	@DMProperty
+	public long getCurrentTrackPlayTime() {
+		ensureCurrentTrack();
+		
+		if (currentTrack != null)
+			return currentTrack.getLastUpdated().getTime();
+		else
+			return -1;
 	}
 }

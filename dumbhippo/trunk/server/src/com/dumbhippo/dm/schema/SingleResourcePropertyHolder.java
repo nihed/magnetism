@@ -48,11 +48,17 @@ public class SingleResourcePropertyHolder<K, T extends DMObject<K>, KI, TI exten
 
 	@Override
 	public Object dehydrate(Object value) {
-		return dehydrateDMO(value);
+		if (value == null)
+			return null;
+		else
+			return dehydrateDMO(value);
 	}
 	
 	@Override
 	public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session) {
+		if (value == null)
+			return null;
+		
 		if (itemFilter == null)
 			return rehydrateDMO(value, session);
 		

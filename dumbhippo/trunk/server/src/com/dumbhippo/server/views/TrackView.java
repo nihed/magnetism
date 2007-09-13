@@ -14,6 +14,7 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackHistory;
+import com.dumbhippo.services.LastFmWebServices;
 
 /**
  * The TrackView does not necessarily represent a Track, but rather can 
@@ -218,11 +219,7 @@ public class TrackView {
 //				"artist", getArtist(),
 //				"album", getAlbum());
 		if (getArtist() != null && getName() != null) {
-			try {
-				return "http://last.fm/music/" + URLEncoder.encode(getArtist(), "UTF-8") + "/_/" + URLEncoder.encode(getName(), "UTF-8");
-			} catch (UnsupportedEncodingException e) {
-				throw new RuntimeException("UTF-8 not supported!");
-			}
+			return LastFmWebServices.makeWebLink(getArtist(), getName());
 		} else {
 			return null;
 		}
