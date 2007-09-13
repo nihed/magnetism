@@ -670,10 +670,7 @@ bigboard_button_add_to_widget (GtkWidget *applet)
                              "   {\n"
                              "      GtkWidget::focus-line-width=0\n"
                              "      GtkWidget::focus-padding=0\n"
-                             "      GtkButton::inner-border=0\n"
                              "      GtkButton::interior-focus=0\n"
-                             "      GtkButton::default-border=0\n"
-                             "      GtkButton::default-outside-border=0\n"                             
                              "   }\n"
                              "\n"
                              "    widget \"*.bigboard-button\" style \"bigboard-button-style\"\n"
@@ -741,11 +738,83 @@ bigboard_button_add_to_widget (GtkWidget *applet)
         return button_data;
 }
 
+static gboolean log_debug_messages = FALSE;
+
+static void
+log_handler(const char    *log_domain,
+            GLogLevelFlags log_level,
+            const char    *message,
+            void          *user_data)
+{
+        const char *prefix;
+        GString *gstr;
+
+        if (log_level & G_LOG_FLAG_RECURSION) {
+                g_print("bigboard-buttons: log recursed\n");
+                return;
+        }
+
+        switch (log_level & G_LOG_LEVEL_MASK) {
+        case G_LOG_LEVEL_DEBUG:
+                if (!log_debug_messages)
+                        return;
+                prefix = "DEBUG: ";
+                break;
+        case G_LOG_LEVEL_WARNING:
+                prefix = "WARNING: ";
+                break;
+        case G_LOG_LEVEL_CRITICAL:
+                prefix = "CRITICAL: ";
+                break;
+        case G_LOG_LEVEL_ERROR:
+                prefix = "ERROR: ";
+                break;
+        case G_LOG_LEVEL_INFO:
+                prefix = "INFO: ";
+                break;
+        case G_LOG_LEVEL_MESSAGE:
+                prefix = "MESSAGE: ";
+                break;
+        default:
+                prefix = "";
+                break;
+        }
+
+        gstr = g_string_new(log_domain);
+        
+        g_string_append(gstr, prefix);
+        g_string_append(gstr, message);
+
+        /* no newline here, the print_debug_func is supposed to add it */
+        if (gstr->str[gstr->len - 1] == '\n') {
+                g_string_erase(gstr, gstr->len - 1, 1);
+        }
+
+        g_print("%s\n", gstr->str);
+        g_string_free(gstr, TRUE);
+        
+#ifdef G_OS_WIN32
+        // glib will do this for us, but if we abort in our own code which has
+        // debug symbols, visual studio gets less confused about the backtrace.
+        // at least, that's my experience.
+        if (log_level & G_LOG_FLAG_FATAL) {
+                if (IsDebuggerPresent())
+                        G_BREAKPOINT();
+                abort();
+        }
+#endif
+}
+
 static gboolean
 bigboard_button_applet_fill (PanelApplet *applet)
 {
         ButtonData *button_data;
 
+        g_log_set_default_handler(log_handler, NULL);
+        g_log_set_handler(G_LOG_DOMAIN,
+                          (GLogLevelFlags) (G_LOG_LEVEL_DEBUG | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION),
+                          log_handler, NULL);
+        
         panel_applet_set_flags (applet, PANEL_APPLET_EXPAND_MINOR);
 
         button_data = bigboard_button_add_to_widget (GTK_WIDGET (applet));
@@ -853,7 +922,7 @@ online_desktop_factory (PanelApplet *applet,
 }
 
 
-#if 0
+#if 1
 
 #if APPLET_INPROCESS
 PANEL_APPLET_BONOBO_SHLIB_FACTORY ("OAFIID:GNOME_OnlineDesktop_BigBoardFactory",
@@ -900,7 +969,13 @@ main (int argc, char **argv)
         GtkWidget *window;
         
         gtk_init (&argc, &argv);
-
+                
+        /* log_debug_messages = TRUE; */
+        g_log_set_default_handler(log_handler, NULL);
+        g_log_set_handler(G_LOG_DOMAIN,
+                          (GLogLevelFlags) (G_LOG_LEVEL_DEBUG | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION),
+                          log_handler, NULL);
+        
         window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
         bigboard_button_add_to_widget (window);

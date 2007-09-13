@@ -39,6 +39,7 @@ BIGBOARD_APPLET_SOURCES=			\
 	self.h
 
 BIGBOARD_APPLET_CPPFLAGS =					\
+	-DG_LOG_DOMAIN=\""bigboard-applets"\"			\
 	-DDATADIR=\""$(datadir)"\"				\
 	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"	\
 	$(BIGBOARD_APPLET_CFLAGS) 
