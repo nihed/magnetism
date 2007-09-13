@@ -57,10 +57,11 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 		
 		model = new DataModel(baseUrl, new DMSessionMapJTA(), emf, this, Viewpoint.class, SystemViewpoint.getInstance());
 		
-		model.addDMClass(ExternalAccountDMO.class);
-		model.addDMClass(UserDMO.class);
-		model.addDMClass(DesktopSettingDMO.class);
 		model.addDMClass(ApplicationDMO.class);
+		model.addDMClass(DesktopSettingDMO.class);
+		model.addDMClass(ExternalAccountDMO.class);
+		model.addDMClass(TrackDMO.class);
+		model.addDMClass(UserDMO.class);
 		
 		model.completeDMClasses();
 		

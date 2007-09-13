@@ -62,6 +62,8 @@ import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.TrackSearchResult;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.AlbumView;
 import com.dumbhippo.server.views.ExpandedArtistView;
@@ -238,8 +240,11 @@ public class MusicSystemBean implements MusicSystem {
 		});
 		
 		// update the stack with this new listen event
-		if (track != null)
+		if (track != null) {
+			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "currentTrack");
+			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "currentTrackPlayTime");
 			notifier.onTrackPlayed(user, track, now);
+		}
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
@@ -274,7 +279,7 @@ public class MusicSystemBean implements MusicSystem {
 		addTrackHistory(user, getTrack(properties), new Date(listenDate), isNative);
 	}
 	
-	private TrackHistory getCurrentTrack(Viewpoint viewpoint, User user) throws NotFoundException {
+	public TrackHistory getCurrentTrack(Viewpoint viewpoint, User user) throws NotFoundException {
 		List<TrackHistory> list = getTrackHistory(viewpoint, user, History.LATEST, 0, 1);
 		if (list.isEmpty())
 			throw new NotFoundException("No current track");

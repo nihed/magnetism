@@ -94,7 +94,10 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 	
 	@Override
 	public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session) {
-		return filter(viewpoint, key, value);
+		if (value == null)
+			return null;
+		else
+			return filter(viewpoint, key, value);
 	}
 
 	@Override

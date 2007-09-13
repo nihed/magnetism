@@ -5,8 +5,12 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -113,6 +117,70 @@ public class LastFmWebServices {
 				temp.delete();
 		}
 		return tracks;
+	}
+	
+	// The way that last.fm builds URLs for tracks is distinctly funky - the components of
+	// the URL are URL-decoded *twice*. It would be safe to simply encode twice always, 
+	// but that would give weird URLs ... "The%2BBeatles" instead of "The+Beatles". 
+	// So, last.fm only double-encodes components with certain 'dangerous' characters
+	// in them, and we try to match that. We also do our URL encoding by hand rather than
+	// using URLEncoder.encode(), to match other slight differences in the way that
+	// last.fm does it (in particular, they encode '*' while Java doesn't), though it's
+	// not clear that there is a lot of point in being that exact a match.
+	
+	// If a path component contains any of these, it needs to be URL-encoded *twice* 
+	static final Pattern NEEDS_DOUBLE = Pattern.compile("[%&/+#;]");
+	
+	// Any of the following characters need to be encoded as hex
+	static final Pattern NEEDS_ENCODING = Pattern.compile("[^A-Za-z0-9_.-]+");
+	
+	static private String encodeComponent(String str) {
+		if (NEEDS_DOUBLE.matcher(str).find()) {
+			return encodeOnce(encodeOnce(str));
+		} else if (NEEDS_ENCODING.matcher(str).find()) {
+			return encodeOnce(str);
+		} else {
+			return str;
+		}
+	}
+
+	private static String encodeOnce(String str) {
+					StringBuffer sb = new StringBuffer();
+		Matcher m = NEEDS_ENCODING.matcher(str);
+		
+		while (m.find()) {
+			m.appendReplacement(sb, "");
+			encodeCharacter(sb, m.group());
+		}
+		m.appendTail(sb);
+		
+		return sb.toString();
+	}
+	
+	private static void encodeCharacter(StringBuffer sb, String s) {
+		if (" ".equals(s))
+			sb.append("+");
+		else {
+			ByteBuffer bytes = Charset.forName("UTF-8").encode(s);
+			while (bytes.hasRemaining()) {
+				byte b = bytes.get();
+				sb.append('%');
+				sb.append(Integer.toHexString(b));
+			}
+		}
+	}
+
+	/**
+	 * Returns the URL of the last.fm web page for a artist/song title pair. No check is done
+	 * that the page actually exists.  
+	 * 
+	 * @param artist the artist
+	 * @param title the song title
+	 * @return the appropriate form for the link on last.fm
+	 */
+	public static String makeWebLink(String artist, String title) {
+		return "http://last.fm/music/" + encodeComponent(artist) + "/_/" + encodeComponent(title);
+
 	}
 	
 	static public final void main(String[] args) {

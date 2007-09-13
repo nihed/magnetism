@@ -35,6 +35,7 @@ public interface MusicSystem extends ExternalAccountFeedListener {
 	public static final long NATIVE_MUSIC_OVERRIDE_TIME_MS = 15 * 60 * 1000;	
 	
 	public TrackView getCurrentTrackView(Viewpoint viewpoint, User user) throws NotFoundException;
+	public TrackHistory getCurrentTrack(Viewpoint viewpoint, User user) throws NotFoundException;
 	
 	public boolean hasTrackHistory(Viewpoint viewpoint, User user);
 	
