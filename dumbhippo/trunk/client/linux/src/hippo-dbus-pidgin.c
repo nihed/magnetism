@@ -51,6 +51,7 @@ static void pidgin_buddy_update(DDMNotificationSet *notifications,
                                 PidginAccount        *account,
                                 PidginBuddy          *buddy);
 
+static guint reload_idle_id = 0;
 static PidginState *pidgin_state = NULL;
 
 static void
@@ -593,12 +594,36 @@ reload_on_buddy_list_change(DBusConnection *connection)
     }
 }
 
+static gboolean
+reload_idle_handler(void *data)
+{
+    DBusConnection *connection;
+    
+    reload_idle_id = 0;
+
+    connection = data;
+
+    reload_on_buddy_list_change(connection);
+
+    dbus_connection_unref(connection);
+    return FALSE;
+}
+
+static void
+queue_reload(DBusConnection *connection)
+{
+    if (reload_idle_id == 0) {
+        reload_idle_id = g_idle_add(reload_idle_handler, connection);
+        dbus_connection_ref(connection);
+    }
+}
+
 static void
 handle_buddy_added(DBusConnection *connection,
                    DBusMessage    *message,
                    void           *data)
 {
-    reload_on_buddy_list_change(connection);
+    queue_reload(connection);
 }
 
 static void
@@ -606,7 +631,7 @@ handle_buddy_removed(DBusConnection *connection,
                      DBusMessage    *message,
                      void           *data)
 {
-    reload_on_buddy_list_change(connection);
+    queue_reload(connection);
 }
 
 static void
