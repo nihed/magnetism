@@ -9,4 +9,8 @@ libdbus_api_plugin_la_CPPFLAGS =		\
 	$(PIDGIN_PLUGIN_CFLAGS)
 
 libdbus_api_plugin_la_SOURCES=			\
-	pidgin/dbus-plugin.c
+	pidgin/dbus-plugin.c			\
+	pidgin/hippo-dbus-helper.c		\
+	pidgin/hippo-dbus-helper.h 		\
+	pidgin/hippo-dbus-helper-rename.h
+
