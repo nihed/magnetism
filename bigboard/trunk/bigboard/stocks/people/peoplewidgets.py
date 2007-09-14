@@ -1,7 +1,9 @@
 import cgi
 import os
+import time
 
 import gobject
+import gtk
 import hippo
 
 import bigboard
@@ -10,6 +12,8 @@ from bigboard.big_widgets import ActionLink, CanvasMugshotURLImage, CanvasMugsho
 import bigboard.libbig as libbig
 
 from ddm import DataModel
+
+STATUS_MUSIC = 0
 
 def _open_aim(aim):
     os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'aim:GoIM?screenname=' + cgi.escape(aim))
@@ -28,10 +32,12 @@ class PersonItem(PhotoContentItem, DataBoundItem):
         PhotoContentItem.__init__(self, **kwargs)
         DataBoundItem.__init__(self, user)
         
+        model = DataModel(bigboard.globals.server_name)
+
         self.set_clickable(True)
         
-        self.__photo = CanvasMugshotURLImage(scale_width=30,
-                                            scale_height=30,
+        self.__photo = CanvasMugshotURLImage(scale_width=45,
+                                            scale_height=45,
                                             border=1,
                                             border_color=0x000000ff)
 
@@ -46,6 +52,11 @@ class PersonItem(PhotoContentItem, DataBoundItem):
 
         self.__presence_box = CanvasHBox()
         self.__details_box.append(self.__presence_box)
+        
+        self.__statuses = []
+        self.__status_box = CanvasHBox()
+        self.__details_box.append(self.__status_box)
+
 
         self.connect('button-press-event', self.__handle_button_press)
         self.connect('button-release-event', self.__handle_button_release)
@@ -53,11 +64,21 @@ class PersonItem(PhotoContentItem, DataBoundItem):
 
         self.__aim_icon = None
 
+        self.__current_track = None
+        self.__current_track_timeout = None
+
+        query = model.query_resource(self.resource.resource_id, "currentTrack +;currentTrackPlayTime")
+        query.add_handler(self.__update_current_track)
+        query.execute()
+
         self.connect_resource(self.__update, 'name')
         self.connect_resource(self.__update, 'photoUrl')
         self.connect_resource(self.__update_aim_buddy, 'aimBuddy')
+        self.connect_resource(self.__update_current_track, 'currentTrack')
+        self.connect_resource(self.__update_current_track, 'currentTrackPlayTime')
         self.__update(self.resource)
         self.__update_aim_buddy(self.resource)
+        self.__update_current_track(self.resource)
 
     def __update_color(self):
         if self.__pressed:
@@ -113,6 +134,75 @@ class PersonItem(PhotoContentItem, DataBoundItem):
         self.__aim_icon = AimIcon(buddy)
         self.__presence_box.append(self.__aim_icon)
 
+    def __timeout_track(self):
+        self.__current_track_timeout = None
+        self.__update_current_track(self.resource)
+        return False
+
+    def __update_current_track(self, user):
+        try:
+            current_track = self.resource.currentTrack
+            current_track_play_time = self.resource.currentTrackPlayTime / 1000.
+        except AttributeError:
+            current_track = None
+            current_track_play_time = -1
+
+        # current_track_play_time < 0, current_track != None might indicate stale
+        # current_track data
+        if current_track_play_time < 0:
+            current_track = None
+
+        if current_track != None:
+            now = time.time()
+            if current_track.duration < 0:
+                endTime = current_track_play_time + 30 * 60   # Half hour
+            else:
+                endTime = current_track_play_time + current_track.duration / 1000. # msec => sec
+
+            if now >= endTime:
+                current_track = None
+
+        if current_track != self.__current_track:
+            self.__current_track = current_track
+            
+            if self.__current_track_timeout:
+                gobject.source_remove(self.__current_track_timeout)
+
+            if current_track != None:
+                # We give 30 seconds of lee-way, so that the track is pretty reliably really stopped
+                self.__current_track_timeout = gobject.timeout_add(int((endTime + 30 - now) * 1000), self.__timeout_track)
+
+            if current_track != None:
+                self.__set_status(STATUS_MUSIC, TrackItem(current_track))
+            else:
+                self.__set_status(STATUS_MUSIC, None)
+            
+    def __set_status(self, type, contents):
+        if len(self.__statuses) > 0:
+            old_contents = self.__statuses[0][1]
+        else:
+            old_contents = None
+        
+        for i in range(0,len(self.__statuses)):
+            (i_type,i_contents) = self.__statuses[i]
+            if i_type == type:
+                i_contents.destroy()
+                del self.__statuses[i]
+                if i == 0:
+                    old_contents = None
+                break
+
+        if old_contents != None:
+            old_contents.set_visible(False)
+        
+        if contents != None:
+            self.__statuses.insert(0, (type, contents))
+            self.__status_box.append(contents)
+            
+        if len(self.__statuses) > 0:
+            new_contents = self.__statuses[0][1]
+            new_contents.set_visible(True)
+
     def get_screen_coords(self):
         return self.get_context().translate_to_screen(self)
 
@@ -162,6 +252,117 @@ class AimIcon(hippo.CanvasText, DataBoundItem):
         _open_aim(self.resource.name)
         return True
 
+#
+# The CanvasText item thinks that you always want the full text as the tooltip when
+# ellipsized, but we are doing our own "tooltip" that is cooler and contains album art
+#
+class NoTooltipText(hippo.CanvasText, hippo.CanvasItem):
+    def __init__(self, **kwargs):
+        hippo.CanvasText.__init__(self, **kwargs)
+
+    def do_get_tooltip(self,x,y,for_area):
+        return ""
+
+gobject.type_register(NoTooltipText)    
+    
+class TrackItem(hippo.CanvasBox, DataBoundItem):
+    __gsignals__ = {
+        'motion-notify-event': 'override'
+       }
+        
+    def __init__(self, track):
+        hippo.CanvasBox.__init__(self, orientation=hippo.ORIENTATION_HORIZONTAL)
+        DataBoundItem.__init__(self, track)
+
+        image = hippo.CanvasImage(yalign=hippo.ALIGNMENT_START,
+                                  image_name="bigboard-music.png",
+                                  border_right=6)
+        self.append(image)
+        
+        details = CanvasVBox()
+        self.append(details)
+
+        artist_text = NoTooltipText(text=track.artist,
+                                    font="12px",
+                                    color=0x666666ff,
+                                    xalign=hippo.ALIGNMENT_START,
+                                    size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        details.append(artist_text)
+
+        title_text = NoTooltipText(text=track.name,
+                                   font="12px",
+                                   color=0x666666ff,
+                                   xalign=hippo.ALIGNMENT_START,
+                                   size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        details.append(title_text)
+
+        self.__tooltip_timeout = None
+        self.__tooltip_popup = None
+        
+    def do_motion_notify_event(self, event):
+        if event.detail == hippo.MOTION_DETAIL_ENTER:
+            if self.__tooltip_timeout == None:
+                try:
+                    tooltip_time = gtk.settings_get_default().get_property("gtk-tooltip-timeout")
+                except TypeError: # Old version of GTK+
+                    tooltip_time = 500
+                    
+                self.__tooltip_timeout = gobject.timeout_add(tooltip_time, self.__on_tooltip_timeout)
+        elif event.detail == hippo.MOTION_DETAIL_LEAVE:
+            if self.__tooltip_timeout != None:
+                gobject.source_remove(self.__tooltip_timeout)
+                self.__tooltip_timeout = None
+            if self.__tooltip_popup != None:
+                self.__tooltip_popup.destroy()
+                self.__tooltip_popup = None
+
+    def __on_tooltip_timeout(self):
+        self.__tooltip_timeout = None
+
+        if self.__tooltip_popup == None:
+            self.__tooltip_popup = TrackPopup(self.resource)
+
+        self.__tooltip_popup.popup()
+        
+class TrackPopup(hippo.CanvasWindow, DataBoundItem):
+    __gsignals__ = {
+        'motion-notify-event': 'override'
+       }
+        
+    def __init__(self, track):
+        hippo.CanvasWindow.__init__(self, gtk.WINDOW_POPUP)
+        DataBoundItem.__init__(self, track)
+
+        self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(0xffff,0xffff,0xffff))
+
+        root = CanvasHBox(border=1, border_color=0x000000ff)
+        self.set_root(root)
+        
+        box = CanvasHBox(border=5)
+        root.append(box)
+        
+        image = CanvasMugshotURLImage(box_width=track.imageWidth, box_height=track.imageHeight)
+        image.set_url(track.imageUrl)
+        box.append(image)
+        
+        details = CanvasVBox(border_left=6)
+        box.append(details)
+
+        artist_text = hippo.CanvasText(text=track.artist,
+                                       font="13px",
+                                       xalign=hippo.ALIGNMENT_START)
+        details.append(artist_text)
+
+        title_text = hippo.CanvasText(text=track.name,
+                                      font="13px",
+                                      xalign=hippo.ALIGNMENT_START)
+        details.append(title_text)
+
+    def popup(self):
+        (x,y,_) = gtk.gdk.get_default_root_window().get_pointer()
+        self.move(x + 10, y + 10)
+        self.show()
+        
 class LocalFilesLink(hippo.CanvasBox, DataBoundItem):
     def __init__(self, buddy):
         hippo.CanvasBox.__init__(self)
