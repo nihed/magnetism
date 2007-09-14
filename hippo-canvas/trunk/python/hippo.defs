@@ -964,6 +964,17 @@
   )
 )
 
+(define-virtual get_tooltip
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_get_tooltip")
+  (return-type "char*")
+  (parameters
+    '("int" "x")
+    '("int" "y")
+    '("HippoRectangle*" "for_area")
+  )
+)
+
 (define-method get_allocation
   (of-object "HippoCanvasItem")
   (c-name "hippo_canvas_item_get_allocation")

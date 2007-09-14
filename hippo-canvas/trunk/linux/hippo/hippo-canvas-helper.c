@@ -1057,7 +1057,7 @@ hippo_canvas_helper_set_root(HippoCanvasHelper *helper,
 GtkWidget *
 hippo_canvas_helper_get_widget(HippoCanvasHelper *helper)
 {
-    g_return_if_fail(HIPPO_IS_CANVAS_HELPER(helper));
+    g_return_val_if_fail(HIPPO_IS_CANVAS_HELPER(helper), NULL);
 
     return helper->widget;
 }
