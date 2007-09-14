@@ -11,6 +11,7 @@ import bigboard.stock as stock
 import bigboard.google as google
 import bigboard.slideout as slideout
 from bigboard.stock import AbstractMugshotStock
+import bigboard.stocks.google_stock as google_stock  
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasVBox, CanvasHBox, ActionLink, Button, PrelightingCanvasBox
 from bigboard.libbig.struct import AutoStruct
 import bigboard.libbig.polling as polling
@@ -412,13 +413,9 @@ class EventDetailsDisplay(hippo.CanvasBox):
     def __str__(self):
         return '<EventDetailsDisplay name="%s">' % (self.__get_title())
 
-class CalendarStock(AbstractMugshotStock, polling.Task):
+class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
     def __init__(self, *args, **kwargs):
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
-        # A dictionary of authenticated google accounts, with keys that are used
-        # to identify those accounts within CalendarStock.
-        self.__googles = {}
-        self.__google_key = 0; 
         # We keep calendars in a dictionary, referenced by calendar feed links,
         # so that we can get calendar names without updating events that are
         # currently not in range. We also use it to get calendar color for events. 
@@ -448,20 +445,12 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
         # these are at the end since they have the side effect of calling on_mugshot_ready it seems?
         AbstractMugshotStock.__init__(self, *args, **kwargs)
-        polling.Task.__init__(self, _events_polling_periodicity_seconds * 1000)
-        
+        google_stock.GoogleStock.__init__(self, *args, **kwargs)
+
         bus = dbus.SessionBus()
         o = bus.get_object('org.freedesktop.Notifications', '/org/freedesktop/Notifications')
         self.__notifications_proxy = dbus.Interface(o, 'org.freedesktop.Notifications')
         self.__notifications_proxy.connect_to_signal('ActionInvoked', self.__on_action)
-        
-        gobj_list = google.get_googles()
-        for gobj in gobj_list:
-            gobj.connect("auth", self.__on_google_auth)
-            if gobj.have_auth():
-                self.__on_google_auth(gobj, True) 
-            else:
-                gobj.request_auth()
 
         self._add_more_button(self.__on_more_button)
 
@@ -558,7 +547,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
     def __on_more_button(self):
         done_with_sleep_state = 0
-        for google_account in self.__googles.itervalues():
+        for google_account in self._googles.itervalues():
             if done_with_sleep_state == 1:
                 # in case the browser is just starting, we should wait a bit, otherwise
                 # Firefox produces this for the second link:  
@@ -569,39 +558,13 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             libbig.show_url(create_account_url(google_account.get_auth()[0]))
             if done_with_sleep_state == 0:
                 done_with_sleep_state = 1
+        
+    def update_google_data(self, google_key = None):
+        self.__update_calendar_list_and_events(google_key) 
 
     def _on_mugshot_ready(self):
         super(CalendarStock, self)._on_mugshot_ready()
         self.__update_calendar_list_and_events()
-
-    def __get_google_key(self, gobj):
-        for google_item in self.__googles.items():
-            if google_item[1] == gobj:
-                return google_item[0]
-        return None 
-
-    def __on_google_auth(self, gobj, have_auth):
-        _logger.debug("google auth state: %s", have_auth)
-        if have_auth:           
-            if self.__googles.values().count(gobj) == 0:
-                self.__googles[self.__google_key] = gobj   
-            self.__update_calendar_list_and_events(self.__google_key)
-            self.__google_key = self.__google_key + 1
-            if not self.is_running():
-                self.start()
-        else:
-            key = self.__get_google_key(gobj)
-            if key is not None:
-                if len(self.__googles) == 1: 
-                    self.stop()
-                self.__remove_calendar_list_and_events(key)
-                del self.__googles[key]                   
-            
-            # Possibly do this if we want to completely clear the box
-            # self.__box.remove_all()
-
-    def do_periodic_task(self):
-        self.__update_calendar_list_and_events()   
 
     def get_authed_content(self, size):
         return size == self.SIZE_BULL and self.__box or None
@@ -634,7 +597,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self.__refresh_events()
 
     def __on_calendar_list_load(self, url, data, gobj):
-        google_key = self.__get_google_key(gobj)
+        google_key = self.get_google_key(gobj)
         if google_key is None:
             _logger.warn("didn't find google_key for %s", gobj)
             return 
@@ -681,7 +644,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
  
     def __on_calendar_load(self, url, data, calendar_feed_url, event_range_start, event_range_end, gobj):
         _logger.debug("loaded calendar from " + url)
-        google_key = self.__get_google_key(gobj)
+        google_key = self.get_google_key(gobj)
         if google_key is None:
             _logger.warn("didn't find google_key for %s", gobj)
             return 
@@ -734,7 +697,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                         reminder_seconds = int(reminder.minutes) * 60  
                         # _logger.debug('delta days %s delta seconds %s reminder seconds %s %s\n '% (delta.days, delta_seconds, reminder_seconds, reminder.extension_attributes['method']))
                         # schedule notifications for alerts that need to happen before the next time we poll events
-                        if reminder.extension_attributes['method'] == 'alert' and (delta_seconds - _events_polling_periodicity_seconds) < reminder_seconds and not self.__event_alerts.has_key(event.get_link() + reminder.minutes):   
+                        if reminder.extension_attributes['method'] == 'alert' and (delta_seconds - google_stock.polling_periodicity_seconds) < reminder_seconds and not self.__event_alerts.has_key(event.get_link() + reminder.minutes):   
                            
                            self.__event_alerts[event.get_link() + reminder.minutes] = event
                            if delta_seconds > reminder_seconds:
@@ -1016,9 +979,9 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         _logger.debug("retrieving calendar list")
         # we update events in __on_calendar_list_load() 
         if google_key is not None:
-            self.__googles[google_key].fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)
+            self._googles[google_key].fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)
         else:            
-            for gobj in self.__googles.values():
+            for gobj in self._googles.values():
                 gobj.fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)      
 
     def __update_events(self, google_key = None):
@@ -1031,7 +994,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                 calendar = google_calendar_dict[local_google_key]  
                 if include_calendar(calendar):
                     calendar_feed_url =  create_calendar_feed_url(calendar)
-                    self.__googles[local_google_key].fetch_calendar(self.__on_calendar_load, self.__on_failed_load, calendar_feed_url, self.__event_range_start, self.__event_range_end)
+                    self._googles[local_google_key].fetch_calendar(self.__on_calendar_load, self.__on_failed_load, calendar_feed_url, self.__event_range_start, self.__event_range_end)
 
     def __close_slideout(self, *args):
         if self.__slideout:
