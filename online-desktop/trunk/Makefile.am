@@ -38,5 +38,6 @@ include Makefile-pyddm.am
 include Makefile-devilspie.am
 include Makefile-session.am
 include Makefile-gconf.am
+include Makefile-pidgin.am
 
 
