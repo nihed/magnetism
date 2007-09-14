@@ -1,4 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include <string.h>
+
 #include "hippo-canvas-internal.h"
 #include "hippo-canvas-item.h"
 #include "hippo-canvas-container.h"
@@ -328,9 +330,22 @@ hippo_canvas_item_get_tooltip(HippoCanvasItem *canvas_item,
                               int              y,
                               HippoRectangle  *for_area)
 {
+    char *tip;
+    
     g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), NULL);
 
-    return HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_tooltip(canvas_item, x, y, for_area);
+    tip = HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_tooltip(canvas_item, x, y, for_area);
+
+    /* Supporting "" as a synonym for NULL is a convenience for pygtk, which
+     * doesn't have support for NULL-returns from interface methods
+     * at the moment.
+     */
+    if (tip != NULL && strcmp(tip, "") == 0) {
+        g_free(tip);
+        tip = NULL;
+    }
+
+    return tip;
 }
 
 HippoCanvasPointer
