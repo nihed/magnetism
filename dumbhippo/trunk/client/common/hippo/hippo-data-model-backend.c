@@ -122,7 +122,7 @@ on_connection_connected_changed(HippoConnection *connection,
     if (ddm_data_resource_update_property(global_resource,
                                           self_id_prop,
                                           self_id ? DDM_DATA_UPDATE_REPLACE : DDM_DATA_UPDATE_DELETE,
-                                          DDM_DATA_CARDINALITY_1,
+                                          DDM_DATA_CARDINALITY_01,
                                           FALSE, NULL,
                                           &value)) {
         GSList *changed_list;
