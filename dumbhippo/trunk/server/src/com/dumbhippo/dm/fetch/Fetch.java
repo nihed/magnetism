@@ -264,7 +264,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 		}
 		
 		// If the other property is a subset of this one, we can just return this one
-		if (newCount == properties.length && this.includeDefault || !other.includeDefault)
+		if (newCount == this.properties.length && (this.includeDefault || !other.includeDefault))
 			return this;
 		
 		PropertyFetch[] newProperties = new PropertyFetch[newCount];
