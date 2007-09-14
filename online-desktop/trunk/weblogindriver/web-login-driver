@@ -1,0 +1,98 @@
+#!/usr/bin/python
+
+import os,sys,re,logging
+
+import gobject, dbus, gnomevfs
+import dbus.glib
+
+_logger = logging.getLogger("WebLoginDriver")
+
+BUS_NAME_STR='org.gnome.WebLoginDriver'
+
+def iterdir(path):
+  for fname in os.listdir(path):
+    yield os.path.join(path, fname)
+    
+class WebLoginDriver(dbus.service.Object):
+  def __init__(self, bus_name):
+    dbus.service.Object.__init__(self, bus_name, '/weblogindriver')  
+      
+    self.__ffpath = os.path.expanduser('~/.mozilla/firefox')
+    self.__profpath = None
+    self.__profile_monid = None
+    try:
+      profpath = self.__get_profile_path()
+    except KeyError, e:
+      profpath = None
+      _logger.debug("couldn't find default profile, awaiting creation")
+      self.__uncreated_monid = gnomevfs.monitor_add('file://' + self.__ffpath, gnomevfs.MONITOR_DIRECTORY, self.__on_profile_created)
+    if profpath:
+      self.__monitor_signins(profpath)
+
+  def __monitor_signins(self, profpath):
+    _logger.debug("starting monitoring of signins in %s", profpath)
+    self.__profpath = profpath
+    signons_path = os.path.join(profpath, 'signons2.txt')
+    if os.path.isfile(signons_path):
+      self.__signins_monid = gnomevfs.monitor_add('file://' + siginons_path, gnomevfs.MONITOR_FILE, self.__on_signons_changed)
+      if self.__profile_monid is not None:
+        gnomevfs.monitor_cancel(self.__profile_monid)
+        self.__profile_monid = None
+    elif not self.__profile_monid:
+      self.__profile_monid = gnomevfs.monitor_add(profpath, gnomevfs.MONITOR_DIRECTORY, self.__on_profdir_changed
+
+  def __on_profdir_changed(self, *args):
+    _logger.debug("profile dir changed: %s", args)
+    self.__monitor_signins()
+  
+  def __on_signons_changed(self, *args):
+    _logger.debug("signons changed: %s", args)
+    if self.__idle_read_signins_id > 0:
+      _logger.debug("canceling queued signins read")
+      gobject.source_remove(self.__idle_read_signins_id)
+    _logger.debug("queued signins read for 3s")
+    self.__idle_read_signins_id = gobject.timeout_add(3000, self.__idle_read_signins)
+
+  def __idle_read_signins(self):
+    _logger.debug("in idle signins read")
+    self.__idle_read_signins_id = 0
+    f = open(os.path.join(self.__profpath, 'signons2.txt'))
+    header = f.readline().strip()
+    if header != '#2d':
+      _logger.debug("unknown header %s, ignoring", header)
+      return
+    ignoredsites = f.readline()
+    dot = f.readline()
+        
+
+  def __on_profile_created(self, *args):
+    _logger.debug("profile directory changed: %s", args)
+    try:
+      profpath = self.__get_profile_path()
+    except KeyError, e:
+      return
+    gnomevfs.monitor_cancel(self.__uncreated_monid)
+    self.__uncreated_monid = None
+    self.__monitor_signins(profpath)
+
+  def __get_profile_path(self):
+    if not os.path.isdir(self.__ffpath):
+      os.makedirs(self.__ffpath)
+    for p in iterdir(self.__ffpath):
+      if not p.endswith('.default'): continue
+      return p
+    raise KeyError("Couldn't find mozilla profile")
+
+_driver = None
+def modmain():
+  bus = dbus.SessionBus() 
+  bus_name = dbus.service.BusName(BUS_NAME_STR, bus=bus)
+  global _driver
+  _driver = WebLoginDriver(bus_name)
+
+def main():
+  gobject.threads_init()
+  dbus.glib.threads_init()
+  modmain()
+  m = gobject.MainLoop()
+  m.run()
