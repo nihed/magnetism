@@ -163,7 +163,7 @@ public class LastFmWebServices {
 		else {
 			ByteBuffer bytes = Charset.forName("UTF-8").encode(s);
 			while (bytes.hasRemaining()) {
-				byte b = bytes.get();
+				int b = bytes.get() & 0xFF;
 				sb.append('%');
 				sb.append(Integer.toHexString(b));
 			}
