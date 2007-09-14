@@ -1,6 +1,8 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <config.h>
 
+#include <string.h>
+
 #define PURPLE_PLUGINS
 
 #include <plugin.h>
@@ -50,17 +52,24 @@ append_buddy(DBusMessageIter        *append_iter,
 {
     DBusMessageIter dict_iter;
     dbus_bool_t is_online;
-    
+    const char *protocol;
+
     dbus_message_iter_open_container(append_iter, DBUS_TYPE_ARRAY, "{sv}", &dict_iter);
     
     append_basic_entry(&dict_iter, "name", DBUS_TYPE_STRING, &buddy->name);
 
     is_online = PURPLE_BUDDY_IS_ONLINE(buddy);
     append_basic_entry(&dict_iter, "online", DBUS_TYPE_BOOLEAN, &is_online);
+
+    if (strcmp(buddy->account->protocol_id, "prpl-aim") == 0)
+        protocol = "aim";
+    else
+        protocol = "unknown";
+
+    append_basic_entry(&dict_iter, "protocol", DBUS_TYPE_STRING, &protocol);
     
 #if 0
     /* FIXME */
-    append_basic_entry(&dict_iter, "protocol", DBUS_TYPE_STRING, &buddy->protocol);
     append_basic_entry(&dict_iter, "status", DBUS_TYPE_STRING, &buddy->status);
 #endif
     
@@ -130,9 +139,22 @@ handle_get_buddies(void            *object,
     return reply;
 }
 
+static DBusMessage*
+handle_get_icon(void            *object,
+                DBusMessage     *message,
+                DBusError       *error)
+{
+    /* FIXME */
+    
+    return dbus_message_new_method_return(message);
+}
 
 static const HippoDBusMember im_members[] = {
     { HIPPO_DBUS_MEMBER_METHOD, "GetBuddyList", "", "aa{sv}", handle_get_buddies },
+    /* args are "s" icon ID, and returns "ay" the icon in PNG or other common format.
+     * the icon ID would be in the key-value dict for a buddy, under key "icon"
+     */
+    { HIPPO_DBUS_MEMBER_METHOD, "GetIcon", "s", "ay", handle_get_icon },
     { HIPPO_DBUS_MEMBER_SIGNAL, "BuddyListChanged", "", "", NULL },
     { HIPPO_DBUS_MEMBER_SIGNAL, "BuddyChanged", "", "a{sv}", NULL },
     { 0, NULL }
