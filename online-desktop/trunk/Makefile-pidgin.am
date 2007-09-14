@@ -1,0 +1,12 @@
+libdbus_api_plugin_la_LDFLAGS = -avoid-version -module
+libdbus_api_plugin_la_LIBADD = $(PIDGIN_PLUGIN_LIBS)
+
+plugindir=$(libdir)/pidgin
+plugin_LTLIBRARIES = libdbus-api-plugin.la
+
+libdbus_api_plugin_la_CPPFLAGS =		\
+	$(AM_CPPFLAGS)				\
+	$(PIDGIN_PLUGIN_CFLAGS)
+
+libdbus_api_plugin_la_SOURCES=			\
+	pidgin/dbus-plugin.c
