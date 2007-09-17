@@ -5,21 +5,10 @@ import pyonlinedesktop
 from pyonlinedesktop.iterdird import iterdir_d
 
 os.environ['OD_SESSION'] = "1"
-os.environ['ONLINE_DESKTOP_GCONF'] = '/usr/share/online-desktop/gconf.path'
 
 # Configure GConf, in a very hackish way
 subprocess.call(['gconftool-2', '--shutdown'])
-gconfd_path = os.path.expanduser('~/.gconf.path')
-#### Disabled for now
-#if not os.access(gconfd_path, os.R_OK):
-if False:
-  f = open(gconfd_path, 'w')
-  f.write('''
-# This file may be safely deleted; it is only needed to work around
-# a GConf limitation.  
-include $(ENV_ONLINE_DESKTOP_GCONF)
-''')
-  f.close()
+os.environ['ONLINE_DESKTOP_GCONF'] = '/usr/share/online-desktop/gconf.path'
 
 # do pre-configuration
 for fpath in iterdir_d('online-desktop/presession'):
