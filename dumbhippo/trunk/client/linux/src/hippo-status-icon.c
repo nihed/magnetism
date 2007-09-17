@@ -143,6 +143,18 @@ hippo_status_icon_activate(GtkStatusIcon *gtk_icon)
 }
 
 static void
+on_toggle_connected_activated()
+{
+    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoConnection *connection = hippo_data_cache_get_connection(cache);
+
+    if (hippo_connection_get_connected(connection))
+        hippo_connection_signout(connection);
+    else
+        hippo_connection_signin(connection);
+}
+
+static void
 on_quit_activated(GtkMenuItem *menu_item,
                   void        *data)
 {
@@ -158,7 +170,6 @@ hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
     GtkWidget *menu_item;
     GtkWidget *label;
 
-#if 0
     /* We used to only show the Quit item in "leet_mode" */
     GdkModifierType state;
     gboolean leet_mode;
@@ -168,7 +179,6 @@ hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
         if (state & GDK_CONTROL_MASK)
             leet_mode = TRUE;
     }
-#endif    
     
     destroy_menu(icon);
     
@@ -192,12 +202,20 @@ hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
     gtk_widget_show(menu_item);
     gtk_menu_shell_append(GTK_MENU_SHELL(icon->popup_menu), menu_item);
     
+    if (leet_mode) {
+        menu_item = gtk_menu_item_new_with_label ("Toggle Connected");
+        g_signal_connect_swapped(menu_item, "activate", G_CALLBACK(on_toggle_connected_activated),
+                                 NULL);
+        gtk_widget_show(menu_item);
+        gtk_menu_shell_append(GTK_MENU_SHELL(icon->popup_menu), menu_item);
+    }
+    
     menu_item = gtk_image_menu_item_new_from_stock (GTK_STOCK_QUIT, NULL);
     g_signal_connect_swapped(menu_item, "activate", G_CALLBACK(on_quit_activated),
                              NULL);
     gtk_widget_show(menu_item);
     gtk_menu_shell_append(GTK_MENU_SHELL(icon->popup_menu), menu_item);
-    
+
     gtk_menu_popup (GTK_MENU(icon->popup_menu), NULL, NULL,
                     gtk_status_icon_position_menu, icon,
                     button, activate_time);
