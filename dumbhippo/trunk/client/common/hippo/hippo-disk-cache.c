@@ -836,6 +836,7 @@ load_resource_from_db(HippoDiskCache   *cache,
         case DDM_DATA_BOOLEAN:
         case DDM_DATA_INTEGER:
         case DDM_DATA_LONG:
+            is_long = TRUE;
             break;
         case DDM_DATA_FLOAT:
             is_float = TRUE;
