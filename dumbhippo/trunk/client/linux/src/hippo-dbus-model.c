@@ -1088,7 +1088,31 @@ on_connected_changed(DDMDataModel *ddm_model,
         const char *empty_string;
 
         empty_string = "";
-        
+
+        /* Including an empty string for the self-id might make you think that being disconnected
+         * means that there is no longer a self-id. That's, however, wrong. The self_id is
+         * *independent* of the connected state and can be used to fetch things out of the
+         * offline cache.
+         *
+         * In fact, I think the whole existence of a ConnectedChanged signal is possibly a confusing
+         * thing. There are two different events:
+         *
+         * Connected:
+         * - The connected boolean is true
+         * - All prior notification's you've registered have been removed
+         * - All data you might be caching is invalid, dump it
+         * - The selfId might have changed
+         * - Start fetching your data from scratch with the assumption that everything has changed
+         *
+         * Disconnected:
+         * - The connected boolean is false
+         *
+         * So while the two events *do* signal changes in the Connected boolean, they otherwise require
+         * entirely different handling on the part of the recipient.
+         *
+         * This also means that even if the connected boolean moved in the global resource, you'd
+         * still want the "Connected" signal.
+         */
         hippo_dbus_helper_emit_signal(connection,
                                       HIPPO_DBUS_MODEL_PATH, HIPPO_DBUS_MODEL_INTERFACE,
                                       "ConnectedChanged",
