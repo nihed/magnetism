@@ -21,6 +21,7 @@ void hippo_dbus_im_update_buddy       (DDMNotificationSet *notifications,
                                        const char           *buddy_id,
                                        const char           *protocol,
                                        const char           *name,
+                                       const char           *alias,
                                        gboolean              is_online,
                                        const char           *status,
                                        const char           *webdav_url);
