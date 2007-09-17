@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-import os,sys,re,logging,urlparse
+import os,sys,re,logging,urlparse,base64
 
 import gobject, dbus, gnomevfs
-import dbus.glib
+import dbus,dbus.service,dbus.glib
 
 # Custom module
 import nssdecrypt
@@ -11,6 +11,7 @@ import nssdecrypt
 _logger = logging.getLogger("WebLoginDriver")
 
 BUS_NAME_STR='org.gnome.WebLoginDriver'
+BUS_IFACE_STR='org.gnome.WebLoginDriver'
 
 def iterdir(path):
   for fname in os.listdir(path):
@@ -23,7 +24,7 @@ class WebLoginDriver(dbus.service.Object):
     self.__ffpath = os.path.expanduser('~/.mozilla/firefox')
     self.__profpath = None
     self.__profile_monid = None
-    self.__signins = {} # domain->(user,pass,{details})
+    self.__signons = {} # domain->(user,pass,{details})
     try:
       profpath = self.__get_profile_path()
     except KeyError, e:
@@ -31,35 +32,45 @@ class WebLoginDriver(dbus.service.Object):
       _logger.debug("couldn't find default profile, awaiting creation")
       self.__uncreated_monid = gnomevfs.monitor_add('file://' + self.__ffpath, gnomevfs.MONITOR_DIRECTORY, self.__on_profile_created)
     if profpath:
-      self.__monitor_signins(profpath)
+      self.__monitor_signons(profpath)
 
-  def __monitor_signins(self, profpath):
-    _logger.debug("starting monitoring of signins in %s", profpath)
+  def __monitor_signons(self, profpath):
+    _logger.debug("starting monitoring of signons in %s", profpath)
     self.__profpath = profpath
     signons_path = os.path.join(profpath, 'signons2.txt')
     if os.path.isfile(signons_path):
-      self.__signins_monid = gnomevfs.monitor_add('file://' + siginons_path, gnomevfs.MONITOR_FILE, self.__on_signons_changed)
+      _logger.debug("monitoring signons file")
+      _logger.debug("initializing NSS in %s", self.__profpath)
+      nssdecrypt.init(self.__profpath)
+      self.__signons_monid = gnomevfs.monitor_add('file://' + signons_path, gnomevfs.MONITOR_FILE, self.__on_signons_changed)
       if self.__profile_monid is not None:
         gnomevfs.monitor_cancel(self.__profile_monid)
         self.__profile_monid = None
+      gobject.idle_add(self.__idle_read_signons)
     elif not self.__profile_monid:
-      self.__profile_monid = gnomevfs.monitor_add(profpath, gnomevfs.MONITOR_DIRECTORY, self.__on_profdir_changed
+      self.__profile_monid = gnomevfs.monitor_add(profpath, gnomevfs.MONITOR_DIRECTORY, self.__on_profdir_changed)
 
   def __on_profdir_changed(self, *args):
     _logger.debug("profile dir changed: %s", args)
-    self.__monitor_signins()
+    self.__monitor_signons()
   
   def __on_signons_changed(self, *args):
     _logger.debug("signons changed: %s", args)
-    if self.__idle_read_signins_id > 0:
-      _logger.debug("canceling queued signins read")
-      gobject.source_remove(self.__idle_read_signins_id)
-    _logger.debug("queued signins read for 3s")
-    self.__idle_read_signins_id = gobject.timeout_add(3000, self.__idle_read_signins)
+    if self.__idle_read_signons_id > 0:
+      _logger.debug("canceling queued signons read")
+      gobject.source_remove(self.__idle_read_signons_id)
+    _logger.debug("queued signons read for 3s")
+    self.__idle_read_signons_id = gobject.timeout_add(3000, self.__idle_read_signons)
 
-  def __idle_read_signins(self):
-    _logger.debug("in idle signins read")
-    self.__idle_read_signins_id = 0
+  def __idle_read_signons(self):
+    _logger.debug("in idle signons read")
+    self.__idle_read_signons_id = 0
+
+    new_signons = self.__read_signons()
+    # todo signal changes
+    self.__signons = new_signons
+  
+  def __read_signons(self):
     f = open(os.path.join(self.__profpath, 'signons2.txt'))
     parse_states = dict(zip(['header', 'reject', 'realm', 'userfield', 'uservalue', 'passfield', 'passvalue', 'actionurl'],
                             xrange(100)))
@@ -67,47 +78,63 @@ class WebLoginDriver(dbus.service.Object):
 
     realm_re = re.compile(r'^(.+?) \((.*)\)$')
 
-    new_signins = {}
+    new_signons = {}
 
-    signin = {}
-    line = f.readline().strip()
-    while True:
-      havemore = not not f
+    # Manually adapted from mozilla/toolkit/components/passwordmgr/src/storage-Legacy.js 20071017
+    signon = {}
+    havemore = True
+    while havemore:
+      line = f.readline()
+      havemore = not not line
+      line = line.strip()
+      process_entry = False
       if parse_state == parse_states['header']:
         if line != '#2d':
-          raise ValueError("Invalid header: %s", line
+          raise ValueError("Invalid header: %s" % (line,))
         parse_state += 1
       elif parse_state == parse_states['reject']:
         parse_state += 1 # ignore disabled hosts stuff for now
       elif parse_state == parse_states['realm']:
         m = realm_re.match(line)
         if not m:
-          signin['hostname'] = line
+          signon['hostname'] = line
         else:
-          signin['hostname'] = m.group(1)
-          signin['http_realm'] = m.group(2)
+          signon['hostname'] = m.group(1)
+          signon['http_realm'] = m.group(2)
         parse_state += 1
       elif parse_state == parse_states['userfield']:
-        if line == '.'
+        if line == '.':
           parse_state = parse_states['realm']
         else:
-          signin['username_field'] = line
+          signon['username_field'] = line
           parse_state += 1 
       elif parse_state == parse_states['uservalue']:
-        
+        try:
+          signon['username'] = nssdecrypt.decrypt(base64.b64decode(line))
+        except KeyError, e:
+          _logger.error("failed decrypt while processing host '%s'", signon.get('hostname', '(None)'))
         parse_state += 1
-          
+      elif parse_state == parse_states['passfield']:
+        signon['password_field'] = line
+        parse_state += 1
+      elif parse_state == parse_states['passvalue']:
+        signon['password'] = base64.b64encode(nssdecrypt.decrypt(base64.b64decode(line)))
+        parse_state += 1
+      elif parse_state == parse_states['actionurl']:
+        signon['submiturl'] = line
+        process_entry = True
+        parse_state = parse_states['userfield']
 
-    while line:
-      url = line
-      parsed_url = urlparse.parse(url)
-      username_field = f.readline()
-      user = f.readline()
-      password_field = f.readline()
-      password = f.readline()
-      otherline = f.readline()
-      dot = f.readline()
-        
+      if process_entry:
+        hostname = signon['hostname']
+        if hostname not in new_signons:
+          new_signons['hostname'] = []
+        l = new_signons['hostname']
+        l.append(signon)
+        _logger.debug("processed signon for %s: %s", hostname, signon)
+        process_entry = False
+
+    return new_signons
 
   def __on_profile_created(self, *args):
     _logger.debug("profile directory changed: %s", args)
@@ -117,7 +144,7 @@ class WebLoginDriver(dbus.service.Object):
       return
     gnomevfs.monitor_cancel(self.__uncreated_monid)
     self.__uncreated_monid = None
-    self.__monitor_signins(profpath)
+    self.__monitor_signons(profpath)
 
   def __get_profile_path(self):
     if not os.path.isdir(self.__ffpath):
@@ -127,6 +154,11 @@ class WebLoginDriver(dbus.service.Object):
       return p
     raise KeyError("Couldn't find mozilla profile")
 
+  @dbus.service.method(BUS_IFACE_STR,
+                       out_signature="a{sv}")
+  def GetSignons(self):
+    return self.__signons
+
 _driver = None
 def modmain():
   bus = dbus.SessionBus() 
@@ -135,8 +167,12 @@ def modmain():
   _driver = WebLoginDriver(bus_name)
 
 def main():
+  logging.basicConfig(level=logging.DEBUG)
   gobject.threads_init()
   dbus.glib.threads_init()
   modmain()
   m = gobject.MainLoop()
   m.run()
+
+if __name__ == '__main__':
+  main()
