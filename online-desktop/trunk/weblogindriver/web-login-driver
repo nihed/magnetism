@@ -1,9 +1,12 @@
 #!/usr/bin/python
 
-import os,sys,re,logging
+import os,sys,re,logging,urlparse
 
 import gobject, dbus, gnomevfs
 import dbus.glib
+
+# Custom module
+import nssdecrypt
 
 _logger = logging.getLogger("WebLoginDriver")
 
@@ -20,6 +23,7 @@ class WebLoginDriver(dbus.service.Object):
     self.__ffpath = os.path.expanduser('~/.mozilla/firefox')
     self.__profpath = None
     self.__profile_monid = None
+    self.__signins = {} # domain->(user,pass,{details})
     try:
       profpath = self.__get_profile_path()
     except KeyError, e:
@@ -57,12 +61,52 @@ class WebLoginDriver(dbus.service.Object):
     _logger.debug("in idle signins read")
     self.__idle_read_signins_id = 0
     f = open(os.path.join(self.__profpath, 'signons2.txt'))
-    header = f.readline().strip()
-    if header != '#2d':
-      _logger.debug("unknown header %s, ignoring", header)
-      return
-    ignoredsites = f.readline()
-    dot = f.readline()
+    parse_states = dict(zip(['header', 'reject', 'realm', 'userfield', 'uservalue', 'passfield', 'passvalue', 'actionurl'],
+                            xrange(100)))
+    parse_state = 0
+
+    realm_re = re.compile(r'^(.+?) \((.*)\)$')
+
+    new_signins = {}
+
+    signin = {}
+    line = f.readline().strip()
+    while True:
+      havemore = not not f
+      if parse_state == parse_states['header']:
+        if line != '#2d':
+          raise ValueError("Invalid header: %s", line
+        parse_state += 1
+      elif parse_state == parse_states['reject']:
+        parse_state += 1 # ignore disabled hosts stuff for now
+      elif parse_state == parse_states['realm']:
+        m = realm_re.match(line)
+        if not m:
+          signin['hostname'] = line
+        else:
+          signin['hostname'] = m.group(1)
+          signin['http_realm'] = m.group(2)
+        parse_state += 1
+      elif parse_state == parse_states['userfield']:
+        if line == '.'
+          parse_state = parse_states['realm']
+        else:
+          signin['username_field'] = line
+          parse_state += 1 
+      elif parse_state == parse_states['uservalue']:
+        
+        parse_state += 1
+          
+
+    while line:
+      url = line
+      parsed_url = urlparse.parse(url)
+      username_field = f.readline()
+      user = f.readline()
+      password_field = f.readline()
+      password = f.readline()
+      otherline = f.readline()
+      dot = f.readline()
         
 
   def __on_profile_created(self, *args):

@@ -2,6 +2,7 @@ dnl -*- mode: m4 -*-
 AC_PREREQ(2.59)
 
 AC_INIT(apps/gmail/gmail.desktop.in)
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR(config)
 
 AM_INIT_AUTOMAKE(online-desktop, 0.2.13)
@@ -179,6 +180,13 @@ ABSOLUTE_TOP_SRCDIR=`cd ${srcdir} && pwd`
 AC_DEFINE_UNQUOTED(ABSOLUTE_TOP_SRCDIR, "$ABSOLUTE_TOP_SRCDIR", [full path to srcdir])
 
 PKG_CHECK_MODULES(PIDGIN_PLUGIN, gobject-2.0 dbus-1 >= 1.0 dbus-glib-1 >= 0.70 purple)
+
+AM_PATH_PYTHON
+AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])
+
+PKG_CHECK_MODULES(WEBLOGINDRIVER, nss >= 3.0.0 nspr >= 4.6.0)
+AC_SUBST(WEBLOGINDRIVER_LIBS)
+AC_SUBST(WEBLOGINDRIVER_CFLAGS)
 
 AC_OUTPUT([
 Makefile
