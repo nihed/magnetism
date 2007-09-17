@@ -20,6 +20,7 @@
 typedef struct {
     dbus_int32_t id;
     char *name;
+    char *alias;
     dbus_int32_t is_online;
     dbus_int32_t presence_id;
     dbus_int32_t status_id;
@@ -58,6 +59,7 @@ static void
 pidgin_buddy_free(PidginBuddy *buddy)
 {
     g_free(buddy->name);
+    g_free(buddy->alias);
     g_free(buddy);
 }
 
@@ -234,16 +236,20 @@ pidgin_buddy_update(DDMNotificationSet *notifications,
     PidginStatus *pidgin_status;
     const char *protocol;
     const char *name;
+    const char *alias;
     gboolean is_online;
     const char *status;
     char *resource_id;
             
     if (strcmp(account->protocol_id, "prpl-aim") == 0)
         protocol = "aim";
+    if (strcmp(account->protocol_id, "prpl-jabber") == 0)
+        protocol = "xmpp";
     else
         protocol = "unknown";
             
     name = buddy->name;
+    alias = buddy->alias;
     is_online = buddy->is_online;
     
     pidgin_status = pidgin_state_lookup_status(state, buddy->status_id);
@@ -255,7 +261,7 @@ pidgin_buddy_update(DDMNotificationSet *notifications,
     resource_id = pidgin_buddy_make_resource_id(account, buddy);
 
     hippo_dbus_im_update_buddy(notifications, resource_id,
-                               protocol, name, is_online, status, NULL);
+                               protocol, name, alias, is_online, status, NULL);
 
     g_free(resource_id);
 }
@@ -396,6 +402,7 @@ reload_from_new_owner(DBusConnection *connection,
             int j;
             for (j = 0; j < buddies_len; ++j) {
                 PidginBuddy *buddy;
+                dbus_int32_t icon_id = 0;
 
                 buddy = g_new0(PidginBuddy, 1);
                 buddy->id = buddies[j];
@@ -411,6 +418,11 @@ reload_from_new_owner(DBusConnection *connection,
                                                     buddy->id, &buddy->name))
                     goto failed;
 
+                if (!hippo_dbus_proxy_STRING__INT32(state->gaim_proxy,
+                                                    "BuddyGetAlias",
+                                                    buddy->id, &buddy->alias))
+                    goto failed;
+
                 if (!hippo_dbus_proxy_INT32__INT32(state->gaim_proxy,
                                                    "BuddyGetPresence",
                                                    buddy->id, &buddy->presence_id))
@@ -421,8 +433,17 @@ reload_from_new_owner(DBusConnection *connection,
                                                    buddy->presence_id, &buddy->status_id))
                     goto failed;
                 
-                g_debug("buddy %d '%s' is_online=%d presence_id=%d status_id=%d\n",
-                        buddy->id, buddy->name, buddy->is_online,
+                if (!hippo_dbus_proxy_INT32__INT32(state->gaim_proxy,
+                                                   "BuddyGetIcon",
+                                                   buddy->id, &icon_id))
+                    goto failed;
+
+                if (icon_id != 0) {
+                    g_debug("==== Icon is %d", icon_id);
+                }
+                
+                g_debug("buddy %d '%s' alias=%s is_online=%d presence_id=%d status_id=%d\n",
+                        buddy->id, buddy->name, buddy->alias, buddy->is_online,
                         buddy->presence_id, buddy->status_id);
 
                 g_hash_table_replace(state->resource_ids,

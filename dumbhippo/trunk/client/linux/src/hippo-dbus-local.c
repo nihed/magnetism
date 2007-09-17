@@ -187,8 +187,12 @@ update_im_buddy(DDMNotificationSet *notifications,
     if (!local_buddy || local_buddy->user_resource_id == NULL) {
         hippo_dbus_im_remove_buddy(notifications, resource_id);
     } else {
+        /* It would be more complete to provide the unix name exported over the local service
+         * as the alias, but right now we won't actually use it for anything, so we don't
+         * bother pulling it out.
+         */
         hippo_dbus_im_update_buddy(notifications, resource_id,
-                                   "mugshot-local", local_buddy->user_resource_id,
+                                   "mugshot-local", local_buddy->user_resource_id, NULL,
                                    TRUE, "Around", local_buddy->webdav_url);
     }
     

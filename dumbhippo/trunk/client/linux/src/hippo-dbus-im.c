@@ -20,6 +20,7 @@ typedef struct {
     char *resource_id;
     char *protocol;
     char *name;
+    char *alias; /* Human visible name */
     gboolean is_online;
     char *status;
     char *webdav_url;
@@ -235,6 +236,7 @@ hippo_dbus_im_update_buddy(DDMNotificationSet *notifications,
                            const char           *buddy_id,
                            const char           *protocol,
                            const char           *name,
+                           const char           *alias,
                            gboolean              is_online,
                            const char           *status,
                            const char           *webdav_url)
@@ -290,6 +292,35 @@ hippo_dbus_im_update_buddy(DDMNotificationSet *notifications,
                         TRUE, NULL,
                         &value,
                         notifications);
+        
+        buddy_changed = !new_buddy;
+    }
+
+    if (new_buddy || !compare_strings(alias, buddy->alias)) {
+        g_free(buddy->alias);
+        buddy->alias = g_strdup(alias);
+
+        value.type = DDM_DATA_STRING;
+        value.u.string = buddy->alias;
+
+        if (alias == NULL) {
+            if (!new_buddy)
+                update_property(buddy_resource,
+                                ddm_qname_get(BUDDY_CLASS, "alias"),
+                                DDM_DATA_UPDATE_CLEAR,
+                                DDM_DATA_CARDINALITY_1,
+                                TRUE, NULL,
+                                &value,
+                                notifications);
+        } else {
+            update_property(buddy_resource,
+                            ddm_qname_get(BUDDY_CLASS, "alias"),
+                            DDM_DATA_UPDATE_REPLACE,
+                            DDM_DATA_CARDINALITY_1,
+                            TRUE, NULL,
+                            &value,
+                            notifications);
+        }
         
         buddy_changed = !new_buddy;
     }

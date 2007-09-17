@@ -1074,7 +1074,15 @@ on_connected_changed(DDMDataModel *ddm_model,
     DBusConnection *connection = data;
     
     if (connected) {
+        DataClientMap *map = data_client_map_get(ddm_model);
         char *resource_id = get_self_id();
+
+        /* Once a client receives ConnectedChanged, it must forget its current
+         * state and start over. It would be a little more efficent to just remove
+         * all connections and leave the D-BUS disconnection-watches in place,
+         * that might be important if we had dozens of clients.
+         */
+        g_hash_table_remove_all(map->clients);
         
         hippo_dbus_helper_emit_signal(connection,
                                       HIPPO_DBUS_MODEL_PATH, HIPPO_DBUS_MODEL_INTERFACE,
