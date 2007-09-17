@@ -39,5 +39,5 @@ include Makefile-devilspie.am
 include Makefile-session.am
 include Makefile-gconf.am
 include Makefile-pidgin.am
-
+include Makefile-weblogindriver.am
 
