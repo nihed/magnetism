@@ -1,13 +1,19 @@
 <?xml version="1.0"?>
 <gconf>
+        <!-- Kill off the background distractions -->
         <dir name="desktop">
                 <dir name="gnome">
                         <dir name="background">
-                                <entry name="draw_background" mtime="1188891314" type="bool" value="false">
-                                </entry>
-                                <entry name="picture_filename" mtime="1188891314" type="string" value="">
-                                </entry>
+                                <entry name="draw_background" mtime="1188891314" type="bool" value="false"></entry>
+                                <entry name="picture_filename" mtime="1188891314" type="string" value=""></entry>
                         </dir>
+                </dir>
+        </dir>
+        <dir name="apps">
+                <dir name="nautilus">
+                        <dir name="preferences">
+                                <entry name="show_desktop" mtime="1188891314" type="bool" value="false"></entry>
+                       </dir>
                 </dir>
         </dir>
 </gconf>
