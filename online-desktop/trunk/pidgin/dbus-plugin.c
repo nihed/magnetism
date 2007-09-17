@@ -494,6 +494,8 @@ plugin_destroy(PurplePlugin *plugin)
         hippo_dbus_helper_unregister_object(pd->connection, HIPPO_DBUS_IM_PATH);
 
         purple_signals_disconnect_by_handle(get_signal_handle());
+
+        g_hash_table_destroy(pd->icons);
         
         dbus_connection_unref(pd->connection);
         g_free(pd);
