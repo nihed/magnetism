@@ -1,0 +1,8 @@
+nssdecryptdir = $(pyexecdir)/nssdecrypt
+nssdecrypt_LTLIBRARIES=nssdecrypt.la
+
+nssdecrypt_la_LDFLAGS = -module -avoid-version
+nssdecrypt_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES) $(WEBLOGINDRIVER_CFLAGS)
+nssdecrypt_la_LIBADD = $(NSPR_LIBS) $(WEBLOGINDRIVER_LIBS)
+
+nssdecrypt_la_SOURCES=weblogindriver/pynssdecrypt.c
