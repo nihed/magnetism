@@ -199,8 +199,10 @@ hippo_dbus_im_append_buddy(DBusMessageIter        *append_iter,
     
     append_basic_entry(&dict_iter, "protocol", DBUS_TYPE_STRING, &buddy->protocol);
     append_basic_entry(&dict_iter, "name", DBUS_TYPE_STRING, &buddy->name);
-    append_basic_entry(&dict_iter, "status", DBUS_TYPE_STRING, &buddy->status);
     append_basic_entry(&dict_iter, "online", DBUS_TYPE_BOOLEAN, &buddy->is_online);
+
+    if (buddy->status)
+        append_basic_entry(&dict_iter, "status", DBUS_TYPE_STRING, &buddy->status);
     
     dbus_message_iter_close_container(append_iter, &dict_iter);
 }
@@ -305,7 +307,6 @@ hippo_dbus_im_update_buddy_icon (DDMNotificationSet   *notifications,
                                           icon_binary_data,
                                           icon_data_len);
 
-
     buddy_resource = ddm_data_model_ensure_resource(model, buddy_id, BUDDY_CLASS);
     
     value.type = DDM_DATA_URL;
@@ -356,8 +357,14 @@ hippo_dbus_im_update_buddy(DDMNotificationSet *notifications,
     DDMDataResource *buddy_resource;
     DDMDataValue value;
     gboolean buddy_changed = FALSE;
+    HippoDBusImBuddy *buddy;
 
-    HippoDBusImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
+    g_return_if_fail(buddy_id != NULL);
+    g_return_if_fail(protocol != NULL);
+    g_return_if_fail(name != NULL);
+    /* other stuff is allowed to be NULL */
+
+    buddy = g_hash_table_lookup(im->buddies, buddy_id);    
     if (buddy == NULL) {
         buddy = g_new0(HippoDBusImBuddy, 1);
         buddy->resource_id = g_strdup(buddy_id);
