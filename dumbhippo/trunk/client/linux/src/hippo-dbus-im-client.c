@@ -159,12 +159,26 @@ find_removed_resources_foreach(gpointer key,
 }
 
 static void
+remove_old_resources(GHashTable         *old_resource_ids,
+                     DDMNotificationSet *notifications,
+                     GHashTable         *new_resource_ids /* may be NULL */)
+{
+    FindRemovedResourcesClosure closure;
+
+    closure.notifications = notifications;
+    closure.new_resource_ids = new_resource_ids;
+    
+    g_hash_table_foreach(old_resource_ids,
+                         find_removed_resources_foreach,
+                         &closure);    
+}
+
+static void
 load_state_from_buddy_list(ImData          *id,
                            DBusMessageIter *buddy_array_iter)
 {
     GHashTable *new_buddy_resource_ids;
     DDMNotificationSet *notifications;
-    FindRemovedResourcesClosure closure;
     
     notifications = hippo_dbus_im_start_notifications();
     
@@ -183,13 +197,8 @@ load_state_from_buddy_list(ImData          *id,
     }
 
     /* Figure out what we removed */
-    closure.notifications = notifications;
-    closure.new_resource_ids = new_buddy_resource_ids;
+    remove_old_resources(id->resource_ids, notifications, new_buddy_resource_ids);
     
-    g_hash_table_foreach(id->resource_ids,
-                         find_removed_resources_foreach,
-                         &closure);
-
     g_hash_table_destroy(id->resource_ids);
     id->resource_ids = new_buddy_resource_ids;
     
@@ -278,10 +287,26 @@ handle_service_unavailable(DBusConnection *connection,
                            void           *data)
 {
     ImData *id = data;
+    DDMNotificationSet *notifications;
 
     if (id->im_proxy == NULL)
         return;
+
+    hippo_dbus_proxy_unref(id->im_proxy);
+    id->im_proxy = NULL;
+
+    if (id->reload_idle) {
+        g_source_remove(id->reload_idle);
+        id->reload_idle = 0;
+    }
     
+    notifications = hippo_dbus_im_start_notifications();
+
+    remove_old_resources(id->resource_ids, notifications, NULL);
+
+    g_hash_table_remove_all(id->resource_ids);
+
+    hippo_dbus_im_send_notifications(notifications);
 }
 
 static const HippoDBusSignalTracker signal_handlers[] = {
