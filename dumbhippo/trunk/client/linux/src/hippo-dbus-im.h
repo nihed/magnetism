@@ -25,8 +25,16 @@ void hippo_dbus_im_update_buddy       (DDMNotificationSet *notifications,
                                        gboolean              is_online,
                                        const char           *status,
                                        const char           *webdav_url);
-void hippo_dbus_im_remove_buddy       (DDMNotificationSet *notifications,
+void hippo_dbus_im_update_buddy_icon  (DDMNotificationSet   *notifications,
+                                       const char           *buddy_id,
+                                       const char           *icon_hash,
+                                       const char           *icon_content_type,
+                                       const char           *icon_binary_data,
+                                       int                   icon_data_len);
+void hippo_dbus_im_remove_buddy       (DDMNotificationSet   *notifications,
                                        const char           *buddy_id);
+gboolean hippo_dbus_im_has_icon_hash  (const char           *buddy_id,
+                                       const char           *icon_hash);
 
 /* Differs from _hippo_notification_set_send(notifications) in that it will
  * also send out a D-BUS signal if the list of buddies changed.

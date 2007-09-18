@@ -24,6 +24,8 @@ typedef struct {
     gboolean is_online;
     char *status;
     char *webdav_url;
+    char *icon_hash;
+    char *icon_data_url;
 } HippoDBusImBuddy;
 
 static void hippo_dbus_im_append_buddy(DBusMessageIter        *append_iter,
@@ -35,8 +37,11 @@ hippo_dbus_im_buddy_destroy(HippoDBusImBuddy *buddy)
     g_free(buddy->resource_id);
     g_free(buddy->protocol);
     g_free(buddy->name);
+    g_free(buddy->alias);
     g_free(buddy->status);
     g_free(buddy->webdav_url);
+    g_free(buddy->icon_hash);
+    g_free(buddy->icon_data_url);
     g_free(buddy);
 }
 
@@ -239,8 +244,8 @@ update_property (DDMDataResource    *resource,
                  DDMQName           *property_id,
                  DDMDataUpdate       update,
                  DDMDataCardinality  cardinality,
-                 gboolean              default_include,
-                 const char           *default_children,
+                 gboolean            default_include,
+                 const char         *default_children,
                  DDMDataValue       *value,
                  DDMNotificationSet *notifications)
 {
@@ -248,6 +253,89 @@ update_property (DDMDataResource    *resource,
                                           cardinality, default_include, default_children,
                                           value))
         ddm_notification_set_add(notifications, resource, property_id);
+}
+
+static char*
+build_data_url(const char           *icon_content_type,
+               const char           *icon_binary_data,
+               int                   icon_data_len)
+{
+    char *base64;
+    char *url;
+    
+    base64 = g_base64_encode((unsigned char*) icon_binary_data, icon_data_len);
+    
+    url = g_strdup_printf("data:%s;base64,%s", icon_content_type, base64);
+
+    g_free(base64);
+
+    return url;
+}
+
+void
+hippo_dbus_im_update_buddy_icon (DDMNotificationSet   *notifications,
+                                 const char           *buddy_id,
+                                 const char           *icon_hash,
+                                 const char           *icon_content_type,
+                                 const char           *icon_binary_data,
+                                 int                   icon_data_len)
+{
+    DDMDataValue value;
+    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoDBusIm *im = hippo_dbus_im_get(cache);
+    DDMDataModel *model = hippo_data_cache_get_model(cache);
+    HippoDBusImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
+    DDMDataResource *buddy_resource;
+    
+    /* This should only happen if we already removed a buddy before its icon data
+     * arrives. Since we get the basics on a buddy before its icon data, we
+     * would expect the buddy to exist otherwise.
+     */
+    if (buddy == NULL)
+        return;
+
+    if (buddy->icon_hash && strcmp(buddy->icon_hash, icon_hash) == 0)
+        return;
+
+    g_free(buddy->icon_hash);
+    g_free(buddy->icon_data_url);
+
+    buddy->icon_hash = g_strdup(icon_hash);
+    buddy->icon_data_url = build_data_url(icon_content_type,
+                                          icon_binary_data,
+                                          icon_data_len);
+
+
+    buddy_resource = ddm_data_model_ensure_resource(model, buddy_id, BUDDY_CLASS);
+    
+    value.type = DDM_DATA_URL;
+    value.u.string = buddy->icon_data_url;
+    
+    update_property(buddy_resource,
+                    ddm_qname_get(BUDDY_CLASS, "icon"),
+                    DDM_DATA_UPDATE_REPLACE,
+                    DDM_DATA_CARDINALITY_01,
+                    FALSE, NULL,
+                    &value,
+                    notifications);
+}
+
+gboolean
+hippo_dbus_im_has_icon_hash (const char           *buddy_id,
+                             const char           *icon_hash)
+{
+    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoDBusIm *im = hippo_dbus_im_get(cache);
+
+    HippoDBusImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
+
+    if (buddy == NULL) {
+        return FALSE;
+    } else if (buddy->icon_hash == NULL) {
+        return icon_hash == NULL;
+    } else {
+        return strcmp(buddy->icon_hash, icon_hash) == 0;
+    }
 }
 
 void
