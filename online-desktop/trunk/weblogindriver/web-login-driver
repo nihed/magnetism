@@ -10,6 +10,19 @@ import nssdecrypt
 
 _logger = logging.getLogger("WebLoginDriver")
 
+def on_pidgin_gmail(signon):
+  p = dbus.SessionBus().get_object('im.pidgin.purple.PurpleService', '/im/pidgin/purple/PurpleObject')
+  a = p.PurpleAccountNew(signon['username'] + '@gmail.com', 'prpl-jabber')
+  p.PurpleAccountSetPassword(a, base64.b64decode(signon['password']))
+  p.PurpleAccountSetRememberPassword(a, dbus.UInt32(1))
+  p.PurpleAccountSetEnabled(a, "gtk-gaim", dbus.UInt32(1))
+
+internal_matchers = [
+ ({'hostname': 'https://www.google.com',
+  'username_field': 'Email'},
+  on_pidgin_gmail),
+]
+
 BUS_NAME_STR='org.gnome.WebLoginDriver'
 BUS_IFACE_STR='org.gnome.WebLoginDriver'
 
@@ -68,10 +81,29 @@ class WebLoginDriver(dbus.service.Object):
 
     new_signons = self.__read_signons()
     if len(self.__signons) > 0:
+      changed_signons = []
       for signon in new_signons:
         if (signon not in self.__signons) or (self.__signons[signon] != new_signons[signon]):
           self.SignonChanged(signon)
+          changed_signons.append(new_signons[signon])
+    else:
+      changed_signons = new_signons.itervalues()
       # todo signal on delete?
+    for signons in changed_signons:
+      _logger.debug("evaluating %s", signons)
+      for signon in signons:
+        for (matcher,handler) in internal_matchers:
+          matched = True
+          for k,v in matcher.iteritems():
+            if signon[k] != v:
+              matched = False
+              break
+          if matched:
+            try:
+              _logger.debug("invoking handler %s for signon %s", handler, signon)
+              handler(signon)
+            except:
+              _logger.error("handler %s failed", handler, exc_info=True)
     self.__signons = new_signons
   
   def __read_signons(self):
@@ -135,7 +167,7 @@ class WebLoginDriver(dbus.service.Object):
         if hostname not in new_signons:
           new_signons[hostname] = []
         l = new_signons[hostname]
-        l.append(signon)
+        l.append(dict(signon))
         _logger.debug("processed signon for %s: %s", hostname, signon)
         process_entry = False
 
@@ -168,6 +200,12 @@ class WebLoginDriver(dbus.service.Object):
                        signature='s')
   def SignonChanged(self, signon):
     pass
+
+  @dbus.service.method(BUS_IFACE_STR,
+                       in_signature="s",
+                       out_signature="a{sv}")
+  def GetSignon(self, signon):
+    return self.__signons[signon]
 
 _driver = None
 def modmain():
