@@ -172,11 +172,22 @@ append_buddy(PluginData             *pd,
 
         append_basic_entry(&dict_iter, "icon", DBUS_TYPE_STRING, &id->hash);
     }
-    
-#if 0
-    /* FIXME */
-    append_basic_entry(&dict_iter, "status", DBUS_TYPE_STRING, &buddy->status);
-#endif
+
+    /* lots of paranoia about stuff being NULL here just because I'm
+     * not sure when it will or won't be and it's not really worth
+     * looking up
+     */
+    if (buddy->presence) {
+        const char *status;
+        PurpleStatus *pstatus;
+
+        status = NULL;
+        pstatus = purple_presence_get_active_status(buddy->presence);
+        if (pstatus)
+            status = purple_status_get_name(pstatus);
+        if (status)
+            append_basic_entry(&dict_iter, "status", DBUS_TYPE_STRING, &status);
+    }
     
     dbus_message_iter_close_container(append_iter, &dict_iter);
 }
