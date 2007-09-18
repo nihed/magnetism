@@ -288,6 +288,8 @@ hippo_dbus_im_update_buddy_icon (DDMNotificationSet   *notifications,
     DDMDataModel *model = hippo_data_cache_get_model(cache);
     HippoDBusImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
     DDMDataResource *buddy_resource;
+
+    g_debug("Updating buddy icon %s %s", buddy_id, icon_hash);
     
     /* This should only happen if we already removed a buddy before its icon data
      * arrives. Since we get the basics on a buddy before its icon data, we
@@ -319,6 +321,8 @@ hippo_dbus_im_update_buddy_icon (DDMNotificationSet   *notifications,
                     FALSE, NULL,
                     &value,
                     notifications);
+
+    g_debug("  (updated)");
 }
 
 gboolean
@@ -519,7 +523,7 @@ hippo_dbus_im_update_buddy(DDMNotificationSet *notifications,
 
 void 
 hippo_dbus_im_remove_buddy(DDMNotificationSet *notifications,
-                           const char           *buddy_id)
+                           const char         *buddy_id)
 {
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
     HippoDBusIm *im = hippo_dbus_im_get(cache);

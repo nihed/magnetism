@@ -38,6 +38,8 @@ handle_get_icon_reply(DBusMessage *reply,
     const char *bytes;
     int bytes_len;
     DDMNotificationSet *notifications;
+
+    g_debug("Received icon %s for %s", ir->hash, ir->buddy_id);
     
     if (dbus_message_get_type(reply) != DBUS_MESSAGE_TYPE_METHOD_RETURN) {
         g_warning("Error getting icon: %s", dbus_message_get_error_name(reply));
@@ -98,12 +100,14 @@ make_icon_request(ImData     *id,
 
     g_hash_table_replace(id->icon_requests,
                          ir->hash, ir);
+
+    g_debug("Sent request for icon %s for buddy %s", ir->hash, ir->buddy_id);
 }
 
 static char *
 make_buddy_resource_id(ImData     *id,
-                 const char *protocol,
-                 const char *name)
+                       const char *protocol,
+                       const char *name)
 {
     return g_strdup_printf(IM_RESOURCE_BASE "/%s/buddy/%s.%s", id->resource_path, protocol, name);
 }
@@ -193,6 +197,8 @@ notify_buddy(ImData             *id,
      */
     if (!hippo_dbus_im_has_icon_hash(resource_id, icon)) {
         make_icon_request(id, icon, resource_id);
+    } else {
+        g_debug("It looks like we already have icon %s", icon ? icon : "(none)");
     }
     
     if (new_resource_ids)
