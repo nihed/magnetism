@@ -63,6 +63,9 @@ class Resource:
             return self._get_by_id(property)
         else:
             return self.__getattr__(property)
+
+    def get_properties(self):
+        return self.__properties.items()
         
     def __init__(self, model, resource_id, class_id):
         """Create a new resource node. Do not call directly."""
@@ -89,6 +92,7 @@ class Resource:
         return property_id
                     
     def _update_property(self, property, update, cardinality, value, notifications=None):
+        
         property_id = self.__insert_property_id(property[0], property[1])
 
         if update == UPDATE_DELETE and not self.__properties.has_key(property_id):
@@ -179,7 +183,7 @@ class Resource:
         return self._get_by_id(property_id)
         
     def _dump(self):
-        print self.resource_id, self.class_id
+        print self.resource_id, self.class_id        
         for id in self.__properties:
             if id[0] == self.class_id:
                 short = id[1]

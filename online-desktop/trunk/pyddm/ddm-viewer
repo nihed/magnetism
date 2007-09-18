@@ -8,6 +8,7 @@ import sys
 from ddm import DataModel
 from dbus.mainloop.glib import DBusGMainLoop
 import gobject
+import gtk
 
 DBusGMainLoop(set_as_default=True)
 
@@ -16,7 +17,8 @@ def on_name_change(resource):
 
 def on_self_change(resource):
     print "The resource changed: "
-    resource._dump()
+    #resource._dump()
+    pass
 
 def on_self_query_success(resource):
     resource._dump()
@@ -27,7 +29,8 @@ def on_self_query_failure(code, message):
     print message
 
 def on_buddy_changed(buddy):
-    buddy._dump()
+    #buddy._dump()
+    pass
 
 def on_buddies_changed(global_resource):
     for buddy in global_resource.onlineBuddies:
@@ -58,6 +61,43 @@ def on_connect():
 def on_disconnect():
     print "Disconnected"
 
+class Tree:
+
+    def __init__(self, ddm_model):
+        self.__ddm_model = ddm_model
+        self.__ddm_model.add_added_handler(self.__resource_added)
+
+        self.__store = gtk.TreeStore(str, str)
+
+        self.__view = gtk.TreeView(self.__store)
+        self.__view.set_headers_clickable(True)
+
+        renderer = gtk.CellRendererText()
+        column = gtk.TreeViewColumn('Resource')
+        column.pack_start(renderer)
+        column.set_attributes(renderer, text=0)
+        column.set_sort_column_id(0) ## which column in the model is used to sort this display column
+        self.__view.append_column(column)
+
+    def __on_resource_changed(self, resource):
+        found_row = None
+        for row in self.__store:
+            if row[0] == resource.resource_id:
+                found_row = row
+                break
+        if found_row:
+            for (name, value) in resource.get_properties():
+                self.__store.append(found_row.iter, [name, value])
+
+    def __resource_added(self, resource):
+        self.__store.append(None, [ resource.resource_id, None ] )
+        resource.connect(self.__on_resource_changed, property=None)
+        self.__on_resource_changed(resource)
+
+    def get_widget(self):
+        return self.__view
+    
+
 parser = OptionParser()
 parser.add_option("-s", "--server", default=None, help="Desktop Data Model server to connect to (default is whichever one is running)")
 (options, args) = parser.parse_args()
@@ -75,6 +115,14 @@ model.add_connected_handler(on_connect)
 model.add_disconnected_handler(on_disconnect)
 if model.connected:
     on_connect()
+
+window = gtk.Window()
+tree = Tree(model)
+treeview = tree.get_widget()
+treeview.show()
+window.add(treeview)
+
+window.show()
 
 loop = gobject.MainLoop()
 loop.run()

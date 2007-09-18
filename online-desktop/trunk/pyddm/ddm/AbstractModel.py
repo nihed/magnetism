@@ -14,6 +14,8 @@ class AbstractModel(object):
     def __init__(self):
         self.__connected_handlers = []
         self.__disconnected_handlers = []
+        self.__added_handlers = []
+        self.__removed_handlers = []
         self.__resources = {}
         self.connected = False
 
@@ -32,6 +34,27 @@ class AbstractModel(object):
     def remove_disconnected_handler(self, handler):
         """Remove a handler added with add_disconnected_handler"""
         self.__disconnected_handlers.remove(handler)
+
+    def add_added_handler(self, handler):
+        """Add a handler that will be called when a resource is added"""
+        self.__added_handlers.append(handler)
+
+    def remove_added_handler(self, handler):
+        """Remove a handler added with add_added_handler"""
+        self.__added_handlers.remove(handler)
+
+    ## of course, currently we never remove resources...
+    def add_removed_handler(self, handler):
+        """Add a handler that will be called when a resource is removed"""
+        self.__removed_handlers.append(handler)
+
+    def remove_removed_handler(self, handler):
+        """Remove a handler added with add_removed_handler"""
+        self.__removed_handlers.remove(handler)
+
+    def get_resources(self):
+        """Get currently-known resources; keep in mind, it's totally undefined what we might currently know, it just depends on what queries people have done"""
+        return self.__resources.values()
 
     def query(self, method, fetch=None, single_result=False, **kwargs):
         """Create a query object.
@@ -91,6 +114,10 @@ class AbstractModel(object):
             return self.__resources[resource_id]
         except KeyError:
             resource = self.__resources[resource_id] = Resource(self, resource_id, class_id)
+
+            for handler in self.__added_handlers:
+                handler(resource)
+            
             return resource
 
     def _on_connected(self):

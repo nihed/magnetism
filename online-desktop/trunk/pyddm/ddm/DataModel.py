@@ -191,11 +191,13 @@ class _DBusQuery(Query):
 
     def __on_reply(self, resources):
         result = []
-        for resource_struct in resources:
-            (resource,indirect) = self.__model._update_resource_from_dbus(resource_struct)
+        notifications = NotificationSet(self.__model)        
+        for resource_struct in resources:            
+            (resource,indirect) = self.__model._update_resource_from_dbus(resource_struct, notifications=notifications)
             if resource != None and not indirect:
                 result.append(resource)
-                
+
+        notifications.send()
         self._on_success(result)
 
     def __on_error(self, *args):
