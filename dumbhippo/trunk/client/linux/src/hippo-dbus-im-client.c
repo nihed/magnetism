@@ -19,7 +19,86 @@ typedef struct {
     HippoDBusProxy *im_proxy;
     GHashTable *resource_ids;
     guint reload_idle;
+    GHashTable *icon_requests;
 } ImData;
+
+typedef struct {
+    ImData *id;
+    char   *hash;
+    char   *buddy_id;
+} IconRequest;
+
+static void
+handle_get_icon_reply(DBusMessage *reply,
+                      void        *data)
+{
+    IconRequest *ir = data;
+    DBusMessageIter toplevel_iter, byte_array_iter;
+    const char *content_type;
+    const char *bytes;
+    int bytes_len;
+    DDMNotificationSet *notifications;
+    
+    if (dbus_message_get_type(reply) != DBUS_MESSAGE_TYPE_METHOD_RETURN) {
+        g_warning("Error getting icon: %s", dbus_message_get_error_name(reply));
+        return;
+    }
+
+    dbus_message_iter_init(reply, &toplevel_iter);
+
+    g_assert(dbus_message_iter_get_arg_type(&toplevel_iter) == DBUS_TYPE_STRING);
+
+    dbus_message_iter_get_basic(&toplevel_iter, &content_type);
+
+    dbus_message_iter_next(&toplevel_iter);
+
+    g_assert(dbus_message_iter_get_arg_type(&toplevel_iter) == DBUS_TYPE_ARRAY);
+    dbus_message_iter_recurse(&toplevel_iter, &byte_array_iter);
+
+    dbus_message_iter_get_fixed_array(&byte_array_iter, &bytes, &bytes_len);
+
+    notifications = hippo_dbus_im_start_notifications();
+    
+    hippo_dbus_im_update_buddy_icon(notifications, ir->buddy_id,
+                                    ir->hash, content_type,
+                                    bytes, bytes_len);
+
+    hippo_dbus_im_send_notifications(notifications);
+
+    g_hash_table_remove(ir->id->icon_requests,
+                        ir->hash);
+    
+    g_free(ir->hash);
+    g_free(ir->buddy_id);
+    g_free(ir);
+}
+
+static void
+make_icon_request(ImData     *id,
+                  const char *icon_hash,
+                  const char *buddy_id)
+{
+    IconRequest *ir;
+
+    if (g_hash_table_lookup(id->icon_requests, icon_hash) != NULL)
+        return; /* we have a request pending already */
+    
+    ir = g_new0(IconRequest, 1);
+    ir->id = id;
+    ir->hash = g_strdup(icon_hash);
+    ir->buddy_id = g_strdup(buddy_id);
+    
+    hippo_dbus_proxy_call_method_async(id->im_proxy,
+                                       "GetIcon",
+                                       handle_get_icon_reply,
+                                       ir,
+                                       NULL,
+                                       DBUS_TYPE_STRING, &ir->hash,
+                                       DBUS_TYPE_INVALID);
+
+    g_hash_table_replace(id->icon_requests,
+                         ir->hash, ir);
+}
 
 static char *
 make_buddy_resource_id(ImData     *id,
@@ -92,7 +171,6 @@ notify_buddy(ImData             *id,
         
         dbus_message_iter_next(buddy_iter);
     }
-
     
     if (protocol == NULL || name == NULL) {
         /* not enough info */
@@ -108,6 +186,15 @@ notify_buddy(ImData             *id,
                                is_online,
                                status,
                                webdav_url);
+
+    /* has_icon_hash() allows icon==NULL. It checks whether
+     * the buddy we have stored has a matching hash, including
+     * matching hash of NULL
+     */
+    if (!hippo_dbus_im_has_icon_hash(resource_id, icon)) {
+        make_icon_request(id, icon, resource_id);
+    }
+    
     if (new_resource_ids)
         g_hash_table_replace(new_resource_ids,
                              resource_id,
@@ -333,7 +420,9 @@ hippo_dbus_im_client_add(DBusConnection *connection,
     dbus_connection_ref(id->connection);
     id->resource_path = g_strdup(resource_path);
     id->resource_ids = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                                g_free, NULL);
+                                             g_free, NULL);
+    id->icon_requests = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                              NULL, NULL);
     
     hippo_dbus_helper_register_service_tracker(connection,
                                                bus_name,
