@@ -96,8 +96,27 @@ handle_get_buddies(void            *object,
     return reply;
 }
 
+static DBusMessage*
+handle_get_icon(void            *object,
+                DBusMessage     *message,
+                DBusError       *error)
+{
+    dbus_set_error(error, DBUS_ERROR_NOT_SUPPORTED,
+                   "Have not implemented GetIcon yet");
+
+    return NULL;
+}
+
+/* Hmm, I guess this is obsoleted by a data model approach */
 static const HippoDBusMember im_members[] = {
     { HIPPO_DBUS_MEMBER_METHOD, "GetBuddyList", "", "aa{sv}", handle_get_buddies },
+
+    /* args are "s" icon ID, and returns "s" content-type and "ay" the
+     * icon in PNG or other common format.  the icon ID would be in
+     * the key-value dict for a buddy, under key "icon"
+     */
+    
+    { HIPPO_DBUS_MEMBER_METHOD, "GetIcon", "s", "say", handle_get_icon },    
     { HIPPO_DBUS_MEMBER_SIGNAL, "BuddyListChanged", "", "", NULL },
     { HIPPO_DBUS_MEMBER_SIGNAL, "BuddyChanged", "", "a{sv}", NULL },
     { 0, NULL }
