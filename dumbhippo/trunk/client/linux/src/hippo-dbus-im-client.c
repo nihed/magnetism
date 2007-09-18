@@ -22,11 +22,11 @@ typedef struct {
 } ImData;
 
 static char *
-make_resource_id(ImData     *id,
+make_buddy_resource_id(ImData     *id,
                  const char *protocol,
                  const char *name)
 {
-    return g_strdup_printf(IM_RESOURCE_BASE "/%s/%s.%s", id->resource_path, protocol, name);
+    return g_strdup_printf(IM_RESOURCE_BASE "/%s/buddy/%s.%s", id->resource_path, protocol, name);
 }
 
 static void
@@ -99,7 +99,7 @@ notify_buddy(ImData             *id,
         return;
     }
 
-    resource_id = make_resource_id(id, protocol, name);
+    resource_id = make_buddy_resource_id(id, protocol, name);
 
     hippo_dbus_im_update_buddy(notifications,
                                resource_id,
