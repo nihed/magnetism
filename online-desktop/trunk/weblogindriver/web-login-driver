@@ -67,7 +67,11 @@ class WebLoginDriver(dbus.service.Object):
     self.__idle_read_signons_id = 0
 
     new_signons = self.__read_signons()
-    # todo signal changes
+    if len(self.__signons) > 0:
+      for signon in new_signons:
+        if (signon not in self.__signons) or (self.__signons[signon] != new_signons[signon]):
+          self.SignonChanged(signon)
+      # todo signal on delete?
     self.__signons = new_signons
   
   def __read_signons(self):
@@ -96,6 +100,7 @@ class WebLoginDriver(dbus.service.Object):
         parse_state += 1 # ignore disabled hosts stuff for now
       elif parse_state == parse_states['realm']:
         m = realm_re.match(line)
+        signon = {}
         if not m:
           signon['hostname'] = line
         else:
@@ -128,8 +133,8 @@ class WebLoginDriver(dbus.service.Object):
       if process_entry:
         hostname = signon['hostname']
         if hostname not in new_signons:
-          new_signons['hostname'] = []
-        l = new_signons['hostname']
+          new_signons[hostname] = []
+        l = new_signons[hostname]
         l.append(signon)
         _logger.debug("processed signon for %s: %s", hostname, signon)
         process_entry = False
@@ -158,6 +163,11 @@ class WebLoginDriver(dbus.service.Object):
                        out_signature="a{sv}")
   def GetSignons(self):
     return self.__signons
+
+  @dbus.service.signal(BUS_IFACE_STR,
+                       signature='s')
+  def SignonChanged(self, signon):
+    pass
 
 _driver = None
 def modmain():
