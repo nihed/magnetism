@@ -16,6 +16,7 @@ PYDDM_NOT_INSTALLED=	pyddm/test.py				\
 noinst_PYTHON += $(PYDDM_NOT_INSTALLED)
 
 bin_SCRIPTS += pyddm/ddm-viewer
+EXTRA_DIST += pyddm/ddm-viewer
 
 pyddm-check-missing:
 	$(srcdir)/check-have-all-files.sh  $(srcdir) 'pyddm/*.py pyddm/ddm/*.py' $(pyddm_PYTHON) $(PYDDM_NOT_INSTALLED)
