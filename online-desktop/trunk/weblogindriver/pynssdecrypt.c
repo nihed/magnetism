@@ -5,6 +5,9 @@
 #include <nss3/pk11pub.h>
 #include <nss3/pk11sdr.h>
 
+/* incompatibility between nspr and Python */
+#undef HAVE_LONG_LONG
+
 #include <Python.h>
 
 #include <stdlib.h>
