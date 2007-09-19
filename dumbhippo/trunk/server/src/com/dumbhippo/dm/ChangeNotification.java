@@ -21,10 +21,17 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 	private Class<T> clazz;
 	private K key;
 	private long propertyMask; // bitset
+	private ClientMatcher matcher;
 
 	public ChangeNotification(Class<T> clazz, K key) {
 		this.clazz = clazz;
 		this.key = key;
+	}
+	
+	public ChangeNotification(Class<T> clazz, K key, ClientMatcher matcher) {
+		this.clazz = clazz;
+		this.key = key;
+		this.matcher = matcher;
 	}
 	
 	public void addProperty(int propertyIndex) {
@@ -46,7 +53,7 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 				model.getStore().invalidate(classHolder, key, propertyIndex, timestamp);
 				
 				logger.debug("Invalidated {}#{}.{}", new Object[] { 
-						classHolder.getClass().getSimpleName(),
+						classHolder.getBaseClass().getSimpleName(),
 						key, 
 						classHolder.getProperty(propertyIndex).getName() });
 			}
@@ -60,7 +67,7 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 		@SuppressWarnings("unchecked")
 		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
 
-		model.getStore().resolveNotifications(classHolder, key, propertyMask, result);
+		model.getStore().resolveNotifications(classHolder, key, propertyMask, result, matcher);
 	}
 	
 	@Override

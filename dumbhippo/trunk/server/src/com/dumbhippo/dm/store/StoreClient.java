@@ -25,6 +25,10 @@ public class StoreClient implements DMClient {
 		return this;
 	}
 
+	public DMClient getWrappedClient() {
+		return client;
+	}
+
 	public long allocateSerial() {
 		return nextSerial.addAndGet(1);
 	}

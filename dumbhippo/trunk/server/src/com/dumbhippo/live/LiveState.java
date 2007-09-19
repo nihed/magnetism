@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ListenerList;
+import com.dumbhippo.dm.ReadWriteSession;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.jms.JmsConnectionType;
 import com.dumbhippo.jms.JmsProducer;
@@ -630,7 +631,12 @@ public class LiveState {
 	 */
 	public void invalidateContacters(final Guid userId) {
 		// The new way of doing things, will eventually replace all of this
-		DataService.currentSessionRW().changed(UserDMO.class, userId, "contacters");
+		ReadWriteSession session = DataService.currentSessionRW();
+		
+		session.changed(UserDMO.class, userId, "contacters");
+		session.changed(UserDMO.class, userId, "blockingContacters");
+		session.changed(UserDMO.class, userId, "coldContacters");
+		session.changed(UserDMO.class, userId, "hotContacters");
 		
 		// Invalidate locally synchronously on commit
 		runTaskOnTransactionComplete(new Runnable() {
