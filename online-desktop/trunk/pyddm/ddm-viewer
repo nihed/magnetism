@@ -9,6 +9,7 @@ from ddm import DataModel
 from dbus.mainloop.glib import DBusGMainLoop
 import gobject
 import gtk
+import base64
 
 DBusGMainLoop(set_as_default=True)
     
@@ -28,6 +29,25 @@ def on_connect():
 def on_disconnect():
     print "Disconnected"
 
+def image_from_data_url(url):
+    ## data:image/png;base64,BASE64DATA
+
+    i = url.find('base64,')
+    if i < 0:
+        return None
+
+    decoded = base64.b64decode(url[i+len('base64,'):])
+
+    loader = gtk.gdk.PixbufLoader()
+    loader.write(decoded)
+    loader.close()
+
+    pixbuf = loader.get_pixbuf()
+    if pixbuf:
+        return pixbuf.scale_simple(32, 32, gtk.gdk.INTERP_BILINEAR)
+    else:
+        return None
+
 class Tree:
 
     def __init__(self, ddm_model):
@@ -39,31 +59,40 @@ class Tree:
         ## 1 = property name if depth 1
         ## 2 = property namespace
         ## 3 = property value
-        self.__store = gtk.TreeStore(str, str, str, str)
+        ## 4 = pixbuf property value
+        self.__store = gtk.TreeStore(str, str, str, str, gtk.gdk.Pixbuf)
 
         self.__view = gtk.TreeView(self.__store)
         self.__view.set_headers_clickable(True)
 
-        renderer = gtk.CellRendererText()
         column = gtk.TreeViewColumn('Resource')
+
+        renderer = gtk.CellRendererText()
         column.pack_start(renderer)
         column.set_attributes(renderer, text=0)
         column.set_sort_column_id(0) ## which column in the model is used to sort this display column
         column.set_resizable(True)
         self.__view.append_column(column)
 
-        renderer = gtk.CellRendererText()
         column = gtk.TreeViewColumn('Property')
+
+        renderer = gtk.CellRendererText()
         column.pack_start(renderer)
         column.set_attributes(renderer, text=1)
         column.set_sort_column_id(1) ## which column in the model is used to sort this display column
         column.set_resizable(True)
         self.__view.append_column(column)
 
-        renderer = gtk.CellRendererText()
         column = gtk.TreeViewColumn('Property Value')
+
+        renderer = gtk.CellRendererPixbuf()        
+        column.pack_start(renderer)
+        column.set_attributes(renderer, pixbuf=4)
+
+        renderer = gtk.CellRendererText()        
         column.pack_start(renderer)
         column.set_attributes(renderer, text=3)
+        
         column.set_sort_column_id(3) ## which column in the model is used to sort this display column
         column.set_max_width(600)
         column.set_resizable(True)
@@ -98,15 +127,20 @@ class Tree:
                 if is_sequence:
                     ## for lists, make each item in the list a sub-node
                     new_iter = self.__store.append(found_row.iter, [None, name[1], name[0],
-                                                                    str(len(value)) + " items"])
+                                                                    str(len(value)) + " items", None])
                     for e in value:
-                        self.__store.append(new_iter, [None, None, None, e])
+                        self.__store.append(new_iter, [None, None, None, e, None])
                 else:
                     ## if value is not a list, append the value
-                    self.__store.append(found_row.iter, [None, name[1], name[0], value])
+
+                    pixbuf = None
+                    if isinstance(value, basestring) and value.startswith("data:"):
+                        pixbuf = image_from_data_url(value)
+                    
+                    self.__store.append(found_row.iter, [None, name[1], name[0], value, pixbuf])
 
     def __resource_added(self, resource):
-        self.__store.append(None, [ resource.resource_id, None, None, None ] )
+        self.__store.append(None, [ resource.resource_id, None, None, None, None ] )
         resource.connect(self.__on_resource_changed, property=None)
         self.__on_resource_changed(resource)
 
