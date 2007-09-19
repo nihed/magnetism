@@ -84,7 +84,26 @@ class Tree:
 
             ## add new values
             for (name, value) in resource.get_properties():
-                self.__store.append(found_row.iter, [None, name[1], name[0], value])
+                ## hack to see if value is a sequence
+                is_sequence = False
+                try:
+                    foo = value[0:0]
+                    is_sequence = True
+                except:
+                    is_sequence = False
+
+                if isinstance(value, basestring):
+                    is_sequence = False
+                    
+                if is_sequence:
+                    ## for lists, make each item in the list a sub-node
+                    new_iter = self.__store.append(found_row.iter, [None, name[1], name[0],
+                                                                    str(len(value)) + " items"])
+                    for e in value:
+                        self.__store.append(new_iter, [None, None, None, e])
+                else:
+                    ## if value is not a list, append the value
+                    self.__store.append(found_row.iter, [None, name[1], name[0], value])
 
     def __resource_added(self, resource):
         self.__store.append(None, [ resource.resource_id, None, None, None ] )
