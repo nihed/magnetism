@@ -17,11 +17,13 @@ def on_pidgin_gmail(signon):
   p.PurpleAccountSetRememberPassword(a, dbus.UInt32(1))
   p.PurpleAccountSetEnabled(a, "gtk-gaim", dbus.UInt32(1))
 
-internal_matchers = [
- ({'hostname': 'https://www.google.com',
-  'username_field': 'Email'},
-  on_pidgin_gmail),
-]
+hints = {
+'GMail': {'hostname': 'https://www.google.com', 'username_field': 'Email'},
+}
+
+internal_matchers = {
+ 'GMail': on_pidgin_gmail,
+}
 
 BUS_NAME_STR='org.gnome.WebLoginDriver'
 BUS_IFACE_STR='org.gnome.WebLoginDriver'
@@ -80,6 +82,17 @@ class WebLoginDriver(dbus.service.Object):
     self.__idle_read_signons_id = 0
 
     new_signons = self.__read_signons()
+    for signons in new_signons.itervalues():
+      for signon in signons:
+        for hintname,hintitems in hints.iteritems():
+          matched = True
+          for k,v in hintitems.iteritems():
+            if signon[k] != v:
+              matched = False
+              break
+          if matched:
+            signon['hint'] = hintname
+            break
     if len(self.__signons) > 0:
       changed_signons = []
       for signon in new_signons:
@@ -92,13 +105,8 @@ class WebLoginDriver(dbus.service.Object):
     for signons in changed_signons:
       _logger.debug("evaluating %s", signons)
       for signon in signons:
-        for (matcher,handler) in internal_matchers:
-          matched = True
-          for k,v in matcher.iteritems():
-            if signon[k] != v:
-              matched = False
-              break
-          if matched:
+        for hintname,handler in internal_matchers.iteritems():
+          if signon.get('hint', '') == hintname:
             try:
               _logger.debug("invoking handler %s for signon %s", handler, signon)
               handler(signon)
