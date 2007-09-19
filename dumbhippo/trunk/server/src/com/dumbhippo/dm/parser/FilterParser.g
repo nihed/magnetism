@@ -78,6 +78,8 @@ term returns [Filter f]
 	:	LPAREN f=orExpression RPAREN 
 	  | "viewer" DOT pred:NAME LPAREN type=conditionType ( DOT prop:NAME )? RPAREN 
 	    { f = new Condition(pred.getText(), type, prop != null ? prop.getText() : null); }
+	  | "false" { f = FalseFilter.getInstance(); }
+	  | "true" { f = TrueFilter.getInstance(); }
 	;
 	  
 conditionType returns [ConditionType t]

@@ -10,6 +10,7 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 
+import com.dumbhippo.Pair;
 import com.dumbhippo.Site;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
@@ -21,6 +22,7 @@ import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.AimResource;
+import com.dumbhippo.persistence.ContactStatus;
 import com.dumbhippo.persistence.DesktopSetting;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
@@ -35,6 +37,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.applications.ApplicationSystem;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @DMO(classId="http://mugshot.org/p/o/user", resourceBase="/o/user")
 public abstract class UserDMO extends DMObject<Guid> {
@@ -43,14 +46,25 @@ public abstract class UserDMO extends DMObject<Guid> {
 //	private String aim;
 //	private boolean contactOfViewer;
 	
+	private static final int CONTACTERS_GROUP = 1;
+	private static final int CURRENT_TRACK_GROUP = 2; 
+	
 	private TrackHistory currentTrack;
 	private boolean currentTrackFetched;
+	
+	private Set<UserDMO> blockingContacters;
+	private Set<UserDMO> contacters; /* Includes hot/medium/cold contacters */
+	private Set<UserDMO> hotContacters;
+	private Set<UserDMO> coldContacters;
 	
 	@Inject
 	private EntityManager em;
 	
 	@Inject
 	private DMSession session;
+	
+	@Inject
+	private Viewpoint viewpoint;
 
 	@EJB
 	private IdentitySpider identitySpider;
@@ -113,15 +127,111 @@ public abstract class UserDMO extends DMObject<Guid> {
 		return result;
 	}
 	
-	@DMProperty
+	private void ensureContacters() {
+		if (contacters == null) {
+			blockingContacters = new HashSet<UserDMO>();
+			contacters = new HashSet<UserDMO>();
+			coldContacters = new HashSet<UserDMO>();
+			hotContacters = new HashSet<UserDMO>();
+
+			for (Pair<Guid,ContactStatus> pair : identitySpider.computeContactersWithStatus(user.getGuid())) {
+				Guid guid = pair.getFirst();
+				ContactStatus status = pair.getSecond();
+				
+				UserDMO contacter = session.findUnchecked(UserDMO.class, guid);
+			
+				switch (status) {
+				case NONCONTACT:
+					break;
+				case BLOCKED:
+					blockingContacters.add(contacter);
+					break;
+				case COLD:
+					coldContacters.add(contacter);
+					contacters.add(contacter);
+					break;
+				case MEDIUM:
+					contacters.add(contacter);
+					break;
+				case HOT:
+					hotContacters.add(contacter);
+					contacters.add(contacter);
+					break;
+				}
+			}
+		}
+	}
+	
+	@DMProperty(group=CONTACTERS_GROUP)
 	@DMFilter("viewer.canSeePrivate(this)")
 	public Set<UserDMO> getContacters() {
-		Set<UserDMO> result = new HashSet<UserDMO>();
+		ensureContacters();
 		
-		for (Guid guid : identitySpider.computeContacters(user.getGuid()))
-			result.add(session.findUnchecked(UserDMO.class, guid));
+		return contacters;
+	}
+	
+	/* The @DMFilter("false") below may seem odd, but we don't want even the 
+	 * user themselves to be able to see how other people have tagged them.
+	 * These properties are here only for caching. 
+	 */
+	
+	@DMProperty(group=CONTACTERS_GROUP)
+	@DMFilter("false")
+	public Set<UserDMO> getBlockingContacters() {
+		ensureContacters();
 		
-		return result;
+		return blockingContacters;
+	}
+	
+	@DMProperty(group=CONTACTERS_GROUP)
+	@DMFilter("false")
+	public Set<UserDMO> getColdContacters() {
+		ensureContacters();
+		
+		return coldContacters;
+	}
+
+	@DMProperty(group=CONTACTERS_GROUP)
+	@DMFilter("false")
+	public Set<UserDMO> getHotContacters() {
+		ensureContacters();
+		
+		return hotContacters;
+	}
+	
+	private boolean isInContacterSet(String propertyName) {
+		if (viewpoint instanceof UserViewpoint) {
+			try {
+				@SuppressWarnings("unchecked")
+				Set<Guid> contacterIds = (Set<Guid>)session.getRawProperty(UserDMO.class, getKey(), propertyName);
+				
+				Guid userId = ((UserViewpoint)viewpoint).getViewerId();
+				
+				return contacterIds.contains(userId);
+			} catch (NotFoundException e) {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+	
+	@DMProperty(cached=false)
+	public int getContactStatus() {
+		ContactStatus status;
+		
+		if (isInContacterSet("blockingContacters"))
+			status = ContactStatus.BLOCKED;
+		else if (!isInContacterSet("contacters"))
+			status = ContactStatus.NONCONTACT;
+		else if (isInContacterSet("hotContacters"))
+			status = ContactStatus.HOT;
+		else if (isInContacterSet("coldContacters"))
+			status = ContactStatus.COLD;
+		else
+			status = ContactStatus.MEDIUM;
+		
+		return status.ordinal();
 	}
 	
 	@DMProperty
@@ -232,7 +342,7 @@ public abstract class UserDMO extends DMObject<Guid> {
 		}
 	}
 	
-	@DMProperty
+	@DMProperty(group=CURRENT_TRACK_GROUP)
 	public TrackDMO getCurrentTrack() {
 		ensureCurrentTrack();
 		
@@ -242,7 +352,7 @@ public abstract class UserDMO extends DMObject<Guid> {
 			return null;
 	}
 	
-	@DMProperty
+	@DMProperty(group=CURRENT_TRACK_GROUP)
 	public long getCurrentTrackPlayTime() {
 		ensureCurrentTrack();
 		

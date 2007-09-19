@@ -5,7 +5,6 @@ import javax.persistence.EntityManager;
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.schema.DMClassHolder;
-import com.dumbhippo.dm.schema.DMPropertyHolder;
 import com.dumbhippo.dm.store.StoreKey;
 import com.dumbhippo.server.NotFoundException;
 
@@ -112,7 +111,7 @@ public abstract class DMSession {
 		return new StoreKey<K,T>((DMClassHolder<K,T>) classHolder, key);
 	}
 	
-	private <K, T extends DMObject<K>> StoreKey<K,T> makeStoreKey(Class<T> clazz, K key) {
+	protected <K, T extends DMObject<K>> StoreKey<K,T> makeStoreKey(Class<T> clazz, K key) {
 		DMClassHolder<?,? extends DMObject<?>> classHolder = model.getClassHolder(clazz); 
 		return newStoreKeyHack(classHolder, key);
 	}
@@ -178,35 +177,7 @@ public abstract class DMSession {
 	 * @return 
 	 * @throws NotFoundException
 	 */
-	public <K, T extends DMObject<K>> Object getRawProperty(Class<T> clazz, K key, String propertyName) throws NotFoundException {
-		StoreKey<K,T> storeKey = makeStoreKey(clazz, key);
-		
-		int propertyIndex = storeKey.getClassHolder().getPropertyIndex(propertyName);
-		if (propertyIndex < 0)
-			throw new RuntimeException("Class " + clazz.getName() + " has no property " + propertyName);
-
-		// We look first in the cache, and only if that fails do we go ahead and create an 
-		// object. The object we create is created from the special "unfiltered session",
-		// which does no filtering and no caching.
-		try {
-			return model.getStore().fetch(storeKey, propertyIndex);
-		} catch (NotCachedException e) {
-			DMPropertyHolder<?,? extends DMObject<?>,?> propertyHolder = storeKey.getClassHolder().getProperty(propertyIndex);
-			T object = model.getUnfilteredSession().findUnchecked(storeKey);
-
-			// There is some inefficiency here ... the property value is dehydrated twice;
-			// once when the property is cached in the cache as a side effect of fetching
-			// it, and again here. But dehydration is pretty fast, and doing it this
-			// way is robust against the case where the property is *not* cached.
-			// (because it's viewer specific, because the property is immediately
-			// evicted from the cache again, etc.)
-			try {
-				return propertyHolder.dehydrate(propertyHolder.getRawPropertyValue(object));
-			} catch (LazyInitializationException e2) {
-				throw e2.getCause();
-			}
-		}
-	}
+	public abstract <K, T extends DMObject<K>> Object getRawProperty(Class<T> clazz, K key, String propertyName) throws NotFoundException;
 	
 	public Object getInjectableEntityManager() {
 		if (injectableEntityManager == null)

@@ -65,6 +65,11 @@ public class UserViewpoint extends Viewpoint {
 		return viewer;
 	}
 	
+	public Guid getViewerId() {
+		return viewerId;
+	}
+	
+	@Override
 	public Site getSite() {
 		return site;
 	}

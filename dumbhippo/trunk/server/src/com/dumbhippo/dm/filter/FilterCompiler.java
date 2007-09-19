@@ -355,6 +355,17 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	 */
 	private void generateKeyPhaseCode(FilterAssembler assembler, FilterStateMap stateMap, ReturnAction onTrueReturn, ReturnAction onFalseReturn) {
 		boolean needTrueReturn = false;
+
+		/* Special-case true/false filters specially; the code below assumes that we start
+		 * off with a state with conditions and evolve to TRUE/FALSE
+		 */
+		if (stateMap.getRoot() == FilterState.TRUE_STATE) {
+			addReturn(assembler, onTrueReturn);
+			return;
+		} else if (stateMap.getRoot() == FilterState.FALSE_STATE) {
+			addReturn(assembler, onFalseReturn);
+			return;
+		}
 		
 		for (FilterState state : stateMap.getGlobalStates()) {
 			assembler.label(state.getName(), state.getFilter().toString());

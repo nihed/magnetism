@@ -68,11 +68,11 @@ public class SetResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends 
 	}
 	
 	@Override
-	public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session) {
+	public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session, boolean filter) {
 		@SuppressWarnings("unchecked")
 		Set<KI> itemKeys= (Set<KI>)value;
 		
-		if (listFilter != null)
+		if (filter && listFilter != null)
 			itemKeys = listFilter.filterKeys(viewpoint, key, itemKeys);
 			
 		if (itemKeys.isEmpty())

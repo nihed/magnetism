@@ -10,6 +10,8 @@ public class FilterParserTests extends AbstractParserTests {
 	}
 		
 	public void testParser() throws Exception {
+		expectIdentity("true");
+		expectIdentity("false");
 		expectIdentity("viewer.p(this)");
 		expectIdentity("viewer.p(item)");
 		expectIdentity("viewer.p(all)");

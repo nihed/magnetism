@@ -211,8 +211,16 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		return "";
 	}
 	
+	public boolean isCached() {
+		return annotation.cached();
+	}
+
+	public int getGroup() {
+		return annotation.group();
+	}
+	
 	abstract public Object dehydrate(Object value);
-	abstract public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session);
+	abstract public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session, boolean filter);
 	abstract public Object filter(DMViewpoint viewpoint, K key, Object value);
 	abstract public Cardinality getCardinality();
 	

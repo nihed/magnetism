@@ -1,15 +1,18 @@
 package com.dumbhippo.server;
 
 import java.net.URL;
+import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.Pair;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
+import com.dumbhippo.persistence.ContactStatus;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
@@ -253,6 +256,14 @@ public interface IdentitySpider {
 	 * @return guids of contacts
 	 */
 	public Set<Guid> computeContacters(Guid userId);
+	
+	/**
+	 * Like computeContacters, but also gets the ContactStatus for each contact
+	 * 
+	 * @param userId
+	 * @return list of pairs of contacter GUID and the status for that contacter
+	 */
+	public List<Pair<Guid,ContactStatus>> computeContactersWithStatus(Guid userId);
 	
 	/**
 	 * Gets the number of friends that this user has listed; you should generally
