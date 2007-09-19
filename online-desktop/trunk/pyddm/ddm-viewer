@@ -11,51 +11,18 @@ import gobject
 import gtk
 
 DBusGMainLoop(set_as_default=True)
-
-def on_name_change(resource):
-    print "The name changed: ", resource.name
-
-def on_self_change(resource):
-    print "The resource changed: "
-    #resource._dump()
-    pass
-
-def on_self_query_success(resource):
-    resource._dump()
-    resource.connect(on_name_change, "name")
-    resource.connect(on_self_change)
-
-def on_self_query_failure(code, message):
-    print message
-
-def on_buddy_changed(buddy):
-    #buddy._dump()
-    pass
-
-def on_buddies_changed(global_resource):
-    for buddy in global_resource.onlineBuddies:
-        buddy.disconnect(on_buddy_changed) # In case we connected previously
-        buddy.connect(on_buddy_changed)
-        on_buddy_changed(buddy)
-    
-def on_global_query_success(global_resource):
-    global_resource.connect(on_buddies_changed, "onlineBuddies")
-    on_buddies_changed(global_resource)
-
-def on_global_query_failure(code, message):
-    print message
     
 def on_connect():
     print "Connected"
 
+    ## Queries are called here for the side effect of getting them in DataModel so
+    ## they will be in the tree view. Eventually we should make the query something
+    ## you can put in the UI or at least on the command line.
+    
     query = model.query_resource(model.self_id, "+;contacts +;contacters +;lovedAccounts +;email;aim")
-    query.add_handler(on_self_query_success)
-    query.add_error_handler(on_self_query_failure)
     query.execute()
 
     query = model.query_resource("online-desktop:/o/global", "onlineBuddies [+;icon]")
-    query.add_handler(on_global_query_success)
-    query.add_error_handler(on_global_query_failure)
     query.execute()
 
 def on_disconnect():
@@ -67,7 +34,12 @@ class Tree:
         self.__ddm_model = ddm_model
         self.__ddm_model.add_added_handler(self.__resource_added)
 
-        self.__store = gtk.TreeStore(str, str)
+        ## model columns are
+        ## 0 = resource ID if depth 0
+        ## 1 = property name if depth 1
+        ## 2 = property namespace
+        ## 3 = property value
+        self.__store = gtk.TreeStore(str, str, str, str)
 
         self.__view = gtk.TreeView(self.__store)
         self.__view.set_headers_clickable(True)
@@ -77,6 +49,24 @@ class Tree:
         column.pack_start(renderer)
         column.set_attributes(renderer, text=0)
         column.set_sort_column_id(0) ## which column in the model is used to sort this display column
+        column.set_resizable(True)
+        self.__view.append_column(column)
+
+        renderer = gtk.CellRendererText()
+        column = gtk.TreeViewColumn('Property')
+        column.pack_start(renderer)
+        column.set_attributes(renderer, text=1)
+        column.set_sort_column_id(1) ## which column in the model is used to sort this display column
+        column.set_resizable(True)
+        self.__view.append_column(column)
+
+        renderer = gtk.CellRendererText()
+        column = gtk.TreeViewColumn('Property Value')
+        column.pack_start(renderer)
+        column.set_attributes(renderer, text=3)
+        column.set_sort_column_id(3) ## which column in the model is used to sort this display column
+        column.set_max_width(600)
+        column.set_resizable(True)
         self.__view.append_column(column)
 
     def __on_resource_changed(self, resource):
@@ -86,11 +76,18 @@ class Tree:
                 found_row = row
                 break
         if found_row:
+            ## remove the old values
+            child = self.__store.iter_children(found_row.iter)
+            while child:
+                self.__store.remove(child)
+                child = self.__store.iter_children(found_row.iter)
+
+            ## add new values
             for (name, value) in resource.get_properties():
-                self.__store.append(found_row.iter, [name, value])
+                self.__store.append(found_row.iter, [None, name[1], name[0], value])
 
     def __resource_added(self, resource):
-        self.__store.append(None, [ resource.resource_id, None ] )
+        self.__store.append(None, [ resource.resource_id, None, None, None ] )
         resource.connect(self.__on_resource_changed, property=None)
         self.__on_resource_changed(resource)
 
@@ -117,10 +114,14 @@ if model.connected:
     on_connect()
 
 window = gtk.Window()
+sw = gtk.ScrolledWindow()
 tree = Tree(model)
 treeview = tree.get_widget()
 treeview.show()
-window.add(treeview)
+sw.add(treeview)
+sw.show()
+window.add(sw)
+window.set_default_size(800, 700)
 
 window.show()
 
