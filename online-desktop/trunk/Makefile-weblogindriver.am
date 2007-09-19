@@ -6,3 +6,6 @@ nssdecrypt_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES) $(WEBLOGINDRIVER_CFLA
 nssdecrypt_la_LIBADD = $(NSPR_LIBS) $(WEBLOGINDRIVER_LIBS)
 
 nssdecrypt_la_SOURCES=weblogindriver/pynssdecrypt.c
+
+bin_SCRIPTS += weblogindriver/web-login-driver
+EXTRA_DIST += weblogindriver/web-login-driver
