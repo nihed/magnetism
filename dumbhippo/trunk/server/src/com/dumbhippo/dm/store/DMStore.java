@@ -7,6 +7,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.ClientMatcher;
 import com.dumbhippo.dm.ClientNotificationSet;
 import com.dumbhippo.dm.DMClient;
 import com.dumbhippo.dm.DMKey;
@@ -128,12 +129,12 @@ public class DMStore {
 		} while (node.isEvicted());
 	}
 
-	public <K, T extends DMObject<K>>  void resolveNotifications(DMClassHolder<K,T> classHolder, K key, long propertyMask, ClientNotificationSet result) {
+	public <K, T extends DMObject<K>>  void resolveNotifications(DMClassHolder<K,T> classHolder, K key, long propertyMask, ClientNotificationSet result, ClientMatcher matcher) {
 		StoreNode<K,T> node = getNode(classHolder, key);
 		if (node == null)
 			return;
 		
-		node.resolveNotifications(propertyMask, result);
+		node.resolveNotifications(propertyMask, result, matcher);
 	}
 	
 	public StoreClient openClient(DMClient client) {

@@ -64,6 +64,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.UserClientMatcher;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
@@ -361,6 +362,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 
+	private void invalidateContactStatus(Guid contacterId, Guid contactId) {
+		DataService.currentSessionRW().changed(UserDMO.class, contactId, "contactStatus",
+			new UserClientMatcher(contacterId));
+	}
+	
 	public void addVerifiedOwnershipClaim(User claimedOwner, Resource res) {
 
 		// first be sure it isn't a dup - the db constraints check this too,
@@ -402,8 +408,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		if (!newContacters.isEmpty()) {
 			LiveState.getInstance().invalidateContacters(claimedOwner.getGuid());
 			
-			for (Guid contacter : newContacters)
+			for (Guid contacter : newContacters) {
+				invalidateContactStatus(contacter, claimedOwner.getGuid());
 				LiveState.getInstance().invalidateContacts(contacter);
+			}
 		}						
 	}
 
@@ -440,8 +448,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				if (!oldContacters.isEmpty()) {
 					LiveState.getInstance().invalidateContacters(owner.getGuid());
 					
-					for (Guid contacter : oldContacters)
+					for (Guid contacter : oldContacters) {
+						invalidateContactStatus(contacter, owner.getGuid());
 						LiveState.getInstance().invalidateContacts(contacter);
+					}
 				}						
 				
 				return;
@@ -533,8 +543,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 		LiveState liveState = LiveState.getInstance();
 		liveState.invalidateContacts(user.getGuid());
-		if (contactUser != null)
+		if (contactUser != null) {
+			invalidateContactStatus(user.getGuid(), contactUser.getGuid());			
 			liveState.invalidateContacters(contactUser.getGuid());
+		}
 
 		return contact;
 	}
@@ -638,8 +650,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		LiveState liveState = LiveState.getInstance();
 		liveState.invalidateContacts(user.getGuid());
 		for (User removedUser : removedUsers) {
+			invalidateContactStatus(user.getGuid(), removedUser.getGuid());
 			liveState.invalidateContacters(removedUser.getGuid());
-			
 		}
 	}
 	

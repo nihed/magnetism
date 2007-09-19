@@ -14,7 +14,6 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
 import com.dumbhippo.Site;
-import com.dumbhippo.dm.DMClient;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.dm.DataModel;
@@ -22,9 +21,10 @@ import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.dm.store.StoreClient;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.server.dm.UserClient;
 import com.dumbhippo.server.views.UserViewpoint;
 
-public class XmppClient implements DMClient {
+public class XmppClient implements UserClient {
 	private XmppClientManager clientManager;
 	private DataModel model;
 	private ClientSession clientSession;
@@ -47,6 +47,10 @@ public class XmppClient implements DMClient {
 	
 	public StoreClient getStoreClient() {
 		return storeClient;
+	}
+	
+	public Guid getUserId() {
+		return userId;
 	}
 
 	public void close() {
@@ -188,5 +192,10 @@ public class XmppClient implements DMClient {
 		public int compareTo(QueuedPacket other) {
 			return serial < other.serial ? -1 : (serial == other.serial ? 0 : 1);
 		}
+	}
+	
+	@Override
+	public String toString() {
+		return "{XmppClient userId=" + userId + " address=" + clientSession.getAddress() + "}";
 	}
 }

@@ -5,12 +5,19 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.ClientMatcher;
 import com.dumbhippo.dm.ClientNotificationSet;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.NotCachedException;
 import com.dumbhippo.dm.schema.DMClassHolder;
 
 public class StoreNode<K,T extends DMObject<K>> extends StoreKey<K,T> {
+	@SuppressWarnings("unused")
+	static final private Logger logger = GlobalSetup.getLogger(StoreNode.class);
+
 	private static final Object nil = new Boolean(false);
 
 	private long timestamp = -1;
@@ -94,11 +101,21 @@ public class StoreNode<K,T extends DMObject<K>> extends StoreKey<K,T> {
 		return null; 
 	}
 	
-	public synchronized void resolveNotifications(long properties, ClientNotificationSet result) {
+	public synchronized void resolveNotifications(long properties, ClientNotificationSet result, ClientMatcher matcher) {
 		if (evicted || registrations == null)
 			return;
 		
-		for (Registration<K,T> registration : registrations)
-			registration.getFetch().resolveNotifications(registration.getClient(), this, properties, result); 
+		for (Registration<K,T> registration : registrations) {
+			if (matcher != null && !matcher.matches(registration.getClient().getWrappedClient())) {
+//				logger.debug("Skipping notification on {} because ClientMatcher {} doesn't match {}", 
+//						     new Object[] { this, matcher, registration.getClient() });
+				continue;
+			}
+			
+//			logger.debug("For {}/{}, comparing notified properties {} to registered properties {}",
+//						 new Object[] { this, registration.getClient(), properties, registration.getFetch().getFetchString(classHolder) });
+			
+			registration.getFetch().resolveNotifications(registration.getClient(), this, properties, result);
+		}
 	}
 }

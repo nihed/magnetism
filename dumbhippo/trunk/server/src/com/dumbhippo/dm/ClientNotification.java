@@ -17,6 +17,14 @@ import com.dumbhippo.dm.store.StoreKey;
  */
 public class ClientNotification {
 	private StoreClient client;
+
+	// We keep a flat list here, and don't try to merge together multiple calls to addObjectProperties
+	// for the same resource. In the case where notifications are done globally, the merging is
+	// done when adding notifications to the ChangeNotificationSet, but if the person calling
+	// session.changed() passed in a ClientMatcher, then no merge is done. I think that there
+	// shouldn't be much harm for having duplicates of the same resource in the notifications
+	// list, but if it proves to be problematical and/or inefficient, we might want to switch
+	// to a map instead.
 	private List<ObjectNotification<?,?>> notifications = new ArrayList<ObjectNotification<?,?>>();
 	
 	public ClientNotification(StoreClient client) {

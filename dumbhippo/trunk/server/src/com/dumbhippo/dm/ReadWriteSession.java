@@ -53,11 +53,29 @@ public class ReadWriteSession extends CachedSession {
 	 * @param propertyName the name of the property that changed
 	 */
 	public <K, T extends DMObject<K>> void changed(Class<T> clazz, K key, String propertyName) {
-		notificationSet.changed(model, clazz, key, propertyName);
+		changed(clazz, key, propertyName, null);
+	}
+	
+	/**
+	 * Indicate that a resource property has changed; this invalidates any cached value for the
+	 * property and also triggers sending notifications to any clients that have registered
+	 * for notification on the property. Notifications will only be sent after the current
+	 * transaction commits succesfully.
+	 * 
+	 * @param <K>
+	 * @param <T>
+	 * @param clazz the class of the resource where the property changed
+	 * @param key the key of the resource  where the property changed
+	 * @param propertyName the name of the property that changed
+	 * @param matcher used to determine what clients to notify of the change; this would
+	 *   typically be used for a change to a viewer-dependent uncached property. 
+	 */
+	public <K, T extends DMObject<K>> void changed(Class<T> clazz, K key, String propertyName, ClientMatcher matcher) {
+		notificationSet.changed(model, clazz, key, propertyName, matcher);
 		
 		// FIXME: invalidate the property in the session-local cached object if one exists
 	}
-	
+
 	@Override
 	public void afterCompletion(int status) {
 		if (status == Status.STATUS_COMMITTED)

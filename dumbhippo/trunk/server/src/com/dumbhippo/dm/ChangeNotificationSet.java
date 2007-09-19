@@ -1,7 +1,9 @@
 package com.dumbhippo.dm;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -24,13 +26,14 @@ public class ChangeNotificationSet implements Serializable {
 	@SuppressWarnings("unused")
 	private static Logger logger = GlobalSetup.getLogger(ChangeNotificationSet.class);
 
-	private Map<ChangeNotification<?,?>, ChangeNotification<?,?>> notifications = new HashMap<ChangeNotification<?,?>, ChangeNotification<?,?>>();
+	private Map<ChangeNotification<?,?>, ChangeNotification<?,?>> notifications;
+	private List<ChangeNotification<?,?>> matchedNotifications;
 	private long timestamp;
 	
 	public ChangeNotificationSet(DataModel model) {
 	}
 
-	public <K, T extends DMObject<K>> void changed(DataModel model, Class<T> clazz, K key, String propertyName) {
+	public <K, T extends DMObject<K>> void changed(DataModel model, Class<T> clazz, K key, String propertyName, ClientMatcher matcher) {
 		@SuppressWarnings("unchecked")
 		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
 		int propertyIndex = classHolder.getPropertyIndex(propertyName);
@@ -43,14 +46,26 @@ public class ChangeNotificationSet implements Serializable {
 			key = clonedKey;
 		}
 
-		ChangeNotification<?,?> notification = new ChangeNotification<K,T>(clazz, key);
-		ChangeNotification<?,?> oldNotification = notifications.get(notification);
-		if (oldNotification != null) {
-			oldNotification.addProperty(propertyIndex);
+		if (matcher != null) {
+			if (matchedNotifications == null)
+				matchedNotifications = new ArrayList<ChangeNotification<?,?>>();
+			
+			ChangeNotification<?,?> notification = new ChangeNotification<K,T>(clazz, key, matcher);
+			notification.addProperty(propertyIndex);;
+			matchedNotifications.add(notification);
 		} else {
-			notification = new ChangeNotification<K,T>(clazz, key);
-			notifications.put(notification, notification);
-			notification.addProperty(propertyIndex);
+			if (notifications == null)
+				notifications = new HashMap<ChangeNotification<?,?>, ChangeNotification<?,?>>();
+	
+			ChangeNotification<?,?> notification = new ChangeNotification<K,T>(clazz, key);
+			ChangeNotification<?,?> oldNotification = notifications.get(notification);
+			if (oldNotification != null) {
+				oldNotification.addProperty(propertyIndex);
+			} else {
+				notification = new ChangeNotification<K,T>(clazz, key);
+				notifications.put(notification, notification);
+				notification.addProperty(propertyIndex);
+			}
 		}
 	}
 	
@@ -60,14 +75,31 @@ public class ChangeNotificationSet implements Serializable {
 	}
 	
 	public void doInvalidations(DataModel model) {
-		for (ChangeNotification<?, ?> notification : notifications.values())
-			notification.invalidate(model, timestamp);
+		if (notifications != null) {
+			for (ChangeNotification<?, ?> notification : notifications.values())
+				notification.invalidate(model, timestamp);
+		}
+		
+		if (matchedNotifications != null) {
+			// I can't think of any valid reason for doing a ClientMatch notification
+			// on a cached property, so this is probably pointless.
+			
+			for (ChangeNotification<?, ?> notification : matchedNotifications)
+				notification.invalidate(model, timestamp);
+		}
 	}
 	
 	public ClientNotificationSet resolveNotifications(DataModel model) {
 		ClientNotificationSet clientNotifications = new ClientNotificationSet();
-		for (ChangeNotification<?, ?> changeNotification : notifications.values())
-			changeNotification.resolveNotifications(model, clientNotifications);
+		
+		if (notifications != null) {
+			for (ChangeNotification<?, ?> changeNotification : notifications.values())
+				changeNotification.resolveNotifications(model, clientNotifications);
+		}
+		if (matchedNotifications != null) {
+			for (ChangeNotification<?, ?> changeNotification : matchedNotifications)
+				changeNotification.resolveNotifications(model, clientNotifications);
+		}
 		
 		return clientNotifications;
 	}
