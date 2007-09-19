@@ -7,10 +7,12 @@ import gnome.ui
 import dbus, dbus.glib
 import hippo
 
+import gdata.docs as gdocs
 import bigboard.libbig as libbig
 from bigboard.libbig.logutil import log_except
 from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock
+import bigboard.stocks.google_stock as google_stock  
 from bigboard.big_widgets import PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, Separator
 from bigboard.libbig.xmlquery import query as xml_query, get_attrs as xml_get_attrs
 
@@ -29,10 +31,11 @@ class IconLink(CanvasHBox):
         self.link = hippo.CanvasLink(text=text, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END,)
         self.append(self.link)
 
-class FilesStock(Stock):
+class FilesStock(Stock, google_stock.GoogleStock):
     """Shows recent files."""
     def __init__(self, *args, **kwargs):
-        super(FilesStock,self).__init__(*args, **kwargs)
+        Stock.__init__(self, *args, **kwargs)
+        google_stock.GoogleStock.__init__(self, *args, **kwargs)
 
         self.__display_limit = 3
         self.__thumbnails = gnome.ui.ThumbnailFactory(gnome.ui.THUMBNAIL_SIZE_NORMAL)
@@ -48,6 +51,24 @@ class FilesStock(Stock):
         self.__monitor = gnomevfs.monitor_add('file://' + self.__recentf_path, gnomevfs.MONITOR_FILE, self.__redisplay)
         gobject.idle_add(self.__redisplay)
         
+    def update_google_data(self, google_key = None):
+        if google_key is not None:
+            self._googles[google_key].fetch_documents(self.__on_documents_load, self.__on_failed_load)
+        else:            
+            for gobj in self._googles.values():
+                gobj.fetch_documents(self.__on_documents_load, self.__on_failed_load)    
+
+    def remove_google_data(self, google_key):
+        pass
+
+    def __on_documents_load(self, url, data, gobj):
+        document_list = gdocs.DocumentListFeedFromString(data)
+        for document_entry in document_list.entry:
+            _logger.debug("document entry: %s", document_entry)
+
+    def __on_failed_load(self, response):
+        pass
+
     def __on_more_button(self):
         _logger.debug("more!")
         subprocess.Popen(['nautilus', '--browser', os.path.expanduser('~/Desktop')]) 

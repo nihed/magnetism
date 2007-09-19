@@ -35,7 +35,7 @@ class GoogleStock(polling.Task):
             if not self.is_running():
                 self.start()
         else:
-            key = self.__get_google_key(gobj)
+            key = self.get_google_key(gobj)
             if key is not None:
                 if len(self._googles) == 1: 
                     self.stop()

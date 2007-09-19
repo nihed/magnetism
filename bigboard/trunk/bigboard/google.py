@@ -537,12 +537,12 @@ class Google(gobject.GObject):
         errcb(exc_info)
 
     def __have_login_fetch_documents(self, cb, errcb):
-
-        uri = 'http://spreadsheets.google.com/feeds/spreadsheets/private/full'
+        uri = 'http://docs.google.com/feeds/documents/private/full'
+        # uri = 'http://spreadsheets.google.com/feeds/spreadsheets/private/full'
 
         self.__fetcher.fetch(uri, self.__username, self.__password,
-                             lambda url, data: self.__on_documents_load(url, data, cb, errcb),
-                             lambda url, exc_info: self.__on_documents_error(url, exc_info, errcb),
+                             lambda url, data: cb(url, data, self),
+                             lambda url, resp: errcb(resp),
                              lambda url: self.__on_bad_auth())
 
     def fetch_documents(self, cb, errcb):

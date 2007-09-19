@@ -142,26 +142,13 @@ def create_account_url(account):
         return "http://www.google.com/calendar"
     else:
         return "https://www.google.com/calendar/hosted/" + domain
-
-# for some reason python library doesn't provide a value
-# for gCal:selected element, so we need to fish it out from
-# extension elements list; it should be a simple change to add 
-# getting gCal:selected in our local copy of the library 
-def get_selected_value(extension_elements):
-    for extension in extension_elements:
-        _logger.debug("tag %s value %s", extension.tag, extension.attributes['value'])  
-        if extension.tag == 'selected' and extension.namespace == 'http://schemas.google.com/gCal/2005':
-            return extension.attributes['value'].find('true') >= 0 and 'true' or 'false'
-    # return false since that way we are more likely to notice something is
-    # wrong; though true would be a meaningful default, gCal:selected should always be there 
-    return 'false'
     
 # hidden calendars can still be selected, we should check both flags and only
 # include the ones that are selected and not hidden
 # we don't include calendars to which you only have 'freebusy' access level, because
 # busy 'events' and notifications about them don't seem useful
 def include_calendar(calendar):
-    return get_selected_value(calendar.extension_elements) == 'true' and calendar.hidden.value == 'false' and ['owner', 'contributor', 'read'].count(calendar.access_level.value) == 1
+    return calendar.selected.value == 'true' and calendar.hidden.value == 'false' and ['owner', 'contributor', 'read'].count(calendar.access_level.value) == 1
 
 class Event(AutoStruct):
     def __init__(self):
@@ -572,7 +559,8 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
     def set_size(self, size):
         super(CalendarStock, self).set_size(size)
 
-    def __remove_calendar_list_and_events(self, google_key):
+    # removes calendar list and events 
+    def remove_google_data(self, google_key):
         removed_calendar_dictionary = {}
         affected_calendar_ids = [] 
         for calendar_item in self.__calendars.items():
@@ -597,6 +585,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         self.__refresh_events()
 
     def __on_calendar_list_load(self, url, data, gobj):
+        _logger.debug("loaded calendar list %s", data)
         google_key = self.get_google_key(gobj)
         if google_key is None:
             _logger.warn("didn't find google_key for %s", gobj)
@@ -973,6 +962,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         return False       
      
     def __on_failed_load(self, response):
+        _logger.debug("load failed")
         pass
 
     def __update_calendar_list_and_events(self, google_key = None):

@@ -561,6 +561,8 @@ class GoogleLoginAuthentication(Authentication):
         if service == 'xapi' and  request_uri.find("calendar") > 0:
             service = "cl"
         # Upstream httplib2 comments this out since google doesn't do 401 on those
+        elif request_uri.find("documents") > 0:
+            service = "writely" 
         elif request_uri.find("spreadsheets") > 0:
             service = "wise"
 
