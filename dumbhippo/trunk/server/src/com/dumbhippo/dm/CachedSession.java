@@ -7,12 +7,17 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.filter.CompiledFilter;
+import com.dumbhippo.dm.schema.DMPropertyHolder;
 import com.dumbhippo.dm.store.StoreKey;
 import com.dumbhippo.server.NotFoundException;
 
 /**
  * CachedSession is an abstract base class for the DMSession subclasses that keep
  * around a session-local cache of DMObjects.
+ * 
+ * FIXME: There are no other subclasses to DMSession any more; so either DMSession
+ *  should be made into an interface, and this into the implementation, or this
+ *  and DMSession should just be merged.
  * 
  * @author otaylor
  */
@@ -27,7 +32,10 @@ public abstract class CachedSession extends DMSession {
 	// Set true when we are running with a temporary viewpoint ("su"); in that case
 	// we must bypass the cache to avoid cross-pollution with the parent viewpoint
 	private boolean bypassCache;
-
+	
+	// Set true when fetching a raw property value
+	protected boolean bypassFilter;
+	
 	protected CachedSession(DataModel model, DMClient client, DMViewpoint viewpoint) {
 		super(model);
 		this.client = client;
@@ -59,9 +67,11 @@ public abstract class CachedSession extends DMSession {
 		// logger.debug("Didn't find object for key {}, creating a new one", storeKey.getKey());
 		return storeKey.getClassHolder().createInstance(storeKey.getKey(), this);
 	}
-	
 
 	private <K, T extends DMObject<K>> T filterRawObject(StoreKey<K,T> storeKey, T raw) {
+		if (bypassFilter)
+			return raw;
+		
 		CompiledFilter<K,T> filter = storeKey.getClassHolder().getFilter();
 		if (filter != null) {
 			return filter.filterObject(getViewpoint(), raw);
@@ -156,4 +166,63 @@ public abstract class CachedSession extends DMSession {
 	public void runAsSystem(Runnable runnable) {
 		runWithViewpoint(model.getSystemViewpoint(), runnable);
 	}
+
+	@Override
+	public <K, T extends DMObject<K>> Object getRawProperty(Class<T> clazz, K key, String propertyName) throws NotFoundException {
+		StoreKey<K,T> storeKey = makeStoreKey(clazz, key);
+		
+		int propertyIndex = storeKey.getClassHolder().getPropertyIndex(propertyName);
+		if (propertyIndex < 0)
+			throw new RuntimeException("Class " + clazz.getName() + " has no property " + propertyName);
+		
+		DMPropertyHolder<?,? extends DMObject<?>,?> propertyHolder = storeKey.getClassHolder().getProperty(propertyIndex);
+
+		// We look first in the cache, and only if that fails do we go ahead and create an 
+		// object. The object we create is created from the special "unfiltered session",
+		// which does no filtering and no caching.
+		try {
+			if (propertyHolder.isCached())
+				return model.getStore().fetch(storeKey, propertyIndex);
+		} catch (NotCachedException e) {
+			/* Fall through */
+		}
+		
+		DMClient oldClient = client;
+		DMViewpoint oldViewpoint = viewpoint;
+		boolean oldBypassCache = bypassCache;
+		boolean oldBypassFilter = bypassFilter;
+
+		try {
+			client = null;
+			viewpoint = model.getSystemViewpoint();
+			bypassCache = true;
+			
+			// Using the SystemViewpoint as the viewpoint should disable almost all filtering,
+			// but there are examples of filtering that might hide things from the system
+			// viewpoint; trivially you can specify @DMFilter("false"). Also, we gain a 
+			// little bit of efficiency by not doing filter computations.
+			bypassFilter = true;
+			
+			T object = findUnchecked(storeKey);
+			
+			// There is some inefficiency here ... the property value is dehydrated twice;
+			// once when the property is cached in the cache as a side effect of fetching
+			// it, and again here. But dehydration is pretty fast, and doing it this
+			// way is robust against the case where the property is *not* cached.
+			// (because it's viewer specific, because the property is immediately
+			// evicted from the cache again, etc.)
+			try {
+				return propertyHolder.dehydrate(propertyHolder.getRawPropertyValue(object));
+			} catch (LazyInitializationException e2) {
+				throw e2.getCause();
+			}
+			
+		} finally {
+			client = oldClient;
+			viewpoint = oldViewpoint;
+			bypassCache = oldBypassCache;
+			bypassFilter = oldBypassFilter;
+		}
+	}
+
 }

@@ -1,7 +1,6 @@
 package com.dumbhippo.dm.schema;
 
 import java.util.Collection;
-import java.util.Date;
 
 import javassist.CtMethod;
 
@@ -93,11 +92,13 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 	}
 	
 	@Override
-	public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session) {
+	public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session, boolean filter) {
 		if (value == null)
 			return null;
-		else
+		else if (filter)
 			return filter(viewpoint, key, value);
+		else
+			return value;
 	}
 
 	@Override

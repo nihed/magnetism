@@ -40,6 +40,24 @@ public class FilterCompilerTests extends TestCase {
 		model = null;
 	}
 	
+	public void testFilterTrue() throws Exception {
+		Filter filter =  FilterParser.parse("true");
+		CompiledFilter<Guid,TestUserDMO> instance = FilterCompiler.compileFilter(model, Guid.class, filter);
+		
+		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
+		
+		assertEquals(viewpoint.getViewerId().toString(), instance.filterKey(viewpoint, viewpoint.getViewerId()).toString());
+	}
+	
+	public void testFilterFalse() throws Exception {
+		Filter filter =  FilterParser.parse("false");
+		CompiledFilter<Guid,TestUserDMO> instance = FilterCompiler.compileFilter(model, Guid.class, filter);
+		
+		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
+		
+		assertNull(instance.filterKey(viewpoint, viewpoint.getViewerId()));
+	}
+	
 	public void testFilterSimple() throws Exception {
 		Filter filter =  FilterParser.parse("viewer.sameAs(this)");
 		CompiledFilter<Guid,TestUserDMO> instance = FilterCompiler.compileFilter(model, Guid.class, filter);
@@ -58,6 +76,36 @@ public class FilterCompilerTests extends TestCase {
 		
 		assertEquals(viewpoint.getViewerId().toString(), instance.filterKey(viewpoint, Guid.createNew(), viewpoint.getViewerId()).toString());
 		assertNull(instance.filterKey(viewpoint, Guid.createNew(), Guid.createNew()));
+	}
+	
+	public void testListFilterTrue() throws Exception {
+		Filter filter =  FilterParser.parse("true");
+		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(model, Guid.class, Guid.class, filter);
+		
+		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
+
+		List<Guid> input = new ArrayList<Guid>();
+		input.add(viewpoint.getViewerId());
+		input.add(Guid.createNew());
+		
+		List<Guid> result = instance.filterKeys(viewpoint, Guid.createNew(), input);
+		
+		assertEquals(2, result.size());
+	}
+	
+	public void testListFilterFalse() throws Exception {
+		Filter filter =  FilterParser.parse("false");
+		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(model, Guid.class, Guid.class, filter);
+		
+		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
+
+		List<Guid> input = new ArrayList<Guid>();
+		input.add(viewpoint.getViewerId());
+		input.add(Guid.createNew());
+		
+		List<Guid> result = instance.filterKeys(viewpoint, Guid.createNew(), input);
+		
+		assertEquals(0, result.size());
 	}
 	
 	public void testListFilterSimple() throws Exception {

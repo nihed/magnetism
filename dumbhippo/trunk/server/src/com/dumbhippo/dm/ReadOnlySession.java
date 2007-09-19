@@ -28,21 +28,28 @@ public class ReadOnlySession extends CachedSession {
 	@Override
 	public <K, T extends DMObject<K>> Object fetchAndFilter(StoreKey<K,T> key, int propertyIndex) throws NotCachedException {
 		DMPropertyHolder<K,T,?> property = key.getClassHolder().getProperty(propertyIndex);
+		if (!property.isCached())
+			throw new NotCachedException();
+			
 		Object value = model.getStore().fetch(key, propertyIndex);
 
-		// logger.debug("Found value for {}.{} in the cache", key, property.getName());
+//		logger.debug("Found value for {}.{} in the cache", key, property.getName());
 
-		return property.rehydrate(getViewpoint(), key.getKey(), value, this);
+		return property.rehydrate(getViewpoint(), key.getKey(), value, this, !bypassFilter);
 	}
 
 	@Override
 	public <K, T extends DMObject<K>> Object storeAndFilter(StoreKey<K,T> key, int propertyIndex, Object value) {
 		DMPropertyHolder<K,T,?> property = key.getClassHolder().getProperty(propertyIndex);
-		model.getStore().store(key, propertyIndex, property.dehydrate(value), txTimestamp);
-		
-		// logger.debug("Cached new value for {}.{}", key, property.getName());
-		
-		return property.filter(getViewpoint(), key.getKey(), value);
+		if (property.isCached()) {
+			model.getStore().store(key, propertyIndex, property.dehydrate(value), txTimestamp);
+//			logger.debug("Cached new value for {}.{}", key, property.getName());
+		}
+
+		if (bypassFilter)
+			return value;
+		else
+			return property.filter(getViewpoint(), key.getKey(), value);
 	}
 	
 	@Override

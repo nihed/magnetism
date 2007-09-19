@@ -99,7 +99,7 @@ public FilterParser(ParserSharedInputState state) {
 		
 		f=andExpression();
 		{
-		_loop145:
+		_loop28:
 		do {
 			if ((LA(1)==OR)) {
 				match(OR);
@@ -107,7 +107,7 @@ public FilterParser(ParserSharedInputState state) {
 				f = new OrFilter(f, f2);
 			}
 			else {
-				break _loop145;
+				break _loop28;
 			}
 			
 		} while (true);
@@ -122,7 +122,7 @@ public FilterParser(ParserSharedInputState state) {
 		
 		f=notExpression();
 		{
-		_loop148:
+		_loop31:
 		do {
 			if ((LA(1)==AND)) {
 				match(AND);
@@ -130,7 +130,7 @@ public FilterParser(ParserSharedInputState state) {
 				f = new AndFilter(f, f2);
 			}
 			else {
-				break _loop148;
+				break _loop31;
 			}
 			
 		} while (true);
@@ -146,6 +146,8 @@ public FilterParser(ParserSharedInputState state) {
 		switch ( LA(1)) {
 		case LPAREN:
 		case LITERAL_viewer:
+		case LITERAL_false:
+		case LITERAL_true:
 		{
 			f=term();
 			break;
@@ -211,6 +213,18 @@ public FilterParser(ParserSharedInputState state) {
 			f = new Condition(pred.getText(), type, prop != null ? prop.getText() : null);
 			break;
 		}
+		case LITERAL_false:
+		{
+			match(LITERAL_false);
+			f = FalseFilter.getInstance();
+			break;
+		}
+		case LITERAL_true:
+		{
+			match(LITERAL_true);
+			f = TrueFilter.getInstance();
+			break;
+		}
 		default:
 		{
 			throw new NoViableAltException(LT(1), getFilename());
@@ -270,6 +284,8 @@ public FilterParser(ParserSharedInputState state) {
 		"\"viewer\"",
 		"DOT",
 		"NAME",
+		"\"false\"",
+		"\"true\"",
 		"\"this\"",
 		"\"item\"",
 		"\"any\"",

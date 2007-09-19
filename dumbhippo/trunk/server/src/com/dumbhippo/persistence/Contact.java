@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -27,11 +28,14 @@ public class Contact extends Person {
 	
 	private Account account;
 	private Set<ContactClaim> resources;
+
+	private ContactStatus status;
 	
 	protected Contact() {}
 	
 	public Contact(Account account) {
 		this.account = account;
+		this.status = ContactStatus.MEDIUM;
 	}
 	
 	@ManyToOne
@@ -57,6 +61,15 @@ public class Contact extends Person {
 	
 	public void setResources(Set<ContactClaim> resources) {
 		this.resources = resources;
+	}
+	
+	@Column(nullable=false)
+	public ContactStatus getStatus() {
+		return status;
+	}
+	
+	public void setStatus(ContactStatus status) {
+		this.status = status;
 	}
 	
 	@Override

@@ -1,11 +1,13 @@
 package com.dumbhippo.server.impl;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -19,6 +21,7 @@ import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -32,6 +35,7 @@ import com.dumbhippo.persistence.Administrator;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactClaim;
+import com.dumbhippo.persistence.ContactStatus;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
@@ -674,6 +678,30 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			} catch (ParseException e) {
 				throw new RuntimeException("Bad GUID in database");
 			}
+		}
+
+		return result;
+	}
+	
+	public List<Pair<Guid,ContactStatus>> computeContactersWithStatus(Guid userId) {
+		Query q = em.createQuery("SELECT cc.account.owner.id, cc.contact.status " +
+                                 "  FROM ContactClaim cc, AccountClaim ac " +
+                 				 "  WHERE cc.resource = ac.resource " +
+				                 "    AND ac.owner.id = :userId");
+		q.setParameter("userId", userId.toString());
+
+		List<Pair<Guid,ContactStatus>> result = new ArrayList<Pair<Guid,ContactStatus>>();
+		for (Object o : q.getResultList()) {
+			Object[] os = (Object[])o;
+			Guid guid;
+			try {
+				guid = new Guid((String)os[0]);
+			} catch (ParseException e) {
+				throw new RuntimeException("Bad GUID in database");
+			}
+			ContactStatus status = (ContactStatus)os[1];
+			
+			result.add(new Pair<Guid, ContactStatus>(guid, status));
 		}
 
 		return result;

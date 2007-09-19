@@ -128,6 +128,11 @@ public class FilterStateMap {
 	}
 	
 	private FilterState makeState(Filter filter) {
+		if (filter == TrueFilter.getInstance())
+			return FilterState.TRUE_STATE;
+		else if (filter == FalseFilter.getInstance())
+			return FilterState.FALSE_STATE;
+		
 		List<Condition> conditions = new ArrayList<Condition>();
 		filter.appendConditions(conditions);
 		

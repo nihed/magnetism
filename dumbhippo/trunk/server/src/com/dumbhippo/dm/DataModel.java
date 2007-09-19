@@ -35,7 +35,6 @@ public class DataModel {
 	
 	private String baseUrl;
 	private DMSessionMap sessionMap = new DMSessionMapJTA();
-	private UnfilteredSession unfilteredSession;
 	private EntityManagerFactory emf = null;
 	private ChangeNotifier notifier;
 	private Map<Class<?>, DMClassHolder<?,?>> classes = new HashMap<Class<?>, DMClassHolder<?,?>>();
@@ -79,8 +78,6 @@ public class DataModel {
 		// where the DMO's live. Something to fix when we add jar-file scanning to 
 		// find DMOs.
 		classPool.insertClassPath(new ClassClassPath(this.getClass()));
-		
-		unfilteredSession = new UnfilteredSession(this);
 		
 		this.sessionMap = sessionMap;
 		this.emf = emf;
@@ -301,10 +298,6 @@ public class DataModel {
 		});
 	}
 	
-	public UnfilteredSession getUnfilteredSession() {
-		return unfilteredSession;
-	}
-
 	public Class<? extends DMViewpoint> getViewpointClass() {
 		return viewpointClass;
 	}

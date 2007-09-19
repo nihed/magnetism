@@ -55,11 +55,11 @@ public class SingleResourcePropertyHolder<K, T extends DMObject<K>, KI, TI exten
 	}
 	
 	@Override
-	public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session) {
+	public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session, boolean filter) {
 		if (value == null)
 			return null;
 		
-		if (itemFilter == null)
+		if (!filter || itemFilter == null)
 			return rehydrateDMO(value, session);
 		
 		@SuppressWarnings("unchecked")

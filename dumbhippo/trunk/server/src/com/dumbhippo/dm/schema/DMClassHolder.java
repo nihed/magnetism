@@ -345,6 +345,39 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		}
 	}
 	
+	private void collateProperties(CtClass baseCtClass) {
+		List<DMPropertyHolder<K,T,?>> foundProperties = new ArrayList<DMPropertyHolder<K,T,?>>();
+		Map<String, Integer> nameCount = new HashMap<String, Integer>();
+		
+		for (CtMethod method : baseCtClass.getMethods()) {
+			DMPropertyHolder<K,T,?> property = DMPropertyHolder.getForMethod(this, method);
+			if (property != null) {
+				foundProperties.add(property);
+				if (!nameCount.containsKey(property.getName()))
+					nameCount.put(property.getName(), 1);
+				else
+					nameCount.put(property.getName(), 1 + nameCount.get(property.getName()));
+			}
+		}
+		
+		// Sort the properties based on the ordering we impose on DMPropertyHolder 
+		// (see comment for DMPropertyHolder.computeHash()
+		Collections.sort(foundProperties);
+		
+		@SuppressWarnings("unchecked")
+		DMPropertyHolder<K,T,?>[] tmpProperties = foundProperties.toArray(new DMPropertyHolder[foundProperties.size()]);
+		
+		properties = tmpProperties;
+		mustQualify = new boolean[foundProperties.size()];
+
+		for (int i = 0; i < properties.length; i++) {
+			DMPropertyHolder<?,?,?> property = properties[i];
+			
+			propertiesMap.put(property.getName(), i);
+			mustQualify[i] = nameCount.get(property.getName()) > 1;
+		}
+	}
+
 	private void addCommonFields(CtClass wrapperCtClass) throws CannotCompileException {
 		CtField field;
 		
@@ -390,6 +423,57 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		wrapperCtClass.addMethod(method);
 	}
 	
+	private void addGroupInitMethod(CtClass wrapperCtClass, int group, List<DMPropertyHolder<K,T,?>> properties) throws CannotCompileException {
+		CtMethod method = new CtMethod(CtClass.voidType, "_dm_initGroup" + group, new CtClass[] {}, wrapperCtClass);
+		StringBuilder body = new StringBuilder();
+		
+		body.append("{" +
+					"  _dm_init();");
+		
+		for (DMPropertyHolder<K,T,?> property : properties) {
+			Template propertyInit = new Template(
+					"  _dm_%propertyName% = %unboxPre%_dm_session.storeAndFilter(getStoreKey(), %propertyIndex%, %boxPre%super.%methodName%()%boxPost%)%unboxPost%;" +
+					"  _dm_%propertyName%Initialized = true;");
+			
+			propertyInit.setParameter("propertyName", property.getName());
+			propertyInit.setParameter("boxPre", property.getBoxPrefix());
+			propertyInit.setParameter("boxPost", property.getBoxSuffix());
+			propertyInit.setParameter("unboxPre", property.getUnboxPrefix());
+			propertyInit.setParameter("unboxPost", property.getUnboxSuffix());
+			propertyInit.setParameter("propertyIndex", Integer.toString(getPropertyIndex(property.getName())));
+			propertyInit.setParameter("group", Integer.toString(group));
+			propertyInit.setParameter("methodName", property.getMethodName());
+
+			body.append(propertyInit.toString());
+		}
+		
+		body.append("}");
+		
+		method.setBody(body.toString());
+		wrapperCtClass.addMethod(method);
+	}
+	
+	private void addGroupInitMethods(CtClass wrapperCtClass) throws CannotCompileException {
+		Map<Integer, List<DMPropertyHolder<K,T,?>>> map = new HashMap<Integer, List<DMPropertyHolder<K,T,?>>>();
+		
+		for (DMPropertyHolder<K,T,?> property : properties) {
+			int group = property.getGroup();
+			if (group >= 0) {
+				List<DMPropertyHolder<K,T,?>> l = map.get(group);
+				if (l == null) {
+					l = new ArrayList<DMPropertyHolder<K,T,?>>();
+					map.put(group, l);
+				}
+				
+				l.add(property);
+			}
+		}
+
+		for (int group : map.keySet()) {
+			addGroupInitMethod(wrapperCtClass, group, map.get(group));
+		}
+	}
+
 	private void addGetClassHolderMethod(CtClass wrapperCtClass) throws CannotCompileException {
 		CtClass dmClassHolderCtClass = ctClassForClass(DMClassHolder.class);
 
@@ -406,31 +490,32 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		wrapperCtClass.addMethod(method);
 	}
 	
-	private void addWrapperGetter(CtClass baseCtClass, CtClass wrapperCtClass, DMPropertyHolder<?,?,?> property, int propertyIndex) throws CannotCompileException, NotFoundException {
-		CtField field;
-			
-		field = new CtField(CtClass.booleanType, "_dm_" + property.getName() + "Initialized", wrapperCtClass);
-		field.setModifiers(Modifier.PRIVATE);
-		wrapperCtClass.addField(field);
-
-		field = new CtField(property.getCtClass(), "_dm_" + property.getName(), wrapperCtClass);
-		field.setModifiers(Modifier.PRIVATE);
-		wrapperCtClass.addField(field);
-		
+	private void addWrapperGetter(CtClass wrapperCtClass, DMPropertyHolder<?,?,?> property, int propertyIndex) throws CannotCompileException, NotFoundException {
 		CtMethod wrapperMethod = new CtMethod(property.getCtClass(), property.getMethodName(), new CtClass[] {}, wrapperCtClass);
 		
 		// TODO: Deal with primitive types, where we need to box/unbox
+		
+		String storeCommands;
+		int group = property.getGroup();
+		if (group < 0) {
+			storeCommands =
+				"_dm_init();" +
+				"_dm_%propertyName% = %unboxPre%_dm_session.storeAndFilter(getStoreKey(), %propertyIndex%, %boxPre%super.%methodName%()%boxPost%)%unboxPost%;" +
+				"_dm_%propertyName%Initialized = true;";
+		} else {
+			storeCommands = 
+				"_dm_initGroup%group%();";
+		}
 		
 		Template body = new Template(
 			"{" +
 			"    if (!_dm_%propertyName%Initialized) {" +
 			"    	 try {" +
 			"           _dm_%propertyName% = %unboxPre%_dm_session.fetchAndFilter(getStoreKey(), %propertyIndex%)%unboxPost%;" +
+			"           _dm_%propertyName%Initialized = true;" +
 			"    	 } catch (com.dumbhippo.dm.NotCachedException e) {" +
-			"           _dm_init();" +
-			"           _dm_%propertyName% = %unboxPre%_dm_session.storeAndFilter(getStoreKey(), %propertyIndex%, %boxPre%super.%methodName%()%boxPost%)%unboxPost%;" +
+			storeCommands +
 			"        }" +
-			"        _dm_%propertyName%Initialized = true;" +
 			"    }" +
 			"    return _dm_%propertyName%;" +
 			"}");
@@ -441,43 +526,34 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		body.setParameter("unboxPre", property.getUnboxPrefix());
 		body.setParameter("unboxPost", property.getUnboxSuffix());
 		body.setParameter("propertyIndex", Integer.toString(propertyIndex));
+		body.setParameter("group", Integer.toString(group));
 		body.setParameter("methodName", property.getMethodName());
 		wrapperMethod.setBody(body.toString());
 		
 		wrapperCtClass.addMethod(wrapperMethod);
 	}
 
-	private void addWrapperGetters(CtClass baseCtClass, CtClass wrapperCtClass) throws CannotCompileException, NotFoundException {
-		List<DMPropertyHolder<K,T,?>> foundProperties = new ArrayList<DMPropertyHolder<K,T,?>>();
-		Map<String, Integer> nameCount = new HashMap<String, Integer>();
-		
-		for (CtMethod method : baseCtClass.getMethods()) {
-			DMPropertyHolder<K,T,?> property = DMPropertyHolder.getForMethod(this, method);
-			if (property != null) {
-				foundProperties.add(property);
-				if (!nameCount.containsKey(property.getName()))
-					nameCount.put(property.getName(), 1);
-				else
-					nameCount.put(property.getName(), 1 + nameCount.get(property.getName()));
-			}
-		}
-		
-		// Sort the properties based on the ordering we impose on DMPropertyHolder 
-		// (see comment for DMPropertyHolder.computeHash()
-		Collections.sort(foundProperties);
-		
-		@SuppressWarnings("unchecked")
-		DMPropertyHolder<K,T,?>[] tmpProperties = foundProperties.toArray(new DMPropertyHolder[foundProperties.size()]);
-		
-		properties = tmpProperties;
-		mustQualify = new boolean[foundProperties.size()];
-
+	private void addPropertyFields(CtClass wrapperCtClass) throws CannotCompileException, NotFoundException {
 		for (int i = 0; i < properties.length; i++) {
 			DMPropertyHolder<?,?,?> property = properties[i];
 			
-			propertiesMap.put(property.getName(), i);
-			mustQualify[i] = nameCount.get(property.getName()) > 1;
-			addWrapperGetter(baseCtClass, wrapperCtClass, property, i);
+			CtField field;
+			
+			field = new CtField(CtClass.booleanType, "_dm_" + property.getName() + "Initialized", wrapperCtClass);
+			field.setModifiers(Modifier.PRIVATE);
+			wrapperCtClass.addField(field);
+
+			field = new CtField(property.getCtClass(), "_dm_" + property.getName(), wrapperCtClass);
+			field.setModifiers(Modifier.PRIVATE);
+			wrapperCtClass.addField(field);
+		}
+	}
+	
+	private void addWrapperGetters(CtClass wrapperCtClass) throws CannotCompileException, NotFoundException {
+		for (int i = 0; i < properties.length; i++) {
+			DMPropertyHolder<?,?,?> property = properties[i];
+			
+			addWrapperGetter(wrapperCtClass, property, i);
 		}
 	}
 	
@@ -497,14 +573,18 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		ClassPool classPool = model.getClassPool();
 		CtClass baseCtClass = ctClassForClass(baseClass);
 		
+		collateProperties(baseCtClass);
+		
 		CtClass wrapperCtClass = classPool.makeClass(className + "_DMWrapper", baseCtClass);
 		
 		try {
 			addCommonFields(wrapperCtClass);
+			addPropertyFields(wrapperCtClass);
 			addConstructor(wrapperCtClass);
 			addInitMethod(baseCtClass, wrapperCtClass);
+			addGroupInitMethods(wrapperCtClass);
 			addGetClassHolderMethod(wrapperCtClass);
-			addWrapperGetters(baseCtClass, wrapperCtClass);
+			addWrapperGetters(wrapperCtClass);
 			
 			Class<?> wrapperClass  = wrapperCtClass.toClass();
 			injectClassHolder(wrapperClass);

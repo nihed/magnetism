@@ -22,7 +22,7 @@ public class FalseFilter implements Filter {
 	
 	@Override
 	public String toString() {
-		return "true";
+		return "false";
 	}
 
 	public Filter asItemFilter() {

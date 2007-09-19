@@ -4,6 +4,7 @@ package com.dumbhippo.dm.parser;
 
 import java.io.StringReader;
 import com.dumbhippo.dm.filter.*;
+import com.dumbhippo.dm.parser.ParseException;
 import com.dumbhippo.GlobalSetup;
 import org.slf4j.Logger;
 
@@ -48,10 +49,12 @@ public FilterLexer(LexerSharedInputState state) {
 	setCaseSensitive(true);
 	literals = new Hashtable();
 	literals.put(new ANTLRHashString("viewer", this), new Integer(9));
-	literals.put(new ANTLRHashString("any", this), new Integer(14));
-	literals.put(new ANTLRHashString("all", this), new Integer(15));
-	literals.put(new ANTLRHashString("this", this), new Integer(12));
-	literals.put(new ANTLRHashString("item", this), new Integer(13));
+	literals.put(new ANTLRHashString("any", this), new Integer(16));
+	literals.put(new ANTLRHashString("all", this), new Integer(17));
+	literals.put(new ANTLRHashString("true", this), new Integer(13));
+	literals.put(new ANTLRHashString("this", this), new Integer(14));
+	literals.put(new ANTLRHashString("item", this), new Integer(15));
+	literals.put(new ANTLRHashString("false", this), new Integer(12));
 }
 
 public Token nextToken() throws TokenStreamException {
@@ -272,7 +275,7 @@ tryAgain:
 		}
 		}
 		{
-		_loop1189:
+		_loop45:
 		do {
 			switch ( LA(1)) {
 			case 'a':  case 'b':  case 'c':  case 'd':
@@ -311,7 +314,7 @@ tryAgain:
 			}
 			default:
 			{
-				break _loop1189;
+				break _loop45;
 			}
 			}
 		} while (true);
