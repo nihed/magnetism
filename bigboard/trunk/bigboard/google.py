@@ -1,4 +1,4 @@
-import sys, logging, threading, datetime, time, functools
+import sys, logging, threading, datetime, time, functools, base64
 import xml, xml.sax
 
 import hippo, gobject, gtk, dbus, dbus.glib
@@ -9,6 +9,7 @@ from bigboard import libbig
 from bigboard.workboard import WorkBoard
 import bigboard.keyring as keyring
 import libbig.logutil
+from libbig.logutil import log_except
 from libbig.struct import AutoStruct, AutoSignallingStruct
 import libbig.polling
 import htmllib
@@ -371,7 +372,7 @@ class Google(gobject.GObject):
         "auth" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))
     }
 
-    def __init__(self, login_label, storage_key, default_domain='gmail.com'):
+    def __init__(self, login_label, storage_key, default_domain='gmail.com', type_hint=None):
         super(Google, self).__init__()
         self.__logger = logging.getLogger("bigboard.Google")
         self.__username = None
@@ -382,32 +383,19 @@ class Google(gobject.GObject):
         self.__login_label = login_label
         self.__storage_key = storage_key
         self.__default_domain = default_domain
+        self.__type_hint = type_hint
+
+        self.__weblogindriver_proxy = dbus.SessionBus().get_object('org.gnome.WebLoginDriver', '/weblogindriver')
+        self.__weblogindriver_proxy.GetSignons(reply_handler=self.__on_get_signons_reply,
+                                               error_handler=self.__on_dbus_error)
+        self.__weblogindriver_proxy.connect_to_signal("SignonChanged",
+                                                       self.__on_signon_changed)
 
         k = keyring.get_keyring()
 
         # this line allows to enter new Google account information on bigboard restarts    
         # k.remove_logins(self.__default_domain)
         self.__mail_checker = None
-        
-        try:
-            username_password_dict = k.get_logins(self.__storage_key) 
-            if len(username_password_dict) > 0:
-                # this sets up callback in case authentication is cancelled
-                WorkBoard().append('service.pwauth', self.__login_label, cb_cancel=self.__on_auth_cancel)
-                # dictionaries are not ordered, so here we are getting a random 
-                # item, but normally, we'll be getting the whole set
-                self.__username = username_password_dict.keys()[0]
-                self.__password = username_password_dict[self.__username]
-
-               ## this is just for old cruft in the keyring, we don't store without
-               ## an @ anymore
-                if '@' not in self.__username:
-                    self.__username = self.__username + '@' + self.__default_domain
-                
-                self.__on_auth_ok(self.__username, self.__password)
-                return
-        except TypeError:
-             pass
 
         self.__username = None
         self.__password = None
@@ -421,13 +409,31 @@ class Google(gobject.GObject):
         elif self.__mail_checker:
             self.__mail_checker.stop()
 
+    @log_except(_logger)
+    def __on_get_signons_reply(self, signondata):
+        _logger.debug("got signons reply")
+        for hostname,signons in signondata.iteritems():
+            for signon in signons:
+                if 'hint' not in signon: continue
+                if signon['hint'] == self.__type_hint:
+                    _logger.debug("hint %s matched signon %s", self.__type_hint, signon)
+                    self.__on_auth_ok(signon['username'], base64.b64decode(signon['password']))
+                    return
+
+    @log_except(_logger)
+    def __on_signon_changed(self, hostname):
+        _logger.debug("signon changed: %s", hostname)
+
+    @log_except(_logger)
+    def __on_dbus_error(self, err):
+        self._logger.error("D-BUS error: %s", err)
+
     def __on_auth_ok(self, username, password):
         if '@' not in username:
             username = username + '@' + self.__default_domain
         self.__username = username
         self.__password = password
         self.__auth_requested = False
-        keyring.get_keyring().store_login(self.__storage_key, self.__username, self.__password)
 
         hooks = self.__post_auth_hooks
         self.__post_auth_hooks = []
@@ -463,11 +469,7 @@ class Google(gobject.GObject):
             # _logger.debug("auth looks valid")   
             func()
             return
-            
-        if not self.__auth_requested:
-            self.__auth_requested = True
-            WorkBoard().append('service.pwauth', self.__login_label,
-                               self.__on_auth_ok, self.__on_auth_cancel, reauth=reauth)
+
         else:
             _logger.debug("auth request pending; not resending")            
         self.__post_auth_hooks.append(func)
@@ -595,7 +597,7 @@ _google_personal_instance = None
 def get_google_at_personal():
     global _google_personal_instance
     if _google_personal_instance is None:
-        _google_personal_instance = Google(login_label='Google Personal', storage_key='google')
+        _google_personal_instance = Google(login_label='Google Personal', storage_key='google', type_hint='GMail')
     return _google_personal_instance
 
 _google_work_instance = None
