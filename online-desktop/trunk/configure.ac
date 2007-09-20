@@ -5,7 +5,7 @@ AC_INIT(apps/gmail/gmail.desktop.in)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR(config)
 
-AM_INIT_AUTOMAKE(online-desktop, 0.2.13)
+AM_INIT_AUTOMAKE(online-desktop, 0.2.14)
 
 AM_CONFIG_HEADER(config/config.h)
 
