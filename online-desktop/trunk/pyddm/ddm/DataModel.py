@@ -120,6 +120,9 @@ class DataModel(AbstractModel):
     def query(self, method, fetch=None, single_result=False, **kwargs):
         return _DBusQuery(self, method, fetch, single_result, kwargs)
 
+    def update(self, method, **kwargs):
+        return _DBusUpdate(self, method, kwargs)
+
     def __update_property_from_dbus(self, resource, property_struct, notifications):
         property_uri, property_name, update_byte, type_byte, cardinality_byte, value = property_struct
 
@@ -182,12 +185,11 @@ class _DBusCallback(dbus.service.Object):
     
 class _DBusQuery(Query):
     def __init__(self, model, method, fetch, single_result, params):
-        Query.__init__(self, single_result)
+        Query.__init__(self, params, single_result)
         self.__model = model
         self.__method = method
         self.__fetch = fetch
         self.__single_result = single_result
-        self.__params = params
 
     def __on_reply(self, resources):
         result = []
@@ -201,7 +203,13 @@ class _DBusQuery(Query):
         self._on_success(result)
 
     def __on_error(self, *args):
-        _logger.error('Caught error; args: %s', args)
+        # FIXME: As of dbus-python-0.80, exception handling for D-BUS is very, very, limited
+        # all we get is the message, so we can't do anything special for the defined
+        # DataModel errors. This is fixed in later versions of dbus-python, where we can
+        # get the exception type and the args
+        #
+        _logger.error('Caught error: %s', e.message)
+        self._on_error(ERROR_FAILED, e.message)
 
     def execute(self):
         # FIXME: Would it be better to call the __on_error? Doing that sync could cause problems.
@@ -209,8 +217,38 @@ class _DBusQuery(Query):
         if not self.__model.connected:
             raise Exception("Not connected")
 
-        meth_path = self.__method[0] + "#" + self.__method[1]
-        _logger.debug("executing query meth: '%s' fetch: '%s' params: '%s'", meth_path, self.__fetch, self.__params)
-        self.__model._get_proxy().Query(self.__model.callback.path, meth_path, self.__fetch, self.__params,
+        method_uri = self.__method[0] + "#" + self.__method[1]
+        _logger.debug("executing query method: '%s' fetch: '%s' params: '%s'", method_uri, self.__fetch, self._params)
+        self.__model._get_proxy().Query(self.__model.callback.path, method_uri, self.__fetch, self._params,
                                         dbus_interface='org.freedesktop.od.Model', reply_handler=self.__on_reply, error_handler=self.__on_error)
+        
+
+class _DBusUpdate(Query):
+    def __init__(self, model, method, params):
+        Query.__init__(self, params)
+        self.__model = model
+        self.__method = method
+
+    def __on_reply(self):
+        self._on_success()
+
+    def __on_error(self, e):
+        # FIXME: As of dbus-python-0.80, exception handling for D-BUS is very, very, limited
+        # all we get is the message, so we can't do anything special for the defined
+        # DataModel errors. This is fixed in later versions of dbus-python, where we can
+        # get the exception type and the args
+        #
+        _logger.error('Caught error: %s', e.message)
+        self._on_error(ERROR_FAILED, e.message)
+
+    def execute(self):
+        # FIXME: Would it be better to call the __on_error? Doing that sync could cause problems.
+        #   If we decide to continue raising an exception here, we should use a subclass
+        if not self.__model.connected:
+            raise Exception("Not connected")
+
+        method_uri = self.__method[0] + "#" + self.__method[1]
+        _logger.debug("executing update method: '%s' params: '%s'", method_uri, self._params)
+        self.__model._get_proxy().Update(method_uri, self._params,
+                                         dbus_interface='org.freedesktop.od.Model', reply_handler=self.__on_reply, error_handler=self.__on_error)
         

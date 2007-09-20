@@ -211,7 +211,7 @@ class TwistedQuery(Query):
     """Implementation of Query for TwistedModel"""
     
     def __init__(self, model, method, fetch, single_result, params):
-        Query.__init__(self, single_result)
+        Query.__init__(self, params, single_result)
         
         self.__model = model
         self.__iq = IQ(model._xmlstream, "get")
@@ -219,10 +219,10 @@ class TwistedQuery(Query):
         
         element = self.__iq.addElement(method)
     
-        for name in params:
+        for name in self._params:
             param = element.addElement(("http://mugshot.org/p/system", "param"))
             param["name"] = name
-            param.addContent(params[name])
+            param.addContent(self._params[name])
         
         if fetch != None:
             element[("http://mugshot.org/p/system", "fetch")] = fetch
