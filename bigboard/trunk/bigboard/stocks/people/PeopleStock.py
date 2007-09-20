@@ -4,15 +4,11 @@ import hippo
 from ddm import DataModel
 
 import bigboard
-from bigboard.people_tracker import PeopleTracker
+from bigboard.people_tracker import PeopleTracker, sort_users
 from bigboard.stock import AbstractMugshotStock
 import bigboard.globals
 import bigboard.slideout
 import bigboard.profile
-try:
-    import bigboard.bignative as bignative
-except:
-    import bignative
 
 import peoplebrowser
 from peoplewidgets import PersonItem, ProfileItem
@@ -85,7 +81,15 @@ class PeopleStock(AbstractMugshotStock):
             return
         
         item = PersonItem(user)
-        box.insert_sorted(item, hippo.PACK_IF_FITS, lambda a,b: bignative.utf8_collate(a.resource.name, b.resource.name))
+        box.insert_sorted(item, hippo.PACK_IF_FITS, lambda a,b: sort_users(a.resource, b.resource))
+
+        def resort(resource):
+            box.remove(item)
+            box.insert_sorted(item, hippo.PACK_IF_FITS, lambda a,b: sort_users(a.resource, b.resource))
+        
+        user.connect(resort, 'contactStatus')
+        user.connect(resort, 'name')
+        
         map[user.resource_id] = item
         self.__set_item_size(item, self.get_size())
         item.connect('activated', self.__handle_item_pressed)

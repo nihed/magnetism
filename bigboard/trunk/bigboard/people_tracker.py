@@ -9,6 +9,11 @@ import ddm.Resource
 import bigboard.globals
 from libbig.singletonmixin import Singleton
 
+try:
+    import bigboard.bignative as bignative
+except:
+    import bignative
+
 _logger = logging.getLogger("bigboard.PeopleTracker")
 
 def _canonicalize_aim(aim):
@@ -171,7 +176,7 @@ class PeopleTracker(Singleton):
         
             self.__myself = None
 
-        query = self.__model.query_resource(self.__model.self_id, "contacts [+;aim;email]")
+        query = self.__model.query_resource(self.__model.self_id, "contacts [+;aim;email;contactStatus]")
         query.add_handler(self.__on_got_self)
         query.execute()
         
@@ -384,3 +389,24 @@ class PeopleTracker(Singleton):
             
         self.__users_by_aim.clear()
         self.__users_by_resource_id.clear()
+
+def sort_users(a,b):
+    try:
+        statusA = a.contactStatus
+    except AttributeError:
+        statusA = 0
+        
+    try:
+        statusB = b.contactStatus
+    except AttributeError:
+        statusB = 0
+
+    if statusA == 0:
+        statusA = 3
+    if statusB == 0:
+        statusB = 3
+
+    if statusA != statusB:
+        return statusB - statusA
+
+    return bignative.utf8_collate(a.name, b.name)
