@@ -2,10 +2,11 @@ dnl -*- mode: m4 -*-
 AC_PREREQ(2.59)
 
 AC_INIT(apps/gmail/gmail.desktop.in)
+AC_CONFIG_SRCDIR(od-session)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR(config)
 
-AM_INIT_AUTOMAKE(online-desktop, 0.2.14)
+AM_INIT_AUTOMAKE(online-desktop, 0.2.15)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -35,6 +36,7 @@ AM_PROG_CC_C_O
 AM_DISABLE_STATIC
 AC_PROG_CXX
 AC_PROG_LIBTOOL
+AC_SUBST(ACLOCAL_AMFLAGS, "$ACLOCAL_FLAGS -I m4")
 AC_ISC_POSIX
 AC_HEADER_STDC
 
