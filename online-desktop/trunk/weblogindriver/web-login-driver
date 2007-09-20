@@ -40,6 +40,9 @@ class WebLoginDriver(dbus.service.Object):
     self.__profpath = None
     self.__profile_monid = None
     self.__signons = {} # domain->(user,pass,{details})
+    self.__signons_monid = None
+    self.__profile_monid = None
+    self.__uncreated_monid = None
     try:
       profpath = self.__get_profile_path()
     except KeyError, e:
@@ -50,10 +53,11 @@ class WebLoginDriver(dbus.service.Object):
       self.__monitor_signons(profpath)
 
   def __monitor_signons(self, profpath):
-    _logger.debug("starting monitoring of signons in %s", profpath)
-    self.__profpath = profpath
+    if profpath:
+      _logger.debug("starting monitoring of signons in %s", profpath)
+      self.__profpath = profpath
     signons_path = os.path.join(profpath, 'signons2.txt')
-    if os.path.isfile(signons_path):
+    if (self.__signons_monid is None) and os.path.isfile(signons_path):
       _logger.debug("monitoring signons file")
       _logger.debug("initializing NSS in %s", self.__profpath)
       nssdecrypt.init(self.__profpath)
@@ -62,12 +66,14 @@ class WebLoginDriver(dbus.service.Object):
         gnomevfs.monitor_cancel(self.__profile_monid)
         self.__profile_monid = None
       gobject.idle_add(self.__idle_read_signons)
-    elif not self.__profile_monid:
+    elif self.__profile_monid is None:
       self.__profile_monid = gnomevfs.monitor_add(profpath, gnomevfs.MONITOR_DIRECTORY, self.__on_profdir_changed)
 
   def __on_profdir_changed(self, *args):
+    if self.__signons_monid:
+      return
     _logger.debug("profile dir changed: %s", args)
-    self.__monitor_signons()
+    self.__monitor_signons(None)
   
   def __on_signons_changed(self, *args):
     _logger.debug("signons changed: %s", args)
@@ -182,6 +188,8 @@ class WebLoginDriver(dbus.service.Object):
     return new_signons
 
   def __on_profile_created(self, *args):
+    if not self.__uncreated_monid:
+      return  
     _logger.debug("profile directory changed: %s", args)
     try:
       profpath = self.__get_profile_path()
