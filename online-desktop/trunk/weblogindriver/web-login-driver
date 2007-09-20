@@ -31,6 +31,32 @@ BUS_IFACE_STR='org.gnome.WebLoginDriver'
 def iterdir(path):
   for fname in os.listdir(path):
     yield os.path.join(path, fname)
+
+class VfsMonitor(object):
+  """Avoid some locking oddities in gnomevfs monitoring"""
+  def __init__(self, path, montype, cb):
+    self.__path = path
+    self.__cb = cb
+    self.__idle_id = 0
+    self.__monid = gnomevfs.monitor_add(path, montype, self.__on_vfsmon)
+  
+  def __idle_emit(self):
+    self.__idle_id = 0
+    self.__cb()
+
+  def __on_vfsmon(self, *args):
+    if not self.__monid:
+      return
+    if self.__idle_id == 0:
+      self.__idle_id = gobject.timeout_add(300, self.__idle_emit)
+
+  def cancel(self):
+    if self.__idle_id:
+      gobject.source_remove(self.__idle_id)
+      self.__idle_id = 0
+    if self.__monid:
+      gnomevfs.monitor_cancel(self.__monid)
+      self.__monid = None
     
 class WebLoginDriver(dbus.service.Object):
   def __init__(self, bus_name):
@@ -48,7 +74,7 @@ class WebLoginDriver(dbus.service.Object):
     except KeyError, e:
       profpath = None
       _logger.debug("couldn't find default profile, awaiting creation")
-      self.__uncreated_monid = gnomevfs.monitor_add('file://' + self.__ffpath, gnomevfs.MONITOR_DIRECTORY, self.__on_profile_created)
+      self.__uncreated_monid = VfsMonitor('file://' + self.__ffpath, gnomevfs.MONITOR_DIRECTORY, self.__on_profile_created)
     if profpath:
       self.__monitor_signons(profpath)
 
@@ -56,21 +82,21 @@ class WebLoginDriver(dbus.service.Object):
     if profpath:
       _logger.debug("starting monitoring of signons in %s", profpath)
       self.__profpath = profpath
-    signons_path = os.path.join(profpath, 'signons2.txt')
+    signons_path = os.path.join(self.__profpath, 'signons2.txt')
     if (self.__signons_monid is None) and os.path.isfile(signons_path):
       _logger.debug("monitoring signons file")
       _logger.debug("initializing NSS in %s", self.__profpath)
       nssdecrypt.init(self.__profpath)
-      self.__signons_monid = gnomevfs.monitor_add('file://' + signons_path, gnomevfs.MONITOR_FILE, self.__on_signons_changed)
+      self.__signons_monid = VfsMonitor('file://' + signons_path, gnomevfs.MONITOR_FILE, self.__on_signons_changed)
       if self.__profile_monid is not None:
-        gnomevfs.monitor_cancel(self.__profile_monid)
+        self.__profile_monid.cancel()
         self.__profile_monid = None
       gobject.idle_add(self.__idle_read_signons)
     elif self.__profile_monid is None:
-      self.__profile_monid = gnomevfs.monitor_add(profpath, gnomevfs.MONITOR_DIRECTORY, self.__on_profdir_changed)
+      self.__profile_monid = VfsMonitor(profpath, gnomevfs.MONITOR_DIRECTORY, self.__on_profdir_changed)
 
   def __on_profdir_changed(self, *args):
-    if self.__signons_monid:
+    if self.__signons_monid is not None:
       return
     _logger.debug("profile dir changed: %s", args)
     self.__monitor_signons(None)
@@ -188,14 +214,14 @@ class WebLoginDriver(dbus.service.Object):
     return new_signons
 
   def __on_profile_created(self, *args):
-    if not self.__uncreated_monid:
-      return  
-    _logger.debug("profile directory changed: %s", args)
+    if self.__uncreated_monid is None:
+      return
+    _logger.debug("profile directory changed")
     try:
       profpath = self.__get_profile_path()
     except KeyError, e:
       return
-    gnomevfs.monitor_cancel(self.__uncreated_monid)
+    self.__uncreated_monid.cancel()
     self.__uncreated_monid = None
     self.__monitor_signons(profpath)
 
