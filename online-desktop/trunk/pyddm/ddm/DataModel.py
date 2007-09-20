@@ -202,14 +202,14 @@ class _DBusQuery(Query):
         notifications.send()
         self._on_success(result)
 
-    def __on_error(self, *args):
-        # FIXME: As of dbus-python-0.80, exception handling for D-BUS is very, very, limited
+    def __on_error(self, err):
+        # FIXME: As of dbus-python-0.80, exception handling for is very, very, limited
         # all we get is the message, so we can't do anything special for the defined
         # DataModel errors. This is fixed in later versions of dbus-python, where we can
         # get the exception type and the args
         #
-        _logger.error('Caught error: %s', e.message)
-        self._on_error(ERROR_FAILED, e.message)
+        _logger.error('Caught error: %s', err.message)
+        self._on_error(ERROR_FAILED, err.message)
 
     def execute(self):
         # FIXME: Would it be better to call the __on_error? Doing that sync could cause problems.
@@ -232,14 +232,14 @@ class _DBusUpdate(Query):
     def __on_reply(self):
         self._on_success()
 
-    def __on_error(self, e):
-        # FIXME: As of dbus-python-0.80, exception handling for D-BUS is very, very, limited
+    def __on_error(self, err):
+        # FIXME: As of dbus-python-0.80, exception handling is very, very, limited
         # all we get is the message, so we can't do anything special for the defined
         # DataModel errors. This is fixed in later versions of dbus-python, where we can
         # get the exception type and the args
         #
-        _logger.error('Caught error: %s', e.message)
-        self._on_error(ERROR_FAILED, e.message)
+        _logger.error('Caught error: %s', err.message)
+        self._on_error(ERROR_FAILED, err.message)
 
     def execute(self):
         # FIXME: Would it be better to call the __on_error? Doing that sync could cause problems.
