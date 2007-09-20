@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from optparse import OptionParser
+import logging
 import os
 import re
 import sys
@@ -8,6 +9,8 @@ import sys
 from ddm import DataModel
 from dbus.mainloop.glib import DBusGMainLoop
 import gobject
+
+logging.basicConfig(level=logging.DEBUG)
 
 DBusGMainLoop(set_as_default=True)
 
