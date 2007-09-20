@@ -57,7 +57,6 @@ class PersonItem(PhotoContentItem, DataBoundItem):
         self.__status_box = CanvasHBox()
         self.__details_box.append(self.__status_box)
 
-
         self.connect('button-press-event', self.__handle_button_press)
         self.connect('button-release-event', self.__handle_button_release)
         self.__pressed = False
@@ -421,6 +420,10 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         self.__address_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
         self.__top_box.append(self.__address_box)
 
+        self.__contact_status_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL,
+                                                    spacing=4, border=4)
+        self.append(self.__contact_status_box)
+        
 #        self.__online = hippo.CanvasText(text='Offline')
 #        self.append(self.__online)
 
@@ -438,6 +441,7 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         self.__local_files_link = None
 
         self.connect_resource(self.__update)
+        self.connect_resource(self.__update_contact_status, "contactStatus")
         self.connect_resource(self.__update_loved_accounts, "lovedAccounts")
         self.connect_resource(self.__update_local_buddy, "localBuddy")
         
@@ -446,9 +450,42 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         query.execute()
         
         self.__update(self.resource)
+        self.__update_contact_status(self.resource)
         self.__update_loved_accounts(self.resource)
         self.__update_local_buddy(self.resource)
-            
+
+    def __add_status_link(self, text, current_status, new_status):
+        if current_status == new_status:
+            link =hippo.CanvasText(text=text)
+        else:
+            def set_new_status(object):
+                model = DataModel(bigboard.globals.server_name)
+                query = model.update(("http://mugshot.org/p/contacts", "setContactStatus"),
+                                     user=self.resource,
+                                     status=new_status)
+                query.execute()
+        
+            link = ActionLink(text=text)
+            link.connect("activated", set_new_status)
+        
+        self.__contact_status_box.append(link)
+        
+    def __update_contact_status(self, user):
+        self.__contact_status_box.remove_all()
+        try:
+            status = self.resource.contactStatus
+        except AttributeError:
+            status = 0
+
+        if status == 0:
+            status = 3 
+
+        self.__contact_status_box.append(hippo.CanvasText(text="In sidebar: "))
+        
+        self.__add_status_link("Always", status, 4)
+        self.__add_status_link("Auto", status, 3)
+        self.__add_status_link("Never", status, 2)
+
     def __update_loved_accounts(self, user):
         try:
             accounts = self.resource.lovedAccounts
