@@ -127,10 +127,10 @@ class WebLoginDriver(dbus.service.Object):
             break
     if len(self.__signons) > 0:
       changed_signons = []
-      for signon in new_signons:
-        if (signon not in self.__signons) or (self.__signons[signon] != new_signons[signon]):
-          self.SignonChanged(signon)
-          changed_signons.append(new_signons[signon])
+      for hostname,signons in new_signons.iteritems():
+        if (hostname not in self.__signons) or (self.__signons[hostname] != signons):
+          self.SignonChanged(signons)
+          changed_signons.append(signons)
     else:
       changed_signons = new_signons.itervalues()
       # todo signal on delete?
@@ -234,18 +234,18 @@ class WebLoginDriver(dbus.service.Object):
     raise KeyError("Couldn't find mozilla profile")
 
   @dbus.service.method(BUS_IFACE_STR,
-                       out_signature="a{sv}")
+                       out_signature="a{saa{sv}}")
   def GetSignons(self):
     return self.__signons
 
   @dbus.service.signal(BUS_IFACE_STR,
-                       signature='s')
+                       signature='aa{sv}')
   def SignonChanged(self, signon):
     pass
 
   @dbus.service.method(BUS_IFACE_STR,
                        in_signature="s",
-                       out_signature="a{sv}")
+                       out_signature="aa{sv}")
   def GetSignon(self, signon):
     return self.__signons[signon]
 
