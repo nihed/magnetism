@@ -204,6 +204,22 @@ public class DataModel {
 		
 		return (ReadWriteSession)session;
 	}
+	
+	/**
+	 * Gets the current session, whether it is read-only or read-write. Usually you want
+	 * to use currentSessionRO or currentSessionRW instead (which is why this isn't 
+	 * exposed as a convenience method on DataService). Throws IllegalStateException 
+	 * if there is no current session.
+	 * 
+	 * @return the current session
+	 */
+	public DMSession currentSession() {
+		DMSession session = sessionMap.getCurrent();
+		if (session == null)
+			throw new IllegalStateException("currentSession() called when not inside a session");
+		
+		return session;
+	}
 
 	public ClassPool getClassPool() {
 		return classPool;

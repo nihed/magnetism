@@ -237,6 +237,8 @@ public interface IdentitySpider {
 	 */
 	public void removeContact(User user, Contact contact); 
 	
+	public void setContactStatus(UserViewpoint viewpoint, User contactUser, ContactStatus status);
+
 	/**
 	 * Compute the set of users that this user has listed as friends; this
 	 * function should not be used directly; it is an internal implementation
@@ -398,5 +400,4 @@ public interface IdentitySpider {
 	 * @param user the user to update
 	 */
 	public void incrementUserVersion(User user);
-
 }

@@ -134,9 +134,18 @@ public abstract class AnnotatedIQMethod {
 			       parameterTypes[2].equals(IQ.class)) {
 			return new GenericIQMethod(handler, method, annotation, true);
 		} else if (DMObject.class.isAssignableFrom(method.getReturnType())) {
+			if (annotation.type() != IQ.Type.get)
+				throw new RuntimeException("Update IQ methods cannot have a return");
+			
 			return new SingleQueryIQMethod(handler, method, annotation);
 		} else if (Collection.class.isAssignableFrom(method.getReturnType())) {
+			if (annotation.type() != IQ.Type.get)
+				throw new RuntimeException("Update IQ methods cannot have a return");
+			
 			return MultiQueryIQMethod.getForMethod(handler, method, annotation);
+		} else if (method.getReturnType().equals(void.class) &&
+				   annotation.type() == IQ.Type.set) {
+			return new UpdateIQMethod(handler, method, annotation);
 		} else {
 			throw new RuntimeException(method + ": Unexpected signature for IQ handler method");
 		}

@@ -25,11 +25,13 @@ import com.dumbhippo.server.views.ViewStream;
 /** 
  * IQ handler for getting / monitoring your social network (groups, contacts)
  * 
+ * TODO: switch all users to the data model and delete this
+ * 
  * @author Havoc Pennington
  *
  */
-@IQHandler(namespace=ContactsIQHandler.CONTACTS_NAMESPACE)
-public class ContactsIQHandler extends AnnotatedIQHandler {
+@IQHandler(namespace=OldContactsIQHandler.CONTACTS_NAMESPACE)
+public class OldContactsIQHandler extends AnnotatedIQHandler {
 	static final String CONTACTS_NAMESPACE = "http://dumbhippo.com/protocol/contacts";
 	
 	@EJB
@@ -41,7 +43,7 @@ public class ContactsIQHandler extends AnnotatedIQHandler {
 	@EJB
 	private ViewStreamBuilder viewStreamBuilder;
 	
-	public ContactsIQHandler() {
+	public OldContactsIQHandler() {
 		super("Hippo contacts IQ Handler");
 		Log.debug("creating ContactsIQHandler");
 	}
