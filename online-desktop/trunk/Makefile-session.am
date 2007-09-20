@@ -9,7 +9,7 @@ autostartdir=$(datadir)/online-desktop/autostart
 autostart_DATA = \
 	autostart/bigboard.desktop \
 	autostart/browser.desktop  \
-	autostart/mugshot.desktop  \
+	autostart/weblogindriver.desktop  \
 	autostart/pidgin.desktop
 
 presessiondir=$(datadir)/online-desktop/presession
