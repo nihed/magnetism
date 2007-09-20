@@ -335,6 +335,10 @@ public class FeedSystemBean implements FeedSystem {
 				throw new FeedLinkUnknownException("Feed contains no link element or we failed to parse one at least");
 			}
 		} else {
+			// this fixes a problem digg has with their feed links			                     
+		    if (link.startsWith("http://."))
+		        link = link.replace("http://.", "http://");
+			logger.debug("link to create feed link is {}", link);		    
 			URL linkUrl;
 			try {
 				linkUrl = new URL(link);

@@ -1812,7 +1812,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		Feed feed;
 		try {
-			feed = feedSystem.scrapeFeedFromUrl(new URL("http://digg.com/users/" + StringUtils.urlEncode(external.getHandle()) + "/dugg"));
+			feed = feedSystem.scrapeFeedFromUrl(new URL("http://digg.com/users/" + StringUtils.urlEncode(external.getHandle()) + "/history/diggs.rss"));
 		} catch (MalformedURLException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
 		}
