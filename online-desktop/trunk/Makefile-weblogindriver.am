@@ -1,4 +1,4 @@
-nssdecryptdir = $(pyexecdir)/nssdecrypt
+nssdecryptdir = $(pyexecdir)
 nssdecrypt_LTLIBRARIES=nssdecrypt.la
 
 nssdecrypt_la_LDFLAGS = -module -avoid-version
