@@ -13,7 +13,7 @@ from bigboard.libbig.logutil import log_except
 from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock
 import bigboard.google as google
-import bigboard.stocks.google_stock as google_stock  
+import bigboard.google_stock as google_stock  
 from bigboard.big_widgets import PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, Separator
 from bigboard.libbig.xmlquery import query as xml_query, get_attrs as xml_get_attrs
 
