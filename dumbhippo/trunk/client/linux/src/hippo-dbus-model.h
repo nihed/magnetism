@@ -11,6 +11,13 @@ G_BEGIN_DECLS
 #define HIPPO_DBUS_MODEL_INTERFACE "org.freedesktop.od.Model"
 #define HIPPO_DBUS_MODEL_PATH      "/org/freedesktop/od/data_model"
 
+/* We use one error for all errors, and pass an error code as the second
+ * argument after the string message. The error code is directly from
+ * the DataModel protocol, and this avoids us having to make up new names
+ * for each error code, including ones we don't know about yet.
+ */
+#define HIPPO_DBUS_MODEL_ERROR     "org.freedesktop.od.Model.Error"
+
 /* This interface is used for callbacks from the server to a client
  */
 #define HIPPO_DBUS_MODEL_CLIENT_INTERFACE  "org.freedesktop.od.ModelClient"

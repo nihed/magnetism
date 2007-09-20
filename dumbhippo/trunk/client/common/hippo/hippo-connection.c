@@ -4934,61 +4934,95 @@ on_query_reply(LmMessageHandler *handler,
     const char *child_uri;
     const char *child_name;
     GSList *results = NULL;
-    DDMNotificationSet *notifications;
+    const char *error_message = NULL;
+    DDMDataError error_code = DDM_DATA_ERROR_INTERNAL;
     
     dm_context_init(&context, message_context->connection);
     dm_context_push_node(&context, node);
 
-    // FIXME: Check for <iq type="error">
-
-    child = node->children;
-    if (child == NULL || child->next != NULL) {
-        g_warning("Reply to query didn't have a single child of the <iq/> node");
-        goto pop_node;
-    }
-
-    dm_context_push_node(&context, child);
-    if (!dm_context_node_info(&context, &child_uri, &child_name)) {
-        g_warning("Couldn't resolve the namespace for the <iq/> child in a query reply");
-        goto pop_child;
-    }
-
-    if (child_uri != query_qname->uri || strcmp(child_name, query_qname->name) != 0) {
-        g_warning("<iq/> child name didn't match the query");
-        goto pop_child;
-    }
-
-    notifications = ddm_notification_set_new(context.model);
-    
-    for (resource_node = child->children; resource_node; resource_node = resource_node->next) {
-        DDMDataResource *resource;
-
-        dm_context_push_node(&context, resource_node);
-        resource = update_resource(&context, NULL, notifications);
-        if (resource != NULL)
-            results = g_slist_prepend(results, resource); 
+    if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_ERROR) {
+        LmMessageNode *error_node;
+        LmMessageNode *text_node;
         
+        error_code = DDM_DATA_ERROR_BAD_REQUEST;
+        error_message = "Server error";
+
+        error_node = lm_message_node_find_child(message->node, "error");
+        if (error_node != NULL) {
+            text_node = lm_message_node_find_child(message->node, "text");
+            error_message = lm_message_node_get_value(text_node);
+
+            /* FIXME: refine error code based on the <error/> element */
+        }
+        
+        goto out;
+    }
+
+    /* We take an empty IQ reply (no child element) as being an empty result list; this would
+     * be an odd way for a server to implement a query, but makes sense for updates, that
+     * normally have no results.
+     */
+    child = node->children;
+    if (child != NULL) {
+        DDMNotificationSet *notifications;
+        
+        if (child->next != NULL) {
+            error_message = "Reply to query didn't have a single child of the <iq/> node";
+            error_code = DDM_DATA_ERROR_BAD_REPLY;
+            goto pop_node;
+        }
+
+        dm_context_push_node(&context, child);
+        if (!dm_context_node_info(&context, &child_uri, &child_name)) {
+            error_message = "Couldn't resolve the namespace for the <iq/> child in a query reply";
+            error_code = DDM_DATA_ERROR_BAD_REPLY;
+            goto pop_child;
+        }
+        
+        if (child_uri != query_qname->uri || strcmp(child_name, query_qname->name) != 0) {
+            error_message = "<iq/> child name didn't match the query";
+            error_code = DDM_DATA_ERROR_BAD_REPLY;
+            goto pop_child;
+        }
+        
+        notifications = ddm_notification_set_new(context.model);
+        
+        for (resource_node = child->children; resource_node; resource_node = resource_node->next) {
+            DDMDataResource *resource;
+            
+            dm_context_push_node(&context, resource_node);
+            resource = update_resource(&context, NULL, notifications);
+            if (resource != NULL)
+                results = g_slist_prepend(results, resource); 
+            
+            dm_context_pop_node(&context);
+        }
+
+        if (!ddm_data_query_is_update(query)) {
+            disk_cache = _hippo_data_model_get_disk_cache(context.model);
+            if (disk_cache)
+                _hippo_disk_cache_save_query_to_disk(disk_cache, query, results, notifications);
+        }
+        
+        ddm_notification_set_free(notifications);
+
+    pop_child:
         dm_context_pop_node(&context);
     }
 
-    disk_cache = _hippo_data_model_get_disk_cache(context.model);
-    if (disk_cache)
-        _hippo_disk_cache_save_query_to_disk(disk_cache, query, results, notifications);
-    
-    ddm_notification_set_free(notifications);
-    
-    ddm_data_query_response(query, results);
+    if (error_message == NULL)
+        ddm_data_query_response(query, results);
     
     g_slist_free(results);
-
- pop_child:
-    dm_context_pop_node(&context);
 
  pop_node:
     dm_context_pop_node(&context);
     g_assert(context.nodes == NULL);
-    
-    // FIXME: ddm_data_query_error() if we had a validation error above
+
+ out:
+    if (error_message != NULL) {
+        ddm_data_query_error(query, error_code, error_message);
+    }
     
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -5015,12 +5049,20 @@ hippo_connection_send_query(HippoConnection *connection,
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *child;
+    LmMessageSubType message_subtype;
+    
     DDMQName *query_qname = ddm_data_query_get_qname(query);
     GHashTable *params = ddm_data_query_get_params(query);
     const char *fetch = ddm_data_query_get_fetch(query);
+
+    if (ddm_data_query_is_update(query))
+        message_subtype = LM_MESSAGE_SUB_TYPE_SET;
+    else
+        message_subtype = LM_MESSAGE_SUB_TYPE_GET;
+
     
     message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
-                                           LM_MESSAGE_SUB_TYPE_GET);
+                                           message_subtype);
     node = lm_message_get_node(message);
 
     child = lm_message_node_add_child (node, query_qname->name, NULL);

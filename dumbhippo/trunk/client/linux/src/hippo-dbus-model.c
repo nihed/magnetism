@@ -161,14 +161,14 @@ data_client_connection_destroy(DataClientConnection *connection)
 }
 
 static DataClientQueryClosure *
-data_client_query_closure_new(DataClient     *client,
-                              DBusMessage    *message,
-                              DDMDataFetch *fetch)
+data_client_query_closure_new(DataClient    *client,
+                              DBusMessage   *message,
+                              DDMDataFetch  *fetch)
 {
     DataClientQueryClosure *closure = g_new0(DataClientQueryClosure, 1);
-    closure->client = data_client_ref(client);
+    closure->client = client ? data_client_ref(client) : NULL;
     closure->message = dbus_message_ref(message);
-    closure->fetch = ddm_data_fetch_ref(fetch);
+    closure->fetch = fetch ? ddm_data_fetch_ref(fetch) : NULL;
 
     return closure;
 }
@@ -176,8 +176,10 @@ data_client_query_closure_new(DataClient     *client,
 static void
 data_client_query_closure_destroy(DataClientQueryClosure *closure)
 {
-    data_client_unref(closure->client);
-    ddm_data_fetch_unref(closure->fetch);
+    if (closure->client)
+        data_client_unref(closure->client);
+    if (closure->fetch)
+        ddm_data_fetch_unref(closure->fetch);
     dbus_message_unref(closure->message);
     g_free(closure);
 }
@@ -623,17 +625,23 @@ on_query_success(GSList  *results,
 }
 
 static void
-on_query_error(DDMDataError  error,
+on_query_error(DDMDataError    error,
                const char     *message,
                gpointer        data)
 {
     DBusConnection *connection = hippo_dbus_get_connection(hippo_app_get_dbus(hippo_get_app()));
     DataClientQueryClosure *closure = data;
     DBusMessage *reply;
+    DBusMessageIter iter;
+    dbus_int32_t code = (dbus_int32_t)error;
 
     reply = dbus_message_new_error(closure->message,
-                                   DBUS_ERROR_FAILED,
+                                   HIPPO_DBUS_MODEL_ERROR,
                                    message);
+    
+    dbus_message_iter_init_append(reply, &iter);
+    dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &code);
+    
     dbus_connection_send(connection, reply, NULL);
     dbus_message_unref(reply);
     
@@ -759,23 +767,38 @@ handle_query (void            *object,
     return NULL;
 }
 
+static void
+on_update_success(gpointer data)
+{
+    DBusConnection *connection = hippo_dbus_get_connection(hippo_app_get_dbus(hippo_get_app()));
+    DataClientQueryClosure *closure = data;
+    DBusMessage *reply;
+
+    reply = dbus_message_new_method_return(closure->message);
+    dbus_connection_send(connection, reply, NULL);
+    dbus_message_unref(reply);
+    
+    data_client_query_closure_destroy(closure);
+}
+
 static DBusMessage*
 handle_update (void            *object,
                DBusMessage     *message,
                DBusError       *error)
 {
     DBusConnection *connection;
+    DDMDataModel *model;
     const char *method_uri;
     GHashTable *params = NULL;
     DBusMessageIter iter;
+    DDMDataQuery *query;
+    DataClientQueryClosure *closure;
     
     connection = hippo_dbus_get_connection(hippo_app_get_dbus(hippo_get_app()));
+    model = hippo_app_get_data_model(hippo_get_app());    
 
     dbus_message_iter_init (message, &iter);
     
-    dbus_message_iter_get_basic(&iter, &method_uri);
-    dbus_message_iter_next (&iter);
-
     if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING) {
         return dbus_message_new_error(message,
 				      DBUS_ERROR_INVALID_ARGS,
@@ -795,9 +818,19 @@ handle_update (void            *object,
                                       DBUS_ERROR_INVALID_ARGS,
                                       _("Too many arguments"));
 
-    /* FIXME Do the update */
-
+    closure = data_client_query_closure_new(NULL, message, NULL);
+    query = ddm_data_model_update_params(model, method_uri, params);
     g_hash_table_destroy(params);
+    
+    if (query == NULL) {
+        data_client_query_closure_destroy(closure);
+        return dbus_message_new_error(message,
+                                      DBUS_ERROR_FAILED,
+                                      _("Couldn't send query"));
+    }
+
+    ddm_data_query_set_update_handler(query, on_update_success, closure);
+    ddm_data_query_set_error_handler(query, on_query_error, closure);
 
     return NULL;
 }
@@ -974,7 +1007,7 @@ static const HippoDBusMember model_members[] = {
      *     Parameter value
      */
 
-    { HIPPO_DBUS_MEMBER_METHOD, "Update", "sa(ss)", "", handle_update },
+    { HIPPO_DBUS_MEMBER_METHOD, "Update", "sa{ss}", "", handle_update },
     
     /* Forget: Remove notifications resulting from an earlier Query request
      * 

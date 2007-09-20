@@ -12,6 +12,7 @@ typedef enum {
 struct _DDMDataQuery {
     DDMDataModel *model;
     DDMQName *qname;
+    gboolean is_update;
     char *fetch;
     GHashTable *params;
 
@@ -40,6 +41,14 @@ ddm_data_query_get_qname (DDMDataQuery *query)
     g_return_val_if_fail(query != NULL, NULL);
 
     return query->qname;
+}
+
+gboolean
+ddm_data_query_is_update (DDMDataQuery *query)
+{
+    g_return_val_if_fail(query != NULL, FALSE);
+
+    return query->is_update;
 }
 
 const char *
@@ -127,7 +136,29 @@ _ddm_data_query_new (DDMDataModel *model,
 
     query->model = model;
     query->qname = qname;
+    query->is_update = FALSE;
     query->fetch = g_strdup(fetch);
+    query->params = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                          (GDestroyNotify)g_free, (GDestroyNotify)g_free);
+    g_hash_table_foreach(params, add_param_foreach, query);
+
+    query->handler_type = HANDLER_NONE;
+
+    return query;
+}
+
+DDMDataQuery *
+_ddm_data_query_new_update (DDMDataModel *model,
+                            DDMQName     *qname,
+                            GHashTable   *params)
+{
+    DDMDataQuery *query =  g_new0(DDMDataQuery, 1);
+
+    query->model = model;
+    query->qname = qname;
+    query->is_update = TRUE;
+    query->fetch = NULL;
+    query->is_update = TRUE;
     query->params = g_hash_table_new_full(g_str_hash, g_str_equal,
                                           (GDestroyNotify)g_free, (GDestroyNotify)g_free);
     g_hash_table_foreach(params, add_param_foreach, query);

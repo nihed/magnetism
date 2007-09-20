@@ -12,6 +12,10 @@ DDMDataQuery *_ddm_data_query_new(DDMDataModel   *model,
                                   const char     *fetch,
                                   GHashTable     *params);
 
+DDMDataQuery *_ddm_data_query_new_update(DDMDataModel   *model,
+                                         DDMQName       *qname,
+                                         GHashTable     *params);
+
 G_END_DECLS
 
 #endif /* __DDM_DATA_QUERY_INTERNAL_H__ */
