@@ -135,7 +135,7 @@ Journal.prototype = {
   },
   _getBaseQueryOptions: function() {
     var options = HISTORY_SERVICE.getNewQueryOptions();
-    options.resultType = options.RESULTS_AS_VISIT;
+    options.resultType = options.RESULTS_AS_URI;
     options.setGroupingMode([options.GROUP_BY_DAY], 1);
     options.sortingMode = options.SORT_BY_DATE_DESCENDING;
     return options;
@@ -214,8 +214,9 @@ JournalPage.prototype = {
     var headernode = document.createElement('h4');
     headernode.className = 'date';
     if (dateTimeUtils.getLocalDayOffset(today) == dateTimeUtils.getLocalDayOffset(date))
-      headernode.appendChild(document.createTextNode("Today, "))
-    headernode.appendChild(document.createTextNode(formatUtils.monthName(date.getMonth()) + " " + formatUtils.pad(date.getDate()) + " " + date.getFullYear()));
+      headernode.appendChild(document.createTextNode("Today"))
+    else
+      headernode.appendChild(document.createTextNode(formatUtils.monthName(date.getMonth()) + " " + formatUtils.pad(date.getDate()) + " " + date.getFullYear()));
     content.appendChild(headernode);
     var histnode = document.createElement('div');
     histnode.className = 'set';
@@ -434,7 +435,7 @@ JournalPage.prototype = {
     if (search)
       search = search.strip();
     var searchIsWeblink = urlUtils.parseWebLink(search);
-    if (search) {
+    if (search && search.length > 1) {
       $("search-info-bar").style.display = "block";
       this.renderSearchInfoBar(search, searchIsWeblink);
       topSites = this.journal.searchTopSites(search);
