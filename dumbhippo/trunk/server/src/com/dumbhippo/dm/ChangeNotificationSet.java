@@ -105,12 +105,22 @@ public class ChangeNotificationSet implements Serializable {
 	}
 	
 	public boolean isEmpty() {
-		return notifications.isEmpty();
+		return notifications == null && matchedNotifications == null;
 	}
 
 	@Override
 	public String toString() {
-		return notifications.values().toString();
+		StringBuilder sb = new StringBuilder();
+		if (notifications != null)
+			sb.append(notifications.values().toString());
+		
+		if (notifications != null && matchedNotifications != null)
+			sb.append(", ");
+			
+		if (matchedNotifications != null)
+			sb.append(matchedNotifications.toString());
+		
+		return sb.toString();
 	}
 }
  

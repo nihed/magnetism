@@ -655,6 +655,28 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 	
+	public void setContactStatus(UserViewpoint viewpoint, User contactUser, ContactStatus status) {
+		User viewer = viewpoint.getViewer();
+		
+		if (status == ContactStatus.NONCONTACT) {
+			removeContactPerson(viewer, contactUser);
+		} else {
+			Contact contact;
+			
+			try {
+				contact = findContactByUser(viewer, contactUser);
+			} catch (NotFoundException e) { 
+				contact = doCreateContact(viewer, contactUser.getAccount());
+			}
+			
+			if (contact.getStatus() != status) {
+				contact.setStatus(status);
+				invalidateContactStatus(viewer.getGuid(), contactUser.getGuid());
+				LiveState.getInstance().invalidateContacters(contactUser.getGuid());
+			}
+		}
+	}
+
 	public Set<Guid> computeContacts(Guid userId) {
 		User user = em.find(User.class, userId.toString());
 		

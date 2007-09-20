@@ -9,12 +9,17 @@ import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.PacketError;
 
+import com.dumbhippo.dm.DMObject;
+import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.fetch.FetchNode;
 import com.dumbhippo.dm.parser.FetchParser;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jive.annotations.IQMethod;
+import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -70,6 +75,8 @@ public abstract class QueryIQMethod extends AnnotatedIQMethod {
 				paramInfo[i] = new IntegerParamInfo(name, defaultValue);
 			} else if (paramType.isAssignableFrom(UserViewpoint.class)) {
 				paramInfo[i] = new ViewpointParamInfo();
+			} else if (DMObject.class.isAssignableFrom(paramType)) {
+				paramInfo[i] = new DMOParamInfo(name, defaultValue, paramType);
 			} else {
 				throw new RuntimeException(method + ": Unknown parameter type " + paramType);
 			}
@@ -197,6 +204,30 @@ public abstract class QueryIQMethod extends AnnotatedIQMethod {
 				return Integer.parseInt(value);
 			} catch (NumberFormatException e) {
 				throw IQException.createBadRequest("Bad integer value for parameter " + value);
+			}
+		}
+	}
+	
+	private static class DMOParamInfo extends ParamInfo {
+		private Class<?> clazz;
+		
+		protected DMOParamInfo(String name, String defaultValue, Class<?> clazz) {
+			super(name, defaultValue);
+			this.clazz = clazz;
+		}
+
+		@Override
+		public Object parse(String value) throws IQException {
+			try {
+				DMSession session = DataService.getModel().currentSession();
+				DMObject<?> dmo = session.find(value);
+				
+				if (clazz.isAssignableFrom(dmo.getClass()))
+					return dmo;
+				else
+					throw IQException.createBadRequest("Resource is not of type " + clazz.getSimpleName());
+			} catch (NotFoundException e) {
+				throw new IQException(PacketError.Condition.item_not_found, PacketError.Type.cancel, e.getMessage());
 			}
 		}
 	}
