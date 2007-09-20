@@ -16,9 +16,11 @@ def on_pidgin_gmail(signon):
   p.PurpleAccountSetPassword(a, base64.b64decode(signon['password']))
   p.PurpleAccountSetRememberPassword(a, dbus.UInt32(1))
   p.PurpleAccountSetEnabled(a, "gtk-gaim", dbus.UInt32(1))
+  p.PurpleAccountsAdd(a)
 
 hints = {
 'GMail': {'hostname': 'https://www.google.com', 'username_field': 'Email'},
+'GAFYD-Mail': {'hostname': 'https://www.google.com', 'username_field': 'userName'},
 }
 
 internal_matchers = {
