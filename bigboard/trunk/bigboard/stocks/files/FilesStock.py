@@ -1,4 +1,4 @@
-import logging, os, subprocess, urlparse, urllib
+import logging, os, subprocess, urlparse, urllib, time
 import xml.dom, xml.dom.minidom
 
 import gobject, gtk, pango
@@ -26,6 +26,14 @@ def reverse(data):
 thumbnails = gnome.ui.ThumbnailFactory(gnome.ui.THUMBNAIL_SIZE_NORMAL)
 itheme = gtk.icon_theme_get_default() 
 local_file_source_key = -1
+
+def create_account_url(account):
+    account = urllib.unquote(account)
+    domain = account[account.find("@") + 1:]
+    if domain == "gmail.com":
+        return "http://docs.google.com"
+    else:
+        return "https://docs.google.com/a/" + domain
 
 class File:
     def __init__(self):
@@ -86,9 +94,17 @@ class GoogleFile(File):
         self._source_key = google_key
         self.__doc_entry = doc_entry
         self._access_time = google.parse_timestamp(self.__doc_entry.updated.text)
-        # TODO: get images for doc, spreadsheet, and presentation and set them here
-        # depending on the category of self.__doc_entry
-        self._image_name = 'bigboard-right-button.png'
+
+        if self.__doc_entry.category[0].label == "document":
+            self._image_name = 'bigboard-document.png'
+        elif self.__doc_entry.category[0].label == "spreadsheet":
+            self._image_name = 'bigboard-spreadsheet.png'
+        elif self.__doc_entry.category[0].label == "presentation":
+            self._image_name = 'bigboard-presentation.png'
+        else:
+            self._image_name = 'document.png'
+            _logger.warn("Unknown Google Docs category %s", self.__doc_entry.category.text)
+
         self._url = self.__doc_entry.GetAlternateLink().href
         self._name = self.__doc_entry.title.text
 
@@ -161,6 +177,18 @@ class FilesStock(Stock, google_stock.GoogleStock):
 
     def __on_more_button(self):
         subprocess.Popen(['nautilus', '--browser', os.path.expanduser('~/Desktop')]) 
+        done_with_sleep_state = 0
+        for google_account in self._googles.itervalues():
+            if done_with_sleep_state == 1:
+                # in case the browser is just starting, we should wait a bit, otherwise
+                # Firefox produces this for the second link:  
+                # "Firefox is already running, but is not responding. To open a new window, 
+                #  you must first close the existing Firefox process, or restart your system."
+                time.sleep(2)
+                done_with_sleep_state = 2  
+            libbig.show_url(create_account_url(google_account.get_auth()[0]))
+            if done_with_sleep_state == 0:
+                done_with_sleep_state = 1
         
     def get_content(self, size):
         return self._box
