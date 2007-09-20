@@ -171,7 +171,8 @@ class WebLoginDriver(dbus.service.Object):
           raise ValueError("Invalid header: %s" % (line,))
         parse_state += 1
       elif parse_state == parse_states['reject']:
-        parse_state += 1 # ignore disabled hosts stuff for now
+        if line == '.':
+          parse_state += 1 # ignore disabled hosts stuff for now
       elif parse_state == parse_states['realm']:
         m = realm_re.match(line)
         signon = {}
@@ -259,7 +260,7 @@ def modmain():
   _driver = WebLoginDriver(bus_name)
 
 def main():
-  logging.basicConfig(level=logging.DEBUG)
+  logging.basicConfig()
   gobject.threads_init()
   dbus.glib.threads_init()
   modmain()
