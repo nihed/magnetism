@@ -409,20 +409,24 @@ class Google(gobject.GObject):
         elif self.__mail_checker:
             self.__mail_checker.stop()
 
+    def __check_signons(self, signons):
+        for signon in signons:
+            if 'hint' not in signon: continue
+            if signon['hint'] == self.__type_hint:
+                _logger.debug("hint %s matched signon %s", self.__type_hint, signon)
+                self.__on_auth_ok(signon['username'], base64.b64decode(signon['password']))
+                return
+
     @log_except(_logger)
     def __on_get_signons_reply(self, signondata):
         _logger.debug("got signons reply")
         for hostname,signons in signondata.iteritems():
-            for signon in signons:
-                if 'hint' not in signon: continue
-                if signon['hint'] == self.__type_hint:
-                    _logger.debug("hint %s matched signon %s", self.__type_hint, signon)
-                    self.__on_auth_ok(signon['username'], base64.b64decode(signon['password']))
-                    return
+            self.__check_signons(signons)
 
     @log_except(_logger)
-    def __on_signon_changed(self, hostname):
-        _logger.debug("signon changed: %s", hostname)
+    def __on_signon_changed(self, signons):
+        _logger.debug("signons changed: %s", signons)
+        self.__check_signons(signons)
 
     @log_except(_logger)
     def __on_dbus_error(self, err):
@@ -604,7 +608,7 @@ _google_work_instance = None
 def get_google_at_work():
     global _google_work_instance
     if _google_work_instance is None:
-        _google_work_instance = Google(login_label='Google Work', storage_key='google-work')
+        _google_work_instance = Google(login_label='Google Work', storage_key='google-work', type_hint='GAFYD-Mail')
     return _google_work_instance
 
 def get_googles():
