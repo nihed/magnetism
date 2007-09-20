@@ -21,8 +21,6 @@ typedef enum {
 typedef struct {
     PendingRequestType type;
     DDMDataQuery *query;
-    char         *method;
-    GHashTable   *params;
 } PendingRequest;
 
 typedef struct {
@@ -40,8 +38,6 @@ static void ddm_dbus_send_query   (DDMDataModel *ddm_model,
                                    void         *backend_data);
 static void ddm_dbus_send_update  (DDMDataModel *ddm_model,
                                    DDMDataQuery *query,
-                                   const char   *method,
-                                   GHashTable   *params,
                                    void         *backend_data);
 
 static void
@@ -90,32 +86,8 @@ model_add_pending_query(DBusModel    *dbus_model,
 }
 
 static void
-copy_foreach(void *key,
-             void *value,
-             void *data)
-{
-    GHashTable *copy = data;
-    g_hash_table_replace(copy, g_strdup(key), g_strdup(value));
-}
-
-static GHashTable*
-deep_copy_string_hash(GHashTable *orig)
-{
-    GHashTable *copy;
-    
-    copy = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                 (GDestroyNotify)g_free, (GDestroyNotify)g_free);
-
-    g_hash_table_foreach(orig, copy_foreach, copy);
-
-    return copy;
-}
-
-static void
 model_add_pending_update(DBusModel    *dbus_model,
-                         DDMDataQuery *query,
-                         const char   *method,
-                         GHashTable   *params)
+                         DDMDataQuery *query)
 {
     PendingRequest *pr;
 
@@ -124,8 +96,6 @@ model_add_pending_update(DBusModel    *dbus_model,
     pr = g_new0(PendingRequest, 1);
     pr->type = PENDING_REQUEST_UPDATE;
     pr->query = query;
-    pr->method = g_strdup(method);
-    pr->params = deep_copy_string_hash(params);
     
     dbus_model->pending_requests = g_slist_append(dbus_model->pending_requests, pr);
 }
@@ -145,10 +115,7 @@ model_send_pending(DBusModel *dbus_model)
             ddm_dbus_send_query(dbus_model->ddm_model, pr->query, NULL);
             g_free(pr);
         } else if (pr->type == PENDING_REQUEST_UPDATE) {
-            ddm_dbus_send_update(dbus_model->ddm_model, pr->query,
-                                 pr->method, pr->params, NULL);
-            g_free(pr->method);
-            g_hash_table_destroy(pr->params);
+            ddm_dbus_send_update(dbus_model->ddm_model, pr->query, NULL);
             g_free(pr);
         } else {
             g_warning("unknown pending request type");
@@ -1002,8 +969,6 @@ append_update_args(DBusMessage *message,
 static void
 ddm_dbus_send_update (DDMDataModel *ddm_model,
                       DDMDataQuery *query,
-                      const char   *method,
-                      GHashTable   *params,
                       void         *backend_data)
 {
     DBusModel *dbus_model;
@@ -1012,7 +977,7 @@ ddm_dbus_send_update (DDMDataModel *ddm_model,
     dbus_model = get_dbus_model(ddm_model);
 
     if (dbus_model->engine_proxy == NULL) {
-        model_add_pending_update(dbus_model, query, method, params);
+        model_add_pending_update(dbus_model, query);
         return;
     }
 

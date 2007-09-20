@@ -224,21 +224,46 @@ hippo_send_query   (DDMDataModel *ddm_model,
     if (hippo_connection_get_connected(connection))
         hippo_connection_send_query(connection, query);
     else
-        queue_offline_query(ddm_model, query);
+        queue_offline_query(ddm_model, query);        
+}
+
+static gboolean
+do_offline_update_error(gpointer data)
+{
+    DDMDataQuery *query = data;
+
+    ddm_data_query_error(query,
+                         DDM_DATA_ERROR_NO_CONNECTION,
+                         "Not connected to server");
+
+    return FALSE;
+}
+
+static void
+queue_offline_update_error(DDMDataModel *ddm_model,
+                           DDMDataQuery *query)
+{
+    g_idle_add(do_offline_update_error, query);
 }
 
 static void
 hippo_send_update (DDMDataModel *ddm_model,
                    DDMDataQuery *query,
-                   const char   *method,
-                   GHashTable   *params,
                    void         *backend_data)
 {
+    HippoDataCache *cache;
+    HippoConnection *connection;    
     HippoModel *hippo_model;
-
-    hippo_model = get_hippo_model(ddm_model);
     
-    g_warning("send_update not implemented");
+    hippo_model = get_hippo_model(ddm_model);    
+
+    cache = HIPPO_DATA_CACHE(backend_data);
+    connection = hippo_data_cache_get_connection(cache);
+    
+    if (hippo_connection_get_connected(connection))
+        hippo_connection_send_query(connection, query);
+    else
+        queue_offline_update_error(ddm_model, query);
 }
 
 static const DDMDataModelBackend hippo_backend = {

@@ -26,8 +26,6 @@ struct _DDMDataModelBackend
     
     void     (* send_update)    (DDMDataModel *model,
                                  DDMDataQuery *query,
-                                 const char   *method,
-                                 GHashTable   *params,
                                  void         *backend_data);
 
     GCallback _ddm_padding_1;

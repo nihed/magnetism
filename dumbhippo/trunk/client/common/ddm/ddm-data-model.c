@@ -198,19 +198,25 @@ ddm_data_model_update_params(DDMDataModel *model,
                              const char   *method,
                              GHashTable   *params)
 {
+    DDMDataQuery *query;
+    DDMQName *method_qname;
+
     g_return_val_if_fail (DDM_IS_DATA_MODEL(model), NULL);
 
-#if 0
-    /* FIXME */
-    model->backend->send_update(model, query, method, params, model->backend_data);
-#endif
+    method_qname = ddm_qname_from_uri(method);
+    if (method_qname == NULL)
+        return NULL;
+
+    query = _ddm_data_query_new_update(model, method_qname, params);
+
+    model->backend->send_update(model, query, model->backend_data);
     
-    return NULL;
+    return query;
 }
 
 DDMDataQuery *
 ddm_data_model_update(DDMDataModel *model,
-                      const char     *method,
+                      const char   *method,
                       ...)
 {
     DDMDataQuery *query;
