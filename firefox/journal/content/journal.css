@@ -98,19 +98,12 @@ input.green-button:hover {
   font-size: 12px;
 }
 
-#search-secondary {
-  display: none;
-  position: absolute;
-  top: 50px;
-  left: 50px;
-}
-
 /* ==== HISTORY ==== */
 
 #historycolumn {
   float: left;
   margin-right: 350px;
-  min-width: 600px;
+  width: 600px;
 }
 
 #history {
@@ -119,18 +112,7 @@ input.green-button:hover {
 #q {
   width: 20em;
 }
-#search-info-bar {
-  border: 1px solid #ccc;
-  padding: 0.5em;
-  font-size: 10pt;
-  color: #666;
-  background-color: #eee;
-  display: none;
-}
-.search-term {
-  font-weight: bold;
-  color: #000;
-}
+
 .search-provider {
   font-size: 10pt;			
 }
@@ -186,11 +168,6 @@ input.green-button:hover {
 	border: 1px solid #FFF;
 	background-color: #FFFF99;	
 }
-.clear-search {
-  font-size: 10pt;
-  text-decoration: none;
-  padding-left: 10px;
-}
 .nav {
   text-align: center;
   margin: 1em;
@@ -219,12 +196,28 @@ input.green-button:hover {
 .sidebar {
   font-size: 10pt;
   min-width: 200px;
-  min-height: 400px;
-  padding: 1em;
+  padding: 0;
   margin: 1em;
 }
 .sidebar-header {
   border-bottom: 1px dotted #222;
+}
+/* ==== Secondary Searches === */
+#secondary-search { 
+  list-style: none;
+}
+li.search-engine {
+  font-size: 6pt;
+  color: #777;
+  margin: 3pt 0pt;
+}
+img.search-engine {
+  border: none;
+  margin-right: 0.5em;
+}
+a.search-engine {
+  font-size: 10pt;
+  text-decoration: none;
 }
 /* ==== Google Search ==== */
 

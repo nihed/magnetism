@@ -313,96 +313,6 @@ JournalPage.prototype = {
 
     return item;
   },
-  renderSearchInfoBar: function(q, searchIsWeblink) {
-      var me = this;
-      var node = $("search-info-bar");
-      while (node.firstChild) { node.removeChild(node.firstChild); };
- 
-      node.appendChild(domUtils.createSpanText("Searching history for ", "search-pre-term"));
-      node.appendChild(domUtils.createSpanText(q,"search-term"));
-      var clearSearch = document.createElement("a");
-      clearSearch.addEventListener("click", function() { me.clearSearch(); }, false);
-      clearSearch.href = "javascript:void(0);";
-      clearSearch.className = "clear-search";
-      clearSearch.setAttribute("accesskey", "c");
-      clearSearch.setAttribute("title", "Clear this search [ESC]");
-      clearSearch.appendChild(document.createTextNode("[clear]"));
-      node.appendChild(clearSearch);
-  },
-  getAction: function(entry) {
-    try {
-      /* FIXME: need to get the correct annotation for the uri */
-      return entry.action || "visited";
-/*
-      var flags = {}, exp = {}, mimeType = {}, type = {};
-      ANNOTATION_SERVICE.getPageAnnotationInfo(uri, "journal/action", flags, exp, mimeType, type);
-      LOG("flags: " + flags.value + " exp: " + exp.value + " mimeType: " + mimeType.value + " type: " + type.value);
-      var action = ANNOTATION_SERVICE.getPageAnnotationString(uri, "journal/action");
-      ANNOTATION_SERVICE.removePageAnnotations(uri);
-*/
-      var uri = new String(entry.uri);
-      LOG("uri: " + uri);      
-      LOG("action retrieved: " + ANNOTATION_SERVICE.getPageAnnotation(uri, "journal/action"));
-      $("debuglog").appendChild(document.createElement("br"));
-
-      /* we're not getting the correct action here, instead we're getting the action from first uri returned every time */
-      var annon = ANNOTATION_SERVICE.getPageAnnotation(uri, "journal/action");
-      if (!annon) throw annon;
-      return annon;
-    } catch (e) {
-      return this._getAction(entry);
-    }
-    return "!visited";
-  },
-  _getAction: function(entry) {
-      var action = "visited";
-      var uri = new String(entry.uri);
-      var queryParams = uri.toQueryParams();
-
-      searchMapping.each(function (kv) {
-        if (!uri.startsWith(kv[1]['urlStart']))
-          return;
-
-        var qps = kv[1]['qparams'];
-        var qp = null;
-        for (var i = 0; i < qps.length; i++) {
-          if (queryParams[qps[i]]) {
-            qp = qps[i];
-            break;
-          }
-        }
-
-        if (!qp) 
-          return;
-
-        action = "search";
-
-        LOG("qp: " + qp + " params: " + queryParams[qp]);
-
-/*      FIXME: commented out for now
-        var engines = SEARCH_SERVICE.getEngines(Object());
-        var engine = null;
-        engines.each(function (eng) {
-          if (eng.name == kv[0]) {
-            engine = eng;
-            throw $break;
-          }
-*/
-      });
-
-      LOG("action: " + action);
-
-      try {
-        ANNOTATION_SERVICE.setPageAnnotation( uri, "journal/action", action, 0, 0 ); // ANNOTATION_SERVICE.EXPIRE_WITH_HISTORY );
-      } catch(e) { LOG("action error: " + e + " : " + uri); }
-
-      /* We're retrieving the correct action here after setting it above */
-      LOG("uri: " + uri);
-      LOG("action saved: " + ANNOTATION_SERVICE.getPageAnnotation(uri, "journal/action"));
-      $("debuglog").appendChild(document.createElement("br"));
-
-    return action;
-  },
   setAsTargetItem: function (node) {
     node.addClassName("target-item");
   },
@@ -429,22 +339,18 @@ JournalPage.prototype = {
     var content = $('history'); 
     while (content.firstChild) { content.removeChild(content.firstChild); }
 
-
     var viewedItems, topSites;
     var search = searchbox.value;
     if (search)
       search = search.strip();
     var searchIsWeblink = urlUtils.parseWebLink(search);
-    if (search && search.length > 1) {
-      $("search-info-bar").style.display = "block";
-      this.renderSearchInfoBar(search, searchIsWeblink);
+    if (search) {
       topSites = this.journal.searchTopSites(search);
       viewedItems = this.journal.search(search, 6);
       if (viewedItems.length == 0) {
         content.appendChild(domUtils.createSpanText("(No results)", "no-results"))
       }
     } else {
-      $("search-info-bar").style.display = "none";
       topSites = this.journal.searchTopSites(null);
       viewedItems = this.journal.getLastHistoryDay();
     }
@@ -468,12 +374,8 @@ JournalPage.prototype = {
 
     var searchPrimary = $("search-primary");
     while (searchPrimary.firstChild) { searchPrimary.removeChild(searchPrimary.firstChild); };
-    var searchSecondary = $("search-secondary");
-    while (searchSecondary.firstChild) { searchSecondary.removeChild(searchSecondary.firstChild); };
-    searchSecondary.style.display = "none";
+
     if (search) {
-      // Now add the alternative search links
-      var engines = SEARCH_SERVICE.getEngines(Object()); /* NS strongly desires an Out argument to be an object */
       var set = document.createElement("div");
       set.className = "set";
 
@@ -494,25 +396,9 @@ JournalPage.prototype = {
         button.appendChild(img);
         button.appendChild(document.createTextNode(" Search " + currentEngine.name));
       }
-        var hint = domUtils.createSpanText(" (Ctrl-Enter)", "keybinding-hint");
+        var hint = domUtils.createSpanText(" [Ctrl-Enter]", "keybinding-hint");
         button.appendChild(hint);
         searchPrimary.appendChild(button);
-
-      for (var i = 1; i < engines.length; i++) {
-        var engine = engines[i];
-        var div = document.createElement("div");
-        var a = document.createElement("a");
-        a.href = engine.getSubmission(search, null).uri.spec;
-        a.appendChild(document.createTextNode("Search "));
-        var img = document.createElement("img");
-        img.className = "search-engine";
-        img.src = engine.iconURI.spec;
-        a.appendChild(img);
-        a.appendChild(document.createTextNode(" " + engine.name));
-        div.appendChild(a);
-        searchSecondary.appendChild(div);
-        a.setAttribute("id", "altsearch-" + i);
-      }
     }
   },
   clearSearch : function() {
@@ -643,7 +529,7 @@ JournalPage.prototype = {
   handleSearchChanged: function(e) {
     var q = e.target;
     var search = q.value.strip()
-    if (search == this.searchValue)
+    if (search == this.searchValue || search.length <= 1)
       return;
     this.searchValue = search;
     var me = this;
