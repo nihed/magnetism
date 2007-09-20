@@ -9,3 +9,11 @@ nssdecrypt_la_SOURCES=weblogindriver/pynssdecrypt.c
 
 bin_SCRIPTS += weblogindriver/web-login-driver
 EXTRA_DIST += weblogindriver/web-login-driver
+
+# DBus service file
+servicedir = $(datadir)/dbus-1/services
+service_in_files = org.gnome.WebLoginDriver.service.in
+EXTRA_DIST += service_in_files
+service_DATA = $(service_in_files:.service.in=.service)
+$(service_DATA): $(service_in_files) Makefile
+	@sed -e "s|\@bindir\@|$(bindir)|" $< > $@
