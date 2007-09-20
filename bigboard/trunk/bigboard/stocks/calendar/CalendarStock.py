@@ -11,7 +11,7 @@ import bigboard.stock as stock
 import bigboard.google as google
 import bigboard.slideout as slideout
 from bigboard.stock import AbstractMugshotStock
-import bigboard.stocks.google_stock as google_stock  
+import bigboard.google_stock as google_stock  
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasVBox, CanvasHBox, ActionLink, Button, PrelightingCanvasBox
 from bigboard.libbig.struct import AutoStruct
 import bigboard.libbig.polling as polling

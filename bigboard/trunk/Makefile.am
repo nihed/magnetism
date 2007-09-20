@@ -58,4 +58,6 @@ gdatabasedir = $(gdatadir)/base
 gdatabase_PYTHON = gdata/base/__init__.py gdata/base/service.py
 gdatacalendardir = $(gdatadir)/calendar
 gdatacalendar_PYTHON = gdata/calendar/__init__.py gdata/calendar/service.py
+gdatadocsdir = $(gdatadir)/docs/
+gdatadocs_PYTHON = gdata/docs/__init__.py gdata/docs/service.py
 
