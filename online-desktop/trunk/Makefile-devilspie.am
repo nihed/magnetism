@@ -1,3 +1,0 @@
-devilspiedir=$(datadir)/online-desktop/devilspie
-devilspie_DATA = devilspie/maximized.ds
-EXTRA_DIST += $(devilspie_DATA)
