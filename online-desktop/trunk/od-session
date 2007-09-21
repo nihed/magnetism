@@ -15,18 +15,5 @@ for fpath in iterdir_d('online-desktop/presession'):
   if os.access(fpath, os.X_OK):
     subprocess.call([fpath], stdout=sys.stdout, stderr=sys.stderr)
 
-# Hardcode devilspie
-subprocess.Popen(['devilspie', '/usr/share/online-desktop/devilspie/maximized.ds'], stdout=sys.stdout, stderr=sys.stderr)
-
-# This contortion is necessary because gnome-session doesn't allow us to read
-# an arbitrary session file outside of the user's home directory that is not
-# the default.session.
-try:
-  os.mkdir(os.path.expanduser("~/.gnome2"))
-except OSError, e:
-  pass
-session_path=os.path.expanduser("~/.gnome2/session")
-if not os.access(session_path, os.R_OK):
-  shutil.copyfile('/usr/share/gnome/online-desktop.session', session_path)
-os.execvp('gnome-session', ['gnome-session', '--choose-session=online-desktop'])
+os.execvp('gnome-session', ['gnome-session'])
 sys.exit(1)
