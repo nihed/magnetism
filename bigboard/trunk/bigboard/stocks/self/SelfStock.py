@@ -269,6 +269,16 @@ class SelfStock(AbstractMugshotStock):
 
         self.__create_fus_proxy()
 
+        #TODO: need to make this conditional on knowing firefox has started already somehow
+        #gobject.timeout_add(2000, self.__idle_first_time_signin_check)
+
+    def __idle_first_time_signin_check(self):
+        ws = dbus.SessionBus().get_object('org.freedesktop.od.Engine', '/org/gnome/web_services')
+        cookiejar = ws.GetCookiesToSend('http://online.gnome.org')
+        _logger.debug("got cookies %s", cookiejar)
+        if not cookiejar:
+            self.__do_account()
+
     def __create_fus_proxy(self):
         try:
             self.__fus_service = dbus.SessionBus().get_object('org.gnome.FastUserSwitch',
