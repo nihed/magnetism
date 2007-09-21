@@ -134,7 +134,12 @@ class FilesStock(Stock, google_stock.GoogleStock):
         # files in this list are either LocalFile or GoogleFile 
         self.__files = []
         self.__display_limit = 5
-        self.__recentf_path = os.path.expanduser('~/.recently-used.xbel')        
+        self.__recentf_path = os.path.expanduser('~/.recently-used.xbel') 
+
+        try:
+            self.__desktop_path = subprocess.Popen(['xdg-user-dir', 'DESKTOP'], stdout=subprocess.PIPE).communicate()[0].strip()    
+        except OSError, e:
+            self.__desktop_path = os.path.expanduser("~/Desktop")
 
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4, padding_top=2)
         self._recentbox = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4)
@@ -176,7 +181,7 @@ class FilesStock(Stock, google_stock.GoogleStock):
         pass
 
     def __on_more_button(self):
-        subprocess.Popen(['nautilus', '--browser', os.path.expanduser('~/Desktop')]) 
+        subprocess.Popen(['nautilus', '--browser', self.__desktop_path]) 
         done_with_sleep_state = 0
         for google_account in self._googles.itervalues():
             if done_with_sleep_state == 1:
