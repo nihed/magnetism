@@ -338,6 +338,8 @@ hippo_dbus_im_has_icon_hash (const char           *buddy_id,
         return FALSE;
     } else if (buddy->icon_hash == NULL) {
         return icon_hash == NULL;
+    } else if (icon_hash == NULL) {
+        return FALSE;
     } else {
         return strcmp(buddy->icon_hash, icon_hash) == 0;
     }
