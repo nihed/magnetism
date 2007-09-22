@@ -61,14 +61,14 @@ class FirefoxProfile(object):
 class FirefoxHTTP(object):
   def __init__(self):
     self.__profile = FirefoxProfile()
-    self.__cookies = cookielib.MozillaCookieJar()
+    self.__cookies = cookielib.MozillaCookieJar(policy=cookielib.DefaultCookiePolicy(rfc2965=True))
     cookiepath = self.__profile.path_join('cookies.txt')
     _logger.debug("reading cookies from %s", cookiepath)
     self.__cookies.load(cookiepath)
     self.opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.__cookies))
 
   def open(self, url):
-    req = urllib2.Request(url, headers={'User-Agent': 'GNOME Online Desktop Widget System 0.1'})
+    req = urllib2.Request(url, headers={'User-Agent': 'GNOME Online Desktop Widget System 0.1',})
     return self.opener.open(req)
 
 class WidgetError(Exception):
@@ -81,27 +81,34 @@ class GoogleWidget(gtk.VBox):
       
         f = gtk.Frame()
         self.__moz = mozembed_wrap.MozClient()
-        self.__moz.connect("open-uri", lambda m, uri: webbrowser.open(uri))
         doc = xml.etree.ElementTree.ElementTree()
         _logger.debug("Reading module url %s", url)
         doc.parse(urllib2.urlopen(url))
         self.__title = doc.find('ModulePrefs').attrib['title']
         content_node = doc.find('Content')
+        self.__content_uri = None
         if content_node.attrib['type'] == 'html':
           content = content_node.text
+          _logger.debug("setting content to %d chars", len(content))
+          self.__moz.set_data("http://www.google.com/", content)
         elif content_node.attrib['type'] == 'url':
           href = content_node.attrib['href']
-          ffhttp = FirefoxHTTP()
+          self.__content_uri = href
           _logger.debug("Reading content url %s", href)
-          content = ffhttp.open(href).read()
+          self.__moz.load_url(href)
         else:
           raise WidgetError("Unknown content type")
-        _logger.debug("setting content to %d chars", len(content))
-        self.__moz.set_data("http://www.google.com/", content)
+        self.__moz.connect("open-uri", self.__on_open_uri)
         f.add(self.__moz)
         self.pack_start(f, expand=True)
         self.__moz.show_all()
-        self.__moz.set_size_request(480, 640)
+        self.__moz.set_size_request(200, 200)
+   
+    def __on_open_uri(self, m, uri):
+      if uri == self.__content_uri:
+        return False
+      webbrowser.open(uri)
+      return True
 
     def get_title(self):
       return self.__title
@@ -110,6 +117,8 @@ def main():
   logging.basicConfig(level=logging.DEBUG)
   gtkmozembed.set_profile_path('/home/walters/tmp', 'widgets')
   win = gtk.Window()
+  win.set_deletable(False)
+  win.set_resizable(False)
   widget = GoogleWidget(sys.argv[1]) 
   win.add(widget)
   win.set_title(widget.get_title())
