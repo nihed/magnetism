@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os,sys,re,urllib,urllib2,logging,webbrowser,tempfile
+import os,sys,re,urllib,urllib2,logging,webbrowser,tempfile,shutil
 import cookielib
 import xml.etree.ElementTree
 
@@ -71,12 +71,18 @@ class FirefoxHTTP(object):
     req = urllib2.Request(url, headers={'User-Agent': 'GNOME Online Desktop Widget System 0.1',})
     return self.opener.open(req)
 
+class WidgetEnvironment(dict):
+  def replace_string(self, s):
+    for k,v in self.iteritems():
+      s = s.replace('__ENV_' + k + '__', v)
+    return s
+
 class WidgetError(Exception):
   def __init__(self, msg):
     super(WidgetError, self).__init__(msg)
 
 class GoogleWidget(gtk.VBox):
-    def __init__(self, url):
+    def __init__(self, url, env):
         super(GoogleWidget, self).__init__()
       
         f = gtk.Frame()
@@ -84,21 +90,26 @@ class GoogleWidget(gtk.VBox):
         doc = xml.etree.ElementTree.ElementTree()
         _logger.debug("Reading module url %s", url)
         doc.parse(urllib2.urlopen(url))
-        self.__title = doc.find('ModulePrefs').attrib['title']
+        module_prefs = doc.find('ModulePrefs')
+        self.__title = module_prefs.attrib['title']
         content_node = doc.find('Content')
         self.__content_uri = None
         if content_node.attrib['type'] == 'html':
           content = content_node.text
           _logger.debug("got content of %d chars", len(content))
-          #content = content.replace('__MODULE_ID__', '0')
-          #content = '''<html><head><script src="http://gmodules.com/ig/f/jVilVNnzbJ0/ig.js"></script></head><body>''' + content + '''</body></html>'''
-          #open('/tmp/gmodule.html', 'w').write(content)
-          #self.__moz.set_data("http://www.google.com/", content)
-          gmodule_url = 'http://gmodules.com/ig/ifr?url=' + urllib.quote(url)
-          self.__content_uri = gmodule_url
-          self.__moz.load_url(gmodule_url)
+ 
+          if module_prefs.attrib.get('render_inline', '') == 'required':
+            content = env.replace_string(content)
+            content = content.replace('__MODULE_ID__', '0')
+            content = '''<html><head><script src="http://gmodules.com/ig/f/jVilVNnzbJ0/ig.js"></script></head><body>''' + content + '''</body></html>'''
+            self.__moz.set_data("http://www.google.com/", content)
+          else:
+            gmodule_url = 'http://gmodules.com/ig/ifr?url=' + urllib.quote(url)
+            self.__content_uri = gmodule_url
+            self.__moz.load_url(gmodule_url)
         elif content_node.attrib['type'] == 'url':
           href = content_node.attrib['href']
+          href = env.replace_string(href)
           self.__content_uri = href
           _logger.debug("Reading content url %s", href)
           self.__moz.load_url(href)
@@ -108,7 +119,8 @@ class GoogleWidget(gtk.VBox):
         f.add(self.__moz)
         self.pack_start(f, expand=True)
         self.__moz.show_all()
-        self.__moz.set_size_request(200, 200)
+        height = module_prefs.attrib.get('height', '200')
+        self.__moz.set_size_request(200, int(height))
    
     def __on_open_uri(self, m, uri):
       if uri == self.__content_uri:
@@ -121,11 +133,22 @@ class GoogleWidget(gtk.VBox):
 
 def main():
   logging.basicConfig(level=logging.DEBUG)
-  gtkmozembed.set_profile_path('/home/walters/tmp', 'widgets')
+  oddir = os.path.expanduser('~/.od/')
+  odwidgets = os.path.join(oddir, 'widgets')
+  try:
+    os.makedirs(odwidgets)
+  except:
+    pass
+  ffp = FirefoxProfile()
+  gtkmozembed.set_profile_path(oddir, 'widgets')
+  shutil.copy(ffp.path_join('cookies.txt'), odwidgets)
+
+  widget_environ = WidgetEnvironment()
+  widget_environ['google_apps_auth_path'] = ''
+
   win = gtk.Window()
   win.set_deletable(False)
-  win.set_resizable(False)
-  widget = GoogleWidget(sys.argv[1]) 
+  widget = GoogleWidget(sys.argv[1], widget_environ) 
   win.add(widget)
   win.set_title(widget.get_title())
   win.show_all()
