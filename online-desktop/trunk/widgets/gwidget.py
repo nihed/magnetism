@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os,sys,re,urllib2,logging,webbrowser
+import os,sys,re,urllib,urllib2,logging,webbrowser,tempfile
 import cookielib
 import xml.etree.ElementTree
 
@@ -89,8 +89,14 @@ class GoogleWidget(gtk.VBox):
         self.__content_uri = None
         if content_node.attrib['type'] == 'html':
           content = content_node.text
-          _logger.debug("setting content to %d chars", len(content))
-          self.__moz.set_data("http://www.google.com/", content)
+          _logger.debug("got content of %d chars", len(content))
+          #content = content.replace('__MODULE_ID__', '0')
+          #content = '''<html><head><script src="http://gmodules.com/ig/f/jVilVNnzbJ0/ig.js"></script></head><body>''' + content + '''</body></html>'''
+          #open('/tmp/gmodule.html', 'w').write(content)
+          #self.__moz.set_data("http://www.google.com/", content)
+          gmodule_url = 'http://gmodules.com/ig/ifr?url=' + urllib.quote(url)
+          self.__content_uri = gmodule_url
+          self.__moz.load_url(gmodule_url)
         elif content_node.attrib['type'] == 'url':
           href = content_node.attrib['href']
           self.__content_uri = href
