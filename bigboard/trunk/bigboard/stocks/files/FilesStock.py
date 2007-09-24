@@ -14,7 +14,7 @@ from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock
 import bigboard.google as google
 import bigboard.google_stock as google_stock  
-from bigboard.big_widgets import PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, Separator
+from bigboard.big_widgets import IconLink
 from bigboard.libbig.xmlquery import query as xml_query, get_attrs as xml_get_attrs
 
 import filebrowser
@@ -104,20 +104,10 @@ class GoogleFile(File):
 
     def get_doc_entry(self):
         return self.__doc_entry
-
  
 def compare_by_date(file_a, file_b):
     # access time on all File types is currently UTC
     return cmp(file_b.get_access_time(), file_a.get_access_time())
-
-class IconLink(CanvasHBox):
-    def __init__(self, text, **kwargs):
-        kwargs['spacing'] = 4
-        super(IconLink, self).__init__(**kwargs)
-        self.img = hippo.CanvasImage(scale_width=20, scale_height=20)
-        self.append(self.img)
-        self.link = hippo.CanvasLink(text=text, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END,)
-        self.append(self.link)
 
 class FilesStock(Stock, google_stock.GoogleStock):
     """Shows recent files."""
@@ -212,10 +202,13 @@ class FilesStock(Stock, google_stock.GoogleStock):
             if a_file.is_valid():                          
                 link = IconLink(a_file.get_name())
                 link.img.set_property('image-name', a_file.get_image_name())
-                link.link.connect("activated", self.__on_item_clicked, a_file.get_url())
+                link.link.connect("activated", self.__on_link_clicked, a_file.get_url())
                 self._recentbox.append(link)
                 i += 1 
 
-    def __on_item_clicked(self, canvas_item, url):
+    def __on_link_clicked(self, canvas_item, url):
         subprocess.Popen(['gnome-open', url])
         
+    def get_files(self):
+        return self.__files
+
