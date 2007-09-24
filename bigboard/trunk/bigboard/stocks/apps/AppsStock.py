@@ -83,6 +83,8 @@ class Application(object):
                     return desktop            
             except gobject.GError, e:
                 desktop = None
+        if not self.__app:
+            return None
         names = self.__app.get_desktop_names()        
         for name in names.split(';'):
             ad = apps_directory.get_app_directory()            
