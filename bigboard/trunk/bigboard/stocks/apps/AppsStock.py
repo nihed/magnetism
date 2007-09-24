@@ -11,42 +11,6 @@ import bigboard.stock
 
 import appbrowser, apps_widgets, apps_directory
 
-class WebApplication(object):
-    def __init__(self, url, name, description, iconurl):
-        self.url = url
-        self.name = name
-        self.description = description
-        self.iconurl = iconurl
-        
-    def get_id(self):
-        return self.url
-    
-    def get_name(self):
-        return self.name
-    
-    def get_generic_name(self):
-        return self.get_description()
-    
-    def get_icon_url(self):
-        return self.iconurl
-    
-    def get_local_pixbuf(self):
-        return None
-    
-    def get_description(self):
-        return self.description
-    
-    def get_category(self):
-        return "Web"
-    
-    def is_installed(self):
-        return True
-    
-    def launch(self):
-        return libbig.show_url(self.url)
-
-WEB_APPS = {'gmail.com': WebApplication('http://mail.google.com', 'GMail', 'Mail', 'http://mail.google.com/mail/images/favicon.ico')}
-        
 class Application(object):
     __slots__ = ['__app', '__install_checked', '__desktop_entry', '__menu_entry']
     def __init__(self, mugshot_app=None, menu_entry=None):
@@ -173,7 +137,6 @@ class AppDisplayLauncher(apps_widgets.AppDisplay):
   
 
 class AppsStock(bigboard.stock.AbstractMugshotStock):
-    WEBAPPS_SET_SIZE = 0
     STATIC_SET_SIZE = 7
     DYNAMIC_SET_SIZE = 1
     STATIFICATION_TIME_SEC = 60 * 60 #* 24 * 3; # 3 days
@@ -189,15 +152,12 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__message_link.connect("button-press-event", lambda link, event: self.__on_message_link())
         self.__message_link_url = None
         self.__subtitle = hippo.CanvasText(font="Bold 12px")
-        self.__web_set = CanvasVBox()
         self.__static_set = CanvasVBox()
         self.__dynamic_set = CanvasVBox()
         
         self.__box.append(self.__message)
         self.__box.append(self.__message_link)        
-        self.__box.append(self.__subtitle)        
- 
-        self.__box.append(self.__web_set)
+        self.__box.append(self.__subtitle)
         self.__box.append(self.__static_set)
         self.__box.append(self.__dynamic_set)        
         self.__box.set_child_visible(self.__dynamic_set, False)
@@ -369,17 +329,6 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__set_message(None)        
              
         self.__box.set_child_visible(self.__dynamic_set, False)
-        
-        self.__web_set.remove_all()
-        webapp_count = 0
-        for domain,login in bigboard.logins.get_logins().iter_logins():
-            if webapp_count >= self.WEBAPPS_SET_SIZE:
-                break
-            if WEB_APPS.has_key(domain):
-                display = apps_widgets.AppDisplay(WEB_APPS[domain])
-                display.connect("button-press-event", lambda display, event: display.launch())    
-                self.__web_set.append(display)
-                webapp_count += 1
 
         usage = self._mugshot.get_pref('applicationUsageEnabled')
         self._logger.debug("usage: %s", usage)
