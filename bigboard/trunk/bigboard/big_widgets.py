@@ -44,6 +44,15 @@ class ActionLink(hippo.CanvasLink):
             kwargs['color'] = 0x0066DDFF 
         hippo.CanvasLink.__init__(self, **kwargs)
         
+class IconLink(CanvasHBox):
+    def __init__(self, text, **kwargs):
+        kwargs['spacing'] = 4
+        super(IconLink, self).__init__(**kwargs)
+        self.img = hippo.CanvasImage(scale_width=20, scale_height=20)
+        self.append(self.img)
+        self.link = hippo.CanvasLink(text=text, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END,)
+        self.append(self.link)
+
 class ButtonLabel(gtk.Label):
     def __init__(self, ypadding=0):
         super(ButtonLabel, self).__init__()
