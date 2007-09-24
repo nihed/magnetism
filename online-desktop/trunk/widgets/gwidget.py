@@ -3,6 +3,7 @@
 import os,sys,re,urllib,urllib2,logging,webbrowser,tempfile,shutil
 import cookielib
 import xml.etree.ElementTree
+from StringIO import StringIO
 
 import gobject,gtk,gnomevfs,gtkmozembed
 
@@ -82,16 +83,52 @@ class WidgetError(Exception):
     super(WidgetError, self).__init__(msg)
 
 class GoogleWidget(gtk.VBox):
+    IG_JS = '''
+
+_IG_Prefs = function() { }
+_IG_Prefs.prototype = {
+  getString: function(key) {
+    return __IG_PREFS_DEFAULTS[key];
+  },
+  getInt: function(key) {
+    return __IG_PREFS_DEFAULTS[key];    
+  },
+  getBool: function(key) {
+    return __IG_PREFS_DEFAULTS[key];
+  },
+  set: function(key, value) {
+  }
+}
+
+_IG_MiniMessage = function(modid, opt_container) {
+}
+_IG_MiniMessage.prototype = {
+  createDismissableMessage: function(msg, opt_callback) { },
+  createTimerMessage: function(msg, seconds, opt_callback) {},
+  createStaticMessage: function(msg) {},
+  dismissMessage: function(msg) {},
+}
+
+'''
+
     def __init__(self, url, env):
         super(GoogleWidget, self).__init__()
       
         f = gtk.Frame()
         self.__moz = mozembed_wrap.MozClient()
-        doc = xml.etree.ElementTree.ElementTree()
         _logger.debug("Reading module url %s", url)
+        
+        self.__doc = doc = xml.etree.ElementTree.ElementTree()
         doc.parse(urllib2.urlopen(url))
         module_prefs = doc.find('ModulePrefs')
         self.__title = module_prefs.attrib['title']
+        self.__prefs = {}
+        for prefnode in self.__doc.findall('UserPref'):
+          try:
+            self.__prefs[prefnode.attrib['name']] = (prefnode.attrib['default_value'],)
+          except KeyError, e:
+            _logger.debug("parse failed for pref", exc_info=True)
+
         content_node = doc.find('Content')
         self.__content_uri = None
         if content_node.attrib['type'] == 'html':
@@ -101,8 +138,11 @@ class GoogleWidget(gtk.VBox):
           if module_prefs.attrib.get('render_inline', '') == 'required':
             content = env.replace_string(content)
             content = content.replace('__MODULE_ID__', '0')
-            content = '''<html><head><script src="http://gmodules.com/ig/f/jVilVNnzbJ0/ig.js"></script></head><body>''' + content + '''</body></html>'''
-            self.__moz.set_data("http://www.google.com/", content)
+            htmlcontent = '''<html><head><title>Widget</title><script type="text/javascript">'''
+            htmlcontent += self.__default_prefs_js()
+            htmlcontent += self.IG_JS
+            htmlcontent += '''</script></head><body>''' + content + '''</body></html>'''
+            self.__moz.set_data("http://www.google.com/", htmlcontent)
           else:
             gmodule_url = 'http://gmodules.com/ig/ifr?url=' + urllib.quote(url)
             self.__content_uri = gmodule_url
@@ -122,6 +162,19 @@ class GoogleWidget(gtk.VBox):
         height = module_prefs.attrib.get('height', '200')
         self.__moz.set_size_request(200, int(height))
    
+    def __default_prefs_js(self):
+      result = StringIO()
+      result.write('''__IG_PREFS_DEFAULTS = {''')
+      def js_quotestr(s):
+        return '"' + s + '"'
+      for k,v in self.__prefs.iteritems():
+        result.write(k)
+        result.write(': ')
+        result.write(js_quotestr(v[0]))
+        result.write(',\n')
+      result.write('''}\n''')
+      return result.getvalue()
+
     def __on_open_uri(self, m, uri):
       if uri == self.__content_uri:
         return False
@@ -147,10 +200,13 @@ def main():
   widget_environ['google_apps_auth_path'] = ''
 
   win = gtk.Window()
+  vb = gtk.VBox()
   win.set_deletable(False)
-  widget = GoogleWidget(sys.argv[1], widget_environ) 
-  win.add(widget)
-  win.set_title(widget.get_title())
+  for url in sys.argv[1:]:
+    widget = GoogleWidget(url, widget_environ) 
+    vb.add(widget)
+  #win.set_title(widget.get_title())
+  win.add(vb)
   win.show_all()
   gtk.main()
 
