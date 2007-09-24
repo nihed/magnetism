@@ -17,6 +17,8 @@ import bigboard.google_stock as google_stock
 from bigboard.big_widgets import PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, Separator
 from bigboard.libbig.xmlquery import query as xml_query, get_attrs as xml_get_attrs
 
+import filebrowser
+
 _logger = logging.getLogger('bigboard.stocks.FilesStock')
 
 def reverse(data):
@@ -26,14 +28,6 @@ def reverse(data):
 thumbnails = gnome.ui.ThumbnailFactory(gnome.ui.THUMBNAIL_SIZE_NORMAL)
 itheme = gtk.icon_theme_get_default() 
 local_file_source_key = -1
-
-def create_account_url(account):
-    account = urllib.unquote(account)
-    domain = account[account.find("@") + 1:]
-    if domain == "gmail.com":
-        return "http://docs.google.com"
-    else:
-        return "https://docs.google.com/a/" + domain
 
 class File:
     def __init__(self):
@@ -137,14 +131,15 @@ class FilesStock(Stock, google_stock.GoogleStock):
         self.__recentf_path = os.path.expanduser('~/.recently-used.xbel') 
 
         try:
-            self.__desktop_path = subprocess.Popen(['xdg-user-dir', 'DESKTOP'], stdout=subprocess.PIPE).communicate()[0].strip()    
+            self.desktop_path = subprocess.Popen(['xdg-user-dir', 'DESKTOP'], stdout=subprocess.PIPE).communicate()[0].strip()    
         except OSError, e:
-            self.__desktop_path = os.path.expanduser("~/Desktop")
+            self.desktop_path = os.path.expanduser("~/Desktop")
 
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4, padding_top=2)
         self._recentbox = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4)
         self._box.append(self._recentbox)
 
+        self.__file_browser = None
         self._add_more_button(self.__on_more_button)
 
         self.__monitor = gnomevfs.monitor_add('file://' + self.__recentf_path, gnomevfs.MONITOR_FILE, self.__update_local_files)
@@ -152,9 +147,9 @@ class FilesStock(Stock, google_stock.GoogleStock):
         
     def update_google_data(self, google_key = None):
         if google_key is not None:
-            self._googles[google_key].fetch_documents(self.__on_documents_load, self.__on_failed_load)
+            self.googles[google_key].fetch_documents(self.__on_documents_load, self.__on_failed_load)
         else:            
-            for gobj in self._googles.values():
+            for gobj in self.googles.values():
                 gobj.fetch_documents(self.__on_documents_load, self.__on_failed_load)    
 
     def __remove_files_for_key(self, source_key):
@@ -181,19 +176,12 @@ class FilesStock(Stock, google_stock.GoogleStock):
         pass
 
     def __on_more_button(self):
-        subprocess.Popen(['nautilus', '--browser', self.__desktop_path]) 
-        done_with_sleep_state = 0
-        for google_account in self._googles.itervalues():
-            if done_with_sleep_state == 1:
-                # in case the browser is just starting, we should wait a bit, otherwise
-                # Firefox produces this for the second link:  
-                # "Firefox is already running, but is not responding. To open a new window, 
-                #  you must first close the existing Firefox process, or restart your system."
-                time.sleep(2)
-                done_with_sleep_state = 2  
-            libbig.show_url(create_account_url(google_account.get_auth()[0]))
-            if done_with_sleep_state == 0:
-                done_with_sleep_state = 1
+        if self.__file_browser is None:
+            self.__file_browser = filebrowser.FileBrowser(self)
+        if self.__file_browser.get_property('is-active'):
+            self.__file_browser.hide()
+        else:
+            self.__file_browser.present()
         
     def get_content(self, size):
         return self._box

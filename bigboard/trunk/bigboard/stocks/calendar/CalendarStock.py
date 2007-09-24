@@ -534,7 +534,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
 
     def __on_more_button(self):
         done_with_sleep_state = 0
-        for google_account in self._googles.itervalues():
+        for google_account in self.googles.itervalues():
             if done_with_sleep_state == 1:
                 # in case the browser is just starting, we should wait a bit, otherwise
                 # Firefox produces this for the second link:  
@@ -969,9 +969,9 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         _logger.debug("retrieving calendar list")
         # we update events in __on_calendar_list_load() 
         if google_key is not None:
-            self._googles[google_key].fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)
+            self.googles[google_key].fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)
         else:            
-            for gobj in self._googles.values():
+            for gobj in self.googles.values():
                 gobj.fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)      
 
     def __update_events(self, google_key = None):
@@ -984,7 +984,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
                 calendar = google_calendar_dict[local_google_key]  
                 if include_calendar(calendar):
                     calendar_feed_url =  create_calendar_feed_url(calendar)
-                    self._googles[local_google_key].fetch_calendar(self.__on_calendar_load, self.__on_failed_load, calendar_feed_url, self.__event_range_start, self.__event_range_end)
+                    self.googles[local_google_key].fetch_calendar(self.__on_calendar_load, self.__on_failed_load, calendar_feed_url, self.__event_range_start, self.__event_range_end)
 
     def __close_slideout(self, *args):
         if self.__slideout:
