@@ -34,6 +34,7 @@ class File:
         self._is_valid = True
         self._url = None
         self._name = None 
+        self._full_name = None
         self._image_name = None
         self._access_time = None
         self._source_key = None
@@ -46,6 +47,9 @@ class File:
 
     def get_name(self):
         return self._name
+
+    def get_full_name(self):
+        return self._full_name
 
     def get_image_name(self):
         return self._image_name
@@ -80,10 +84,11 @@ class LocalFile(File):
             self._is_valid = False
             return
         self._name = urllib.unquote(os.path.basename(self._url))
+        self._full_name = self._url
         self._source_key = local_file_source_key
 
 class GoogleFile(File):
-    def __init__(self, google_key, doc_entry):
+    def __init__(self, google_key, google_name, doc_entry):
         File.__init__(self)
         self._source_key = google_key
         self.__doc_entry = doc_entry
@@ -101,6 +106,7 @@ class GoogleFile(File):
 
         self._url = self.__doc_entry.GetAlternateLink().href
         self._name = self.__doc_entry.title.text
+        self._full_name = self.__doc_entry.title.text + " from " + google_name + " Docs" 
 
     def get_doc_entry(self):
         return self.__doc_entry
@@ -157,7 +163,7 @@ class FilesStock(Stock, google_stock.GoogleStock):
         google_key = self.get_google_key(gobj)
         self.__remove_files_for_key(google_key) 
         for document_entry in document_list.entry:
-            google_file = GoogleFile(google_key, document_entry)
+            google_file = GoogleFile(google_key, gobj.get_auth()[0], document_entry)
             self.__files.append(google_file)
         self.__files.sort(compare_by_date)
         self.__refresh_files() 
@@ -203,6 +209,7 @@ class FilesStock(Stock, google_stock.GoogleStock):
                 link = IconLink(a_file.get_name())
                 link.img.set_property('image-name', a_file.get_image_name())
                 link.link.connect("activated", self.__on_link_clicked, a_file.get_url())
+                link.link.set_property("tooltip", a_file.get_full_name())
                 self._recentbox.append(link)
                 i += 1 
 

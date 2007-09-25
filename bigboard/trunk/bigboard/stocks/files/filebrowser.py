@@ -67,6 +67,7 @@ class FileBrowser(hippo.CanvasWindow):
                 link = IconLink(a_file.get_name())
                 link.img.set_property('image-name', a_file.get_image_name())
                 link.link.connect("activated", self.__on_link_clicked, a_file.get_url())
+                link.link.set_property("tooltip", a_file.get_full_name())
                 self.__file_list.add_column_item(files_section, link)
 
         self.connect("delete-event", lambda *args: self.__hide() or True)
