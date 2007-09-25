@@ -38,6 +38,7 @@ struct _DDMDataResource
 {
     char *resource_id;
     char *class_id;
+    gboolean local;
 
     GSList *connections;
     GSList *properties;
@@ -157,12 +158,14 @@ ddm_data_property_get_default_children(DDMDataProperty *property)
 
 DDMDataResource *
 _ddm_data_resource_new(const char *resource_id,
-                       const char *class_id)
+                       const char *class_id,
+                       gboolean    local)
 {
     DDMDataResource *resource = g_new0(DDMDataResource, 1);
 
     resource->resource_id = g_strdup(resource_id);
     ddm_data_resource_set_class_id(resource, class_id);
+    resource->local = local != FALSE;
 
     return resource;
 }
@@ -193,6 +196,14 @@ ddm_data_resource_get_class_id (DDMDataResource *resource)
     g_return_val_if_fail(resource != NULL, NULL);
 
     return resource->class_id;
+}
+
+gboolean
+ddm_data_resource_get_local (DDMDataResource *resource)
+{
+    g_return_val_if_fail(resource != NULL, NULL);
+
+    return resource->local;
 }
 
 static void

@@ -36,7 +36,8 @@ typedef void (*DDMErrorHandler)  (DDMDataError     error,
 
 DDMDataModel *ddm_data_query_get_model          (DDMDataQuery     *query);
 DDMQName *    ddm_data_query_get_qname          (DDMDataQuery     *query);
-const char *  ddm_data_query_get_fetch          (DDMDataQuery     *query);
+const char *  ddm_data_query_get_fetch_string   (DDMDataQuery     *query);
+DDMDataFetch *ddm_data_query_get_fetch          (DDMDataQuery     *query);
 gboolean      ddm_data_query_is_update          (DDMDataQuery     *query);
 void          ddm_data_query_set_single_handler (DDMDataQuery     *query,
                                                  DDMSingleHandler  handler,

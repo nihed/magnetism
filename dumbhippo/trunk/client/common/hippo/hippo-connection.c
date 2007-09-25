@@ -5053,7 +5053,7 @@ hippo_connection_send_query(HippoConnection *connection,
     
     DDMQName *query_qname = ddm_data_query_get_qname(query);
     GHashTable *params = ddm_data_query_get_params(query);
-    const char *fetch = ddm_data_query_get_fetch(query);
+    const char *fetch = ddm_data_query_get_fetch_string(query);
 
     if (ddm_data_query_is_update(query))
         message_subtype = LM_MESSAGE_SUB_TYPE_SET;

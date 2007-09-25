@@ -59,6 +59,17 @@ DDMDataResource *ddm_data_model_lookup_resource (DDMDataModel   *model,
 DDMDataResource *ddm_data_model_ensure_resource (DDMDataModel   *model,
                                                  const char     *resource_id,
                                                  const char     *class_id);
+
+/* Like ddm_data_model_ensure_resource, but the resource is flagged as local. This means
+ *
+ * - Don't query remotely for properties that aren't there
+ * - Don't expunge on reconnect
+ *
+ */
+DDMDataResource *ddm_data_model_ensure_local_resource (DDMDataModel   *model,
+                                                       const char     *resource_id,
+                                                       const char     *class_id);
+
 /* should only be called by backends */
 void          ddm_data_model_set_connected      (DDMDataModel   *model,
                                                  gboolean        connected);

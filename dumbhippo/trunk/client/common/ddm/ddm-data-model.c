@@ -204,10 +204,12 @@ ddm_data_model_update_params(DDMDataModel *model,
     g_return_val_if_fail (DDM_IS_DATA_MODEL(model), NULL);
 
     method_qname = ddm_qname_from_uri(method);
-    if (method_qname == NULL)
+    if (method_qname == NULL) /* Invalid method URI */
         return NULL;
 
     query = _ddm_data_query_new_update(model, method_qname, params);
+    if (query == NULL) /* Bad fetch string */
+        return NULL:
 
     model->backend->send_update(model, query, model->backend_data);
     
@@ -242,19 +244,51 @@ ddm_data_model_lookup_resource(DDMDataModel *model,
 }
 
 DDMDataResource *
-ddm_data_model_ensure_resource(DDMDataModel *model,
-                               const char   *resource_id,
-                               const char   *class_id)
+ensure_resource_internal(DDMDataModel *model,
+                         const char   *resource_id,
+                         const char   *class_id,
+                         gboolean      local)
 {
     DDMDataResource *resource;
 
+    local = local != FALSE;
+
     resource = g_hash_table_lookup(model->resources, resource_id);
-    if (resource == NULL) {
-        resource = _ddm_data_resource_new(resource_id, class_id);
+    if (resource) {
+        if ((local != FALSE) != ddm_data_resource_get_local(resource)) {
+            g_warning("Mismatch for 'local' nature of resource '%s', old=%d, new=%d",
+                      resource_id, !local, local);
+        }
+
+        if (class_id) {
+            const char *old_class_id = ddm_data_resource_get_class_id(resource);
+            if (old_class_id && strcmp(class_id, old_class_id) != 0)
+                g_warning("Mismatch for class_id of resource '%s', old=%s, new=%s",
+                          resource_id, old_class_id, class_id);
+        }
+
+    } else {
+        resource = _ddm_data_resource_new(resource_id, class_id, local);
         g_hash_table_insert(model->resources, (char *)ddm_data_resource_get_resource_id(resource), resource);
     }
 
     return resource;
+}
+
+DDMDataResource *
+ddm_data_model_ensure_resource(DDMDataModel *model,
+                               const char   *resource_id,
+                               const char   *class_id)
+{
+    ensure_resource_internal(model, resource_id, class_id, FALSE);
+}
+
+DDMDataResource *
+ddm_data_model_ensure_local_resource(DDMDataModel *model,
+                                     const char   *resource_id,
+                                     const char   *class_id)
+{
+    ensure_resource_internal(model, resource_id, class_id, TRUE);
 }
 
 void
