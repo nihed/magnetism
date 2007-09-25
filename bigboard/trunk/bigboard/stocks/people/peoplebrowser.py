@@ -159,7 +159,6 @@ class PeopleBrowser(hippo.CanvasWindow):
         self.__search_input.connect("notify::text", self.__on_search_changed)
         self.__search_input.connect("key-press-event", self.__on_search_keypress)
         self.__idle_search_id = 0
-        self.__idle_search_mugshot_id = 0
         self.__left_box.append(self.__search_input)
 
         self.__profile_box = CanvasVBox(border=1, border_color=0x999999FF, background_color=0xFFFFFFFF)

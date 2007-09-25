@@ -25,6 +25,9 @@ def reverse(data):
     for index in range(len(data)-1, -1, -1):
         yield data[index]
 
+def on_link_clicked(canvas_item, url):
+    subprocess.Popen(['gnome-open', url])
+
 thumbnails = gnome.ui.ThumbnailFactory(gnome.ui.THUMBNAIL_SIZE_NORMAL)
 itheme = gtk.icon_theme_get_default() 
 local_file_source_key = -1
@@ -59,6 +62,13 @@ class File:
 
     def get_source_key(self):
         return self._source_key
+
+    def create_icon_link(self):
+        link = IconLink(self.get_name())
+        link.img.set_property('image-name', self.get_image_name())
+        link.link.connect("activated", on_link_clicked, self.get_url())
+        link.link.set_property("tooltip", self.get_full_name())
+        return link
 
 class LocalFile(File):
     def __init__(self, bookmark_child):
@@ -177,6 +187,8 @@ class FilesStock(Stock, google_stock.GoogleStock):
         if self.__file_browser.get_property('is-active'):
             self.__file_browser.hide()
         else:
+            # we don't refresh files in the file browser when it is hidden
+            self.__file_browser.refresh_files()
             self.__file_browser.present()
         
     def get_content(self, size):
@@ -199,22 +211,20 @@ class FilesStock(Stock, google_stock.GoogleStock):
             self.__files.append(local_file)
         self.__files.sort(compare_by_date)
         self.__refresh_files()
-
+  
     def __refresh_files(self):
-        self._recentbox.remove_all()
+        self._recentbox.remove_all() 
         i = 0
         for a_file in self.__files:         
             if i >= self.__display_limit: break
             if a_file.is_valid():                          
-                link = IconLink(a_file.get_name())
-                link.img.set_property('image-name', a_file.get_image_name())
-                link.link.connect("activated", self.__on_link_clicked, a_file.get_url())
-                link.link.set_property("tooltip", a_file.get_full_name())
+                link = a_file.create_icon_link()
                 self._recentbox.append(link)
                 i += 1 
 
-    def __on_link_clicked(self, canvas_item, url):
-        subprocess.Popen(['gnome-open', url])
+        if self.__file_browser is not None and self.__file_browser.get_property('visible'):
+            _logger.debug("will refresh files")
+            self.__file_browser.refresh_files()
         
     def get_files(self):
         return self.__files
