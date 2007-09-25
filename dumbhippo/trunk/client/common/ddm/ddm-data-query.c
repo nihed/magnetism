@@ -13,7 +13,8 @@ struct _DDMDataQuery {
     DDMDataModel *model;
     DDMQName *qname;
     gboolean is_update;
-    char *fetch;
+    char *fetch_string;
+    DDMDataFetch *fetch;
     GHashTable *params;
 
     HandlerType handler_type;
@@ -52,7 +53,15 @@ ddm_data_query_is_update (DDMDataQuery *query)
 }
 
 const char *
-ddm_data_query_get_fetch (DDMDataQuery *query)
+ddm_data_query_get_fetch_string (DDMDataQuery *query)
+{
+    g_return_val_if_fail(query != NULL, NULL);
+
+    return query->fetch_string;
+}
+
+DDMDataFetch *
+ddm_data_query_get_fetch (DDMDataQuery     *query)
 {
     g_return_val_if_fail(query != NULL, NULL);
 
@@ -129,15 +138,29 @@ add_param_foreach(gpointer key,
 DDMDataQuery *
 _ddm_data_query_new (DDMDataModel *model,
                      DDMQName     *qname,
-                     const char   *fetch,
+                     const char   *fetch_string,
                      GHashTable   *params)
 {
-    DDMDataQuery *query =  g_new0(DDMDataQuery, 1);
+    DDMDataQuery *query;
+    DDMDataFetch *fetch;
 
+    if (fetch_string != NULL) {
+        fetch = ddm_data_fetch_from_string(fetch_string);
+        if (fetch == NULL) {
+            g_warning("Invalid fetch string '%s'", fetch);
+            return NULL;
+        }
+    }
+        
+
+    
+
+    query =  g_new0(DDMDataQuery, 1);
     query->model = model;
     query->qname = qname;
     query->is_update = FALSE;
-    query->fetch = g_strdup(fetch);
+    query->fetch_string = g_strdup(fetch_string);
+    query->fetch = fetch;
     query->params = g_hash_table_new_full(g_str_hash, g_str_equal,
                                           (GDestroyNotify)g_free, (GDestroyNotify)g_free);
     g_hash_table_foreach(params, add_param_foreach, query);
@@ -157,7 +180,7 @@ _ddm_data_query_new_update (DDMDataModel *model,
     query->model = model;
     query->qname = qname;
     query->is_update = TRUE;
-    query->fetch = NULL;
+    query->fetch_string = NULL;
     query->is_update = TRUE;
     query->params = g_hash_table_new_full(g_str_hash, g_str_equal,
                                           (GDestroyNotify)g_free, (GDestroyNotify)g_free);
@@ -171,7 +194,10 @@ _ddm_data_query_new_update (DDMDataModel *model,
 static void
 ddm_data_query_free (DDMDataQuery *query)
 {
-    g_free(query->fetch);
+    if (query->fetch)
+        ddm_data_fetch_unref(query->fetch);
+    
+    g_free(query->fetch_string);
     g_hash_table_destroy(query->params);
     g_free(query);
 }

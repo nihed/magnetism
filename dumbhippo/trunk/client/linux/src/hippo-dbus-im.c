@@ -210,7 +210,7 @@ hippo_dbus_im_append_buddy(DBusMessageIter        *append_iter,
 static DDMDataResource *
 get_system_resource(DDMDataModel *model)
 {
-    return ddm_data_model_ensure_resource(model, DDM_GLOBAL_RESOURCE, DDM_GLOBAL_RESOURCE_CLASS);
+    return ddm_data_model_ensure_local_resource(model, DDM_GLOBAL_RESOURCE, DDM_GLOBAL_RESOURCE_CLASS);
 }
 
 static gboolean
@@ -309,7 +309,7 @@ hippo_dbus_im_update_buddy_icon (DDMNotificationSet   *notifications,
                                           icon_binary_data,
                                           icon_data_len);
 
-    buddy_resource = ddm_data_model_ensure_resource(model, buddy_id, BUDDY_CLASS);
+    buddy_resource = ddm_data_model_ensure_local_resource(model, buddy_id, BUDDY_CLASS);
     
     value.type = DDM_DATA_URL;
     value.u.string = buddy->icon_data_url;
@@ -378,7 +378,7 @@ hippo_dbus_im_update_buddy(DDMNotificationSet *notifications,
         new_buddy = TRUE;
     }
 
-    buddy_resource = ddm_data_model_ensure_resource(model, buddy_id, BUDDY_CLASS);
+    buddy_resource = ddm_data_model_ensure_local_resource(model, buddy_id, BUDDY_CLASS);
 
     if (new_buddy || !compare_strings(protocol, buddy->protocol)) {
         g_free(buddy->protocol);

@@ -851,7 +851,7 @@ append_query_args(DBusMessage *message,
     g_free(s);
 
     /* fetch string */
-    cs = ddm_data_query_get_fetch(qd->query);
+    cs = ddm_data_query_get_fetch_string(qd->query);
     if (!dbus_message_iter_append_basic(&toplevel_iter,
                                         DBUS_TYPE_STRING, &cs))
         return FALSE;
@@ -889,7 +889,7 @@ ddm_dbus_send_query   (DDMDataModel *ddm_model,
     g_debug("sending Query to org.freedesktop.od.Engine %s#%s fetch %s",
             ddm_data_query_get_qname(query)->uri,
             ddm_data_query_get_qname(query)->name,
-            ddm_data_query_get_fetch(query));
+            ddm_data_query_get_fetch_string(query));
     
     g_assert(dbus_model->engine_proxy != NULL); /* since connection != NULL */
 

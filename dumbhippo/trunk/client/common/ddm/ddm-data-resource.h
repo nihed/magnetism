@@ -71,6 +71,7 @@ void ddm_data_value_get_element(DDMDataValue *value,
 
 const char *ddm_data_resource_get_resource_id (DDMDataResource *resource);
 const char *ddm_data_resource_get_class_id    (DDMDataResource *resource);
+gboolean    ddm_data_resource_get_local       (DDMDataResource *resource);
 
 void ddm_data_resource_get               (DDMDataResource *resource,
                                           ...) G_GNUC_NULL_TERMINATED;

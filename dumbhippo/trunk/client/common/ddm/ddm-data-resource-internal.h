@@ -8,7 +8,8 @@
 G_BEGIN_DECLS
 
 DDMDataResource *_ddm_data_resource_new (const char *resource_id,
-                                         const char *class_id);
+                                         const char *class_id,
+                                         gboolean    local);
 
 GSList *_ddm_data_resource_get_default_properties (DDMDataResource *resource);
 

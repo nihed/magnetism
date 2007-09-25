@@ -9,7 +9,7 @@ G_BEGIN_DECLS
 
 DDMDataQuery *_ddm_data_query_new(DDMDataModel   *model,
                                   DDMQName       *qname,
-                                  const char     *fetch,
+                                  const char     *fetch_string,
                                   GHashTable     *params);
 
 DDMDataQuery *_ddm_data_query_new_update(DDMDataModel   *model,

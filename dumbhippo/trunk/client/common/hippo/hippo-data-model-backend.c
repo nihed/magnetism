@@ -81,8 +81,8 @@ on_connection_connected_changed(HippoConnection *connection,
     DDMQName *self_id_prop;
     DDMDataValue value;
     
-    global_resource = ddm_data_model_ensure_resource(hippo_model->ddm_model,
-                                                     DDM_GLOBAL_RESOURCE, DDM_GLOBAL_RESOURCE_CLASS);
+    global_resource = ddm_data_model_ensure_local_resource(hippo_model->ddm_model,
+                                                           DDM_GLOBAL_RESOURCE, DDM_GLOBAL_RESOURCE_CLASS);
     if (connected) {
         self_id = hippo_connection_get_self_resource_id(connection);
     } else {
