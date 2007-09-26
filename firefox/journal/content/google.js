@@ -19,9 +19,9 @@ GoogleSidebar.prototype = {
   searchQuery: function(q) {
     if (q) {
      frames["google-q"].location.href = "http://www.gnome.org/~clarkbw/google/?q=" + escape(q.strip());
-      $("GoogleSidebar").style.display = "block";
+      $(this.sidebarId).style.display = "block";
     } else {
-      $("GoogleSidebar").style.display = "none";
+      $(this.sidebarId).style.display = "none";
     }
   },
 }

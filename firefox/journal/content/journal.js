@@ -344,12 +344,9 @@ JournalPage.prototype = {
     if (search)
       search = search.strip();
     var searchIsWeblink = urlUtils.parseWebLink(search);
-    if (search) {
+    if (search && search.length > 1) {
       topSites = this.journal.searchTopSites(search);
       viewedItems = this.journal.search(search, 6);
-      if (viewedItems.length == 0) {
-        content.appendChild(domUtils.createSpanText("(No results)", "no-results"))
-      }
     } else {
       topSites = this.journal.searchTopSites(null);
       viewedItems = this.journal.getLastHistoryDay();
@@ -361,8 +358,12 @@ JournalPage.prototype = {
 
     if (viewedItems && viewedItems.root.hasChildren) {
       viewedItems.root.containerOpen = true;
-      for (var i = 0; i < viewedItems.root.childCount; i++) {
-        this.appendDaySet(viewedItems.root.getChild(i));
+      if (viewedItems.root.childCount == 0 && search) {
+        content.appendChild(domUtils.createSpanText("\"The world is a book, those who do not travel read only one page.\" ~ St. Augustine", "no-results"))
+      } else {
+        for (var i = 0; i < viewedItems.root.childCount; i++) {
+          this.appendDaySet(viewedItems.root.getChild(i));
+        }
       }
       viewedItems.root.containerOpen = false;
     }
@@ -520,16 +521,15 @@ JournalPage.prototype = {
     this.redisplay(); 
   },
   doSearchQuery: function() {
-    var me = this;
     this.sidebars.each(function (sb) {
       if (sb.searchQuery)
-        sb.searchQuery(me.searchValue);
+        sb.searchQuery($('q').value);
     });
   },
   handleSearchChanged: function(e) {
     var q = e.target;
     var search = q.value.strip()
-    if (search == this.searchValue || search.length <= 1)
+    if (search == this.searchValue)
       return;
     this.searchValue = search;
     var me = this;
