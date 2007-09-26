@@ -480,7 +480,7 @@ class Google(gobject.GObject):
 
     def __on_bad_auth(self):
         _logger.debug("got bad auth; invoking reauth")
-        # don't null username, leave it filled inf
+        # don't null username, leave it filled in
         self.__password = None
         self.__auth_requested = False
         self.__with_login_info(lambda: True, reauth=True)

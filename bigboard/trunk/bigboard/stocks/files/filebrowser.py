@@ -8,7 +8,7 @@ from bigboard.overview_table import OverviewTable
 
 import FilesStock
 
-_logger = logging.getLogger("bigboard.FileBrowser")
+_logger = logging.getLogger("bigboard.stocks.FileBrowser")
 
 def create_account_url(account):
     account = urllib.unquote(account)
@@ -32,27 +32,33 @@ class FileBrowser(hippo.CanvasWindow):
         self.set_title('Files')
         self.set_default_size(750, 600)
     
-        self.__box = CanvasVBox(xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START, box_width=750, box_height=600)
+        self.__box = CanvasVBox(xalign=hippo.ALIGNMENT_FILL, yalign=hippo.ALIGNMENT_FILL)
         self.__box.set_property('background-color', 0xEEEEEEFF)
 
-        browse_text = hippo.CanvasText(text="Browse:", font="Bold 12px", color=0x3F3F3FFF, padding=4, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
-        self.__box.append(browse_text)
+        browse_box = CanvasHBox(xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START, padding_top=4)
+        self.__box.append(browse_box)
 
-        browse_options = CanvasVBox(xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START, box_width=750)
-        self.__box.append(browse_options)
+        browse_text = hippo.CanvasText(text="Browse:", font="Bold 12px", color=0x3F3F3FFF, padding_right=6, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
+        browse_box.append(browse_text)
 
-        local_files_link = ActionLink(text="Local Files", font="14px", padding=4, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
+        browse_options = CanvasVBox(xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
+        browse_box.append(browse_options)
+
+        local_files_link = ActionLink(text="Local Files", font="14px", padding_bottom=4, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
         local_files_link.connect("activated", self.__on_browse_local_files_clicked)
         browse_options.append(local_files_link)
  
         for google_account in self.__stock.googles.itervalues():
-            google_docs_link = ActionLink(text=google_account.get_auth()[0] + " Docs", font="14px", padding=4, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
+            # don't list invalid accounts we might have picked up from the signons file
+            if not google_account.have_auth():
+                continue  
+            google_docs_link = ActionLink(text=google_account.get_auth()[0] + " Docs", font="14px", padding_bottom=4, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
             google_docs_link.connect("activated", FilesStock.on_link_clicked, create_account_url(google_account.get_auth()[0]))
             browse_options.append(google_docs_link)
 
-        self.__search_box = CanvasHBox(padding_top=6, padding_bottom=6, box_width=750)        
+        self.__search_box = CanvasHBox(padding_top=4, padding_bottom=4)        
         self.__search_text = hippo.CanvasText(text="Search Recent Files:", font="Bold 12px",
-                                              color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START, padding_right=6)
+                                              color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START, padding_right=4)
         self.__search_box.append(self.__search_text)
         self.__search_input = hippo.CanvasEntry(box_width=250)
         self.__search_input.connect("notify::text", self.__on_search_changed)
@@ -65,13 +71,13 @@ class FileBrowser(hippo.CanvasWindow):
         self.__section_head.append(hippo.CanvasText(text="Recent Files", font="Bold 14px", xalign=hippo.ALIGNMENT_START))
         self.__box.append(self.__section_head)
 
-        self.__files_outter_box = CanvasVBox(box_height=445, background_color=0xFFFFFFFF)
+        self.__files_outter_box = CanvasVBox(background_color=0xFFFFFFFF)
         self.__box.append(self.__files_outter_box, hippo.PACK_EXPAND)
 
         self.__right_scroll = hippo.CanvasScrollbars()
         self.__right_scroll.set_policy(hippo.ORIENTATION_HORIZONTAL,
                                        hippo.SCROLLBAR_NEVER)
-        self.__files_box = CanvasVBox(border=0, background_color=0xFFFFFFFF)
+        self.__files_box = CanvasVBox(border=0, background_color=0xFFFFFFFF, padding=2)
         self.__files_outter_box.append(self.__right_scroll, hippo.PACK_EXPAND)
         
         self.__file_list = OverviewTable()
