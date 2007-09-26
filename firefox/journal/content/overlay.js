@@ -38,10 +38,14 @@ const JOURNAL_CHROME = "chrome://firefoxjournal/content/journal.html";
 
 const console = Components.classes["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
 
-var HistoryBlacklist = [ /* Match what we don't want to see, showing only what we would.  would be nice to use literals, but they don't play well inside an array */
-  new RegExp("^https?:\/\/mail\.google\.com\/(mail|\/.+|a\/.+\/.+)"),
-  new RegExp("^https?:\/\/www\.google\.com\/calendar\/(render\/.+|hosted\/.+/render\/.+)"),
+/* Match the junk we don't want so we can form decent URLs later.  If we don't want the URL at all, don't match it. */
+var HistoryBlacklist = [ 
+  new RegExp("(?:^https?:\/\/mail\.google\.com\/mail\/|^https?:\/\/mail\.google\.com\/a\/.+\/)(.+)"),
+  new RegExp("(?:^https?:\/\/www\.google\.com\/calendar\/render|^https?:\/\/www\.google\.com\/calendar\/hosted\/.+\/render)(.+)"),
   new RegExp("^https?:\/\/www\.google\.com\/accounts\/.+"),
+  new RegExp("^https?:\/\/www\.google\.com\/a\/.+\/ServiceLogin.+"),
+  new RegExp("^https?:\/\/www\.google\.com\/reader\/view\/(.+)"),
+  new RegExp("^http:\/\/www\.facebook\.com\/(home.php\??)"),
   new RegExp("^javascript:.+"),
 ];
 
@@ -57,23 +61,30 @@ HistoryMonkey.prototype = {
     console.logStringMessage("evaluating: " + uri.spec);
     for (var i = 0; i < HistoryBlacklist.length; i++) {
       var blacklistItem = HistoryBlacklist[i];
-      console.logStringMessage("using regex: " + blacklistItem);
       if ( blacklistItem.test(uri.spec) )
-        return true;
+        return i;
     }
-    return false;
+    return -1;
   },
-  possiblyHideUri: function(uri) {
-    if (this.queryHideUri(uri)) {
-      console.logStringMessage("hiding: " + uri.spec);
+  possiblyHideUri: function(uri, time, sessid) {
+    console.logStringMessage("possibly hiding URI: " + uri.spec);
+    var rei = this.queryHideUri(uri);
+    if ( rei >= 0 ) {
       try {
-        /* 
-         *  It might be worthwhile to try inserting the version of the URI that is ok, in case we don't have it already... 
-         *  If we used the () match facility of the regex properly we could get the objects back needed to strip the URL of what we don't want
-         */
-        this.browserHistory.removePage(uri); 
+        this.browserHistory.removePage(uri);
       } catch (e) {
         console.logStringMessage("failed to hide page: " + e);
+      }
+
+      try {
+        var junk = HistoryBlacklist[rei].exec(uri.spec)[1];
+        if (junk) {
+          uri.spec = uri.spec.replace(junk, "");
+          console.logStringMessage("adding clean URI Visit: " + uri.spec);
+          this.browserHistory.addVisit( uri, time, 0, this.browserHistory.TRANSITION_LINK, false, sessid );
+        }
+      } catch (e) {
+        console.logStringMessage("failed to add clean uri: " + e);
       }
     }
   },
@@ -81,7 +92,7 @@ HistoryMonkey.prototype = {
   onEndUpdateBatch: function() { },
   onVisit: function(uri, visitId, time, sessid, referid, transtype) {
     console.logStringMessage("visit: " + uri.spec);
-    theHistoryMonkey.possiblyHideUri(uri);
+    theHistoryMonkey.possiblyHideUri(uri, time, sessid);
 /*  
     var feeds = gBrowser.selectedBrowser.feeds;  //   gBrowser.mCurrentBrowser.feeds;
     for ( var i = 0; i < feeds.length; i++ ) {

@@ -104,6 +104,7 @@ input.green-button:hover {
   float: left;
   margin-right: 350px;
   width: 600px;
+  overflow: hidden;
 }
 
 #history {
@@ -173,7 +174,10 @@ input.green-button:hover {
   margin: 1em;
 }
 .no-results {
-  font-family: italic;	
+  font-size: smaller;
+  font-style: italic;
+  display: block;
+  text-align: center;
 }
 .input-text {
   font-family: monospace;	
