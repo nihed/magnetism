@@ -47,6 +47,7 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.ServerStatus;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.impl.ConfigurationBean;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -270,7 +271,11 @@ public class RewriteServlet extends HttpServlet {
 				User user = userSignin.getUser();
 				AccountSystem accountSystem = EJBUtil.defaultLookup(AccountSystem.class);
 				accountSystem.updateWebActivity(user);
+				
 			}
+
+			if (transactionCreated)
+				DataService.getModel().initializeReadOnlySession(signin.getViewpoint());				
 			
 			// Deleting the user from SigninBean means that next time it
 			// is accessed, we'll get a copy attached to this hibernate Session
