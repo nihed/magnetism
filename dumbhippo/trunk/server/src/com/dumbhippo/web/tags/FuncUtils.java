@@ -43,4 +43,8 @@ public class FuncUtils {
 	public static int size(Collection<?> collection) {
 		return collection.size();
 	}
+	
+	public static boolean containerHas(Collection<?> collection, Object o) {
+		return collection.contains(o);
+	}
 }
