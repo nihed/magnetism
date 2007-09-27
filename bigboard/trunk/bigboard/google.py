@@ -3,6 +3,8 @@ import xml, xml.sax
 
 import hippo, gobject, gtk, dbus, dbus.glib
 
+from ddm import DataModel
+import bigboard.globals as globals
 from bigboard.libbig.singletonmixin import Singleton
 from bigboard.libbig.http import AsyncHTTPFetcher
 from bigboard import libbig
@@ -385,11 +387,19 @@ class Google(gobject.GObject):
         self.__default_domain = default_domain
         self.__type_hint = type_hint
 
+        self.__model = DataModel(globals.server_name)
+        
+        self.__myself = None
+        self.__model.add_connected_handler(self.__on_data_model_connected)
+        if self.__model.connected:
+            self.__on_data_model_connected()
+        else:
+            _logger.debug("datamodel not connected, deferring")       
+
         self.__weblogindriver_proxy = dbus.SessionBus().get_object('org.gnome.WebLoginDriver', '/weblogindriver')
-        self.__weblogindriver_proxy.GetSignons(reply_handler=self.__on_get_signons_reply,
-                                               error_handler=self.__on_dbus_error)
         self.__weblogindriver_proxy.connect_to_signal("SignonChanged",
                                                        self.__on_signon_changed)
+        self.__recheck_signons()
 
         k = keyring.get_keyring()
 
@@ -416,6 +426,25 @@ class Google(gobject.GObject):
                 _logger.debug("hint %s matched signon %s", self.__type_hint, signon)
                 self.__on_auth_ok(signon['username'], base64.b64decode(signon['password']))
                 return
+            
+    def __recheck_signons(self):
+        self.__weblogindriver_proxy.GetSignons(reply_handler=self.__on_get_signons_reply,
+                                               error_handler=self.__on_dbus_error)        
+            
+    def __on_data_model_connected(self, *args):
+        _logger.debug("got data model connection")
+        query = self.__model.query_resource(self.__model.self_id, "+;googleEnabledEmails +")
+        query.add_handler(self.__on_google_enabled_emails)
+        query.execute()
+        
+    def __on_google_enabled_emails(self, myself):
+        self.__ddm_identity = myself     
+        myself.connect(self.__on_ddm_identity_changed)
+        self.__on_ddm_identity_changed(myself)
+        
+    def __on_ddm_identity_changed(self, myself):
+        _logger.debug("ddm identity (%s) changed", myself.resource_id)
+        self.__recheck_signons()
 
     @log_except(_logger)
     def __on_get_signons_reply(self, signondata):
