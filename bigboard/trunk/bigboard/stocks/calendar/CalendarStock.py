@@ -733,6 +733,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         self.__box.remove_all()
 
         if not self.is_running():
+            self.__box.append(hippo.CanvasText(xalign=hippo.ALIGNMENT_CENTER, text="Sign into GMail"))
             return
 
         title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
