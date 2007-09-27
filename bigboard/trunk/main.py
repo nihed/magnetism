@@ -305,6 +305,10 @@ class BigBoardPanel(dbus.service.Object):
         gconf_client.notify_add(GCONF_PREFIX + 'expand', self._sync_size)
         self._sync_size()
         
+        self.__screensaver_proxy = dbus.SessionBus().get_object('org.gnome.ScreenSaver', '/org/gnome/ScreenSaver')
+        self.__screensaver_proxy.connect_to_signal('SessionIdleChanged',
+                                                   self.__on_session_idle_changed)
+        
         self.__stockreader.load()        
 
         try:
@@ -319,11 +323,24 @@ class BigBoardPanel(dbus.service.Object):
         self._canvas.show()
 
         self.__queue_strut()
+        
+        gobject.timeout_add(1000, self.__idle_show_we_exist)
+        
+    @log_except()
+    def __on_session_idle_changed(self, isidle):
+        if not isidle:
+            self.__idle_show_we_exist()
 
     def __on_header_buttonpress(self, box, e):
         self.__logger.debug("got shell header click: %s %s %s", e, e.button, e.modifiers)
         if e.button == 2:
             self.Shell()
+
+    @log_except()
+    def __idle_show_we_exist(self):
+        self.__logger.debug("showing we exist")
+        self.__handle_activation()
+        self.__handle_deactivation()
 
     @log_except()
     def __on_focus(self):
@@ -475,14 +492,17 @@ class BigBoardPanel(dbus.service.Object):
     def show(self):
         self.__sync_visible()
 
-    def external_focus(self):
+    def __handle_activation(self):
         vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
         if not vis:
             self.__logger.debug("showing all")
             self._dw.show_all()
             self._shown = True
         if self.__get_size() == Stock.SIZE_BEAR:
-            self._toggle_size()
+            self._toggle_size()        
+
+    def external_focus(self):
+        self.__handle_activation()
         try:
             search = self.get_stock('org.gnome.bigboard.SearchStock')
         except KeyError, e:
