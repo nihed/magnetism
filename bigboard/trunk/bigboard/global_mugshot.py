@@ -410,7 +410,7 @@ class Mugshot(gobject.GObject):
         attrs = xml_get_attrs(node, ['id', 'rank', 'usageCount', 
                                      'iconUrl', 
                                      'category',
-                                     'name', 'desktopNames',
+                                     'name', 'desktopNames', 'packageNames',
                                      ('tooltip', True),
                                      ('genericName', True)
                                     ])
