@@ -178,6 +178,14 @@ final public class Guid implements Serializable {
 	public Guid(String string) throws ParseException {
 		initFromString(string);
 	}
+	
+	public static Guid parseTrustedString(String str) {
+		try {
+			return new Guid(str);
+		} catch (ParseException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	@Override
 	public String toString() {
