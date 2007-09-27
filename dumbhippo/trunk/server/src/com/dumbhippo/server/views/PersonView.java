@@ -29,6 +29,8 @@ import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.VersionedEntity;
 import com.dumbhippo.persistence.XmppResource;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.web.ListBean;
 
 /**
@@ -125,6 +127,14 @@ public class PersonView extends EntityView {
 			throw new IllegalArgumentException("can't add null internal accounts set");
 		addExtras(EnumSet.of(PersonViewExtra.EXTERNAL_ACCOUNTS));
 		this.externalAccountViews = externalAccountViews;
+	}
+	
+	public UserDMO getDmo() {
+		if (user != null) {
+			UserDMO dmo = DataService.getModel().currentSessionRO().findUnchecked(UserDMO.class, user.getGuid());
+			return dmo;
+		}
+		return null;
 	}
 	
 	/**
