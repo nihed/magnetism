@@ -18,10 +18,10 @@ def create_account_url(account):
     else:
         return "https://docs.google.com/a/" + domain
 
-def check_command_works(name):
+def command_works(args_list):
     try:
-        subprocess.Popen([name])
-    except OSError, e:
+        subprocess.Popen(args_list)
+    except:
         return False
 
     return True
@@ -163,10 +163,9 @@ class FileBrowser(hippo.CanvasWindow):
     def __on_search_local_files_clicked(self, canvas_item):
         # we don't want to turn "" into None, or change everything to be lowercase
         search = self.__search_input.get_property("text")
-        if check_command_works('beagle-search'):
-            subprocess.Popen(['beagle-search', search]) 
-        else:
-            subprocess.Popen(['gnome-search-tool', '--named', search])
+        if not command_works(['beagle-search', search]):
+            if not command_works(['tracker-search-tool', search]):
+                subprocess.Popen(['gnome-search-tool', '--named', search])
 
     def __on_link_clicked(self, canvas_item, url):
         subprocess.Popen(['gnome-open', url])
