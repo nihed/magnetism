@@ -47,9 +47,8 @@ const TAGGING_SERVICE = Cc["@mozilla.org/browser/tagging-service;1"].getService(
 const JOURNAL_CHROME = "chrome://firefoxjournal/content/journal.html"; 
 
 const BLANK_FAVICON = "chrome://mozapps/skin/places/defaultFavicon.png"
-const FIREFOX_FAVICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAHWSURBVHjaYvz//z8DJQAggJiQOe/fv2fv7Oz8rays/N+VkfG/iYnJfyD/1+rVq7ffu3dPFpsBAAHEAHIBCJ85c8bN2Nj4vwsDw/8zQLwKiO8CcRoQu0DxqlWrdsHUwzBAAIGJmTNnPgYa9j8UqhFElwPxf2MIDeIrKSn9FwSJoRkAEEAM0DD4DzMAyPi/G+QKY4hh5WAXGf8PDQ0FGwJ22d27CjADAAIIrLmjo+MXA9R2kAHvGBA2wwx6B8W7od6CeQcggKCmCEL8bgwxYCbUIGTDVkHDBia+CuotgACCueD3TDQN75D4xmAvCoK9ARMHBzAw0AECiBHkAlC0Mdy7x9ABNA3obAZXIAa6iKEcGlMVQHwWyjYuL2d4v2cPg8vZswx7gHyAAAK7AOif7SAbOqCmn4Ha3AHFsIDtgPq/vLz8P4MSkJ2W9h8ggBjevXvHDo4FQUQg/kdypqCg4H8lUIACnQ/SOBMYI8bAsAJFPcj1AAEEjwVQqLpAbXmH5BJjqI0gi9DTAAgDBBCcAVLkgmQ7yKCZxpCQxqUZhAECCJ4XgMl493ug21ZD+aDAXH0WLM4A9MZPXJkJIIAwTAR5pQMalaCABQUULttBGCCAGCnNzgABBgAMJ5THwGvJLAAAAABJRU5ErkJggg==";
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000000; // a day
 
 function LOG(msg) {
   var dl = $("debuglog");
@@ -57,72 +56,17 @@ function LOG(msg) {
   dl.appendChild(document.createElement("br"));
 }
 
-// Used to recognize search URLs, so we can display them as a "search" with icon
-var searchMapping = $H({
-  // TODO: are these names returned translated?  Also the URLs here probably need translation
-  "Google Web Search": {"urlStart": "http://www.google.com/search",
-             "qparams": ["q"]},
-  "Google Code Search": {"urlStart": "http://www.google.com/codesearch",
-             "qparams": ["q"]},
-  "Google Maps Search": {"urlStart": "http://maps.google.com/maps",
-             "qparams": ["q"]},
-  "Yahoo": {"urlStart": "http://search.yahoo.com/search",
-            "qparams": ["p"]},
-  "Amazon.com": {"urlStart": "http://www.amazon.com/",
-                 "qparams": ["field-keywords"]},
-  "Creative Commons": {"urlStart": "http://search.creativecommons.org/",
-                       "qparams": ["q"]},
-  "eBay": {"urlStart": "http://search.ebay.com/",
-           "qparams": ["satitle", "query"]},
-  "Netflix": {"urlStart": "http://www.netflix.com/Search",
-           "qparams": ["v1"]},
-});
-
 /***** The Journal *****/
 
 var JournalEntry = Class.create();
 JournalEntry.prototype = {
   initialize: function(histitem) {
-    var me = this;
     this.histitem = histitem;
 
     this.url = histitem.url;
     this.date = histitem.lastVisitDate;
     this.displayUrl = formatUtils.ellipsize(histitem.url.split("?")[0], 50);
     this.title = this.histitem.title;
-    this.actionIcon = null;
-    this.action = 'visited';
-    
-    var queryParams = histitem.url.toQueryParams();
-    
-    var engines = SEARCH_SERVICE.getEngines(Object()); /* NS strongly desires an Out argument to be an object */
-    searchMapping.each(function (kv) {
-      if (!me.url.startsWith(kv[1]['urlStart']))
-        return;
-      var qps = kv[1]['qparams'];
-      var qp = null;
-      for (var i = 0; i < qps.length; i++) {
-        if (queryParams[qps[i]]) {
-          qp = qps[i];
-          break;
-        }
-      }
-      if (!qp)
-        return;
-
-      me.title = decodeURIComponent(queryParams[qp].replace(/\+/g," "));
-      me.action = 'search';
-
-      var engine = null;
-      engines.each(function (eng) {
-        if (eng.name == kv[0]) {
-          engine = eng;
-          throw $break;
-        }
-      });
-      if (engine)
-        me.actionIcon = engine.iconURI.spec;
-    });
   },
   matches: function (q) {
     return this['url'].indexOf(q) >= 0 || this['title'].toLowerCase().indexOf(q) >= 0;
@@ -147,20 +91,19 @@ Journal.prototype = {
     var histq = HISTORY_SERVICE.getNewQuery();    
    
     var lastHistoryItemResults = HISTORY_SERVICE.executeQuery(histq, options);
-    var lastHistoryTime;
     lastHistoryItemResults.root.containerOpen = true;
     if (!lastHistoryItemResults.root.hasChildren) {
       lastHistoryItemResults.root.containerOpen = false;
       return null;
     }
     var lastHistoryItem = lastHistoryItemResults.root.getChild(0);
-    lastHistoryTime = lastHistoryItem.time;
+    var lastHistoryTime = lastHistoryItem.time;
     lastHistoryItemResults.root.containerOpen = false;
 
     histq = HISTORY_SERVICE.getNewQuery();
     options = this._getBaseQueryOptions();
     histq.beginTimeReference = histq.TIME_RELATIVE_EPOCH;
-    histq.beginTime = lastHistoryTime  - (24 * 60 * 60 * 1000000); // a day
+    histq.beginTime = lastHistoryTime  - DAY_MS;
     histq.endTimeReference = histq.TIME_RELATIVE_EPOCH;
     histq.endTime = lastHistoryTime;
 
@@ -168,7 +111,6 @@ Journal.prototype = {
   },
   search: function(q, limit) {
     var options = this._getBaseQueryOptions();
-    options.resultType = options.RESULTS_AS_URI;
     var histq = HISTORY_SERVICE.getNewQuery();
     histq.searchTerms = q;
     // FIXME - uncomment this when https://bugzilla.mozilla.org/show_bug.cgi?id=394508 is in
@@ -177,13 +119,14 @@ Journal.prototype = {
   },
   searchTopSites: function(q) {
     var options = this._getBaseQueryOptions();
-    options.resultType = options.RESULTS_AS_URI;
     options.setGroupingMode([], 0);
     options.sortingMode = options.SORT_BY_VISITCOUNT_DESCENDING;
     var histq = HISTORY_SERVICE.getNewQuery();
     if (q) histq.searchTerms = q;
-    histq.minVisits = 3; /* picking a static value for this is a little silly */
-    //options.maxResults = 5;
+    /* FIXME - picking a static value for this is a little silly */
+    histq.minVisits = 3; 
+    // FIXME - uncomment this when https://bugzilla.mozilla.org/show_bug.cgi?id=394508 is in
+    // options.maxResults = 5;
     return HISTORY_SERVICE.executeQuery(histq, options);
   },
 }
@@ -202,7 +145,6 @@ JournalPage.prototype = {
     this.searchTimeout = null;
     this.searchQueryTimeout = null;
     this.searchValue = null;
-    this.targetHistoryItem = null;
   },
   appendDaySet: function(dayset) {
     dayset.QueryInterface(Ci.nsINavHistoryContainerResultNode);
@@ -212,18 +154,18 @@ JournalPage.prototype = {
 
     var content = $('history');    
     var headernode = document.createElement('h4');
-    headernode.className = 'date';
+    headernode.setAttribute('class' , 'date');
     if (dateTimeUtils.getLocalDayOffset(today) == dateTimeUtils.getLocalDayOffset(date))
       headernode.appendChild(document.createTextNode("Today"))
     else
       headernode.appendChild(document.createTextNode(formatUtils.monthName(date.getMonth()) + " " + formatUtils.pad(date.getDate()) + " " + date.getFullYear()));
     content.appendChild(headernode);
     var histnode = document.createElement('div');
-    histnode.className = 'set';
+    histnode.setAttribute('class', 'set');
     content.appendChild(histnode);
 
     for (var i = 0; i < dayset.childCount; i++) {
-      histnode.appendChild(this.renderJournalItem(dayset.getChild(i)));
+      histnode.appendChild(this.renderJournalItem(dayset.getChild(i), false));
     }
     dayset.containerOpen = false;
   },
@@ -231,59 +173,39 @@ JournalPage.prototype = {
 
     siteset.root.containerOpen = true;
     var count = (siteset.root.childCount > 5)? 5 : siteset.root.childCount;
-    if (count == 0) return;
+    if (count > 0) {
 
-    var content = $('top-sites');    
-    var headernode = document.createElement('h4');
-    headernode.appendChild(document.createTextNode("Top Sites"));
-    content.appendChild(headernode);
-    var sitenode = document.createElement('div');
-    sitenode.className = 'set';
+      var content = $('top-sites');    
+      var headernode = document.createElement('h4');
+      headernode.appendChild(document.createTextNode("Top Sites"));
+      content.appendChild(headernode);
+      var sitenode = document.createElement('div');
+      sitenode.setAttribute('class', 'set');
 
-    for (var i = 0; i < count; i++) {
-      sitenode.appendChild(this.renderTopItem(siteset.root.getChild(i), (i == 0)));
+      for (var i = 0; i < count; i++) {
+        sitenode.appendChild(this.renderJournalItem(siteset.root.getChild(i), true));
+      }
+
+      content.appendChild(sitenode);
     }
 
     siteset.root.containerOpen = false;
 
-    content.appendChild(sitenode);
-  },
-  renderTopItem: function(entry, isTarget) {
-    var me = this;  
-
-    var item = document.createElement('a');
-    item.href = entry.uri;
-    item.className = 'item';
-    item.setAttribute('tabindex', 1); 
-
-    if (isTarget) {
-      item.setAttribute('id', 'default-target-item');
-    }
-
-    item.addEventListener("focus", function(e) { me.onResultFocus(e, true); }, false);
-    item.addEventListener("blur", function(e) { me.onResultFocus(e, false); }, false);             
-        
-    this.renderJournalItemContent(entry, item);
-
-    return item;
   },
   renderJournalItemContent: function(entry, item) {
     var iconSection = document.createElement('div');
-    iconSection.className = 'favicon';
+    iconSection.setAttribute('class', 'favicon');
     var a = document.createElement('a');
     a.href = entry.uri;
     iconSection.appendChild(a);
     var img = document.createElement('img');
-    img.className = 'favicon-img';
-    if (entry.icon)
-      img.src = entry.icon.spec;
-    else
-      img.src = BLANK_FAVICON;
+    img.setAttribute('class', 'favicon-img');
+    img.setAttribute('src', (entry.icon)? entry.icon.spec : BLANK_FAVICON);
     a.appendChild(img);
     item.appendChild(iconSection);     
 
     var urlSection = document.createElement('div');
-    urlSection.className = 'urls';
+    urlSection.setAttribute('class', 'urls');
     var titleDiv = document.createElement('div');
     titleDiv.appendChild(domUtils.createSpanText(entry.title,'title'));
     urlSection.appendChild(titleDiv);
@@ -292,18 +214,18 @@ JournalPage.prototype = {
     urlSection.appendChild(hrefDiv);
     item.appendChild(urlSection);
   },
-  renderJournalItem: function(entry) {
+  renderJournalItem: function(entry, top) {
     var me = this;  
 
     var item = document.createElement('a');
     item.href = entry.uri;
-    item.className = 'item';
+    item.setAttribute('class', 'item');
     item.setAttribute('tabindex', 1); 
 
     item.addEventListener("focus", function(e) { me.onResultFocus(e, true); }, false);
     item.addEventListener("blur", function(e) { me.onResultFocus(e, false); }, false);             
     
-    if (entry.time) {
+    if (entry.time && !top) {
       var dateTime = new Date(entry.time/1000);
       var timeText = formatUtils.twelveHour(dateTime.getHours()) + ":" + formatUtils.pad(dateTime.getMinutes()) + " " + formatUtils.meridiem(dateTime.getHours());
       item.appendChild(domUtils.createSpanText(timeText, 'time'));
@@ -321,9 +243,6 @@ JournalPage.prototype = {
   },
   onResultFocus: function(e, focused) {
     if (focused) {
-      var defTarget = document.getElementById("default-target-item");
-      if (defTarget) 
-        this.unsetAsTargetItem(defTarget); 
       this.setAsTargetItem(e.target);
     } else {
       this.unsetAsTargetItem(e.target);
@@ -511,11 +430,8 @@ JournalPage.prototype = {
       this.webSearchTimeout = null;
     }  
   },
-  onsubmit: function() {
+  onSubmit: function() {
     this.clearSearchTimeouts();
-    if (this.targetHistoryItem) {
-      window.location.href = this.targetHistoryItem.uri;
-    }
   },
   doSearch: function() {
     this.redisplay(); 
