@@ -39,7 +39,7 @@ public class SetPlainPropertyHolder<K, T extends DMObject<K>, TI>  extends Plain
 		if (result == null)
 			return Collections.emptySet();
 		else
-			return null;
+			return result;
 	}
 
 	@Override
