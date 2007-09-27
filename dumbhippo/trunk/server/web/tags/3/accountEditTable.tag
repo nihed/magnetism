@@ -42,12 +42,14 @@
 		<dht2:textInput id="dhUsernameEntry" extraClass="dh-name-input"/>
 		<div id="dhUsernameEntryDescription" style="display: none"></div>
 	</dht2:formTableRow>
-	<dht2:formTableRow label="About me" altRow="true" controlId="dhBioEntry">
-		<div>
-			<dht2:textInput id="dhBioEntry" multiline="true"/>
-			<div id="dhBioEntryDescription" style="display: none"></div>
-		</div>
-	</dht2:formTableRow>
+	<c:if test="${dh:enumIs(site, 'MUGSHOT')}">	
+		<dht2:formTableRow label="About me" altRow="true" controlId="dhBioEntry">
+			<div>
+				<dht2:textInput id="dhBioEntry" multiline="true"/>
+				<div id="dhBioEntryDescription" style="display: none"></div>
+			</div>
+		</dht2:formTableRow>
+	</c:if>
 	<!-- music bio currently disabled
 	<dht2:formTableRowStatus controlId='dhMusicBioEntry'></dht2:formTableRowStatus>
 	<dht2:formTableRow label="Your music bio">
@@ -116,14 +118,10 @@
 			</div>
 		</dht2:formTableRow>
 	</c:if><%-- End of !GNOME site --%>
-	<dht2:formTableRow label="Application statistics" altRow="true">
-		<div class="dh-explanation">
-			Share information about which applications you use. <a
-			href="/applications">Read more</a>
-		</div>
+	<dht2:formTableRow label="GNOME Online services" altRow="true">
 		<div id="dhApplicationUsagePreferences"
 			class="dh-account-preferences-row">
-		    Application usage statistics: 
+		    Save application usage statistics (<a href="/applications">Read more</a>)
 		    <c:choose>
 			<c:when
 				test="${signin.user.account.applicationUsageEnabledWithDefault}">
@@ -150,7 +148,38 @@
 			</c:otherwise>
 		</c:choose>
 		</div>
+	</dht2:formTableRow>
+	<c:if test="${dh:enumIs(site, 'GNOME')}">
+	<dht2:formTableRow label="Google services" altRow="true">
+		<div id="dhGoogleServices"
+			class="dh-account-preferences-row">
+			<table>
+			 	<c:forEach items="${account.person.allEmails}" var="email">
+				<tr>
+					<td><c:out value="${email.email}" /></td>
+					<td>
+						<c:choose>
+							<c:when test="${dh:containerHas(account.person.dmo.googleEnabledEmails, email.email)}">
+								<jsp:element name="input">
+									<jsp:attribute name="type">checkbox</jsp:attribute>
+									<jsp:attribute name="onclick">dh.actions.setGoogleServicedEmail(<dh:jsString value="${email.email}" />, false)</jsp:attribute>
+									<jsp:attribute name="checked">true</jsp:attribute>
+								</jsp:element>
+							</c:when>
+							<c:otherwise>
+								<jsp:element name="input">
+									<jsp:attribute name="type">checkbox</jsp:attribute>
+									<jsp:attribute name="onclick">dh.actions.setGoogleServicedEmail(<dh:jsString value="${email.email}" />, true)</jsp:attribute>
+								</jsp:element>								
+							</c:otherwise>
+						</c:choose>
+					</td>
+				</tr>
+				</c:forEach>
+			</table>
+		</div>
 	</dht2:formTableRow>	
+	</c:if>	
 	<dht3:formTableRowSeparator>
 	    <div class="dh-section-header">Private Info</div>
 	    <div class="dh-section-explanation">Nobody sees this stuff but you.</div>

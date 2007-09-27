@@ -104,6 +104,7 @@ import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemeSystem;
+import com.dumbhippo.server.OnlineDesktopSystem;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PollingTaskPersistence;
@@ -232,6 +233,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private AmazonUpdater amazonUpdater;
+	
+	@EJB
+	private OnlineDesktopSystem onlineDesktopSystem;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -1163,6 +1167,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	public void doSetStockPhoto(UserViewpoint viewpoint, String photo) {
 		identitySpider.setStockPhoto(viewpoint, viewpoint.getViewer(), photo);
+	}
+	
+	public void doSetGoogleServicedEmail(UserViewpoint viewpoint, String email, boolean serviced) throws RetryException, ValidationException {
+		onlineDesktopSystem.setGoogleServicedEmail(viewpoint, viewpoint.getViewer(), identitySpider.getEmail(email), serviced);
 	}
 	
 	public void getUserPhoto(OutputStream out, HttpResponseData contentType, String userId, String size)

@@ -339,3 +339,14 @@ dh.actions.setApplicationUsageEnabled = function(enabled) {
 		  	    	     alert("Couldn't change application usage sharing preference.");
 		  	    	 });
 }
+
+dh.actions.setGoogleServicedEmail = function(email, enabled) {
+   	dh.server.doPOST("setgoogleservicedemail",
+   					 { "email" : email,
+				       "enabled" : enabled ? "true" : "false" },
+		  	    	 function(type, data, http) {
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't set google services enabled");
+		  	    	 });
+}

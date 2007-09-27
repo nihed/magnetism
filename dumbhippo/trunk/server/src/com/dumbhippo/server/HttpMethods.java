@@ -15,6 +15,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.tx.RetryException;
@@ -442,6 +443,10 @@ public interface HttpMethods {
 	@HttpOptions( optionalParams = { "participantOnly" } )
 	public void getUserRSS(OutputStream out, HttpResponseData contentType, Viewpoint viewpoint, User who, boolean participantOnly) throws IOException, XmlMethodException;
 
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "email", "enabled" })
+	public void doSetGoogleServicedEmail(UserViewpoint viewpoint, String email, boolean enabled) throws IOException, RetryException, ValidationException;
+	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "enabled" })
 	public void doSetApplicationUsageEnabled(UserViewpoint viewpoint, boolean enabled) throws IOException, HumanVisibleException;

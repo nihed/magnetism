@@ -34,6 +34,7 @@ import com.dumbhippo.server.DesktopSettings;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.OnlineDesktopSystem;
 import com.dumbhippo.server.applications.ApplicationSystem;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -77,6 +78,9 @@ public abstract class UserDMO extends DMObject<Guid> {
 	
 	@EJB
 	private MusicSystem musicSystem;
+	
+	@EJB
+	private OnlineDesktopSystem onlineDesktopSystem;
 	
 	protected UserDMO(Guid key) {
 		super(key);
@@ -271,7 +275,17 @@ public abstract class UserDMO extends DMObject<Guid> {
 		
 		return null;
 	}
-	
+
+	@DMProperty
+	@DMFilter("viewer.canSeePrivate(this)")
+	public Set<String> getGoogleEnabledEmails() {
+		Set<String> results = new HashSet<String>();
+		for (EmailResource er : onlineDesktopSystem.getGoogleEnabledEmails(viewpoint, user)) {
+			results.add(er.getEmail());
+		}
+		return results;
+	}
+
 	@DMProperty
 	@DMFilter("viewer.canSeePrivate(this)")
 	public Set<DesktopSettingDMO> getSettings() {
