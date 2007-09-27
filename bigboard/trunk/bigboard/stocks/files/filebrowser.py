@@ -18,6 +18,14 @@ def create_account_url(account):
     else:
         return "https://docs.google.com/a/" + domain
 
+def check_command_works(name):
+    try:
+        subprocess.Popen([name])
+    except OSError, e:
+        return False
+
+    return True
+
 class FileBrowser(hippo.CanvasWindow):
     __gsignals__ = {
         "activated" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
@@ -65,6 +73,11 @@ class FileBrowser(hippo.CanvasWindow):
         self.__search_input.connect("key-press-event", self.__on_search_keypress)
         self.__idle_search_id = 0
         self.__search_box.append(self.__search_input)
+
+        search_local_files_link = ActionLink(text="Search All Local Files", font="14px", padding_left=10)
+        search_local_files_link.connect("activated", self.__on_search_local_files_clicked)
+        self.__search_box.append(search_local_files_link)
+        
         self.__box.append(self.__search_box)
 
         self.__section_head = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL, color=0xAAAAAAFF, border_bottom=1, border_color=0xAAAAAAFF)
@@ -146,6 +159,14 @@ class FileBrowser(hippo.CanvasWindow):
 
     def __on_browse_local_files_clicked(self, canvas_item):
         subprocess.Popen(['nautilus', '--browser', self.__stock.desktop_path])
+
+    def __on_search_local_files_clicked(self, canvas_item):
+        # we don't want to turn "" into None, or change everything to be lowercase
+        search = self.__search_input.get_property("text")
+        if check_command_works('beagle-search'):
+            subprocess.Popen(['beagle-search', search]) 
+        else:
+            subprocess.Popen(['gnome-search-tool', '--named', search])
 
     def __on_link_clicked(self, canvas_item, url):
         subprocess.Popen(['gnome-open', url])
