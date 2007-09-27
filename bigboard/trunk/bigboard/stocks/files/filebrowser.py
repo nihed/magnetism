@@ -56,7 +56,7 @@ class FileBrowser(hippo.CanvasWindow):
         local_files_link.connect("activated", self.__on_browse_local_files_clicked)
         browse_options.append(local_files_link)
  
-        for google_account in self.__stock.googles.itervalues():
+        for google_account in self.__stock.googles:
             # don't list invalid accounts we might have picked up from the signons file
             if not google_account.have_auth():
                 continue  
