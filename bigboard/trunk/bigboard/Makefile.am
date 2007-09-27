@@ -94,6 +94,6 @@ peoplestock_PYTHON = \
 filestockdir=$(stocksdir)/files
 filestock_PYTHON = \
                 stocks/files/FilesStock.py \
-                stocks/files/filebrowser.py
+                stocks/files/filebrowser.py \
                 stocks/files/listing.xml
 
