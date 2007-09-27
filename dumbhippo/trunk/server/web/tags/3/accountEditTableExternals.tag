@@ -9,7 +9,7 @@
 	<dht2:formTableRowStatus controlId='dhEmailEntry'></dht2:formTableRowStatus>
 	<dht2:formTableRow label="Email"
 		icon="/images3/${buildStamp}/mail_icon.png"
-		info="Only your ${dh:xmlEscape(site.siteName)} friends see this.">
+		info='${dh:enumIs(site, "MUGSHOT") ? "Only your Mugshot friends see this." : ""}'>
 		<table cellpadding="0" cellspacing="0" class="dh-address-table">
 		<tbody>
 		<c:forEach items="${account.person.allEmails}" var="email">
@@ -49,7 +49,7 @@
 	<dht2:formTableRowStatus controlId='dhXmppEntry'></dht2:formTableRowStatus>
 	<dht2:formTableRow label="IM"
 		icon="/images3/${buildStamp}/chat16x16.png"
-		info="Only your ${dh:xmlEscape(site.siteName)} friends see this.">
+		info='${dh:enumIs(site, "MUGSHOT") ? "Only your Mugshot friends see this." : ""}'>
 		<table id="dhImTable" cellpadding="0" cellspacing="0" class="dh-address-table">
 		<tbody id="dhImTableBody">
 		<c:forEach items="${account.person.allAims}" var="aim" varStatus="status">
