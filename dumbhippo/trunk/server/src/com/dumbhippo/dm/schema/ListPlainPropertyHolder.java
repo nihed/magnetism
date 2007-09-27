@@ -39,7 +39,7 @@ public class ListPlainPropertyHolder<K, T extends DMObject<K>, TI>  extends Plai
 		if (result == null)
 			return Collections.emptyList();
 		else
-			return null;
+			return result;
 	}
 
 	@Override
