@@ -176,8 +176,9 @@ _IG_MiniMessage.prototype = {
       return result.getvalue()
 
     def __on_open_uri(self, m, uri):
-      if uri == self.__content_uri:
+      if uri == self.__content_uri or (not uri.startswith("http")):
         return False
+      _logger.debug("opening in external browser: %s", uri)
       webbrowser.open(uri)
       return True
 
