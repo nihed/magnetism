@@ -30,7 +30,6 @@ def on_link_clicked(canvas_item, url):
 
 thumbnails = gnome.ui.ThumbnailFactory(gnome.ui.THUMBNAIL_SIZE_NORMAL)
 itheme = gtk.icon_theme_get_default() 
-local_file_source_key = -1
 
 class File:
     def __init__(self):
@@ -95,7 +94,7 @@ class LocalFile(File):
             return
         self._name = urllib.unquote(os.path.basename(self._url))
         self._full_name = self._url
-        self._source_key = local_file_source_key
+        self._source_key = 'files'
 
 class GoogleFile(File):
     def __init__(self, google_key, google_name, doc_entry):
@@ -151,11 +150,11 @@ class FilesStock(Stock, google_stock.GoogleStock):
         self.__monitor = gnomevfs.monitor_add('file://' + self.__recentf_path, gnomevfs.MONITOR_FILE, self.__update_local_files)
         gobject.idle_add(self.__update_local_files)
         
-    def update_google_data(self, google_key = None):
-        if google_key is not None:
-            self.googles[google_key].fetch_documents(self.__on_documents_load, self.__on_failed_load)
+    def update_google_data(self, selected_gobj = None):
+        if selected_gobj is not None:
+            selected_gobj.fetch_documents(self.__on_documents_load, self.__on_failed_load)
         else:            
-            for gobj in self.googles.values():
+            for gobj in self.googles.itervalues():
                 gobj.fetch_documents(self.__on_documents_load, self.__on_failed_load)    
 
     def __remove_files_for_key(self, source_key):
@@ -165,15 +164,14 @@ class FilesStock(Stock, google_stock.GoogleStock):
                 files_to_keep.append(a_file)
         self.__files = files_to_keep
 
-    def remove_google_data(self, google_key):
-        self.__remove_files_for_key(google_key)
+    def remove_google_data(self, gobj):
+        self.__remove_files_for_key(gobj)
 
     def __on_documents_load(self, url, data, gobj):
         document_list = gdocs.DocumentListFeedFromString(data)   
-        google_key = self.get_google_key(gobj)
-        self.__remove_files_for_key(google_key) 
+        self.__remove_files_for_key(gobj) 
         for document_entry in document_list.entry:
-            google_file = GoogleFile(google_key, gobj.get_auth()[0], document_entry)
+            google_file = GoogleFile(gobj, gobj.get_auth()[0], document_entry)
             self.__files.append(google_file)
         self.__files.sort(compare_by_date)
         self.__refresh_files() 
@@ -203,7 +201,7 @@ class FilesStock(Stock, google_stock.GoogleStock):
         f = open(self.__recentf_path, 'r')
         doc = xml.dom.minidom.parse(f)
 
-        self.__remove_files_for_key(local_file_source_key) 
+        self.__remove_files_for_key('files') 
         # we sort the list of files after we add them, so reversing doesn't
         # really matter anymore
         for child in reverse(xml_query(doc.documentElement, 'bookmark*')):         

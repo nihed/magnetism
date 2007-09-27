@@ -546,8 +546,8 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
             if done_with_sleep_state == 0:
                 done_with_sleep_state = 1
         
-    def update_google_data(self, google_key = None):
-        self.__update_calendar_list_and_events(google_key) 
+    def update_google_data(self, gobj = None):
+        self.__update_calendar_list_and_events(gobj) 
 
     def _on_mugshot_ready(self):
         super(CalendarStock, self)._on_mugshot_ready()
@@ -560,13 +560,13 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         super(CalendarStock, self).set_size(size)
 
     # removes calendar list and events 
-    def remove_google_data(self, google_key):
+    def remove_google_data(self, gobj):
         removed_calendar_dictionary = {}
         affected_calendar_ids = [] 
-        for calendar_item in self.__calendars.items():
-            if calendar_item[1].has_key(google_key):
+        for calendar_item in self.__calendars.iteritems():
+            if gobj in calendar_item[1]:
                 if len(calendar_item[1]) == 1:
-                    removed_calendar_dictionary[calendar_item[0]] = calendar_item[1][google_key]     
+                    removed_calendar_dictionary[calendar_item[0]] = calendar_item[1][gobj]     
                 else:
                     affected_calendar_ids.append(calendar_item[0])    
         
@@ -574,7 +574,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
             del self.__calendars[removed_calendar_item[0]]
 
         for affected_calendar_id in affected_calendar_ids:
-            del self.__calendars[affected_calendar_id][google_key]        
+            del self.__calendars[affected_calendar_id][gobj]        
          
         events = copy.copy(self.__events)
         for calendar_link in removed_calendar_dictionary.keys():  
@@ -586,7 +586,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
 
     def __on_calendar_list_load(self, url, data, gobj):
         _logger.debug("loaded calendar list %s", data)
-        google_key = self.get_google_key(gobj)
+        google_key = gobj
         if google_key is None:
             _logger.warn("didn't find google_key for %s", gobj)
             return 
@@ -633,7 +633,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
  
     def __on_calendar_load(self, url, data, calendar_feed_url, event_range_start, event_range_end, gobj):
         _logger.debug("loaded calendar from " + url)
-        google_key = self.get_google_key(gobj)
+        google_key = gobj
         if google_key is None:
             _logger.warn("didn't find google_key for %s", gobj)
             return 
@@ -966,13 +966,13 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         _logger.debug("load failed")
         pass
 
-    def __update_calendar_list_and_events(self, google_key = None):
+    def __update_calendar_list_and_events(self, selected_gobj = None):
         _logger.debug("retrieving calendar list")
         # we update events in __on_calendar_list_load() 
-        if google_key is not None:
-            self.googles[google_key].fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)
+        if selected_gobj is not None:
+            selected_gobj.fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)
         else:            
-            for gobj in self.googles.values():
+            for gobj in self.googles:
                 gobj.fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)      
 
     def __update_events(self, google_key = None):
@@ -981,11 +981,11 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
             if google_key is None or google_calendar_dict.has_key(google_key):
                 local_google_key = google_key
                 if google_key is None:
-                    local_google_key = google_calendar_dict.keys()[0]
+                    local_google_key = google_calendar_dict.iterkeys().__iter__().next()
                 calendar = google_calendar_dict[local_google_key]  
                 if include_calendar(calendar):
                     calendar_feed_url =  create_calendar_feed_url(calendar)
-                    self.googles[local_google_key].fetch_calendar(self.__on_calendar_load, self.__on_failed_load, calendar_feed_url, self.__event_range_start, self.__event_range_end)
+                    local_google_key.fetch_calendar(self.__on_calendar_load, self.__on_failed_load, calendar_feed_url, self.__event_range_start, self.__event_range_end)
 
     def __close_slideout(self, *args):
         if self.__slideout:
