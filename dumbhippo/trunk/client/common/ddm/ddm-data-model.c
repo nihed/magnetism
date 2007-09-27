@@ -209,7 +209,7 @@ ddm_data_model_update_params(DDMDataModel *model,
 
     query = _ddm_data_query_new_update(model, method_qname, params);
     if (query == NULL) /* Bad fetch string */
-        return NULL:
+        return NULL;
 
     model->backend->send_update(model, query, model->backend_data);
     
