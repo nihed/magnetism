@@ -11,6 +11,7 @@ import org.xml.sax.SAXException;
 
 import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.server.util.HtmlTextExtractor;
 
 class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandler.Element> {
 	
@@ -52,29 +53,11 @@ class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandl
 	}
 	
 	private String parseEditorialReview(String content) {
-	    // remove tags and truncate to the maximum length we can store in the database
-		StringBuilder sb = new StringBuilder();
-		int currentIndex = 0;
-		while (((content.indexOf("<", currentIndex) >= 0) && sb.length() < AmazonItemView.MAX_EDITORIAL_REVIEW_LENGTH)) {
-			sb.append(content.substring(currentIndex, content.indexOf("<", currentIndex)));
-			// returned content should not have unclosed tags, so if we see a "<" without a matching ">", we can
-			// just leave it in place
-			if (content.indexOf(">", currentIndex + 1) > 0) {	
-			    currentIndex = content.indexOf(">", currentIndex + 1) + 1;
-			} else {
-				currentIndex = content.indexOf("<", currentIndex);
-			}
-		}
-		
-		// if there are no more tags in the editorial review, but we have not reached the max length,
-		// just append the rest of the review to the string buffer
-		if (((currentIndex < content.length()) && (content.indexOf("<", currentIndex) < 0) 
-			&& sb.length() < AmazonItemView.MAX_EDITORIAL_REVIEW_LENGTH)) {
-		    sb.append(content.substring(currentIndex, content.length()));	
-		}
-		
-		sb.setLength(Math.min(sb.length(), AmazonItemView.MAX_EDITORIAL_REVIEW_LENGTH));
-		return sb.toString();
+		String plainText = HtmlTextExtractor.extractText(content);
+		if (plainText.length() > AmazonItemView.MAX_EDITORIAL_REVIEW_LENGTH)
+			plainText = plainText.substring(0, AmazonItemView.MAX_EDITORIAL_REVIEW_LENGTH);
+
+		return plainText;
 	}
 	
 	private AmazonItem currentItem() {
