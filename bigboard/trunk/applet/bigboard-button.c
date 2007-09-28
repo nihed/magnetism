@@ -388,10 +388,14 @@ update_icon (ButtonData *button_data)
                         g_error_free (error);
                         error = NULL;
                 }
-                
+
+                gtk_image_set_from_file (GTK_IMAGE (button_data->image),
+                                         DATADIR "/pixmaps/nobody.png");
+#if 0
                 gtk_image_set_from_stock (GTK_IMAGE (button_data->image),
                                           GTK_STOCK_MISSING_IMAGE,
                                           GTK_ICON_SIZE_SMALL_TOOLBAR);
+#endif
                 return;
         }
         
