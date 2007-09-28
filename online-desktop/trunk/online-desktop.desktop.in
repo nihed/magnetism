@@ -1,7 +1,7 @@
 [Desktop Entry]
 Encoding=UTF-8
-_Name=Online Desktop
-GenericName=Online Desktop
+_Name=Online Desktop Demo
+GenericName=Online Desktop Demo
 _Comment=Use the internet
 Exec=od-session
 Terminal=false
