@@ -22,6 +22,12 @@ class CanvasHBox(hippo.CanvasBox):
         kwargs['orientation'] = hippo.ORIENTATION_HORIZONTAL
         hippo.CanvasBox.__init__(self, **kwargs)
 
+class CanvasSpinner(hippo.CanvasWidget):
+    def __init__(self):
+        super(CanvasSpinner, self).__init__()
+        self.spinner = gtk.SpinButton()
+        self.set_property('widget', self.spinner)
+
 class CanvasTable(hippo.CanvasBox):
     def __init__(self, column_spacing=0, row_spacing=0, **kwargs):
         hippo.CanvasBox.__init__(self, **kwargs)
