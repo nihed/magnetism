@@ -1,4 +1,4 @@
-AC_INIT(bigboard, 0.5.19, feedback@mugshot.org)
+AC_INIT(bigboard, 0.5.20, feedback@mugshot.org)
 AC_CONFIG_SRCDIR(main.py)
 AC_CONFIG_MACRO_DIR([m4])
 
