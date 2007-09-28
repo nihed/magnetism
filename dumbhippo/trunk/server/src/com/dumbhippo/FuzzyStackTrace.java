@@ -30,7 +30,9 @@ public class FuzzyStackTrace {
 		int i;
 		for (i = 0; i < ELEMENTS_TO_HASH; ++i) {
 			// to increase "fuzziness" we only consider file name and line number
-			result = prime * result + elements[i].getFileName().hashCode();
+			String fileName = elements[i].getFileName();
+			if (fileName != null)
+				result = prime * result + fileName.hashCode();
 			result = prime * result + elements[i].getLineNumber();
 			++i;
 		}
