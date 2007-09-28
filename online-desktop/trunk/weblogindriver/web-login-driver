@@ -10,13 +10,30 @@ import nssdecrypt
 
 _logger = logging.getLogger("WebLoginDriver")
 
+def do_idle(f, *args):
+  f(*args)
+  return False
+
 def on_pidgin_gmail(signon):
   p = dbus.SessionBus().get_object('im.pidgin.purple.PurpleService', '/im/pidgin/purple/PurpleObject')
-  a = p.PurpleAccountNew(signon['username'] + '@gmail.com', 'prpl-jabber')
+  target_username = signon['username'] + '@gmail.com'
+  a = None
+  for acctid in p.PurpleAccountsGetAllActive():
+    username = p.PurpleAccountGetUsername(a)
+    try:
+    	(real_username, resource) = username.split('/', 1)
+    except:
+    	real_username = username   
+    if real_username == target_username:
+      a = accountid
+      break
+  if not a:
+    _logger.debug("creating pidgin account for %s", target_username)
+    a = p.PurpleAccountNew(target_username, 'prpl-jabber')
+  p.PurpleAccountsAdd(a)     
   p.PurpleAccountSetPassword(a, base64.b64decode(signon['password']))
   p.PurpleAccountSetRememberPassword(a, dbus.UInt32(1))
-  p.PurpleAccountSetEnabled(a, "gtk-gaim", dbus.UInt32(1))
-  p.PurpleAccountsAdd(a)
+  do_idle(p.PurpleAccountSetEnabled, a, "gtk-gaim", dbus.UInt32(1))
 
 hints = {
 'GMail': {'hostname': 'https://www.google.com', 'username_field': 'Email'},
