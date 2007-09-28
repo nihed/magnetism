@@ -1,4 +1,4 @@
-import sys, logging, threading, datetime, time, functools, base64
+import sys, logging, threading, datetime, time, functools, base64, rfc822
 import xml, xml.sax
 
 import hippo, gobject, gtk, dbus, dbus.glib
@@ -11,6 +11,7 @@ from bigboard import libbig
 from bigboard.workboard import WorkBoard
 import bigboard.keyring as keyring
 import libbig.logutil
+from bigboard.libbig.gutil import *
 from libbig.logutil import log_except
 from libbig.struct import AutoStruct, AutoSignallingStruct
 import libbig.polling
@@ -389,7 +390,7 @@ class Google(gobject.GObject):
 
         self.__model = DataModel(globals.server_name)
         
-        self.__myself = None
+        self.__ddm_identity = None
         self.__model.add_connected_handler(self.__on_data_model_connected)
         if self.__model.connected:
             self.__on_data_model_connected()
@@ -419,12 +420,32 @@ class Google(gobject.GObject):
         elif self.__mail_checker:
             self.__mail_checker.stop()
 
+    def __handle_matched_signon(self, username, password):
+        if self.__type_hint == 'GMail':
+            username = username + "@gmail.com"
+            _logger.debug("using GMail identity %s", username)
+            self.__on_auth_ok(username, password)
+        elif self.__type_hint == 'GAFYD-Mail':
+            if not self.__ddm_identity:
+                _logger.debug("no DDM identity, skipping GAFYD mail")
+                return
+            if not hasattr(self.__ddm_identity, 'googleEnabledEmails'):
+                _logger.debug("No googleEnabledEmails in DDM identity")
+                return
+            for email in self.__ddm_identity.googleEnabledEmails:                             
+                (emailuser, emailhost) = email.split('@', 1) # TODO is this right?
+                if emailuser == username:
+                    _logger.debug("matched username %s (%s) with googleEnabledEmail", emailuser, email)
+                    self.__on_auth_ok(email, password)
+        else:
+            _logger.error("unknown type hint %s...oops!", self.__type_hint)
+
     def __check_signons(self, signons):
         for signon in signons:
             if 'hint' not in signon: continue
             if signon['hint'] == self.__type_hint:
                 _logger.debug("hint %s matched signon %s", self.__type_hint, signon)
-                self.__on_auth_ok(signon['username'], base64.b64decode(signon['password']))
+                self.__handle_matched_signon(signon['username'], base64.b64decode(signon['password']))
                 return
             
     def __recheck_signons(self):
@@ -435,7 +456,11 @@ class Google(gobject.GObject):
         _logger.debug("got data model connection")
         query = self.__model.query_resource(self.__model.self_id, "+;googleEnabledEmails +")
         query.add_handler(self.__on_google_enabled_emails)
+        query.add_error_handler(self.__on_datamodel_error)        
         query.execute()
+        
+    def __on_datamodel_error(self, code, str):
+        _logger.error("datamodel error %s: %s", code, str)        
         
     def __on_google_enabled_emails(self, myself):
         self.__ddm_identity = myself     
@@ -444,7 +469,7 @@ class Google(gobject.GObject):
         
     def __on_ddm_identity_changed(self, myself):
         _logger.debug("ddm identity (%s) changed", myself.resource_id)
-        self.__recheck_signons()
+        call_idle_once(self.__recheck_signons)
 
     @log_except(_logger)
     def __on_get_signons_reply(self, signondata):
