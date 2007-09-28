@@ -23,6 +23,30 @@ AM_MAINTAINER_MODE
 ## don't rerun to this point if we abort
 AC_CACHE_SAVE
 
+#
+# A little cut and paste to work with old versions of pkg-config
+# PKG_CHECK_EXISTS is "new" in 0.19. If writing this configure.ac from
+# scratch to work with those versions, I'd just write if $PKG_CONFIG --exists,
+# but adding this is easier than rewriting.
+#
+AC_DEFUN([HIPPO_PKG_PROG_PKG_CONFIG], [AC_PATH_PROG(PKG_CONFIG, pkg-config)])
+
+#
+# This macro is:
+#
+# Copyright © 2004 Scott James Remnant <scott@netsplit.com>.
+#
+# And licensed under the GNU General Public License
+#
+AC_DEFUN([HIPPO_PKG_CHECK_EXISTS],
+[AC_REQUIRE([HIPPO_PKG_PROG_PKG_CONFIG])dnl
+if test -n "$PKG_CONFIG" && \
+    AC_RUN_LOG([$PKG_CONFIG --exists --print-errors "$1"]); then
+  m4_ifval([$2], [$2], [:])
+m4_ifvaln([$3], [else
+  $3])dnl
+fi])
+
 # libtool versioning for libddm
 #
 # See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details
@@ -43,7 +67,6 @@ DDM_LT_AGE=0
 AC_SUBST(DDM_LT_CURRENT)
 AC_SUBST(DDM_LT_REVISION)
 AC_SUBST(DDM_LT_AGE)
-
 
 AC_PROG_CC
 AM_PROG_CC_C_O
@@ -288,7 +311,7 @@ GNOME_DESKTOP_REQUIRED=2.10.0
 ## Also, older curl has curl-config instead of a .pc file... mumble grumble
 CURL_LIBS=-lcurl
 CURL_CFLAGS=
-PKG_CHECK_EXISTS(libcurl >= $CURL_REQUIRED, have_curl=true, have_curl=false)
+HIPPO_PKG_CHECK_EXISTS(libcurl >= $CURL_REQUIRED, have_curl=true, have_curl=false)
 warn_about_curl_version=false
 if $have_curl ; then
     AC_MSG_NOTICE([Found libcurl, using link flags $CURL_LIBS])
@@ -319,7 +342,7 @@ XSCREENSAVER_LIBS=""
 XSCREENSAVER_CFLAGS=""
 
 # First check to see if we have a .pc file for the xscreensaver extensio
-PKG_CHECK_EXISTS(xscrnsaver, have_xscreensaver=true, have_xscreensaver=false)
+HIPPO_PKG_CHECK_EXISTS(xscrnsaver, have_xscreensaver=true, have_xscreensaver=false)
 if $have_xscreensaver ; then
     XSCREENSAVER_PACKAGES="xscrnsaver"
 else
@@ -351,7 +374,7 @@ fi
 
 # PCRE checks
 AC_MSG_CHECKING([for PCRE])
-PKG_CHECK_EXISTS(libpcre >= $PCRE_REQUIRED, found_pcre=yes, found_pcre=no)
+HIPPO_PKG_CHECK_EXISTS(libpcre >= $PCRE_REQUIRED, found_pcre=yes, found_pcre=no)
 AC_MSG_RESULT([$found_pcre])
 if test $found_pcre = yes ; then
    PCRE_MODULES=libpcre
@@ -376,7 +399,7 @@ if test x"$with_sqlite" = xno ; then
    found_sqlite=no
    AC_MSG_RESULT(disabled)
 else
-   PKG_CHECK_EXISTS(sqlite3 >= $SQLITE_REQUIRED, found_sqlite=yes, found_sqlite=no)
+   HIPPO_PKG_CHECK_EXISTS(sqlite3 >= $SQLITE_REQUIRED, found_sqlite=yes, found_sqlite=no)
    AC_MSG_RESULT([$found_sqlite])
 fi
 
@@ -403,7 +426,7 @@ AC_ARG_WITH(included_canvas,
 
 if test "x$with_included_canvas" = xauto ; then
    AC_MSG_CHECKING([for hippo-canvas library])
-   PKG_CHECK_EXISTS(hippo-canvas-1, with_included_canvas=no, with_included_canvas=yes)
+   HIPPO_PKG_CHECK_EXISTS(hippo-canvas-1, with_included_canvas=no, with_included_canvas=yes)
    if test "x$with_included_canvas" = xyes ; then
       AC_MSG_RESULT([no: using included version])
    else
@@ -439,10 +462,10 @@ AC_SUBST(GLIB_GENMARSHAL)
 GLIB_MKENUMS=`$PKG_CONFIG --variable=glib_mkenums glib-2.0`
 AC_SUBST(GLIB_MKENUMS)
 
-PKG_CHECK_EXISTS(gtk+-2.0 < 2.9.0, have_gtk210=false, have_gtk210=true)
+HIPPO_PKG_CHECK_EXISTS(gtk+-2.0 < 2.9.0, have_gtk210=false, have_gtk210=true)
 AM_CONDITIONAL(HAVE_GTK210, $have_gtk210)
 
-PKG_CHECK_EXISTS(dbus-1 < 1.0, have_dbus10=false, have_dbus10=true)
+HIPPO_PKG_CHECK_EXISTS(dbus-1 < 1.0, have_dbus10=false, have_dbus10=true)
 if $have_dbus10 ; then
     AC_DEFINE(HAVE_DBUS_1_0, , [whether we have dbus 1.0 or greater])
 fi
@@ -599,7 +622,7 @@ if $sdk_includes_nspr ; then
 else
     for pkg in firefox-nspr xulrunnner-nspr nspr ; do
         if test "x$NSPR_PACKAGES" = x ; then
-	    PKG_CHECK_EXISTS($pkg, NSPR_PACKAGES=$pkg)
+	    HIPPO_PKG_CHECK_EXISTS($pkg, NSPR_PACKAGES=$pkg)
 	fi
     done
     if test "x$NSPR_PACKAGES" = x ; then
@@ -610,7 +633,7 @@ fi
 if $need_separate_js ; then
     for pkg in firefox-js xulrunner-js ; do
         if test "x$JS_PACKAGES" = x ; then
-	    PKG_CHECK_EXISTS($pkg, JS_PACKAGES=$pkg)
+	    HIPPO_PKG_CHECK_EXISTS($pkg, JS_PACKAGES=$pkg)
 	fi
     done
     if test "x$JS_PACKAGES" = x ; then
