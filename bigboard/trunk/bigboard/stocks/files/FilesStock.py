@@ -1,4 +1,4 @@
-import logging, os, subprocess, urlparse, urllib, time
+import logging, os, subprocess, urlparse, urllib, time, threading
 import xml.dom, xml.dom.minidom
 
 import gobject, gtk, pango
@@ -10,6 +10,7 @@ import hippo
 import gdata.docs as gdocs
 import bigboard.libbig as libbig
 from bigboard.libbig.logutil import log_except
+from bigboard.libbig.gutil import *
 from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock
 import bigboard.google as google
@@ -31,8 +32,12 @@ def on_link_clicked(canvas_item, url):
 thumbnails = gnome.ui.ThumbnailFactory(gnome.ui.THUMBNAIL_SIZE_NORMAL)
 itheme = gtk.icon_theme_get_default() 
 
-class File:
+class File(gobject.GObject):
+    __gsignals__ = {
+        "changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+    }    
     def __init__(self):
+        super(File, self).__init__()
         self._is_valid = True
         self._url = None
         self._name = None 
@@ -67,11 +72,11 @@ class File:
         link.img.set_property('image-name', self.get_image_name())
         link.link.connect("activated", on_link_clicked, self.get_url())
         link.link.set_property("tooltip", self.get_full_name())
-        return link
+        return link   
 
 class LocalFile(File):
     def __init__(self, bookmark_child):
-        File.__init__(self)
+        super(LocalFile, self).__init__()
         attrs = xml_get_attrs(bookmark_child, ['href', 'modified', 'visited'])
         self._url = attrs['href']
         # google.parse_timestamp() just parses an RFC 3339 format timestamp,
@@ -79,26 +84,46 @@ class LocalFile(File):
         # We'll need to move that function to some more generic file. 
         modified = google.parse_timestamp(attrs['modified'])
         visited = google.parse_timestamp(attrs['visited'])
-        self._access_time = max(modified, visited)        
-        try:            
-            vfsstat = gnomevfs.get_file_info(self._url.encode('utf-8'), gnomevfs.FILE_INFO_GET_MIME_TYPE | gnomevfs.FILE_INFO_FOLLOW_LINKS)
-        except gnomevfs.NotFoundError, e:
-            _logger.debug("Failed to get file info for target of '%s'", self._url, exc_info=True)
-            self._is_valid = False
-            return
-        try:
-            (self._image_name, flags) = gnome.ui.icon_lookup(itheme, thumbnails, self._url, file_info=vfsstat, mime_type=vfsstat.mime_type)
-        except gnomevfs.NotFoundError, e:
-            _logger.debug("Failed to get icon info for '%s'", self._url, exc_info=True)
-            self._is_valid = False
-            return
+        self._access_time = max(modified, visited)
         self._name = urllib.unquote(os.path.basename(self._url))
         self._full_name = self._url
         self._source_key = 'files'
+        self._is_valid = True
+        self.__update_async(self.__on_async_update)
+        
+    def __on_async_update(self, results):
+        _logger.debug("got async results: %s", results)
+        (vfsstat, image_name) = results
+        if not vfsstat:
+            self._is_valid = False
+        self._image_name = image_name
+        self.emit("changed")
+        
+    def __do_update_async(self, url, cb):
+        results = (None, None)
+        try:            
+            vfsstat = gnomevfs.get_file_info(url.encode('utf-8'), gnomevfs.FILE_INFO_GET_MIME_TYPE | gnomevfs.FILE_INFO_FOLLOW_LINKS)
+        except gnomevfs.NotFoundError, e:
+            _logger.debug("Failed to get file info for target of '%s'", url, exc_info=True)
+            gobject.idle_add(cb, results)
+            return
+        try:
+            (image_name, flags) = gnome.ui.icon_lookup(itheme, thumbnails, url, file_info=vfsstat, mime_type=vfsstat.mime_type)
+        except gnomevfs.NotFoundError, e:
+            _logger.debug("Failed to get icon info for '%s'", self._url, exc_info=True)
+            gobject.idle_add(cb, results)
+            return
+        results = (vfsstat, image_name)
+        gobject.idle_add(cb, results)
+        
+    def __update_async(self, cb):
+        t = threading.Thread(target=self.__do_update_async, name="FileImageWorker", args=(self._url, cb))
+        t.setDaemon(True)
+        t.start()          
 
 class GoogleFile(File):
     def __init__(self, google_key, google_name, doc_entry):
-        File.__init__(self)
+        super(GoogleFile, self).__init__()
         self._source_key = google_key
         self.__doc_entry = doc_entry
         self._access_time = google.parse_timestamp(self.__doc_entry.updated.text)
@@ -205,10 +230,14 @@ class FilesStock(Stock, google_stock.GoogleStock):
         # we sort the list of files after we add them, so reversing doesn't
         # really matter anymore
         for child in reverse(xml_query(doc.documentElement, 'bookmark*')):         
-            local_file = LocalFile(child) 
+            local_file = LocalFile(child)
+            local_file.connect("changed", self.__on_local_file_changed)
             self.__files.append(local_file)
         self.__files.sort(compare_by_date)
         self.__refresh_files()
+        
+    def __on_local_file_changed(self, f):
+        call_timeout_once(500, self.__refresh_files)
   
     def __refresh_files(self):
         self._recentbox.remove_all() 
