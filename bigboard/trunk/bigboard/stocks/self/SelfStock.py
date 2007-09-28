@@ -297,7 +297,11 @@ class SelfStock(AbstractMugshotStock):
 
         query = self._model.query_resource(self._model.self_id, "+;lovedAccounts +")
         query.add_handler(self.__on_got_self)
+        query.add_error_handler(self.__on_datamodel_error)
         query.execute()
+        
+    def __on_datamodel_error(self, code, str):
+        _logger.error("datamodel error %s: %s", code, str)
         
     def __on_got_self(self, myself):
         self.__myself = myself     
