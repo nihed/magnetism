@@ -25,6 +25,7 @@ except:
 import bigboard.globals
 import bigboard.google
 import bigboard.presence
+from bigboard.libbig.gutil import *
 from bigboard.libbig.logutil import log_except
 import bigboard.libbig.dbusutil
 import bigboard.libbig.logutil
@@ -305,9 +306,13 @@ class BigBoardPanel(dbus.service.Object):
         gconf_client.notify_add(GCONF_PREFIX + 'expand', self._sync_size)
         self._sync_size()
         
-        self.__screensaver_proxy = dbus.SessionBus().get_object('org.gnome.ScreenSaver', '/org/gnome/ScreenSaver')
-        self.__screensaver_proxy.connect_to_signal('SessionIdleChanged',
-                                                   self.__on_session_idle_changed)
+        try:
+            self.__screensaver_proxy = dbus.SessionBus().get_object('org.gnome.ScreenSaver', '/org/gnome/ScreenSaver')
+            self.__screensaver_proxy.connect_to_signal('SessionIdleChanged',
+                                                       self.__on_session_idle_changed)
+        except dbus.DBusException, e:
+            _logger.warn("Couldn't find screensaver")
+            pass
         
         self.__stockreader.load()        
 
