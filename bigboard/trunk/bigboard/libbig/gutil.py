@@ -15,7 +15,6 @@ def call_timeout(timeout, func, *args, **kwargs):
         del kwargs['logger']
     else:
         logger = logging
-    sys.stderr.write("idle call t:'%s' f:'%s' l:'%s' a:'%s' k:'%s'\n" % (timeout, func, logger, args, kwargs))
     return gobject.timeout_add(timeout, functools.partial(_run_logging, func, logger, *args), **kwargs)
 
 def call_idle(func, *args, **kwargs):
