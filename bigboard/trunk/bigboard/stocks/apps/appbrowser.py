@@ -393,6 +393,7 @@ class AppList(CanvasVBox):
          
          if event.count == 1:
              if overview == self.__selected_app:
+                 self.emit("launch")
                  return
              
              if self.__selected_app:
