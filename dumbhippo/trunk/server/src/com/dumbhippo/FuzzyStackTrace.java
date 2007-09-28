@@ -58,10 +58,15 @@ public class FuzzyStackTrace {
 			// to increase "fuzziness" we only consider file name and line number
 			StackTraceElement thisElem = thisElements[i];
 			StackTraceElement otherElem = otherElements[i];
+			String thisFileName = thisElem.getFileName();
+			String otherFileName = otherElem.getFileName();
 			if (thisElem.getLineNumber() != otherElem.getLineNumber())
 				return false;
-			if (!thisElem.getFileName().equals(otherElem.getFileName()))
-				return false;
+			if (thisFileName != null || otherFileName != null)
+				if ((thisFileName == null && otherFileName != null)
+						|| (thisFileName != null && otherFileName == null)
+						|| !thisFileName.equals(otherFileName))
+					return false;
 			
 			++i;
 		}
