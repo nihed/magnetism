@@ -154,7 +154,7 @@ class FilesStock(Stock, google_stock.GoogleStock):
         if selected_gobj is not None:
             selected_gobj.fetch_documents(self.__on_documents_load, self.__on_failed_load)
         else:            
-            for gobj in self.googles.itervalues():
+            for gobj in self.googles:
                 gobj.fetch_documents(self.__on_documents_load, self.__on_failed_load)    
 
     def __remove_files_for_key(self, source_key):

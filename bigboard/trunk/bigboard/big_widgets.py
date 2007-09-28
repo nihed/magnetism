@@ -43,15 +43,6 @@ class ActionLink(hippo.CanvasLink):
         if not kwargs.has_key('color'):
             kwargs['color'] = 0x0066DDFF 
         hippo.CanvasLink.__init__(self, **kwargs)
-        
-class IconLink(CanvasHBox):
-    def __init__(self, text, **kwargs):
-        kwargs['spacing'] = 4
-        super(IconLink, self).__init__(**kwargs)
-        self.img = hippo.CanvasImage(scale_width=20, scale_height=20)
-        self.append(self.img)
-        self.link = hippo.CanvasLink(text=text, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END,)
-        self.append(self.link)
 
 class ButtonLabel(gtk.Label):
     def __init__(self, ypadding=0):
@@ -236,6 +227,16 @@ class PhotoContentItem(PrelightingCanvasBox):
                 self.__photo.set_property('yalign', hippo.ALIGNMENT_CENTER)        
                 self.__photo.set_property("scale-width", 30)
                 self.__photo.set_property("scale-height", 30)            
+
+class IconLink(PrelightingCanvasBox):
+    def __init__(self, text, **kwargs):
+        PrelightingCanvasBox.__init__(self,
+                                      orientation=hippo.ORIENTATION_HORIZONTAL,
+                                      spacing=4, **kwargs)
+        self.img = hippo.CanvasImage(scale_width=20, scale_height=20)
+        self.append(self.img)
+        self.link = hippo.CanvasLink(text=text, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END,)
+        self.append(self.link)
 
 class RootWindowWatcher(gtk.Invisible):
     """Class to track properties of the root window.

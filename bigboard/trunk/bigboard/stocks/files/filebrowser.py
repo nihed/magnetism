@@ -34,6 +34,8 @@ class FileBrowser(hippo.CanvasWindow):
         super(FileBrowser, self).__init__(gtk.WINDOW_TOPLEVEL)
         
         self.__stock = stock
+        self.__single_selected_item = None
+        self.__multiple_items_visible = False    
         
         self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))        
 
@@ -106,8 +108,24 @@ class FileBrowser(hippo.CanvasWindow):
 
         self.set_root(self.__box)
 
-    def refresh_files(self):
+    def __set_visibility(self, item):
         search = self.__get_search_text()
+        visible = search == None or item.link.get_property("text").lower().find(search) >= 0    
+        item.set_force_prelight(False)      
+        item.set_visible(visible)           
+        if self.__single_selected_item is None and visible:
+            self.__single_selected_item = item
+        elif visible:
+            self.__multiple_items_visible = True    
+
+    def __prelight_single_selected_item(self): 
+        if not self.__multiple_items_visible and self.__single_selected_item is not None:
+            self.__single_selected_item.set_force_prelight(True)      
+
+    def refresh_files(self):
+        self.__single_selected_item = None
+        self.__multiple_items_visible = False    
+
         self.__file_list.remove_all()
         self.__file_items = []
         for a_file in self.__stock.get_files():         
@@ -115,8 +133,9 @@ class FileBrowser(hippo.CanvasWindow):
                 link = a_file.create_icon_link()
                 self.__file_list.add_column_item(0, link)
                 self.__file_items.append(link)
-                visible = search == None or link.link.get_property("text").lower().find(search) >= 0        
-                link.set_visible(visible)
+                self.__set_visibility(link)
+
+        self.__prelight_single_selected_item()
 
     def __on_search_changed(self, input, text):
         if self.__idle_search_id > 0:
@@ -125,8 +144,11 @@ class FileBrowser(hippo.CanvasWindow):
         
     def __on_search_keypress(self, entry, event):
         if event.key == hippo.KEY_RETURN:
+            search = self.__get_search_text()
             # if there is only one file that matches the search, we'll open it
-            self.__select_single_visible_item()
+            # don't open the file if the search has changed, but we haven't updated the results yet
+            if self.__single_selected_item is not None and (len(self.__stock.get_files()) == 1 or search is not None and self.__single_selected_item.link.get_property("text").lower().find(search) >= 0):
+                self.__single_selected_item.link.emit("activated")
 
     def __get_search_text(self):
         search = self.__search_input.get_property("text")
@@ -136,26 +158,15 @@ class FileBrowser(hippo.CanvasWindow):
             return search.lower()
 
     def __idle_do_search(self):
-        search = self.__get_search_text()
+        self.__single_selected_item = None
+        self.__multiple_items_visible = False          
 
         for item in self.__file_items:
-            visible = search == None or item.link.get_property("text").lower().find(search) >= 0        
-            item.set_visible(visible)
+            self.__set_visibility(item)
 
-        self.__idle_search_id = 0
- 
-    def __select_single_visible_item(self):
-        visible_item = None
-        
-        for item in self.__file_items:
-            if item.get_visible():
-                if visible_item == None:
-                    visible_item = item
-                else:
-                    return # Two visible
-                    
-        if visible_item != None:
-            visible_item.link.emit("activated")
+        self.__prelight_single_selected_item()
+
+        self.__idle_search_id = 0          
 
     def __on_browse_local_files_clicked(self, canvas_item):
         subprocess.Popen(['nautilus', '--browser', self.__stock.desktop_path])
