@@ -521,7 +521,7 @@ class Mugshot(gobject.GObject):
                                       self.__on_applications_search_error,
                                       self.__on_applications_search_error)
             
-    def __on_all_applications(self, url, child_nodes):
+    def __on_all_applications(self, url, child_nodes, is_refetch=False):
         reply_root = child_nodes[0]
         apps = self.__parse_app_set('applications',
                                     child_nodes=reply_root.childNodes)
