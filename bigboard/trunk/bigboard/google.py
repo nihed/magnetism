@@ -459,7 +459,7 @@ class Google(gobject.GObject):
 
     @log_except(_logger)
     def __on_dbus_error(self, err):
-        self._logger.error("D-BUS error: %s", err)
+        self.__logger.error("D-BUS error: %s", err)
 
     def __on_auth_ok(self, username, password):
         if '@' not in username:
