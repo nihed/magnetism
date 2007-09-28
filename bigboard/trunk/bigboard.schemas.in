@@ -42,5 +42,15 @@
 		<short>Whether to show dialog on first minimization</short>
       </locale>
     </schema>    
+    <schema>
+      <key>/schemas/apps/bigboard/application_list_size</key>
+      <applyto>/apps/bigboard/application_list_size</applyto>
+      <owner>bigboard</owner>
+      <type>int</type>
+      <default>FALSE</default>
+      <locale name="C">
+		<short>Number of applications to show in sidebar</short>
+      </locale>
+    </schema>        
   </schemalist>
 </gconfschemafile>

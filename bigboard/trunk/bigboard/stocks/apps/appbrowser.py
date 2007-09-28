@@ -7,7 +7,7 @@ import bigboard.globals as globals
 import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, CanvasTable, \
-             ActionLink, PrelightingCanvasBox
+             ActionLink, PrelightingCanvasBox, CanvasSpinner
 from bigboard.overview_table import OverviewTable
 
 import apps_widgets, apps_directory
@@ -446,6 +446,12 @@ class AppBrowser(hippo.CanvasWindow):
         browse_link = ActionLink(text="Find New Applications", xalign=hippo.ALIGNMENT_START) 
         browse_link.connect("button-press-event", lambda l,e: self.__on_browse_popular_apps())
         self.__left_box.append(browse_link)
+        spinbox = CanvasHBox()
+        spinbox.append(hippo.CanvasText(text='Visible applications: '))
+        spinner = CanvasSpinner()
+        spinner.spinner.connect('value-changed', self.__on_visible_apps_spin_changed)
+        spinbox.append()
+        self.__left_box.append(spinbox)
     
         self.__right_scroll = hippo.CanvasScrollbars()
         self.__right_scroll.set_policy(hippo.ORIENTATION_HORIZONTAL,
@@ -486,6 +492,9 @@ class AppBrowser(hippo.CanvasWindow):
         self.__stock.connect("all-apps-loaded",
                              lambda as: self.__sync())
         self.__sync()
+        
+    def __on_visible_apps_spin_changed(self, *args):
+        _logger.debug("spinner changed")
         
     def __on_local_apps_changed(self, ad):
         _logger.debug("handling local app change")
