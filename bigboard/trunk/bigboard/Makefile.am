@@ -17,40 +17,10 @@ bignative_la_LIBADD =					\
 bignative_la_SOURCES = bignative.c bigboard-native.h bigboard-native.c
 
 bigboarddir = $(pyexecdir)/bigboard
-bigboard_PYTHON = __init__.py \
-                  big_widgets.py \
-		  databound.py \
-                  deskbar_embed.py \
-                  google.py \
-		  google_stock.py \
-                  logins.py \
-                  keyring.py \
-                  layout_utils.py \
-                  libgimmie.py \
-                  global_mugshot.py \
-                  globals.py \
-		  overview_layout.py \
-		  overview_table.py \
-                  people_tracker.py \
-                  presence.py \
-                  profile.py \
-                  slideout.py \
-		  stock.py \
-		  sync.py \
-		  table_layout.py \
-		  workboard.py
+bigboard_PYTHON = *.py
 
 libbigdir=$(bigboarddir)/libbig
-libbig_PYTHON = libbig/__init__.py \
-	       	libbig/dbusutil.py \
-	       	libbig/http.py \
-	       	libbig/imagecache.py \
-	       	libbig/logutil.py \
-	       	libbig/polling.py \
-	       	libbig/singletonmixin.py \
-	       	libbig/stdout_logger.py \
-	       	libbig/struct.py \
-	       	libbig/xmlquery.py
+libbig_PYTHON = libbig/*.py
 
 httplibdir=$(bigboarddir)/httplib2
 httplib_PYTHON = httplib2/__init__.py \
@@ -58,42 +28,38 @@ httplib_PYTHON = httplib2/__init__.py \
 
 appstockdir=$(stocksdir)/apps
 appstock_PYTHON = \
-                stocks/apps/appbrowser.py \
-                stocks/apps/apps_directory.py \
-                stocks/apps/AppsStock.py \
-                stocks/apps/apps_widgets.py \
+                stocks/apps/*.py \
                 stocks/apps/listing.xml
 
 calendarstockdir=$(stocksdir)/calendar
 calendarstock_PYTHON = \
-                stocks/calendar/CalendarStock.py \
+                stocks/calendar/*.py \
                 stocks/calendar/listing.xml
 
 photosstockdir=$(stocksdir)/photos
 photosstock_PYTHON = \
-                stocks/photos/PhotosStock.py \
+                stocks/photos/*.py \
                 stocks/photos/listing.xml
 
 searchstockdir=$(stocksdir)/search
 searchstock_PYTHON = \
-                stocks/search/SearchStock.py \
+                stocks/search/*.py \
                 stocks/search/listing.xml
 
 selfstockdir=$(stocksdir)/self
 selfstock_PYTHON = \
-                stocks/self/SelfStock.py \
+                stocks/self/*.py \
                 stocks/self/listing.xml
                 
 peoplestockdir=$(stocksdir)/people
 peoplestock_PYTHON = \
-                stocks/people/PeopleStock.py \
-                stocks/people/peoplebrowser.py \
+                stocks/people/*.py \
                 stocks/people/peoplewidgets.py \
                 stocks/people/listing.xml
 
 filestockdir=$(stocksdir)/files
 filestock_PYTHON = \
-                stocks/files/FilesStock.py \
+                stocks/files/*.py \
                 stocks/files/filebrowser.py \
                 stocks/files/listing.xml
 
