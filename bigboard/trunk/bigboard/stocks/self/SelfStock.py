@@ -169,7 +169,7 @@ class SelfSlideout(CanvasVBox):
         else:
             self.__photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
             self.__name.set_property("text", "Nobody")
-            self.__mugshot_link.set_property("text", 'Sign in')
+            self.__personalization_box.set_child_visible(self.__mugshot_link, False)
         
     def __show_mugshot_link(self, l):
         self.emit('account')
@@ -251,7 +251,7 @@ class SelfStock(AbstractMugshotStock):
         
         self._box.append(self._whereim_box)
 
-        self._signin = ActionLink(text="Please Login or Signup")
+        self._signin = ActionLink(text="Enable Online Desktop")
         self._box.append(self._signin)
         self._signin.connect("button-press-event", lambda signin, event: self.__do_account())
 
