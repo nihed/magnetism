@@ -30,8 +30,11 @@ class AppDirectory(gobject.GObject):
             
     def _on_apps_changed(self, tree, data):
         self._logger.debug("installed apps changed")
-        self._apps = {} 
-        self._append_directory(self._tree.root)
+        self._apps = {}
+        ## no root if no applications.menu was found, which would usually happen in a messed-up
+        ## install to a separate prefix
+        if self._tree.root:
+            self._append_directory(self._tree.root)
         self._logger.debug("app read complete (%d apps)", len(self._apps.keys()))
         curtime = time.time()
         if self.__last_local_app_update < curtime-10:
