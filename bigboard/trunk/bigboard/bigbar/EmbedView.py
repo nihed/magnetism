@@ -1,3 +1,4 @@
+import logging
 import gtk
 import gobject
 import deskbar.interfaces.View
@@ -7,6 +8,8 @@ from deskbar.ui.cuemiac.CuemiacModel import CuemiacModel
 from deskbar.ui.cuemiac.CuemiacTreeView import CuemiacTreeView
 from deskbar.ui.cuemiac.CuemiacActionsTreeView import CuemiacActionsTreeView, CuemiacActionsModel
 from deskbar.ui.cuemiac.CuemiacItems import CuemiacCategory
+
+_logger = logging.getLogger("bigboard.Deskbar")
 
 class Border(gtk.Frame):
     def __init__(self, child, label=None, shadow=gtk.SHADOW_ETCHED_IN):
@@ -33,12 +36,14 @@ class EmbedView(deskbar.interfaces.View):
         self.treeview_model.connect("category-added", lambda w, c, p: self.cview.expand_row(p, False) )
         
         self.cview = CuemiacTreeView (self.treeview_model)
-        #self.cview.connect ("key-press-event", self._on_cview_key_press)
+        self.cview.connect ("key-press-event", self.__on_cview_key_press)
+        self.cview.connect ("button-press-event", self.__on_cview_button_press)
         self.cview.connect ("match-selected", self._controller.on_match_selected)
         self.cview.connect ("match-selected", self.__on_match_selected)
         self.cview.connect ("do-default-action", self._controller.on_do_default_action)
         self.cview.connect ("do-default-action", self.__on_match_selected)
         self.cview.connect_after ("cursor-changed", self._controller.on_treeview_cursor_changed)
+        self.cview.connect_after ("hide", self.__on_cview_hidden)
         self.cview.show()
         
         self.scrolled_results = gtk.ScrolledWindow ()
@@ -62,16 +67,42 @@ class EmbedView(deskbar.interfaces.View):
      
         self._window = gtk.Window(gtk.WINDOW_POPUP)
         self._window.set_size_request(480, 360)
-        self._window.set_default(None)
         self._window.set_decorated(False)
         self._window.set_focus_on_map(False)
-        self._window.set_focus(None)
-        self._window.unset_flags(gtk.CAN_FOCUS)
         self._window.move(210, 10)
         hbox = gtk.VBox(spacing=6)
         self._window.add(Border(hbox))
         hbox.add(self.scrolled_results)
         #hbox.add(self.scrolled_actions)
+
+    def __do_results_grab(self, event):
+        self.cview.grab_focus()
+        self.cview.get_toplevel().show_now()
+        self.cview.grab_add()
+        gtk.gdk.keyboard_grab(self.cview.window, False, event.time)
+        gtk.gdk.pointer_grab(self.cview.window, time=event.time, event_mask=gtk.gdk.BUTTON_PRESS_MASK|gtk.gdk.BUTTON_RELEASE_MASK)
+
+    def __drop_results_grab(self, event):
+        time = 0
+        if event:
+            time = event.time
+            
+        gtk.gdk.keyboard_ungrab(time)
+        gtk.gdk.pointer_ungrab(time)
+        self.cview.grab_remove()
+        
+    def focus_results_from_top(self, event):
+        self.cview.grab_focus()
+        self.cview.select_first_item()
+        self.__do_results_grab(event)
+        
+    def focus_results_from_bottom(self, event):
+        self.cview.select_last_item()
+        self.__do_results_grab(event)        
+
+    def forward_key_to_results_tree(self, event):
+        _logger.debug("Sending synthetic event to cview")
+        self.cview.event(event)
         
     def clear_results(self):
         self.treeview_model.clear()
@@ -131,4 +162,20 @@ class EmbedView(deskbar.interfaces.View):
     def __on_match_selected(self, *args):
         self._window.hide()
 
-       
+
+
+    def __on_cview_key_press(self, cview, event):
+        if event.keyval == gtk.keysyms.Escape:
+            self.__drop_results_grab(event)
+            self._window.hide()
+
+    def __on_cview_button_press(self, cview, event):
+        pass
+        # we want to drop the grab if someone clicks outside the window,
+        # but what is the normal way to check for outside the window?
+        #self.__drop_results_grab(event)
+        #self._window.hide()
+
+    def __on_cview_hidden(self, cview):
+        self.__drop_results_grab(None)
+    
