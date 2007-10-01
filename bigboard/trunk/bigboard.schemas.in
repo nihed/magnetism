@@ -47,7 +47,7 @@
       <applyto>/apps/bigboard/application_list_size</applyto>
       <owner>bigboard</owner>
       <type>int</type>
-      <default>FALSE</default>
+      <default>7</default>
       <locale name="C">
 		<short>Number of applications to show in sidebar</short>
       </locale>
