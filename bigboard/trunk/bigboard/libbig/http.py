@@ -91,7 +91,8 @@ class AsyncHTTPFetcher(Singleton):
         self.fetch(url,
                    lambda url, data: self.__handle_xml_method_return(url, data, cb, normerrcb),
                    errcb,
-                   data=formdata)
+                   data=formdata,
+                   headers={'Content-Type': 'application/x-www-form-urlencoded'})
         
     def xml_method_refetch(self, url, params, cb, normerrcb, errcb):
         formdata = urllib.urlencode(params)
@@ -99,7 +100,8 @@ class AsyncHTTPFetcher(Singleton):
         self.refetch(url,
                      lambda url, data, is_refetch=False: self.__handle_xml_method_return(url, data, cb, normerrcb),
                      errcb,
-                     data=formdata)        
+                     data=formdata,
+                     headers={'Content-Type': 'application/x-www-form-urlencoded'})        
 
     def __handle_xml_method_return(self, url, data, cb, normerrcb):
         doc = xml.dom.minidom.parseString(data) 
@@ -134,7 +136,7 @@ class AsyncHTTPFetcher(Singleton):
         h = httplib2.Http(cache=self.__cache)
         if 'setupfn' in kwargs:
             kwargs['setupfn'](h)
-        headers = {}            
+        headers = kwargs.get('headers', {})
         http_kwargs = {'headers': headers}     
         if 'data' in kwargs:
             http_kwargs['method'] = 'POST'
