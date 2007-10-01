@@ -62,6 +62,9 @@ class AppOverview(CanvasVBox):
     def get_app(self):
         return self.__app
 
+    def get_header(self):
+        return self.__header
+
 def categorize(apps):    
     """Given a set of applications, returns a map <string,set<Application>> based on category name."""
     categories = {}
@@ -324,7 +327,8 @@ class AppList(CanvasVBox):
     def __sync_display(self):
         self.__table.remove_all()
 
-        categories = categorize(filter(self.__filter_app_and_installed, self.__all_apps))
+        categories = categorize(filter(self.__filter_app_and_installed_or_used, self.__all_apps)) 
+
         self.__categorized = categories
              
         cat_keys = categories.keys()
@@ -332,8 +336,8 @@ class AppList(CanvasVBox):
 
         self.__extras_section.set_catname(self.__selected_cat, self.__search)
 
-        display_only_used = (self.__used_apps) and (not self.__selected_cat) and (not self.__search)
         section_key = 0
+        display_only_used = (self.__used_apps) and (not self.__selected_cat) and (not self.__search)
         for catname in (self.__selected_cat and not self.__search) and [self.__selected_cat] or cat_keys:
             cat_used_apps = filter(lambda app: app in self.__used_apps, categories[catname])
             cat_used_apps_count = len(cat_used_apps)
@@ -378,8 +382,8 @@ class AppList(CanvasVBox):
         self.__selected_cat = catname
         self.__sync_display()
 
-    def __filter_app_and_installed(self, app):
-        if not app.is_installed():
+    def __filter_app_and_installed_or_used(self, app):
+        if not app.is_installed() and not app in self.__used_apps:
             return False
         return self._filter_app(app)
                 
@@ -537,6 +541,7 @@ class AppBrowser(hippo.CanvasWindow):
                 
     def __on_app_selected(self, app):
         self.__overview.set_app(app)
+        self.__overview.get_header().connect("button-press-event", lambda l,e: self.__on_app_launch()) 
 
     def __reset(self):
         self.__search_input.set_property('text', '')
