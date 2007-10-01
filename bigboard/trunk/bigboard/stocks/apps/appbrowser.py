@@ -197,16 +197,21 @@ class AppExtras(CanvasVBox):
         self.append(self.__app_pair2)
 
         global_mugshot.get_mugshot().connect("apps-search-changed", self.__handle_mugshot_results)
+        global_mugshot.get_mugshot().connect("category-top-apps-changed", self.__handle_category_top_apps_changed)        
 
     def have_apps(self):
         return not not self.__found_app_count
 
+    def __get_apps(self):
+        if self.__catname:
+            _logger.debug("getting top apps for category %s", self.__catname)
+            return global_mugshot.get_mugshot().get_category_top_apps(self.__catname)
+        else:
+            return global_mugshot.get_mugshot().get_global_top_apps()          
+
     def set_catname(self, catname, search):
         self.__catname = catname
-        if catname:
-            mugshot_apps = global_mugshot.get_mugshot().get_category_top_apps(catname)
-        else:
-            mugshot_apps = global_mugshot.get_mugshot().get_global_top_apps()  
+        mugshot_apps = self.__get_apps()
         if mugshot_apps is None:
             self.set_top_apps(None, search)
         else:
@@ -216,6 +221,10 @@ class AppExtras(CanvasVBox):
         if search != self.__search:
             return
         self.__mugshot_search_hits = not not apps
+        self.__sync()
+        
+    def __handle_category_top_apps_changed(self, *args):
+        self.__apps = map(self.__stock.get_app, self.__get_apps())
         self.__sync()
 
     def __on_more_popular(self, w):
@@ -354,6 +363,7 @@ class AppList(CanvasVBox):
         self.__handle_nocategory(None)
 
     def on_category_changed(self, cat, apps):
+        _logger.debug("got category changed: %s", cat)
         if cat != self.__selected_cat:
             return
         self.__extras_section.set_top_apps(apps, self.__search)
