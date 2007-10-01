@@ -25,20 +25,12 @@ class EmbedController(deskbar.interfaces.Controller):
             self._view.clear_all()
     
     def on_query_entry_key_press_event(self, entry, event):
-        _logger.debug("Key press event")
-        # For key UP to browse in history, we have either to be already in history mode, or have an empty text entry to trigger hist. mode
-        up_history_condition = self._model.get_history().get_current() != None or (self._model.get_history().get_current() == None and entry.get_text() == "")
-        # For key DOWN to browse history, we have to be already in history mode. Down cannot trigger history mode in that orient.
-        down_history_condition = self._model.get_history().get_current() != None
-
-        if event.keyval == gtk.keysyms.Up and up_history_condition:
-            # Browse back history
-            entry.set_history_item( self._model.get_history().up() )
+        if event.keyval == gtk.keysyms.Up:
+            self._view.focus_results_from_bottom(event)
             return True
                 
-        if event.keyval == gtk.keysyms.Down and down_history_condition:
-            # Browse back history
-            entry.set_history_item( self._model.get_history().down() )
+        if event.keyval == gtk.keysyms.Down:
+            self._view.focus_results_from_top(event)
             return True
         
         # If the checks above fail and we come here, let's see if it's right to swallow up/down stroke
