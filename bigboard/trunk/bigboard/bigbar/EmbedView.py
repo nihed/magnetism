@@ -25,6 +25,7 @@ class EmbedView(deskbar.interfaces.View):
         self.entry = CuemiacEntry (self.default_entry_pixbuf)
         self.entry.connect("changed", self._controller.on_query_entry_changed)
         self.entry.connect("activate", self._controller.on_query_entry_activate)
+        self.entry.connect("key-press-event", self._controller.on_query_entry_key_press_event)        
         self.entry.show()
         
         # Results TreeView
