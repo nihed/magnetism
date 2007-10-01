@@ -136,6 +136,11 @@ def sync_gconf_key_from_server(key):
     try:
         value = online_prefs.GetPreference(server_key_from_gconf_key(key), signature)
     except dbus.DBusException, e:
+        # This one is expected. In some future version of dbus-python, we'll be able
+        # to check the exception type a better way
+        if e.message.find("org.freedesktop.Preferences.Error.NotFound") >= 0:
+            return
+        
         warn("failed to get pref from server: " + key + ": " + str(e))
         return
 
