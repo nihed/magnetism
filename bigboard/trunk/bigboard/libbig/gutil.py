@@ -40,4 +40,9 @@ def call_timeout_once(timeout, func, **kwargs):
 def call_idle_once(func, **kwargs):
     return call_timeout_once(0, func, **kwargs)
 
-__all__ = ['call_timeout', 'call_idle', 'call_timeout_once', 'call_idle_once']
+def defer_idle_func(timeout=100, **kwargs):
+    def wrapped(f):
+        return lambda *margs: call_timeout_once(timeout, functools.partial(f, *margs), **kwargs)
+    return wrapped
+
+__all__ = ['call_timeout', 'call_idle', 'call_timeout_once', 'call_idle_once', 'defer_idle_func']
