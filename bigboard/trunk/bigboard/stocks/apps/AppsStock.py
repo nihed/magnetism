@@ -1,10 +1,11 @@
 import logging, time, re, os, sys
 
 import gmenu, gobject, pango, gnomedesktop, gtk
-import hippo
+import gconf, hippo
 
 import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
+from bigboard.libbig.gutil import *
 import bigboard.logins
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox, ActionLink
 import bigboard.stock
@@ -12,6 +13,8 @@ import bigboard.stock
 import appbrowser, apps_widgets, apps_directory
 
 _logger = logging.getLogger("bigboard.stocks.AppsStock")
+
+GCONF_KEY_APP_SIZE = '/apps/bigboard/application_list_size'
 
 class Application(object):
     __slots__ = ['__app', '__install_checked', '__desktop_entry', '__menu_entry']
@@ -179,6 +182,8 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__usage_enabled = False
         
         self.__static_set_ids = {}
+        gconf.client_get_default().notify_add(GCONF_KEY_APP_SIZE, self.__on_app_size_changed)
+         
         self.__set_message('Loading...')
         
         self.__apps = {} # mugshot app -> app
@@ -191,6 +196,10 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         ad.connect('changed', self.__on_local_apps_changed)
         for app in ad.get_apps():
             self.get_local_app(app)
+        self.__sync()
+        
+    def __on_app_size_changed(self, *args):
+        _logger.debug("app size changed")  
         self.__sync()
             
     def __on_local_apps_changed(self, ad):
@@ -329,6 +338,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
             self.get_app(app)
         self.emit("all-apps-loaded")
         
+    @defer_idle_func(logger=_logger)
     def __sync(self):
         _logger.debug("doing sync")
         
@@ -345,8 +355,9 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__static_set_ids = {}
         pinned_apps =  self._mugshot.get_my_top_apps()
         global_top_apps = self._mugshot.get_global_top_apps()
+        static_size = gconf.client_get_default().get_int(GCONF_KEY_APP_SIZE) or 7
         for i, mugshot_app in enumerate((usage and pinned_apps) or global_top_apps or []):
-            if i >= self.STATIC_SET_SIZE:
+            if i >= static_size:
                 break
             app = self.get_app(mugshot_app)
             display = apps_widgets.AppDisplay(app)
@@ -379,5 +390,3 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
                     self.__set_message("Saving your applications...")
                     _logger.debug("creating initial pin set: %s", pinned_ids)
                     self._mugshot.set_pinned_apps(pinned_ids, lambda: self.__on_pinned_apps_success(pinned_ids))       
-  
-

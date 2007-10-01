@@ -1,11 +1,12 @@
 import logging, time, urlparse, urllib, time
 
 import gobject, gtk
-import hippo
+import hippo, gconf
 
 import bigboard.globals as globals
 import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
+from bigboard.libbig.gutil import *
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, CanvasTable, \
              ActionLink, PrelightingCanvasBox, CanvasSpinner
 from bigboard.overview_table import OverviewTable
@@ -13,6 +14,8 @@ from bigboard.overview_table import OverviewTable
 import apps_widgets, apps_directory
 
 _logger = logging.getLogger("bigboard.AppBrowser")
+
+GCONF_KEY_APP_SIZE = '/apps/bigboard/application_list_size'
 
 class AppOverview(CanvasVBox):
     __gsignals__ = {
@@ -343,7 +346,7 @@ class AppList(CanvasVBox):
                 appsource = categories[catname]
             for app in appsource:
                 overview = apps_widgets.AppDisplay(app)
-                overview.connect("button-press-event", self.__on_overview_click)             
+                overview.connect("button-press-event", self.__on_overview_click) 
                 self.__table.add_column_item(section_key, overview)
             section_key += 1
 
@@ -448,9 +451,12 @@ class AppBrowser(hippo.CanvasWindow):
         self.__left_box.append(browse_link)
         spinbox = CanvasHBox()
         spinbox.append(hippo.CanvasText(text='Visible applications: '))
-        spinner = CanvasSpinner()
-        spinner.spinner.connect('value-changed', self.__on_visible_apps_spin_changed)
-        spinbox.append()
+        self.__apps_spinner = CanvasSpinner()
+        gconf.client_get_default().notify_add(GCONF_KEY_APP_SIZE, self.__on_visible_apps_key_changed)
+        self.__apps_spinner.spinner.connect('value-changed', self.__on_visible_apps_spin_changed)
+        self.__apps_spinner.spinner.get_adjustment().set_all(gconf.client_get_default().get_int(GCONF_KEY_APP_SIZE),
+                                                             1, 20, 1, 1, 1)        
+        spinbox.append(self.__apps_spinner)
         self.__left_box.append(spinbox)
     
         self.__right_scroll = hippo.CanvasScrollbars()
@@ -493,8 +499,19 @@ class AppBrowser(hippo.CanvasWindow):
                              lambda as: self.__sync())
         self.__sync()
         
+    @defer_idle_func(logger=_logger)
     def __on_visible_apps_spin_changed(self, *args):
         _logger.debug("spinner changed")
+        count = self.__apps_spinner.spinner.get_value()
+        curval = gconf.client_get_default().get_int(GCONF_KEY_APP_SIZE) or 4
+        if curval != count:        
+            gconf.client_get_default().set_int(GCONF_KEY_APP_SIZE, count)
+        
+    def __on_visible_apps_key_changed(self, *args):
+        _logger.debug("apps count key changed")
+        curval = gconf.client_get_default().get_int(GCONF_KEY_APP_SIZE) or 4
+        if curval != self.__apps_spinner.spinner.get_value():
+            self.__apps_spinner.set_value(curval)
         
     def __on_local_apps_changed(self, ad):
         _logger.debug("handling local app change")
