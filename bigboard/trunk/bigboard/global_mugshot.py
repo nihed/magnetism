@@ -477,15 +477,15 @@ class Mugshot(gobject.GObject):
                                       self.__on_top_applications_error)
         return True
 
-    def __on_category_applications(self, url, child_nodes):
+    def __on_category_applications(self, src_catname, url, child_nodes):
         reply_root = child_nodes[0]
-        catname = reply_root.getAttribute('category')
-        orig_catname = reply_root.getAttribute('origCategory')
+        catname = reply_root.getAttribute('category') or src_catname
+        orig_catname = reply_root.getAttribute('origCategory') or src_catname
         apps = self.__parse_app_set('topApplications',
                                     child_nodes=reply_root.childNodes)
         self.__category_top_apps[catname] = (apps, time.time())
         self.__category_mapping[orig_catname] = catname
-        self._logger.debug("emitting category-top-apps-changed")
+        self._logger.debug("emitting category-top-apps-changed for '%s'", catname)
         self.emit("category-top-apps-changed", catname, self.__category_top_apps[catname][0])        
 
     def __on_category_applications_error(self, *args):
@@ -504,10 +504,12 @@ class Mugshot(gobject.GObject):
     def __request_category_top_apps(self, category):
         baseurl = globals.get_baseurl()
         if not baseurl:
+            _logger.debug("no baseurl, skipping request of category top apps")
             return        
+        _logger.debug("requesting category top apps for %s", category)
         AsyncHTTPFetcher().xml_method(urlparse.urljoin(baseurl, '/xml/popularapplications'),
                                       {'category': category},
-                                      self.__on_category_applications,
+                                      lambda *args: self.__on_category_applications(category, *args),
                                       self.__on_category_applications_error,
                                       self.__on_category_applications_error)
 
@@ -605,7 +607,7 @@ class Mugshot(gobject.GObject):
                 self.__category_top_apps[category] = ([], 0)
             self.__request_category_top_apps(category)
             return None    
-        if self.__category_top_apps.has_key(category): 
+        if self.__category_top_apps.has_key(category):
             return self.__category_top_apps[category][0]
         return None
     
