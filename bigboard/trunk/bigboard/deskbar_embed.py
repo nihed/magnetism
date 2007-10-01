@@ -35,7 +35,10 @@ class OldDeskbar(AbstractDeskbar):
         self.__applet = gnomeapplet.Applet()
         self.__applet.get_orient = lambda: gnomeapplet.ORIENT_DOWN
         self.__deskbar = DeskbarApplet.DeskbarApplet(self.__applet)
-        self.__deskbar.loader.connect("modules-loaded", self.__override_modules_loaded)
+        try:
+                self.__deskbar.loader.connect("modules-loaded", self.__override_modules_loaded)
+        except:
+                _logger.warn("Unable to override deskbar modules (not possible in newer deskbar?)")
         self.__applet.reparent(self)
         uiname = gconf.Value(gconf.VALUE_STRING)
         uiname.set_string(deskbar.ENTRIAC_UI_NAME)
