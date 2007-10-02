@@ -190,7 +190,7 @@ static void update_showing_bigboard     (ButtonData        *button_data,
                                          gboolean           showing_bigboard);
 static void theme_changed_callback      (GtkIconTheme      *icon_theme,
                                          ButtonData        *button_data);
-static void button_toggled_callback     (GtkWidget         *button,
+static void button_clicked_callback     (GtkWidget         *button,
                                          ButtonData        *button_data);
 static void user_photo_changed_callback (GdkPixbuf         *pixbuf,
                                          void              *data);
@@ -449,36 +449,16 @@ static const BonoboUIVerb bigboard_button_menu_verbs [] = {
 static void
 update_button_display (ButtonData *button_data)
 {
-        if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (button_data->button))) {
-                wncklet_set_tooltip (button_data->button,
-                                     _("Click here to show the desktop sidebar."));
-        } else {
-                wncklet_set_tooltip (button_data->button,
-                                     _("Click here to hide the desktop sidebar."));
-        }
+		wncklet_set_tooltip (button_data->button, _("Click here to show the desktop sidebar."));
 }
 
 static void
 update_button_state (ButtonData *button_data)
 {
         if (button_data->showing_bigboard) {
-                g_signal_handlers_block_by_func (G_OBJECT (button_data->button),
-                                                 G_CALLBACK (button_toggled_callback),
-                                                 button_data);
-                gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button_data->button),
-                                              TRUE);
-                g_signal_handlers_unblock_by_func (G_OBJECT (button_data->button),
-                                                   G_CALLBACK (button_toggled_callback),
-                                                   button_data);
-        } else {
-                g_signal_handlers_block_by_func (G_OBJECT (button_data->button),
-                                                 G_CALLBACK (button_toggled_callback),
-                                                 button_data);
-                gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button_data->button),
-                                              FALSE);
-                g_signal_handlers_unblock_by_func (G_OBJECT (button_data->button),
-                                                   G_CALLBACK (button_toggled_callback),
-                                                   button_data);
+        		gtk_widget_set_sensitive (GTK_WIDGET (button_data->button), FALSE);
+        } else if (!button_data->showing_bigboard) {      
+                gtk_widget_set_sensitive (GTK_WIDGET (button_data->button), TRUE);
         }
 
         update_button_display (button_data);
@@ -490,7 +470,6 @@ update_showing_bigboard (ButtonData        *button_data,
 {
         if ((showing_bigboard != FALSE) == button_data->showing_bigboard)
                 return;
-
 
         button_data->showing_bigboard = showing_bigboard != FALSE;
 
@@ -665,7 +644,7 @@ bigboard_button_add_to_widget (GtkWidget *applet)
         g_signal_connect (G_OBJECT (button_data->applet), "realize",
                           G_CALLBACK (bigboard_button_applet_realized), button_data);
 
-        button_data->button = gtk_toggle_button_new ();
+        button_data->button = gtk_button_new ();
         
         gtk_widget_set_name (button_data->button, "bigboard-button");
         gtk_rc_parse_string ("\n"
@@ -684,11 +663,11 @@ bigboard_button_add_to_widget (GtkWidget *applet)
         g_signal_connect (G_OBJECT (button_data->button), "button_press_event",
                           G_CALLBACK (do_not_eat_button_press), NULL);
 
-        g_signal_connect (G_OBJECT (button_data->button), "toggled",
-                          G_CALLBACK (button_toggled_callback), button_data);
+        g_signal_connect (G_OBJECT (button_data->button), "clicked",
+                          G_CALLBACK (button_clicked_callback), button_data);
 
         gtk_container_set_border_width (GTK_CONTAINER (button_data->button), 0);
-        gtk_container_add (GTK_CONTAINER (button_data->button), button_data->image);
+        gtk_container_add (GTK_CONTAINER (button_data->button), button_data->image);        
 
         button_data->launchers = launchers_new();
         
@@ -896,16 +875,11 @@ display_help_dialog (BonoboUIComponent *uic,
 }
 
 static void
-button_toggled_callback (GtkWidget       *button,
+button_clicked_callback (GtkWidget       *button,
                          ButtonData      *button_data)
 {
         if (button_data->bb_proxy) {
-                if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (button)))
-                        hippo_dbus_proxy_VOID__VOID (button_data->bb_proxy,
-                                                     "Expand");
-                else
-                        hippo_dbus_proxy_VOID__VOID (button_data->bb_proxy,
-                                                     "Unexpand");
+				hippo_dbus_proxy_VOID__VOID (button_data->bb_proxy, "Popout");
         }
         
         update_button_display (button_data);
