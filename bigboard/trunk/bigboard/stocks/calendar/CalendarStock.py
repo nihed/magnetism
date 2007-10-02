@@ -534,7 +534,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
 
     def __on_more_button(self):
         done_with_sleep_state = 0
-        for google_account in self.googles.itervalues():
+        for google_account in self.googles:
             if done_with_sleep_state == 1:
                 # in case the browser is just starting, we should wait a bit, otherwise
                 # Firefox produces this for the second link:  

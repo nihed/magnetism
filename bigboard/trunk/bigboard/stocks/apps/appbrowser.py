@@ -8,7 +8,7 @@ import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.libbig.gutil import *
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, CanvasTable, \
-             ActionLink, PrelightingCanvasBox, CanvasSpinner, CanvasCheckbox
+             ActionLink, PrelightingCanvasBox, CanvasSpinner, CanvasCheckbox, Button
 from bigboard.overview_table import OverviewTable
 
 import apps_widgets, apps_directory
@@ -26,7 +26,7 @@ class AppOverview(CanvasVBox):
     }
 
     def __init__(self, app=None):
-        super(AppOverview, self).__init__(box_width=200, box_height=260,
+        super(AppOverview, self).__init__(xalign=hippo.ALIGNMENT_FILL, yalign=hippo.ALIGNMENT_FILL, box_width=200, box_height=260,
                                           border=1, border_color=0xAAAAAAFF, background_color=0xFFFFFFFF, padding=5)
 
         self.__unselected = True
@@ -41,11 +41,19 @@ class AppOverview(CanvasVBox):
         
         self.__description = hippo.CanvasText(font="12px",size_mode=hippo.CANVAS_SIZE_WRAP_WORD)
         
+        self.__controls_box = CanvasVBox(xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_END)
+ 
+        self.__action_button = Button(label_xpadding=10)
+        self.__action_button.set_property("xalign", hippo.ALIGNMENT_START) 
+        self.__controls_box.append(self.__action_button)
+  
         self.__moreinfo = ActionLink(text="More Info", xalign=hippo.ALIGNMENT_START)
         self.__moreinfo.connect("button-press-event", lambda l,e: self.emit("more-info", self.__app))
+        self.__controls_box.append(self.__moreinfo) 
 
         self.__check_showing = CanvasCheckbox("Show in sidebar")
         self.__check_showing.checkbox.connect('toggled', self.__on_show_in_sidebar_toggled)
+        self.__controls_box.append(self.__check_showing) 
 
         self.__up_button = hippo.CanvasLink(text="Up", border_right=10)
         self.__down_button = hippo.CanvasLink(text="Down")
@@ -55,7 +63,8 @@ class AppOverview(CanvasVBox):
 
         self.__up_button.connect("activated", lambda ci: self.emit("move-up", self.__app))
         self.__down_button.connect("activated", lambda ci: self.emit("move-down", self.__app))
-        
+        self.__controls_box.append(self.__up_down_controls)        
+
         if app:
             self.set_app(app)
 
@@ -80,10 +89,8 @@ class AppOverview(CanvasVBox):
             self.__unselected = False
             self.remove(self.__app_unselected_text)
             self.append(self.__header)
-            self.append(self.__description, hippo.PACK_CLEAR_RIGHT)
-            self.append(self.__moreinfo)
-            self.append(self.__check_showing)
-            self.append(self.__up_down_controls)
+            self.append(self.__description)
+            self.append(self.__controls_box, hippo.PACK_EXPAND)
 
         self.__app = app
         self.__header.set_app(app)
@@ -92,6 +99,10 @@ class AppOverview(CanvasVBox):
         self.sync_pinned_checkbox()
         
         self.set_child_visible(self.__moreinfo, not not self.__app.get_mugshot_app())
+        if app.is_installed():
+            self.__action_button.set_label_text("Run...")
+        else:
+            self.__action_button.set_label_text("Install...")
         
     def launch(self):
         return self.__header.launch()
@@ -101,6 +112,9 @@ class AppOverview(CanvasVBox):
 
     def get_header(self):
         return self.__header
+
+    def get_action_button(self):
+        return self.__action_button
 
 def categorize(apps):    
     """Given a set of applications, returns a map <string,set<Application>> based on category name."""
@@ -492,6 +506,8 @@ class AppBrowser(hippo.CanvasWindow):
         self.__overview.connect("toggle-pinned", lambda o, app, active: self.__on_toggle_app_pinned(app, active))
         self.__overview.connect("move-up", lambda o, app: self.__on_move_app(app, True))
         self.__overview.connect("move-down", lambda o, app: self.__on_move_app(app, False))
+        self.__overview.get_header().connect("button-press-event", lambda l,e: self.__on_app_launch()) 
+        self.__overview.get_action_button().connect("activated", lambda l: self.__on_app_launch()) 
         self.__left_box.append(self.__overview)
         
         self.__cat_usage = AppCategoryUsage()
@@ -583,7 +599,6 @@ class AppBrowser(hippo.CanvasWindow):
                 
     def __on_app_selected(self, app):
         self.__overview.set_app(app)
-        self.__overview.get_header().connect("button-press-event", lambda l,e: self.__on_app_launch()) 
 
     def __reset(self):
         self.__search_input.set_property('text', '')

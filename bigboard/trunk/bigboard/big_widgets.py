@@ -68,8 +68,10 @@ class ButtonLabel(gtk.Label):
 gobject.type_register(ButtonLabel)
 
 class Button(hippo.CanvasButton):
-    def __init__(self, label_ypadding=0, label=''):
+    def __init__(self, label_xpadding=0, label_ypadding=0, label=''):
         super(Button, self).__init__()
+        self.__label_xpadding = label_xpadding
+        self.__label_ypadding = label_ypadding
         button = self.get_property('widget')
         button.set_property('border-width', 0)
         button.unset_flags(gtk.CAN_DEFAULT)
@@ -82,13 +84,18 @@ class Button(hippo.CanvasButton):
         button.set_name('bigboard-nopad-button')
         child = button.get_child() #gtk.Label() #ButtonLabel(ypadding=label_ypadding)
         child.set_alignment(0.5, 0)
-        child.set_padding(0, 0)
+        child.set_padding(self.__label_xpadding, self.__label_ypadding)
 
     def get_button(self):
         return self.get_property('widget')
   
     def get_label(self):
 	return self.get_button().child
+
+    def set_label_text(self, label=''):
+        self.set_property('text', label)
+        child = self.get_property('widget').get_child()
+        child.set_padding(self.__label_xpadding, self.__label_ypadding) 
 
 class CanvasURLImageMixin:
     """A wrapper for CanvasImage which has a set_url method to retrieve
