@@ -19,7 +19,10 @@ GCONF_KEY_APP_SIZE = '/apps/bigboard/application_list_size'
 
 class AppOverview(CanvasVBox):
     __gsignals__ = {
-        "more-info" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
+        "more-info" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "toggle-pinned" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_BOOLEAN,)),
+        "move-up" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "move-down" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
     }
 
     def __init__(self, app=None):
@@ -42,15 +45,35 @@ class AppOverview(CanvasVBox):
         self.__moreinfo.connect("button-press-event", lambda l,e: self.emit("more-info", self.__app))
 
         self.__check_showing = CanvasCheckbox("Show in sidebar")
+        self.__check_showing.checkbox.connect('toggled', self.__on_show_in_sidebar_toggled)
 
         self.__up_button = hippo.CanvasLink(text="Up", border_right=10)
         self.__down_button = hippo.CanvasLink(text="Down")
         self.__up_down_controls = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
         self.__up_down_controls.append(self.__up_button)
         self.__up_down_controls.append(self.__down_button)
+
+        self.__up_button.connect("activated", lambda ci: self.emit("move-up", self.__app))
+        self.__down_button.connect("activated", lambda ci: self.emit("move-down", self.__app))
         
         if app:
             self.set_app(app)
+
+
+    def __on_show_in_sidebar_toggled(self, checkbox):
+        active = checkbox.get_active()
+        _logger.debug("Checkbox toggled, active = " + str(active))
+        if self.__app:
+            pinned = self.__app.get_pinned()
+            _logger.debug("App is currently pinned = " + str(pinned))
+            if active != pinned:
+                self.emit("toggle-pinned", self.__app, active)
+
+    def sync_pinned_checkbox(self):
+        _logger.debug("Syncing pinned checkbox")
+        if self.__app:
+            _logger.debug("  app " + self.__app.get_id() + " pinned: " + str(self.__app.get_pinned()))
+            self.__check_showing.checkbox.set_active(self.__app.get_pinned())
 
     def set_app(self, app):
         if self.__unselected:
@@ -61,9 +84,13 @@ class AppOverview(CanvasVBox):
             self.append(self.__moreinfo)
             self.append(self.__check_showing)
             self.append(self.__up_down_controls)
+
         self.__app = app
         self.__header.set_app(app)
         self.__description.set_property("text", app.get_description())
+
+        self.sync_pinned_checkbox()
+        
         self.set_child_visible(self.__moreinfo, not not self.__app.get_mugshot_app())
         
     def launch(self):
@@ -462,6 +489,9 @@ class AppBrowser(hippo.CanvasWindow):
     
         self.__overview = AppOverview()
         self.__overview.connect("more-info", lambda o, app: self.__on_show_more_info(app))
+        self.__overview.connect("toggle-pinned", lambda o, app, active: self.__on_toggle_app_pinned(app, active))
+        self.__overview.connect("move-up", lambda o, app: self.__on_move_app(app, True))
+        self.__overview.connect("move-down", lambda o, app: self.__on_move_app(app, False))
         self.__left_box.append(self.__overview)
         
         self.__cat_usage = AppCategoryUsage()
@@ -518,9 +548,11 @@ class AppBrowser(hippo.CanvasWindow):
         self.__mugshot.connect("apps-search-changed", 
                                lambda *args: self.__sync())          
         self.__mugshot.connect("category-top-apps-changed", 
-                               self.__handle_category_changed)          
+                               self.__handle_category_changed)
+        self.__mugshot.connect("pinned-apps-changed", self.__on_pinned_apps_changed)
         self.__stock.connect("all-apps-loaded",
                              lambda as: self.__sync())
+        
         self.__sync()
         
     @defer_idle_func(logger=_logger)
@@ -566,6 +598,48 @@ class AppBrowser(hippo.CanvasWindow):
             libbig.show_url(urlparse.urljoin(globals.get_baseurl(), "application?id=" + app.get_mugshot_app().get_id()))
         self.__hide_reset()
 
+    def __on_set_pinned_reply(self):
+        ## this is incredibly broken and means we don't have change notification from the server
+        _logger.debug("got reply to setting pinned apps")
+        self.__mugshot.get_pinned_apps(force=True)
+
+    def __on_toggle_app_pinned(self, app, active):
+        _logger.debug("Toggle app " + app.get_id() + " pinned = " + str(active))
+
+        pinned_apps = self.__mugshot.get_pinned_apps()
+        if pinned_apps is None:
+            pinned_apps = []
+        pinned_ids = {}
+        for p in pinned_apps:
+            pinned_ids[p.get_id()] = p
+
+        _logger.debug("  (pinned_ids = " + str(pinned_ids.keys()) + ")")
+
+        if app.get_id() in pinned_ids:
+            if active:
+                _logger.debug("App is already pinned")
+                return
+            else:
+                _logger.debug("Unpinning app")
+                del pinned_ids[app.get_id()]
+        else:
+            if active:
+                _logger.debug("Pinning app")
+                pinned_ids[app.get_id()] = app.get_mugshot_app()
+            else:
+                _logger.debug("App is already not pinned")
+                return
+
+        _logger.debug("Setting pinned apps to " + str(pinned_ids.keys()))
+        self.__mugshot.set_pinned_apps(pinned_ids.keys(), self.__on_set_pinned_reply)
+
+    def __on_move_app(self, app, up):
+        _logger.debug("Move app up= " + str(up))
+        if up:
+            pass
+        else:
+            pass        
+
     def __on_app_launch(self):
         self.__overview.launch()
         self.__hide_reset()
@@ -607,3 +681,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.__used_apps = map(self.__stock.get_app, self.__mugshot.get_my_top_apps() or [])
         self.__app_list.set_apps(self.__all_apps, self.__used_apps)
         self.__cat_usage.set_apps(self.__all_apps, self.__used_apps) 
+
+    def __on_pinned_apps_changed(self, mugshot, pinned_apps):
+        _logger.debug("Pinned apps changed: " + str(map(lambda x: x.get_id(), pinned_apps)))
+        self.__overview.sync_pinned_checkbox()

@@ -36,6 +36,9 @@ class Application(object):
 
     def get_desktop(self):
         return self.__desktop_entry
+
+    def get_pinned(self):
+        return self.__app and self.__app.get_pinned()
     
     def get_name(self):
         return self.__app and self.__app.get_name() or self.__menu_entry.get_name()
@@ -268,7 +271,8 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__sync()
             
     def __on_pinned_apps_success(self, pinned_ids):
-        _logger.debug("app pin set succeeded")       
+        _logger.debug("app pin set succeeded")
+        ## this is incredibly broken and means we don't have change notification from the server        
         self._mugshot.get_pinned_apps(force=True)
             
     def __set_dynamic_set(self, mugshot_apps):
