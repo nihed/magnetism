@@ -540,6 +540,11 @@ class BigBoardPanel(dbus.service.Object):
     def EmitExpandedChanged(self):
         self.__logger.debug("got emitExpandedChanged method call")
         self.ExpandedChanged(gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible'))
+        
+    @dbus.service.method(BUS_IFACE_PANEL)
+    def Popout(self):
+        self.__logger.debug("got popout method call")
+        return self.external_focus()  
 
     @dbus.service.method(BUS_IFACE_PANEL)
     def Reboot(self):
