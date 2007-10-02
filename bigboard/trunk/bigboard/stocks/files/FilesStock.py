@@ -78,7 +78,7 @@ class LocalFile(File):
     def __init__(self, bookmark_child):
         super(LocalFile, self).__init__()
         attrs = xml_get_attrs(bookmark_child, ['href', 'modified', 'visited'])
-        self._url = attrs['href']
+        self._url = attrs['href'].encode('utf-8')     
         # google.parse_timestamp() just parses an RFC 3339 format timestamp,
         # which 'modified' and 'visited' timestamps here use as well.
         # We'll need to move that function to some more generic file. 
@@ -101,8 +101,9 @@ class LocalFile(File):
         
     def __do_update_async(self, url, cb):
         results = (None, None)
+        uri = gnomevfs.URI(url)
         try:            
-            vfsstat = gnomevfs.get_file_info(url.encode('utf-8'), gnomevfs.FILE_INFO_GET_MIME_TYPE | gnomevfs.FILE_INFO_FOLLOW_LINKS)
+            vfsstat = gnomevfs.get_file_info(uri, gnomevfs.FILE_INFO_GET_MIME_TYPE | gnomevfs.FILE_INFO_FOLLOW_LINKS)
         except gnomevfs.NotFoundError, e:
             _logger.debug("Failed to get file info for target of '%s'", url, exc_info=True)
             gobject.idle_add(cb, results)
