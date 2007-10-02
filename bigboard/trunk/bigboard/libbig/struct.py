@@ -62,6 +62,14 @@ class AutoStruct(object):
             k = studly_to_underscore(k)
             temp_args[k] = v    
         return temp_args
+
+    # set the given key-value pairs only if not already set, used
+    # in constructor
+    def _default_values(self, attrs):
+        transformed = self._transform_values(attrs)
+        for k in transformed.keys():
+            if not self._struct_values.has_key(k):
+                self._struct_values[k] = transformed[k]
     
     def update(self, values):
         for k in values.keys():

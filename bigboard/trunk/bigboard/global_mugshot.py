@@ -54,7 +54,9 @@ class Feed(Entity):
     pass
 
 class Application(AutoSignallingStruct):
-    pass
+    def __init__(self, *args, **kwargs):
+        super(Application, self).__init__(*args, **kwargs)
+        self._default_values({'pinned' : False})
 
 class Mugshot(gobject.GObject):
     """A combination of a wrapper and cache for the Mugshot D-BUS API.  Access
@@ -232,7 +234,7 @@ class Mugshot(gobject.GObject):
     @log_except(_logger)
     def __externalIQReturn(self, id, content):
         if self.__external_iqs.has_key(id):
-            self._logger.debug("got external IQ reply for %d (%d outstanding)", id, len(self.__external_iqs.keys())-1)
+            #self._logger.debug("got external IQ reply for %d (%d outstanding)", id, len(self.__external_iqs.keys())-1)
             (cb, iqkey) = self.__external_iqs[id]
             if iqkey:
                 iqfile = os.path.join(self.__iqcachedir, iqkey)
@@ -353,7 +355,7 @@ class Mugshot(gobject.GObject):
         if self.__proxy is None:
             self._logger.warn("No Mugshot active, not sending IQ")
             return
-        self._logger.debug("sending external IQ request: set=%s name=%s xmlns=%s attrs=%s (%d bytes)", is_set, name, xmlns, attrs, len(content))
+        #self._logger.debug("sending external IQ request: set=%s name=%s xmlns=%s attrs=%s (%d bytes)", is_set, name, xmlns, attrs, len(content))
         if attrs is None:
             attrs = {}
         attrs['xmlns'] = xmlns
@@ -383,7 +385,7 @@ class Mugshot(gobject.GObject):
                 for thumbnail in xml_query(thumbnails_node, 'thumbnail*'):
                     subattrs = xml_get_attrs(thumbnail, ['src', ('title', True), 'href'])
                     thumbnails.append(ExternalAccountThumbnail(subattrs)) 
-                self._logger.debug("%d thumbnails found for account %s (user %s)" % (len(thumbnails), accttype, person)) 
+                #self._logger.debug("%d thumbnails found for account %s (user %s)" % (len(thumbnails), accttype, person)) 
                 attrs['thumbnails'] = thumbnails
             feeds = []
             try:
@@ -396,7 +398,7 @@ class Mugshot(gobject.GObject):
                 attrs['feeds'] = feeds          
             acct = ExternalAccount(attrs)
             accts.append(acct)
-        self._logger.debug("setting %d accounts for user %s" % (len(accts), person))
+        #self._logger.debug("setting %d accounts for user %s" % (len(accts), person))
         person.set_external_accounts(accts)
         
     def get_person_accounts(self, person):
@@ -406,7 +408,7 @@ class Mugshot(gobject.GObject):
     
     def __load_app_from_xml(self, node):
         id = node.getAttribute("id")
-        self._logger.debug("parsing application id=%s", id)
+        #self._logger.debug("parsing application id=%s", id)
         attrs = xml_get_attrs(node, ['id', 'rank', 'usageCount', 
                                      'iconUrl', 
                                      'category',
@@ -417,13 +419,14 @@ class Mugshot(gobject.GObject):
         description = xml_query(node, 'description#')
         if description:
             attrs['description'] = description
+
         app = None
         if not self.__applications.has_key(attrs['id']):
             app = Application(attrs)
             self.__applications[attrs['id']] = app
         else:
             app = self.__applications[attrs['id']]    
-        app.update(attrs)            
+        app.update(attrs)
         return app
     
     def __parse_app_set(self, expected_name, doc=None, child_nodes=None):
@@ -440,9 +443,10 @@ class Mugshot(gobject.GObject):
                 continue
             app = self.__load_app_from_xml(node)
             apps.append(app)
+        _logger.debug("Parsed app set; pinned_apps = " + str(map(lambda a: a.get_id(), self.__pinned_apps)))
         return apps
             
-    def __on_my_top_applications(self, xml_str):     
+    def __on_my_top_applications(self, xml_str):
         doc = xml.dom.minidom.parseString(xml_str)        
         self.__my_top_apps = self.__parse_app_set('myTopApplications', doc)
         self.__my_app_usage_start = doc.documentElement.getAttribute("since")
@@ -621,23 +625,49 @@ class Mugshot(gobject.GObject):
             self.__reset_global_apps_poll()
             return None    
         return self.__global_top_apps
+
+    def __update_pinned_attributes(self):
+        
+        pinned = {}
+        if self.__pinned_apps is not None:
+            for p in self.__pinned_apps:
+                pinned[p.get_id()] = p
+
+        _logger.debug("In update, pinned apps are: " + str(pinned.keys()));
+
+        for id in self.__applications.keys():
+            if id in pinned:
+                _logger.debug("Setting pinned=true for " + id)
+                a = self.__applications[id]
+                a.update({'pinned' : True})
+                if not a.get_pinned():
+                    raise "Was not pinned???"
+            else:
+                #_logger.debug("Setting pinned=false for " + id)
+                a = self.__applications[id]
+                a.update({'pinned' : False})
+                if a.get_pinned():
+                    raise "Was not unpinned???"
     
     def __on_pinned_apps(self, xml_str):
-        self._logger.debug("parsing pinned apps reply: %s", xml_str)
+        self._logger.debug("parsing pinned apps reply")
         doc = xml.dom.minidom.parseString(xml_str)        
         self.__pinned_apps = self.__parse_app_set('pinned', doc)
+        self.__update_pinned_attributes()
         self._logger.debug("emitting pinned-apps-changed")
-        self.emit("pinned-apps-changed", self.__pinned_apps)        
+        self.emit("pinned-apps-changed", self.__pinned_apps)
     
     def get_pinned_apps(self, force=False):
         if self.__pinned_apps is None or force:
             if not force:
                 self.__pinned_apps = []
+                self.__update_pinned_attributes()
             self.__request_pinned_apps()
             return None
         return self.__pinned_apps
         
     def set_pinned_apps(self, ids, cb):
+        _logger.debug("Setting pinned apps to: " + str(ids))
         iq = StringIO.StringIO()
         for id in ids:
             iq.write('<appId>')
