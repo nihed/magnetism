@@ -28,6 +28,12 @@ class CanvasSpinner(hippo.CanvasWidget):
         self.spinner = gtk.SpinButton()
         self.set_property('widget', self.spinner)
 
+class CanvasCheckbox(hippo.CanvasWidget):
+    def __init__(self, label):
+        super(CanvasCheckbox, self).__init__()
+        self.checkbox = gtk.CheckButton(label)
+        self.set_property('widget', self.checkbox)
+
 class CanvasTable(hippo.CanvasBox):
     def __init__(self, column_spacing=0, row_spacing=0, **kwargs):
         hippo.CanvasBox.__init__(self, **kwargs)
