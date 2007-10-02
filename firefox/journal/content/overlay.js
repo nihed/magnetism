@@ -34,7 +34,7 @@
  * 
  * ***** END LICENSE BLOCK ***** */
 
-const JOURNAL_CHROME = "chrome://firefoxjournal/content/journal.html";
+const JOURNAL_CHROME = "about:journal"
 
 const console = Components.classes["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
 
