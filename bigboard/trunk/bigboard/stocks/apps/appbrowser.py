@@ -8,7 +8,7 @@ import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.libbig.gutil import *
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, CanvasTable, \
-             ActionLink, PrelightingCanvasBox, CanvasSpinner
+             ActionLink, PrelightingCanvasBox, CanvasSpinner, CanvasCheckbox
 from bigboard.overview_table import OverviewTable
 
 import apps_widgets, apps_directory
@@ -40,6 +40,14 @@ class AppOverview(CanvasVBox):
         
         self.__moreinfo = ActionLink(text="More Info", xalign=hippo.ALIGNMENT_START)
         self.__moreinfo.connect("button-press-event", lambda l,e: self.emit("more-info", self.__app))
+
+        self.__check_showing = CanvasCheckbox("Show in sidebar")
+
+        self.__up_button = hippo.CanvasLink(text="Up", border_right=10)
+        self.__down_button = hippo.CanvasLink(text="Down")
+        self.__up_down_controls = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
+        self.__up_down_controls.append(self.__up_button)
+        self.__up_down_controls.append(self.__down_button)
         
         if app:
             self.set_app(app)
@@ -49,8 +57,10 @@ class AppOverview(CanvasVBox):
             self.__unselected = False
             self.remove(self.__app_unselected_text)
             self.append(self.__header)
-            self.append(self.__description, hippo.PACK_CLEAR_RIGHT)     
+            self.append(self.__description, hippo.PACK_CLEAR_RIGHT)
             self.append(self.__moreinfo)
+            self.append(self.__check_showing)
+            self.append(self.__up_down_controls)
         self.__app = app
         self.__header.set_app(app)
         self.__description.set_property("text", app.get_description())
@@ -469,7 +479,7 @@ class AppBrowser(hippo.CanvasWindow):
         gconf.client_get_default().notify_add(GCONF_KEY_APP_SIZE, self.__on_visible_apps_key_changed)
         self.__apps_spinner.spinner.connect('value-changed', self.__on_visible_apps_spin_changed)
         self.__apps_spinner.spinner.get_adjustment().set_all(gconf.client_get_default().get_int(GCONF_KEY_APP_SIZE),
-                                                             1, 20, 1, 1, 1)        
+                                                             1, 20, 1, 1, 1)
         spinbox.append(self.__apps_spinner)
         self.__left_box.append(spinbox)
     
