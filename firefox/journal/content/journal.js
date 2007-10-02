@@ -44,7 +44,7 @@ const ANNOTATION_SERVICE = Cc["@mozilla.org/browser/annotation-service;1"].getSe
 const SEARCH_SERVICE = Cc["@mozilla.org/browser/search-service;1"].getService(Ci.nsIBrowserSearchService);
 const TAGGING_SERVICE = Cc["@mozilla.org/browser/tagging-service;1"].getService(Ci.nsITaggingService);
 
-const JOURNAL_CHROME = "chrome://firefoxjournal/content/journal.html"; 
+const JOURNAL_CHROME = "about:journal";
 
 const BLANK_FAVICON = "chrome://mozapps/skin/places/defaultFavicon.png"
 
@@ -331,6 +331,7 @@ JournalPage.prototype = {
     searchbox.focus();
   },
   handleWindowKeyUp: function(e) {
+    var me = this;
 
     // ESC or Ctrl-c is clear search
     if (e.keyCode == 27 || (e.ctrlKey && e.keyCode == 67)) {
