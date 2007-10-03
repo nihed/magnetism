@@ -7,7 +7,7 @@ test -z "$srcdir" && srcdir=.
 PKG_NAME="bigboard"
 ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I m4"
 REQUIRED_AUTOCONF_VERSION=2.59
-REQUIRED_AUTOMAKE_VERSION=1.10
+REQUIRED_AUTOMAKE_VERSION=1.9.2
 REQUIRED_MACROS="python.m4"
 
 (test -f $srcdir/configure.ac \
