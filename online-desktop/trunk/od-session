@@ -10,6 +10,26 @@ os.environ['OD_SESSION'] = "1"
 subprocess.call(['gconftool-2', '--shutdown'])
 os.environ['ONLINE_DESKTOP_GCONF'] = '/usr/share/online-desktop/gconf.path'
 
+reset_autostart_data = '''
+[Desktop Entry]
+Name=od-reset
+Encoding=UTF-8
+Version=1.0
+Exec=od-reset
+X-GNOME-Autostart-enabled=true
+'''
+
+autostart_dir_path = os.path.expanduser('~/.config/autostart')
+reset_autostart_path = os.path.join(autostart_dir_path, 'od-reset.desktop')
+if not os.access(reset_autostart_path, os.R_OK):
+	try:
+		os.makedirs(autostart_dir_path)
+	except:
+		pass
+	autostart_file = open(reset_autostart_path, 'w')
+	autostart_file.write(reset_autostart_data)
+	autostart_file.close()
+
 # do pre-configuration
 for fpath in iterdir_d('online-desktop/presession'):
   if os.access(fpath, os.X_OK):

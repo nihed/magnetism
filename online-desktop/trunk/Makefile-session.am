@@ -1,5 +1,5 @@
-bin_SCRIPTS += od-autostart od-session
-EXTRA_DIST += od-autostart od-session
+bin_SCRIPTS += od-autostart od-session od-reset
+EXTRA_DIST += od-autostart od-session od-reset
 
 gnomesessiondir=$(datadir)/gnome
 gnomesession_DATA = online-desktop.session

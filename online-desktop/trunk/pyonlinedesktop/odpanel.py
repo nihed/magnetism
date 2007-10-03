@@ -1,3 +1,5 @@
+import gconf
+
 from pyonlinedesktop import gnomepanel
 
 NAME = 'OD'
@@ -15,3 +17,5 @@ def setup_panels():
     gnomepanel.add_applet(PANEL_ID, 'clock_' + NAME, 'GNOME_ClockApplet', 1, right=True)
     gnomepanel.add_applet(PANEL_ID, 'tray_' + NAME, 'GNOME_SystemTrayApplet', 0, right=True)
     gnomepanel.set_toplevels([PANEL_ID])
+    # TODO no schema for this, ugly to use /bigboard too
+    gconf.client_get_default().set_list('/apps/bigboard/prev_panel_config', gconf.VALUE_STRING, toplevels)
