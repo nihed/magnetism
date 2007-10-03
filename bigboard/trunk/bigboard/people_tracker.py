@@ -210,7 +210,11 @@ class PeopleTracker(Singleton):
         self.__on_buddies_changed(globalResource)
 
     def __on_buddies_changed(self, globalResource):
-        self.__set_new_buddies(globalResource.onlineBuddies)
+        try:
+            self.__set_new_buddies(globalResource.onlineBuddies)
+        except AttributeError, e:
+            ## globalResource.onlineBuddies may not exist yet before the query reply arrives
+            pass
 
     def __set_new_buddies(self, buddies):
         _logger.debug("Got new buddy list from the server: %s", buddies)
