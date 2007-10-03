@@ -611,7 +611,7 @@ public enum ExternalAccountType {
 		
 		@Override
 		public String getLink(String handle, String extra) {
-			return "http://digg.com/users/" + StringUtils.urlEncode(handle) + "/dugg";
+			return "http://digg.com/users/" + StringUtils.urlEncode(handle);
 		}
 		
 		@Override
