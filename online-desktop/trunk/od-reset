@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+##
+## This program is designed to ensure that when logging back into 
+## a non-Online Desktop session, we reset the panel config back
+## to the way it was before.
+
+import os,sys,logging
+
+import gconf, gnome, gnome.ui, gtk
+
+import gnomedesktop
+
+_logger = logging.getLogger("od.Reset")
+
+autostart_data = '''
+[Desktop Entry]
+Name=od-reset
+Encoding=UTF-8
+Version=1.0
+Exec=od-reset
+X-GNOME-Autostart-enabled=true
+'''
+
+autostart_dir_path = os.path.expanduser('~/.config/autostart')
+autostart_path = os.path.join(autostart_dir_path, 'od-reset.desktop')
+
+if not os.getenv('OD_SESSION'):
+	# Not in Online mode, try resetting config
+	try:
+		client = gconf.client_get_default()
+		prevconfig = client.get_list('/apps/bigboard/prev_panel_config', gconf.VALUE_STRING)
+		if not prevconfig:
+			prevconfig = client.get_list('/apps/panel/default_setup/general/toplevel_id_list', gconf.VALUE_STRING)
+		client.set_list('/apps/panel/general/toplevel_id_list', gconf.VALUE_STRING, prevconfig)
+	finally:
+		# Ensure here that we don't do this more than once
+		if os.access(autostart_path, os.R_OK):
+			os.unlink(autostart_path)
+		# Now, we need to kill the session, because the panel (or more likely bonobo) 
+		# often freaks out when we change this much from under it.
+		# First, notify the user we're going to do so.  
+		dl = gtk.MessageDialog(buttons=gtk.BUTTONS_OK, message_format='Desktop settings reset, please log in again.')
+		dl.run()		
+		# Now, kill the session.
+		master = gnome.ui.master_client()
+		master.request_save(gnome.ui.SAVE_GLOBAL,
+							True,
+							gnome.ui.INTERACT_NONE,
+							True,
+							False)	
+		sys.exit(0)
+else:
+	print "OD_SESSION is set, not doing anything"
