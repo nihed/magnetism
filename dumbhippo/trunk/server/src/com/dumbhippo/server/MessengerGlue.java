@@ -9,7 +9,6 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.tx.RetryException;
 

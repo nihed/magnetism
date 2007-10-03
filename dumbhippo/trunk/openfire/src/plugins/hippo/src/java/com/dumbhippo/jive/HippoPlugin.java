@@ -78,8 +78,9 @@ public class HippoPlugin implements Plugin {
 			
 			compatibilityNotifier.start();
 			
-			addIQHandler(new SystemIQHandler());			
+			addIQHandler(new SystemIQHandler());
 			addIQHandler(new ApplicationsIQHandler());
+			addIQHandler(new LegacyApplicationsIQHandler());
 			addIQHandler(new ClientInfoIQHandler());
 			addIQHandler(new MySpaceIQHandler());					
 			addIQHandler(new MusicIQHandler());

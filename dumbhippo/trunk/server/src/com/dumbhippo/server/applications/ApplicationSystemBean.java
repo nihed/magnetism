@@ -57,6 +57,8 @@ import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.tx.RetryException;
@@ -96,11 +98,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		if (app == null)
 			throw new NotFoundException(id);
 		return app;
-	}	
-	
-	public List<String> getAllApplicationIds() {
-		return TypeUtils.castList(String.class, em.createQuery("SELECT a.id FROM Application a").getResultList());		
-	}	
+	}		
 	
 	private Date getDefaultSince() {
 		return new Date(System.currentTimeMillis() - 31 * 24 * 60 * 60 * 1000L);
@@ -993,16 +991,34 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		});
 	}	
 
-	public void pinApplicationIds(User user, List<String> applicationIds, boolean pin) throws RetryException {
-		for (String appId : applicationIds) {
-			Application application = em.find(Application.class, appId);
-			if (application == null) {
-				logger.warn("Unknown application id '{}'", appId);
-				continue;
-			}
-			ApplicationUserState state = getUserState(user, application);
-			state.setPinned(pin);
+	// returns true if a change was made
+	private boolean setApplicationIdPinned(User user, String appId, boolean pin) throws RetryException {
+		Application application = em.find(Application.class, appId);
+		if (application == null) {
+			logger.warn("Unknown application id '{}'", appId);
+			return false;
 		}
+		ApplicationUserState state = getUserState(user, application);
+		if (state.getPinned() != pin) {
+			state.setPinned(pin);
+			return true;
+		}
+		return false;
+	}
+	
+	public void pinApplicationIds(User user, List<String> applicationIds, boolean pin) throws RetryException {
+		boolean changed = false;
+		for (String appId : applicationIds) {
+			if (setApplicationIdPinned(user, appId, pin))
+				changed = true;
+		}
+		if (changed)
+			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "pinnedApplications");
+	}
+	
+	public void pinApplicationId(User user, String appId, boolean pin) throws RetryException {
+		if (setApplicationIdPinned(user, appId, pin))
+			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "pinnedApplications");
 	}
 	
 	private void setViewIcon(ApplicationView view, int size) {
@@ -1019,6 +1035,12 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		return result;
 	}
 
+	public List<String> getPinnedApplicationIds(User user) {
+		Query q = em.createQuery("SELECT aus.application.id FROM ApplicationUserState aus WHERE aus.user = :user AND aus.pinned = TRUE")
+			.setParameter("user", user);
+		return TypeUtils.castList(String.class, q.getResultList());
+	}
+	
 	public List<Application> getPinnedApplications(User user) {
 		Query q = em.createQuery("SELECT aus.application FROM ApplicationUserState aus WHERE aus.user = :user AND aus.pinned = TRUE")
 			.setParameter("user", user);
@@ -1061,7 +1083,15 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		pageable.setTotalCount(appHits.size());
 	}
 	
-
+	public List<String> getAllApplicationIds() {
+		return TypeUtils.castList(String.class, em.createQuery("SELECT a.id FROM Application a").getResultList());		
+	}		
+	
+	public Collection<String> getAllApplicationIds(String distribution, String lang) {
+		// for now we just ignore distribution and lang
+		return getAllApplicationIds();
+	}
+	
 	public void writeAllApplicationsToXml(XmlBuilder xml, String distribution, String lang) {
 		List<Application> apps = TypeUtils.castList(Application.class,
 													em.createQuery("SELECT a FROM Application a").getResultList());

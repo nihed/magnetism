@@ -91,7 +91,7 @@ public class AnnotatedIQHandler extends org.jivesoftware.openfire.handler.IQHand
 	}
 	
 	private void injectEjbs() {
-		Class clazz = getClass();
+		Class<?> clazz = getClass();
 		for (Class<?> c = clazz; c.getPackage() == clazz.getPackage(); c = c.getSuperclass()) {
 			for (Field field : c.getDeclaredFields()) {
 				EJB annotation = field.getAnnotation(EJB.class);
