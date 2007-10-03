@@ -20,7 +20,7 @@ def on_connect():
     ## they will be in the tree view. Eventually we should make the query something
     ## you can put in the UI or at least on the command line.
     
-    query = model.query_resource(model.self_id, "+;contacts +;contacters +;lovedAccounts +;email;aim")
+    query = model.query_resource(model.self_id, "+;contacts +;contacters +;lovedAccounts +;topApplications+;pinnedApplications+;email;aim")
     query.execute()
 
     query = model.query_resource("online-desktop:/o/global", "onlineBuddies [+;icon]")
