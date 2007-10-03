@@ -50,6 +50,8 @@ public class ApplicationView {
 	 */
 	public void writeToXmlBuilder(XmlBuilder builder, String distribution, String lang) {
 		String packageName = null;
+		if (distribution != null && distribution.equals(""))
+			distribution = null;
 		if (distribution != null) {
 			packageName = extractPackageName(application.getPackageNames(), distribution);
 		}
