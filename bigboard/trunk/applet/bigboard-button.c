@@ -167,7 +167,7 @@ typedef struct {
         PanelAppletOrient orient;
         int size;
 
-        guint showing_bigboard : 1;
+        guint showing_bigboard : 2; /* Represents "unknown" basically */
         guint button_activate;
 
         GtkIconTheme *icon_theme;
@@ -211,6 +211,7 @@ handle_expanded_changed(DBusConnection *connection,
                 return;
         }
 
+        g_debug ("got bb expanded state: %d\n", is_expanded);
         update_showing_bigboard (button_data, is_expanded);
 }
 
@@ -227,6 +228,7 @@ handle_bigboard_available(DBusConnection *connection,
         /* request the expanded state */
         hippo_dbus_proxy_VOID__VOID (button_data->bb_proxy,
                                      "EmitExpandedChanged");
+        g_debug ("got bb available\n");
 }
 
 static void
@@ -240,10 +242,11 @@ handle_bigboard_unavailable(DBusConnection *connection,
         button_data = data;
         
         update_showing_bigboard (button_data, FALSE);
+        g_debug ("got bb unavailable\n");        
 }
 
 static const HippoDBusSignalTracker signal_handlers[] = {
-        { "org.gnome.BigBoard", "ExpandedChanged", handle_expanded_changed },
+        { "org.gnome.BigBoard.Panel", "ExpandedChanged", handle_expanded_changed },
         { NULL, NULL, NULL }
 };
 
@@ -335,6 +338,14 @@ update_icon (ButtonData *button_data)
         
         if (!button_data->icon_theme)
                 return;
+
+		gtk_image_clear (GTK_IMAGE (button_data->image));
+		
+        if (button_data->showing_bigboard) {
+        	g_debug ("showing bb, not setting icon\n");
+        	gtk_widget_set_size_request(button_data->image, 1, 1);        	        
+        	return;
+        }
 
         gtk_widget_style_get (button_data->button,
                               "focus-line-width", &focus_width,
@@ -455,12 +466,7 @@ update_button_display (ButtonData *button_data)
 static void
 update_button_state (ButtonData *button_data)
 {
-        if (button_data->showing_bigboard) {
-        		gtk_widget_set_sensitive (GTK_WIDGET (button_data->button), FALSE);
-        } else if (!button_data->showing_bigboard) {      
-                gtk_widget_set_sensitive (GTK_WIDGET (button_data->button), TRUE);
-        }
-
+      	update_icon (button_data);
         update_button_display (button_data);
 }
 
@@ -613,6 +619,8 @@ user_photo_changed_callback (GdkPixbuf         *pixbuf,
 {
         ButtonData *button_data;
         button_data = data;
+
+        g_debug ("got user photo changed\n");
 
         if (pixbuf)
                 g_object_ref(pixbuf);
