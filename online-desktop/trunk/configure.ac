@@ -6,7 +6,7 @@ AC_CONFIG_SRCDIR(od-session)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR(config)
 
-AM_INIT_AUTOMAKE(online-desktop, 0.2.17)
+AM_INIT_AUTOMAKE(online-desktop, 0.2.18)
 
 AM_CONFIG_HEADER(config/config.h)
 
