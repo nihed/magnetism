@@ -180,7 +180,11 @@ class _DBusCallback(dbus.service.Object):
         _logger.debug("got notify for resources: %s", resources)
         notifications = NotificationSet(self.__model)
         for resource_struct in resources:
-            self.__model._update_resource_from_dbus(resource_struct, notifications=notifications)
+            try:
+                self.__model._update_resource_from_dbus(resource_struct, notifications=notifications)
+            except Exception, e:
+                _logger.error("Failed to update resource from a Notify", e)
+
         notifications.send()
     
 class _DBusQuery(Query):
@@ -191,18 +195,21 @@ class _DBusQuery(Query):
         self.__fetch = fetch
         self.__single_result = single_result
 
-    def __on_reply(self, resources):
+    def __on_query_reply(self, resources):
         result = []
         notifications = NotificationSet(self.__model)        
-        for resource_struct in resources:            
-            (resource,indirect) = self.__model._update_resource_from_dbus(resource_struct, notifications=notifications)
-            if resource != None and not indirect:
-                result.append(resource)
+        for resource_struct in resources:
+            try:
+                (resource,indirect) = self.__model._update_resource_from_dbus(resource_struct, notifications=notifications)
+                if resource != None and not indirect:
+                    result.append(resource)
+            except Exception, e:
+                _logger.error("Failed to update resource from a query reply: " + e.message)
 
         notifications.send()
         self._on_success(result)
 
-    def __on_error(self, err):
+    def __on_query_error(self, err):
         # FIXME: As of dbus-python-0.80, exception handling for is very, very, limited
         # all we get is the message, so we can't do anything special for the defined
         # DataModel errors. This is fixed in later versions of dbus-python, where we can
@@ -218,9 +225,9 @@ class _DBusQuery(Query):
             raise Exception("Not connected")
 
         method_uri = self.__method[0] + "#" + self.__method[1]
-        _logger.debug("executing query method: '%s' fetch: '%s' params: '%s'", method_uri, self.__fetch, self._params)
+        #_logger.debug("executing query method: '%s' fetch: '%s' params: '%s'", method_uri, self.__fetch, self._params)
         self.__model._get_proxy().Query(self.__model.callback.path, method_uri, self.__fetch, self._params,
-                                        dbus_interface='org.freedesktop.od.Model', reply_handler=self.__on_reply, error_handler=self.__on_error)
+                                        dbus_interface='org.freedesktop.od.Model', reply_handler=self.__on_query_reply, error_handler=self.__on_query_error)
         
 
 class _DBusUpdate(Query):
@@ -229,10 +236,10 @@ class _DBusUpdate(Query):
         self.__model = model
         self.__method = method
 
-    def __on_reply(self):
+    def __on_update_reply(self):
         self._on_success()
 
-    def __on_error(self, err):
+    def __on_update_error(self, err):
         # FIXME: As of dbus-python-0.80, exception handling is very, very, limited
         # all we get is the message, so we can't do anything special for the defined
         # DataModel errors. This is fixed in later versions of dbus-python, where we can
@@ -250,5 +257,5 @@ class _DBusUpdate(Query):
         method_uri = self.__method[0] + "#" + self.__method[1]
         _logger.debug("executing update method: '%s' params: '%s'", method_uri, self._params)
         self.__model._get_proxy().Update(method_uri, self._params,
-                                         dbus_interface='org.freedesktop.od.Model', reply_handler=self.__on_reply, error_handler=self.__on_error)
+                                         dbus_interface='org.freedesktop.od.Model', reply_handler=self.__on_update_reply, error_handler=self.__on_update_error)
         
