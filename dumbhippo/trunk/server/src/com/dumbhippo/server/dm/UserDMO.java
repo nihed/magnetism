@@ -332,6 +332,19 @@ public abstract class UserDMO extends DMObject<Guid> {
 		return result;
 	}
 	
+	@DMProperty
+	@DMFilter("viewer.canSeePrivate(this)")
+	public Set<ApplicationDMO> getPinnedApplications() {
+		Set<ApplicationDMO> result = new HashSet<ApplicationDMO>();
+	
+		List<String> appIds = applicationSystem.getPinnedApplicationIds(user);
+		for (String appId : appIds) {
+			result.add(session.findUnchecked(ApplicationDMO.class, appId));
+		}
+		
+		return result;
+	}
+	
 	private void ensureCurrentTrack() {
 		if (!currentTrackFetched) {
 			try {

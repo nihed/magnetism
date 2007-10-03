@@ -22,9 +22,8 @@ import com.dumbhippo.tx.RetryException;
 
 @Local
 public interface ApplicationSystem {
-	boolean canEditApplications(Viewpoint viewpoint);
-		
-	public List<String> getAllApplicationIds();	
+	boolean canEditApplications(Viewpoint viewpoint);		
+	
 	Application lookupById(String id) throws NotFoundException;
 	
 	void addUpload(Guid uploaderId, Guid uploadId, AppinfoFile appinfoFile, String comment);
@@ -57,12 +56,16 @@ public interface ApplicationSystem {
 	public List<Application> getApplicationsWithTitlePatterns();
 	
 	void pinApplicationIds(User user, List<String> applicationIds, boolean pin) throws RetryException;
+	public void pinApplicationId(User user, String appId, boolean pin) throws RetryException;
 	
 	public List<ApplicationView> viewApplications(UserViewpoint viewpoint, List<Application> apps, int iconSize);
 	
+	public List<String> getAllApplicationIds();
+	public Collection<String> getAllApplicationIds(String distribution, String lang);
 	public void writeAllApplicationsToXml(XmlBuilder xml, String distribution, String lang);	
 	
-	public List<Application> getPinnedApplications(User user); 
+	public List<Application> getPinnedApplications(User user);
+	public List<String> getPinnedApplicationIds(User user);
 	public ApplicationUserState getUserState(User user, Application app) throws RetryException;
 
 	void updateUsages();
