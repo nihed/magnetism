@@ -3,6 +3,7 @@ package com.dumbhippo.persistence;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StringUtils;
 
 public class Validators {
 	private static final Logger logger = GlobalSetup.getLogger(Validators.class); 
@@ -33,11 +34,9 @@ public class Validators {
 		
 		String basename = relativePhotoUrl.substring(dirLen, relativePhotoUrl.length() - ".png".length());
 				
-		for (char c : basename.toCharArray()) {
-			if (c < 'a' || c > 'z') {
-				logger.debug("Invalid stock photo name '{}'", relativePhotoUrl);
-				return false;
-			}
+		if (!StringUtils.isAlphanumericOrInSet(basename, "_-")) {
+		    logger.debug("Invalid stock photo name '{}'", relativePhotoUrl);
+		    return false;
 		}
 		
 		return true;

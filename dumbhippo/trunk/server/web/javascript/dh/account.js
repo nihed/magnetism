@@ -830,8 +830,10 @@ dhAccountInit = function() {
 	usernameEntry.setDescription("The name you appear to others as.");
 	usernameEntry.setChangedPost('renameperson', 'name');
 
-	var bioEntry = new dh.formtable.ExpandableTextInput('dhBioEntry', "I grew up in Kansas.");
-	bioEntry.setChangedPost('setbio', 'bio');
+    if (exists('dhBioEntry')) {
+	    var bioEntry = new dh.formtable.ExpandableTextInput('dhBioEntry', "I grew up in Kansas.");
+	    bioEntry.setChangedPost('setbio', 'bio');
+	}
 	
 	if (exists('dhWebsiteEntry')) {
 		var websiteEntry = new dh.formtable.ExpandableTextInput('dhWebsiteEntry', 'Your website URL');
