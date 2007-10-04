@@ -1048,9 +1048,9 @@ static const HippoDBusProperty model_properties[] = {
      * the one returned by the old "org.mugshot.Mugshot" API does.
      */
 
-    /* FIXME Maybe this is broken - instead, we should be making all URLs absolute
-     * as they leave the process, making the data model independent of the server
-     * it came from
+    /* All URLs in the data model have already been made absolute
+     * on receipt from the server, so this is just useful if you want to construct
+     * an URL like /account. FIXME: Such URL's perhaps should also be in the data model
      */
     { "WebBaseUrl", "s", handle_get_web_base_url, NULL },
     { NULL }
