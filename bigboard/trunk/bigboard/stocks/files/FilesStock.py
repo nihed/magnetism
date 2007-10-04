@@ -89,7 +89,12 @@ class LocalFile(File):
         self._full_name = self._url
         self._source_key = 'files'
         self._is_valid = True
-        self.__update_async(self.__on_async_update)
+        uri = gnomevfs.URI(self._url)
+        if uri.is_local:        
+            self.__update_async(self.__on_async_update)
+        else:
+            self._is_valid = True
+            self._image_name = gtk.STOCK_FILE
         
     def __on_async_update(self, results):
         _logger.debug("got async results: %s", results)
