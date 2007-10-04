@@ -1,7 +1,9 @@
 import re
 
+from ddm import DataModel
+
 bus_name = 'org.freedesktop.od.Engine'
-server_name = 'online.gnome.org'
+server_name = None
 _do_autolaunch_raw = True
 do_autolaunch = True
 
@@ -27,6 +29,12 @@ def _make_bus_name(server_name):
 
     return "com.dumbhippo.Client." + _escape_server_name(server_name)
 
+## the DataModel code already returns a singleton; the purpose of
+## this is just to save typing "DataModel(bigboard.globals.server_name)"
+## everywhere.
+def get_data_model():
+    return DataModel(server_name)
+
 def set_server_name(value=None):
     global server_name
     global bus_name
@@ -42,17 +50,28 @@ def set_do_autolaunch(value):
     do_autolaunch = value
     do_autolaunch = _do_autolaunch_raw and server_name == None
 
+## note that the base URL is never supposed to have trailing '/'
 def get_baseurl():
-    ## this is wrong (why?)
-    if server_name:
+    ## first we prefer the base url from the model we're actually using.
+    ## this happens when we just connect to "org.freedesktop.od.Engine"
+    ## and don't know in advance whether a dogfood or production or whatever
+    ## server instance owns that bus name.
+    ## Note that this is _supposed_ to work offline as well - the od.Engine
+    ## is supposed to have an offline mode.
+    url = None
+    model = get_data_model()
+    if model.connected:
+        url = model.get_web_base_url()
+        
+    ## next we fall back to the server name set by command line option,
+    ## see set_server_name() above which is called from main.py
+    if server_name and not url:
         url = "http://" + server_name
 
-    ## for now we don't have a way to do it right (see DataModel.WebBaseUrl
-    ## property, but we don't rely on a new client daemon yet)
-
-    ## the old API leaves trailing '/', once we drop deprecated stuff
-    ## above this should not be needed
-    if url and url.endswith('/'):
-        url = url[:-1]
+    ## finally we fall back to a hardcoded URL, since it's probably better
+    ## than crashing and would normally be right in production, but never
+    ## right when testing on dogfood.
+    if not url:
+        url = "http://online.gnome.org"
 
     return url
