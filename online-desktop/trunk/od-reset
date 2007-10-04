@@ -25,6 +25,7 @@ autostart_dir_path = os.path.expanduser('~/.config/autostart')
 autostart_path = os.path.join(autostart_dir_path, 'od-reset.desktop')
 
 if not os.getenv('OD_SESSION'):
+	gnome.program_init("od-reset", "0.1")
 	# Not in Online mode, try resetting config
 	try:
 		client = gconf.client_get_default()
@@ -39,15 +40,15 @@ if not os.getenv('OD_SESSION'):
 		# Now, we need to kill the session, because the panel (or more likely bonobo) 
 		# often freaks out when we change this much from under it.
 		# First, notify the user we're going to do so.  
-		dl = gtk.MessageDialog(buttons=gtk.BUTTONS_OK, message_format='Desktop settings reset, please log in again.')
-		dl.run()		
-		# Now, kill the session.
+		dl = gtk.MessageDialog(buttons=gtk.BUTTONS_OK, message_format='Online desktop changes reset, please log in again')
+		dl.run()
+		# Now, kill the session.		
 		master = gnome.ui.master_client()
 		master.request_save(gnome.ui.SAVE_GLOBAL,
 							True,
 							gnome.ui.INTERACT_NONE,
 							True,
-							False)	
+							True)
 		sys.exit(0)
 else:
 	print "OD_SESSION is set, not doing anything"
