@@ -1,6 +1,6 @@
 import logging, time, urlparse, urllib, time
 
-import gobject, gtk
+import gobject, pango, gtk
 import hippo, gconf
 
 import bigboard.globals as globals
@@ -8,7 +8,7 @@ import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.libbig.gutil import *
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, CanvasTable, \
-             ActionLink, PrelightingCanvasBox, CanvasSpinner, CanvasCheckbox, Button
+             ActionLink, IconLink, PrelightingCanvasBox, CanvasSpinner, CanvasCheckbox, Button
 from bigboard.overview_table import OverviewTable
 
 import apps_widgets, apps_directory
@@ -37,19 +37,25 @@ class AppOverview(CanvasVBox):
                                                       color=0x3F3F3FFF)
         self.append(self.__app_unselected_text, hippo.PACK_CLEAR_RIGHT)
         
-        self.__header = apps_widgets.AppDisplay()
+        self.__header = apps_widgets.AppDisplay(apps_widgets.AppLocation.DESCRIPTION_HEADER)
         
         self.__description = hippo.CanvasText(font="12px",size_mode=hippo.CANVAS_SIZE_WRAP_WORD)
         
         self.__controls_box = CanvasVBox(xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_END)
  
+        self.__icon_button_combo = CanvasHBox(spacing=4, padding_bottom=4)
+        self.__action_button_image = hippo.CanvasImage(scale_width=16, scale_height=16, xalign=hippo.ALIGNMENT_CENTER, yalign=hippo.ALIGNMENT_CENTER) 
+        self.__icon_button_combo.append(self.__action_button_image)
         self.__action_button = Button(label_xpadding=10)
-        self.__action_button.set_property("xalign", hippo.ALIGNMENT_START) 
-        self.__controls_box.append(self.__action_button)
-  
-        self.__moreinfo = ActionLink(text="More Info", xalign=hippo.ALIGNMENT_START)
-        self.__moreinfo.connect("button-press-event", lambda l,e: self.emit("more-info", self.__app))
-        self.__controls_box.append(self.__moreinfo) 
+        self.__action_button.set_property("xalign", hippo.ALIGNMENT_START)
+        self.__action_button.get_button().set_focus_on_click(False) 
+        self.__icon_button_combo.append(self.__action_button)
+        self.__controls_box.append(self.__icon_button_combo)
+      
+        self.__more_info = IconLink(text="More Info", prelight=False, img_scale_width=16, img_scale_height=16, spacing=2, underline=pango.UNDERLINE_LOW, xalign=hippo.ALIGNMENT_START)
+        self.__more_info.link.connect("button-press-event", lambda l,e: self.emit("more-info", self.__app)) 
+        self.__more_info.img.set_property('image-name', '/usr/share/icons/gnome/16x16/status/info.png')
+        self.__controls_box.append(self.__more_info) 
 
         self.__check_showing = CanvasCheckbox("Show in sidebar")
         self.__check_showing.checkbox.connect('toggled', self.__on_show_in_sidebar_toggled)
@@ -98,10 +104,12 @@ class AppOverview(CanvasVBox):
 
         self.sync_pinned_checkbox()
         
-        self.set_child_visible(self.__moreinfo, not not self.__app.get_mugshot_app())
+        self.set_child_visible(self.__more_info, not not self.__app.get_mugshot_app())
         if app.is_installed():
+            self.__action_button_image.set_property("image-name", "/usr/share/icons/gnome/16x16/actions/gnome-run.png")
             self.__action_button.set_label_text("Run...")
         else:
+            self.__action_button_image.set_property("image-name", "/usr/share/icons/gnome/16x16/apps/system-software-installer.png")
             self.__action_button.set_label_text("Install...")
         
     def launch(self):
@@ -325,7 +333,7 @@ class AppExtras(CanvasVBox):
                 continue
             if self.__search_filter and (not self.__search_filter(app)):
                 continue
-            app_view = apps_widgets.AppDisplay(app, color=0xFFFFFFFF)
+            app_view = apps_widgets.AppDisplay(apps_widgets.AppLocation.APP_BROWSER, app, color=0xFFFFFFFF)
             app_view.connect("title-clicked", self.__on_app_clicked)
             app_view.set_description_mode(True)
             if found > 1:
@@ -409,7 +417,7 @@ class AppList(CanvasVBox):
             else:
                 appsource = categories[catname]
             for app in appsource:
-                overview = apps_widgets.AppDisplay(app)
+                overview = apps_widgets.AppDisplay(apps_widgets.AppLocation.APP_BROWSER, app)
                 overview.connect("button-press-event", self.__on_overview_click) 
                 self.__table.add_column_item(section_key, overview)
             section_key += 1
@@ -515,8 +523,8 @@ class AppBrowser(hippo.CanvasWindow):
 
         self.__left_box.append(hippo.CanvasText(text="Tools", font="Bold 12px",
                                                 color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START))
-
-        browse_link = ActionLink(text="Find New Applications", xalign=hippo.ALIGNMENT_START) 
+                                                               
+        browse_link = ActionLink(text="Find New Applications", underline=pango.UNDERLINE_LOW, xalign=hippo.ALIGNMENT_START)
         browse_link.connect("button-press-event", lambda l,e: self.__on_browse_popular_apps())
         self.__left_box.append(browse_link)
         spinbox = CanvasHBox()
