@@ -32,6 +32,11 @@ public abstract class ApplicationDMO extends DMObject<String> {
 			throw new NotFoundException("No such application");
 	}
 	
+	@DMProperty(defaultInclude=true)
+	public String getId() {
+		return applicationView.getApplication().getId();
+	}
+	
 	@DMProperty(defaultInclude=true, type=PropertyType.URL)
 	public String getIconUrl() {
 		return applicationView.getIconUrl();
