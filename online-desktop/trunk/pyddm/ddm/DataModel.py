@@ -52,6 +52,8 @@ class DataModel(AbstractModel):
 
     def __real_init(self, server_name):
         AbstractModel.__init__(self)
+
+        self.__web_base_url = None
         
         self.server_name = server_name
 
@@ -78,7 +80,10 @@ class DataModel(AbstractModel):
         
         _logger.debug("Found model, querying status")          
         # Order matters ... we want the self_id to be there before we call on_connect
-        self_id = self._proxy.Get('org.freedesktop.od.Model', 'SelfId', reply_handler=self.__get_self_id_reply, error_handler=self.__on_dbus_error)
+        self._proxy.Get('org.freedesktop.od.Model', 'SelfId', reply_handler=self.__get_self_id_reply, error_handler=self.__on_dbus_error)
+
+        self._proxy.Get('org.freedesktop.od.Model', 'WebBaseUrl', reply_handler=self.__get_web_base_url_reply, error_handler=self.__on_dbus_error)
+        
         self._proxy.connect_to_signal("ConnectedChanged", self.__on_connected_changed, dbus_interface='org.freedesktop.od.Model')
         self._proxy.Get('org.freedesktop.od.Model', 'Connected', reply_handler=self.__get_connected_reply, error_handler=self.__on_dbus_error)        
 
@@ -102,6 +107,12 @@ class DataModel(AbstractModel):
     def __on_disconnected(self):
         self._on_disconnected()
 
+    def __get_web_base_url_reply(self, baseurl):
+        _logger.debug("Got base url %s", baseurl)
+        if baseurl == '':
+            baseurl = None
+        self.__web_base_url = baseurl
+
     def __get_self_id_reply(self, self_id):
         _logger.debug("Got self id %s", self_id)  
         if self_id == '':
@@ -116,6 +127,9 @@ class DataModel(AbstractModel):
 
     def _get_proxy(self):
         return self._proxy
+
+    def get_web_base_url(self):
+        return self.__web_base_url
         
     def query(self, method, fetch=None, single_result=False, **kwargs):
         return _DBusQuery(self, method, fetch, single_result, kwargs)
