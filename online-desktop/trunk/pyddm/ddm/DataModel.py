@@ -33,7 +33,8 @@ class DataModel(AbstractModel):
 
     There is a singleton DataModel object for each server session, retrieved by
     calling the constructor DataModel(server_name). server_name is optional, and if
-    omitted, the session will be for the official official mugshot.org server.
+    omitted, the session will be for whichever server the org.freedesktop.od.Engine
+    bus name owner owns.
     
     """
     def __new__(cls, server_name=None):
@@ -55,7 +56,7 @@ class DataModel(AbstractModel):
 
         self.__web_base_url = None
         
-        self.server_name = server_name
+        self.server_name = server_name # server_name can be None for "whatever engine is running"
 
         bus = dbus.SessionBus()
         bus_proxy = bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
