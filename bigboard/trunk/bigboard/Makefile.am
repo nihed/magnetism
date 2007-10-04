@@ -22,6 +22,9 @@ bigboard_PYTHON = *.py
 libbigdir=$(bigboarddir)/libbig
 libbig_PYTHON = libbig/*.py
 
+libbigbardir=$(bigboarddir)/bigbar
+libbigbar_PYTHON = bigbar/*.py
+
 httplibdir=$(bigboarddir)/httplib2
 httplib_PYTHON = httplib2/__init__.py \
                  httplib2/iri2uri.py
