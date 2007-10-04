@@ -8,6 +8,7 @@ import big_widgets
 import global_mugshot
 import libbig
 from libbig.singletonmixin import Singleton
+from bigboard.libbig.gutil import *
 
 ## FIXME remove these from the Stock class ... I can't figure out how to
 ## refer to them from outside a Stock instance with them there, anyway
@@ -106,6 +107,8 @@ class AbstractMugshotStock(Stock):
         
         self._mugshot = global_mugshot.get_mugshot()
         self._mugshot.connect("initialized", lambda mugshot: self._on_mugshot_initialized())
+        if self._mugshot.get_initialized():
+            call_idle(lambda: self._on_mugshot_initialized())
         self._mugshot.connect("connection-status", lambda mugshot, auth, xmpp, contacts: self.__handle_mugshot_connection_status(auth, xmpp, contacts))  
         
         self.__cursize = None
