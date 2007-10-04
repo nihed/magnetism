@@ -460,7 +460,10 @@ static const BonoboUIVerb bigboard_button_menu_verbs [] = {
 static void
 update_button_display (ButtonData *button_data)
 {
-		wncklet_set_tooltip (button_data->button, _("Click here to show the desktop sidebar."));
+		if (!button_data->showing_bigboard)
+				wncklet_set_tooltip (button_data->button, _("Click here to show the desktop sidebar."));
+		else
+				wncklet_set_tooltip (button_data->button, NULL);
 }
 
 static void
@@ -603,7 +606,7 @@ bigboard_button_applet_realized (PanelApplet *applet,
                                      button_data,
                                      button_data->applet);
 
-        update_icon (button_data);
+        update_button_state (button_data);
 }
 
 static void
@@ -628,7 +631,7 @@ user_photo_changed_callback (GdkPixbuf         *pixbuf,
                 g_object_unref(button_data->user_photo);
         button_data->user_photo = pixbuf;
 
-        update_icon (button_data);
+        update_button_state (button_data);
 }
 
 
