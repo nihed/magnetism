@@ -60,6 +60,9 @@
     height:         0px;
 }
 
+
+
+
 #dhAddImLink {
 	position:       relative;
 }	
@@ -129,7 +132,8 @@ div.dh-notification {
 }
 
 #dhPhotoChooser {
-	bottom:         -12px;	
+	bottom:         -170px;
+	left:           240px;	
 }
 
 .dh-form-table .dh-control-cell .dh-password-input {

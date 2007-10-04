@@ -4,6 +4,11 @@ dojo.require("dojo.style");
 dojo.require("dh.popup");
 
 // FIXME automate getting this from the app server
+
+// When adding new images, note that the image names are 
+// currently validated to contain only characters, numbers, 
+// and "_" or "-" characters in com.dumbhippo.persistence.Validators
+
 dh.photochooser.user_nophoto = '/user_pix1/nophoto.png';
 dh.photochooser.user_pix1 = [ 'alien.png', 'apricot.png', 'bear.png',
 			      'bear2.png', 'clown.png', 'devil.png', 'duck.png',
