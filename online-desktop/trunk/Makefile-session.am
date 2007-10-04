@@ -8,8 +8,7 @@ EXTRA_DIST += $(gnomesession_DATA)
 autostartdir=$(datadir)/online-desktop/autostart
 autostart_DATA = \
 	autostart/bigboard.desktop \
-	autostart/browser.desktop  \
-	autostart/pidgin.desktop
+	autostart/browser.desktop
 
 presessiondir=$(datadir)/online-desktop/presession
 presession_SCRIPTS = presession/panel-config.py
