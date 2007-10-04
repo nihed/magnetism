@@ -87,7 +87,7 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler {
 	 * @throws IQException
 	 */
 	@IQMethod(name="getPopularApplications", type=IQ.Type.get)
-	@IQParams({ "start", "category", "distribution", "lang" })
+	@IQParams({ "start=0", "category=null", "distribution=null", "lang=null" })
 	public Collection<ApplicationDMO> getPopularApplications(UserViewpoint viewpoint, int start, String category, String distribution, String lang) throws IQException {
 		if (start < 0 || start > 4096) // Arbitrary but reasonable limit
 			start = 0;
@@ -121,7 +121,7 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler {
 	 * @throws IQException
 	 */
 	@IQMethod(name="searchApplications", type=IQ.Type.get)
-	@IQParams({ "start", "search", "distribution", "lang" })
+	@IQParams({ "start=0", "search", "distribution=null", "lang=null" })
 	public Collection<ApplicationDMO> searchApplications(UserViewpoint viewpoint, int start, String search, String distribution, String lang) throws IQException {
 		if (start < 0 || start > 4096) // Arbitrary but reasonable limit
 			start = 0;
@@ -144,7 +144,7 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler {
 	 * @throws IQException
 	 */
 	@IQMethod(name="getAllApplications", type=IQ.Type.get)
-	@IQParams({ "distribution", "lang" })
+	@IQParams({ "distribution=null", "lang=null" })
 	public Collection<ApplicationDMO> getAllApplications(UserViewpoint viewpoint, String distribution, String lang) throws IQException {
 
 		Collection<String> appIds = applicationSystem.getAllApplicationIds(distribution, lang);
