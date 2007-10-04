@@ -286,7 +286,10 @@ class Mugshot(gobject.GObject):
         return self.__baseprops and self.__baseprops[name] or None
     
     def get_baseurl(self):
-        return self.__get_baseprop('baseurl')
+        return globals.get_baseurl()
+    
+    def get_initialized(self):
+        return True
     
     def get_self(self):
         if self.__self is None:
@@ -443,7 +446,7 @@ class Mugshot(gobject.GObject):
                 continue
             app = self.__load_app_from_xml(node)
             apps.append(app)
-        _logger.debug("Parsed app set; pinned_apps = " + str(map(lambda a: a.get_id(), self.__pinned_apps)))
+        #_logger.debug("Parsed app set; pinned_apps = " + str(map(lambda a: a.get_id(), apps)))
         return apps
             
     def __on_my_top_applications(self, xml_str):
