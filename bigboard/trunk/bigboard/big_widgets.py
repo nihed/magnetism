@@ -1,6 +1,7 @@
 import os, code, sys, traceback, logging, StringIO, threading, urlparse
 
 import cairo
+import pango
 import gtk
 import gobject
 import gconf
@@ -51,11 +52,23 @@ class CanvasTable(hippo.CanvasBox):
         self.__layout.set_row_expand(row, expand)        
         
 class ActionLink(hippo.CanvasLink):
-    def __init__(self, **kwargs):
+    def __init__(self, underline=pango.UNDERLINE_NONE, **kwargs):
         if not kwargs.has_key('color'):
             kwargs['color'] = 0x0066DDFF 
         hippo.CanvasLink.__init__(self, **kwargs)
+        self.set_underline(underline)   
 
+    def set_underline(self, underline):
+        if self.get_property('text') is None:
+            return
+        if underline == pango.UNDERLINE_LOW:
+            self.set_property("padding-bottom", 2)
+        # TODO: need to change the end index of the underline if the text is changed  
+        attrs = self.get_property("attributes") and self.get_property("attributes") or pango.AttrList()
+        attrs.insert(pango.AttrUnderline(underline, end_index=len(self.get_property('text'))))
+        if len(attrs.get_iterator().get_attrs()) == 1: 
+            self.set_property("attributes", attrs)   
+    
 class ButtonLabel(gtk.Label):
     def __init__(self, ypadding=0):
         super(ButtonLabel, self).__init__()
@@ -248,14 +261,19 @@ class PhotoContentItem(PrelightingCanvasBox):
                 self.__photo.set_property("scale-height", 30)            
 
 class IconLink(PrelightingCanvasBox):
-    def __init__(self, text, **kwargs):
+    def __init__(self, text, prelight=True, img_scale_width=20, img_scale_height=20, spacing=4, underline=pango.UNDERLINE_NONE, **kwargs):
         PrelightingCanvasBox.__init__(self,
                                       orientation=hippo.ORIENTATION_HORIZONTAL,
-                                      spacing=4, **kwargs)
-        self.img = hippo.CanvasImage(scale_width=20, scale_height=20)
+                                      spacing=spacing, **kwargs)
+        self.img = hippo.CanvasImage(scale_width=img_scale_width, scale_height=img_scale_height, xalign=hippo.ALIGNMENT_CENTER, yalign=hippo.ALIGNMENT_CENTER)
         self.append(self.img)
-        self.link = hippo.CanvasLink(text=text, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END,)
+        self.link = ActionLink(text=text, underline=underline, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END,)
         self.append(self.link)
+        self.__prelight = prelight
+
+    # override
+    def do_prelight(self):
+        return self.__prelight
 
 class RootWindowWatcher(gtk.Invisible):
     """Class to track properties of the root window.

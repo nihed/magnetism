@@ -290,7 +290,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
                 continue
             i+=1            
             _logger.debug("setting dynamic app: %s", app)            
-            display = apps_widgets.AppDisplay(app)
+            display = apps_widgets.AppDisplay(apps_widgets.AppLocation.STOCK, app)
             display.connect("button-press-event", lambda display, event: display.launch())             
             self.__dynamic_set.append(display)
         if mugshot_apps:
@@ -364,7 +364,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
             if i >= static_size:
                 break
             app = self.get_app(mugshot_app)
-            display = apps_widgets.AppDisplay(app)
+            display = apps_widgets.AppDisplay(apps_widgets.AppLocation.STOCK, app)
             display.connect("button-press-event", lambda display, event: display.launch()) 
             _logger.debug("setting static set app: %s", app)
             self.__static_set.append(display)

@@ -8,14 +8,17 @@ from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, Canvas
 
 import apps_directory
 
+class AppLocation:   
+    (STOCK, APP_BROWSER, DESCRIPTION_HEADER) = range(3)
+
 class AppDisplay(PhotoContentItem):
     __gsignals__ = {
         "title-clicked" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }
-    def __init__(self, app=None, **kwargs):
+    def __init__(self, app_location, app=None, **kwargs):
         PhotoContentItem.__init__(self, border_right=6, **kwargs)
         self.__app = None 
-
+ 
         self.__description_mode = False
             
         self._logger = logging.getLogger('bigboard.AppDisplay')                
@@ -42,7 +45,8 @@ class AppDisplay(PhotoContentItem):
         self.__box.append(self.__description)
         
         self.__photo.set_clickable(True)
-        self.__box.set_clickable(True)         
+        self.__box.set_clickable(True)
+        self.__app_location = app_location         
         if app:
             self.set_app(app)
 
@@ -64,10 +68,6 @@ class AppDisplay(PhotoContentItem):
     
     def __str__(self):
         return '<AppDisplay name="%s">' % (self.__get_name())
-        
-    # override
-    def do_prelight(self):
-        return self.__app.is_installed()
     
     def __app_display_sync(self):
         if not self.__app:
@@ -77,11 +77,13 @@ class AppDisplay(PhotoContentItem):
         self.__box.set_child_visible(self.__description, self.__description_mode)
  
         self.__title.set_property("text", self.__app.get_name())
-        if self.__app.is_installed():
+        if self.__app.is_installed() or self.__app_location == AppLocation.DESCRIPTION_HEADER:
             self.__subtitle.set_property("text", self.__app.get_generic_name() or self.__app.get_tooltip() or self.__app.get_comment())
+        elif self.__app_location == AppLocation.STOCK:
+            self.__subtitle.set_property('text', "(Click to Install)")
         else:
-            self.__subtitle.set_property('text', "(Click to install)")
-
+            self.__subtitle.set_property('text', "(Not Installed)")
+ 
         self.__description.set_property("text", self.__app.get_description())
 
         if self.__app.get_icon_url():
