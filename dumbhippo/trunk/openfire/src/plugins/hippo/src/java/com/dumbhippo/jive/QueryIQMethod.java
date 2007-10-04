@@ -101,7 +101,7 @@ public abstract class QueryIQMethod extends AnnotatedIQMethod {
 		Object[] params = new Object[paramInfo.length];
 		Map<String, String> paramMap = new HashMap<String, String>(paramInfo.length * 2);
 		
-		Iterator iterator = request.getChildElement().elementIterator("param");
+		Iterator<?> iterator = request.getChildElement().elementIterator("param");
 		while (iterator.hasNext()) {
 			Element element = (Element)iterator.next();
 			String name = element.attributeValue("name");
