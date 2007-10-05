@@ -129,9 +129,9 @@ public abstract class QueryIQMethod extends AnnotatedIQMethod {
 			else {
 				optional = true;
 				
-				if ("null".equals(defaultValue))
-					defaultValue = null;
-				else {
+				if ("null".equals(defaultValue)) {
+					this.defaultValue = null;
+				} else {
 					try {
 						this.defaultValue = parse(defaultValue);
 					} catch (IQException e) {
@@ -143,10 +143,14 @@ public abstract class QueryIQMethod extends AnnotatedIQMethod {
 
 		public Object get(UserViewpoint viewpoint, Map<String, String> paramMap) throws IQException {
 			String value = paramMap.get(name);
-			if (value == null && !optional)
-				throw IQException.createBadRequest("Parameter " + name + " is required");
-			
-			return parse(value);
+			if (value == null) {
+				if (optional)
+					return defaultValue;
+				else
+					throw IQException.createBadRequest("Parameter " + name + " is required");
+			} else {
+				return parse(value);
+			}
 		}
 		
 		public abstract Object parse(String value) throws IQException;
@@ -203,7 +207,7 @@ public abstract class QueryIQMethod extends AnnotatedIQMethod {
 			try {
 				return Integer.parseInt(value);
 			} catch (NumberFormatException e) {
-				throw IQException.createBadRequest("Bad integer value for parameter " + value);
+				throw IQException.createBadRequest("Bad integer value for parameter '" + value + "': " + e.getMessage());
 			}
 		}
 	}
