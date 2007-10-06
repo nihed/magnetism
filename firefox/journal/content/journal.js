@@ -103,7 +103,8 @@ Journal.prototype = {
     histq = HISTORY_SERVICE.getNewQuery();
     options = this._getBaseQueryOptions();
     histq.beginTimeReference = histq.TIME_RELATIVE_EPOCH;
-    histq.beginTime = lastHistoryTime  - DAY_MS;
+    // time is microseconds, not milliseconds
+    histq.beginTime = lastHistoryTime  - (DAY_MS * 1000);
     histq.endTimeReference = histq.TIME_RELATIVE_EPOCH;
     histq.endTime = lastHistoryTime;
 
