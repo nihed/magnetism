@@ -48,7 +48,7 @@ const JOURNAL_CHROME = "about:journal";
 
 const BLANK_FAVICON = "chrome://mozapps/skin/places/defaultFavicon.png"
 
-const DAY_MS = 24 * 60 * 60 * 1000000; // a day
+const DAY_MS = 24 * 60 * 60 * 1000; // a day
 
 function LOG(msg) {
   var dl = $("debuglog");
