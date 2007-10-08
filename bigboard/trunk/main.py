@@ -350,7 +350,7 @@ class BigBoardPanel(dbus.service.Object):
     @log_except()
     def __on_focus(self):
         self.__logger.debug("got focus keypress")
-        self.external_focus()
+        self.toggle_popout()
         
     def __on_stock_added(self, prestock):
         if not prestock.get_id() in gconf.client_get_default().get_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING):
@@ -432,8 +432,9 @@ class BigBoardPanel(dbus.service.Object):
         self.__autohide_id = 0
         vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
         if vis:
-            return        
-        self.__shown = False
+            return  
+        _logger.debug("setting shown=False")      
+        self._shown = False
         self._dw.hide()
         
     @log_except()
@@ -506,14 +507,19 @@ class BigBoardPanel(dbus.service.Object):
         if self.__get_size() == Stock.SIZE_BEAR:
             self._toggle_size()        
 
-    def external_focus(self):
-        self.__handle_activation()
-        try:
-            search = self.get_stock('org.gnome.bigboard.SearchStock')
-        except KeyError, e:
-            _logger.debug("Couldn't find search stock")
-            return
-        search.focus()
+    def toggle_popout(self):
+        if not self._shown:
+            _logger.debug("handling popout activation")
+            self.__handle_activation()
+            try:
+                search = self.get_stock('org.gnome.bigboard.SearchStock')
+            except KeyError, e:
+                _logger.debug("Couldn't find search stock")
+                return
+            search.focus()
+        else:
+            _logger.debug("handling popout deactivation")            
+            self.__handle_deactivation(True)
 
     def __do_unexpand(self):
         gconf.client_get_default().set_bool(GCONF_PREFIX + 'visible', False)
@@ -542,9 +548,9 @@ class BigBoardPanel(dbus.service.Object):
         self.ExpandedChanged(gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible'))
         
     @dbus.service.method(BUS_IFACE_PANEL)
-    def Popout(self):
-        self.__logger.debug("got popout method call")
-        return self.external_focus()  
+    def TogglePopout(self):
+        self.__logger.debug("got toggle popout method call")
+        return self.toggle_popout()  
 
     @dbus.service.method(BUS_IFACE_PANEL)
     def Reboot(self):
