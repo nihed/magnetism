@@ -890,7 +890,7 @@ button_clicked_callback (GtkWidget       *button,
                          ButtonData      *button_data)
 {
         if (button_data->bb_proxy) {
-				hippo_dbus_proxy_VOID__VOID (button_data->bb_proxy, "Popout");
+				hippo_dbus_proxy_VOID__VOID (button_data->bb_proxy, "TogglePopout");
         }
         
         update_button_display (button_data);
