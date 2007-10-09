@@ -3,8 +3,9 @@ import logging, time, urlparse, urllib, time
 import gobject, pango, gtk
 import hippo, gconf
 
+import apps
+
 import bigboard.globals as globals
-import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.libbig.gutil import *
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, CanvasTable, \
@@ -69,11 +70,12 @@ class AppOverview(CanvasVBox):
 
         self.__up_button.connect("activated", lambda ci: self.emit("move-up", self.__app))
         self.__down_button.connect("activated", lambda ci: self.emit("move-down", self.__app))
-        self.__controls_box.append(self.__up_down_controls)        
+
+        # FIXME - don't show up-down controls until they work
+        #self.__controls_box.append(self.__up_down_controls)
 
         if app:
             self.set_app(app)
-
 
     def __on_show_in_sidebar_toggled(self, checkbox):
         active = checkbox.get_active()
@@ -87,7 +89,8 @@ class AppOverview(CanvasVBox):
     def sync_pinned_checkbox(self):
         _logger.debug("Syncing pinned checkbox")
         if self.__app:
-            _logger.debug("  app " + self.__app.get_id() + " pinned: " + str(self.__app.get_pinned()))
+            _logger.debug(str(self.__app) + " pinned: " + str(self.__app.get_pinned()))            
+            self.__controls_box.set_child_visible(self.__check_showing, not self.__app.is_local())
             self.__check_showing.checkbox.set_active(self.__app.get_pinned())
 
     def set_app(self, app):
@@ -104,7 +107,7 @@ class AppOverview(CanvasVBox):
 
         self.sync_pinned_checkbox()
         
-        self.set_child_visible(self.__more_info, not not self.__app.get_mugshot_app())
+        self.__controls_box.set_child_visible(self.__more_info, not self.__app.is_local())
         if app.is_installed():
             self.__action_button_image.set_property("image-name", "/usr/share/icons/gnome/16x16/actions/gnome-run.png")
             self.__action_button.set_label_text("Run...")
@@ -137,7 +140,7 @@ def categorize(apps):
         if not local_categories.has_key(local_cat):
             local_categories[local_cat] = set()
         local_categories[local_cat].add(app)
-    # heuristic for detecting when we don't have enough data from Mugshot
+    # heuristic for detecting when we don't have enough data from data model
     if len(categories) <= 2:
         return local_categories
     return categories
@@ -178,13 +181,17 @@ class AppCategoryUsage(CanvasTable):
     def __init__(self):
         super(AppCategoryUsage, self).__init__(column_spacing=10, row_spacing=3)
         self.set_column_expand(1, True)
-        
-        self.__apps = set()
 
         self.set_property('background-color', 0xFFFFFFFF)
         self.set_property('padding', 5)
+
+        self.__repo = apps.get_apps_repo()
+        self.__repo.connect("my-top-apps-changed", lambda repo, my_top_apps: self.__sync())
                 
-    def set_apps(self, apps, used_apps):
+    def __sync(self):
+        apps = self.__repo.get_all_apps()
+        used_apps = self.__repo.get_my_top_apps()
+        
         self.remove_all()
 
         self.add(hippo.CanvasText(text="Category", font="Bold 12px", color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START), left=0, top=0)
@@ -197,9 +204,7 @@ class AppCategoryUsage(CanvasTable):
         for category,apps in categories.iteritems():
             cat_usage_count = 0
             for app in apps:
-                mugshot_app = app.get_mugshot_app()
-                if mugshot_app:
-                    cat_usage_count += int(mugshot_app.get_usage_count())
+                cat_usage_count += int(app.get_usage_count())
             if cat_usage_count > max_usage_count[1]:
                 max_usage_count = (category, cat_usage_count)
             cat_usage[category] = cat_usage_count
@@ -224,10 +229,9 @@ class AppCategoryUsage(CanvasTable):
 
 class AppExtras(CanvasVBox):
     __gsignals__ = {
-        "have-apps" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,)),
         "more-info" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
     }
-    def __init__(self, stock, filterfunc, **args):
+    def __init__(self, filterfunc, **args):
         super(AppExtras, self).__init__(background_color=0x888888FF,
                                         color=0xFFFFFFFF,
                                         padding=4,
@@ -235,9 +239,11 @@ class AppExtras(CanvasVBox):
 
         self.__search = False
         self.__search_filter = filterfunc
-        self.__stock = stock
         self.__catname = None
         self.__apps = None
+
+        self.__have_search_hits = False        
+        self.__found_app_count = 0
 
         self.__headerbox = CanvasHBox()
         self.append(self.__headerbox)
@@ -258,36 +264,32 @@ class AppExtras(CanvasVBox):
         self.append(self.__app_pair)
         self.append(self.__app_pair2)
 
-        global_mugshot.get_mugshot().connect("apps-search-changed", self.__handle_mugshot_results)
-        global_mugshot.get_mugshot().connect("category-top-apps-changed", self.__handle_category_top_apps_changed)        
+        self.__repo = apps.get_apps_repo()
 
     def have_apps(self):
         return not not self.__found_app_count
 
-    def __get_apps(self):
-        if self.__catname:
-            _logger.debug("getting top apps for category %s", self.__catname)
-            return global_mugshot.get_mugshot().get_category_top_apps(self.__catname)
-        else:
-            return global_mugshot.get_mugshot().get_global_top_apps()          
+    def __on_search_results(self, applications, category, search_terms):
+        _logger.debug("Got %d search results for category '%s' terms '%s'" % (len(applications), str(category), str(search_terms)))
 
-    def set_catname(self, catname, search):
-        self.__catname = catname
-        mugshot_apps = self.__get_apps()
-        if mugshot_apps is None:
-            self.set_top_apps(None, search)
-        else:
-            self.set_top_apps(map(self.__stock.get_app, mugshot_apps), search)
-
-    def __handle_mugshot_results(self, mugshot, search, apps):
-        if search != self.__search:
+        if search_terms != self.__search or category != self.__catname:
+            _logger.debug("Search terms have changed since starting search, ignoring results")
             return
-        self.__mugshot_search_hits = not not apps
-        self.__sync()
+
+        if search_terms is not None:
+            self.__have_search_hits = len(applications) > 0
+        else:
+            self.__have_search_hits = False
+
+        self.__apps = applications
         
-    def __handle_category_top_apps_changed(self, *args):
-        self.__apps = map(self.__stock.get_app, self.__get_apps())
         self.__sync()
+
+    def set_search_parameters(self, catname, search):
+        if self.__catname != catname or self.__search != search:
+            self.__catname = catname
+            self.__search = search
+            self.__repo.search(self.__catname, self.__search, self.__on_search_results)
 
     def __on_more_popular(self, w):
         subquery = (self.__search and ("?q=" + urllib.quote(self.__search))) \
@@ -298,18 +300,11 @@ class AppExtras(CanvasVBox):
         # more-info with None just means hide window
         self.emit("more-info", None)
 
-    def set_top_apps(self, apps, search):
-        self.__apps = apps
-        self.__search = search
-        self.__mugshot_search_hits = None
-        self.__sync()
-        self.emit("have-apps", self.have_apps())
-
     def __sync(self):
         thing = self.__catname or 'apps'
         if self.__apps:
             if self.__search:
-                if self.__mugshot_search_hits is None:
+                if self.__have_search_hits:
                     self.__left_title.set_property('markup', "Searching for <b>%s</b>" % (gobject.markup_escape_text(self.__search),))
 
                 else:
@@ -347,56 +342,71 @@ class AppExtras(CanvasVBox):
         self.set_child_visible(self.__app_pair2, found > 2 and (not not self.__search))
         self.__found_app_count = found
 
-    def __on_app_clicked(self, a):
-        self.emit("more-info", a.get_app())
+    def __on_app_clicked(self, app_view):
+        self.emit("more-info", app_view.get_app())
         
         
 class AppList(CanvasVBox):
     __gsignals__ = {
-        "category-selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_STRING,)),
         "selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "launch" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "more-info" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))      
     }
     
-    def __init__(self, stock):
+    def __init__(self):
         super(AppList, self).__init__(padding=6)
 
         self.__table = OverviewTable(min_column_width=200, max_column_width=250)
         self.append(self.__table, hippo.PACK_EXPAND)
 
-        self.__extras_section = AppExtras(stock, self._filter_app, yalign=hippo.ALIGNMENT_END)
+        self.__extras_section = AppExtras(self._filter_app, yalign=hippo.ALIGNMENT_END)
         self.__extras_section.connect("more-info", lambda e, app: self.emit("more-info", app))
         self.append(self.__extras_section)
 
-        self.__stock = stock
+        self.__repo = apps.get_apps_repo()
 
         self.__search = None
-        self.__all_apps = None
-        self.__used_apps = None
+        self.__all_apps = set()
+        self.__used_apps = set()
         self.__categorized = None
         self.__selected_app = None
         self.__selected_cat = None
-        
-    def set_apps(self, apps, used_apps):
-        self.__all_apps = apps
-        self.__used_apps = used_apps
+
+        self.__repo.connect("local-apps-changed",
+                            self.__on_apps_changed)
+        self.__repo.connect("my-top-apps-changed",
+                            self.__on_apps_changed)
+        self.__repo.connect("global-top-apps-changed",
+                            self.__on_apps_changed)
+        self.__repo.connect("all-apps-loaded", 
+                            lambda repo: self.__on_apps_changed(repo, []))        
+
+        self.__on_apps_changed(self.__repo, [])
+
+    ## whatever_apps is ignored, we pass junk for it usually, or whatever the signal
+    ## provides
+    def __on_apps_changed(self, repo, whatever_apps):
+        self.__all_apps = self.__repo.get_all_apps()
+        self.__used_apps = self.__repo.get_my_top_apps()
         self.__sync_display()
 
+    @defer_idle_func(logger=_logger)
     def __sync_display(self):
         self.__table.remove_all()
 
         categories = categorize(filter(self.__filter_app_and_installed_or_used, self.__all_apps)) 
+
+        # _logger.debug(str(categories))
 
         self.__categorized = categories
              
         cat_keys = categories.keys()
         cat_keys.sort()
 
-        self.__extras_section.set_catname(self.__selected_cat, self.__search)
+        self.__extras_section.set_search_parameters(self.__selected_cat, self.__search)
 
         section_key = 0
-        display_only_used = (self.__used_apps) and (not self.__selected_cat) and (not self.__search)
+        display_only_used = (len(self.__used_apps) > 0) and (not self.__selected_cat) and (not self.__search)
         for catname in (self.__selected_cat and not self.__search) and [self.__selected_cat] or cat_keys:
             cat_used_apps = filter(lambda app: app in self.__used_apps, categories[catname])
             cat_used_apps_count = len(cat_used_apps)
@@ -425,17 +435,13 @@ class AppList(CanvasVBox):
     def reset_category(self):
         self.__handle_nocategory(None)
 
-    def on_category_changed(self, cat, apps):
-        _logger.debug("got category changed: %s", cat)
-        if cat != self.__selected_cat:
-            return
-        self.__extras_section.set_top_apps(apps, self.__search)
-
+    ## called when user chooses "all applications"
     def __handle_nocategory(self, l):
         _logger.debug("no category selected")
         self.__selected_cat = None
         self.__sync_display()
 
+    ## called when user clicks a category filter
     def __handle_category_more(self, l, catname):
         _logger.debug("category %s selected", catname)
         self.__selected_cat = catname
@@ -483,10 +489,11 @@ class AppList(CanvasVBox):
              self.emit("launch")
              
 class AppBrowser(hippo.CanvasWindow):
-    def __init__(self, stock):
+    def __init__(self):
         super(AppBrowser, self).__init__(gtk.WINDOW_TOPLEVEL)
+
+        self.__repo = apps.get_apps_repo()
         
-        self.__stock = stock
         self.__all_apps = []
         
         self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))        
@@ -506,7 +513,6 @@ class AppBrowser(hippo.CanvasWindow):
         #self.__search_input.set_property('border-color', 0xAAAAAAFF)
         self.__search_input.connect("notify::text", self.__on_search_changed)
         self.__idle_search_id = 0
-        self.__idle_search_mugshot_id = 0
         self.__left_box.append(self.__search_input)        
     
         self.__overview = AppOverview()
@@ -543,9 +549,8 @@ class AppBrowser(hippo.CanvasWindow):
         self.__right_box = CanvasVBox(border=0, background_color=0xFFFFFFFF)
         self.__box.append(self.__right_scroll, hippo.PACK_EXPAND)
         
-        self.__app_list = AppList(self.__stock)
+        self.__app_list = AppList()
         self.__right_box.append(self.__app_list, hippo.PACK_EXPAND)
-        self.__app_list.connect("category-selected", lambda list, cat: self.__on_category_selected(cat))
         self.__app_list.connect("selected", lambda list, app: self.__on_app_selected(app))
         self.__app_list.connect("launch", lambda list: self.__on_app_launch()) 
         self.__app_list.connect("more-info", lambda list, app: self.__on_show_more_info(app)) 
@@ -557,27 +562,8 @@ class AppBrowser(hippo.CanvasWindow):
         self.connect("key-press-event", lambda win, event: self.__on_keypress(event))
                
         self.set_root(self.__box)
-        
-        ad = apps_directory.get_app_directory()
-        self.__last_local_app_change = 0
-        self.__last_local_app_idle_id = 0
-        ad.connect('changed', self.__on_local_apps_changed)
 
-        self.__mugshot = global_mugshot.get_mugshot()
-        self.__mugshot.connect("initialized", lambda mugshot: self.__sync())
-        self.__mugshot.connect("my-top-apps-changed", 
-                               lambda mugshot, apps: self.__sync())          
-        self.__mugshot.connect("global-top-apps-changed", 
-                               self.__handle_global_changed)          
-        self.__mugshot.connect("apps-search-changed", 
-                               lambda *args: self.__sync())          
-        self.__mugshot.connect("category-top-apps-changed", 
-                               self.__handle_category_changed)
-        self.__mugshot.connect("pinned-apps-changed", self.__on_pinned_apps_changed)
-        self.__stock.connect("all-apps-loaded",
-                             lambda as: self.__sync())
-        
-        self.__sync()
+        self.__repo.connect("my-pinned-apps-changed", self.__on_pinned_apps_changed)
         
     @defer_idle_func(logger=_logger)
     def __on_visible_apps_spin_changed(self, *args):
@@ -585,25 +571,13 @@ class AppBrowser(hippo.CanvasWindow):
         count = self.__apps_spinner.spinner.get_value()
         curval = gconf.client_get_default().get_int(GCONF_KEY_APP_SIZE) or 4
         if curval != count:        
-            gconf.client_get_default().set_int(GCONF_KEY_APP_SIZE, count)
+            gconf.client_get_default().set_int(GCONF_KEY_APP_SIZE, int(count))
         
     def __on_visible_apps_key_changed(self, *args):
         _logger.debug("apps count key changed")
         curval = gconf.client_get_default().get_int(GCONF_KEY_APP_SIZE) or 4
         if curval != self.__apps_spinner.spinner.get_value():
             self.__apps_spinner.set_value(curval)
-        
-    def __on_local_apps_changed(self, ad):
-        _logger.debug("handling local app change")
-        self.__sync()
-        
-    def __handle_global_changed(self, m, apps):
-        self.__handle_category_changed(m, None, apps)
-
-    def __handle_category_changed(self, m, cat, apps):
-        _logger.debug("category %s changed: %d apps", cat, len(apps))
-        apps = map(self.__stock.get_app, apps)
-        self.__app_list.on_category_changed(cat, apps)
                 
     def __on_app_selected(self, app):
         self.__overview.set_app(app)
@@ -621,40 +595,10 @@ class AppBrowser(hippo.CanvasWindow):
             libbig.show_url(urlparse.urljoin(globals.get_baseurl(), "application?id=" + app.get_mugshot_app().get_id()))
         self.__hide_reset()
 
-    def __on_set_pinned_reply(self):
-        ## this is incredibly broken and means we don't have change notification from the server
-        _logger.debug("got reply to setting pinned apps")
-        self.__mugshot.get_pinned_apps(force=True)
-
     def __on_toggle_app_pinned(self, app, active):
         _logger.debug("Toggle app " + app.get_id() + " pinned = " + str(active))
 
-        pinned_apps = self.__mugshot.get_pinned_apps()
-        if pinned_apps is None:
-            pinned_apps = []
-        pinned_ids = {}
-        for p in pinned_apps:
-            pinned_ids[p.get_id()] = p
-
-        _logger.debug("  (pinned_ids = " + str(pinned_ids.keys()) + ")")
-
-        if app.get_id() in pinned_ids:
-            if active:
-                _logger.debug("App is already pinned")
-                return
-            else:
-                _logger.debug("Unpinning app")
-                del pinned_ids[app.get_id()]
-        else:
-            if active:
-                _logger.debug("Pinning app")
-                pinned_ids[app.get_id()] = app.get_mugshot_app()
-            else:
-                _logger.debug("App is already not pinned")
-                return
-
-        _logger.debug("Setting pinned apps to " + str(pinned_ids.keys()))
-        self.__mugshot.set_pinned_apps(pinned_ids.keys(), self.__on_set_pinned_reply)
+        self.__repo.set_app_pinned(app, active)
 
     def __on_move_app(self, app, up):
         _logger.debug("Move app up= " + str(up))
@@ -678,32 +622,13 @@ class AppBrowser(hippo.CanvasWindow):
     def __on_search_changed(self, input, text):
         if self.__idle_search_id > 0:
             return
-        self.__idle_search_id = gobject.timeout_add(500, self.__idle_do_search)
-        if self.__idle_search_mugshot_id > 0:
-            return
-        self.__idle_search_mugshot_id = gobject.timeout_add(2000, self.__idle_do_mugshot_search)
+        self.__idle_search_id = gobject.timeout_add(1500, self.__idle_do_search)
         
     def __idle_do_search(self):
-        self.__app_list.set_search(self.__search_input.get_property("text"))
+        search_terms = self.__search_input.get_property("text")
+        _logger.debug("Search terms: " + str(search_terms))
+        self.__app_list.set_search(search_terms)
         self.__idle_search_id = 0
-        
-    def __idle_do_mugshot_search(self):
-        searchtext = self.__search_input.get_property("text")
-        if searchtext:
-            global_mugshot.get_mugshot().request_app_search(searchtext)
-        self.__idle_mugshot_search_id = 0
-
-    def __on_mugshot_initialized(self, mugshot):
-        self.__sync()
-            
-    def __sync(self):
-        local_apps = self.__stock.get_local_apps() 
-        mugshot_apps = self.__stock.get_all_apps()
-                
-        self.__all_apps = set(local_apps).union(set(mugshot_apps))
-        self.__used_apps = map(self.__stock.get_app, self.__mugshot.get_my_top_apps() or [])
-        self.__app_list.set_apps(self.__all_apps, self.__used_apps)
-        self.__cat_usage.set_apps(self.__all_apps, self.__used_apps) 
 
     def __on_pinned_apps_changed(self, mugshot, pinned_apps):
         _logger.debug("Pinned apps changed: " + str(map(lambda x: x.get_id(), pinned_apps)))

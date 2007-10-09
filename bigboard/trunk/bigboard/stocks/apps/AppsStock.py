@@ -1,8 +1,11 @@
 import logging, time, re, os, sys
 
+from ddm import DataModel
+
 import gmenu, gobject, pango, gnomedesktop, gtk
 import gconf, hippo
 
+import bigboard.globals as globals
 import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.libbig.gutil import *
@@ -10,136 +13,13 @@ import bigboard.logins
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox, ActionLink
 import bigboard.stock
 
-import appbrowser, apps_widgets, apps_directory
+import apps, appbrowser, apps_widgets, apps_directory
+
+from ddm import DataModel
 
 _logger = logging.getLogger("bigboard.stocks.AppsStock")
 
 GCONF_KEY_APP_SIZE = '/apps/bigboard/application_list_size'
-
-class Application(object):
-    __slots__ = ['__app', '__install_checked', '__desktop_entry', '__menu_entry']
-    def __init__(self, mugshot_app=None, menu_entry=None):
-        super(Application, self).__init__()
-        self.__app = mugshot_app
-        self.__install_checked = False
-        self.__desktop_entry = None
-        self.__menu_entry = menu_entry      
-        
-    def get_id(self):
-        return self.__app.get_id()
-        
-    def get_mugshot_app(self):
-        return self.__app
-
-    def get_menu(self):
-        return self.__menu_entry
-
-    def get_desktop(self):
-        return self.__desktop_entry
-
-    def get_pinned(self):
-        return self.__app and self.__app.get_pinned()
-    
-    def get_name(self):
-        return self.__app and self.__app.get_name() or self.__menu_entry.get_name()
-    
-    def get_description(self):
-        return self.__app and self.__app.get_description() or ""
-
-    def get_tooltip(self):
-        return self.__app and self.__app.get_tooltip() or ""
-    
-    def get_generic_name(self):
-        return self.__app and self.__app.get_generic_name() or ""
-
-    def get_category(self):
-        return self.__app and self.__app.get_category() or "Other"
-
-    def get_local_category(self):
-        return ((self.__menu_entry and self.__menu_entry.parent) and self.__menu_entry.parent.get_name()) or "Other"
-
-    def get_comment(self):
-        return self.__desktop_entry and self.__desktop_entry.get_localestring('Comment')
-
-    def get_is_excluded(self):
-        return self.__menu_entry and self.__menu_entry.get_is_excluded()
-        
-    def get_icon_url(self):
-        return self.__app and self.__app.get_icon_url()
-        
-    def get_local_pixbuf(self):
-        if self.__desktop_entry:
-            # strip off .png
-            icon_name = re.sub(r'\.[a-z]+$','', self.__menu_entry.get_icon()) 
-            theme = gtk.icon_theme_get_default()
-            try:
-                pixbuf = theme.load_icon(icon_name, 48, 0)
-            except gobject.GError, e:
-                return None
-            return pixbuf
-        return None        
-
-    def set_app(self, app):
-        self.__app = app
-
-    def __lookup_desktop(self):
-        if self.__menu_entry:
-            entry_path = self.__menu_entry.get_desktop_file_path()
-            try:
-                desktop = gnomedesktop.item_new_from_file(entry_path, 0)
-                if desktop:
-                    return desktop            
-            except gobject.GError, e:
-                desktop = None
-        if not self.__app:
-            return None
-        names = self.__app.get_desktop_names()        
-        for name in names.split(';'):
-            ad = apps_directory.get_app_directory()            
-            menuitem = None
-            try:
-                menuitem = ad.lookup(name)
-            except KeyError, e:
-                pass
-                
-            if menuitem and not self.__menu_entry:
-                self.__menu_entry = menuitem
-                entry_path = menuitem.get_desktop_file_path()
-            else:
-                entry_path = None
-                for dir in libbig.get_xdg_datadirs():
-                    appdir = os.path.join(dir, 'applications')
-                    path = os.path.join(appdir, name + '.desktop') 
-                    if os.access(path, os.R_OK):
-                        entry_path = path
-                        break
-                                                   
-            if not entry_path:
-                continue
-            desktop = gnomedesktop.item_new_from_file(entry_path, 0)
-            if desktop:
-                return desktop
-        return None
-
-    def is_installed(self):
-        if not self.__install_checked:
-            self.recheck_installed()            
-        self.__install_checked = True               
-        return self.__desktop_entry is not None      
-   
-    def recheck_installed(self):
-        old_installed = self.__desktop_entry is not None
-        self.__desktop_entry = self.__lookup_desktop()
-            
-    def launch(self):
-        if self.__desktop_entry:
-            self.__desktop_entry.launch([])
-        else:
-            global_mugshot.get_mugshot().install_application(self.__app.get_id(), self.__app.get_package_names(), self.__app.get_desktop_names())            
-
-    def __str__(self):
-        return "App: %s mugshot: %s menu: %s local: %s" % (self.get_name(), self.__app, self.__menu_entry,
-                                                           self.__desktop_entry)
             
 class AppDisplayLauncher(apps_widgets.AppDisplay):
     def __init__(self):
@@ -151,10 +31,16 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
     DYNAMIC_SET_SIZE = 0
     STATIFICATION_TIME_SEC = 60 * 60 #* 24 * 3; # 3 days
     __gsignals__ = {
-        "all-apps-loaded" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+
     }    
     def __init__(self, *args, **kwargs):
-        super(AppsStock, self).__init__(*args, **kwargs)        
+        super(AppsStock, self).__init__(*args, **kwargs)
+
+        self.__model = bigboard.globals.get_data_model()
+
+        self.__model.add_connected_handler(self.__on_connected)
+        if self.__model.connected:
+            self.__on_connected()
         
         self.__box = CanvasVBox(spacing=3)
         self.__message = hippo.CanvasText()
@@ -174,46 +60,61 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         
         self.__app_browser = None
         self._add_more_button(self.__on_more_button)
-
-        self._mugshot.connect("initialized", lambda mugshot: self.__sync())  
-        self._mugshot.connect("all-apps-loaded", lambda mugshot: self.__merge_apps())  
-        self._mugshot.connect("global-top-apps-changed", lambda mugshot, apps: self.__sync())  
-        self._mugshot.connect("my-top-apps-changed", lambda mugshot, apps: self.__sync())      
-        self._mugshot.connect("pinned-apps-changed", lambda mugshot, apps: self.__sync())        
-        self._mugshot.connect("pref-changed", lambda mugshot, key, value: self.__handle_pref_change(key, value))          
-        
-        self.__usage_enabled = False
         
         self.__static_set_ids = {}
+
         gconf.client_get_default().notify_add(GCONF_KEY_APP_SIZE, self.__on_app_size_changed)
          
         self.__set_message('Loading...')
-        
-        self.__apps = {} # mugshot app -> app
-        # apps installed locally and not known in Mugshot
-        self.__local_apps = {} # desktop -> app
 
         bigboard.logins.get_logins().connect('changed', lambda *args: self.__sync())
 
-        ad = apps_directory.get_app_directory()
-        ad.connect('changed', self.__on_local_apps_changed)
-        for app in ad.get_apps():
-            self.get_local_app(app)
+        self.__repo = apps.get_apps_repo()
+
+        self.__repo.connect('enabled-changed', self.__on_usage_enabled_changed)
+        self.__repo.connect('all-apps-loaded', self.__on_all_apps_loaded)
+        self.__repo.connect('my-pinned-apps-changed', self.__on_my_pinned_apps_changed)
+        self.__repo.connect('my-top-apps-changed', self.__on_my_top_apps_changed)
+        self.__repo.connect('global-top-apps-changed', self.__on_global_top_apps_changed)
+
+        self.__sync()
+
+    def __on_connected(self):
+        # When we disconnect from the server we freeze existing content, then on reconnect
+        # we clear everything and start over.
+        _logger.debug("Connected to data model")
+
+    def __on_query_error(self, where, error_code, message):
+        _logger.warn("Query '" + where + "' failed, code " + str(error_code) + " message: " + str(message))
+
+    def __on_usage_enabled_changed(self, repo):
+        _logger.debug("usage enabled changed")
+        self.__sync()
+
+    def __on_all_apps_loaded(self, repo):
+        _logger.debug("all apps are loaded")
+        self.__sync()
+
+    def __on_my_pinned_apps_changed(self, repo, pinned_apps):
+        _logger.debug("Pinned apps changed from apps repo: " + str(pinned_apps))
+        self.__sync()
+
+    def __on_my_top_apps_changed(self, repo, my_top_apps):
+        _logger.debug("My top apps changed from apps repo: " + str(my_top_apps))
+        self.__sync()
+
+    def __on_global_top_apps_changed(self, repo, global_top_apps):
+        _logger.debug("Global top apps changed from apps repo: " + str(global_top_apps))
         self.__sync()
         
     def __on_app_size_changed(self, *args):
         _logger.debug("app size changed")  
         self.__sync()
-            
-    def __on_local_apps_changed(self, ad):
-        for id,app in self.__apps.iteritems():
-            app.recheck_installed()
-        self.__sync()
 
     def __on_more_button(self):
         _logger.debug("more!")
         if self.__app_browser is None:
-            self.__app_browser = appbrowser.AppBrowser(self)            
+            self.__app_browser = appbrowser.AppBrowser()  
         if self.__app_browser.get_property('is-active'):
             self.__app_browser.hide()
         else:
@@ -236,16 +137,6 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         if text:
             self.__subtitle.set_property("text", text)        
 
-    def _on_mugshot_initialized(self):
-        super(AppsStock, self)._on_mugshot_initialized()
-        self._mugshot.get_global_top_apps()        
-        self._mugshot.request_all_apps()
-
-    def _on_mugshot_ready(self):
-        super(AppsStock, self)._on_mugshot_ready()
-        self._mugshot.get_pinned_apps()        
-        self._mugshot.get_my_top_apps()
-
     def get_authed_content(self, size):
         return self.__box
 
@@ -264,133 +155,48 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         for child in self.__static_set.get_children() + self.__dynamic_set.get_children():
             self.__set_item_size(child, size)        
 
-    def __handle_pref_change(self, key, value):          
-        if key != 'applicationUsageEnabled':
-            return
-        _logger.debug("handling %s pref change: %s", key, value)              
-        self.__sync()
-            
-    def __on_pinned_apps_success(self, pinned_ids):
-        _logger.debug("app pin set succeeded")
-        ## this is incredibly broken and means we don't have change notification from the server        
-        self._mugshot.get_pinned_apps(force=True)
-            
-    def __set_dynamic_set(self, mugshot_apps):
-        self.__dynamic_set.remove_all()
-        i = 0
-        for mugshot_app in mugshot_apps:
-            if i >= self.DYNAMIC_SET_SIZE:
-                break                  
-            app = self.get_app(mugshot_app)
-            if self.__static_set_ids.has_key(app.get_id()):
-                continue
-            if app.get_is_excluded():
-                continue
-            if not app.is_installed():
-                continue
-            i+=1            
-            _logger.debug("setting dynamic app: %s", app)            
-            display = apps_widgets.AppDisplay(apps_widgets.AppLocation.STOCK, app)
-            display.connect("button-press-event", lambda display, event: display.launch())             
-            self.__dynamic_set.append(display)
-        if mugshot_apps:
-            self.__box.set_child_visible(self.__dynamic_set,True)
-                        
-    def get_app(self, mugshot_app):
-        if not self.__apps.has_key(mugshot_app.get_id()):
-            ad = apps_directory.get_app_directory()
-            for desktop_name in mugshot_app.get_desktop_names().split(';'):
-                try:
-                    target_menuitem = ad.lookup(desktop_name)
-                except KeyError, e:
-                    continue
-                if self.__local_apps.has_key(target_menuitem.get_name()):
-                    _logger.debug("moving app %s from local to apps", target_menuitem.get_name())
-                    existing_app = self.__local_apps[target_menuitem.get_name()]
-                    del self.__local_apps[target_menuitem.get_name()]
-                    existing_app.set_app(mugshot_app)
-                    self.__apps[mugshot_app.get_id()] = existing_app
-                    return existing_app
-            _logger.debug("creating app %s", mugshot_app.get_id())
-            self.__apps[mugshot_app.get_id()] = Application(mugshot_app=mugshot_app)
-        return self.__apps[mugshot_app.get_id()]
+    def __fill_static_set(self):
+        self.__static_set.remove_all()
+        self.__static_set_ids = {}
 
-    def get_all_apps(self):
-        return self.__apps.itervalues()
+        usage = self.__repo.get_app_usage_enabled()
+        pinned_apps = self.__repo.get_pinned_apps()
+        global_top_apps = self.__repo.get_global_top_apps()
+        static_size = gconf.client_get_default().get_int(GCONF_KEY_APP_SIZE) or 7
 
-    def get_local_apps(self):
-        return self.__local_apps.itervalues()
-    
-    def get_local_app(self, menu):
-        if self.__local_apps.has_key(menu.get_name()):
-            return self.__local_apps[menu.get_name()]
-        app = None
-        for appvalue in self.__apps.itervalues():
-            if not appvalue.get_menu():
-                continue
-            if appvalue.get_menu().get_name() == menu.get_name():
-                app = appvalue
-                break
-        if app is None:
-            app = Application(menu_entry=menu)
-            _logger.debug("creating local app %s", menu.get_name())
-            self.__local_apps[menu.get_name()] = app
-        return app
-
-    def __merge_apps(self):
-        for app in self._mugshot.get_all_apps():
-            self.get_app(app)
-        self.emit("all-apps-loaded")
+        self.__set_subtitle(None)
+        apps_in_set = []
+        if usage:
+            apps_in_set = pinned_apps
+        if len(apps_in_set) == 0:
+            apps_in_set = global_top_apps
+            self.__set_subtitle("Popular Applications")
         
+        for i, app in enumerate(apps_in_set):
+            if i >= static_size:
+                break
+            display = apps_widgets.AppDisplay(apps_widgets.AppLocation.STOCK, app)
+            display.connect("button-press-event", lambda display, event: display.launch()) 
+            #_logger.debug("setting static set app: %s", app)
+            self.__static_set.append(display)
+            self.__static_set_ids[app.get_id()] = True
+
     @defer_idle_func(logger=_logger)
     def __sync(self):
-        _logger.debug("doing sync")
+        #_logger.debug("doing sync")
         
         self.__set_message(None)        
              
         self.__box.set_child_visible(self.__dynamic_set, False)
 
-        usage = self._mugshot.get_pref('applicationUsageEnabled')
-        _logger.debug("usage: %s", usage)
+        usage = self.__repo.get_app_usage_enabled()
+
+        #_logger.debug("usage: %s", usage)
+
         if usage is False:
             self.__set_message("Enable application tracking", 
-                               self._mugshot.get_baseurl() + "/account")        
-        self.__static_set.remove_all()
-        self.__static_set_ids = {}
-        pinned_apps =  self._mugshot.get_my_top_apps()
-        global_top_apps = self._mugshot.get_global_top_apps()
-        static_size = gconf.client_get_default().get_int(GCONF_KEY_APP_SIZE) or 7
-        for i, mugshot_app in enumerate((usage and pinned_apps) or global_top_apps or []):
-            if i >= static_size:
-                break
-            app = self.get_app(mugshot_app)
-            display = apps_widgets.AppDisplay(apps_widgets.AppLocation.STOCK, app)
-            display.connect("button-press-event", lambda display, event: display.launch()) 
-            _logger.debug("setting static set app: %s", app)
-            self.__static_set.append(display)
-            self.__static_set_ids[app.get_id()] = True   
-        self.__set_subtitle(None)        
-        if (not pinned_apps) and global_top_apps:
-            self.__set_subtitle("Popular Applications")               
-        
-        self._mugshot.set_my_apps_poll_frequency(30 * 60) # 30 minutes
-        
-        if (not pinned_apps) and usage:          
-            self.__set_message("Finding your application list...")
-            self._mugshot.set_my_apps_poll_frequency(3 * 60) # 3 minutes                
-            if len(self.__static_set.get_children()) == 0 and self._mugshot.get_my_app_usage_start():
-                _logger.debug("no static set")           
-                app_stalking_duration = (time.mktime(time.gmtime())) - (int(self._mugshot.get_my_app_usage_start())/1000) 
-                _logger.debug("comparing stalking duration %s to statification time %s", app_stalking_duration, self.STATIFICATION_TIME_SEC)                  
-                if app_stalking_duration > self.STATIFICATION_TIME_SEC and self._mugshot.get_my_top_apps(): 
-                    # We don't have a static set yet, time to make it
-                    pinned_ids = []
-                    for app in self._mugshot.get_my_top_apps():
-                        if len(pinned_ids) >= self.STATIC_SET_SIZE:
-                            break
-                        pinned_ids.append(app.get_id())
-                    # FIXME - we need to retry if this fails for some reason                    
-                    # this is generally true of any state setting
-                    self.__set_message("Saving your applications...")
-                    _logger.debug("creating initial pin set: %s", pinned_ids)
-                    self._mugshot.set_pinned_apps(pinned_ids, lambda: self.__on_pinned_apps_success(pinned_ids))       
+                               globals.get_baseurl() + "/account")        
+
+        self.__fill_static_set()
+
+        self.__repo.pin_stuff_if_we_have_none()
