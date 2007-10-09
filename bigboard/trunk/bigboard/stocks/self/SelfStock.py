@@ -246,7 +246,7 @@ class SelfStock(AbstractMugshotStock):
         
         self._box.append(self._namephoto_box)
         
-        self._whereim_box = FixedCountWrapBox(7, spacing=2)
+        self._whereim_box = FixedCountWrapBox(9, spacing=2)
         self._whereim_box.set_property("padding-top", 4)
         
         self._box.append(self._whereim_box)
