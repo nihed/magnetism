@@ -66,7 +66,7 @@ class Application(object):
 
     def get_category(self):
         ## FIXME should this be category or categoryDisplayName ?
-        return self.__resource and self.__resource.category or "Other"
+        return self.__resource and self.__resource.categoryDisplayName or "Other"
 
     def get_local_category(self):
         return ((self.__menu_entry and self.__menu_entry.parent) and self.__menu_entry.parent.get_name()) or "Other"
@@ -177,6 +177,12 @@ class AppsHttpDownloader:
         if description:
             attrs['description'] = description
 
+        ## the old http format uses 'category' for what the data model
+        ## calls 'categoryDisplayName'
+        if attrs.has_key('category') and not attrs.has_key('categoryDisplayName'):
+            attrs['categoryDisplayName'] = attrs['category']
+            del attrs['category']
+
         return attrs
     
     def __parse_app_set(self, expected_name, doc=None, child_nodes=None):
@@ -273,13 +279,13 @@ class AppsRepo(gobject.GObject):
         # we clear everything and start over.
         _logger.debug("Connected to data model")
 
-        query = self.__model.query_resource(self.__model.self_id, "topApplications[+;description;category];pinnedApplications[+;description;category];applicationUsageEnabled")
+        query = self.__model.query_resource(self.__model.self_id, "topApplications[+;description;category;categoryDisplayName];pinnedApplications[+;description;category;categoryDisplayName];applicationUsageEnabled")
         query.add_handler(self.__on_got_self)
         query.add_error_handler(lambda code, msg: self.__on_query_error("self resource", code, msg))
         query.execute()
 
         query = self.__model.query(("http://online.gnome.org/p/application", "getPopularApplications"),
-                                   "+;description;category",
+                                   "+;description;category;categoryDisplayName",
                                    single_result=False,
                                    start=0)
 
@@ -293,7 +299,7 @@ class AppsRepo(gobject.GObject):
             ## do the getAllApplications last since it emits the all-apps-loaded signal when complete
 
             #query = self.__model.query(("http://online.gnome.org/p/application", "getAllApplications"),
-            #"+;description;category",
+            #"+;description;category;categoryDisplayName",
             #single_result=False)
 
             #query.add_handler(self.__on_got_global_all_apps)
@@ -525,7 +531,7 @@ class AppsRepo(gobject.GObject):
                 need_execute = False
             else:
                 query = self.__model.query(("http://online.gnome.org/p/application", "searchApplications"),
-                                           "+;description;category",
+                                           "+;description;category;categoryDisplayName",
                                            single_result=False,
                                            search=search_terms)
         else:
@@ -536,7 +542,7 @@ class AppsRepo(gobject.GObject):
                 need_execute = False
             else:
                 query = self.__model.query(("http://online.gnome.org/p/application", "getPopularApplications"),
-                                           "+;description;category",
+                                           "+;description;category;categoryDisplayName",
                                            single_result=False,
                                            category=category)
         
