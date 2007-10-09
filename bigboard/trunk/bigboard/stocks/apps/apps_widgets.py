@@ -3,7 +3,6 @@ import logging, time
 import gmenu, gobject, pango, gnomedesktop
 import hippo
 
-import bigboard.global_mugshot as global_mugshot
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox, ActionLink
 
 import apps_directory
