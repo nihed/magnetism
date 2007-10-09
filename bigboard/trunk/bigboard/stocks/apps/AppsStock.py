@@ -171,6 +171,9 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         if len(apps_in_set) == 0:
             apps_in_set = global_top_apps
             self.__set_subtitle("Popular Applications")
+
+        ## note the "-" in front of the cmp to sort descending
+        apps_in_set.sort(lambda a, b: - cmp(a.get_usage_count(), b.get_usage_count()))
         
         for i, app in enumerate(apps_in_set):
             if i >= static_size:
