@@ -1,9 +1,3 @@
 pylibdir = $(pyexecdir)/pyonlinedesktop
-pylib_PYTHON =					\
-	pyonlinedesktop/gnomepanel.py		\
-	pyonlinedesktop/__init__.py		\
-	pyonlinedesktop/iterdird.py		\
-	pyonlinedesktop/odpanel.py
-
-pyonlinedesktop-check-missing:
-	$(srcdir)/check-have-all-files.sh $(srcdir) 'pyonlinedesktop/*.py' $(pylib_PYTHON)
+pylib_PYTHON = \
+	pyonlinedesktop/*.py 
