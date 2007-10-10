@@ -183,6 +183,8 @@ AC_DEFINE_UNQUOTED(ABSOLUTE_TOP_SRCDIR, "$ABSOLUTE_TOP_SRCDIR", [full path to sr
 
 PKG_CHECK_MODULES(PIDGIN_PLUGIN, gobject-2.0 dbus-1 >= 1.0 dbus-glib-1 >= 0.70 purple)
 
+PKG_CHECK_MODULES(ONLINE_PREFS_SYNC, glib-2.0 dbus-1 >= 1.0 dbus-glib-1 >= 0.70 gconf-2.0)
+
 AM_PATH_PYTHON
 AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])
 
