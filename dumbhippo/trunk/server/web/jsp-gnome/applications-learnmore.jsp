@@ -4,6 +4,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
+<%@ taglib tagdir="/WEB-INF/tags/gnome" prefix="gnome" %>
 
 <head>
 	<title>Application Statistics</title>
@@ -12,28 +13,29 @@
 	<dh:script module="dh.actions"/>
 </head>
 
-<dht3:page currentPageLink="applications">
-   	<dht3:shinyBox color="grey">
-	    <div class="dh-page-shinybox-title-large">Open Source Application Statistics</div>
+<body>
+	<gnome:page currentPageLink="applications">
+	    <h1>Open Source Application Statistics</h1>
    		<div class="dh-applications-learnmore">
 		    <p>
 		    	Have you ever looked at a long list of software packages available for
-		    	installation and wondered which ones people actually use? The Mugshot 
-		    	and Fedora developers are working on new ways to find and browse 
+		    	installation and wondered which ones people actually use? GNOME 
+		    	developers are working on new ways to find and browse 
 		    	applications that take usage statistics into account. You can help out
 		    	with the effort by sharing your application usage statistics.
 	    	</p>
 	    	<p>
 				Right now, we're just providing <a href="/applications">global anonymous 
 				statistics</a> about the applications that are most frequently used by
-				Mugshot users. In the future, we may extend this with other features like
+				users of the <a href="http://online-desktop.org">GNOME Online Desktop</a>. 
+				In the future, we may extend this with other features like
 				seeing which applications are most frequently used among your circle of
 				friends or finding local people who use a particular application.
 	    	</p>
 		    <h2>How it works</h2>
 		    <p>
 			    When application usage statistics are enabled for your account, the 
-			    Mugshot software keeps track of which applications you interact with.
+			    Online Desktop software keeps track of which applications you interact with.
 				Periodically it uploads a list of applications that you've used within the
 				last day to the server. We don't record anything about what you're doing
 				inside the applications, what documents you have open, or even how much
@@ -56,5 +58,6 @@
 			    </div>
 		    </c:if>
 	    </div>
-	</dht3:shinyBox>
-</dht3:page>
+	</gnome:page>
+</body>
+</html>
