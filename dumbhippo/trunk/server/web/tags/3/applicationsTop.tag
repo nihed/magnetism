@@ -28,7 +28,7 @@
 <img id="dhApplicationsBusy" src="/images2/${buildstamp}/feedspinner.gif" style="display: none;"/>
 <div class="dh-page-shinybox-title-large">Open Source Application Statistics</div>
 <div>
-   	Mugshot and Fedora developers are working on ways to browse and find popular
+   	GNOME developers are working on ways to browse and find popular
    	applications. Here are the current statistics for users sharing
    	application usage with us. 
 	<a href="/applications-learnmore">Read the full details</a>
