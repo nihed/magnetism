@@ -68,7 +68,7 @@
 		  			<c:choose>
 						<c:when test="${person.pageableStack.totalCount == 0 && person.self}">
 							<dht3:tip>
-								Updates from your friends and the things they share with you will go here.
+								Updates and shared items from your friends and groups will go here. You can search for friends using their e-mail.
 								<c:if test="${signin.user.account.hasAcceptedTerms}">
 									<div class="dh-tip-secondary">
 										<a href="/invitation">Invite some friends</a> | <a href="/active-groups">Find groups</a>
