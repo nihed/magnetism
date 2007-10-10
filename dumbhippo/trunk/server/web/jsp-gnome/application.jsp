@@ -4,6 +4,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
+<%@ taglib tagdir="/WEB-INF/tags/gnome" prefix="gnome" %>
 
 <dh:bean id="applications" class="com.dumbhippo.web.pages.ApplicationsPage" scope="request"/>
 <dh:bean id="application" class="com.dumbhippo.web.pages.ApplicationPage" scope="page"/>
@@ -58,8 +59,8 @@
 	</script>	
 </head>
 
-<dht3:page currentPageLink="application">
-   	<dht3:shinyBox color="grey">
+<body>
+   	<gnome:page>
 	    <dht3:applicationsTop/>
 	    <hr>
 	    <table id="dhApplicationsColumns">
@@ -107,5 +108,6 @@
 	    </td>
 	    </tr>
 	    </table>
-	</dht3:shinyBox>
-</dht3:page>
+	</gnome:page>
+</body>
+
