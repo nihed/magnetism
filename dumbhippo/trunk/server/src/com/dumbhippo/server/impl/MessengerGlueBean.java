@@ -358,7 +358,9 @@ public class MessengerGlueBean implements MessengerGlue {
 	}
 	
 	public void handleMusicChanged(UserViewpoint viewpoint, Map<String, String> properties) throws RetryException {
-		musicSystem.setCurrentTrack(viewpoint.getViewer(), properties, true);
+		// empty properties map means that the music was stopped
+		if (properties.size() > 0) 
+		    musicSystem.setCurrentTrack(viewpoint.getViewer(), properties, true);
 	}
 
 	public void handleMusicPriming(UserViewpoint viewpoint, List<Map<String, String>> tracks) throws RetryException {
