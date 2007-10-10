@@ -13,6 +13,6 @@ int
 main(int argc, char **argv)
 {     
     g_set_application_name("Online Prefs Sync");
-
+    
     return 0;
 }
