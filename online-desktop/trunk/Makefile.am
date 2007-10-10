@@ -39,4 +39,5 @@ include Makefile-session.am
 include Makefile-gconf.am
 include Makefile-pidgin.am
 include Makefile-weblogindriver.am
+include Makefile-online-prefs-sync.am
 
