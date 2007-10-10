@@ -1,6 +1,7 @@
 include $(top_srcdir)/Makefile-include.am
 
 SUBDIRS = keybinder
+EXTRA_DIST =
 
 bignative_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)			\
@@ -29,40 +30,27 @@ httplibdir=$(bigboarddir)/httplib2
 httplib_PYTHON = httplib2/__init__.py \
                  httplib2/iri2uri.py
 
+stocks_DATA = stocks/*.xml
+EXTRA_DIST += $(stocks_DATA)
+
 appstockdir=$(stocksdir)/apps
-appstock_PYTHON = \
-                stocks/apps/*.py \
-                stocks/apps/listing.xml
+appstock_PYTHON = stocks/apps/*.py
 
-calendarstockdir=$(stocksdir)/calendar
-calendarstock_PYTHON = \
-                stocks/calendar/*.py \
-                stocks/calendar/listing.xml
+calendarstockdir=$(stocksdir)/google_calendar
+calendarstock_PYTHON = stocks/google_calendar/*.py
 
-photosstockdir=$(stocksdir)/photos
-photosstock_PYTHON = \
-                stocks/photos/*.py \
-                stocks/photos/listing.xml
+photosstockdir=$(stocksdir)/mugshot_photos
+photosstock_PYTHON = stocks/mugshot_photos/*.py
 
 searchstockdir=$(stocksdir)/search
-searchstock_PYTHON = \
-                stocks/search/*.py \
-                stocks/search/listing.xml
+searchstock_PYTHON = stocks/search/*.py
 
 selfstockdir=$(stocksdir)/self
-selfstock_PYTHON = \
-                stocks/self/*.py \
-                stocks/self/listing.xml
+selfstock_PYTHON = stocks/self/*.py
                 
 peoplestockdir=$(stocksdir)/people
-peoplestock_PYTHON = \
-                stocks/people/*.py \
-                stocks/people/peoplewidgets.py \
-                stocks/people/listing.xml
+peoplestock_PYTHON = stocks/people/*.py
 
 filestockdir=$(stocksdir)/files
-filestock_PYTHON = \
-                stocks/files/*.py \
-                stocks/files/filebrowser.py \
-                stocks/files/listing.xml
+filestock_PYTHON = stocks/files/*.py
 
