@@ -353,6 +353,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "URL must be http or https: '" + url.toExternalForm() + "'");
 	}
 	
+	private boolean startsWithHttp(String url) {
+		return (url.startsWith("http://") || url.startsWith("https://"));
+	}
+	
 	// FIXME if we change doShareLink to be an "XMLMETHOD" then this can throw XmlMethodException directly
 	// FIXME this method is deprecated; just make your method take an URL then use throwIfUrlNotHttp as required
 	private URL parseUserEnteredUrl(String url, boolean httpOnly) throws MalformedURLException {
@@ -1487,7 +1491,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		String rhapUserId = StringUtils.findParamValueInUrl(urlOrId, "rhapUserId");		
 		if (rhapUserId == null) {
-			if (urlOrId.startsWith("http://") || urlOrId.toLowerCase().contains(("rhapsody"))) {
+			if (startsWithHttp(urlOrId) || urlOrId.toLowerCase().contains(("rhapsody"))) {
 				throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Rhapsody RSS URL should contain a rhapUserId param: " + urlOrId);
 			} else {
 				// we also want to handle the user entering only an id
@@ -1521,7 +1525,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		String netflixUserId = StringUtils.findParamValueInUrl(urlOrId, "id");		
 		if (netflixUserId == null) {
-			if (urlOrId.startsWith("http://") || urlOrId.toLowerCase().contains(("netflix"))) {
+			if (startsWithHttp(urlOrId) || urlOrId.toLowerCase().contains(("netflix"))) {
 			    throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Netflix RSS URL should contain an id param: " + urlOrId);
 			} else {
 				// we also want to handle a user entering only an id
@@ -1674,7 +1678,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			name = urlOrName.substring(user);
 		}
 		
-		if (name.startsWith("http://"))
+		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.YOUTUBE);
@@ -1694,7 +1698,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (found != null)
 			name = found;
 		
-		if (name.startsWith("http://"))
+		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.LASTFM);
@@ -1723,7 +1727,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (found != null)
 			name = found;
 
-		if (name.startsWith("http://"))
+		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.DELICIOUS);
@@ -1757,7 +1761,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (found != null)
 			name = found;
 		
-		if (name.startsWith("http://"))
+		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.TWITTER);
@@ -1807,7 +1811,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (found != null)
 			name = found;
 
-		if (name.startsWith("http://"))
+		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.DIGG);
@@ -1845,7 +1849,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		//logger.debug("found={}", found);
 		
-		if (name.startsWith("http://"))
+		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.REDDIT);
@@ -1908,7 +1912,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			name = urlOrName.substring(i);
 		}
 		
-		if (name.startsWith("http://"))
+		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.LINKED_IN);
@@ -1931,7 +1935,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (found != null)
 			name = found;
 		
-		if (name.startsWith("http://"))
+		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public gallery URL or just your username");
 		
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.PICASA);
@@ -1965,7 +1969,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		String amazonUserId = StringUtils.findPathElementAfter(urlOrUserId, "/profile/");
 		if (amazonUserId == null) {
-			if (urlOrUserId.startsWith("http://") || urlOrUserId.toLowerCase().contains(("amazon"))) {
+			if (startsWithHttp(urlOrUserId) || urlOrUserId.toLowerCase().contains(("amazon"))) {
 			    throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Enter your public profile URL");
 			} else {
 				// we also want to handle a user entering only an id
@@ -2075,6 +2079,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	public void doSetGoogleReaderUrl(XmlBuilder xml, UserViewpoint viewpoint, String feedOrPageUrl) throws XmlMethodException, RetryException {
 		feedOrPageUrl = feedOrPageUrl.trim();
+		
+		if (feedOrPageUrl.startsWith("https://"))
+			feedOrPageUrl = feedOrPageUrl.replaceFirst("https", "http");
 		
 		// the page url would be "http://www.google.com/reader/shared/10558901572126132384"
 		// the feed would be "http://www.google.com/reader/public/atom/user/10558901572126132384/state/com.google/broadcast"
