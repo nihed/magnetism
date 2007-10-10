@@ -13,6 +13,9 @@ import dbus.glib
 
 import hippo
 
+import pyonlinedesktop
+import pyonlinedesktop.widget
+
 import bigboard
 import bigboard.big_widgets
 from bigboard.big_widgets import Sidebar, CommandShell, CanvasHBox, CanvasVBox, ActionLink, Button
@@ -110,73 +113,7 @@ back up temporarily.'''))
     def __idle_undo_visible(self):
         gconf.client_get_default().set_bool(GCONF_PREFIX + 'visible', True)
         return False        
-        
-class PrelistedStock(object):
-    def __init__(self, id, stockdir):
-        self.__id = id
-        self.__stockdir = stockdir
-        self.__logger = logging.getLogger('bigboard.StockReader')        
-        
-    def get_id(self):
-        return self.__id
-        
-    def get(self, panel=None):
-        listing = os.path.join(self.__stockdir, 'listing.xml')
-        if not os.access(listing, os.R_OK):
-            raise Exception("stock listing %s vanished!" % listing)
-        self.__logger.debug("parsing %s", listing)
-        doc = xml.dom.minidom.parse(listing)
-        stock = doc.documentElement
-        fmt_version = int(stock.getAttribute("version") or "0")            
-        class_name = self.__id.split('.')[-1]
-        try:
-            ticker = bigboard.libbig.xmlquery.get_element_value(stock, 'ticker')
-        except KeyError:
-            ticker = ""
-            
-        sys.path.append(self.__stockdir)
-        try:
-            self.__logger.info("importing module %s (%s) %s", class_name, self.__id, self.__stockdir)
-            module = __import__(class_name)
-            class_constructor = getattr(module, class_name)
-            self.__logger.debug("got constructor %s", class_constructor)
-            
-            stock = class_constructor({'id': self.__id, 'ticker': ticker}, panel=panel)
-            return stock                  
-        except:
-            self.__logger.exception("failed to add stock %s", self.__id)        
-            return None
-        
-class StockReader(gobject.GObject):
-    __gsignals__ = {
-        "stock-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
-    }
-            
-    def __init__(self, dirs):
-        gobject.GObject.__init__(self)
-        self.__logger = logging.getLogger('bigboard.StockReader')
-        self.__dirs = dirs
-        
-    def load(self):
-        self.__logger.debug("starting stock reading, cwd=%s", os.getcwd())
-        for dir in self.__dirs:
-            self.__logger.info("reading directory %s", dir)
-            for direntry in os.listdir(dir):
-                stockdir = os.path.join(dir, direntry)
-                if not stat.S_ISDIR(os.stat(stockdir).st_mode):
-                    continue
-                
-                listing = os.path.join(stockdir, 'listing.xml')
-                if not os.access(listing, os.R_OK):
-                    self.__logger.debug("ignoring missing %s", listing)
-                    continue
-                self.__logger.debug("parsing prelisting %s", listing)
-                doc = xml.dom.minidom.parse(listing)
-                stock = doc.documentElement
-                id = bigboard.libbig.xmlquery.get_element_value(stock, 'id')
-
-                self.emit("stock-added", PrelistedStock(id, stockdir))
-                
+    
 class Exchange(hippo.CanvasBox):
     """A container for stocks."""
     
@@ -250,7 +187,7 @@ class Exchange(hippo.CanvasBox):
             self.set_child_visible(self.__ticker_container, size == Stock.SIZE_BULL)
 
 class BigBoardPanel(dbus.service.Object):
-    def __init__(self, dirs, bus_name):
+    def __init__(self, bus_name):
         dbus.service.Object.__init__(self, bus_name, '/bigboard/panel')
         
         self.__logger = logging.getLogger("bigboard.Panel")        
@@ -269,9 +206,7 @@ class BigBoardPanel(dbus.service.Object):
         self._dw.connect('enter-notify-event', self.__on_mouse_enter)        
         self._dw.connect('leave-notify-event', self.__on_mouse_leave)
         
-        self.__stockreader = StockReader(dirs)
-        self.__stockreader.connect("stock-added", lambda reader, stock: self.__on_stock_added(stock))
-        gconf_client.notify_add(GCONF_PREFIX + 'listings', lambda *args: self.Reboot())        
+        gconf_client.notify_add(GCONF_PREFIX + 'listings', self.__on_listings_change)        
 
         self._exchanges = []
         self.__prelisted = {}
@@ -314,13 +249,15 @@ class BigBoardPanel(dbus.service.Object):
             _logger.warn("Couldn't find screensaver")
             pass
         
-        self.__stockreader.load()        
-
-        try:
-            search = self.get_stock('org.gnome.bigboard.SearchStock')
-            search.connect('match-selected', self.__on_search_match_selected)
-        except KeyError, e:
-            pass
+        self.__widget_environ = widget_environ = pyonlinedesktop.widget.WidgetEnvironment()
+        widget_environ['google_apps_auth_path'] = ''        
+        self.__self_stock = self.__load_stock_url('builtin://self.xml', notitle=True)
+        self.list(self.__self_stock)
+        self.__search_stock = self.__load_stock_url('builtin://search.xml', notitle=True)
+        self.list(self.__search_stock)
+        gobject.idle_add(self.__list_initial_stocks)
+        
+        self.__search_stock.connect('match-selected', self.__on_search_match_selected)
 
         gconf_client.notify_add(GCONF_PREFIX + 'visible', self.__sync_visible)
         self.__sync_visible()
@@ -330,6 +267,11 @@ class BigBoardPanel(dbus.service.Object):
         self.__queue_strut()
         
         gobject.timeout_add(1000, self.__idle_show_we_exist)
+        
+    @defer_idle_func(timeout=100)     
+    def __on_listings_change(self, *args):
+        _logger.debug("processing listings change")
+        self.Reboot()        
         
     @log_except()
     def __on_session_idle_changed(self, isidle):
@@ -351,17 +293,46 @@ class BigBoardPanel(dbus.service.Object):
     def __on_focus(self):
         self.__logger.debug("got focus keypress")
         self.toggle_popout()
+    
+    def __load_builtin_stock(self, modfile, notitle=False):
+        stockdir = os.path.join(os.path.dirname(bigboard.__file__), 'stocks') 
+        srcpath = os.path.join(stockdir, modfile)
+        _logger.debug("parsing path %s", srcpath)
+        widget = pyonlinedesktop.widget.WidgetParser(open(srcpath), self.__widget_environ)
+        dirname = modfile[:modfile.rfind('.')]
+        dirpath = os.path.join(stockdir, dirname)
+        sys.path.append(dirpath)
+        modname = "%s%s%s" % (dirname[0].upper(), dirname[1:], 'Stock')
+        try:
+            self.__logger.info("importing module %s (title: %s) from dir %s", modname, widget.title, dirpath)
+            pymodule = __import__(modname)
+            class_constructor = getattr(pymodule, modname)
+            self.__logger.debug("got constructor %s", class_constructor)
+            if notitle:
+                title = ''
+            else:
+                title = widget.title
+            stock = class_constructor({'id': modfile, 'ticker': title}, panel=self)
+            return stock                  
+        except:
+            self.__logger.exception("failed to add stock %s", modname)
+            return None
         
-    def __on_stock_added(self, prestock):
-        if not prestock.get_id() in gconf.client_get_default().get_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING):
-            self.__logger.debug("ignoring unlisted stock %s", prestock.get_id())
-            self.__prelisted[prestock.get_id()] = prestock
-            return
-        stock = prestock.get(panel=self)
-        if not stock:
-            self.__logger.debug("stock %s failed to load", prestock.get_id())
-            return
-        self.list(stock)
+    def __load_stock_url(self, url, **kwargs):
+        _logger.debug("loading stock url %s", url)
+        builtin_scheme = 'builtin://'
+        if url.startswith(builtin_scheme):
+            return self.__load_builtin_stock(url[len(builtin_scheme):], **kwargs)       
+
+    @log_except()
+    def __list_initial_stocks(self):
+        _logger.debug("doing initial stock load")
+        for url in gconf.client_get_default().get_list(GCONF_PREFIX + 'url_listings', gconf.VALUE_STRING):
+            stock = self.__load_stock_url(url)
+            if not stock:
+                _logger.debug("failed to load stock from %s", url)
+                continue
+            self.list(stock)
         
     def __get_size(self):
         return Stock.SIZE_BULL
@@ -376,21 +347,8 @@ class BigBoardPanel(dbus.service.Object):
         self.__logger.debug("listing stock %s", stock)
         container = Exchange(stock)
         container.set_size(self.__get_size())
-        self._exchanges.append(container)
-                
-        last_matched = None
-        for listed in gconf.client_get_default().get_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING):
-            stockid = stock.get_id()
-            if listed == stockid:
-                self.__logger.debug("found stock %s in saved listing, inserting after %s", stock, last_matched)
-                if last_matched is None:
-                    self._stocks_box.prepend(container)
-                else:
-                    self._stocks_box.insert_after(container, last_matched)
-                break
-            for exchange in self._stocks_box.get_children():
-                if listed == exchange.get_stock().get_id(): 
-                    last_matched = exchange
+        self._exchanges.append(container)        
+        self._stocks_box.append(container)
 
     def get_stocks(self):
         return map(lambda e: e.get_stock(), self._exchanges)
@@ -511,12 +469,7 @@ class BigBoardPanel(dbus.service.Object):
         if not self._shown:
             _logger.debug("handling popout activation")
             self.__handle_activation()
-            try:
-                search = self.get_stock('org.gnome.bigboard.SearchStock')
-            except KeyError, e:
-                _logger.debug("Couldn't find search stock")
-                return
-            search.focus()
+            self.__search_stock.focus()
         else:
             _logger.debug("handling popout deactivation")            
             self.__handle_deactivation(True)
@@ -724,37 +677,9 @@ style "bigboard-nopad-button" {
 }
 widget "*bigboard-nopad-button" style "bigboard-nopad-button"
 ''')
-
-    listings = gconf.client_get_default().get_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING)
-
-    ## we used to use ids with "org.mugshot" instead of "org.gnome", migrate them
-    if listings:
-        new_listings = []
-        fixed_listing = False
-        for id in listings:
-            if 'org.mugshot' in id:
-                new_id = id.replace('org.mugshot', 'org.gnome')
-                _logger.debug("Replacing %s with %s" % (id, new_id))
-                new_listings.append(new_id)
-                fixed_listing = True
-            else:
-                new_listings.append(id)
-
-        if fixed_listing:
-            gconf.client_get_default().set_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING, new_listings)
-
-        listings = new_listings
     
-    ## this is a bad hack for now since we'll often not have schemas and there's no way
-    ## to add stocks to a blank bigboard
-    if not listings or len(listings) == 0:
-        gconf.client_get_default().set_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING,
-                                            ['org.gnome.bigboard.SelfStock','org.gnome.bigboard.SearchStock','org.gnome.bigboard.FilesStock','org.gnome.bigboard.AppsStock','org.gnome.bigboard.PeopleStock'])
-
-    if not stockdirs:
-        stockdirs = [os.path.join(os.path.dirname(bigboard.__file__), 'stocks')]
     _logger.debug("Creating panel")
-    panel = BigBoardPanel(stockdirs, bus_name)
+    panel = BigBoardPanel(bus_name)
     
     panel.show()
 

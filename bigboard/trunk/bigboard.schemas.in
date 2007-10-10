@@ -22,14 +22,14 @@
       </locale>
     </schema>
     <schema>
-      <key>/schemas/apps/bigboard/listings</key>
-      <applyto>/apps/bigboard/listings</applyto>
+      <key>/schemas/apps/bigboard/url_listings</key>
+      <applyto>/apps/bigboard/url_listings</applyto>
       <owner>bigboard</owner>
       <type>list</type>
       <list_type>string</list_type>
-      <default>[org.gnome.bigboard.SelfStock,org.gnome.bigboard.SearchStock,org.gnome.bigboard.FilesStock,org.gnome.bigboard.AppsStock,org.gnome.bigboard.PeopleStock,org.gnome.bigboard.CalendarStock]</default>
+      <default>[builtin://files.xml,builtin://apps.xml,builtin://people.xml,builtin://google_calendar.xml]</default>
       <locale name="C">
-		<short>The list of visible stocks</short>
+		<short>The list of visible stocks; supersedes old listings key.</short>
       </locale>
     </schema>
     <schema>

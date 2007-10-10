@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+  <ModulePrefs title="Self"
+               author="Red Hat, Inc."
+               author_email="online-desktop-list@gnome.org"
+               author_affiliation="Red Hat, Inc."
+               author_location="Westford, MA">
+  </ModulePrefs>
+  <Content type="online-desktop-builtin"></Content>  
+</Module>

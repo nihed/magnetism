@@ -1,4 +1,4 @@
-stocksdir = $(datadir)/bigboard/stocks
+stocksdir = $(pyexecdir)/bigboard/stocks
 
 mainscriptdir = $(libexecdir)/bigboard
 
