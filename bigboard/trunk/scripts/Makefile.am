@@ -4,7 +4,7 @@ bin_SCRIPTS = bigboard gconf-online-sync
 
 noinst_SCRIPTS = bigboard-uninst 
 
-bigboard: bigboard.in
+bigboard: bigboard.in Makefile
 	sed \
 	    -e s!\@PYTHON\@!@PYTHON@!g \
 	    -e s!\@BB_PYDIR\@!$(mainscriptdir)!g \
@@ -13,7 +13,7 @@ bigboard: bigboard.in
 	    < $< > $@
 	chmod a+x $@
 
-bigboard-uninst: bigboard-uninst.in
+bigboard-uninst: bigboard-uninst.in Makefile
 	sed \
 	    -e s!\@PYTHON\@!@PYTHON@!g \
 	    -e s!\@BB_TOPSRCDIR\@!$(top_srcdir)!g \
@@ -22,7 +22,7 @@ bigboard-uninst: bigboard-uninst.in
 	    < $< > $@
 	chmod a+x $@
 
-gconf-online-sync: gconf-online-sync.in
+gconf-online-sync: gconf-online-sync.in Makefile
 	sed \
 	    -e s!\@PYTHON\@!@PYTHON@!g \
 	    -e s!\@BB_PYDIR\@!$(mainscriptdir)!g \
