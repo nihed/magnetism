@@ -122,7 +122,6 @@ class Exchange(hippo.CanvasBox):
                                  orientation=hippo.ORIENTATION_VERTICAL,
                                  spacing=4)      
         self.__size = None
-        self.__logger = logging.getLogger("bigboard.Panel")
         self.__stock = stock
         self.__ticker_text = None
         self.__ticker_container = None
@@ -175,7 +174,7 @@ class Exchange(hippo.CanvasBox):
             self.set_child_visible(self.__mini_more_button, size == Stock.SIZE_BEAR)
         self.set_child_visible(self.__stockbox, not not content)
         if not content:
-            self.__logger.debug("no content for stock %s", self.__stock)
+            _logger.debug("no content for stock %s", self.__stock)
             return
         self.__stockbox.append(content)
         padding = 4
@@ -189,9 +188,8 @@ class Exchange(hippo.CanvasBox):
 class BigBoardPanel(dbus.service.Object):
     def __init__(self, bus_name):
         dbus.service.Object.__init__(self, bus_name, '/bigboard/panel')
-        
-        self.__logger = logging.getLogger("bigboard.Panel")        
-        self.__logger.info("constructing")
+          
+        _logger.info("constructing")
                 
         self._dw = Sidebar(True, GCONF_PREFIX + 'visible')
         self._shown = False
@@ -279,19 +277,19 @@ class BigBoardPanel(dbus.service.Object):
             self.__idle_show_we_exist()
 
     def __on_header_buttonpress(self, box, e):
-        self.__logger.debug("got shell header click: %s %s %s", e, e.button, e.modifiers)
+        _logger.debug("got shell header click: %s %s %s", e, e.button, e.modifiers)
         if e.button == 2:
             self.Shell()
 
     @log_except()
     def __idle_show_we_exist(self):
-        self.__logger.debug("showing we exist")
+        _logger.debug("showing we exist")
         self.__handle_activation()
         self.__handle_deactivation()
 
     @log_except()
     def __on_focus(self):
-        self.__logger.debug("got focus keypress")
+        _logger.debug("got focus keypress")
         self.toggle_popout()
     
     def __load_builtin_stock(self, modfile, notitle=False):
@@ -302,12 +300,17 @@ class BigBoardPanel(dbus.service.Object):
         dirname = modfile[:modfile.rfind('.')]
         dirpath = os.path.join(stockdir, dirname)
         sys.path.append(dirpath)
-        modname = "%s%s%s" % (dirname[0].upper(), dirname[1:], 'Stock')
+        pfxidx = modfile.find('_')
+        if pfxidx >= 0:
+            classname = dirname[pfxidx+1:]
+        else:
+            classname = dirname
+        classname = classname[0].upper() + classname[1:] + 'Stock'
         try:
-            self.__logger.info("importing module %s (title: %s) from dir %s", modname, widget.title, dirpath)
-            pymodule = __import__(modname)
-            class_constructor = getattr(pymodule, modname)
-            self.__logger.debug("got constructor %s", class_constructor)
+            _logger.info("importing module %s (title: %s) from dir %s", classname, widget.title, dirpath)
+            pymodule = __import__(classname)
+            class_constructor = getattr(pymodule, classname)
+            _logger.debug("got constructor %s", class_constructor)
             if notitle:
                 title = ''
             else:
@@ -315,7 +318,7 @@ class BigBoardPanel(dbus.service.Object):
             stock = class_constructor({'id': modfile, 'ticker': title}, panel=self)
             return stock                  
         except:
-            self.__logger.exception("failed to add stock %s", modname)
+            _logger.exception("failed to add stock %s", classname)
             return None
         
     def __load_stock_url(self, url, **kwargs):
@@ -324,7 +327,7 @@ class BigBoardPanel(dbus.service.Object):
         if url.startswith(builtin_scheme):
             return self.__load_builtin_stock(url[len(builtin_scheme):], **kwargs)       
 
-    @log_except()
+    @log_except(_logger)
     def __list_initial_stocks(self):
         _logger.debug("doing initial stock load")
         for url in gconf.client_get_default().get_list(GCONF_PREFIX + 'url_listings', gconf.VALUE_STRING):
@@ -333,6 +336,7 @@ class BigBoardPanel(dbus.service.Object):
                 _logger.debug("failed to load stock from %s", url)
                 continue
             self.list(stock)
+        _logger.debug("done with initial stock load")            
         
     def __get_size(self):
         return Stock.SIZE_BULL
@@ -344,7 +348,7 @@ class BigBoardPanel(dbus.service.Object):
         
     def list(self, stock):
         """Add a stock to an Exchange and append it to the bigboard."""
-        self.__logger.debug("listing stock %s", stock)
+        _logger.debug("listing stock %s", stock)
         container = Exchange(stock)
         container.set_size(self.__get_size())
         self._exchanges.append(container)        
@@ -362,31 +366,31 @@ class BigBoardPanel(dbus.service.Object):
 
     @log_except()
     def __on_mouse_enter(self, w, e):
-        self.__logger.debug("mouse enter %s", e)
+        _logger.debug("mouse enter %s", e)
         if self.__autohide_id > 0:
-            self.__logger.debug("removing autohide timeout")
+            _logger.debug("removing autohide timeout")
             gobject.source_remove(self.__autohide_id)
             self.__autohide_id = 0
     
     @log_except()
     def __on_search_match_selected(self, search):
-        self.__logger.debug("search match selected")        
+        _logger.debug("search match selected")        
         self.__handle_deactivation(immediate=True)    
     
     @log_except()
     def __on_mouse_leave(self, w, e):
-        self.__logger.debug("mouse leave %s", e)
+        _logger.debug("mouse leave %s", e)
         self.__handle_deactivation()
         
     def __handle_deactivation(self, immediate=False):
         vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
         if not vis and self.__autohide_id == 0:
-            self.__logger.debug("enqueued autohide timeout")            
+            _logger.debug("enqueued autohide timeout")            
             self.__autohide_id = gobject.timeout_add(immediate and 1 or 1500, self.__idle_do_hide)        
             
     @log_except()
     def __idle_do_hide(self):
-        self.__logger.debug("in idle hide")
+        _logger.debug("in idle hide")
         self.__autohide_id = 0
         vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
         if vis:
@@ -411,7 +415,7 @@ class BigBoardPanel(dbus.service.Object):
         
     @log_except()
     def _toggle_size(self):
-        self.__logger.debug("toggling size")
+        _logger.debug("toggling size")
         expanded = gconf.client_get_default().get_bool(GCONF_PREFIX + 'expand')
         gconf.client_get_default().set_bool(GCONF_PREFIX + 'expand', not expanded)
             
@@ -431,20 +435,20 @@ class BigBoardPanel(dbus.service.Object):
             self._canvas.set_size_request(Stock.SIZE_BULL_CONTENT_PX, 42)
             
         for exchange in self._exchanges:
-            self.__logger.debug("resizing exchange %s to %s", exchange, self.__get_size())
+            _logger.debug("resizing exchange %s to %s", exchange, self.__get_size())
             exchange.set_size(self.__get_size())
         
-        self.__logger.debug("queuing resize")
+        _logger.debug("queuing resize")
         self._dw.queue_resize()  
-        self.__logger.debug("queuing strut")
+        _logger.debug("queuing strut")
         self.__queue_strut()
-        self.__logger.debug("queuing strut complete")
+        _logger.debug("queuing strut complete")
 
     @log_except()
     def __idle_do_strut(self):
-        self.__logger.debug("idle strut set")
+        _logger.debug("idle strut set")
         self._dw.do_set_wm_strut()
-        self.__logger.debug("idle strut set complete")
+        _logger.debug("idle strut set complete")
         return False
 
     def __queue_strut(self):
@@ -459,7 +463,7 @@ class BigBoardPanel(dbus.service.Object):
     def __handle_activation(self):
         vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
         if not vis:
-            self.__logger.debug("showing all")
+            _logger.debug("showing all")
             self._dw.show_all()
             self._shown = True
         if self.__get_size() == Stock.SIZE_BEAR:
@@ -479,7 +483,7 @@ class BigBoardPanel(dbus.service.Object):
 
     @dbus.service.method(BUS_IFACE_PANEL)
     def Unexpand(self):
-        self.__logger.debug("got unexpand method call")
+        _logger.debug("got unexpand method call")
         return self.__do_unexpand()
 
     def __do_expand(self):
@@ -492,17 +496,17 @@ class BigBoardPanel(dbus.service.Object):
 
     @dbus.service.method(BUS_IFACE_PANEL)
     def Expand(self):
-        self.__logger.debug("got expand method call")
+        _logger.debug("got expand method call")
         return self.__do_expand()
 
     @dbus.service.method(BUS_IFACE_PANEL)
     def EmitExpandedChanged(self):
-        self.__logger.debug("got emitExpandedChanged method call")
+        _logger.debug("got emitExpandedChanged method call")
         self.ExpandedChanged(gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible'))
         
     @dbus.service.method(BUS_IFACE_PANEL)
     def TogglePopout(self):
-        self.__logger.debug("got toggle popout method call")
+        _logger.debug("got toggle popout method call")
         return self.toggle_popout()  
 
     @dbus.service.method(BUS_IFACE_PANEL)
