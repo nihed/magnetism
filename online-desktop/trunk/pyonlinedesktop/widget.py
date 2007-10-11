@@ -85,6 +85,8 @@ _IG_MiniMessage.prototype = {
             href = content_node.attrib['href']
             href = env.replace_string(href)
             self.content = ('url', href)
+        elif content_node.attrib['type'] == 'online-desktop-builtin':
+            self.content = ('online-desktop-builtin', content_node.text)
         else:
             raise WidgetError("Unknown content type")           
    
