@@ -2,7 +2,7 @@
 import os,sys,subprocess,shutil
 
 import pyonlinedesktop
-from pyonlinedesktop.iterdird import iterdir_d
+from pyonlinedesktop.fsutil import iterdir_d
 
 os.environ['OD_SESSION'] = "1"
 
