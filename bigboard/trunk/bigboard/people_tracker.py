@@ -147,8 +147,6 @@ class PeopleTracker(Singleton):
     def __init__(self):
         self.__model = DataModel(bigboard.globals.server_name)
         self.__model.add_connected_handler(self.__on_connected)
-        if self.__model.connected:
-            self.__on_connected()
 
         self.__myself = None
         self.__globalResource = None
@@ -162,6 +160,9 @@ class PeopleTracker(Singleton):
 
         self.__users_by_aim = _MultiDict()
         self.__users_by_resource_id = _MultiDict()
+        
+        if self.__model.connected:
+            self.__on_connected()        
         
     def __on_connected(self):
 
