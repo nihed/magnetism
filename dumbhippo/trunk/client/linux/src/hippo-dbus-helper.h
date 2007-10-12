@@ -85,7 +85,7 @@ struct HippoDBusMember
     HippoDBusMemberType member_type;
     const char *name;
     const char *in_args;
-    const char *out_args;
+    const char *out_args; /* FIXME right now for signals we use out_args, should be in_args */
     /* for a signal the handler is NULL
      */
     HippoDBusHandler handler;
@@ -109,6 +109,7 @@ struct HippoDBusServiceTracker
 
 struct HippoDBusSignalTracker
 {
+    /* FIXME there's no way to specify the object path */
     const char *interface;
     const char *signal;
     HippoDBusSignalHandler handler;

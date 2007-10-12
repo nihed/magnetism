@@ -1939,36 +1939,7 @@ handle_message(DBusConnection     *connection,
                 dbus_message_unref(reply);
             }
         } else if (path && member &&
-                   strcmp(path, HIPPO_DBUS_ONLINE_PREFS_PATH) == 0) {
-            DBusMessage *reply;
-            
-            reply = NULL;
-            result = DBUS_HANDLER_RESULT_HANDLED;
-            
-            if (strcmp(member, "GetPreference") == 0) {
-                /* GetPreference is often async (no immediate reply)
-                 * since it may need to block on the XMPP connection.
-                 * If it decides to be synchronous it will return
-                 * a reply, otherwise NULL
-                 */
-                reply = hippo_dbus_handle_get_preference(dbus, message);
-            } else if (strcmp(member, "SetPreference") == 0) {
-                reply = hippo_dbus_handle_set_preference(dbus, message);
-            } else if (strcmp(member, "Introspect") == 0) {
-                reply = hippo_dbus_handle_introspect_prefs(dbus, message);
-            } else if (strcmp(member, "IsReady") == 0) {
-                reply = hippo_dbus_handle_is_ready(dbus, message);
-            } else {
-                /* Set this back so the default handler can return an error */
-                result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-            }
-
-            if (reply != NULL) {
-                dbus_connection_send(dbus->connection, reply, NULL);
-                dbus_message_unref(reply);
-            }
-         } else if (path && member &&
-                    strcmp(path, HIPPO_DBUS_MUGSHOT_PATH) == 0) {
+                   strcmp(path, HIPPO_DBUS_MUGSHOT_PATH) == 0) {
             DBusMessage *reply;
             
             reply = NULL;
