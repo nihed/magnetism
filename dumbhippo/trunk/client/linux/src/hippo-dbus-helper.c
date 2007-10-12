@@ -991,7 +991,8 @@ emit_signal_valist_appender(DBusConnection          *connection,
             g_warning("no memory to append signal args");
         }
     }
-    
+
+    /* FIXME this is broken, signals only have in_args, not out_args */
     if (!dbus_message_has_signature(message, member->out_args)) {
         g_warning("Tried to emit signal %s %s with args %s but should have been %s",
                   interface, signal_name, dbus_message_get_signature(message), member->out_args);

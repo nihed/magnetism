@@ -10,6 +10,7 @@
 #include "hippo-dbus-server.h"
 #include "hippo-dbus-web.h"
 #include "hippo-dbus-settings.h"
+#include "hippo-dbus-helper.h"
 #include "main.h"
 
 /* This is its own file since it could end up being a fair bit of code eventually
@@ -21,16 +22,15 @@ on_ready_changed(HippoSettings *settings,
                  void          *data)
 {
     DBusConnection *dbus_connection = data;
-    DBusMessage *message;
 
     g_debug("emitting ReadyChanged ready=%d", ready);
-    
-    message = dbus_message_new_signal(HIPPO_DBUS_ONLINE_PREFS_PATH,
-                                      HIPPO_DBUS_PREFS_INTERFACE,
-                                      "ReadyChanged");
-    dbus_message_append_args(message, DBUS_TYPE_BOOLEAN, &ready, DBUS_TYPE_INVALID);
-    dbus_connection_send(dbus_connection, message, NULL);
-    dbus_message_unref(message);
+
+    hippo_dbus_helper_emit_signal(dbus_connection,
+                                  HIPPO_DBUS_ONLINE_PREFS_PATH,
+                                  HIPPO_DBUS_PREFS_INTERFACE,
+                                  "ReadyChanged",
+                                  DBUS_TYPE_BOOLEAN, &ready,
+                                  DBUS_TYPE_INVALID);
 }
 
 static void
@@ -39,16 +39,15 @@ on_setting_changed(HippoSettings *settings,
                    void          *data)
 {
     DBusConnection *dbus_connection = data;
-    DBusMessage *message;
 
     g_debug("emitting PreferenceChanged key=%s", key);
-    
-    message = dbus_message_new_signal(HIPPO_DBUS_ONLINE_PREFS_PATH,
-                                      HIPPO_DBUS_PREFS_INTERFACE,
-                                      "PreferenceChanged");
-    dbus_message_append_args(message, DBUS_TYPE_STRING, &key, DBUS_TYPE_INVALID);
-    dbus_connection_send(dbus_connection, message, NULL);
-    dbus_message_unref(message);
+
+    hippo_dbus_helper_emit_signal(dbus_connection,
+                                  HIPPO_DBUS_ONLINE_PREFS_PATH,
+                                  HIPPO_DBUS_PREFS_INTERFACE,
+                                  "PreferenceChanged",
+                                  DBUS_TYPE_STRING, &key,
+                                  DBUS_TYPE_INVALID);
 }
 
 static HippoSettings*
@@ -81,26 +80,6 @@ get_and_ref_settings(DBusConnection *dbus_connection)
     return settings;
 }
 
-void
-hippo_dbus_try_acquire_online_prefs_manager(DBusConnection *connection,
-                                            gboolean        replace)
-{
-    dbus_uint32_t flags;
-
-    /* We do want to be queued if we don't get this right away */
-    flags = DBUS_NAME_FLAG_ALLOW_REPLACEMENT;
-    if (replace)
-        flags |= DBUS_NAME_FLAG_REPLACE_EXISTING;
-
-    /* we just ignore errors on this */
-    dbus_bus_request_name(connection, HIPPO_DBUS_ONLINE_PREFS_BUS_NAME,
-                          flags,
-                          NULL);
-
-    /* note that calling get_and_ref_settings() in here is bad, because HippoApp has
-     * not been created
-     */
-}
 
 typedef struct SettingArrivedData SettingArrivedData;
 struct SettingArrivedData {
@@ -184,15 +163,18 @@ setting_arrived(const char *key,
     g_free(sad);
 }
 
-DBusMessage*
-hippo_dbus_handle_get_preference(HippoDBus   *dbus,
-                                 DBusMessage *message)
+static DBusMessage*
+handle_get_preference(void            *object,
+                      DBusMessage     *message,
+                      DBusError       *error)
 {
     const char *key;
     const char *signature;
     HippoSettings *settings;
     SettingArrivedData *sad;
     DBusConnection *dbus_connection;
+
+    dbus_connection = object;
     
     key = NULL;
     signature = NULL;
@@ -216,8 +198,6 @@ hippo_dbus_handle_get_preference(HippoDBus   *dbus,
         return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
                                       _("Only STRING, INT32, BOOLEAN values supported for now"));
     }
-
-    dbus_connection = hippo_dbus_get_connection(dbus);    
     
     settings = get_and_ref_settings(dbus_connection);
 
@@ -244,9 +224,10 @@ hippo_dbus_handle_get_preference(HippoDBus   *dbus,
     return NULL; /* no synchronous reply, we'll send it async or we just sent it above */
 }
 
-DBusMessage*
-hippo_dbus_handle_set_preference(HippoDBus   *dbus,
-                                 DBusMessage *message)
+static DBusMessage*
+handle_set_preference(void            *object,
+                      DBusMessage     *message,
+                      DBusError       *error)
 {
     DBusMessage *reply;
     HippoSettings *settings;
@@ -255,6 +236,9 @@ hippo_dbus_handle_set_preference(HippoDBus   *dbus,
     const char *key;
     int value_type;
     char *value;
+    DBusConnection *dbus_connection;
+
+    dbus_connection = object;
     
     if (!dbus_message_has_signature(message, "sv")) {
         return dbus_message_new_error(message,
@@ -303,7 +287,7 @@ hippo_dbus_handle_set_preference(HippoDBus   *dbus,
         break;
     }
 
-    settings = get_and_ref_settings(hippo_dbus_get_connection(dbus));
+    settings = get_and_ref_settings(dbus_connection);    
     
     hippo_settings_set(settings, key, value);
 
@@ -316,14 +300,47 @@ hippo_dbus_handle_set_preference(HippoDBus   *dbus,
     return reply;
 }
 
-DBusMessage*
-hippo_dbus_handle_is_ready(HippoDBus   *dbus,
-                           DBusMessage *message)
+static DBusMessage*
+handle_unset_preference(void            *object,
+                        DBusMessage     *message,
+                        DBusError       *error)
+{
+    DBusMessage *reply;
+    HippoSettings *settings;
+    const char *key;
+    DBusConnection *dbus_connection;
+
+    dbus_connection = object;
+
+    if (!dbus_message_get_args(message, error,
+                               DBUS_TYPE_STRING, &key,
+                               DBUS_TYPE_INVALID))
+        return NULL;
+
+    settings = get_and_ref_settings(dbus_connection);    
+    
+    hippo_settings_set(settings, key, NULL);
+
+    g_object_unref(settings);
+    
+    /* Just an empty "ack" reply */
+    reply = dbus_message_new_method_return(message);
+
+    return reply;
+}
+
+static DBusMessage*
+handle_is_ready(void            *object,
+                DBusMessage     *message,
+                DBusError       *error)
 {
     HippoSettings *settings;
     dbus_bool_t v_BOOLEAN;
     DBusMessage *reply;
+    DBusConnection *dbus_connection;
 
+    dbus_connection = object;
+    
     g_debug("handling IsReady()");
     
     if (!dbus_message_has_signature(message, "")) {
@@ -331,82 +348,98 @@ hippo_dbus_handle_is_ready(HippoDBus   *dbus,
                                       DBUS_ERROR_INVALID_ARGS,
                                       _("Expected zero arguments"));
     }
-
-    settings = get_and_ref_settings(hippo_dbus_get_connection(dbus));
+    
+    settings = get_and_ref_settings(dbus_connection);
     v_BOOLEAN = hippo_settings_get_ready(settings);
     g_object_unref(settings);
-
+    
     reply = dbus_message_new_method_return(message);
     dbus_message_append_args(reply, DBUS_TYPE_BOOLEAN, &v_BOOLEAN, DBUS_TYPE_INVALID);
-
+    
     return reply;
 }
 
-
-DBusMessage*
-hippo_dbus_handle_introspect_prefs(HippoDBus   *dbus,
-                                   DBusMessage *message)
+static dbus_bool_t
+handle_get_ready(void            *object,
+                 const char      *prop_name,
+                 DBusMessageIter *append_iter,
+                 DBusError       *error)
 {
-    GString *xml;
-    DBusMessage *reply;
+    HippoSettings *settings;
+    dbus_bool_t v_BOOLEAN;
+    DBusConnection *dbus_connection;
 
-    xml = g_string_new(NULL);
+    dbus_connection = object;
     
-    g_string_append(xml, DBUS_INTROSPECT_1_0_XML_DOCTYPE_DECL_NODE);
-        
-    g_string_append(xml, "<node>\n");
-        
-    g_string_append_printf(xml, "  <interface name=\"%s\">\n", DBUS_INTERFACE_INTROSPECTABLE);
-        
-    g_string_append(xml, "    <method name=\"Introspect\">\n");
-        
-    g_string_append_printf(xml, "      <arg name=\"data\" direction=\"out\" type=\"%s\"/>\n", DBUS_TYPE_STRING_AS_STRING);
-        
-    g_string_append(xml, "    </method>\n");
-        
-    g_string_append(xml, "  </interface>\n");
-
-    g_string_append_printf(xml, "  <interface name=\"%s\">\n",
-                           HIPPO_DBUS_PREFS_INTERFACE);
-
-    g_string_append(xml,
-                    "    <method name=\"GetPreference\">\n"
-                    "      <arg direction=\"in\" type=\"s\"/>\n"
-                    "      <arg direction=\"in\" type=\"g\"/>\n"
-                    "      <arg direction=\"out\" type=\"v\"/>\n"
-                    "    </method>\n");
-
-    g_string_append(xml,
-                    "    <method name=\"SetPreference\">\n"
-                    "      <arg direction=\"in\" type=\"s\"/>\n"
-                    "      <arg direction=\"in\" type=\"v\"/>\n"
-                    "    </method>\n");
-
-    g_string_append(xml,
-                    "    <method name=\"IsReady\">\n"
-                    "      <arg direction=\"out\" type=\"b\"/>\n"
-                    "    </method>\n");
-
-    g_string_append(xml,
-                    "    <signal name=\"ReadyChanged\">\n"
-                    "      <arg direction=\"in\" type=\"b\"/>\n"
-                    "    </signal>\n");
-
-    g_string_append(xml,
-                    "    <signal name=\"PreferenceChanged\">\n"
-                    "      <arg direction=\"in\" type=\"s\"/>\n"
-                    "    </signal>\n");
+    g_debug("handling GetProperty 'ready'");
     
-    g_string_append(xml, "  </interface>\n");        
-  
-    g_string_append(xml, "</node>\n");
-
-
-    reply = dbus_message_new_method_return(message);
-
-    dbus_message_append_args(reply, DBUS_TYPE_STRING, &xml->str, DBUS_TYPE_INVALID);
-
-    g_string_free(xml, TRUE);
+    settings = get_and_ref_settings(dbus_connection);
+    v_BOOLEAN = hippo_settings_get_ready(settings);
+    g_object_unref(settings);
     
-    return reply;
+    return dbus_message_iter_append_basic(append_iter, DBUS_TYPE_BOOLEAN, &v_BOOLEAN);
+}
+
+
+/*
+ * Lame summary of the org.freedesktop.Preferences interface
+ * 
+ * VARIANT GetPreference(STRING key, SIGNATURE expectedType) throws NotFound, WrongType, NotReady
+ * void SetPreference(STRING key, VARIANT v) # just queues up if offline
+ * void UnsetPreference(STRING key)
+ * BOOLEAN IsReady()
+ * signal ReadyChanged(BOOLEAN status)
+ * signal PreferenceChanged(STRING key)
+ *
+ */
+
+static const HippoDBusMember prefs_members[] = {
+    { HIPPO_DBUS_MEMBER_METHOD, "GetPreference", "sg", "v", handle_get_preference },
+    { HIPPO_DBUS_MEMBER_METHOD, "SetPreference", "s", "v", handle_set_preference },
+    { HIPPO_DBUS_MEMBER_METHOD, "UnsetPreference", "s", "", handle_unset_preference },
+    /* deprecated, use the Ready property */
+    { HIPPO_DBUS_MEMBER_METHOD, "IsReady", "", "b", handle_is_ready },
+
+    { HIPPO_DBUS_MEMBER_SIGNAL, "ReadyChanged", "", "", NULL },
+    /* FIXME the signal params should be "in" params */
+    { HIPPO_DBUS_MEMBER_SIGNAL, "PreferenceChanged", "", "s", NULL },
+
+    { 0, NULL }
+};
+
+static const HippoDBusProperty prefs_properties[] = {
+    { "ready", DBUS_TYPE_STRING_AS_STRING, handle_get_ready, NULL },
+    { NULL, }
+};
+
+void
+hippo_dbus_try_acquire_online_prefs_manager(DBusConnection *connection,
+                                            gboolean        replace)
+{
+    dbus_uint32_t flags;
+
+    /* We do want to be queued if we don't get this right away */
+    flags = DBUS_NAME_FLAG_ALLOW_REPLACEMENT;
+    if (replace)
+        flags |= DBUS_NAME_FLAG_REPLACE_EXISTING;
+
+    /* we just ignore errors on this */
+    dbus_bus_request_name(connection, HIPPO_DBUS_ONLINE_PREFS_BUS_NAME,
+                          flags,
+                          NULL);
+
+    /* note that calling get_and_ref_settings() in here is bad, because HippoApp has
+     * not been created
+     */
+
+    hippo_dbus_helper_register_interface(connection,
+                                         HIPPO_DBUS_PREFS_INTERFACE,
+                                         prefs_members,
+                                         prefs_properties);
+
+    hippo_dbus_helper_register_object(connection,
+                                      HIPPO_DBUS_ONLINE_PREFS_PATH,
+                                      connection,
+                                      HIPPO_DBUS_PREFS_INTERFACE,
+                                      NULL);
 }
