@@ -1,10 +1,13 @@
 bin_PROGRAMS += online-prefs-sync-daemon
 
-online_prefs_sync_daemon_CPPFLAGS = $(AM_CPPFLAGS) $(ONLINE_PREFS_SYNC_CFLAGS)
+online_prefs_sync_daemon_CPPFLAGS = $(AM_CPPFLAGS) $(ONLINE_PREFS_SYNC_CFLAGS) \
+	-DCONFIG_FILES_DIR=\"$(pkgdatadir)/conf.d\"
 online_prefs_sync_daemon_LDFLAGS = $(ONLINE_PREFS_SYNC_LIBS)
 
 online_prefs_sync_daemon_SOURCES =			\
 	online-prefs-sync/hippo-dbus-helper.c		\
 	online-prefs-sync/hippo-dbus-helper.h		\
 	online-prefs-sync/hippo-dbus-helper-rename.h	\
-	online-prefs-sync/main.c
+	online-prefs-sync/main.c			\
+	online-prefs-sync/whitelist.c			\
+	online-prefs-sync/whitelist.h
