@@ -9,6 +9,7 @@ import global_mugshot
 import libbig
 from libbig.singletonmixin import Singleton
 from bigboard.libbig.gutil import *
+from bigboard.libbig.logutil import log_except
 
 ## FIXME remove these from the Stock class ... I can't figure out how to
 ## refer to them from outside a Stock instance with them there, anyway
@@ -17,6 +18,7 @@ SIZE_BULL = 2
 SIZE_BULL_CONTENT_PX = 200
 SIZE_BEAR_CONTENT_PX = 36
 
+_logger = logging.getLogger("bigboard.Stock")
 
 class Stock(gobject.GObject):
     __gsignals__ = {
@@ -54,7 +56,7 @@ class Stock(gobject.GObject):
         
         # For use in subclasses as well
         self._logger = logging.getLogger('bigboard.stocks.' + self._id)  
-        self._logger.debug("initializing")
+        _logger.debug("initializing")
         
     def get_id(self):
         return self._id
@@ -108,8 +110,9 @@ class AbstractMugshotStock(Stock):
         self._mugshot = global_mugshot.get_mugshot()
         self._mugshot.connect("initialized", lambda mugshot: self._on_mugshot_initialized())
         if self._mugshot.get_initialized():
-            call_idle(lambda: self._on_mugshot_initialized())
-        self._mugshot.connect("connection-status", lambda mugshot, auth, xmpp, contacts: self.__handle_mugshot_connection_status(auth, xmpp, contacts))  
+            call_idle(self.__invoke_mugshot_initialized)
+        self._mugshot.connect("connection-status", lambda mugshot, auth, xmpp, contacts: self.__handle_mugshot_connection_status(auth, xmpp, contacts))
+        call_idle(self.__handle_mugshot_connection_status, *self._mugshot.current_connection_status())  
         
         self.__cursize = None
         self.__box = hippo.CanvasBox()
@@ -142,6 +145,10 @@ class AbstractMugshotStock(Stock):
     def get_mugshot_initialized(self):
         return self._mugshot_initialized
         
+    @log_except(_logger)
+    def __invoke_mugshot_initialized(self):
+        self._on_mugshot_initialized()        
+        
     def _on_mugshot_initialized(self):
         logging.debug("mugshot intialized, hooking up %d handlers", len(self._dependent_handlers))
         self._mugshot_initialized = True
@@ -154,9 +161,10 @@ class AbstractMugshotStock(Stock):
         is initialized and connected."""
         pass
 
+    @log_except(_logger)
     def __handle_mugshot_connection_status(self, auth, xmpp, contacts):
         if auth != self._auth:
-            self._logger.debug("emitting visibility: %s", auth)
+            _logger.debug("emitting visibility: %s", auth)
             self.emit("visible", auth)
         self._auth = auth
         self.__sync_content()        
