@@ -111,6 +111,7 @@ class Mugshot(gobject.GObject):
         self._logger.debug("reset")  
         # Generic properties
         self.__baseprops = None
+        self.__connection_status = (None, None, None)
 
         self.__self_proxy = None
         self.__self = None
@@ -202,6 +203,7 @@ class Mugshot(gobject.GObject):
     @log_except(_logger)
     def __on_connection_status(self, has_auth, connected, contacts):
         self._logger.debug("connection status auth=%s connected=%s contacts=%s" % (has_auth, connected, contacts))
+        self.__connection_status = (has_auth, connected, contacts)
         self.emit("connection-status", has_auth, connected, contacts)         
 
     def __get_connection_status(self):
@@ -212,6 +214,9 @@ class Mugshot(gobject.GObject):
     def __on_connection_status_changed(self):
         self._logger.debug("connection status changed")        
         self.__get_connection_status()
+        
+    def current_connection_status(self):
+        return self.__connection_status
     
     def get_pref(self, key):
         if self.__prefs.has_key(key):
