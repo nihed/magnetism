@@ -49,7 +49,8 @@ _IG_MiniMessage.prototype = {
 }
 
 '''    
-    def __init__(self, f, env):
+    def __init__(self, srcurl, f, env):
+        self.srcurl = srcurl
         doc = xml.etree.ElementTree.ElementTree()        
      
         doc.parse(f)
@@ -111,7 +112,7 @@ class Widget(gtk.VBox):
         f = gtk.Frame()
         self.__moz = mozembed_wrap.MozClient()
         _logger.debug("Reading module url %s", url)
-        self.__content = content = WidgetParser(urllib2.urlopen(url), env)
+        self.__content = content = WidgetParser(url, urllib2.urlopen(url), env)
         (content_type, content_data) = content.content
         if content_type == 'html':
             self.__moz.set_data("http://www.google.com/", content_data)
