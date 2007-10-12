@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import os, sys, threading, getopt, logging, StringIO, stat, signal
-import xml.dom.minidom
+import xml.dom.minidom, urllib2, urlparse
 
 import gobject, gtk, pango
 import gnome.ui, gconf
@@ -114,6 +114,62 @@ back up temporarily.'''))
         gconf.client_get_default().set_bool(GCONF_PREFIX + 'visible', True)
         return False        
     
+class StockManager(object):
+    def __init__(self):
+        super(StockManager, self).__init__()
+        self.__stockdir = os.path.join(os.path.dirname(bigboard.__file__), 'stocks')
+        self.__widget_environ = widget_environ = pyonlinedesktop.widget.WidgetEnvironment()
+        widget_environ['google_apps_auth_path'] = ''           
+
+    def get_builtins(self):
+        for fname in os.listdir(self.__stockdir):
+            fpath = os.path.join(self.__stockdir, fname)
+            if fpath.endswith('.xml'):
+                yield 'builtin://' + fname
+
+    def load_metadata(self, url):
+        _logger.debug("loading stock url %s", url)
+        builtin_scheme = 'builtin://'
+        if url.startswith(builtin_scheme):
+            url = 'file://' + os.path.join(self.__stockdir, url[len(builtin_scheme):])
+        return pyonlinedesktop.widget.WidgetParser(url, urllib2.urlopen(url), self.__widget_environ)
+    
+    def load(self, module, **kwargs):
+        (content_type, content_data) = module.content
+        if content_type == 'online-desktop-builtin':
+            return self.__load_builtin(module, **kwargs)
+        
+    def load_url(self, url, **kwargs):
+        return self.load(self.load_metadata(url), **kwargs)
+        
+    def __load_builtin(self, module, notitle=False):
+        modpath = urlparse.urlparse(module.srcurl).path
+        modfile = os.path.basename(modpath)
+        dirname = modfile[:modfile.rfind('.')]
+        dirpath = os.path.join(self.__stockdir, dirname)
+        sys.path.append(dirpath)
+        pfxidx = modfile.find('_')
+        if pfxidx >= 0:
+            classname = dirname[pfxidx+1:]
+        else:
+            classname = dirname
+        classname = classname[0].upper() + classname[1:] + 'Stock'
+        try:
+            _logger.info("importing module %s (title: %s) from dir %s", classname, module.title, dirpath)
+            pymodule = __import__(classname)
+            class_constructor = getattr(pymodule, classname)
+            _logger.debug("got constructor %s", class_constructor)
+            if notitle:
+                title = ''
+            else:
+                title = module.title
+            stock = class_constructor({'id': modfile, 'ticker': title}, panel=self)
+            return stock                  
+        except:
+            _logger.exception("failed to add stock %s", classname)
+            return None
+        
+         
 class Exchange(hippo.CanvasBox):
     """A container for stocks."""
     
@@ -247,11 +303,10 @@ class BigBoardPanel(dbus.service.Object):
             _logger.warn("Couldn't find screensaver")
             pass
         
-        self.__widget_environ = widget_environ = pyonlinedesktop.widget.WidgetEnvironment()
-        widget_environ['google_apps_auth_path'] = ''        
-        self.__self_stock = self.__load_stock_url('builtin://self.xml', notitle=True)
+        self.__stock_manager = StockManager()     
+        self.__self_stock = self.__stock_manager.load_url('builtin://self.xml', notitle=True)
         self.list(self.__self_stock)
-        self.__search_stock = self.__load_stock_url('builtin://search.xml', notitle=True)
+        self.__search_stock = self.__stock_manager.load_url('builtin://search.xml', notitle=True)
         self.list(self.__search_stock)
         gobject.idle_add(self.__list_initial_stocks)
         
@@ -291,47 +346,16 @@ class BigBoardPanel(dbus.service.Object):
     def __on_focus(self):
         _logger.debug("got focus keypress")
         self.toggle_popout()
-    
-    def __load_builtin_stock(self, modfile, notitle=False):
-        stockdir = os.path.join(os.path.dirname(bigboard.__file__), 'stocks') 
-        srcpath = os.path.join(stockdir, modfile)
-        _logger.debug("parsing path %s", srcpath)
-        widget = pyonlinedesktop.widget.WidgetParser(open(srcpath), self.__widget_environ)
-        dirname = modfile[:modfile.rfind('.')]
-        dirpath = os.path.join(stockdir, dirname)
-        sys.path.append(dirpath)
-        pfxidx = modfile.find('_')
-        if pfxidx >= 0:
-            classname = dirname[pfxidx+1:]
-        else:
-            classname = dirname
-        classname = classname[0].upper() + classname[1:] + 'Stock'
-        try:
-            _logger.info("importing module %s (title: %s) from dir %s", classname, widget.title, dirpath)
-            pymodule = __import__(classname)
-            class_constructor = getattr(pymodule, classname)
-            _logger.debug("got constructor %s", class_constructor)
-            if notitle:
-                title = ''
-            else:
-                title = widget.title
-            stock = class_constructor({'id': modfile, 'ticker': title}, panel=self)
-            return stock                  
-        except:
-            _logger.exception("failed to add stock %s", classname)
-            return None
         
-    def __load_stock_url(self, url, **kwargs):
-        _logger.debug("loading stock url %s", url)
-        builtin_scheme = 'builtin://'
-        if url.startswith(builtin_scheme):
-            return self.__load_builtin_stock(url[len(builtin_scheme):], **kwargs)       
+    def get_all_stock_widgets(self):
+        for url in self.__stock_manager.get_builtins():
+            yield self.__stock_manager.load_metadata(url)
 
     @log_except(_logger)
     def __list_initial_stocks(self):
         _logger.debug("doing initial stock load")
         for url in gconf.client_get_default().get_list(GCONF_PREFIX + 'url_listings', gconf.VALUE_STRING):
-            stock = self.__load_stock_url(url)
+            stock = self.__stock_manager.load_url(url)
             if not stock:
                 _logger.debug("failed to load stock from %s", url)
                 continue
