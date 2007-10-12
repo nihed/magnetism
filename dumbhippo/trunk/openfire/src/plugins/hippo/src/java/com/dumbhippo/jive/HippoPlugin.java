@@ -91,7 +91,7 @@ public class HippoPlugin implements Plugin {
 			addIQHandler(new GroupIQHandler());			
 			addIQHandler(new BlocksIQHandler());
 			addIQHandler(new AccountQuestionIQHandler());
-			addIQHandler(new SettingsIQHandler());
+			addIQHandler(new LegacySettingsIQHandler());
 			addIQHandler(new WhereImIQHandler());
 			addIQHandler(new OldContactsIQHandler());
 			addIQHandler(new ContactsIQHandler());

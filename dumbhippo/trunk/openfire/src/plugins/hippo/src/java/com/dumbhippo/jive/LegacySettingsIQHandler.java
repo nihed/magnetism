@@ -23,13 +23,13 @@ import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.tx.RetryException;
 
 /** 
- * IQ handler for getting your desktop settings
+ * IQ handler for getting your desktop settings; this is the old pre-data-model version.
  * 
  * @author Havoc Pennington
  *
  */
-@IQHandler(namespace=SettingsIQHandler.SETTINGS_NAMESPACE)
-public class SettingsIQHandler extends AnnotatedIQHandler implements LiveEventListener<DesktopSettingChangedEvent> {
+@IQHandler(namespace=LegacySettingsIQHandler.SETTINGS_NAMESPACE)
+public class LegacySettingsIQHandler extends AnnotatedIQHandler implements LiveEventListener<DesktopSettingChangedEvent> {
 	static final String SETTINGS_NAMESPACE = "http://dumbhippo.com/protocol/settings";
 	
 	@EJB
@@ -38,7 +38,7 @@ public class SettingsIQHandler extends AnnotatedIQHandler implements LiveEventLi
 	@EJB
 	private IdentitySpider spider;
 	
-	public SettingsIQHandler() {
+	public LegacySettingsIQHandler() {
 		super("Hippo settings IQ Handler");
 		Log.debug("creating SettingsIQHandler");
 	}
