@@ -4,6 +4,7 @@
 #include <glib.h>
 #include <gconf/gconf-client.h>
 #include "hippo-dbus-helper.h"
+#include "whitelist.h"
 
 /* Sync tasks are in a hash by gconf key. This means we can
  * only have 1 pending sync in 1 direction per key at a time.
@@ -46,6 +47,84 @@ get_gconf(void)
     }
     return global_gconf_client;
 }
+
+static gboolean
+gconf_key_to_dbus_key(const char *gconf_key,
+                      char      **dbus_key)
+{
+    KeyScope scope;
+
+    scope = whitelist_get_key_scope(gconf_key);
+
+    *dbus_key = NULL;
+
+    if (scope == KEY_SCOPE_NOT_SAVED_REMOTELY) {
+        return FALSE;
+    } else if (scope == KEY_SCOPE_SAVED_PER_USER) {
+        *dbus_key = g_strdup_printf("/gconf%s", gconf_key);
+        return TRUE;
+    } else if (scope == KEY_SCOPE_SAVED_PER_MACHINE) {
+        char *machine_id;
+        machine_id = dbus_get_local_machine_id();
+        *dbus_key = g_strdup_printf("/gconf-%s%s",
+                                    machine_id, gconf_key);
+        g_free(machine_id);
+        return TRUE;
+    } else {
+        g_assert_not_reached();
+        return FALSE;
+    }
+}
+
+static gboolean
+dbus_key_to_gconf_key(const char *dbus_key,
+                      char      **gconf_key)
+{
+    *gconf_key = NULL;
+    
+    if (g_str_has_prefix(dbus_key, "/gconf/")) {
+        *gconf_key = g_strdup(dbus_key + strlen("/gconf"));
+
+        if (whitelist_get_key_scope(*gconf_key) != KEY_SCOPE_SAVED_PER_USER) {
+            g_free(*gconf_key);
+            *gconf_key = NULL;
+            return FALSE;
+        } else {
+            return TRUE;
+        }
+    } else if (g_str_has_prefix(dbus_key, "/gconf-")) {
+        const char *slash;
+        const char *machine_id_start;
+        char *key_machine_id;
+        char *machine_id;
+        gboolean machine_id_matches;
+        
+        slash = strchr(dbus_key+1, '/');
+        if (slash == NULL)
+            return FALSE;
+
+        machine_id_start = dbus_key + strlen("/gconf-");
+        key_machine_id = g_strndup(machine_id_start,
+                                   slash - machine_id_start);
+        machine_id = dbus_get_local_machine_id();
+        machine_id_matches = FALSE;
+        if (strcmp(key_machine_id, machine_id) == 0) {
+            machine_id_matches = TRUE;
+        }
+        g_free(machine_id);
+        g_free(key_machine_id);
+
+        if (machine_id_matches) {
+            *gconf_key = g_strdup(slash);
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    } else {
+        return FALSE;
+    }
+}
+
 
 typedef union
 {
@@ -221,7 +300,11 @@ task_value_appender(DBusMessage *message,
     DBusMessageIter iter, variant_iter;
     char *dbus_key;
 
-    dbus_key = g_strdup_printf("/gconf%s", task->gconf_key);
+    if (!gconf_key_to_dbus_key(task->gconf_key, &dbus_key)) {
+        g_debug("gconf key '%s' is not saved online", task->gconf_key);
+        sync_task_free(task);
+        return FALSE;
+    }
 
     g_debug("Setting %s online", dbus_key);
     
@@ -289,18 +372,23 @@ sync_idle(void *data)
                                                                 task_value_appender,
                                                                 task);
                 } else {
-                    char *dbus_key = g_strdup_printf("/gconf%s", task->gconf_key);
+                    char *dbus_key;
 
-                    g_debug("Unsetting %s online", dbus_key);
+                    if (gconf_key_to_dbus_key(task->gconf_key, &dbus_key)) {
+                        g_debug("Unsetting %s online", dbus_key);
+                        
+                        hippo_dbus_proxy_call_method_async(manager->proxy,
+                                                           "UnsetPreference",
+                                                           NULL, NULL, NULL,
+                                                           DBUS_TYPE_STRING,
+                                                           &dbus_key,
+                                                           DBUS_TYPE_INVALID);
+                        g_free(dbus_key);
+                    } else {
+                        g_debug("gconf key '%s' is not saved online", task->gconf_key);
+                    }
                     
-                    hippo_dbus_proxy_call_method_async(manager->proxy,
-                                                       "UnsetPreference",
-                                                       NULL, NULL, NULL,
-                                                       DBUS_TYPE_STRING,
-                                                       &dbus_key,
-                                                       DBUS_TYPE_INVALID);
-                    g_free(dbus_key);
-                    sync_task_free(task);
+                    sync_task_free(task);                        
                 }                                    
             }        
             break;
@@ -415,13 +503,16 @@ on_get_preference_reply(DBusMessage *reply,
         return;
     }
 
-    gconf_key = g_strdup(key + strlen("/gconf"));
+    if (dbus_key_to_gconf_key(key, &gconf_key)) {
+        manager_add_sync_task(global_manager, PREFS_SYNC_FROM_ONLINE_TO_GCONF,
+                              gconf_key, gconf_value);
+        
+        g_free(gconf_key);
+    } else {
+        g_debug("online key '%s' does not map to a gconf key on this machine",
+                key);
+    }
     
-    manager_add_sync_task(global_manager, PREFS_SYNC_FROM_ONLINE_TO_GCONF,
-                          gconf_key, gconf_value);
-
-    g_free(gconf_key);
-
     if (gconf_value)
         gconf_value_free(gconf_value);
 }
@@ -510,27 +601,30 @@ on_prefs_manager_pref_changed(DBusConnection *connection,
         g_warning("Unexpected signature for PreferenceChanged signal");
         return;
     }
-
-    if (!g_str_has_prefix(key, "/gconf"))
-        return;
     
     if (global_manager->proxy) {
-        char *signature;
-        const char *gconf_key;
-        
-        gconf_key = key + strlen("/gconf");
+        char *gconf_key;
 
-        signature = get_dbus_signature_for_gconf_key(gconf_key);
+        if (dbus_key_to_gconf_key(key, &gconf_key)) {
+            char *signature;
 
-        if (signature != NULL) {
-            hippo_dbus_proxy_call_method_async(global_manager->proxy,
-                                               "GetPreference",
-                                               on_get_preference_reply,
-                                               g_strdup(key), g_free,
-                                               DBUS_TYPE_STRING, &key,
-                                               DBUS_TYPE_SIGNATURE, &signature,
-                                               DBUS_TYPE_INVALID);
-            g_free(signature);
+            signature = get_dbus_signature_for_gconf_key(gconf_key);
+
+            if (signature != NULL) {
+                hippo_dbus_proxy_call_method_async(global_manager->proxy,
+                                                   "GetPreference",
+                                                   on_get_preference_reply,
+                                                   g_strdup(key), g_free,
+                                                   DBUS_TYPE_STRING, &key,
+                                                   DBUS_TYPE_SIGNATURE, &signature,
+                                                   DBUS_TYPE_INVALID);
+                g_free(signature);
+            }
+            
+            g_free(gconf_key);
+        } else {
+            g_debug("online key '%s' does not map to a gconf key on this machine",
+                    key);
         }
     }
 }
