@@ -2,6 +2,16 @@
 <gconfschemafile>
   <schemalist>
     <schema>
+      <key>/schemas/apps/bigboard/focus_key</key>
+      <applyto>/apps/bigboard/focus_key</applyto>
+      <owner>bigboard</owner>
+      <type>string</type>
+      <default>Super_L</default>
+      <locale name="C">
+        <short>Key name for focusing (and toggling popout state)</short>
+      </locale>
+    </schema>
+    <schema>
       <key>/schemas/apps/bigboard/expand</key>
       <applyto>/apps/bigboard/expand</applyto>
       <owner>bigboard</owner>
