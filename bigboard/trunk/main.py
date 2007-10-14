@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import os, sys, threading, getopt, logging, StringIO, stat, signal
-import xml.dom.minidom, urllib2, urlparse
+import xml.dom.minidom, urllib2, urlparse, subprocess
 
 import gobject, gtk, pango
 import gnome.ui, gconf
@@ -36,6 +36,10 @@ import bigboard.libbig.xmlquery
 import bigboard.libbig.stdout_logger
 import bigboard.keybinder
 
+_logger = logging.getLogger("bigboard.Main")
+
+_logger.debug("starting main")
+
 BUS_NAME_STR='org.gnome.BigBoard'
 BUS_IFACE=BUS_NAME_STR
 BUS_IFACE_PANEL=BUS_IFACE + ".Panel"
@@ -48,6 +52,15 @@ REEXEC_CMD = os.path.abspath(REEXEC_CMD)
 BB_DATADIR = os.getenv('BB_DATADIR')
 if BB_DATADIR:
     BB_DATADIR = os.path.abspath(BB_DATADIR)
+
+# We do this early because there is some breakage when fork()ing after we're doing
+# Python threading and/or gnomevfs stuff.
+try:    
+    DESKTOP_PATH = subprocess.Popen(['xdg-user-dir', 'DESKTOP'], stdout=subprocess.PIPE).communicate()[0].strip()
+    _logger.debug("got desktop path %s", DESKTOP_PATH)
+except OSError, e:
+    _logger.debug("caught error reading desktop path", exc_info=True)
+    DESKTOP_PATH = os.path.expanduser('~/Desktop') 
 
 def _find_in_datadir(fname):
     if BB_DATADIR:
@@ -63,8 +76,6 @@ def _find_in_datadir(fname):
         if os.access(fpath, os.R_OK):
             return fpath
     return None
-
-_logger = logging.getLogger("bigboard.Main")
 
 class GradientHeader(hippo.CanvasGradient):
     def __init__(self, **kwargs):
@@ -142,7 +153,7 @@ class StockManager(object):
     def load_url(self, url, **kwargs):
         return self.load(self.load_metadata(url), **kwargs)
         
-    def __load_builtin(self, module, notitle=False):
+    def __load_builtin(self, module, notitle=False, panel=None):
         modpath = urlparse.urlparse(module.srcurl).path
         modfile = os.path.basename(modpath)
         dirname = modfile[:modfile.rfind('.')]
@@ -163,7 +174,7 @@ class StockManager(object):
                 title = ''
             else:
                 title = module.title
-            stock = class_constructor({'id': modfile, 'ticker': title}, panel=self)
+            stock = class_constructor({'id': modfile, 'ticker': title}, panel=panel)
             return stock                  
         except:
             _logger.exception("failed to add stock %s", classname)
@@ -260,7 +271,7 @@ class BigBoardPanel(dbus.service.Object):
         self._dw.connect('enter-notify-event', self.__on_mouse_enter)        
         self._dw.connect('leave-notify-event', self.__on_mouse_leave)
         
-        gconf_client.notify_add(GCONF_PREFIX + 'listings', self.__on_listings_change)        
+        gconf_client.notify_add(GCONF_PREFIX + 'url_listings', self.__on_listings_change)        
 
         self._exchanges = []
         self.__prelisted = {}
@@ -304,9 +315,9 @@ class BigBoardPanel(dbus.service.Object):
             pass
         
         self.__stock_manager = StockManager()     
-        self.__self_stock = self.__stock_manager.load_url('builtin://self.xml', notitle=True)
+        self.__self_stock = self.__stock_manager.load_url('builtin://self.xml', notitle=True, panel=self)
         self.list(self.__self_stock)
-        self.__search_stock = self.__stock_manager.load_url('builtin://search.xml', notitle=True)
+        self.__search_stock = self.__stock_manager.load_url('builtin://search.xml', notitle=True, panel=self)
         self.list(self.__search_stock)
         gobject.idle_add(self.__list_initial_stocks)
         
@@ -355,7 +366,7 @@ class BigBoardPanel(dbus.service.Object):
     def __list_initial_stocks(self):
         _logger.debug("doing initial stock load")
         for url in gconf.client_get_default().get_list(GCONF_PREFIX + 'url_listings', gconf.VALUE_STRING):
-            stock = self.__stock_manager.load_url(url)
+            stock = self.__stock_manager.load_url(url, panel=self)
             if not stock:
                 _logger.debug("failed to load stock from %s", url)
                 continue
@@ -483,6 +494,9 @@ class BigBoardPanel(dbus.service.Object):
         
     def show(self):
         self.__sync_visible()
+        
+    def get_desktop_path(self):
+        return DESKTOP_PATH
 
     def __handle_activation(self):
         vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
