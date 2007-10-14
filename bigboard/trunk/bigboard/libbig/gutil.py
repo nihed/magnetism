@@ -1,4 +1,5 @@
 import os, sys, logging, weakref, functools
+from StringIO import StringIO
 
 import gobject
 
@@ -45,4 +46,22 @@ def defer_idle_func(timeout=100, **kwargs):
         return lambda *margs: call_timeout_once(timeout, functools.partial(f, *margs), **kwargs)
     return wrapped
 
-__all__ = ['call_timeout', 'call_idle', 'call_timeout_once', 'call_idle_once', 'defer_idle_func']
+def read_subprocess_idle(args, cb):
+    import subprocess
+    subp = subprocess.Popen(args, stdout=subprocess.PIPE, close_fds=True)
+    buf = StringIO()
+    watchid = None
+    def handle_data_avail(src, condition):
+        if (condition & gobject.IO_IN):
+            buf.write(os.read(src, 8192))
+        if ((condition & gobject.IO_HUP) or (condition & gobject.IO_ERR)):
+            cb(buf.getvalue())
+            os.close(src)
+            subp.wait()
+            gobject.source_remove(watchid)
+            return False
+        return True
+    watchid = gobject.io_add_watch(subp.stdout.fileno(), gobject.IO_IN | gobject.IO_ERR | gobject.IO_HUP, handle_data_avail)
+    return watchid
+
+__all__ = ['call_timeout', 'call_idle', 'call_timeout_once', 'call_idle_once', 'defer_idle_func', 'read_subprocess_idle']
