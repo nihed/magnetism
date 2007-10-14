@@ -264,7 +264,7 @@ class BigBoardPanel(dbus.service.Object):
         
         gconf_client = gconf.client_get_default()
 
-        self.__keybinding = "Super_L"
+        self.__keybinding = gconf_client.get_string('/apps/bigboard/focus_key')
         bigboard.keybinder.tomboy_keybinder_bind(self.__keybinding, self.__on_focus)
     
         self.__autohide_id = 0
