@@ -7,6 +7,8 @@ import gnome.ui
 import dbus, dbus.glib
 import hippo
 
+from pyonlinedesktop.fsutil import VfsMonitor
+
 import gdata.docs as gdocs
 import bigboard.libbig as libbig
 from bigboard.libbig.logutil import log_except
@@ -110,9 +112,13 @@ class LocalFile(File):
         try:            
             vfsstat = gnomevfs.get_file_info(uri, gnomevfs.FILE_INFO_GET_MIME_TYPE | gnomevfs.FILE_INFO_FOLLOW_LINKS)
         except gnomevfs.NotFoundError, e:
-            _logger.debug("Failed to get file info for target of '%s'", url, exc_info=True)
+            _logger.debug("No file info for target of '%s'", url)
             gobject.idle_add(cb, results)
             return
+        except:
+            _logger.debug("Failed to get file info for target of '%s'", url, exc_info=True)
+            gobject.idle_add(cb, results)
+            return        
         try:
             (image_name, flags) = gnome.ui.icon_lookup(itheme, thumbnails, url, file_info=vfsstat, mime_type=vfsstat.mime_type)
         except gnomevfs.NotFoundError, e:
@@ -166,10 +172,7 @@ class FilesStock(Stock, google_stock.GoogleStock):
         self.__display_limit = 5
         self.__recentf_path = os.path.expanduser('~/.recently-used.xbel') 
 
-        try:
-            self.desktop_path = subprocess.Popen(['xdg-user-dir', 'DESKTOP'], stdout=subprocess.PIPE).communicate()[0].strip()    
-        except OSError, e:
-            self.desktop_path = os.path.expanduser("~/Desktop")
+        self.desktop_path = self._panel.get_desktop_path()
 
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4, padding_top=2)
         self._recentbox = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4)
@@ -178,9 +181,9 @@ class FilesStock(Stock, google_stock.GoogleStock):
         self.__file_browser = None
         self._add_more_button(self.__on_more_button)
 
-        self.__monitor = gnomevfs.monitor_add('file://' + self.__recentf_path, gnomevfs.MONITOR_FILE, self.__update_local_files)
+        self.__monitor = VfsMonitor('file://' + self.__recentf_path, gnomevfs.MONITOR_FILE, self.__update_local_files)
         gobject.idle_add(self.__update_local_files)
-        
+
     def update_google_data(self, selected_gobj = None):
         if selected_gobj is not None:
             selected_gobj.fetch_documents(self.__on_documents_load, self.__on_failed_load)
