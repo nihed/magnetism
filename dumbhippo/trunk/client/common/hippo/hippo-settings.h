@@ -33,6 +33,8 @@ void           hippo_settings_get         (HippoSettings           *settings,
                                            void                    *data);
 gboolean       hippo_settings_get_ready   (HippoSettings           *settings);
 
+char**         hippo_settings_get_all_names(HippoSettings          *settings);
+
 G_END_DECLS
 
 #endif /* __HIPPO_SETTINGS_H__ */
