@@ -1,9 +1,9 @@
-#include <nspr4/nspr.h>
-#include <nspr4/plbase64.h>
-#include <nspr4/prtypes.h>
-#include <nss3/nss.h>
-#include <nss3/pk11pub.h>
-#include <nss3/pk11sdr.h>
+#include <nspr.h>
+#include <plbase64.h>
+#include <prtypes.h>
+#include <nss.h>
+#include <pk11pub.h>
+#include <pk11sdr.h>
 
 /* incompatibility between nspr and Python */
 #undef HAVE_LONG_LONG
