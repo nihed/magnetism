@@ -180,6 +180,7 @@ class StockManager(gobject.GObject):
         modfile = os.path.basename(modpath)
         dirname = modfile[:modfile.rfind('.')]
         dirpath = os.path.join(self.__stockdir, dirname)
+        _logger.debug("appending to path: %s", dirpath)
         sys.path.append(dirpath)
         pfxidx = modfile.find('_')
         if pfxidx >= 0:
