@@ -6,6 +6,21 @@
 #include "hippo-dbus-helper.h"
 #include "whitelist.h"
 
+/* The prefs sync is not "bidirectional"; the way it works is that
+ * the server copy is always the master copy, and wins. However,
+ * if this daemon sees you change anything locally, it copies that
+ * to the server. If this daemon does not see a change, then
+ * the server setting will overwrite next time you log in...
+ */
+
+/* To avoid infinite loops this code relies on both the
+ * OnlinePrefsManager provider and GConfClient short-circuiting change
+ * notifications when nothing really changed. This has some dangers,
+ * e.g. if we could not round-trip a value properly without changing it,
+ * then it might start toggling back and forth over and over... we'll
+ * cross that bridge if we come to it.
+ */
+
 /* Sync tasks are in a hash by gconf key. This means we can
  * only have 1 pending sync in 1 direction per key at a time.
  * So if e.g. we get a change notify from gconf, then before
@@ -631,8 +646,9 @@ check_need_sync_idle(PrefsManager *manager)
         g_hash_table_size(manager->sync_tasks) > 0;
     
     if (need_idle) {
+        /* timeout instead of idle is a little extra insurance vs. infinite loops */
         manager->sync_idle_id =
-            g_idle_add(sync_idle, manager);
+            g_timeout_add(2000, sync_idle, manager);
     } else {
         if (manager->sync_idle_id != 0) {
             g_source_remove(manager->sync_idle_id);
@@ -649,6 +665,13 @@ manager_add_sync_task(PrefsManager     *manager,
 {
     PrefsSyncTask *task;
 
+    if (type == PREFS_SYNC_FROM_GCONF_TO_ONLINE)
+        g_debug("Will sync from gconf %s to online prefs storage", gconf_key);
+    else if (type == PREFS_SYNC_FROM_ONLINE_TO_GCONF)
+        g_debug("Will sync from online prefs storage to gconf %s", gconf_key);
+    else
+        g_debug("Unknown sync task???");
+    
     task = sync_task_new(type, gconf_key, value);
     
     g_hash_table_replace(manager->sync_tasks,
@@ -664,59 +687,6 @@ manager_add_entry(PrefsManager *manager,
 {
     manager_add_sync_task(manager, PREFS_SYNC_FROM_GCONF_TO_ONLINE,
                           entry->key, entry->value);
-}
-
-static void
-manager_set_ready(PrefsManager *manager,
-                  gboolean      is_ready)
-{
-    if (manager->ready == is_ready)
-        return;
-    
-    manager->ready = is_ready;
-    check_need_sync_idle(manager);
-}
-
-static void
-on_gconf_notify(GConfClient* client,
-                guint        cnxn_id,
-                GConfEntry  *entry,
-                gpointer     user_data)
-{
-    if (strcmp(entry->key, ENABLED_GCONF_KEY) == 0) {
-        gboolean now_enabled;
-        
-        if (entry->value == NULL || entry->value->type != GCONF_VALUE_BOOL)
-            now_enabled = FALSE;
-        else
-            now_enabled = gconf_value_get_bool(entry->value);
-
-        g_debug("Got change notify for %s, was enabled %d now enabled %d",
-                entry->key, global_manager->enabled, now_enabled);
-
-        if (global_manager->enabled != now_enabled) {        
-            global_manager->enabled = now_enabled;
-            check_need_sync_idle(global_manager);
-        }
-    } else {
-        manager_add_entry(global_manager, entry);
-    }
-}
-
-static void
-on_prefs_manager_ready_changed(DBusConnection *connection,
-                               DBusMessage    *message,
-                               void           *data)
-{
-    dbus_bool_t is_ready;
-
-    is_ready = FALSE;
-    if (!dbus_message_get_args(message, NULL,
-                               DBUS_TYPE_BOOLEAN, &is_ready,
-                               DBUS_TYPE_INVALID))
-        g_warning("wrong args to ReadyChanged signal");
-    
-    manager_set_ready(global_manager, is_ready);
 }
 
 static void
@@ -758,6 +728,143 @@ on_get_preference_reply(DBusMessage *reply,
 }
 
 static void
+request_new_value_of_pref(PrefsManager *manager,
+                          const char   *dbus_key)
+{
+    if (manager->proxy) {
+        char *gconf_key;
+
+        if (dbus_key_to_gconf_key(dbus_key, &gconf_key)) {
+            char *signature;
+
+            signature = get_dbus_signature_for_gconf_key(gconf_key);
+
+            if (signature != NULL) {
+                g_debug("Requesting value of %s", dbus_key);
+                
+                hippo_dbus_proxy_call_method_async(manager->proxy,
+                                                   "GetPreference",
+                                                   on_get_preference_reply,
+                                                   g_strdup(dbus_key), g_free,
+                                                   DBUS_TYPE_STRING, &dbus_key,
+                                                   DBUS_TYPE_SIGNATURE, &signature,
+                                                   DBUS_TYPE_INVALID);
+                g_free(signature);
+            } else {
+                g_debug("Not syncing gconf key '%s' since we can't figure out its expected type (no schema?)",
+                        gconf_key);
+            }
+            
+            g_free(gconf_key);
+        } else {
+            g_debug("online key '%s' does not map to a gconf key on this machine",
+                    dbus_key);
+        }
+    }
+}
+
+static void
+on_get_all_names_reply(DBusMessage *reply,
+                       void        *data)
+{
+    PrefsManager *manager;
+
+    manager = data;
+
+    if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_METHOD_RETURN) {
+        DBusMessageIter iter, array_iter;
+
+        if (!dbus_message_has_signature(reply, "as")) {
+            g_warning("Wrong signature in method reply to GetAllPreferenceNames");
+            return;
+        }
+        
+        dbus_message_iter_init(reply, &iter);
+        dbus_message_iter_recurse(&iter, &array_iter);
+        while (dbus_message_iter_get_arg_type(&array_iter) != DBUS_TYPE_INVALID) {
+            const char *key;
+
+            key = NULL;
+            dbus_message_iter_get_basic(&array_iter, &key);
+
+            request_new_value_of_pref(manager, key);
+
+            dbus_message_iter_next(&array_iter);
+        }
+    } else {
+        /* Some error, these are unavoidable due to races; should work out fine since we'll retry
+         * later after the prefs manager reappears
+         */
+        return;
+    }
+}
+
+static void
+manager_set_ready(PrefsManager *manager,
+                  gboolean      is_ready)
+{
+    if (manager->ready == is_ready)
+        return;
+    
+    manager->ready = is_ready;
+    check_need_sync_idle(manager);
+
+    if (manager->ready) {
+        /* Get all the known pref names and sync them */
+        hippo_dbus_proxy_call_method_async(manager->proxy,
+                                           "GetAllPreferenceNames",
+                                           on_get_all_names_reply,
+                                           manager, NULL,
+                                           DBUS_TYPE_INVALID);
+    }
+}
+
+static void
+on_gconf_notify(GConfClient* client,
+                guint        cnxn_id,
+                GConfEntry  *entry,
+                gpointer     user_data)
+{
+    if (strcmp(entry->key, ENABLED_GCONF_KEY) == 0) {
+        gboolean now_enabled;
+        
+        if (entry->value == NULL || entry->value->type != GCONF_VALUE_BOOL)
+            now_enabled = FALSE;
+        else
+            now_enabled = gconf_value_get_bool(entry->value);
+
+        g_debug("Got change notify for %s, was enabled %d now enabled %d",
+                entry->key, global_manager->enabled, now_enabled);
+
+        if (global_manager->enabled != now_enabled) { 
+            global_manager->enabled = now_enabled;
+            
+            check_need_sync_idle(global_manager);
+        }
+    } else {
+        g_debug("Got change notify for gconf key %s", entry->key);
+        
+        manager_add_entry(global_manager, entry);
+    }
+}
+
+static void
+on_prefs_manager_ready_changed(DBusConnection *connection,
+                               DBusMessage    *message,
+                               void           *data)
+{
+    dbus_bool_t is_ready;
+
+    is_ready = FALSE;
+    if (!dbus_message_get_args(message, NULL,
+                               DBUS_TYPE_BOOLEAN, &is_ready,
+                               DBUS_TYPE_INVALID))
+        g_warning("wrong args to ReadyChanged signal");
+    
+    manager_set_ready(global_manager, is_ready);
+}
+
+static void
 on_prefs_manager_pref_changed(DBusConnection *connection,
                               DBusMessage    *message,
                               void           *data)
@@ -769,32 +876,10 @@ on_prefs_manager_pref_changed(DBusConnection *connection,
         g_warning("Unexpected signature for PreferenceChanged signal");
         return;
     }
+
+    g_debug("Got PreferenceChanged for online key %s", key);
     
-    if (global_manager->proxy) {
-        char *gconf_key;
-
-        if (dbus_key_to_gconf_key(key, &gconf_key)) {
-            char *signature;
-
-            signature = get_dbus_signature_for_gconf_key(gconf_key);
-
-            if (signature != NULL) {
-                hippo_dbus_proxy_call_method_async(global_manager->proxy,
-                                                   "GetPreference",
-                                                   on_get_preference_reply,
-                                                   g_strdup(key), g_free,
-                                                   DBUS_TYPE_STRING, &key,
-                                                   DBUS_TYPE_SIGNATURE, &signature,
-                                                   DBUS_TYPE_INVALID);
-                g_free(signature);
-            }
-            
-            g_free(gconf_key);
-        } else {
-            g_debug("online key '%s' does not map to a gconf key on this machine",
-                    key);
-        }
-    }
+    request_new_value_of_pref(global_manager, key);
 }
 
 static void
@@ -896,7 +981,7 @@ on_dbus_connected (DBusConnection *connection,
                    void           *data)
 {
     hippo_dbus_helper_register_name_owner(connection,
-                                          "org.gnome.GConfOnlineSync",
+                                          "org.gnome.OnlinePrefsSync",
                                           HIPPO_DBUS_NAME_SINGLE_INSTANCE,
                                           &single_instance_owner,
                                           NULL);
@@ -907,7 +992,7 @@ on_dbus_disconnected(DBusConnection *connection,
                      void           *data)
 {    
     hippo_dbus_helper_unregister_name_owner(connection,
-                                            "org.gnome.GConfOnlineSync",
+                                            "org.gnome.OnlinePrefsSync",
                                             &single_instance_owner,
                                             NULL);
 }
@@ -938,6 +1023,7 @@ main(int argc, char **argv)
     global_manager->enabled = gconf_client_get_bool(get_gconf(),
                                                     ENABLED_GCONF_KEY,
                                                     NULL);
+    g_debug("Online prefs sync enabled = %d", global_manager->enabled);
     
     gconf_client_add_dir(get_gconf(), "/",
                          GCONF_CLIENT_PRELOAD_NONE,
