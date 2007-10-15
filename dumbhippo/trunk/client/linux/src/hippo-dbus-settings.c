@@ -400,7 +400,8 @@ static const HippoDBusMember prefs_members[] = {
     /* deprecated, use the Ready property */
     { HIPPO_DBUS_MEMBER_METHOD, "IsReady", "", "b", handle_is_ready },
 
-    { HIPPO_DBUS_MEMBER_SIGNAL, "ReadyChanged", "", "", NULL },
+    /* FIXME the signal params should be "in" params */
+    { HIPPO_DBUS_MEMBER_SIGNAL, "ReadyChanged", "", "b", NULL },
     /* FIXME the signal params should be "in" params */
     { HIPPO_DBUS_MEMBER_SIGNAL, "PreferenceChanged", "", "s", NULL },
 

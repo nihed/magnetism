@@ -110,6 +110,7 @@ struct HippoDBusServiceTracker
 struct HippoDBusSignalTracker
 {
     /* FIXME there's no way to specify the object path */
+    /* FIXME specify the signature so it can be automatically checked */
     const char *interface;
     const char *signal;
     HippoDBusSignalHandler handler;
