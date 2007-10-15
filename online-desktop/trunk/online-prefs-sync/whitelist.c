@@ -116,3 +116,75 @@ whitelist_get_key_scope(const char *gconf_key)
     else
         return KEY_SCOPE_NOT_SAVED_REMOTELY;
 }
+
+static GSList*
+read_entries(GConfClient    *client,
+             const char     *key,
+             gboolean        exact_match_only)
+{    
+    if (exact_match_only) {
+        GConfEntry *gconf_entry;
+        
+        gconf_entry = gconf_client_get_entry(client, key, NULL, FALSE /* don't want default */, NULL);
+        if (gconf_entry) {
+            if (!gconf_entry_get_is_default(gconf_entry) && gconf_entry->value) {
+                return g_slist_prepend(NULL, gconf_entry);
+            } else {
+                gconf_entry_unref(gconf_entry);
+                return NULL;
+            }
+        } else {
+            return NULL;
+        }
+    } else {
+        GSList *result;
+        GSList *gconf_entries;
+        GSList *gconf_subdirs;
+        GSList *l;
+
+        result = NULL;
+        gconf_entries = gconf_client_all_entries(client, key, NULL);
+        gconf_subdirs = gconf_client_all_dirs(client, key, NULL);
+        
+        for (l = gconf_entries; l != NULL; l = l->next) {
+            GConfEntry *gconf_entry = l->data;
+            if (!gconf_entry_get_is_default(gconf_entry) && gconf_entry->value) {
+                result = g_slist_prepend(result, gconf_entry);
+            } else {
+                gconf_entry_unref(gconf_entry);
+            }
+        }
+        g_slist_free(gconf_entries);
+
+        for (l = gconf_subdirs; l != NULL; l = l->next) {
+            char *full_gconf_key = l->data;
+            GSList *subdir_results;
+            
+            subdir_results = read_entries(client, full_gconf_key, FALSE);
+            result = g_slist_concat(result, subdir_results);
+            
+            g_free(full_gconf_key);
+        }
+        g_slist_free(gconf_subdirs);
+
+        return result;
+    }
+}            
+
+GSList*
+whitelist_get_gconf_entries_set_locally(GConfClient *client)
+{
+    GSList *tmp;
+    GSList *result;
+
+    result = NULL;
+    for (tmp = entries; tmp != NULL; tmp = tmp->next) {
+        WhitelistEntry *entry = tmp->data;    
+        GSList *gconf_entries;
+
+        gconf_entries = read_entries(client, entry->key, entry->exact_match_only);
+        result = g_slist_concat(result, gconf_entries);
+    }
+
+    return result;
+}

@@ -61,6 +61,7 @@ typedef struct {
     guint sync_idle_id;
     GMainLoop *loop;
     guint enabled : 1;
+    guint initialized : 1;
 } PrefsManager;
 
 static PrefsManager *global_manager = NULL;
@@ -75,6 +76,17 @@ get_gconf(void)
     }
     return global_gconf_client;
 }
+
+#if 0
+static void
+print_dbus_error_reply_handler(DBusMessage *reply,
+                               void        *data)
+{
+    if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_ERROR) {
+        g_debug("Error reply: %s", dbus_message_get_error_name(reply));
+    }
+}
+#endif
 
 static gboolean
 gconf_key_to_dbus_key(const char *gconf_key,
@@ -521,7 +533,7 @@ task_value_appender(DBusMessage *message,
         return FALSE;
     }
     
-    g_debug("Setting %s online", dbus_key);
+    g_debug("Sending %s to online server", dbus_key);
     
     dbus_message_iter_init_append(message, &iter);
 
@@ -764,6 +776,45 @@ request_new_value_of_pref(PrefsManager *manager,
 }
 
 static void
+sync_local_to_server(PrefsManager *manager,
+                     GHashTable   *provided_by_server)
+{
+    GSList *gconf_entries;
+    
+    gconf_entries = whitelist_get_gconf_entries_set_locally(get_gconf());
+
+    while (gconf_entries != NULL) {
+        GConfEntry *gconf_entry;
+        char *dbus_key;
+        gboolean server_provided;
+
+        gconf_entry = gconf_entries->data;
+        gconf_entries = g_slist_remove(gconf_entries, gconf_entries->data);
+
+        dbus_key = NULL;
+        gconf_key_to_dbus_key(gconf_entry_get_key(gconf_entry), &dbus_key);
+        if (dbus_key)
+            server_provided = g_hash_table_lookup(provided_by_server, dbus_key) != NULL;
+        else
+            server_provided = FALSE;
+
+        if (dbus_key) {
+            if (server_provided) {
+                g_debug("gconf key %s will be set from server", gconf_entry_get_key(gconf_entry));
+            } else {
+                /* sync this one */
+                g_debug("gconf key %s has been set in gconf and is not provided by server, uploading",
+                        gconf_entry_get_key(gconf_entry));
+                manager_add_entry(manager, gconf_entry);
+            }
+        }
+        
+        g_free(dbus_key);
+        gconf_entry_unref(gconf_entry);
+    }
+}
+
+static void
 on_get_all_names_reply(DBusMessage *reply,
                        void        *data)
 {
@@ -773,11 +824,14 @@ on_get_all_names_reply(DBusMessage *reply,
 
     if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_METHOD_RETURN) {
         DBusMessageIter iter, array_iter;
-
+        GHashTable *provided_by_server;
+        
         if (!dbus_message_has_signature(reply, "as")) {
             g_warning("Wrong signature in method reply to GetAllPreferenceNames");
             return;
         }
+
+        provided_by_server = g_hash_table_new(g_str_hash, g_str_equal);
         
         dbus_message_iter_init(reply, &iter);
         dbus_message_iter_recurse(&iter, &array_iter);
@@ -789,8 +843,18 @@ on_get_all_names_reply(DBusMessage *reply,
 
             request_new_value_of_pref(manager, key);
 
+            g_hash_table_replace(provided_by_server, (char*) key, (char*) key);
+            
             dbus_message_iter_next(&array_iter);
         }
+
+        /* Now sync any local settings that are not the schema defaults and were not
+         * provided by the server, to the server
+         */
+        sync_local_to_server(manager, provided_by_server);
+        g_hash_table_destroy(provided_by_server);
+
+        manager->initialized = TRUE;
     } else {
         /* Some error, these are unavoidable due to races; should work out fine since we'll retry
          * later after the prefs manager reappears
@@ -810,6 +874,9 @@ manager_set_ready(PrefsManager *manager,
     check_need_sync_idle(manager);
 
     if (manager->ready) {
+
+        manager->initialized = FALSE;
+
         /* Get all the known pref names and sync them */
         hippo_dbus_proxy_call_method_async(manager->proxy,
                                            "GetAllPreferenceNames",
@@ -870,7 +937,7 @@ on_prefs_manager_pref_changed(DBusConnection *connection,
                               void           *data)
 {
     const char *key;
-
+    
     key = NULL;
     if (!dbus_message_get_args(message, NULL, DBUS_TYPE_STRING, &key, DBUS_TYPE_INVALID)) {
         g_warning("Unexpected signature for PreferenceChanged signal");
@@ -878,6 +945,11 @@ on_prefs_manager_pref_changed(DBusConnection *connection,
     }
 
     g_debug("Got PreferenceChanged for online key %s", key);
+
+    if (!global_manager->initialized) {
+        g_debug("Ignoring pref changed since we haven't processed GetAllPreferenceNames yet");
+        return;
+    }
     
     request_new_value_of_pref(global_manager, key);
 }
