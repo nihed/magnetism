@@ -10,6 +10,8 @@ import bigboard.deskbar_embed as deskbar_embed
 from bigboard.stock import Stock
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasVBox
         
+_logger = logging.getLogger("bigboard.stocks.SearchStock")
+        
 class SearchStock(Stock):
     """Search.  It's what's for dinner."""
     __gsignals__ = {
@@ -20,6 +22,7 @@ class SearchStock(Stock):
         
         self.__box = hippo.CanvasBox()
         
+        _logger.debug("constructing deskbar")        
         self.__deskbar = deskbar_embed.Deskbar()
         self.__deskbar.connect('match-selected', lambda d: self.emit('match-selected'))
         self.__widget = hippo.CanvasWidget(widget=self.__deskbar)
@@ -30,4 +33,5 @@ class SearchStock(Stock):
         return size == self.SIZE_BULL and self.__box or self.__empty_box
 
     def focus(self):
+        _logger.debug("doing focus")
         self.__deskbar.focus()
