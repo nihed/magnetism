@@ -326,6 +326,27 @@ task_value_appender(DBusMessage *message,
     return TRUE;
 }
 
+static void
+get_values_foreach(gpointer       key,
+                   gpointer       value,
+                   gpointer       data)
+{
+    GList **values = data;
+    *values = g_list_prepend(*values, value);
+}
+
+/* As of GLib-2.14, GLib has g_hash_table_get_values()
+ */
+static GList *
+hash_table_get_values(GHashTable *hash)
+{
+    GList *values = NULL;
+    
+    g_hash_table_foreach(hash, get_values_foreach, &values);
+
+    return values;
+}
+
 static gboolean
 sync_idle(void *data)
 {
@@ -334,7 +355,7 @@ sync_idle(void *data)
     
     manager->sync_idle_id = 0;
 
-    tasks = g_hash_table_get_values(manager->sync_tasks);
+    tasks = hash_table_get_values(manager->sync_tasks);
     g_hash_table_steal_all(manager->sync_tasks);
     g_assert(g_hash_table_size(manager->sync_tasks) == 0);
 
