@@ -17,6 +17,17 @@
  * queueing up tons of them in pathological cases.
  */
 
+/* The "enabled" flag works as follows:
+ *  - on each machine we have a gconf setting for whether to sync, allowing
+ *    some machines to skip syncing
+ *  - if we aren't enabled, we still do all the work except we never
+ *    run the sync idle. This means if you ever toggle on the "enabled"
+ *    flag we have a backlog of stuff to be synced that immediately goes through.
+ *  - there is no server-side flag for this; the server always stores settings,
+ *    it's just a question of whether a given machine pays attention to them
+ */
+#define ENABLED_GCONF_KEY "/apps/online-prefs-sync/enabled"
+
 typedef enum {
     PREFS_SYNC_FROM_GCONF_TO_ONLINE,
     PREFS_SYNC_FROM_ONLINE_TO_GCONF
@@ -34,6 +45,7 @@ typedef struct {
     GHashTable *sync_tasks;
     guint sync_idle_id;
     GMainLoop *loop;
+    guint enabled : 1;
 } PrefsManager;
 
 static PrefsManager *global_manager = NULL;
@@ -126,6 +138,34 @@ dbus_key_to_gconf_key(const char *dbus_key,
     }
 }
 
+static GConfValueType
+get_gconf_type_for_dbus_type(int dbus_type)
+{
+    switch (dbus_type) {
+    case DBUS_TYPE_BYTE:
+    case DBUS_TYPE_INT16:
+    case DBUS_TYPE_UINT16:
+    case DBUS_TYPE_INT32:
+    case DBUS_TYPE_UINT32:
+    case DBUS_TYPE_INT64:
+    case DBUS_TYPE_UINT64:
+        return GCONF_VALUE_INT;
+
+    case DBUS_TYPE_BOOLEAN:
+        return GCONF_VALUE_BOOL;
+        
+    case DBUS_TYPE_DOUBLE:
+        return GCONF_VALUE_FLOAT;
+        
+    case DBUS_TYPE_STRING:
+        return GCONF_VALUE_STRING;
+        
+    case DBUS_TYPE_ARRAY:
+        return GCONF_VALUE_LIST;
+    }
+    
+    return GCONF_VALUE_INVALID;
+}
 
 typedef union
 {
@@ -147,64 +187,99 @@ gconf_value_from_dbus(DBusMessageIter *iter)
 {
     VariantUnion v_GENERIC;
     GConfValue *gconf_value;    
+    GConfValueType gconf_type;
 
-    gconf_value = NULL;
+    gconf_type = get_gconf_type_for_dbus_type(dbus_message_iter_get_arg_type(iter));
+    if (gconf_type == GCONF_VALUE_INVALID)
+        return NULL;
+    
+    gconf_value = gconf_value_new(gconf_type);
+
+    if (gconf_type != GCONF_VALUE_LIST)
+        dbus_message_iter_get_basic(iter, &v_GENERIC);
+    
     switch (dbus_message_iter_get_arg_type(iter)) {
     case DBUS_TYPE_BYTE:
-        dbus_message_iter_get_basic(iter, &v_GENERIC);
-        gconf_value = gconf_value_new(GCONF_VALUE_INT);
         gconf_value_set_int(gconf_value, v_GENERIC.byt);
         break;
     case DBUS_TYPE_INT16:
-        dbus_message_iter_get_basic(iter, &v_GENERIC);
-        gconf_value = gconf_value_new(GCONF_VALUE_INT);
         gconf_value_set_int(gconf_value, v_GENERIC.i16);
         break;        
     case DBUS_TYPE_UINT16:
-        dbus_message_iter_get_basic(iter, &v_GENERIC);
-        gconf_value = gconf_value_new(GCONF_VALUE_INT);
         gconf_value_set_int(gconf_value, v_GENERIC.u16);
         break;        
     case DBUS_TYPE_INT32:
-        dbus_message_iter_get_basic(iter, &v_GENERIC);
-        gconf_value = gconf_value_new(GCONF_VALUE_INT);
         gconf_value_set_int(gconf_value, v_GENERIC.i32);
         break;        
     case DBUS_TYPE_UINT32:
-        dbus_message_iter_get_basic(iter, &v_GENERIC);
-        gconf_value = gconf_value_new(GCONF_VALUE_INT);
         gconf_value_set_int(gconf_value, v_GENERIC.u32);
         break;        
     case DBUS_TYPE_INT64:
-        dbus_message_iter_get_basic(iter, &v_GENERIC);
-        gconf_value = gconf_value_new(GCONF_VALUE_INT);
         gconf_value_set_int(gconf_value, v_GENERIC.i64);
         break;        
     case DBUS_TYPE_UINT64:
-        dbus_message_iter_get_basic(iter, &v_GENERIC);
-        gconf_value = gconf_value_new(GCONF_VALUE_INT);
         gconf_value_set_int(gconf_value, v_GENERIC.u64);
         break;
     case DBUS_TYPE_BOOLEAN:
-        dbus_message_iter_get_basic(iter, &v_GENERIC);
-        gconf_value = gconf_value_new(GCONF_VALUE_BOOL);
         gconf_value_set_bool(gconf_value, v_GENERIC.bl);
         break;        
     case DBUS_TYPE_DOUBLE:
-        dbus_message_iter_get_basic(iter, &v_GENERIC);
-        gconf_value = gconf_value_new(GCONF_VALUE_FLOAT);
         gconf_value_set_float(gconf_value, v_GENERIC.dbl);
         break;        
     case DBUS_TYPE_STRING:
-        dbus_message_iter_get_basic(iter, &v_GENERIC);
-        gconf_value = gconf_value_new(GCONF_VALUE_STRING);
         gconf_value_set_string(gconf_value, v_GENERIC.str);
         break;                
+
     case DBUS_TYPE_ARRAY:
-        /* FIXME */
-        break;        
+        {
+            GConfValueType list_type;
+
+            list_type = get_gconf_type_for_dbus_type(dbus_message_iter_get_element_type(iter));
+            if (list_type == GCONF_VALUE_INVALID ||
+                list_type == GCONF_VALUE_LIST) {
+                /* No good; array is of some kind of complex type */
+                gconf_value_free(gconf_value);
+                gconf_value = NULL;
+            } else {
+                GSList *list;
+                DBusMessageIter array_iter;
+                gboolean failed_conversion;
+                
+                list = NULL;
+                failed_conversion = FALSE;
+            
+                dbus_message_iter_recurse(iter, &array_iter);
+                while (dbus_message_iter_get_arg_type(&array_iter) != DBUS_TYPE_INVALID) {
+                    GConfValue *elem;
+
+                    elem = gconf_value_from_dbus(&array_iter);
+                    if (elem == NULL) {
+                        failed_conversion = TRUE;
+                        break;
+                    }
+                    list = g_slist_prepend(list, elem);
+                    
+                    dbus_message_iter_next(&array_iter);
+                }
+                list = g_slist_reverse(list); /* put it back in order */
+                
+                if (failed_conversion) {
+                    /* should never happen */
+                    g_warning("Failed to convert an element of dbus array to a GConfValue");
+                    g_slist_foreach(list, (GFunc) gconf_value_free, NULL);
+                    g_slist_free(list);
+                    gconf_value_free(gconf_value);
+                    gconf_value = NULL;
+                } else {
+                    gconf_value_set_list_type(gconf_value, list_type);
+                    gconf_value_set_list_nocopy(gconf_value, list);
+                }
+            }
+        }
+        break;
     default:
-        /* FIXME whine or something */
+        /* FIXME we could in theory handle variants, though a variant containing a variant is pretty f'd up */
+        g_debug("Unable to convert complex dbus type to a gconf type");
         break;
     }
 
@@ -348,7 +423,21 @@ write_gconf_value_to_dbus(GConfValue      *value,
         v_GENERIC.bl = gconf_value_get_bool(value);
         break;
     case GCONF_VALUE_LIST:
-        /* FIXME */
+        {
+            char array_element[2] = { '\0', '\0' };
+            DBusMessageIter array_iter;
+            GSList *l;
+            
+            dbus_type = DBUS_TYPE_ARRAY;
+            array_element[0] = get_dbus_type_for_gconf_type(gconf_value_get_list_type(value));
+            dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY, array_element, &array_iter);
+
+            for (l = gconf_value_get_list(value); l != NULL; l = l->next) {
+                GConfValue *elem = l->data;
+                write_gconf_value_to_dbus(elem, &array_iter);
+            }
+            dbus_message_iter_close_container(iter, &array_iter);
+        }
         break;
         
     case GCONF_VALUE_SCHEMA: /* FALL THRU */
@@ -361,7 +450,10 @@ write_gconf_value_to_dbus(GConfValue      *value,
     if (dbus_type == DBUS_TYPE_INVALID)
         return FALSE;
 
-    return dbus_message_iter_append_basic(iter, dbus_type, &v_GENERIC);
+    if (dbus_type != DBUS_TYPE_ARRAY)
+        return dbus_message_iter_append_basic(iter, dbus_type, &v_GENERIC);
+    else
+        return TRUE;
 }
 
 static PrefsSyncTask*
@@ -534,9 +626,9 @@ check_need_sync_idle(PrefsManager *manager)
 {
     gboolean need_idle;
 
-    need_idle = g_hash_table_size(manager->sync_tasks) > 0 &&
-        manager->ready &&
-        manager->sync_idle_id == 0;
+    need_idle = manager->enabled && manager->ready &&
+        manager->sync_idle_id == 0 &&
+        g_hash_table_size(manager->sync_tasks) > 0;
     
     if (need_idle) {
         manager->sync_idle_id =
@@ -591,7 +683,24 @@ on_gconf_notify(GConfClient* client,
                 GConfEntry  *entry,
                 gpointer     user_data)
 {
-    manager_add_entry(global_manager, entry);
+    if (strcmp(entry->key, ENABLED_GCONF_KEY) == 0) {
+        gboolean now_enabled;
+        
+        if (entry->value == NULL || entry->value->type != GCONF_VALUE_BOOL)
+            now_enabled = FALSE;
+        else
+            now_enabled = gconf_value_get_bool(entry->value);
+
+        g_debug("Got change notify for %s, was enabled %d now enabled %d",
+                entry->key, global_manager->enabled, now_enabled);
+
+        if (global_manager->enabled != now_enabled) {        
+            global_manager->enabled = now_enabled;
+            check_need_sync_idle(global_manager);
+        }
+    } else {
+        manager_add_entry(global_manager, entry);
+    }
 }
 
 static void
@@ -825,6 +934,10 @@ main(int argc, char **argv)
     global_manager = g_new0(PrefsManager, 1);
     global_manager->sync_tasks = g_hash_table_new_full(g_str_hash, g_str_equal,
                                                        NULL, (GFreeFunc) sync_task_free);
+
+    global_manager->enabled = gconf_client_get_bool(get_gconf(),
+                                                    ENABLED_GCONF_KEY,
+                                                    NULL);
     
     gconf_client_add_dir(get_gconf(), "/",
                          GCONF_CLIENT_PRELOAD_NONE,
