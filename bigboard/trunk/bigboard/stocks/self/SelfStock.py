@@ -15,6 +15,8 @@ from bigboard.stock import Stock, AbstractMugshotStock
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, Separator
 import bigboard.google
 
+import portfoliomanager
+
 _logger = logging.getLogger('bigboard.stocks.SelfStock')
 
 GCONF_PREFIX = '/apps/bigboard/'
@@ -85,7 +87,7 @@ class SelfSlideout(CanvasVBox):
     __gsignals__ = {
         "account" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),                    
         "logout" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
-        "minimize" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
+        "sidebar-controls" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
         "close" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
     }
     def __init__(self, stock, myself, fus=None, logger=None):
@@ -133,8 +135,8 @@ class SelfSlideout(CanvasVBox):
         link.connect("activated", self.__on_system_preferences)
         self.__personalization_box.append(link)
         visible = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')        
-        link = hippo.CanvasLink(text='%s sidebar' % (visible and 'Minimize' or 'Show'), xalign=hippo.ALIGNMENT_START)
-        link.connect("activated", self.__on_minimize_mode)
+        link = hippo.CanvasLink(text='Sidebar controls', xalign=hippo.ALIGNMENT_START)
+        link.connect("activated", self.__on_sidebar_controls)
         self.__personalization_box.append(link)
 
         if fus:
@@ -175,8 +177,8 @@ class SelfSlideout(CanvasVBox):
         self.emit('account')
         self.emit('close')
 
-    def __on_minimize_mode(self, l): 
-        self.emit('minimize')
+    def __on_sidebar_controls(self, l): 
+        self.emit('sidebar-controls')
         self.emit('close')
 
     def __on_system_preferences(self, l):
@@ -266,6 +268,8 @@ class SelfStock(AbstractMugshotStock):
 
         self.__slideout = None
         self.__slideout_display = None
+        
+        self.__portfolio_manager = None
 
         self.__create_fus_proxy()
 
@@ -327,8 +331,10 @@ class SelfStock(AbstractMugshotStock):
     def __do_logout(self):
         self._panel.Logout()
 
-    def __do_minimize(self):
-        self._panel.toggle_expand()
+    def __do_sidebar_controls(self):
+        if not self.__portfolio_manager:
+            self.__portfolio_manager = portfoliomanager.PortfolioManager(self._panel)
+        self.__portfolio_manager.present()
     
     def __do_account(self):
         if self.__myself:
@@ -346,7 +352,7 @@ class SelfStock(AbstractMugshotStock):
         self.__create_fus_proxy()
         self.__slideout_display = SelfSlideout(self, self.__myself, fus=self.__fus_service, logger=self._logger)
         self.__slideout_display.connect('account', lambda s: self.__do_account())        
-        self.__slideout_display.connect('minimize', lambda s: self.__do_minimize())
+        self.__slideout_display.connect('sidebar-controls', lambda s: self.__do_sidebar_controls())
         self.__slideout_display.connect('logout', lambda s: self.__do_logout())
         self.__slideout_display.connect('close', lambda s: self.__on_activate())
         self.__slideout = self.__do_slideout(self.__slideout_display)   
