@@ -80,6 +80,47 @@ get_and_ref_settings(DBusConnection *dbus_connection)
     return settings;
 }
 
+static DBusMessage*
+handle_get_all_preference_names(void            *object,
+                                DBusMessage     *message,
+                                DBusError       *error)
+{
+    HippoSettings *settings;
+    DBusConnection *dbus_connection;
+    DBusMessageIter iter, array_iter;
+    char **names;
+    int i;
+    DBusMessage *reply;
+    
+    dbus_connection = object;
+    settings = get_and_ref_settings(dbus_connection);
+
+    if (!hippo_settings_get_ready(settings)) {
+        g_object_unref(G_OBJECT(settings));
+        return dbus_message_new_error(message, HIPPO_DBUS_PREFS_ERROR_NOT_READY,
+                                      _("Have not yet connected to server, can't get preference names"));
+    }
+
+    reply = dbus_message_new_method_return(message);
+
+    dbus_message_iter_init_append(reply, &iter);
+    
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "s",
+                                     &array_iter);
+
+    names = hippo_settings_get_all_names(settings);
+    for (i = 0; names[i] != NULL; ++i) {
+        dbus_message_iter_append_basic(&array_iter, DBUS_TYPE_STRING, &names[i]);
+    }
+    g_strfreev(names);
+    
+    dbus_message_iter_close_container(&iter, &array_iter);
+
+    g_object_unref(settings);
+    
+    return reply;
+
+}
 
 typedef struct SettingArrivedData SettingArrivedData;
 struct SettingArrivedData {
@@ -287,7 +328,7 @@ handle_set_preference(void            *object,
         break;
     }
 
-    settings = get_and_ref_settings(dbus_connection);    
+    settings = get_and_ref_settings(dbus_connection);
     
     hippo_settings_set(settings, key, value);
 
@@ -383,7 +424,8 @@ handle_get_ready(void            *object,
 
 /*
  * Lame summary of the org.freedesktop.Preferences interface
- * 
+ *
+ * ARRAY of STRING GetAllPreferenceNames() throws NotReady
  * VARIANT GetPreference(STRING key, SIGNATURE expectedType) throws NotFound, WrongType, NotReady
  * void SetPreference(STRING key, VARIANT v) # just queues up if offline
  * void UnsetPreference(STRING key)
@@ -394,6 +436,7 @@ handle_get_ready(void            *object,
  */
 
 static const HippoDBusMember prefs_members[] = {
+    { HIPPO_DBUS_MEMBER_METHOD, "GetAllPreferenceNames", "", "as", handle_get_all_preference_names },    
     { HIPPO_DBUS_MEMBER_METHOD, "GetPreference", "sg", "v", handle_get_preference },
     { HIPPO_DBUS_MEMBER_METHOD, "SetPreference", "s", "v", handle_set_preference },
     { HIPPO_DBUS_MEMBER_METHOD, "UnsetPreference", "s", "", handle_unset_preference },

@@ -426,3 +426,51 @@ hippo_settings_get_ready(HippoSettings *settings)
 {
     return settings->ready;
 }
+
+static void
+get_values_foreach(gpointer       key,
+                   gpointer       value,
+                   gpointer       data)
+{
+    GList **values = data;
+    *values = g_list_prepend(*values, value);
+}
+
+/* As of GLib-2.14, GLib has g_hash_table_get_values()
+ */
+static GList *
+hash_table_get_values(GHashTable *hash)
+{
+    GList *values = NULL;
+    
+    g_hash_table_foreach(hash, get_values_foreach, &values);
+
+    return values;
+}
+
+char**
+hippo_settings_get_all_names(HippoSettings *settings)
+{
+    GList *entries;
+    char **names;
+    int names_len;
+    int i;
+    
+    entries = hash_table_get_values(settings->entries);
+
+    names_len = g_list_length(entries);
+
+    names = g_new0(char*, names_len + 1);
+
+    i = 0;
+    while (entries != NULL) {
+        CacheEntry *entry = entries->data;
+
+        entries = g_list_remove(entries, entries->data);
+
+        names[i] = g_strdup(entry->key);
+        ++i;
+    }
+
+    return names;
+}
