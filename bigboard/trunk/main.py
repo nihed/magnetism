@@ -125,36 +125,58 @@ back up temporarily.'''))
         gconf.client_get_default().set_bool(GCONF_PREFIX + 'visible', True)
         return False        
     
-class StockManager(object):
+class StockManager(gobject.GObject):
+    __gsignals__ = {
+        "listings-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
+    }    
     def __init__(self):
         super(StockManager, self).__init__()
         self.__stockdir = os.path.join(os.path.dirname(bigboard.__file__), 'stocks')
         self.__widget_environ = widget_environ = pyonlinedesktop.widget.WidgetEnvironment()
-        widget_environ['google_apps_auth_path'] = ''           
+        widget_environ['google_apps_auth_path'] = ''
+        gconf.client_get_default().notify_add(GCONF_PREFIX + 'url_listings', self.__on_listings_change)
+        self.__metainfo_cache = {}                           
 
-    def get_builtins(self):
+    def get_all_builtin_urls(self):
         for fname in os.listdir(self.__stockdir):
             fpath = os.path.join(self.__stockdir, fname)
             if fpath.endswith('.xml'):
                 yield 'builtin://' + fname
+            
+    def get_listed_urls(self):
+        return gconf.client_get_default().get_list(GCONF_PREFIX + 'url_listings', gconf.VALUE_STRING)
+    
+    def get_listed(self):
+        for url in self.get_listed_urls():
+            yield self.load_metainfo(url)        
 
-    def load_metadata(self, url):
+    def load_metainfo(self, url):
+        try:
+            return self.__metainfo_cache[url]
+        except KeyError, e:
+            pass        
         _logger.debug("loading stock url %s", url)
         builtin_scheme = 'builtin://'
+        srcurl = url
         if url.startswith(builtin_scheme):
-            url = 'file://' + os.path.join(self.__stockdir, url[len(builtin_scheme):])
-        return pyonlinedesktop.widget.WidgetParser(url, urllib2.urlopen(url), self.__widget_environ)
+            srcurl = 'file://' + os.path.join(self.__stockdir, url[len(builtin_scheme):])       
+        metainfo = pyonlinedesktop.widget.WidgetParser(url, urllib2.urlopen(srcurl), self.__widget_environ)
+        self.__metainfo_cache[url] = metainfo
+        return metainfo 
     
-    def load(self, module, **kwargs):
+    def render(self, module, **kwargs):
         (content_type, content_data) = module.content
         if content_type == 'online-desktop-builtin':
-            return self.__load_builtin(module, **kwargs)
+            loaded = self.__load_builtin(module, **kwargs)
+            if not loaded: 
+                return None
+            return self.__render_builtin(loaded)            
         
-    def load_url(self, url, **kwargs):
-        return self.load(self.load_metadata(url), **kwargs)
+    def render_url(self, url, **kwargs):
+        return self.render(self.load_metainfo(url), **kwargs)
         
-    def __load_builtin(self, module, notitle=False, panel=None):
-        modpath = urlparse.urlparse(module.srcurl).path
+    def __load_builtin(self, metainfo, notitle=False, panel=None):
+        modpath = urlparse.urlparse(metainfo.srcurl).path
         modfile = os.path.basename(modpath)
         dirname = modfile[:modfile.rfind('.')]
         dirpath = os.path.join(self.__stockdir, dirname)
@@ -166,20 +188,27 @@ class StockManager(object):
             classname = dirname
         classname = classname[0].upper() + classname[1:] + 'Stock'
         try:
-            _logger.info("importing module %s (title: %s) from dir %s", classname, module.title, dirpath)
+            _logger.info("importing module %s (title: %s) from dir %s", classname, metainfo.title, dirpath)
             pymodule = __import__(classname)
             class_constructor = getattr(pymodule, classname)
             _logger.debug("got constructor %s", class_constructor)
             if notitle:
                 title = ''
             else:
-                title = module.title
-            stock = class_constructor({'id': modfile, 'ticker': title}, panel=panel)
+                title = metainfo.title
+            stock = class_constructor(metainfo, title=title, panel=panel)
             return stock                  
         except:
             _logger.exception("failed to add stock %s", classname)
             return None
         
+    def __render_builtin(self, stock):
+        return Exchange(stock)
+                
+    @defer_idle_func(timeout=100)     
+    def __on_listings_change(self, *args):
+        _logger.debug("processing listings change")
+        self.emit("listings-changed")
          
 class Exchange(hippo.CanvasBox):
     """A container for stocks."""
@@ -225,6 +254,9 @@ class Exchange(hippo.CanvasBox):
     def get_stock(self):
         return self.__stock
     
+    def get_srcurl(self):
+        return self.__stock.get_metainfo().srcurl
+    
     def set_size(self, size):
         self.__size = size
         self.__stockbox.remove_all()
@@ -265,16 +297,14 @@ class BigBoardPanel(dbus.service.Object):
         gconf_client = gconf.client_get_default()
 
         self.__keybinding = gconf_client.get_string('/apps/bigboard/focus_key')
-        bigboard.keybinder.tomboy_keybinder_bind(self.__keybinding, self.__on_focus)
+        if self.__keybinding:
+            bigboard.keybinder.tomboy_keybinder_bind(self.__keybinding, self.__on_focus)
     
         self.__autohide_id = 0
         self._dw.connect('enter-notify-event', self.__on_mouse_enter)        
         self._dw.connect('leave-notify-event', self.__on_mouse_leave)
-        
-        gconf_client.notify_add(GCONF_PREFIX + 'url_listings', self.__on_listings_change)        
 
-        self._exchanges = []
-        self.__prelisted = {}
+        self._exchanges = {}
 
         self._canvas = hippo.Canvas()
         self._dw.get_content().add(self._canvas)
@@ -290,11 +320,6 @@ class BigBoardPanel(dbus.service.Object):
      
         self._header_box.append(self._title, hippo.PACK_EXPAND)
         
-        #self._size_button = hippo.CanvasImage(xalign=hippo.ALIGNMENT_END, yalign=hippo.ALIGNMENT_START)
-        #self._size_button.set_clickable(True)
-        #self._size_button.connect("button-press-event", lambda text, event: self._toggle_size())
-        #
-        #self._header_box.append(self._size_button, hippo.PACK_END)
         self._size_button = None
         
         self._main_box.append(self._header_box)
@@ -314,12 +339,17 @@ class BigBoardPanel(dbus.service.Object):
             _logger.warn("Couldn't find screensaver")
             pass
         
-        self.__stock_manager = StockManager()     
-        self.__self_stock = self.__stock_manager.load_url('builtin://self.xml', notitle=True, panel=self)
-        self.list(self.__self_stock)
-        self.__search_stock = self.__stock_manager.load_url('builtin://search.xml', notitle=True, panel=self)
-        self.list(self.__search_stock)
-        gobject.idle_add(self.__list_initial_stocks)
+        self.__stock_manager = StockManager()
+        self.__stock_manager.connect("listings-changed", lambda *args: self.__sync_listing())
+        
+        # These are hardcoded as it isn't really sensible to remove them
+        self.__hardcoded_stocks = ['builtin://self.xml', 'builtin://search.xml']
+        hardcoded_metas = map(lambda url: self.__stock_manager.load_metainfo(url), self.__hardcoded_stocks)
+        for metainfo in hardcoded_metas:
+            self.__append_metainfo(metainfo, notitle=True)    
+        self.__self_stock = self._exchanges[self.__hardcoded_stocks[0]].get_stock()
+        self.__search_stock = self._exchanges[self.__hardcoded_stocks[1]].get_stock()
+        gobject.idle_add(self.__sync_listing)
         
         self.__search_stock.connect('match-selected', self.__on_search_match_selected)
 
@@ -330,12 +360,7 @@ class BigBoardPanel(dbus.service.Object):
 
         self.__queue_strut()
         
-        gobject.timeout_add(1000, self.__idle_show_we_exist)
-        
-    @defer_idle_func(timeout=100)     
-    def __on_listings_change(self, *args):
-        _logger.debug("processing listings change")
-        self.Reboot()        
+        gobject.timeout_add(1000, self.__idle_show_we_exist)       
         
     @log_except()
     def __on_session_idle_changed(self, isidle):
@@ -357,47 +382,37 @@ class BigBoardPanel(dbus.service.Object):
     def __on_focus(self):
         _logger.debug("got focus keypress")
         self.toggle_popout()
-        
-    def get_all_stock_widgets(self):
-        for url in self.__stock_manager.get_builtins():
-            yield self.__stock_manager.load_metadata(url)
 
+    def __append_metainfo(self, metainfo, **kwargs):
+        try:
+            exchange = self._exchanges[metainfo.srcurl]
+        except KeyError, e:
+            exchange = self.__stock_manager.render(metainfo, panel=self, **kwargs)
+            _logger.debug("rendered %s: %s", metainfo.srcurl, exchange)
+            if exchange:
+                self._exchanges[metainfo.srcurl] = exchange
+        if not exchange:
+            _logger.debug("failed to load stock from %s", metainfo.srcurl)
+            return
+        _logger.debug("adding stock %s", exchange.get_stock())
+        exchange.set_size(self.__get_size())
+        self._stocks_box.append(exchange)
+        
     @log_except(_logger)
-    def __list_initial_stocks(self):
-        _logger.debug("doing initial stock load")
-        for url in gconf.client_get_default().get_list(GCONF_PREFIX + 'url_listings', gconf.VALUE_STRING):
-            stock = self.__stock_manager.load_url(url, panel=self)
-            if not stock:
-                _logger.debug("failed to load stock from %s", url)
+    def __sync_listing(self):
+        _logger.debug("doing stock listing sync")
+        new_listed = list(self.__stock_manager.get_listed())       
+        for exchange in list(self._stocks_box.get_children()):
+            if exchange.get_stock().get_metainfo().srcurl in self.__hardcoded_stocks:
                 continue
-            self.list(stock)
-        _logger.debug("done with initial stock load")            
+            _logger.debug("removing %s", exchange)
+            self._stocks_box.remove(exchange)
+        for metainfo in new_listed:
+            self.__append_metainfo(metainfo)
+        _logger.debug("done with stock load")            
         
     def __get_size(self):
         return Stock.SIZE_BULL
-    
-        #client = gconf.client_get_default()
-        #if client.get_bool(GCONF_PREFIX + 'expand'):
-        #    return Stock.SIZE_BULL
-        #return Stock.SIZE_BEAR
-        
-    def list(self, stock):
-        """Add a stock to an Exchange and append it to the bigboard."""
-        _logger.debug("listing stock %s", stock)
-        container = Exchange(stock)
-        container.set_size(self.__get_size())
-        self._exchanges.append(container)        
-        self._stocks_box.append(container)
-
-    def get_stocks(self):
-        return map(lambda e: e.get_stock(), self._exchanges)
-
-    def get_stock(self, id):
-        for xcg in self._exchanges:
-            stock = xcg.get_stock()
-            if stock.get_id() == id:
-                return stock
-        raise KeyError("Couldn't find stock %s" % (id,))
 
     @log_except()
     def __on_mouse_enter(self, w, e):
@@ -469,7 +484,7 @@ class BigBoardPanel(dbus.service.Object):
                 self._size_button.set_property('image-name', 'bigboard-collapse.png')       
             self._canvas.set_size_request(Stock.SIZE_BULL_CONTENT_PX, 42)
             
-        for exchange in self._exchanges:
+        for exchange in self._exchanges.itervalues():
             _logger.debug("resizing exchange %s to %s", exchange, self.__get_size())
             exchange.set_size(self.__get_size())
         
