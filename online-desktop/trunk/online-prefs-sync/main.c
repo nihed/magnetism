@@ -33,6 +33,7 @@ typedef struct {
     gboolean ready;
     GHashTable *sync_tasks;
     guint sync_idle_id;
+    GMainLoop *loop;
 } PrefsManager;
 
 static PrefsManager *global_manager = NULL;
@@ -210,6 +211,103 @@ gconf_value_from_dbus(DBusMessageIter *iter)
     return gconf_value;
 }
 
+static int
+get_dbus_type_for_gconf_type(GConfValueType gconf_type)
+{
+    switch (gconf_type) {
+    case GCONF_VALUE_STRING:
+        return DBUS_TYPE_STRING;
+
+    case GCONF_VALUE_INT:
+        return DBUS_TYPE_INT32;
+
+    case GCONF_VALUE_FLOAT:
+        return DBUS_TYPE_DOUBLE;
+
+    case GCONF_VALUE_BOOL:
+        return DBUS_TYPE_BOOLEAN;
+
+    case GCONF_VALUE_LIST:
+        return DBUS_TYPE_ARRAY;
+        
+    case GCONF_VALUE_SCHEMA: /* FALL THRU */
+    case GCONF_VALUE_PAIR:
+    case GCONF_VALUE_INVALID:
+        return DBUS_TYPE_INVALID;
+    }
+
+    return DBUS_TYPE_INVALID;
+}
+
+static char*
+get_dbus_signature_for_gconf_types(GConfValueType gconf_type,
+                                   GConfValueType gconf_list_type)
+{
+    char dbus_signature[3] = { '\0', '\0', '\0' };
+
+    dbus_signature[0] = get_dbus_type_for_gconf_type(gconf_type);
+    if (dbus_signature[0] == DBUS_TYPE_ARRAY) {
+        dbus_signature[1] = get_dbus_type_for_gconf_type(gconf_list_type);
+    }
+
+    if (*dbus_signature)
+        return g_strdup(dbus_signature);
+    else
+        return NULL;
+}
+
+static char*
+get_dbus_signature_for_gconf_value(GConfValue *value)
+{
+    if (value == NULL)
+        return NULL;
+    else if (value->type == GCONF_VALUE_LIST)
+        return get_dbus_signature_for_gconf_types(value->type,
+                                                  gconf_value_get_list_type(value));
+    else
+        return get_dbus_signature_for_gconf_types(value->type, GCONF_VALUE_INVALID);    
+}
+
+static char*
+get_dbus_signature_for_gconf_key(const char *gconf_key)
+{
+    GConfEntry *entry;
+    const char *schema_name;
+    GConfSchema *schema;
+    GConfValueType gconf_type;
+    GConfValueType gconf_list_type;
+    
+    entry = gconf_client_get_entry(get_gconf(), gconf_key,
+                                   NULL, TRUE, NULL);
+    if (entry == NULL)
+        return NULL;
+
+    schema_name = gconf_entry_get_schema_name(entry);
+    if (schema_name == NULL) {
+        gconf_entry_unref(entry);
+        return NULL;
+    }
+
+    schema = gconf_client_get_schema(get_gconf(), schema_name, NULL);
+
+    if (schema == NULL) {
+        gconf_entry_unref(entry);
+        return NULL;
+    }
+
+    gconf_entry_unref(entry);
+    entry = NULL;
+
+    gconf_type = gconf_schema_get_type(schema);
+    gconf_list_type = GCONF_VALUE_INVALID;
+    if (gconf_type == GCONF_VALUE_LIST)
+        gconf_list_type = gconf_schema_get_list_type(schema);
+    
+    gconf_schema_free(schema);
+
+    return get_dbus_signature_for_gconf_types(gconf_type, gconf_list_type);
+}
+
 static GConfValue*
 gconf_value_from_dbus_variant(DBusMessageIter *iter)
 {
@@ -299,6 +397,7 @@ task_value_appender(DBusMessage *message,
     PrefsSyncTask *task = data;
     DBusMessageIter iter, variant_iter;
     char *dbus_key;
+    char *signature;
 
     if (!gconf_key_to_dbus_key(task->gconf_key, &dbus_key)) {
         g_debug("gconf key '%s' is not saved online", task->gconf_key);
@@ -306,6 +405,15 @@ task_value_appender(DBusMessage *message,
         return FALSE;
     }
 
+    signature = get_dbus_signature_for_gconf_value(task->gconf_value);
+    if (signature == NULL) {
+        g_debug("gconf key '%s' cannot be represented as a dbus type",
+                task->gconf_key);
+        sync_task_free(task);
+        g_free(dbus_key);
+        return FALSE;
+    }
+    
     g_debug("Setting %s online", dbus_key);
     
     dbus_message_iter_init_append(message, &iter);
@@ -313,8 +421,10 @@ task_value_appender(DBusMessage *message,
     dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &dbus_key);
 
     g_free(dbus_key);
+
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT, signature, &variant_iter);
+    g_free(signature);
     
-    dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT, NULL, &variant_iter);
     if (!write_gconf_value_to_dbus(task->gconf_value, &variant_iter)) {
         sync_task_free(task);
         return FALSE;
@@ -538,78 +648,6 @@ on_get_preference_reply(DBusMessage *reply,
         gconf_value_free(gconf_value);
 }
 
-static char*
-get_dbus_signature_for_gconf_type(GConfValueType gconf_type)
-{
-    char dbus_signature[2] = { '\0', '\0' };
-    
-    switch (gconf_type) {
-    case GCONF_VALUE_STRING:
-        dbus_signature[0] = DBUS_TYPE_STRING;
-        break;
-    case GCONF_VALUE_INT:
-        dbus_signature[0] = DBUS_TYPE_INT32;
-        break;
-    case GCONF_VALUE_FLOAT:
-        dbus_signature[0] = DBUS_TYPE_DOUBLE;
-        break;
-    case GCONF_VALUE_BOOL:
-        dbus_signature[0] = DBUS_TYPE_BOOLEAN;
-        break;
-
-    case GCONF_VALUE_LIST:
-        /* FIXME */
-        break;
-        
-    case GCONF_VALUE_SCHEMA: /* FALL THRU */
-    case GCONF_VALUE_PAIR:
-    case GCONF_VALUE_INVALID:
-        /* do nothing */
-        break;
-    }
-
-    if (*dbus_signature)
-        return g_strdup(dbus_signature);
-    else
-        return NULL;
-}
-
-static char*
-get_dbus_signature_for_gconf_key(const char *gconf_key)
-{
-    GConfEntry *entry;
-    const char *schema_name;
-    GConfSchema *schema;
-    GConfValueType gconf_type;
-    
-    entry = gconf_client_get_entry(get_gconf(), gconf_key,
-                                   NULL, TRUE, NULL);
-    if (entry == NULL)
-        return NULL;
-
-    schema_name = gconf_entry_get_schema_name(entry);
-    if (schema_name == NULL) {
-        gconf_entry_unref(entry);
-        return NULL;
-    }
-
-    schema = gconf_client_get_schema(get_gconf(), schema_name, NULL);
-
-    if (schema == NULL) {
-        gconf_entry_unref(entry);
-        return NULL;
-    }
-
-    gconf_entry_unref(entry);
-    entry = NULL;
-
-    gconf_type = gconf_schema_get_type(schema);
-
-    gconf_schema_free(schema);
-
-    return get_dbus_signature_for_gconf_type(gconf_type);
-}
-
 static void
 on_prefs_manager_pref_changed(DBusConnection *connection,
                               DBusMessage    *message,
@@ -717,25 +755,52 @@ static HippoDBusSignalTracker prefs_manager_signals[] = {
 };
 
 static void
-on_dbus_connected (DBusConnection *connection,
-                   void           *data)
-{    
+on_own_bus_name (DBusConnection *connection,
+                 void           *data)
+{
     hippo_dbus_helper_register_service_tracker(connection,
                                                "org.freedesktop.OnlinePreferencesManager",
                                                &prefs_manager_tracker,
                                                prefs_manager_signals,
                                                NULL);
-
 }
 
 static void
-on_dbus_disconnected(DBusConnection *connection,
-                     void           *data)
+on_do_not_own_bus_name(DBusConnection *connection,
+                       void           *data)
 {
     hippo_dbus_helper_unregister_service_tracker(connection,
                                                  "org.freedesktop.OnlinePreferencesManager",
                                                  &prefs_manager_tracker,
                                                  NULL);
+
+    g_main_loop_quit(global_manager->loop);
+}
+
+static HippoDBusNameOwner single_instance_owner = {
+    on_own_bus_name,
+    on_do_not_own_bus_name
+};
+
+static void
+on_dbus_connected (DBusConnection *connection,
+                   void           *data)
+{
+    hippo_dbus_helper_register_name_owner(connection,
+                                          "org.gnome.GConfOnlineSync",
+                                          HIPPO_DBUS_NAME_SINGLE_INSTANCE,
+                                          &single_instance_owner,
+                                          NULL);
+}
+
+static void
+on_dbus_disconnected(DBusConnection *connection,
+                     void           *data)
+{    
+    hippo_dbus_helper_unregister_name_owner(connection,
+                                            "org.gnome.GConfOnlineSync",
+                                            &single_instance_owner,
+                                            NULL);
 }
 
 static HippoDBusConnectionTracker connection_tracker = {
@@ -752,15 +817,11 @@ print_debug_func(const char *message)
 
 int
 main(int argc, char **argv)
-{
-    GMainLoop *loop;
-    
+{    
     g_type_init();
     
     g_set_application_name("Online Prefs Sync");
-
-    /* FIXME try to own a bus name to keep ourselves single-instance */
-    
+   
     global_manager = g_new0(PrefsManager, 1);
     global_manager->sync_tasks = g_hash_table_new_full(g_str_hash, g_str_equal,
                                                        NULL, (GFreeFunc) sync_task_free);
@@ -776,11 +837,11 @@ main(int argc, char **argv)
     hippo_dbus_helper_register_connection_tracker(DBUS_BUS_SESSION,
                                                   &connection_tracker, NULL);
     
-    loop = g_main_loop_new(NULL, FALSE);
+    global_manager->loop = g_main_loop_new(NULL, FALSE);
 
-    g_main_loop_run(loop);
+    g_main_loop_run(global_manager->loop);
 
-    g_main_loop_unref(loop);
+    g_main_loop_unref(global_manager->loop);
 
     g_free(global_manager);
     global_manager = NULL;
