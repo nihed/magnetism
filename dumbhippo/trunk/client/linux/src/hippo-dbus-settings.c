@@ -278,14 +278,8 @@ handle_set_preference(void            *object,
     int value_type;
     char *value;
     DBusConnection *dbus_connection;
-
-    dbus_connection = object;
     
-    if (!dbus_message_has_signature(message, "sv")) {
-        return dbus_message_new_error(message,
-                                      DBUS_ERROR_INVALID_ARGS,
-                                      _("Expected two arguments, the string key and the variant value"));
-    }
+    dbus_connection = object;    
     
     dbus_message_iter_init(message, &iter);
 
@@ -322,6 +316,7 @@ handle_set_preference(void            *object,
         }
         break;
     default:
+        g_debug("dbus value type we don't know how to handle");
         return dbus_message_new_error_printf(message,
                                              DBUS_ERROR_INVALID_ARGS,
                                              _("Unable to handle values of type '%c' right now"), value_type);
@@ -382,13 +377,7 @@ handle_is_ready(void            *object,
 
     dbus_connection = object;
     
-    g_debug("handling IsReady()");
-    
-    if (!dbus_message_has_signature(message, "")) {
-        return dbus_message_new_error(message,
-                                      DBUS_ERROR_INVALID_ARGS,
-                                      _("Expected zero arguments"));
-    }
+    g_debug("handling IsReady()");    
     
     settings = get_and_ref_settings(dbus_connection);
     v_BOOLEAN = hippo_settings_get_ready(settings);
@@ -438,7 +427,7 @@ handle_get_ready(void            *object,
 static const HippoDBusMember prefs_members[] = {
     { HIPPO_DBUS_MEMBER_METHOD, "GetAllPreferenceNames", "", "as", handle_get_all_preference_names },    
     { HIPPO_DBUS_MEMBER_METHOD, "GetPreference", "sg", "v", handle_get_preference },
-    { HIPPO_DBUS_MEMBER_METHOD, "SetPreference", "s", "v", handle_set_preference },
+    { HIPPO_DBUS_MEMBER_METHOD, "SetPreference", "sv", "", handle_set_preference },
     { HIPPO_DBUS_MEMBER_METHOD, "UnsetPreference", "s", "", handle_unset_preference },
     /* deprecated, use the Ready property */
     { HIPPO_DBUS_MEMBER_METHOD, "IsReady", "", "b", handle_is_ready },
