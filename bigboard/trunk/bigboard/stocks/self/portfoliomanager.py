@@ -8,7 +8,7 @@ from ddm import DataModel
 import bigboard.globals
 import bigboard.libbig as libbig
 from bigboard.libbig.logutil import log_except
-from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, ActionLink, PrelightingCanvasBox, Button, CanvasCheckbox
+from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, ActionLink, PrelightingCanvasBox, Button, CanvasCheckbox, CanvasURLImage
 from bigboard.overview_table import OverviewTable
 
 _logger = logging.getLogger("bigboard.PortfolioManager")
@@ -22,11 +22,25 @@ SECTIONS = {
 
 GCONF_KEY_VISIBLE = '/apps/bigboard/visible'
 
-class StockItem(CanvasVBox):
+class StockPreview(CanvasVBox):
     __gsignals__ = {
         "add-remove" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
     }    
-    
+        
+    def __init__(self, stock):
+        super(StockPreview, self).__init__()
+        self.metainfo = stock.metainfo
+        self.listed = stock.listed
+        
+        self.append(hippo.CanvasText(text=self.metainfo.title, font='Bold 12px'))
+        if self.metainfo.thumbnail:
+            self.append(CanvasURLImage(self.metainfo.thumbnail))        
+        self.append(hippo.CanvasText(text=self.metainfo.description, font="12px", size_mode=hippo.CANVAS_SIZE_WRAP_WORD))
+        self.__button = Button(label=(stock.listed and 'Remove from Sidebar' or 'Add to Sidebar'))
+        self.__button.connect('activated', lambda *args: self.emit('add-remove'))
+        self.append(self.__button)
+        
+class StockItem(CanvasVBox):
     def __init__(self, metainfo, listed):
         super(StockItem, self).__init__()
         
@@ -36,9 +50,8 @@ class StockItem(CanvasVBox):
         self.set_clickable(True)
         
         self.append(hippo.CanvasText(text=metainfo.title))
-        self.__button = Button(label=(listed and 'Remove' or 'Add'))
-        self.__button.connect('activated', lambda *args: self.emit('add-remove'))
-        self.append(self.__button)
+        if metainfo.thumbnail:
+            self.append(CanvasURLImage(metainfo.thumbnail))
 
 class StockList(OverviewTable):
     __gsignals__ = {
@@ -69,7 +82,6 @@ class StockList(OverviewTable):
             return
         
         item = StockItem(metainfo, section == LISTED)
-        item.connect('add-remove', self.__on_item_add_remove)
         item.connect("button-press-event", self.__on_item_click)
                 
         self.add_column_item(section, item, lambda a,b: cmp(a.metainfo.title,b.metainfo.title))
@@ -136,7 +148,7 @@ class StockList(OverviewTable):
             
         self.__selected_item = item
         #self.__selected_item.set_force_prelight(True)
-        self.emit("selected", item.metainfo)
+        self.emit("selected", item)
 
     def __on_item_click(self, item, event):
          if event.count == 1:
@@ -159,17 +171,14 @@ class StockList(OverviewTable):
             else:
                 sect = UNLISTED
             self.add_stock(metainfo, sect)
-            
-    def __on_item_add_remove(self, item):
-        _logger.debug("got addremove for item %s", item.metainfo.srcurl)
-        self.__mgr.set_listed(item.metainfo.srcurl, not item.listed)
              
 class PortfolioManager(hippo.CanvasWindow):
     def __init__(self, panel):
         super(PortfolioManager, self).__init__(gtk.WINDOW_TOPLEVEL)
         
         self.__panel = panel
-        
+        self.__mgr = self.__panel.get_stock_manager()        
+        self.__mgr.connect('listings-changed', lambda *args: self.__on_listings_change())        
         self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))        
 
         self.set_title('Widgets')
@@ -229,7 +238,13 @@ class PortfolioManager(hippo.CanvasWindow):
             self.__profile_box.set_property("box-height", 300)
         else:
             self.__profile_box.set_property("box_height", -1)
-            self.__profile_box.append(StockPreview(stock))
+            pv = StockPreview(stock)
+            self.__profile_box.append(pv)
+            pv.connect('add-remove', self.__on_item_add_remove)            
+            
+    def __on_item_add_remove(self, item):
+        _logger.debug("got addremove for item %s", item.metainfo.srcurl)
+        self.__mgr.set_listed(item.metainfo.srcurl, not item.listed)
 
     def __reset(self):
         self.__search_input.set_property('text', '')
@@ -272,3 +287,8 @@ class PortfolioManager(hippo.CanvasWindow):
         old_visible = gconf.client_get_default().get_bool(GCONF_KEY_VISIBLE)
         if old_visible != new_visible:
             gconf.client_get_default().set_bool(GCONF_KEY_VISIBLE, new_visible)
+
+    @log_except(_logger)
+    def __on_listings_change(self, *args):
+        _logger.debug("got listings change")
+        self.__set_profile_stock(None)
