@@ -2,40 +2,10 @@
 #include <config.h>
 #include <string.h>
 #include "whitelist.h"
+#include "parser.h"
 
-typedef struct
-{
-    char *key;
-    KeyScope scope;
-    /* whitelist only the exact key, or anything with the key as prefix */
-    guint exact_match_only : 1;
-
-} WhitelistEntry;
-
-static WhitelistEntry*
-entry_new(const char *key,
-          KeyScope    scope,
-          gboolean    exact_match_only)
-{
-    WhitelistEntry *entry;
-
-    entry = g_new0(WhitelistEntry, 1);
-    entry->key = g_strdup(key);
-    entry->scope = scope;
-    entry->exact_match_only = exact_match_only != FALSE;
-
-    return entry;
-}
-
-static void
-entry_free(WhitelistEntry *entry)
-{
-
-    g_free(entry->key);
-    g_free(entry);
-}
-
-static GSList *entries = NULL;
+static GHashTable *exact_match_entries;
+static GHashTable *any_subkey_entries;
 
 static void
 scan_directory(const char *dirname)
@@ -53,9 +23,39 @@ scan_directory(const char *dirname)
     }
 
     while ((filename = g_dir_read_name(dir))) {
+        ParsedEntry **parsed;
+        int n_parsed;
+        int i;
         
-        /* FIXME */
+        if (!g_str_has_suffix(filename, ".synclist"))
+            continue;
         
+        if (!parse_entries(filename, &parsed, &n_parsed))
+            continue;
+
+        for (i = 0; i < n_parsed; ++i) {
+            ParsedEntry *existing;
+            GHashTable *table;
+
+            if (parsed[i]->exact_match_only)
+                table = exact_match_entries;
+            else
+                table = any_subkey_entries;
+            
+            existing = g_hash_table_lookup(table, parsed[i]->key);
+
+            if (existing) {
+                if (parsed[i]->priority > existing->priority) {
+                    existing->scope = parsed[i]->scope;
+                    existing->priority = parsed[i]->priority;
+                }
+                parsed_entry_free(parsed[i]);
+            } else {
+                g_hash_table_replace(table, parsed[i]->key, parsed[i]);
+            }
+        }
+
+        g_free(parsed);
     }
     
     g_dir_close(dir);
@@ -64,51 +64,97 @@ scan_directory(const char *dirname)
 static void
 scan_all_directories(void)
 {
-    if (entries == NULL) {
-        static const char *hardcoded_test_entries[] = {
-            "/apps/metacity",
-            "/desktop/gnome/applications",
-            "/desktop/gnome/background",
-            "/desktop/gnome/interface",
-            "/desktop/gnome/url-handlers"
-        };
-        int i;
-        for (i = 0; i < (int) G_N_ELEMENTS(hardcoded_test_entries); ++i) {
-            entries = g_slist_prepend(entries,
-                                      entry_new(hardcoded_test_entries[i],
-                                                KEY_SCOPE_SAVED_PER_USER,
-                                                FALSE));
-        }
+    static const char *hardcoded_test_entries[] = {
+        "/apps/metacity",
+        "/desktop/gnome/applications",
+        "/desktop/gnome/background",
+        "/desktop/gnome/interface",
+        "/desktop/gnome/url-handlers"
+    };
+    int i;
+
+    if (exact_match_entries != NULL)
+        return;
+
+    exact_match_entries = g_hash_table_new(g_str_hash, g_str_equal);
+    any_subkey_entries = g_hash_table_new(g_str_hash, g_str_equal);
+    
+    for (i = 0; i < (int) G_N_ELEMENTS(hardcoded_test_entries); ++i) {
+        ParsedEntry *entry;
+        entry = g_new0(ParsedEntry, 1);
+        entry->key = g_strdup(hardcoded_test_entries[i]);
+        entry->scope = KEY_SCOPE_SAVED_PER_USER;
+        entry->priority = ENTRY_PRIORITY_LOWEST;
+        entry->exact_match_only = FALSE;
+        
+        g_hash_table_replace(any_subkey_entries, entry->key, entry);
     }
     
-    /* FIXME scan XDG_DATA_DIRS */
-    
-    /* scan_directory(CONFIG_FILES_DIR); */
+    scan_directory(CONFIG_FILES_DIR);
 }
 
-static WhitelistEntry*
+/* from g_path_get_dirname() */
+static char*
+parent_gconf_key (const gchar *key)
+{
+     char *base;
+     int len;    
+  
+     base = strrchr (key, '/');
+     
+     if (!base) {
+         return NULL;
+     }
+     
+     while (base > key && *base == '/')
+         base--;
+     
+     len = (1 + base - key);
+     
+     base = g_new (char, len + 1);
+     g_memmove (base, key, len);
+     base[len] = 0;
+     
+     return base;
+}
+
+static ParsedEntry*
 find_entry_for_key(const char *gconf_key)
 {
-    GSList *tmp;
+    ParsedEntry *entry;
     
     scan_all_directories();
-    
-    for (tmp = entries; tmp != NULL; tmp = tmp->next) {
-        WhitelistEntry *entry = tmp->data;
 
-        if (entry->exact_match_only && strcmp(gconf_key, entry->key) == 0)
-            return entry;
-        else if (g_str_has_prefix(gconf_key, entry->key))
-            return entry;
+    /* exact matches override the wildcard matches */
+    entry = g_hash_table_lookup(exact_match_entries, gconf_key);
+
+    /* Now look for each parent in the wildcard list */
+    if (entry == NULL) {        
+        char *parent;
+        
+        parent = g_strdup(gconf_key); /* dup to avoid special-case */
+        
+        while (parent != NULL) {
+            entry = g_hash_table_lookup(any_subkey_entries, parent);
+            if (entry != NULL) {
+                g_free(parent);
+                break;
+            } else {
+                char *old;
+                old = parent;
+                parent = parent_gconf_key(old);
+                g_free(old);
+            }
+        }
     }
 
-    return NULL;
+    return entry;
 }
 
 KeyScope
 whitelist_get_key_scope(const char *gconf_key)
 {
-    WhitelistEntry *entry;
+    ParsedEntry *entry;
 
     entry = find_entry_for_key(gconf_key);
     if (entry != NULL)
@@ -171,20 +217,40 @@ read_entries(GConfClient    *client,
     }
 }            
 
+typedef struct {
+    GConfClient *client;
+    GSList *result;
+} ReadEntriesData;
+
+static void
+read_entries_foreach(void *key,
+                     void *value,
+                     void *data)
+{
+    ReadEntriesData *red = data;
+    ParsedEntry *entry = value;
+    GSList *gconf_entries;
+
+    gconf_entries = read_entries(red->client, entry->key, entry->exact_match_only);
+    red->result = g_slist_concat(red->result, gconf_entries);
+}
+
 GSList*
 whitelist_get_gconf_entries_set_locally(GConfClient *client)
 {
-    GSList *tmp;
-    GSList *result;
+    ReadEntriesData red;
 
-    result = NULL;
-    for (tmp = entries; tmp != NULL; tmp = tmp->next) {
-        WhitelistEntry *entry = tmp->data;    
-        GSList *gconf_entries;
+    red.client = client;
+    red.result = NULL;
 
-        gconf_entries = read_entries(client, entry->key, entry->exact_match_only);
-        result = g_slist_concat(result, gconf_entries);
-    }
+    scan_all_directories();
 
-    return result;
+    /* it might be mildy more efficient to do any_subkey_entries first
+     * if the two hash tables overlap, since it does batch reads of
+     * whole directories
+     */
+    g_hash_table_foreach(any_subkey_entries, read_entries_foreach, &red);
+    g_hash_table_foreach(exact_match_entries, read_entries_foreach, &red);
+    
+    return red.result;
 }

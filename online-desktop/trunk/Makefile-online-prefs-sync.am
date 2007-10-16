@@ -9,5 +9,7 @@ online_prefs_sync_daemon_SOURCES =			\
 	online-prefs-sync/hippo-dbus-helper.h		\
 	online-prefs-sync/hippo-dbus-helper-rename.h	\
 	online-prefs-sync/main.c			\
+	online-prefs-sync/parser.c			\
+	online-prefs-sync/parser.h			\
 	online-prefs-sync/whitelist.c			\
 	online-prefs-sync/whitelist.h
