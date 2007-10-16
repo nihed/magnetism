@@ -1,12 +1,19 @@
-import deskbar.interfaces.Controller
-import gtk
 import logging
+
+import gobject, gtk
+
+import deskbar.interfaces.Controller
 
 _logger = logging.getLogger("bigboard.Deskbar")
 
-class EmbedController(deskbar.interfaces.Controller):
+class EmbedController(deskbar.interfaces.Controller, gobject.GObject):
     
+    __gsignals__ = {
+        "action-selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
+    }
+        
     def __init__(self, model):
+        gobject.GObject.__init__(self)
         deskbar.interfaces.Controller.__init__(self, model)
     
     def on_quit(self, *args):
@@ -85,4 +92,4 @@ class EmbedController(deskbar.interfaces.Controller):
         
     def on_action_selected(self, treeview, text, action, event):
         action.activate(text)
-    
+        self.emit("action-selected", action)

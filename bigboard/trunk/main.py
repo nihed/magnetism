@@ -332,9 +332,7 @@ class BigBoardPanel(dbus.service.Object):
             bigboard.keybinder.tomboy_keybinder_bind(self.__keybinding, self.__on_focus)
     
         self.__autohide_id = 0
-        self._dw.connect('enter-notify-event', self.__on_mouse_enter)        
-        self._dw.connect('leave-notify-event', self.__on_mouse_leave)
-
+        
         self._exchanges = {}
 
         self._canvas = hippo.Canvas()
@@ -447,24 +445,14 @@ class BigBoardPanel(dbus.service.Object):
         
     def __get_size(self):
         return Stock.SIZE_BULL
-
-    @log_except()
-    def __on_mouse_enter(self, w, e):
-        _logger.debug("mouse enter %s", e)
-        if self.__autohide_id > 0:
-            _logger.debug("removing autohide timeout")
-            gobject.source_remove(self.__autohide_id)
-            self.__autohide_id = 0
+    
+    def action_taken(self):
+        _logger.debug("action taken")           
+        self.__handle_deactivation(immediate=True)
     
     @log_except()
     def __on_search_match_selected(self, search):
-        _logger.debug("search match selected")        
-        self.__handle_deactivation(immediate=True)    
-    
-    @log_except()
-    def __on_mouse_leave(self, w, e):
-        _logger.debug("mouse leave %s", e)
-        self.__handle_deactivation()
+        self.action_taken()
         
     def __handle_deactivation(self, immediate=False):
         vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')

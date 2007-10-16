@@ -28,14 +28,12 @@ def reverse(data):
     for index in range(len(data)-1, -1, -1):
         yield data[index]
 
-def on_link_clicked(canvas_item, url):
-    subprocess.Popen(['gnome-open', url])
-
 thumbnails = gnome.ui.ThumbnailFactory(gnome.ui.THUMBNAIL_SIZE_NORMAL)
 itheme = gtk.icon_theme_get_default() 
 
 class File(gobject.GObject):
     __gsignals__ = {
+        "activated" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),                    
         "changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }    
     def __init__(self):
@@ -72,7 +70,7 @@ class File(gobject.GObject):
     def create_icon_link(self):
         link = IconLink(self.get_name())
         link.img.set_property('image-name', self.get_image_name())
-        link.link.connect("activated", on_link_clicked, self.get_url())
+        link.link.connect("activated", lambda *args: self.emit('activated'))
         link.link.set_property("tooltip", self.get_full_name())
         return link   
 
@@ -200,12 +198,18 @@ class FilesStock(Stock, google_stock.GoogleStock):
 
     def remove_google_data(self, gobj):
         self.__remove_files_for_key(gobj)
+        
+    def __on_file_activated(self, fobj):
+        _logger.debug("got file activated: %s", fobj)
+        self._panel.action_taken()
+        subprocess.Popen(['gnome-open', fobj.get_url()])        
 
     def __on_documents_load(self, url, data, gobj):
         document_list = gdocs.DocumentListFeedFromString(data)   
         self.__remove_files_for_key(gobj) 
         for document_entry in document_list.entry:
             google_file = GoogleFile(gobj, gobj.get_auth()[0], document_entry)
+            google_file.connect('activated', self.__on_file_activated)
             self.__files.append(google_file)
         self.__files.sort(compare_by_date)
         self.__refresh_files() 
@@ -238,9 +242,10 @@ class FilesStock(Stock, google_stock.GoogleStock):
         self.__remove_files_for_key('files') 
         # we sort the list of files after we add them, so reversing doesn't
         # really matter anymore
-        for child in reverse(xml_query(doc.documentElement, 'bookmark*')):         
+        for child in reversed(xml_query(doc.documentElement, 'bookmark*')):         
             local_file = LocalFile(child)
             local_file.connect("changed", self.__on_local_file_changed)
+            local_file.connect('activated', self.__on_file_activated)            
             self.__files.append(local_file)
         self.__files.sort(compare_by_date)
         self.__refresh_files()

@@ -1,4 +1,4 @@
-import logging, subprocess, urllib
+import logging, subprocess, urllib, webbrowser
 
 import gobject, gtk
 import hippo
@@ -63,7 +63,7 @@ class FileBrowser(hippo.CanvasWindow):
             if not google_account.have_auth():
                 continue  
             google_docs_link = ActionLink(text=google_account.get_auth()[0] + " Docs", font="14px", padding_bottom=4, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
-            google_docs_link.connect("activated", FilesStock.on_link_clicked, create_account_url(google_account.get_auth()[0]))
+            google_docs_link.connect("activated", webbrowser.open, create_account_url(google_account.get_auth()[0]))
             browse_options.append(google_docs_link)
 
         self.__search_box = CanvasHBox(padding_top=4, padding_bottom=4)        
