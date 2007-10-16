@@ -193,6 +193,7 @@ class PrelightingCanvasBox(hippo.CanvasBox):
         hippo.CanvasBox.__init__(self, **kwargs)
         self.__hovered = False
         self.__force_prelight = False
+        self._prelighted = False
         self.connect('motion-notify-event', lambda self, event: self.__handle_motion(event))
         
     def __handle_motion(self, event):
@@ -211,8 +212,10 @@ class PrelightingCanvasBox(hippo.CanvasBox):
     def sync_prelight_color(self): 
         if self.__force_prelight or (self.__hovered and self.do_prelight()):
             self.set_property('background-color', 0xE2E2E2FF)
+            self._prelighted = True
         else:
             self.set_property('background-color', 0x00000000)           
+            self._prelighted = False
             
     # protected
     def do_prelight(self):
@@ -223,13 +226,16 @@ class PhotoContentItem(PrelightingCanvasBox):
     corresponding content.  Handles size changes via 
     set_size."""
     def __init__(self, **kwargs):
+        if 'spacing' not in kwargs:
+            kwargs['spacing'] = 4
         PrelightingCanvasBox.__init__(self,
                                       orientation=hippo.ORIENTATION_HORIZONTAL,
-                                      spacing=4, **kwargs)
+                                      **kwargs)
         self.__photo = None
         self.__photo_native_width = None
         self.__photo_native_height = None
         self.__child = None
+        self.__cb = None
         
     def set_photo(self, photo):
         assert(self.__photo is None)
@@ -241,7 +247,7 @@ class PhotoContentItem(PrelightingCanvasBox):
     def set_child(self, child):
         assert(self.__child is None)
         self.__child = child
-        self.append(self.__child)         
+        self.append(self.__child, hippo.PACK_EXPAND)         
         
     def set_size(self, size):
         assert(not None in (self.__photo, self.__child, self.__photo_native_width, self.__photo_native_height))
@@ -260,8 +266,16 @@ class PhotoContentItem(PrelightingCanvasBox):
                 self.__photo.set_property("scale-width", 30)
                 self.__photo.set_property("scale-height", 30)            
 
+    def set_sync_prelight_callback(self, cb):
+        self.__cb = cb
+
+    def sync_prelight_color(self): 
+        super(PhotoContentItem, self).sync_prelight_color()
+        if self.__cb:
+            self.__cb(self._prelighted) 
+
 class IconLink(PrelightingCanvasBox):
-    def __init__(self, text, prelight=True, img_scale_width=20, img_scale_height=20, spacing=4, underline=pango.UNDERLINE_NONE, **kwargs):
+    def __init__(self, text="", prelight=True, img_scale_width=20, img_scale_height=20, spacing=4, underline=pango.UNDERLINE_NONE, **kwargs):
         PrelightingCanvasBox.__init__(self,
                                       orientation=hippo.ORIENTATION_HORIZONTAL,
                                       spacing=spacing, **kwargs)
