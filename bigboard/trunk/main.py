@@ -129,22 +129,52 @@ class StockManager(gobject.GObject):
     __gsignals__ = {
         "listings-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
     }    
-    def __init__(self):
+    def __init__(self, hardcoded_urls):
         super(StockManager, self).__init__()
         self.__stockdir = os.path.join(os.path.dirname(bigboard.__file__), 'stocks')
         self.__widget_environ = widget_environ = pyonlinedesktop.widget.WidgetEnvironment()
         widget_environ['google_apps_auth_path'] = ''
-        gconf.client_get_default().notify_add(GCONF_PREFIX + 'url_listings', self.__on_listings_change)
-        self.__metainfo_cache = {}                           
+        self.__listing_key = GCONF_PREFIX + 'url_listings'
+        gconf.client_get_default().notify_add(self.__listing_key, self.__on_listings_change)
+        self.__metainfo_cache = {}   
+        self.__hardcoded_urls = hardcoded_urls                        
+
+    def set_listed(self, url, dolist):
+        curlist = list(self.get_listed_urls())
+        _logger.debug("current listing: %s", curlist)
+        if (url in curlist) and dolist:
+            _logger.debug("attempting to list currently listed stock %s", url)
+            return
+        elif (url not in curlist) and (not dolist):
+            _logger.debug("attempting to delist currently unlisted stock %s", url)            
+            return
+        elif dolist:
+            _logger.debug("listing %s", url)              
+            curlist.append(url)
+        elif not dolist:
+            _logger.debug("delisting %s", url)               
+            curlist.remove(url)
+        gconf.client_get_default().set_list(self.__listing_key, gconf.VALUE_STRING, curlist)                        
 
     def get_all_builtin_urls(self):
         for fname in os.listdir(self.__stockdir):
             fpath = os.path.join(self.__stockdir, fname)
             if fpath.endswith('.xml'):
-                yield 'builtin://' + fname
+                url = 'builtin://' + fname
+                if url not in self.__hardcoded_urls:
+                    yield url
+            
+    def get_hardcoded_urls(self):
+        return self.__hardcoded_urls
+            
+    def get_all_builtin_metadata(self):
+        for url in self.get_all_builtin_urls():
+            yield self.load_metainfo(url)
             
     def get_listed_urls(self):
-        return gconf.client_get_default().get_list(GCONF_PREFIX + 'url_listings', gconf.VALUE_STRING)
+        for url in gconf.client_get_default().get_list(self.__listing_key, gconf.VALUE_STRING):
+            if url not in self.__hardcoded_urls:
+                yield url
     
     def get_listed(self):
         for url in self.get_listed_urls():
@@ -340,11 +370,11 @@ class BigBoardPanel(dbus.service.Object):
             _logger.warn("Couldn't find screensaver")
             pass
         
-        self.__stock_manager = StockManager()
+        self.__stock_manager = StockManager(['builtin://self.xml', 'builtin://search.xml'])
         self.__stock_manager.connect("listings-changed", lambda *args: self.__sync_listing())
         
         # These are hardcoded as it isn't really sensible to remove them
-        self.__hardcoded_stocks = ['builtin://self.xml', 'builtin://search.xml']
+        self.__hardcoded_stocks = self.__stock_manager.get_hardcoded_urls()
         hardcoded_metas = map(lambda url: self.__stock_manager.load_metainfo(url), self.__hardcoded_stocks)
         for metainfo in hardcoded_metas:
             self.__append_metainfo(metainfo, notitle=True)    
@@ -411,6 +441,9 @@ class BigBoardPanel(dbus.service.Object):
         for metainfo in new_listed:
             self.__append_metainfo(metainfo)
         _logger.debug("done with stock load")            
+        
+    def get_stock_manager(self):
+        return self.__stock_manager
         
     def __get_size(self):
         return Stock.SIZE_BULL
