@@ -329,14 +329,19 @@ class SelfStock(AbstractMugshotStock):
         return slideout
          
     def __do_logout(self):
+        self._panel.action_taken()
         self._panel.Logout()
 
     def __do_sidebar_controls(self):
+        # Don't call this here; this ensures that we keep the sidebar visible while
+        # stocks are being manipulated
+        #self._panel.action_taken()        
         if not self.__portfolio_manager:
             self.__portfolio_manager = portfoliomanager.PortfolioManager(self._panel)
         self.__portfolio_manager.present()
     
     def __do_account(self):
+        self._panel.action_taken()        
         if self.__myself:
             url = "/account"
         else:

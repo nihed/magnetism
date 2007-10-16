@@ -6,7 +6,7 @@
                author_affiliation="Red Hat, Inc."
                author_location="Westford, MA"
           	   screenshot="apps.png"
-               thumbnail="apps.png"
+               thumbnail="thumbnail.png"
                description="View and run your applications">
   </ModulePrefs>
   <Content type="online-desktop-builtin"></Content>  

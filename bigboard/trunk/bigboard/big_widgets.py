@@ -114,9 +114,9 @@ class CanvasURLImageMixin:
     """A wrapper for CanvasImage which has a set_url method to retrieve
        images from a URL."""
     def __init__(self, url=None):
+        self.__is_button = False        
         if url:
             self.set_url(url)
-        self.__is_button = False
         
     def set_url(self, url):
         if url:

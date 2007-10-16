@@ -189,8 +189,9 @@ class StockManager(gobject.GObject):
         builtin_scheme = 'builtin://'
         srcurl = url
         if url.startswith(builtin_scheme):
-            srcurl = 'file://' + os.path.join(self.__stockdir, url[len(builtin_scheme):])       
-        metainfo = pyonlinedesktop.widget.WidgetParser(url, urllib2.urlopen(srcurl), self.__widget_environ)
+            srcurl = 'file://' + os.path.join(self.__stockdir, url[len(builtin_scheme):])
+            baseurl = 'file://' + self.__get_moddir_for_builtin(url)
+        metainfo = pyonlinedesktop.widget.WidgetParser(url, urllib2.urlopen(srcurl), self.__widget_environ, baseurl=baseurl)
         self.__metainfo_cache[url] = metainfo
         return metainfo 
     
@@ -205,11 +206,17 @@ class StockManager(gobject.GObject):
     def render_url(self, url, **kwargs):
         return self.render(self.load_metainfo(url), **kwargs)
         
-    def __load_builtin(self, metainfo, notitle=False, panel=None):
-        modpath = urlparse.urlparse(metainfo.srcurl).path
+    def __get_moddir_for_builtin(self, url):
+        modpath = urlparse.urlparse(url).path
         modfile = os.path.basename(modpath)
         dirname = modfile[:modfile.rfind('.')]
-        dirpath = os.path.join(self.__stockdir, dirname)
+        return os.path.join(self.__stockdir, dirname) + "/"
+                
+    def __load_builtin(self, metainfo, notitle=False, panel=None):
+        dirpath = self.__get_moddir_for_builtin(metainfo.srcurl)
+        modpath = urlparse.urlparse(metainfo.srcurl).path
+        modfile = os.path.basename(modpath)
+        dirname = modfile[:modfile.rfind('.')]        
         _logger.debug("appending to path: %s", dirpath)
         sys.path.append(dirpath)
         pfxidx = modfile.find('_')
