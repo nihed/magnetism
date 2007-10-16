@@ -1,6 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <config.h>
 #include <string.h>
+#include <glib/gi18n.h>
 #include "whitelist.h"
 #include "parser.h"
 
