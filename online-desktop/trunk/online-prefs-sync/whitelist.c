@@ -24,14 +24,22 @@ scan_directory(const char *dirname)
 
     while ((filename = g_dir_read_name(dir))) {
         ParsedEntry **parsed;
+        char *full_path;
         int n_parsed;
         int i;
         
-        if (!g_str_has_suffix(filename, ".synclist"))
+        if (!g_str_has_suffix(filename, ".synclist")) {
+            g_debug("Ignoring wrong-suffixed file '%s'", filename);
             continue;
+        }
+
+        full_path = g_build_filename(dirname, filename, NULL);
         
-        if (!parse_entries(filename, &parsed, &n_parsed))
+        if (!parse_entries(full_path, &parsed, &n_parsed)) {
+            g_free(full_path);
             continue;
+        }
+        g_free(full_path);
 
         for (i = 0; i < n_parsed; ++i) {
             ParsedEntry *existing;
@@ -64,33 +72,15 @@ scan_directory(const char *dirname)
 static void
 scan_all_directories(void)
 {
-    static const char *hardcoded_test_entries[] = {
-        "/apps/metacity",
-        "/desktop/gnome/applications",
-        "/desktop/gnome/background",
-        "/desktop/gnome/interface",
-        "/desktop/gnome/url-handlers"
-    };
-    int i;
-
     if (exact_match_entries != NULL)
         return;
 
     exact_match_entries = g_hash_table_new(g_str_hash, g_str_equal);
     any_subkey_entries = g_hash_table_new(g_str_hash, g_str_equal);
+
+    /* FIXME scan XDG_DATA_DIRS */
     
-    for (i = 0; i < (int) G_N_ELEMENTS(hardcoded_test_entries); ++i) {
-        ParsedEntry *entry;
-        entry = g_new0(ParsedEntry, 1);
-        entry->key = g_strdup(hardcoded_test_entries[i]);
-        entry->scope = KEY_SCOPE_SAVED_PER_USER;
-        entry->priority = ENTRY_PRIORITY_LOWEST;
-        entry->exact_match_only = FALSE;
-        
-        g_hash_table_replace(any_subkey_entries, entry->key, entry);
-    }
-    
-    scan_directory(CONFIG_FILES_DIR);
+    scan_directory(SYNCLIST_FILES_DIR);
 }
 
 /* from g_path_get_dirname() */
@@ -127,8 +117,13 @@ find_entry_for_key(const char *gconf_key)
 
     /* exact matches override the wildcard matches */
     entry = g_hash_table_lookup(exact_match_entries, gconf_key);
-
-    /* Now look for each parent in the wildcard list */
+    /* it would be nicer to just drop all "not saved" after parsing all config */
+    if (entry && entry->scope == KEY_SCOPE_NOT_SAVED_REMOTELY)
+        entry = NULL;
+    
+    /* Now look for each parent in the wildcard list; note that more-specific
+     * (deeper) matches "win" since we start from the bottom.
+     */
     if (entry == NULL) {        
         char *parent;
         
@@ -136,6 +131,9 @@ find_entry_for_key(const char *gconf_key)
         
         while (parent != NULL) {
             entry = g_hash_table_lookup(any_subkey_entries, parent);
+            if (entry && entry->scope == KEY_SCOPE_NOT_SAVED_REMOTELY)
+                entry = NULL;            
+            
             if (entry != NULL) {
                 g_free(parent);
                 break;
@@ -231,6 +229,10 @@ read_entries_foreach(void *key,
     ParsedEntry *entry = value;
     GSList *gconf_entries;
 
+    /* would be cleaner to drop these "not saved" entries from the hash after loading config */
+    if (entry->scope == KEY_SCOPE_NOT_SAVED_REMOTELY)
+        return;
+    
     gconf_entries = read_entries(red->client, entry->key, entry->exact_match_only);
     red->result = g_slist_concat(red->result, gconf_entries);
 }

@@ -1,0 +1,39 @@
+<!-- 
+     This is a set of fallback "gconf keys to store on server side"
+     shipped with the online-prefs-sync daemon. Ideally, apps would
+     maintain this list themselves instead for their own keys. Apps
+     can override this stuff by installing a file and setting
+     priority="provided-by-app", which means apps can override this
+     fallback (they are encouraged to do so).
+
+     Presumably this same information is useful both for an enterprise 
+     "store prefs in LDAP" type server and an individual user storing
+     their prefs on the Internet somewhere.
+
+     To avoid syncing a key, use
+       <key name="/whatever" scope="not-saved-remotely" priority="whatever"/>
+
+     Values of priority: lowest, provided-by-app, provided-by-os-vendor,
+                         provided-by-local-site, provided-by-user, 
+                         provided-by-local-site-and-locked-down
+     Values of scope:    not-saved-remotely, saved-per-machine, saved-per-user
+
+     To sync an entire tree of prefs, add "/*" at the end, like "/whatever/*" - 
+     this recursively syncs the whole tree. Arbitrary globs don't work, only 
+     a trailing "/*"
+
+     Scopes are used first from the most specific match (i.e. "/a/b" is more 
+     specific than "/a/*") and if both are equally specific, the priorities
+     come into play. This does mean that provided-by-local-site-and-locked-down
+     is not all that useful, since it can be overridden for specific keys.
+     -->
+
+<!DOCTYPE online_sync PUBLIC "-//gnome//DTD Online Prefs Sync 1.0//EN"
+ "http://www.gnome.org/FIXME.dtd">
+<online_sync>
+  <key name="/apps/metacity/*" scope="saved-per-user" priority="lowest"/>,
+  <key name="/desktop/gnome/applications/*" scope="saved-per-user" priority="lowest"/>,
+  <key name="/desktop/gnome/background/*" scope="saved-per-user" priority="lowest"/>,
+  <key name="/desktop/gnome/interface/*" scope="saved-per-user" priority="lowest"/>,
+  <key name="/desktop/gnome/url-handlers/*" scope="saved-per-user" priority="lowest"/>        
+</online_sync>
