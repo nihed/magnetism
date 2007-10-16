@@ -1147,6 +1147,8 @@ main(int argc, char **argv)
     
     g_set_application_name("Online Prefs Sync");
 
+    g_log_set_default_handler(log_handler, NULL);
+    
     context = g_option_context_new("");
     g_option_context_add_main_entries(context, entries, NULL);
 
@@ -1159,7 +1161,11 @@ main(int argc, char **argv)
     g_option_context_free(context);
 
     debug_level_enabled = verbose;
-    g_log_set_default_handler(log_handler, NULL);
+    if (!debug_level_enabled) {
+        const char *s = g_getenv("ONLINE_PREFS_SYNC_VERBOSE");
+        if (s && *s && *s == '1')
+            debug_level_enabled = TRUE;
+    }
     
     global_manager = g_new0(PrefsManager, 1);
     global_manager->sync_tasks = g_hash_table_new_full(g_str_hash, g_str_equal,
