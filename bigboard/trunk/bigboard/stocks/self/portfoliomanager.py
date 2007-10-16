@@ -7,6 +7,7 @@ from ddm import DataModel
 
 import bigboard.globals
 import bigboard.libbig as libbig
+from bigboard.libbig.logutil import log_except
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, ActionLink, PrelightingCanvasBox, Button
 from bigboard.overview_table import OverviewTable
 
@@ -20,16 +21,21 @@ SECTIONS = {
 }
 
 class StockItem(CanvasVBox):
+    __gsignals__ = {
+        "add-remove" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
+    }    
+    
     def __init__(self, metainfo, listed):
         super(StockItem, self).__init__()
         
-        self.__metainfo = metainfo
-        self.__listed = listed
+        self.metainfo = metainfo
+        self.listed = listed
         
         self.set_clickable(True)
         
         self.append(hippo.CanvasText(text=metainfo.title))
         self.__button = Button(label=(listed and 'Remove' or 'Add'))
+        self.__button.connect('activated', lambda *args: self.emit('add-remove'))
         self.append(self.__button)
 
 class StockList(OverviewTable):
@@ -37,9 +43,10 @@ class StockList(OverviewTable):
         "selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
     }
 
-    def __init__(self):
+    def __init__(self, panel=None):
         super(StockList, self).__init__(padding=6)
         
+        self.__panel = panel
         self.__items = {}
         self.__section_counts = {}
         self.__section_headers = {}
@@ -51,15 +58,19 @@ class StockList(OverviewTable):
 
         self.__selected_item = None
         self.__search = None
+        self.__mgr = self.__panel.get_stock_manager()
+        self.__mgr.connect('listings-changed', lambda *args: self.__sync())
+        gobject.idle_add(self.__sync)
 
     def add_stock(self, metainfo, section):
         if metainfo.srcurl in self.__items[section]:
             return
         
-        item = StockItem(metainfo)
+        item = StockItem(metainfo, section == LISTED)
+        item.connect('add-remove', self.__on_item_add_remove)
         item.connect("button-press-event", self.__on_item_click)
                 
-        self.add_column_item(section, item, lambda a,b: cmp(a,b))
+        self.add_column_item(section, item, lambda a,b: cmp(a.metainfo.title,b.metainfo.title))
         self.__section_counts[section] += 1
         if self.__section_counts[section] == 1:
             self.__section_headers[section].set_visible(True)
@@ -68,14 +79,14 @@ class StockList(OverviewTable):
 
         self.__items[section][metainfo.srcurl] = item
 
-    def remove_stock(self, metainfo, section):
+    def remove_stock(self, srcurl, section):
         try:
-            item = self.__items[section][metainfo.srcurl]
+            item = self.__items[section][srcurl]
         except KeyError:
             return
         
         item.destroy()
-        del self.__items[section][metainfo.srcurl]
+        del self.__items[section][srcurl]
 
     def __update_visibility(self, section, item):
         was_visible = item.get_visible()
@@ -84,8 +95,10 @@ class StockList(OverviewTable):
             visible = True
         else:
             visible = False
-            for str in [item.title]:
-                if str.find(self.__search) >= 0:
+            lcsearch = self.__search.lower()
+            for str in [item.metainfo.title]:
+                lcstr = str.lower()
+                if lcstr.find(lcsearch) >= 0:
                     visible = True
                     break
 
@@ -127,6 +140,28 @@ class StockList(OverviewTable):
          if event.count == 1:
              self.__select_item(item)
              
+    @log_except(_logger)
+    def __sync(self):
+        all = list(self.__mgr.get_all_builtin_metadata())
+        listed = list(self.__mgr.get_listed())
+        itemsections = []
+        for section in self.__items:
+            for srcurl in self.__items[section]:
+                itemsections.append((section, srcurl))
+        for (section, srcurl) in itemsections:
+            self.remove_stock(srcurl, section)
+        for metainfo in all:
+            islisted = metainfo in listed
+            if metainfo in listed:
+                sect = LISTED
+            else:
+                sect = UNLISTED
+            self.add_stock(metainfo, sect)
+            
+    def __on_item_add_remove(self, item):
+        _logger.debug("got addremove for item %s", item.metainfo.srcurl)
+        self.__mgr.set_listed(item.metainfo.srcurl, not item.listed)
+             
 class PortfolioManager(hippo.CanvasWindow):
     def __init__(self, panel):
         super(PortfolioManager, self).__init__(gtk.WINDOW_TOPLEVEL)
@@ -163,7 +198,7 @@ class PortfolioManager(hippo.CanvasWindow):
         self.__right_box = CanvasVBox(border=0, background_color=0xFFFFFFFF)
         self.__box.append(self.__right_scroll, hippo.PACK_EXPAND)
         
-        self.__stock_list = StockList()
+        self.__stock_list = StockList(panel=panel)
         self.__right_box.append(self.__stock_list, hippo.PACK_EXPAND)
 
         self.__stock_list.connect("selected", self.__on_stock_selected)
