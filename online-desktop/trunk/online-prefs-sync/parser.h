@@ -22,7 +22,6 @@ typedef struct {
     guint priority : 8; /* EntryPriority */
     /* whitelist only the exact key, or anything with the key as prefix */
     guint exact_match_only : 1;
-
 } ParsedEntry;
 
 gboolean parse_entries(const char    *filename,

@@ -263,7 +263,8 @@ element_key(GMarkupParseContext *context,
     
     if (!locate_attributes (context, element_name, attribute_names, attribute_values,
                             error,
-                            "name", &name_attr, "scope", &scope_attr, "priority", &priority_attr,
+                            "name", &name_attr, "scope", &scope_attr,
+                            "priority", &priority_attr,
                             NULL))
         return;
 
@@ -311,7 +312,7 @@ element_key(GMarkupParseContext *context,
     entry->scope = scope;
     entry->priority = priority;
     entry->exact_match_only = exact_match_only;
-
+    
     pd->entries = g_slist_prepend(pd->entries, entry);
 }
 
@@ -417,8 +418,10 @@ parse_entries(const char    *filename,
     success = FALSE;
 
     /* ignore error here since we want to silently ignore file open failures */
-    if (!g_file_get_contents(filename, &contents, &contents_len, NULL))
+    if (!g_file_get_contents(filename, &contents, &contents_len, NULL)) {
+        g_debug("Failed to open '%s'", filename);
         return FALSE;
+    }
 
     pd.entries = NULL;
 

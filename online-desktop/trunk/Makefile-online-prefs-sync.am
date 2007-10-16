@@ -1,7 +1,10 @@
 bin_PROGRAMS += online-prefs-sync-daemon
 
+synclistdir=$(pkgdatadir)/synclists
+synclist_DATA=online-prefs-sync/online-prefs-sync.synclist
+
 online_prefs_sync_daemon_CPPFLAGS = $(AM_CPPFLAGS) $(ONLINE_PREFS_SYNC_CFLAGS) \
-	-DCONFIG_FILES_DIR=\"$(pkgdatadir)/conf.d\"
+	-DSYNCLIST_FILES_DIR=\"$(synclistdir)\"
 online_prefs_sync_daemon_LDFLAGS = $(ONLINE_PREFS_SYNC_LIBS)
 
 online_prefs_sync_daemon_SOURCES =			\
