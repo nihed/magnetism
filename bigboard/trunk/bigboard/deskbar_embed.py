@@ -71,6 +71,7 @@ class NewDeskbar(AbstractDeskbar):
 		self.__model = CoreImpl(deskbar.MODULES_DIRS)
 		self.__model.run()
 		self.__controller = EmbedController(self.__model)
+		self.__controller.connect('action-selected', lambda *args: self.emit('match-selected'))
 		self.__view = EmbedView(self.__controller, self.__model)
 
 		self.add(self.__view.get_entry())

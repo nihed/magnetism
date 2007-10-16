@@ -76,6 +76,7 @@ class Stock(gobject.GObject):
     
     def on_more_clicked(self):
         assert(self.__more_button_cb)
+        self._panel.action_taken()
         self.__more_button_cb()
 
     def append_bull(self, box, item):
