@@ -1,6 +1,6 @@
 import logging, time, urlparse, urllib
 
-import gobject, gtk
+import gobject, gtk, gconf
 import hippo
 
 from ddm import DataModel
@@ -8,7 +8,7 @@ from ddm import DataModel
 import bigboard.globals
 import bigboard.libbig as libbig
 from bigboard.libbig.logutil import log_except
-from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, ActionLink, PrelightingCanvasBox, Button
+from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, ActionLink, PrelightingCanvasBox, Button, CanvasCheckbox
 from bigboard.overview_table import OverviewTable
 
 _logger = logging.getLogger("bigboard.PortfolioManager")
@@ -19,6 +19,8 @@ SECTIONS = {
     LISTED : "Installed Widgets",
     UNLISTED : "Available Widgets"
 }
+
+GCONF_KEY_VISIBLE = '/apps/bigboard/visible'
 
 class StockItem(CanvasVBox):
     __gsignals__ = {
@@ -129,12 +131,12 @@ class StockList(OverviewTable):
         if item == self.__selected_item:
             return
         
-        if self.__selected_item:
-            self.__selected_item.set_force_prelight(False)
+        #if self.__selected_item:
+        #    self.__selected_item.set_force_prelight(False)
             
         self.__selected_item = item
-        self.__selected_item.set_force_prelight(True)
-        self.emit("selected", item.resource)
+        #self.__selected_item.set_force_prelight(True)
+        self.emit("selected", item.metainfo)
 
     def __on_item_click(self, item, event):
          if event.count == 1:
@@ -187,10 +189,20 @@ class PortfolioManager(hippo.CanvasWindow):
         self.__search_input.connect("key-press-event", self.__on_search_keypress)
         self.__idle_search_id = 0
         self.__left_box.append(self.__search_input)
-
+        
         self.__profile_box = CanvasVBox(border=1, border_color=0x999999FF, background_color=0xFFFFFFFF)
         self.__left_box.append(self.__profile_box)
         self.__set_profile_stock(None)
+        
+        self.__left_box.append(hippo.CanvasText(text="Tools", font="Bold 12px",
+                                                color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START))
+        minimized_box = CanvasHBox()
+        self.__minimized_check = CanvasCheckbox("Minimized Sidebar Mode")
+        self.__minimized_check.checkbox.connect('toggled', self.__on_minimize_toggled)
+        gconf.client_get_default().notify_add(GCONF_KEY_VISIBLE, self.__on_minimize_key_changed)
+        self.__on_minimize_key_changed()
+        minimized_box.append(self.__minimized_check)
+        self.__left_box.append(minimized_box)
     
         self.__right_scroll = hippo.CanvasScrollbars()
         self.__right_scroll.set_policy(hippo.ORIENTATION_HORIZONTAL,
@@ -226,6 +238,7 @@ class PortfolioManager(hippo.CanvasWindow):
         self.__reset()
         self.hide()
 
+    @log_except(_logger)
     def __idle_do_search(self):
         self.__stock_list.set_search(self.__search_input.get_property("text"))
         self.__idle_search_id = 0
@@ -246,3 +259,16 @@ class PortfolioManager(hippo.CanvasWindow):
 
     def __on_stock_selected(self, list, stock):
          self.__set_profile_stock(stock)
+
+    @log_except(_logger)
+    def __on_minimize_key_changed(self, *args):
+        _logger.debug("minimize key changed")
+        self.__minimized_check.checkbox.set_active(not gconf.client_get_default().get_bool(GCONF_KEY_VISIBLE))  
+       
+    @log_except(_logger)        
+    def __on_minimize_toggled(self, *args):
+        _logger.debug("minimize toggled")        
+        new_visible = not self.__minimized_check.checkbox.get_active()
+        old_visible = gconf.client_get_default().get_bool(GCONF_KEY_VISIBLE)
+        if old_visible != new_visible:
+            gconf.client_get_default().set_bool(GCONF_KEY_VISIBLE, new_visible)
