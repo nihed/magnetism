@@ -1,7 +1,9 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <config.h>
 #include <string.h>
+#include <stdlib.h>
 #include <glib.h>
+#include <glib/gi18n.h>
 #include <gconf/gconf-client.h>
 #include "hippo-dbus-helper.h"
 #include "whitelist.h"
@@ -1074,20 +1076,91 @@ static HippoDBusConnectionTracker connection_tracker = {
     on_dbus_disconnected
 };
 
+static gboolean debug_level_enabled = FALSE;
 
 static void
-print_debug_func(const char *message)
+log_handler(const char    *log_domain,
+            GLogLevelFlags log_level,
+            const char    *message,
+            void          *user_data)
 {
-    g_printerr("%s\n", message);
+    const char *prefix;
+    GString *gstr;
+
+    if (log_level & G_LOG_FLAG_RECURSION) {
+        return;
+    }
+
+    switch (log_level & G_LOG_LEVEL_MASK) {
+        case G_LOG_LEVEL_DEBUG:
+            if (!debug_level_enabled)
+                return;
+            prefix = "DEBUG: ";
+            break;
+        case G_LOG_LEVEL_WARNING:
+            prefix = "WARNING: ";
+            break;
+        case G_LOG_LEVEL_CRITICAL:
+            prefix = "CRITICAL: ";
+            break;
+        case G_LOG_LEVEL_ERROR:
+            prefix = "ERROR: ";
+            break;
+        case G_LOG_LEVEL_INFO:
+            prefix = "INFO: ";
+            break;
+        case G_LOG_LEVEL_MESSAGE:
+            prefix = "MESSAGE: ";
+            break;
+        default:
+            prefix = "";
+            break;
+    }
+
+    gstr = g_string_new("online-prefs-sync: ");
+    
+    g_string_append(gstr, prefix);
+    g_string_append(gstr, message);
+
+    /* no newline here, the print_debug_func is supposed to add it */
+    if (gstr->str[gstr->len - 1] == '\n') {
+        g_string_erase(gstr, gstr->len - 1, 1);
+    }
+
+    g_printerr("%s\n", gstr->str);
+    g_string_free(gstr, TRUE);
 }
+
 
 int
 main(int argc, char **argv)
-{    
+{
+    static gboolean verbose = FALSE;    
+    GError *error;
+    GOptionContext *context;    
+    static const GOptionEntry entries[] = {
+        { "verbose", 0, 0, G_OPTION_ARG_NONE, (gpointer)&verbose, "Print lots of debugging information" },
+        { NULL }
+    };
+    
     g_type_init();
     
     g_set_application_name("Online Prefs Sync");
-   
+
+    context = g_option_context_new("");
+    g_option_context_add_main_entries(context, entries, NULL);
+
+    error = NULL;
+    g_option_context_parse(context, &argc, &argv, &error);
+    if (error) {
+        g_printerr("%s\n", error->message);
+        exit(1);
+    }
+    g_option_context_free(context);
+
+    debug_level_enabled = verbose;
+    g_log_set_default_handler(log_handler, NULL);
+    
     global_manager = g_new0(PrefsManager, 1);
     global_manager->sync_tasks = g_hash_table_new_full(g_str_hash, g_str_equal,
                                                        NULL, (GFreeFunc) sync_task_free);
