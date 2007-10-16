@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import os,sys,re,urllib,urllib2,logging,webbrowser,tempfile,shutil
-import cookielib
+import cookielib,urlparse
 import xml.etree.ElementTree
 from StringIO import StringIO
 
@@ -47,13 +47,20 @@ _IG_MiniMessage.prototype = {
 }
 
 '''    
-    def __init__(self, srcurl, f, env):
+    def __init__(self, srcurl, f, env, baseurl=None):
         self.srcurl = srcurl
         doc = xml.etree.ElementTree.ElementTree()        
      
         doc.parse(f)
         module_prefs = doc.find('ModulePrefs')
-        self.title = module_prefs.attrib['title']
+        self.title = module_prefs.attrib.get('title', None)
+        self.description = module_prefs.attrib.get('description', None)
+        self.thumbnail = module_prefs.attrib.get('thumbnail', None)
+        if self.thumbnail and baseurl:
+            self.thumbnail = urlparse.urljoin(baseurl, self.thumbnail)
+        self.screenshot = module_prefs.attrib.get('screenshot', None)
+        if self.screenshot and baseurl:
+            self.screenshot = urlparse.urljoin(baseurl, self.screenshot)        
         self.height = module_prefs.attrib.get('height', '200')
         self.prefs = {}
         for prefnode in doc.findall('UserPref'):
