@@ -1,6 +1,6 @@
 bin_PROGRAMS += online-prefs-sync-daemon
 
-synclistdir=$(pkgdatadir)/synclists
+synclistdir=$(datadir)/online-prefs-sync
 synclist_DATA=online-prefs-sync/online-prefs-sync.synclist
 
 online_prefs_sync_daemon_CPPFLAGS = $(AM_CPPFLAGS) $(ONLINE_PREFS_SYNC_CFLAGS) \

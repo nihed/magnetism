@@ -13,6 +13,8 @@ scan_directory(const char *dirname)
     GDir *dir;
     GError *error;
     const char *filename;
+
+    g_debug("Scanning directory '%s'", dirname);
     
     error = NULL;
     dir = g_dir_open(dirname, 0, &error);
@@ -44,7 +46,7 @@ scan_directory(const char *dirname)
         for (i = 0; i < n_parsed; ++i) {
             ParsedEntry *existing;
             GHashTable *table;
-
+            
             if (parsed[i]->exact_match_only)
                 table = exact_match_entries;
             else
@@ -53,7 +55,8 @@ scan_directory(const char *dirname)
             existing = g_hash_table_lookup(table, parsed[i]->key);
 
             if (existing) {
-                if (parsed[i]->priority > existing->priority) {
+                /* note >=, i.e. same priority but later in file overrides */
+                if (parsed[i]->priority >= existing->priority) {
                     existing->scope = parsed[i]->scope;
                     existing->priority = parsed[i]->priority;
                 }
@@ -72,15 +75,26 @@ scan_directory(const char *dirname)
 static void
 scan_all_directories(void)
 {
+    const char* const * data_dirs;
+    int i;
+    
     if (exact_match_entries != NULL)
         return;
 
     exact_match_entries = g_hash_table_new(g_str_hash, g_str_equal);
     any_subkey_entries = g_hash_table_new(g_str_hash, g_str_equal);
 
-    /* FIXME scan XDG_DATA_DIRS */
-    
+    /* first try hardcoded location */
     scan_directory(SYNCLIST_FILES_DIR);
+
+    /* override it with anything in XDG_DATA_DIRS (if higher or same priority) */
+    data_dirs = g_get_system_data_dirs();
+    for (i = 0; data_dirs[i] != NULL; ++i) {
+        char *dirname;
+        dirname = g_build_filename(data_dirs[i], "online-prefs-sync", NULL);
+        scan_directory(dirname);
+        g_free(dirname);
+    }
 }
 
 /* from g_path_get_dirname() */
