@@ -12,7 +12,7 @@ import bigboard.slideout
 import bigboard.libbig as libbig
 from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock, AbstractMugshotStock
-from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, Separator
+from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, IconLink, Separator
 import bigboard.google
 
 import portfoliomanager
@@ -98,7 +98,7 @@ class SelfSlideout(CanvasVBox):
         
         self.__stock = stock
 
-        self.__personal_box = CanvasHBox()
+        self.__personal_box = CanvasHBox(spacing=4)
         self.append(self.__personal_box)
        
         self.__photo = CanvasMugshotURLImage(scale_width=48, scale_height=48)
@@ -108,36 +108,35 @@ class SelfSlideout(CanvasVBox):
         self.__personal_box_right = CanvasVBox()
         self.__personal_box.append(self.__personal_box_right, hippo.PACK_EXPAND)
         
-        self.__name_logout = CanvasHBox()
         self.__name = hippo.CanvasText(font="14px Bold",
-                                       xalign=hippo.ALIGNMENT_START)
+                                       xalign=hippo.ALIGNMENT_START,
+                                       size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         
-        self.__name_logout.append(self.__name)
-        self.__logout = hippo.CanvasLink(text='[logout]', xalign=hippo.ALIGNMENT_END,
-                                         padding_left=10)
-        self.__logout.connect("activated", self.__on_logout)
-        self.__name_logout.append(self.__logout, hippo.PACK_EXPAND)
-        self.__personal_box_right.append(self.__name_logout)
+        self.__personal_box_right.append(self.__name)
 
         self.append(Separator())
 
-        self.__personalization_box = CanvasVBox()
+        self.__personalization_box = CanvasVBox(spacing=2)
         self.append(self.__personalization_box)
         self.__personalization_box.append(hippo.CanvasText(text='Personalization',
                                                            font='12px Bold',
                                                            xalign=hippo.ALIGNMENT_START))
 
-        self.__mugshot_link = hippo.CanvasLink(xalign=hippo.ALIGNMENT_START)
-        self.__mugshot_link.connect("activated", self.__show_mugshot_link)
+        self.__mugshot_link = IconLink(img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START)
+        self.__mugshot_link.link.connect("activated", self.__show_mugshot_link)
+        self.__mugshot_link.img.set_property('image-name', '/usr/share/icons/gnome/22x22/apps/web-browser.png')
         self.__personalization_box.append(self.__mugshot_link)
-        
-        link = hippo.CanvasLink(text='System preferences', xalign=hippo.ALIGNMENT_START)
-        link.connect("activated", self.__on_system_preferences)
+
+        link = IconLink(text='Desktop Preferences...', img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START)
+        link.link.connect("activated", self.__on_system_preferences)
+        link.img.set_property('image-name', '/usr/share/icons/gnome/22x22/categories/preferences-system.png')
+        self.__personalization_box.append(link)    
+        link = IconLink(text='Sidebar Preferences...', img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START)
+        link.link.connect("activated", self.__on_sidebar_controls)
+        link.img.set_property('image-name', '/usr/share/icons/gnome/22x22/categories/preferences-desktop.png')
         self.__personalization_box.append(link)
-        visible = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')        
-        link = hippo.CanvasLink(text='Sidebar controls', xalign=hippo.ALIGNMENT_START)
-        link.connect("activated", self.__on_sidebar_controls)
-        self.__personalization_box.append(link)
+
+        self.append(Separator())
 
         if fus:
             self.__fus = dbus.Interface(fus, 'org.gnome.FastUserSwitch')
@@ -145,19 +144,27 @@ class SelfSlideout(CanvasVBox):
             self.__fus.connect_to_signal('DisplaysChanged', self.__handle_fus_change)
             self.__fus.RecheckDisplays()
 
-            self.append(Separator())
             self.__fus_box = CanvasVBox()
             self.append(self.__fus_box)
 
             self.__fus_users_box = CanvasVBox()
             self.__fus_box.append(self.__fus_users_box)
             
-            link = hippo.CanvasLink(text='Log in as another user', xalign=hippo.ALIGNMENT_START)
-            link.connect("activated", self.__do_fus_login_other_user)
+            link = IconLink(text='Log in as Another User...', img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START)
+            link.link.connect("activated", self.__do_fus_login_other_user)
+            link.img.set_property('image-name', '/usr/share/icons/gnome/22x22/apps/system-users.png')
             self.__fus_box.append(link)
             self.__fus_users = []
             self.__handle_fus_change()
             
+        self.__logout_controls_box = CanvasVBox()
+        self.append(self.__logout_controls_box)
+
+        link = IconLink(text='Logout or Shutdown...', img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START)
+        link.link.connect("activated", self.__on_logout)
+        link.img.set_property('image-name', '/usr/share/icons/gnome/22x22/apps/gnome-shutdown.png')
+        self.__logout_controls_box.append(link)
+
         self.update_self(myself)
 
     def update_self(self, myself):
@@ -167,7 +174,7 @@ class SelfSlideout(CanvasVBox):
                 self.__photo.set_url(myself.photoUrl)
             if myself.name:
                 self.__name.set_property("text", myself.name)
-            self.__mugshot_link.set_property("text", 'Visit account page')
+            self.__mugshot_link.link.set_property("text", 'Visit Account Page...')
         else:
             self.__photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
             self.__name.set_property("text", "Nobody")
@@ -235,16 +242,24 @@ class SelfStock(AbstractMugshotStock):
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4, padding_top=2)
 
         self._namephoto_box = PhotoContentItem()
-        self._namephoto_box.set_clickable(True)        
+        self._namephoto_box.set_clickable(True)
+        self._namephoto_box.set_sync_prelight_callback(self.__on_sync_prelight)        
         self._namephoto_box.connect("button-press-event", lambda button, event: self.__on_activate())
         
         self._photo = CanvasMugshotURLImage(scale_width=48, scale_height=48)
         self._photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
         self._namephoto_box.set_photo(self._photo)
         
-        self._name = hippo.CanvasText(text="Nobody")
+        self._namephoto_box_child = CanvasHBox()
+        self._name = hippo.CanvasText(text="Nobody", size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self._name.set_property("font", "14px Bold")
-        self._namephoto_box.set_child(self._name)        
+        self._namephoto_box_child.append(self._name)  
+
+        self._bulb = hippo.CanvasImage(scale_width=17, scale_height=22, xalign=hippo.ALIGNMENT_END, yalign=hippo.ALIGNMENT_CENTER)
+        self._bulb.set_property("image-name", 'bigboard-bulb-bw.png')
+        self._namephoto_box_child.append(self._bulb, hippo.PACK_EXPAND)
+        
+        self._namephoto_box.set_child(self._namephoto_box_child)      
         
         self._box.append(self._namephoto_box)
         
@@ -275,6 +290,12 @@ class SelfStock(AbstractMugshotStock):
 
         #TODO: need to make this conditional on knowing firefox has started already somehow
         #gobject.timeout_add(2000, self.__idle_first_time_signin_check)
+
+    def __on_sync_prelight(self, prelighted):
+        if prelighted:
+            self._bulb.set_property("image-name", 'bigboard-bulb.png')
+        else:
+            self._bulb.set_property("image-name", 'bigboard-bulb-bw.png')
 
     def __idle_first_time_signin_check(self):
         ws = dbus.SessionBus().get_object('org.freedesktop.od.Engine', '/org/gnome/web_services')
