@@ -1,6 +1,6 @@
 import os,sys
 import threading, logging, urllib2, cookielib, urllib, StringIO
-import xml.dom.minidom
+import xml.dom.minidom, urlparse
 
 import gobject
 
@@ -131,6 +131,13 @@ class AsyncHTTPFetcher(Singleton):
 
     def __do_fetch(self, kwargs):
         url = kwargs['url']
+        if url.startswith('file://'):
+            fpath = urlparse.urlparse(url).path
+            try:
+                gobject.idle_add(lambda: self.__emit_results(url, kwargs['cb'], open(fpath).read()))
+            except OSError, e:
+                gobject.idle_add(lambda: kwargs['errcb'](url, str(e)) and False)  
+            return                              
         is_refetch = 'refetch' in kwargs
         self.__logger.debug("in thread fetch of %s" % (url,))
         h = httplib2.Http(cache=self.__cache)
