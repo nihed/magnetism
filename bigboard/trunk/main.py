@@ -642,15 +642,24 @@ class BigBoardPanel(dbus.service.Object):
     def ExpandedChanged(self, is_expanded):
         pass
 
+# TODO: figure out an algorithm for removing pixbufs from the cache
+_pixbufcache = {}
 def load_image_hook(img_name):
     if img_name.startswith('bigboard-'):
         img_name = _find_in_datadir(img_name)
-    if img_name.find(os.sep) >= 0:
-        pixbuf = gtk.gdk.pixbuf_new_from_file(img_name)
-    else:
-        theme = gtk.icon_theme_get_default()
-        pixbuf = theme.load_icon(img_name, 60, gtk.ICON_LOOKUP_USE_BUILTIN)
-    _logger.debug("loaded '%s': %s" % (img_name,pixbuf))        
+    try:
+        pixbuf = _pixbufcache[img_name]
+    except KeyError, e:
+        pixbuf = None
+    if not pixbuf:
+        if img_name.find(os.sep) >= 0:
+            pixbuf = gtk.gdk.pixbuf_new_from_file(img_name)
+            _logger.debug("loaded from file '%s': %s" % (img_name,pixbuf))               
+        else:
+            theme = gtk.icon_theme_get_default()
+            pixbuf = theme.load_icon(img_name, 60, gtk.ICON_LOOKUP_USE_BUILTIN)
+            _logger.debug("loaded from icon theme '%s': %s" % (img_name,pixbuf))
+    _pixbufcache[img_name] = pixbuf        
     return hippo.cairo_surface_from_gdk_pixbuf(pixbuf)    
 
 def on_name_lost(*args):
