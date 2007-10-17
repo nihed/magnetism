@@ -1,6 +1,6 @@
 include $(top_srcdir)/Makefile-include.am
 
-bin_SCRIPTS = bigboard gconf-online-sync
+bin_SCRIPTS = bigboard
 
 noinst_SCRIPTS = bigboard-uninst 
 
@@ -22,14 +22,6 @@ bigboard-uninst: bigboard-uninst.in Makefile
 	    < $< > $@
 	chmod a+x $@
 
-gconf-online-sync: gconf-online-sync.in Makefile
-	sed \
-	    -e s!\@PYTHON\@!@PYTHON@!g \
-	    -e s!\@BB_PYDIR\@!$(mainscriptdir)!g \
-	    -e s!\@BB_STOCKDIR\@!$(stocksdir)!g \
-	    < $< > $@
-	chmod a+x $@
+EXTRA_DIST = bigboard.in bigboard-uninst.in
 
-EXTRA_DIST = bigboard.in bigboard-uninst.in gconf-online-sync.in
-
-CLEANFILES = bigboard bigboard-uninst gconf-online-sync
+CLEANFILES = bigboard bigboard-uninst
