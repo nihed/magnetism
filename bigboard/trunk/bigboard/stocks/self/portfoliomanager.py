@@ -28,16 +28,16 @@ class StockPreview(CanvasVBox):
         "move" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),     
     }
         
-    def __init__(self, stock):
+    def __init__(self, metainfo, listed):
         super(StockPreview, self).__init__()
-        self.metainfo = stock.metainfo
-        self.listed = stock.listed
+        self.metainfo = metainfo
+        self.listed = listed
         
         self.append(hippo.CanvasText(text=self.metainfo.title, font='Bold 12px'))
         if self.metainfo.thumbnail:
             self.append(CanvasURLImage(self.metainfo.thumbnail))        
         self.append(hippo.CanvasText(text=self.metainfo.description, font="12px", size_mode=hippo.CANVAS_SIZE_WRAP_WORD))
-        self.__button = Button(label=(stock.listed and 'Remove from Sidebar' or 'Add to Sidebar'))
+        self.__button = Button(label=(self.listed and 'Remove from Sidebar' or 'Add to Sidebar'))
         self.__button.connect('activated', lambda *args: self.emit('add-remove'))
         self.append(self.__button)
         
@@ -163,7 +163,7 @@ class StockList(OverviewTable):
             
         self.__selected_item = item
         #self.__selected_item.set_force_prelight(True)
-        self.emit("selected", item)
+        self.emit("selected", item.metainfo.srcurl)
 
     def __on_item_click(self, item, event):
          if event.count == 1:
@@ -239,7 +239,10 @@ class PortfolioManager(hippo.CanvasWindow):
 
         self.__stock_list.connect("selected", self.__on_stock_selected)
         
-        self.__right_scroll.set_root(self.__right_box) 
+        self.__right_scroll.set_root(self.__right_box)
+        
+        self.__preview = None
+        self.__set_profile_stock(None) 
         
         self.set_default_size(750, 600)
         self.connect("delete-event", lambda *args: self.__hide_reset() or True)
@@ -247,13 +250,16 @@ class PortfolioManager(hippo.CanvasWindow):
                
         self.set_root(self.__box)
 
-    def __set_profile_stock(self, stock):
+    def __set_profile_stock(self, url):
         self.__profile_box.clear()
-        if stock is None:
+        if url is None:
             self.__profile_box.set_property("box-height", 300)
         else:
             self.__profile_box.set_property("box_height", -1)
-            pv = StockPreview(stock)
+            metainfo = self.__mgr.load_metainfo(url)
+            listed = url in self.__mgr.get_listed_urls()
+            pv = StockPreview(metainfo, listed)
+            self.__preview = pv
             self.__profile_box.append(pv)
             pv.connect('add-remove', self.__on_item_add_remove)
             pv.connect('move', self.__on_item_move)                        
@@ -311,4 +317,6 @@ class PortfolioManager(hippo.CanvasWindow):
     @log_except(_logger)
     def __on_listings_change(self, *args):
         _logger.debug("got listings change")
-        self.__set_profile_stock(None)
+        if self.__preview:
+            self.__set_profile_stock(self.__preview.metainfo.srcurl)
+            
