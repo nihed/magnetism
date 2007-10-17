@@ -109,6 +109,41 @@ hippo_parse_int64(const char *s,
     return TRUE;
 }
 
+gboolean
+hippo_parse_double (const char *s,
+                    double     *result)
+{
+    /*
+     * We accept values of the form '\s*\d+\s+'
+     */
+    
+    char *end;
+    double v;
+
+    while (g_ascii_isspace(*s))
+        ++s;
+    
+    if (*s == '\0')
+        return FALSE;
+    
+    end = NULL;
+    errno = 0;
+    v = g_ascii_strtod(s, &end);
+    
+    if (errno == ERANGE)
+        return FALSE;
+
+    while (g_ascii_isspace(*end))
+        end++;
+
+    if (*end != '\0')
+        return FALSE;
+
+    *result = v;
+
+    return TRUE;
+}
+
 /* No end of spec-compliance here, no doubt */
 gboolean
 hippo_parse_http_url (const char *url,
