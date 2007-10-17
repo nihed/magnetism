@@ -49,9 +49,11 @@ class StockItem(CanvasVBox):
         
         self.set_clickable(True)
         
-        self.append(hippo.CanvasText(text=metainfo.title))
+        self.append(hippo.CanvasText(text=metainfo.title, font='Bold 12px'))
         if metainfo.thumbnail:
-            self.append(CanvasURLImage(metainfo.thumbnail))
+            box = CanvasVBox()
+            box.append(CanvasURLImage(metainfo.thumbnail, border=1, border_color=0xAAAAAAFF, xalign=hippo.ALIGNMENT_CENTER, yalign=hippo.ALIGNMENT_CENTER))
+            self.append(box)
 
 class StockList(OverviewTable):
     __gsignals__ = {
