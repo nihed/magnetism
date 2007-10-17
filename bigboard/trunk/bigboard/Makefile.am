@@ -34,23 +34,23 @@ stocks_DATA = stocks/*.xml
 EXTRA_DIST += $(stocks_DATA)
 
 appstockdir=$(stocksdir)/apps
-appstock_PYTHON = stocks/apps/*.py
+appstock_PYTHON = stocks/apps/*.py stocks/apps/*.png
 
 calendarstockdir=$(stocksdir)/google_calendar
-calendarstock_PYTHON = stocks/google_calendar/*.py
+calendarstock_PYTHON = stocks/google_calendar/*.py stocks/google_calendar/*.png
 
 photosstockdir=$(stocksdir)/mugshot_photos
-photosstock_PYTHON = stocks/mugshot_photos/*.py
+photosstock_PYTHON = stocks/mugshot_photos/*.py stocks/mugshot_photos/*.png
 
 searchstockdir=$(stocksdir)/search
-searchstock_PYTHON = stocks/search/*.py
+searchstock_PYTHON = stocks/search/*.py 
 
 selfstockdir=$(stocksdir)/self
 selfstock_PYTHON = stocks/self/*.py
                 
 peoplestockdir=$(stocksdir)/people
-peoplestock_PYTHON = stocks/people/*.py
+peoplestock_PYTHON = stocks/people/*.py stocks/people/*.png
 
 filestockdir=$(stocksdir)/files
-filestock_PYTHON = stocks/files/*.py
+filestock_PYTHON = stocks/files/*.py stocks/files/*.png
 
