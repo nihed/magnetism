@@ -160,7 +160,10 @@ class CanvasURLImage(hippo.CanvasImage, CanvasURLImageMixin):
     """A wrapper for CanvasImage which has a set_url method to retrieve
        images from a URL."""
     def __init__(self, url=None, **kwargs):
-        hippo.CanvasImage.__init__(self, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START, **kwargs)
+        for k in ['xalign', 'yalign']:
+            if k not in kwargs:
+                kwargs[k] = hippo.ALIGNMENT_START
+        hippo.CanvasImage.__init__(self, **kwargs)
         CanvasURLImageMixin.__init__(self, url)
         
 class CanvasMugshotURLImage(CanvasMugshotURLImageMixin, CanvasURLImage):
@@ -173,7 +176,10 @@ class CanvasURLImageButton(hippo.CanvasImageButton, CanvasURLImageMixin):
     """A wrapper for CanvasImageButton which has a set_url method to retrieve
        images from a URL."""
     def __init__(self, url=None, **kwargs):
-        hippo.CanvasImageButton.__init__(self, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START, **kwargs)
+        for k in ['xalign', 'yalign']:
+            if k not in kwargs:
+                kwargs[k] = hippo.ALIGNMENT_START        
+        hippo.CanvasImageButton.__init__(self, **kwargs)
         CanvasURLImageMixin.__init__(self, url)
         self._set_is_button(True)
         
