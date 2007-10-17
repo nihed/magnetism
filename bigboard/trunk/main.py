@@ -141,7 +141,6 @@ class StockManager(gobject.GObject):
 
     def set_listed(self, url, dolist):
         curlist = list(self.get_listed_urls())
-        _logger.debug("current listing: %s", curlist)
         if (url in curlist) and dolist:
             _logger.debug("attempting to list currently listed stock %s", url)
             return
@@ -155,6 +154,22 @@ class StockManager(gobject.GObject):
             _logger.debug("delisting %s", url)               
             curlist.remove(url)
         gconf.client_get_default().set_list(self.__listing_key, gconf.VALUE_STRING, curlist)                        
+
+    def move_listing(self, url, isup):
+        curlist = list(self.get_listed_urls())
+        curlen = len(curlist)
+        pos = curlist.index(url)
+        if pos < 0:
+            _logger.debug("couldn't find url in listings: %s", url)
+            return
+        if isup and pos == 0:
+            return
+        elif (not isup) and pos == (curlen-1):
+            return
+        del curlist[pos]        
+        pos += (isup and -1 or 1)
+        curlist.insert(pos, url)
+        gconf.client_get_default().set_list(self.__listing_key, gconf.VALUE_STRING, curlist)        
 
     def get_all_builtin_urls(self):
         for fname in os.listdir(self.__stockdir):
