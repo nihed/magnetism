@@ -4,9 +4,9 @@ AC_PREREQ(2.59)
 AC_INIT(apps/gmail/gmail.desktop.in)
 AC_CONFIG_SRCDIR(od-session)
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_AUX_DIR(config)
 
 AM_INIT_AUTOMAKE(online-desktop, 0.2.19)
+GNOME_COMMON_INIT
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -16,6 +16,7 @@ ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
 GETTEXT_PACKAGE=online-desktop
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE",[The name of the gettext domain])
+AM_GLIB_GNU_GETTEXT
 
  ## must come before we use the $USE_MAINTAINER_MODE variable later
 AM_MAINTAINER_MODE
@@ -176,6 +177,12 @@ AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(LDFLAGS)
 
+AC_CACHE_SAVE
+
+IT_PROG_INTLTOOL([0.35.0])
+AC_PATH_PROG(GCONFTOOL, gconftool-2)
+AM_GCONF_SOURCE_2
+
 
 #### define absolute path to srcdir for debugging-only code
 ABSOLUTE_TOP_SRCDIR=`cd ${srcdir} && pwd`
@@ -194,6 +201,7 @@ AC_SUBST(WEBLOGINDRIVER_CFLAGS)
 
 AC_OUTPUT([
 Makefile
+po/Makefile.in
 ])
 
 dnl ==========================================================================
