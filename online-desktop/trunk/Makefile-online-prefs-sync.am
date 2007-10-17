@@ -3,6 +3,8 @@ bin_PROGRAMS += online-prefs-sync-daemon
 synclistdir=$(datadir)/online-prefs-sync
 synclist_DATA=online-prefs-sync/online-prefs-sync.synclist
 
+EXTRA_DIST += $(synclist_DATA)
+
 online_prefs_sync_daemon_CPPFLAGS = $(AM_CPPFLAGS) $(ONLINE_PREFS_SYNC_CFLAGS) \
 	-DSYNCLIST_FILES_DIR=\"$(synclistdir)\"
 online_prefs_sync_daemon_LDFLAGS = $(ONLINE_PREFS_SYNC_LIBS)
