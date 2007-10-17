@@ -190,6 +190,20 @@ setting_arrived(const char *key,
             dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_BOOLEAN, &v_BOOLEAN);
         }
         break;
+    case DBUS_TYPE_DOUBLE:
+        {
+            double v_DOUBLE;
+
+            if (!hippo_parse_double(value, &v_DOUBLE)) {
+                dbus_message_unref(reply);
+                reply = dbus_message_new_error_printf(sad->method_call, HIPPO_DBUS_PREFS_ERROR_WRONG_TYPE,  
+                                                      _("Value was '%s' not parseable as a double"), value);
+                goto out;
+            }
+            
+            dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_DOUBLE, &v_DOUBLE);
+        }
+        break;        
     }
 
     dbus_message_iter_close_container(&iter, &variant_iter);
@@ -235,9 +249,10 @@ handle_get_preference(void            *object,
 
     if ( ! (*signature == DBUS_TYPE_INT32 ||
             *signature == DBUS_TYPE_STRING ||
-            *signature == DBUS_TYPE_BOOLEAN) ) {
+            *signature == DBUS_TYPE_BOOLEAN ||
+            *signature == DBUS_TYPE_DOUBLE) ) {
         return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
-                                      _("Only STRING, INT32, BOOLEAN values supported for now"));
+                                      _("Only STRING, INT32, BOOLEAN, DOUBLE values supported for now"));
     }
     
     settings = get_and_ref_settings(dbus_connection);
@@ -313,6 +328,15 @@ handle_set_preference(void            *object,
             dbus_bool_t v_BOOLEAN;
             dbus_message_iter_get_basic(&variant_iter, &v_BOOLEAN);
             value = g_strdup_printf("%s", v_BOOLEAN ? "true" : "false");
+        }
+        break;
+    case DBUS_TYPE_DOUBLE:
+        {
+            double v_DOUBLE;
+            char buf[G_ASCII_DTOSTR_BUF_SIZE];
+            dbus_message_iter_get_basic(&variant_iter, &v_DOUBLE);
+            g_ascii_dtostr(buf, G_ASCII_DTOSTR_BUF_SIZE, v_DOUBLE);
+            value = g_strdup(buf);
         }
         break;
     default:
