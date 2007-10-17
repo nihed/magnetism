@@ -24,8 +24,9 @@ GCONF_KEY_VISIBLE = '/apps/bigboard/visible'
 
 class StockPreview(CanvasVBox):
     __gsignals__ = {
-        "add-remove" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
-    }    
+        "add-remove" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
+        "move" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),     
+    }
         
     def __init__(self, stock):
         super(StockPreview, self).__init__()
@@ -39,6 +40,18 @@ class StockPreview(CanvasVBox):
         self.__button = Button(label=(stock.listed and 'Remove from Sidebar' or 'Add to Sidebar'))
         self.__button.connect('activated', lambda *args: self.emit('add-remove'))
         self.append(self.__button)
+        
+        if self.listed:
+            self.__up_button = hippo.CanvasLink(text="Up", border_right=10)
+            self.__down_button = hippo.CanvasLink(text="Down")
+            self.__up_down_controls = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
+            self.__up_down_controls.append(self.__up_button)
+            self.__up_down_controls.append(self.__down_button)
+
+            self.__up_button.connect("activated", lambda ci: self.emit("move", True))
+            self.__down_button.connect("activated", lambda ci: self.emit("move", False))
+
+            self.append(self.__up_down_controls)
         
 class StockItem(CanvasVBox):
     def __init__(self, metainfo, listed):
@@ -242,11 +255,16 @@ class PortfolioManager(hippo.CanvasWindow):
             self.__profile_box.set_property("box_height", -1)
             pv = StockPreview(stock)
             self.__profile_box.append(pv)
-            pv.connect('add-remove', self.__on_item_add_remove)            
+            pv.connect('add-remove', self.__on_item_add_remove)
+            pv.connect('move', self.__on_item_move)                        
             
     def __on_item_add_remove(self, item):
         _logger.debug("got addremove for item %s", item.metainfo.srcurl)
         self.__mgr.set_listed(item.metainfo.srcurl, not item.listed)
+        
+    def __on_item_move(self, item, isup):
+        _logger.debug("got move for item %s up: %s", item.metainfo.srcurl, isup)
+        self.__mgr.move_listing(item.metainfo.srcurl, isup)        
 
     def __reset(self):
         self.__search_input.set_property('text', '')
