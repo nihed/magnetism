@@ -477,7 +477,7 @@ class AppsRepo(gobject.GObject):
     def pin_stuff_if_we_have_none(self):
         ## if no apps are pinned and application usage is enabled, initially pin
         ## some stuff
-        if self.__myself and (len(self.__my_pinned_apps) == 0) and usage: 
+        if self.__myself and (len(self.__my_pinned_apps) == 0): 
             if self.__myself.applicationUsageStart > 0:
                 _logger.debug("no static set")           
                 app_stalking_duration = (time.mktime(time.gmtime())) - (int(self.__myself.applicationUsageStart)/1000) 
