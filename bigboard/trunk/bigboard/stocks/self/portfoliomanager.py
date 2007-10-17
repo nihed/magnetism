@@ -125,7 +125,7 @@ class StockList(OverviewTable):
         else:
             visible = False
             lcsearch = self.__search.lower()
-            for str in [item.metainfo.title]:
+            for str in [item.metainfo.title, item.metainfo.description]:
                 lcstr = str.lower()
                 if lcstr.find(lcsearch) >= 0:
                     visible = True
