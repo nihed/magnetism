@@ -122,6 +122,8 @@ static gboolean
 dbus_key_to_gconf_key(const char *dbus_key,
                       char      **gconf_key)
 {
+    g_return_val_if_fail(dbus_key != NULL, FALSE);
+    
     *gconf_key = NULL;
     
     if (g_str_has_prefix(dbus_key, "/gconf/")) {
@@ -745,6 +747,8 @@ static void
 request_new_value_of_pref(PrefsManager *manager,
                           const char   *dbus_key)
 {
+    g_return_if_fail(dbus_key != NULL);
+    
     if (manager->proxy) {
         char *gconf_key;
 

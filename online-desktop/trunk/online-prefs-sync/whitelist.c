@@ -103,9 +103,12 @@ static char*
 parent_gconf_key (const gchar *key)
 {
      char *base;
-     int len;    
-  
-     base = strrchr (key, '/');
+     int len;
+
+     if (key[0] == '/' && key[1] == '\0')
+         return NULL;
+     
+     base = strrchr (key, '/');     
      
      if (!base) {
          return NULL;
