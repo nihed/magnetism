@@ -263,6 +263,71 @@ json_string_parse (const char  *s,
     return g_string_free(str, FALSE);
 }
 
+char*
+json_string_escape (const char *s)
+{
+    GString *escaped;
+    const char *p;
+
+    escaped = g_string_new(NULL);
+
+    g_string_append_c(escaped, '"');
+
+    p = s;
+    while (*p) {        
+        gunichar c;
+        
+        c = g_utf8_get_char(p);
+        p = g_utf8_next_char(p);
+
+        if (c < 128) {
+            switch (c) {
+            case '"':
+                g_string_append_c(escaped, '\\');
+                g_string_append_c(escaped, '"');
+                break;
+            case '\\':
+                g_string_append_c(escaped, '\\');
+                g_string_append_c(escaped, '\\');
+                break;
+            case '/':
+                g_string_append_c(escaped, '\\');
+                g_string_append_c(escaped, '/');
+                break;
+            case '\b':
+                g_string_append_c(escaped, '\\');
+                g_string_append_c(escaped, 'b');
+                break;
+            case '\f':
+                g_string_append_c(escaped, '\\');
+                g_string_append_c(escaped, 'f');
+                break;
+            case '\n':
+                g_string_append_c(escaped, '\\');
+                g_string_append_c(escaped, 'n');
+                break;
+            case '\r':
+                g_string_append_c(escaped, '\\');
+                g_string_append_c(escaped, 'r');
+                break;
+            case '\t':
+                g_string_append_c(escaped, '\\');
+                g_string_append_c(escaped, 't');
+                break;
+            default:
+                g_string_append_unichar(escaped, c);
+                break;
+            }
+        } else {
+            g_string_append_printf(escaped, "\\u%04d", c);
+        }
+    }
+    
+    g_string_append_c(escaped, '"');
+
+    return g_string_free(escaped, FALSE);
+}
+
 #ifdef BUILD_TESTS
 /* too confusing when done as a string literal */
 static const char escaped_quote[] = { '"', '\\', '"', '"', '\0' };
@@ -276,7 +341,8 @@ valid_json_strings[] = {
     "\"abc\\u2620def\"",
     "\"\\u2620\"",
     "\"\\u2620def\"",
-    "\"abc\\u2620def\""    
+    "\"abc\\u2620def\"",
+    "\"\\u0155\"" /* to check escaping with leading 0, i.e. %04d not %4d */
 };
 
 typedef struct {
@@ -343,11 +409,12 @@ main(int argc, char **argv)
         
         g_string_free(str, TRUE);
 
-        /* check parsing */
+        /* check parsing and escaping */
         {
             GError *error = NULL;
             char *unescaped = json_string_parse(s, &error);
-
+            char *reescaped;
+            
             if (unescaped == NULL) {
                 g_error("Failed to unescape '%s': %s",
                         s, error->message);
@@ -358,6 +425,16 @@ main(int argc, char **argv)
             }
             
             g_print("   = '%s'\n", unescaped);
+
+            reescaped = json_string_escape(unescaped);
+            if (strcmp(reescaped, s) != 0) {
+                g_error("Re-escaping gave '%s' not '%s'",
+                        reescaped, s);
+            } else {
+                g_print("   (re-escaped '%s')\n", reescaped);
+            }
+            
+            g_free(reescaped);
             g_free(unescaped);
         }
     }
