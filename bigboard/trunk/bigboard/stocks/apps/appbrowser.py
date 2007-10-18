@@ -411,17 +411,21 @@ class AppList(CanvasVBox):
             cat_used_apps = filter(lambda app: app in self.__used_apps, categories[catname])
             cat_used_apps_count = len(cat_used_apps)
             if display_only_used:
-                right_link = ActionLink(text=u"More (%d) \u00BB" % (len(categories[catname]) - cat_used_apps_count,))
-                right_link.connect("activated", self.__handle_category_more, catname)
+                right_button = Button()
+                right_button.set_label_text("More (%d)" % (len(categories[catname]) - cat_used_apps_count,))
+                right_button.connect("activated", self.__handle_category_more, catname)
                 left_link = None
             else:
-                right_link = None
                 if self.__selected_cat:
                     left_link = ActionLink(text=u"All Applications /")
                     left_link.connect("activated", self.__handle_nocategory)
+                    right_button = Button()
+                    right_button.set_label_text("Back")
+                    right_button.connect("activated", self.__handle_nocategory)
                 else:
+                    right_button = None
                     left_link = None
-            self.__table.add_section_head(section_key, catname, left_control=left_link, right_control=right_link)
+            self.__table.add_section_head(section_key, catname, left_control=left_link, right_control=right_button)
             if display_only_used:
                 appsource = cat_used_apps
             else:
