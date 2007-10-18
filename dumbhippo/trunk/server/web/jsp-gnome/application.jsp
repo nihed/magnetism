@@ -60,7 +60,7 @@
 </head>
 
 <body>
-   	<gnome:page>
+   	<gnome:page currentPageLink="application">
 	    <dht3:applicationsTop/>
 	    <hr>
 	    <table id="dhApplicationsColumns">
