@@ -534,7 +534,7 @@ public class RewriteServlet extends HttpServlet {
 			}
 		}
 		
-		if (jspPages.containsKey(afterSlash)) {
+		if (jspPages.containsKey(afterSlash) || jspPagesGnome.contains(afterSlash)) {
 			handleVersionedJsp(request, response, afterSlash);
 		} else if (htmlPages.contains(afterSlash)) {
 			Configuration configuration = EJBUtil.defaultLookup(Configuration.class);
@@ -709,6 +709,8 @@ public class RewriteServlet extends HttpServlet {
 
 		boolean dogfoodMode = Boolean.parseBoolean(configuration.getProperty(HippoProperty.DOGFOOD_MODE));
         getServletContext().setAttribute("dogfoodMode", dogfoodMode);
+        getServletContext().setAttribute("baseUrlMugshot", configuration.getProperty(HippoProperty.BASEURL_MUGSHOT));
+        getServletContext().setAttribute("baseUrlGnome", configuration.getProperty(HippoProperty.BASEURL_GNOME));
 		
 		requiresSignin = getStringSet(config, "requiresSignin");
 		requiresSigninStealth = getStringSet(config, "requiresSigninStealth");
@@ -775,7 +777,7 @@ public class RewriteServlet extends HttpServlet {
 		}
 		
 		for (String p : withSigninRequirements) {
-			if (!jspPages.containsKey(p) && !htmlPages.contains(p)) {
+			if (!jspPages.containsKey(p) && !htmlPages.contains(p) && !jspPagesGnome.contains(p)) {
 				logger.warn("Page '{}' in servlet config is not a .jsp or .html we know about", p);
 			}
 		}
