@@ -9,6 +9,8 @@ char** json_array_split  (const char  *s,
 char*  json_string_parse (const char  *s,
                           GError     **error);
 
+char*  json_string_escape (const char *s);
+
 G_END_DECLS
 
 #endif /* __HIPPO_JSON_H__ */

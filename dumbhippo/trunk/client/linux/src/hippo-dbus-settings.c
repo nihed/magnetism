@@ -12,9 +12,21 @@
 #include "hippo-dbus-settings.h"
 #include "hippo-dbus-helper.h"
 #include "main.h"
+#include "json.h"
 
 /* This is its own file since it could end up being a fair bit of code eventually
  */
+
+static const char *supported_signatures[] = {
+    DBUS_TYPE_INT32_AS_STRING,
+    DBUS_TYPE_STRING_AS_STRING,
+    DBUS_TYPE_BOOLEAN_AS_STRING,
+    DBUS_TYPE_DOUBLE_AS_STRING,
+    DBUS_TYPE_ARRAY_AS_STRING DBUS_TYPE_INT32_AS_STRING,
+    DBUS_TYPE_ARRAY_AS_STRING DBUS_TYPE_STRING_AS_STRING,
+    DBUS_TYPE_ARRAY_AS_STRING DBUS_TYPE_BOOLEAN_AS_STRING,
+    DBUS_TYPE_ARRAY_AS_STRING DBUS_TYPE_DOUBLE_AS_STRING,
+};
 
 static void
 on_ready_changed(HippoSettings *settings,
@@ -122,6 +134,125 @@ handle_get_all_preference_names(void            *object,
 
 }
 
+static gboolean
+signature_is_supported(const char *signature)
+{
+    int i;
+
+    for (i = 0; i < (int) G_N_ELEMENTS(supported_signatures); ++i) {
+        if (strcmp(signature, supported_signatures[i]) == 0)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static gboolean
+parse_and_append_value(const char      *signature,
+                       const char      *value,
+                       DBusMessageIter *append_iter,
+                       gboolean         unescape_if_string)
+{
+    switch (*signature) {
+    case DBUS_TYPE_STRING:
+        /* strings are escaped if in a list, but not if single values,
+         * for historical reasons (back compat, json was introduced only
+         * when list support was added)
+         */
+        if (unescape_if_string) {
+            char *s;
+            GError *error;
+            error = NULL;
+            s = json_string_parse(value, &error);
+            if (s == NULL) {
+                g_debug("JSON string parse error: %s", error->message);
+                g_error_free(error);
+                return FALSE;
+            } else {
+                dbus_message_iter_append_basic(append_iter, DBUS_TYPE_STRING, &s);
+                g_free(s);
+            }
+        } else {            
+            dbus_message_iter_append_basic(append_iter, DBUS_TYPE_STRING, &value);
+        }
+        break;
+    case DBUS_TYPE_INT32:
+        {
+            dbus_int32_t v_INT32;
+
+            if (!hippo_parse_int32(value, &v_INT32)) {
+                return FALSE;
+            }
+            
+            dbus_message_iter_append_basic(append_iter, DBUS_TYPE_INT32, &v_INT32);
+        }
+        break;
+    case DBUS_TYPE_BOOLEAN:
+        {
+            dbus_bool_t v_BOOLEAN;
+
+            if (strcmp(value, "true") == 0)
+                v_BOOLEAN = TRUE;
+            else if (strcmp(value, "false") == 0)
+                v_BOOLEAN = FALSE;
+            else {
+                return FALSE;
+            }
+            
+            dbus_message_iter_append_basic(append_iter, DBUS_TYPE_BOOLEAN, &v_BOOLEAN);
+        }
+        break;
+    case DBUS_TYPE_DOUBLE:
+        {
+            double v_DOUBLE;
+
+            if (!hippo_parse_double(value, &v_DOUBLE)) {
+                return FALSE;
+            }
+            
+            dbus_message_iter_append_basic(append_iter, DBUS_TYPE_DOUBLE, &v_DOUBLE);
+        }
+        break;
+    case DBUS_TYPE_ARRAY:
+        /* We store arrays as JSON lists */
+        {
+            char** elements;
+            GError *error;
+            int i;
+            DBusMessageIter array_iter;
+            
+            error = NULL;
+            elements = json_array_split(value, &error);
+            if (elements == NULL) {
+                g_debug("JSON array parse error: %s", error->message);
+                g_error_free(error);
+                return FALSE;
+            }
+
+            dbus_message_iter_open_container(append_iter, DBUS_TYPE_ARRAY, signature + 1,
+                                             &array_iter);
+            for (i = 0; elements[i] != NULL; ++i) {
+                if (!parse_and_append_value(signature + 1,
+                                            elements[i],
+                                            &array_iter,
+                                            TRUE)) {
+                    g_strfreev(elements);
+                    return FALSE;
+                }
+            }
+            g_strfreev(elements);
+
+            dbus_message_iter_close_container(append_iter, &array_iter);
+        }
+        break;
+    default:
+        /* since we already validated the signature, should not happen */
+        g_assert_not_reached();
+        break;
+    }
+
+    return TRUE;
+}
+
 typedef struct SettingArrivedData SettingArrivedData;
 struct SettingArrivedData {
     DBusMessage *method_call;
@@ -154,56 +285,15 @@ setting_arrived(const char *key,
                                      &variant_iter);
 
 
-    switch (*(sad->signature)) {
-    case DBUS_TYPE_STRING:
-        dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_STRING, &value);
-        break;
-    case DBUS_TYPE_INT32:
-        {
-            dbus_int32_t v_INT32;
-
-            if (!hippo_parse_int32(value, &v_INT32)) {
-                dbus_message_unref(reply);
-                reply = dbus_message_new_error_printf(sad->method_call, HIPPO_DBUS_PREFS_ERROR_WRONG_TYPE,  
-                                                      _("Value was '%s' not parseable as an INT32"), value);
-                goto out;
-            }
-            
-            dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_INT32, &v_INT32);
-        }
-        break;
-    case DBUS_TYPE_BOOLEAN:
-        {
-            dbus_bool_t v_BOOLEAN;
-
-            if (strcmp(value, "true") == 0)
-                v_BOOLEAN = TRUE;
-            else if (strcmp(value, "false") == 0)
-                v_BOOLEAN = FALSE;
-            else {
-                dbus_message_unref(reply);
-                reply = dbus_message_new_error_printf(sad->method_call, HIPPO_DBUS_PREFS_ERROR_WRONG_TYPE,  
-                                                      _("Value was '%s' not parseable as a BOOLEAN"), value);
-                goto out;
-            }
-            
-            dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_BOOLEAN, &v_BOOLEAN);
-        }
-        break;
-    case DBUS_TYPE_DOUBLE:
-        {
-            double v_DOUBLE;
-
-            if (!hippo_parse_double(value, &v_DOUBLE)) {
-                dbus_message_unref(reply);
-                reply = dbus_message_new_error_printf(sad->method_call, HIPPO_DBUS_PREFS_ERROR_WRONG_TYPE,  
-                                                      _("Value was '%s' not parseable as a double"), value);
-                goto out;
-            }
-            
-            dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_DOUBLE, &v_DOUBLE);
-        }
-        break;        
+    if (!parse_and_append_value(sad->signature,
+                                value,
+                                &variant_iter,
+                                FALSE)) {
+        dbus_message_unref(reply);
+        reply = dbus_message_new_error_printf(sad->method_call, HIPPO_DBUS_PREFS_ERROR_WRONG_TYPE,  
+                                              _("Value was '%s' not parseable as type '%s'"),
+                                              value, sad->signature);
+        goto out;
     }
 
     dbus_message_iter_close_container(&iter, &variant_iter);
@@ -227,8 +317,8 @@ handle_get_preference(void            *object,
     const char *signature;
     HippoSettings *settings;
     SettingArrivedData *sad;
-    DBusConnection *dbus_connection;
-
+    DBusConnection *dbus_connection;    
+    
     dbus_connection = object;
     
     key = NULL;
@@ -246,13 +336,10 @@ handle_get_preference(void            *object,
         return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
                                       _("Type signature must be a single complete type, not a list of types"));
     }
-
-    if ( ! (*signature == DBUS_TYPE_INT32 ||
-            *signature == DBUS_TYPE_STRING ||
-            *signature == DBUS_TYPE_BOOLEAN ||
-            *signature == DBUS_TYPE_DOUBLE) ) {
+    
+    if (!signature_is_supported(signature)) {
         return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
-                                      _("Only STRING, INT32, BOOLEAN, DOUBLE values supported for now"));
+                                      _("Only STRING, INT32, BOOLEAN, DOUBLE and arrays of those supported for now"));
     }
     
     settings = get_and_ref_settings(dbus_connection);
@@ -280,6 +367,125 @@ handle_get_preference(void            *object,
     return NULL; /* no synchronous reply, we'll send it async or we just sent it above */
 }
 
+static char*
+string_value_from_array(DBusMessageIter *array_iter,
+                        int              value_type)
+{
+    GString *json_array;
+
+    /* We store arrays as JSON lists */
+    
+    json_array = g_string_new("[");
+
+    while (dbus_message_iter_get_arg_type(array_iter) != DBUS_TYPE_INVALID) {
+        switch (value_type) {
+        case DBUS_TYPE_STRING:
+            {
+                const char *v_STRING;                        
+                char *s;
+                dbus_message_iter_get_basic(array_iter, &v_STRING);
+                s = json_string_escape(v_STRING);
+                g_string_append(json_array, s);
+                g_free(s);
+            }
+            break;
+        case DBUS_TYPE_INT32:
+            {
+                dbus_int32_t v_INT32;
+                dbus_message_iter_get_basic(array_iter, &v_INT32);
+                g_string_append_printf(json_array, "%d", v_INT32);
+            }
+            break;
+        case DBUS_TYPE_BOOLEAN:
+            {
+                dbus_bool_t v_BOOLEAN;
+                dbus_message_iter_get_basic(array_iter, &v_BOOLEAN);
+                g_string_append(json_array, v_BOOLEAN ? "true" : "false");
+            }
+            break;
+        case DBUS_TYPE_DOUBLE:
+            {
+                double v_DOUBLE;
+                char buf[G_ASCII_DTOSTR_BUF_SIZE];
+                dbus_message_iter_get_basic(array_iter, &v_DOUBLE);
+                g_ascii_dtostr(buf, G_ASCII_DTOSTR_BUF_SIZE, v_DOUBLE);
+                g_string_append(json_array, buf);
+            }
+            break;
+        default:
+            /* since we already validated signature, should not happen */
+            g_assert_not_reached();
+            break;
+        }
+
+        if (dbus_message_iter_has_next(array_iter)) {
+            g_string_append(json_array, ",");
+        }
+                
+        dbus_message_iter_next(array_iter);
+    }
+    
+    g_string_append(json_array, "]");
+
+    return g_string_free(json_array, FALSE);
+}
+
+static char*
+string_value_from_variant(DBusMessageIter *variant_iter,
+                          const char      *value_signature)
+{
+    char *value;
+    
+    value = NULL;
+    switch (*value_signature) {
+    case DBUS_TYPE_STRING:
+        {
+            /* note we do NOT json-escape a single string, only strings in an array */
+            const char *v_STRING;
+            dbus_message_iter_get_basic(variant_iter, &v_STRING);
+            value = g_strdup(v_STRING);
+        }
+        break;
+    case DBUS_TYPE_INT32:
+        {
+            dbus_int32_t v_INT32;
+            dbus_message_iter_get_basic(variant_iter, &v_INT32);
+            value = g_strdup_printf("%d", v_INT32);
+        }
+        break;
+    case DBUS_TYPE_BOOLEAN:
+        {
+            dbus_bool_t v_BOOLEAN;
+            dbus_message_iter_get_basic(variant_iter, &v_BOOLEAN);
+            value = g_strdup_printf("%s", v_BOOLEAN ? "true" : "false");
+        }
+        break;
+    case DBUS_TYPE_DOUBLE:
+        {
+            double v_DOUBLE;
+            char buf[G_ASCII_DTOSTR_BUF_SIZE];
+            dbus_message_iter_get_basic(variant_iter, &v_DOUBLE);
+            g_ascii_dtostr(buf, G_ASCII_DTOSTR_BUF_SIZE, v_DOUBLE);
+            value = g_strdup(buf);
+        }
+        break;
+    case DBUS_TYPE_ARRAY:
+        {
+            DBusMessageIter array_iter;
+            
+            dbus_message_iter_recurse(variant_iter, &array_iter);
+            value = string_value_from_array(&array_iter, *(value_signature + 1));
+        }
+        break;
+    default:
+        /* since we already validated the signature, should not happen */
+        g_assert_not_reached();
+        break;
+    }
+
+    return value;
+}
+
 static DBusMessage*
 handle_set_preference(void            *object,
                       DBusMessage     *message,
@@ -290,7 +496,7 @@ handle_set_preference(void            *object,
     DBusMessageIter iter;
     DBusMessageIter variant_iter;
     const char *key;
-    int value_type;
+    char *value_signature;
     char *value;
     DBusConnection *dbus_connection;
     
@@ -305,48 +511,21 @@ handle_set_preference(void            *object,
 
     dbus_message_iter_recurse(&iter, &variant_iter);
 
-    value_type = dbus_message_iter_get_arg_type(&variant_iter);
+    value_signature = dbus_message_iter_get_signature(&variant_iter);
 
-    value = NULL;
-    switch (value_type) {
-    case DBUS_TYPE_STRING:
-        {
-            const char *v_STRING;
-            dbus_message_iter_get_basic(&variant_iter, &v_STRING);
-            value = g_strdup(v_STRING);
-        }
-        break;
-    case DBUS_TYPE_INT32:
-        {
-            dbus_int32_t v_INT32;
-            dbus_message_iter_get_basic(&variant_iter, &v_INT32);
-            value = g_strdup_printf("%d", v_INT32);
-        }
-        break;
-    case DBUS_TYPE_BOOLEAN:
-        {
-            dbus_bool_t v_BOOLEAN;
-            dbus_message_iter_get_basic(&variant_iter, &v_BOOLEAN);
-            value = g_strdup_printf("%s", v_BOOLEAN ? "true" : "false");
-        }
-        break;
-    case DBUS_TYPE_DOUBLE:
-        {
-            double v_DOUBLE;
-            char buf[G_ASCII_DTOSTR_BUF_SIZE];
-            dbus_message_iter_get_basic(&variant_iter, &v_DOUBLE);
-            g_ascii_dtostr(buf, G_ASCII_DTOSTR_BUF_SIZE, v_DOUBLE);
-            value = g_strdup(buf);
-        }
-        break;
-    default:
-        g_debug("dbus value type we don't know how to handle");
-        return dbus_message_new_error_printf(message,
-                                             DBUS_ERROR_INVALID_ARGS,
-                                             _("Unable to handle values of type '%c' right now"), value_type);
-        break;
+    if (!signature_is_supported(value_signature)) {
+        reply = dbus_message_new_error_printf(message,
+                                              DBUS_ERROR_INVALID_ARGS,
+                                              _("Unable to handle values of type '%s' right now"),
+                                              value_signature);
+        g_free(value_signature);
+        return reply;
     }
+    
+    value = string_value_from_variant(&variant_iter, value_signature);
 
+    g_free(value_signature);
+    
     settings = get_and_ref_settings(dbus_connection);
     
     hippo_settings_set(settings, key, value);
