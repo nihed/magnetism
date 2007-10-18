@@ -5,12 +5,12 @@ gnomesessiondir=$(datadir)/gnome
 gnomesession_DATA = online-desktop.session
 EXTRA_DIST += $(gnomesession_DATA)
 
-autostartdir=$(datadir)/online-desktop/autostart
-autostart_DATA = \
+odautostartdir=$(datadir)/online-desktop/autostart
+odautostart_DATA = \
 	autostart/bigboard.desktop \
 	autostart/browser.desktop
 
 presessiondir=$(datadir)/online-desktop/presession
 presession_SCRIPTS = presession/panel-config.py
-EXTRA_DIST += $(autostart_DATA) $(presession_SCRIPTS)
+EXTRA_DIST += $(odautostart_DATA) $(presession_SCRIPTS)
 
