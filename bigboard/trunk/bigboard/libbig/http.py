@@ -80,10 +80,13 @@ class AsyncHTTPFetcher(Singleton):
         self.fetch_extended(**kwargs)
         
     def fetch_extended(self, **kwargs):
-        self.__work_lock.acquire()
-        self.__work_queue.append((kwargs,))
-        self.__work_cond.notify()
-        self.__work_lock.release()        
+        if 'refetch' in kwargs:
+            self.__do_fetch(kwargs)
+        else:
+            self.__work_lock.acquire()
+            self.__work_queue.append((kwargs,))
+            self.__work_cond.notify()
+            self.__work_lock.release()        
 
     def xml_method(self, url, params, cb, normerrcb, errcb):
         formdata = urllib.urlencode(params)
