@@ -28,7 +28,8 @@ class EmbedView(deskbar.interfaces.View):
         self.entry = CuemiacEntry (self.default_entry_pixbuf)
         self.entry.connect("changed", self._controller.on_query_entry_changed)
         self.entry.connect("activate", self._controller.on_query_entry_activate)
-        self.entry.connect("key-press-event", self._controller.on_query_entry_key_press_event)        
+        self.entry.connect("key-press-event", self._controller.on_query_entry_key_press_event)
+        self.entry.connect("focus-out-event", self._controller.on_query_focus_out)
         self.entry.show()
         
         # Results TreeView
@@ -36,14 +37,11 @@ class EmbedView(deskbar.interfaces.View):
         self.treeview_model.connect("category-added", lambda w, c, p: self.cview.expand_row(p, False) )
         
         self.cview = CuemiacTreeView (self.treeview_model)
-        self.cview.connect ("key-press-event", self.__on_cview_key_press)
-        self.cview.connect ("button-press-event", self.__on_cview_button_press)
         self.cview.connect ("match-selected", self._controller.on_match_selected)
         self.cview.connect ("match-selected", self.__on_match_selected)
         self.cview.connect ("do-default-action", self._controller.on_do_default_action)
         self.cview.connect ("do-default-action", self.__on_match_selected)
         self.cview.connect_after ("cursor-changed", self._controller.on_treeview_cursor_changed)
-        self.cview.connect_after ("hide", self.__on_cview_hidden)
         self.cview.show()
         
         self.scrolled_results = gtk.ScrolledWindow ()
@@ -75,31 +73,33 @@ class EmbedView(deskbar.interfaces.View):
         hbox.add(self.scrolled_results)
         #hbox.add(self.scrolled_actions)
 
-    def __do_results_grab(self, event):
-        self.cview.grab_focus()
-        self.cview.get_toplevel().show_now()
-        self.cview.grab_add()
-        gtk.gdk.keyboard_grab(self.cview.window, False, event.time)
-        gtk.gdk.pointer_grab(self.cview.window, time=event.time, event_mask=gtk.gdk.BUTTON_PRESS_MASK|gtk.gdk.BUTTON_RELEASE_MASK)
-
-    def __drop_results_grab(self, event):
-        time = 0
-        if event:
-            time = event.time
-            
-        gtk.gdk.keyboard_ungrab(time)
-        gtk.gdk.pointer_ungrab(time)
-        self.cview.grab_remove()
+    def __have_cview_selection(self):
+        model, iter = self.cview.get_selection().get_selected()
+        if iter == None:
+            return False
         
+        match = model[iter][model.MATCHES]
+        if match.__class__ == CuemiacCategory:
+            return False
+
+        return True
+
+    def __send_synthetic_focus_in(self):
+        focus_in = gtk.gdk.Event(gtk.gdk.FOCUS_CHANGE)
+        focus_in.window = self._window.window
+        focus_in.in_ = True
+        self._window.event(focus_in)
+
     def focus_results_from_top(self, event):
         self.cview.grab_focus()
-        self.cview.select_first_item()
-        self.__do_results_grab(event)
+        self.__send_synthetic_focus_in()
+        self.cview.event(event)
         
     def focus_results_from_bottom(self, event):
-        self.cview.select_last_item()
-        self.__do_results_grab(event)        
-
+        self.cview.grab_focus()
+        self.__send_synthetic_focus_in()
+        self.cview.event(event)
+        
     def forward_key_to_results_tree(self, event):
         _logger.debug("Sending synthetic event to cview")
         self.cview.event(event)
@@ -162,20 +162,4 @@ class EmbedView(deskbar.interfaces.View):
     def __on_match_selected(self, *args):
         self._window.hide()
 
-
-
-    def __on_cview_key_press(self, cview, event):
-        if event.keyval == gtk.keysyms.Escape:
-            self.__drop_results_grab(event)
-            self._window.hide()
-
-    def __on_cview_button_press(self, cview, event):
-        pass
-        # we want to drop the grab if someone clicks outside the window,
-        # but what is the normal way to check for outside the window?
-        #self.__drop_results_grab(event)
-        #self._window.hide()
-
-    def __on_cview_hidden(self, cview):
-        self.__drop_results_grab(None)
     

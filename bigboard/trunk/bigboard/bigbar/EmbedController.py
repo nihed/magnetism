@@ -40,13 +40,21 @@ class EmbedController(deskbar.interfaces.Controller, gobject.GObject):
             self._view.focus_results_from_top(event)
             return True
         
+        if event.keyval == gtk.keysyms.Escape:
+            self._view._window.hide()
+            return True
+            
         # If the checks above fail and we come here, let's see if it's right to swallow up/down stroke
         # to avoid the entry losing focus.
         if (event.keyval == gtk.keysyms.Down or event.keyval == gtk.keysyms.Up) and entry.get_text() == "":
             return True
 
         return False
-    
+
+    def on_query_focus_out(self, entry, event):
+        self._view._window.hide()
+        return False
+
     def on_query_entry_activate(self, entry):
         path, column = self._view.cview.get_cursor ()
         model = self._view.cview.get_model()
@@ -65,12 +73,8 @@ class EmbedController(deskbar.interfaces.Controller, gobject.GObject):
 
         if iter is None:
             return
-        # retrieve new path-col pair, since it might have been None to start out
-        path = model.get_path (iter)
-        
-        column = self._view.cview.get_column (0)
-        # This emits a match-selected from the cview
-        self._view.cview.emit ("row-activated", path, column)
+
+        self._view.cview.activate_row(iter)
         
     def on_treeview_cursor_changed(self, treeview):
         self._view.update_entry_icon ()
