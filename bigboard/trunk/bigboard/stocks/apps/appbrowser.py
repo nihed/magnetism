@@ -7,6 +7,7 @@ import apps
 
 import bigboard.globals as globals
 import bigboard.libbig as libbig
+from bigboard.libbig.logutil import log_except
 from bigboard.libbig.gutil import *
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, CanvasTable, \
              ActionLink, IconLink, PrelightingCanvasBox, CanvasSpinner, CanvasCheckbox, Button
@@ -594,9 +595,11 @@ class AppBrowser(hippo.CanvasWindow):
         self.__reset()
         self.hide()
 
+    @log_except(_logger)
     def __on_show_more_info(self, app):
         if app:
-            libbig.show_url(urlparse.urljoin(globals.get_baseurl(), "application?id=" + app.get_mugshot_app().get_id()))
+            _logger.debug("showing app: %s", app)
+            libbig.show_url(urlparse.urljoin(globals.get_baseurl(), "application?id=" + app.get_id()))
         self.__hide_reset()
 
     def __on_toggle_app_pinned(self, app, active):
