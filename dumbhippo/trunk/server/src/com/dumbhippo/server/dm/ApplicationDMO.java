@@ -84,6 +84,11 @@ public abstract class ApplicationDMO extends DMObject<String> {
 	}
 	
 	@DMProperty(defaultInclude=true)
+	public String getPackageNames() {
+		return applicationView.getApplication().getPackageNames();
+	}
+	
+	@DMProperty(defaultInclude=true)
 	public int getRank() {
 		return applicationView.getApplication().getRank();
 	}
