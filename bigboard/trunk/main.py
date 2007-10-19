@@ -402,15 +402,20 @@ class BigBoardPanel(dbus.service.Object):
         self.__search_stock = self._exchanges[self.__hardcoded_stocks[1]].get_stock()
         gobject.idle_add(self.__sync_listing)
         
-        self.__self_stock.connect('info-loaded', lambda l: self._canvas.show())
+        self.__self_stock.connect('info-loaded', lambda *args: self.__initial_appearance())
         self.__search_stock.connect('match-selected', self.__on_search_match_selected)
 
         gconf_client.notify_add(GCONF_PREFIX + 'visible', self.__sync_visible)
         self.__sync_visible()
-
-        self.__queue_strut()
         
-        gobject.timeout_add(1000, self.__idle_show_we_exist)       
+    @log_except(_logger)
+    def __initial_appearance(self):
+        ## This function is where we show the canvas internally; we only want this to 
+        ## happen after we've loaded information intially to avoid showing a partially-loaded
+        ## state.
+        self._canvas.show() 
+        self.__queue_strut()
+        self.__idle_show_we_exist()
         
     @log_except()
     def __on_session_idle_changed(self, isidle):
