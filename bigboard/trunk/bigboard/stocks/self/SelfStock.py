@@ -236,6 +236,9 @@ class SelfSlideout(CanvasVBox):
 
 class SelfStock(AbstractMugshotStock):
     """Shows a user's Mugshot personal information."""
+    __gsignals__ = {
+        "info-loaded" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])                  
+    }
     def __init__(self, *args, **kwargs):
         super(SelfStock,self).__init__(*args, **kwargs)
 
@@ -279,7 +282,7 @@ class SelfStock(AbstractMugshotStock):
         if self._model.connected:
             self.__on_connected()
         else:
-            _logger.debug("datamodel not connected, deferring")            
+            _logger.debug("datamodel not connected, deferring")     
 
         self.__slideout = None
         self.__slideout_display = None
@@ -311,7 +314,7 @@ class SelfStock(AbstractMugshotStock):
             fus = dbus.Interface(self.__fus_service, 'org.gnome.FastUserSwitch')
             fus.RecheckDisplays()
         except dbus.DBusException, e:
-            self._logger.debug("Couldn't find org.gnome.FastUserSwitch service, ignoring")
+            _logger.debug("Couldn't find org.gnome.FastUserSwitch service, ignoring")
             self.__fus_service = None
             pass
 
@@ -322,12 +325,16 @@ class SelfStock(AbstractMugshotStock):
 
         query = self._model.query_resource(self._model.self_id, "+;lovedAccounts +")
         query.add_handler(self.__on_got_self)
-        query.add_error_handler(self.__on_datamodel_error)
+        query.add_error_handler(self.__on_self_datamodel_error)
         query.execute()
         
     def __on_datamodel_error(self, code, str):
         _logger.error("datamodel error %s: %s", code, str)
         
+    def __on_self_datamodel_error(self, code, str):
+        _logger.error("datamodel error %s: %s", code, str)
+	self.emit('info-loaded')
+
     def __on_got_self(self, myself):
         self.__myself = myself     
         myself.connect(self.__on_self_changed)
@@ -376,7 +383,7 @@ class SelfStock(AbstractMugshotStock):
             return
 
         self.__create_fus_proxy()
-        self.__slideout_display = SelfSlideout(self, self.__myself, fus=self.__fus_service, logger=self._logger)
+        self.__slideout_display = SelfSlideout(self, self.__myself, fus=self.__fus_service, logger=_logger)
         self.__slideout_display.connect('account', lambda s: self.__do_account())        
         self.__slideout_display.connect('sidebar-controls', lambda s: self.__do_sidebar_controls())
         self.__slideout_display.connect('logout', lambda s: self.__do_logout())
@@ -394,15 +401,17 @@ class SelfStock(AbstractMugshotStock):
         self._namephoto_box.set_size(size)
     
     def __on_self_changed(self, myself):
-        self._logger.debug("self (%s) changed", myself.resource_id)
+        _logger.debug("self (%s) changed", myself.resource_id)
+        _logger.debug("photoUrl: %s", myself.photoUrl)
         self._photo.set_url(myself.photoUrl)
         self._name.set_property("text", myself.name)
         
         self._whereim_box.remove_all()
         for acct in myself.lovedAccounts:
             icon = ExternalAccountIcon(acct)
-            self._logger.debug("appending external account %s", acct.accountType)
+            _logger.debug("appending external account %s", acct.accountType)
             self._whereim_box.append(icon)
 
         if self.__slideout_display != None:
             self.__slideout_display.update_self(myself)
+        self.emit("info-loaded")
