@@ -104,7 +104,8 @@ class Stock(gobject.GObject):
 
 class AbstractMugshotStock(Stock):
     """An abstract class for stocks which use Mugshot.  The most useful
-    method on this class is connect_mugshot_handler."""
+    method on this class is connect_mugshot_handler. This is deprecated since the
+    old mugshot API in mugshot.py should no longer be used, use the data model."""
     def __init__(self, *args, **kwargs):
         super(AbstractMugshotStock, self).__init__(*args, **kwargs)
         self._auth = False

@@ -53,11 +53,6 @@ class Resource(Entity):
 class Feed(Entity):
     pass
 
-class Application(AutoSignallingStruct):
-    def __init__(self, *args, **kwargs):
-        super(Application, self).__init__(*args, **kwargs)
-        self._default_values({'pinned' : False})
-
 class Mugshot(gobject.GObject):
     """A combination of a wrapper and cache for the Mugshot D-BUS API.  Access
     using the get_mugshot() module method."""
@@ -66,13 +61,7 @@ class Mugshot(gobject.GObject):
         "connection-status": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
         "self-known" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "network-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        "pref-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
-        "global-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "category-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_STRING, gobject.TYPE_PYOBJECT,)),
-        "all-apps-loaded" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        "my-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "apps-search-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)),
-        "pinned-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))        
+        "pref-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT))
         }    
     
     def __init__(self, issingleton):
@@ -82,13 +71,6 @@ class Mugshot(gobject.GObject):
         
         if not issingleton == 42:
             raise Exception("use global_mugshot.get_mugshot()")
-        self.__my_apps_poll_id = 0
-        self.__global_apps_poll_id = 0
-
-        self.__category_app_poll_frequency_secs = 55 * 60
-
-        self.__my_app_poll_frequency_ms = 22 * 60 * 1000
-        self.__app_poll_frequency_ms = 30 * 60 * 1000
 
         self._logger.debug("connecting to session bus")            
         session_bus = dbus.SessionBus()
@@ -119,35 +101,10 @@ class Mugshot(gobject.GObject):
         self.__prefs = {}
         self.__network = None
         self.__entities = {} # <str>,<Entity>
-        self.__all_apps_requested = False
-        self.__applications = {} # <str>,<Application>
-        self.__my_top_apps = None # <Application>
-        self.__my_app_usage_start = None
-        self.__apps_enabled = None
-        self.__pinned_apps = None
-        self.__global_top_apps = None # <Application>
-        self.__category_top_apps = {}
-        self.__category_mapping = {}
+
         self.__endpoint_id = None
         
         self.__external_iqs = {} # <int>,<function>
-        
-        self.__reset_my_apps_poll()
-        self.__reset_global_apps_poll()
-
-    def __reset_my_apps_poll(self):
-        if self.__my_apps_poll_id > 0:
-            gobject.source_remove(self.__my_apps_poll_id)
-            self.__my_apps_poll_id = 0
-        self.__my_apps_poll_id = gobject.timeout_add(self.__my_app_poll_frequency_ms, 
-                                                     self.__idle_poll_my_apps)
-        
-    def __reset_global_apps_poll(self):
-        if self.__global_apps_poll_id > 0:
-            gobject.source_remove(self.__global_apps_poll_id)
-            self.__global_apps_poll_id = 0
-        self.__global_apps_poll_id = gobject.timeout_add(self.__app_poll_frequency_ms, 
-                                                         self.__idle_poll_global_apps)        
 
     def get_im_proxy(self):
         return self.__im_proxy
@@ -414,278 +371,6 @@ class Mugshot(gobject.GObject):
                               lambda node: self.__on_get_person_accounts(person, node),
                               attrs={'who': person.get_guid()})
     
-    def __load_app_from_xml(self, node):
-        id = node.getAttribute("id")
-        #self._logger.debug("parsing application id=%s", id)
-        attrs = xml_get_attrs(node, ['id', 'rank', 'usageCount', 
-                                     'iconUrl', 
-                                     'category',
-                                     'name', 'desktopNames', 'packageNames',
-                                     ('tooltip', True),
-                                     ('genericName', True)
-                                    ])
-        description = xml_query(node, 'description#')
-        if description:
-            attrs['description'] = description
-
-        app = None
-        if not self.__applications.has_key(attrs['id']):
-            app = Application(attrs)
-            self.__applications[attrs['id']] = app
-        else:
-            app = self.__applications[attrs['id']]    
-        app.update(attrs)
-        return app
-    
-    def __parse_app_set(self, expected_name, doc=None, child_nodes=None):
-        if doc:
-            root = doc.documentElement
-            if not root.nodeName == expected_name:
-                self._logger.warn("invalid root node, expected %s", expected_name)
-                return []
-        else:
-            root = None
-        apps = []
-        for node in (child_nodes or (root and root.childNodes) or []):
-            if not (node.nodeType == xml.dom.Node.ELEMENT_NODE):
-                continue
-            app = self.__load_app_from_xml(node)
-            apps.append(app)
-        #_logger.debug("Parsed app set; pinned_apps = " + str(map(lambda a: a.get_id(), apps)))
-        return apps
-            
-    def __on_my_top_applications(self, xml_str):
-        doc = xml.dom.minidom.parseString(xml_str)        
-        self.__my_top_apps = self.__parse_app_set('myTopApplications', doc)
-        self.__my_app_usage_start = doc.documentElement.getAttribute("since")
-        # kind of a hack, but we do this to ensure we always know the state; 
-        # currently prefs are not retrieved on startup
-        self.__prefs['applicationUsageEnabled'] = doc.documentElement.getAttribute("enabled").lower() == 'true'
-        self.emit("pref-changed", "applicationUsageEnabled", self.__prefs['applicationUsageEnabled'])   
-        self._logger.debug("emitting my-top-apps-changed")
-        self.emit("my-top-apps-changed", self.__my_top_apps)
-        
-    def __on_top_applications(self, url, child_nodes):     
-        self.__global_top_apps = self.__parse_app_set('topApplications', child_nodes=child_nodes[0].childNodes)
-        self._logger.debug("emitting global-top-apps-changed")
-        self.emit("global-top-apps-changed", self.__global_top_apps)        
-
-    def __on_top_applications_error(self, *args):
-        self._logger.error("failed to get top apps: %s", args)
-    
-    def __request_my_top_apps(self):
-        self.__do_external_iq("myTopApplications", "http://dumbhippo.com/protocol/applications",
-                             self.__on_my_top_applications)
-    
-    def __request_global_top_apps(self):
-        baseurl = globals.get_baseurl()
-        if not baseurl:
-            _logger.debug("Not doing top apps request; no baseurl")
-            return False
-        AsyncHTTPFetcher().xml_method(urlparse.urljoin(baseurl, '/xml/popularapplications'),
-                                      (),
-                                      self.__on_top_applications,
-                                      self.__on_top_applications_error,
-                                      self.__on_top_applications_error)
-        return True
-
-    def __on_category_applications(self, src_catname, url, child_nodes):
-        reply_root = child_nodes[0]
-        catname = reply_root.getAttribute('category') or src_catname
-        orig_catname = reply_root.getAttribute('origCategory') or src_catname
-        apps = self.__parse_app_set('topApplications',
-                                    child_nodes=reply_root.childNodes)
-        self.__category_top_apps[catname] = (apps, time.time())
-        self.__category_mapping[orig_catname] = catname
-        self._logger.debug("emitting category-top-apps-changed for '%s'", catname)
-        self.emit("category-top-apps-changed", catname, self.__category_top_apps[catname][0])        
-
-    def __on_category_applications_error(self, *args):
-        self._logger.error("failed to get top apps for a category: %s", args)
-
-    def __on_applications_search(self, search, url, child_nodes):
-        reply_root = child_nodes[0]
-        apps = self.__parse_app_set('applications',
-                                    child_nodes=reply_root.childNodes)
-        self._logger.debug("emitting apps-search-changed")
-        self.emit("apps-search-changed", search, apps)        
-
-    def __on_applications_search_error(self, *args):
-        self._logger.error("failed to search apps: %s", args)
-
-    def __request_category_top_apps(self, category):
-        baseurl = globals.get_baseurl()
-        if not baseurl:
-            _logger.debug("no baseurl, skipping request of category top apps")
-            return        
-        _logger.debug("requesting category top apps for %s", category)
-        AsyncHTTPFetcher().xml_method(urlparse.urljoin(baseurl, '/xml/popularapplications'),
-                                      {'category': category},
-                                      lambda *args: self.__on_category_applications(category, *args),
-                                      self.__on_category_applications_error,
-                                      self.__on_category_applications_error)
-
-    def request_app_search(self, search):
-        baseurl = globals.get_baseurl()
-        if not baseurl:
-            return        
-        AsyncHTTPFetcher().xml_method(urlparse.urljoin(baseurl, '/xml/searchapplications'),
-                                      {'search': search},
-                                      lambda url, nodes: self.__on_applications_search(search, url, nodes),
-                                      self.__on_applications_search_error,
-                                      self.__on_applications_search_error)
-            
-    def __on_all_applications(self, url, child_nodes, is_refetch=False):
-        reply_root = child_nodes[0]
-        apps = self.__parse_app_set('applications',
-                                    child_nodes=reply_root.childNodes)
-        self.__all_apps_requested = False
-        self.emit("all-apps-loaded")
-
-    def __on_all_applications_error(self, *args):
-        self._logger.error("failed to get all apps: %s", args)
-        self.__all_apps_requested = False
-        
-    def __on_all_applications_error_do_xmlfallback(self, *args):
-        self._logger.error("failed to get all apps, falling back to old XML method")
-        baseurl = globals.get_baseurl()
-        if not baseurl:
-            return        
-        AsyncHTTPFetcher().xml_method_refetch(urlparse.urljoin(baseurl, '/xml/allapplications'),
-                                              {},
-                                              self.__on_all_applications,
-                                              self.__on_all_applications_error,
-                                              self.__on_all_applications_error)        
-
-    def request_all_apps(self):
-        baseurl = globals.get_baseurl()
-        if not baseurl:
-            _logger.debug("Not doing all apps request; no baseurl")            
-            return        
-        if not self.__all_apps_requested:
-            self.__all_apps_requested = True
-            AsyncHTTPFetcher().refetch(urlparse.urljoin(baseurl, '/files/allapplications'),
-                                       self.__on_all_applications,
-                                       self.__on_all_applications_error_do_xmlfallback,)            
-
-        
-    def __request_pinned_apps(self):
-        self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",
-                              self.__on_pinned_apps)
-            
-    def __idle_poll_my_apps(self):
-        self.__request_my_top_apps()
-        self.__reset_my_apps_poll()
-        return False
-    
-    def __idle_poll_global_apps(self):
-        self.__request_global_top_apps()
-        return True    
-
-    def get_all_apps(self):
-        return self.__applications.itervalues()
-    
-    def get_app(self, guid):
-        return self.__applications[guid]
-    
-    def get_my_top_apps(self, force=False):
-        if self.__my_top_apps is None or force:
-            if not force:            
-                self.__my_top_apps = []
-            self.__request_my_top_apps()
-            self.__reset_my_apps_poll()
-            return None
-        return self.__my_top_apps
-    
-    def get_my_app_usage_start(self):
-        return self.__my_app_usage_start
-    
-    def set_my_apps_poll_frequency(self, poll_interval_secs):
-        ms = poll_interval_secs * 1000
-        reset = ms < self.__my_app_poll_frequency_ms
-        self.__my_app_poll_frequency_ms = ms
-        if reset:
-            self.__reset_my_apps_poll()
-
-    def get_category_top_apps(self, category, force=False):
-        if self.__category_mapping.has_key(category):
-            category = self.__category_mapping[category] 
-        do_force = force
-        if self.__category_top_apps.has_key(category) and \
-           (time.time() - self.__category_top_apps[category][1] > self.__category_app_poll_frequency_secs):
-            do_force = True
-        if (not self.__category_top_apps.has_key(category)) or force:
-            if not force:            
-                self.__category_top_apps[category] = ([], 0)
-            self.__request_category_top_apps(category)
-            return None    
-        if self.__category_top_apps.has_key(category):
-            return self.__category_top_apps[category][0]
-        return None
-    
-    def get_global_top_apps(self, force=False):
-        if self.__global_top_apps is None or force:
-            request_made = self.__request_global_top_apps()
-            if not request_made:
-                return None            
-            if not force:            
-                self.__global_top_apps = []
-            self.__reset_global_apps_poll()
-            return None    
-        return self.__global_top_apps
-
-    def __update_pinned_attributes(self):
-        
-        pinned = {}
-        if self.__pinned_apps is not None:
-            for p in self.__pinned_apps:
-                pinned[p.get_id()] = p
-
-        _logger.debug("In update, pinned apps are: " + str(pinned.keys()));
-
-        for id in self.__applications.keys():
-            if id in pinned:
-                _logger.debug("Setting pinned=true for " + id)
-                a = self.__applications[id]
-                a.update({'pinned' : True})
-                if not a.get_pinned():
-                    raise "Was not pinned???"
-            else:
-                #_logger.debug("Setting pinned=false for " + id)
-                a = self.__applications[id]
-                a.update({'pinned' : False})
-                if a.get_pinned():
-                    raise "Was not unpinned???"
-    
-    def __on_pinned_apps(self, xml_str):
-        self._logger.debug("parsing pinned apps reply")
-        doc = xml.dom.minidom.parseString(xml_str)        
-        self.__pinned_apps = self.__parse_app_set('pinned', doc)
-        self.__update_pinned_attributes()
-        self._logger.debug("emitting pinned-apps-changed")
-        self.emit("pinned-apps-changed", self.__pinned_apps)
-    
-    def get_pinned_apps(self, force=False):
-        if self.__pinned_apps is None or force:
-            if not force:
-                self.__pinned_apps = []
-                self.__update_pinned_attributes()
-            self.__request_pinned_apps()
-            return None
-        return self.__pinned_apps
-        
-    def set_pinned_apps(self, ids, cb):
-        _logger.debug("Setting pinned apps to: " + str(ids))
-        iq = StringIO.StringIO()
-        for id in ids:
-            iq.write('<appId>')
-            iq.write(id)
-            iq.write('</appId>')
-        self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications", 
-                              lambda *args: cb(), 
-                              content=iq.getvalue(),
-                              is_set=True) 
-        
     def install_application(self, id, package_names, desktop_names):
         self._logger.debug("requesting install of app id %s", id)
         self.__mugshot_dbus_proxy.InstallApplication(self.__endpoint_id, id, package_names, desktop_names)

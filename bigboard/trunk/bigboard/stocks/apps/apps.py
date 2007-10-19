@@ -280,13 +280,13 @@ class AppsRepo(gobject.GObject):
         # we clear everything and start over.
         _logger.debug("Connected to data model")
 
-        query = self.__model.query_resource(self.__model.self_id, "topApplications[+;description;category;categoryDisplayName];pinnedApplications[+;description;category;categoryDisplayName];applicationUsageEnabled")
+        query = self.__model.query_resource(self.__model.self_id, "topApplications[+;description;category;categoryDisplayName;packageNames];pinnedApplications[+;description;category;categoryDisplayName;packageNames];applicationUsageEnabled")
         query.add_handler(self.__on_got_self)
         query.add_error_handler(lambda code, msg: self.__on_query_error("self resource", code, msg))
         query.execute()
 
         query = self.__model.query(("http://online.gnome.org/p/application", "getPopularApplications"),
-                                   "+;description;category;categoryDisplayName",
+                                   "+;description;category;categoryDisplayName;packageNames",
                                    single_result=False,
                                    start=0)
 
@@ -300,7 +300,7 @@ class AppsRepo(gobject.GObject):
             ## do the getAllApplications last since it emits the all-apps-loaded signal when complete
 
             #query = self.__model.query(("http://online.gnome.org/p/application", "getAllApplications"),
-            #"+;description;category;categoryDisplayName",
+            #"+;description;category;categoryDisplayName;packageNames",
             #single_result=False)
 
             #query.add_handler(self.__on_got_global_all_apps)
@@ -532,7 +532,7 @@ class AppsRepo(gobject.GObject):
                 need_execute = False
             else:
                 query = self.__model.query(("http://online.gnome.org/p/application", "searchApplications"),
-                                           "+;description;category;categoryDisplayName",
+                                           "+;description;category;categoryDisplayName;packageNames",
                                            single_result=False,
                                            search=search_terms)
         else:
@@ -543,7 +543,7 @@ class AppsRepo(gobject.GObject):
                 need_execute = False
             else:
                 query = self.__model.query(("http://online.gnome.org/p/application", "getPopularApplications"),
-                                           "+;description;category;categoryDisplayName",
+                                           "+;description;category;categoryDisplayName;packageNames",
                                            single_result=False,
                                            category=category)
         
