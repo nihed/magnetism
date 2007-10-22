@@ -166,11 +166,10 @@ class FileSearchResult(search.SearchResult):
         self.__query = query
         self.__file = file
 
-    def get_title_markup(self):
-        ## FIXME bold the search terms
+    def get_title(self):
         return self.__file.get_name()
 
-    def get_detail_markup(self):
+    def get_detail(self):
         return self.__file.get_full_name()
 
     def get_icon(self):
@@ -196,8 +195,9 @@ class FileSearchProvider(search.SearchProvider):
     def perform_search(self, query, consumer):
         results = []
         files = self.__stock.get_files()
+        lower_query = query.lower()
         for f in files:
-            if query in f.get_name() or query in f.get_full_name():
+            if lower_query in f.get_name().lower() or lower_query in f.get_full_name().lower():
                 results.append(FileSearchResult(self, query, f))
 
         if len(results) > 0:
