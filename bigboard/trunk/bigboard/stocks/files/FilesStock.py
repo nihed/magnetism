@@ -19,6 +19,7 @@ import bigboard.google as google
 import bigboard.google_stock as google_stock  
 from bigboard.big_widgets import IconLink
 from bigboard.libbig.xmlquery import query as xml_query, get_attrs as xml_get_attrs
+import bigboard.search as search
 
 import filebrowser
 
@@ -159,6 +160,52 @@ def compare_by_date(file_a, file_b):
     # access time on all File types is currently UTC
     return cmp(file_b.get_access_time(), file_a.get_access_time())
 
+class FileSearchResult(search.SearchResult):
+    def __init__(self, provider, query, file):
+        super(FileSearchResult, self).__init__(provider)
+        self.__query = query
+        self.__file = file
+
+    def get_title_markup(self):
+        ## FIXME bold the search terms
+        return self.__file.get_name()
+
+    def get_detail_markup(self):
+        return self.__file.get_full_name()
+
+    def get_icon(self):
+        """Returns an icon for the result"""
+        return None
+
+    def _on_highlighted(self):
+        """Action when user has highlighted the result"""
+        pass
+
+    def _on_activated(self):
+        """Action when user has activated the result"""
+        self.get_provider().activate_file(self.__file)
+
+class FileSearchProvider(search.SearchProvider):    
+    def __init__(self, stock):
+        super(FileSearchProvider, self).__init__()
+        self.__stock = stock
+
+    def get_heading(self):
+        return "Files"
+
+    def perform_search(self, query, consumer):
+        results = []
+        files = self.__stock.get_files()
+        for f in files:
+            if query in f.get_name() or query in f.get_full_name():
+                results.append(FileSearchResult(self, query, f))
+
+        if len(results) > 0:
+            consumer.add_results(results)
+
+    def activate_file(self, file):
+        self.__stock.activate_file(file)
+
 class FilesStock(Stock, google_stock.GoogleStock):
     """Shows recent files."""
     def __init__(self, *args, **kwargs):
@@ -181,6 +228,12 @@ class FilesStock(Stock, google_stock.GoogleStock):
 
         self.__monitor = VfsMonitor('file://' + self.__recentf_path, gnomevfs.MONITOR_FILE, self.__update_local_files)
         gobject.idle_add(self.__update_local_files)
+
+        search.enable_search_provider('files', constructor=self.__construct_search_provider)
+        #### FIXME need to figure out when to call search.disable_search_provider
+
+    def __construct_search_provider(self):
+        return FileSearchProvider(stock=self)
 
     def update_google_data(self, selected_gobj = None):
         if selected_gobj is not None:
@@ -270,3 +323,5 @@ class FilesStock(Stock, google_stock.GoogleStock):
     def get_files(self):
         return self.__files
 
+    def activate_file(self, file):
+        self.__on_file_activated(file)
