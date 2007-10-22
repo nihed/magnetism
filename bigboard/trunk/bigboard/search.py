@@ -14,12 +14,12 @@ class SearchResult(object):
     def get_provider(self):
         return self.__provider
 
-    def get_title_markup(self):
-        """Returns a main title for the result; should bold the search terms using Pango markup."""
+    def get_title(self):
+        """Returns a main title for the result, as plain text."""
         return "FIXME"
 
-    def get_detail_markup(self):
-        """Returns detail text for the result; should bold the search terms using Pango markup."""        
+    def get_detail(self):
+        """Returns detail text for the result, as plain text."""        
         return "FIXME"
 
     def get_icon(self):
@@ -112,5 +112,8 @@ def disable_search_provider(id):
 def perform_search(query, consumer):
     """Clear results on consumer, ask all enabled providers to run the given search, and add the results to the consumer"""
     consumer.clear_results()
+    consumer.set_query(query)
+    if len(query) == 0: # empty search text never has results
+        return
     for provider in __providers.values():
         provider.perform_search(query, consumer)

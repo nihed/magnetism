@@ -1,17 +1,208 @@
-import logging, os
+import sys, logging, os, xml.sax.saxutils
 
 import gobject, gtk, gnomeapplet, gconf
 
 import hippo
 
-import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
-import bigboard.deskbar_embed as deskbar_embed
 from bigboard.stock import Stock
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasVBox
+import bigboard.search as search
+
+if __name__ == '__main__':
+    def logger(domain, priority, msg):
+        print msg
+    libbig.logutil.init('DEBUG', ['bigboard.search.SearchStock'], '')
         
 _logger = logging.getLogger("bigboard.stocks.SearchStock")
+
+class ResultsView(search.SearchConsumer):
+
+    def __init__(self, *args, **kwargs):
+        super(ResultsView, self).__init__(*args, **kwargs)
+
+        self.__query = ''
         
+        ## model columns are
+        ## 0 = SearchResult
+        ## 1 = icon
+        ## 2 = title + detail markup
+        ## 3 = heading
+        
+        self.__store = gtk.TreeStore(object, gtk.gdk.Pixbuf, str, str)
+        
+        self.__view = gtk.TreeView(self.__store)
+        self.__view.set_headers_visible(False)
+        
+        column = gtk.TreeViewColumn('Result')
+        
+        renderer = gtk.CellRendererText()
+        column.pack_start(renderer)
+        column.set_attributes(renderer, markup=2)
+        
+        self.__view.append_column(column)
+
+        self.__view.get_selection().connect('changed', self.__on_selection_changed)
+        self.__view.connect('row-activated', self.__on_row_activated)
+        
+    def get_widget(self):
+        return self.__view
+
+    def __on_selection_changed(self, selection):
+        (model, rows) = selection.get_selected_rows()
+        if len(rows) > 0:
+            iter = model.get_iter(rows[0]) # rows is a list of path
+            result = model.get_value(iter, 0)
+            result._on_highlighted()
+            
+    def __on_row_activated(self, tree, path, view_column):
+        model = tree.get_model()
+        iter = model.get_iter(path)
+        result = model.get_value(iter, 0)
+        result._on_activated()
+            
+    def __update_showing(self):
+        toplevel = self.__view.get_toplevel()
+        if not toplevel:
+            return
+        if self.__store.get_iter_first():
+            toplevel.show()
+        else:
+            toplevel.hide()
+
+    def __send_synthetic_focus_in(self):
+        toplevel = self.__view.get_toplevel()
+        if not toplevel or not toplevel.window:
+            return
+        
+        focus_in = gtk.gdk.Event(gtk.gdk.FOCUS_CHANGE)
+        focus_in.window = toplevel.window
+        focus_in.in_ = True
+        toplevel.event(focus_in)
+
+    def navigate_up(self):
+        #_logger.debug("moving up")
+        self.__view.grab_focus()        
+        self.__send_synthetic_focus_in()        
+        self.__view.emit('move-cursor', gtk.MOVEMENT_DISPLAY_LINES, -1)
+
+    def navigate_down(self):
+        #_logger.debug("moving down")
+        had_selection = self.__view.get_selection().count_selected_rows() > 0
+        self.__view.grab_focus()        
+        self.__send_synthetic_focus_in()
+        ## don't move down if we just did focus in and focus the first one
+        if had_selection:
+            self.__view.emit('move-cursor', gtk.MOVEMENT_DISPLAY_LINES, 1)
+
+    def navigate_activate(self):
+        #_logger.debug("activating selection if any")        
+        had_selection = self.__view.get_selection().count_selected_rows() > 0
+        if not had_selection:
+            return
+
+        self.__view.grab_focus()        
+        self.__send_synthetic_focus_in()
+        self.__view.emit('select-cursor-row', True)
+
+    def set_query(self, query):
+        self.__query = query
+        
+    def clear_results(self):
+        self.__store.clear()
+        self.__update_showing()
+
+    def __bold_query(self, text):        
+        ## this assumes the indexes for the lower and the uppercase
+        ## strings line up, which I'm not sure is really true i18n-wise,
+        ## but I'm not sure of a better way to do this
+        i = text.lower().find(self.__query.lower())
+        if i < 0:
+            return xml.sax.saxutils.escape(text)
+        j = i + len(self.__query)
+        markup = '%s<b>%s</b>%s' % (xml.sax.saxutils.escape(text[:i]),
+                                    xml.sax.saxutils.escape(text[i:j]),
+                                    xml.sax.saxutils.escape(text[j:]))
+        return markup
+
+    def add_results(self, results):
+        for r in results:
+            title_markup = self.__bold_query(r.get_title())
+            detail_markup = self.__bold_query(r.get_detail())
+            markup = "<span size='large'>%s</span>\n<span color='#aaaaaa'>%s</span>" % \
+                   (title_markup, detail_markup)
+            self.__store.append(None,
+                                [ r, r.get_icon(),
+                                  markup,
+                                  r.get_provider().get_heading() ] )
+        self.__update_showing()
+
+
+class SearchEntry(gtk.Entry):
+    def __init__(self, *args, **kwargs):
+        super(SearchEntry,self).__init__(*args, **kwargs)
+
+        self.__results_window = gtk.Window(gtk.WINDOW_POPUP)
+        self.__results_window.set_resizable(False)
+        self.__results_window.set_focus_on_map(False)
+        
+        self.__results_view = ResultsView()
+        treeview = self.__results_view.get_widget()
+        treeview.show()
+        self.__results_window.add(treeview)
+
+        self.connect('changed', self.__on_changed)
+        self.connect('key-press-event', self.__on_key_press)
+        self.connect('focus-out-event', self.__on_focus_out)
+
+    def __on_changed(self, entry):
+        query = self.get_text()
+        _logger.debug("Searching for '%s'" % query)
+        search.perform_search(query, self.__results_view)
+
+        entry_toplevel = self.get_toplevel()
+        if entry_toplevel and isinstance(entry_toplevel, gtk.Window) and entry_toplevel.window:
+            rect = entry_toplevel.window.get_frame_extents()
+            self.__results_window.move(rect.x + rect.width,
+                                       rect.y)
+
+        ## results view shows its own toplevel if it is not empty; kind of weird, but simple
+
+    def __on_focus_out(self, entry, event):
+        _logger.debug("focus out of search entry")
+        self.__results_window.hide()
+        return False
+
+    def __on_key_press(self, entry, event):
+        ## we want to be able to hit Escape then tab out, so the result-navigation
+        ## keys only work if the results popup is showing
+        popup_showing = (gtk.VISIBLE & self.__results_window.flags()) != 0
+
+        #_logger.debug("got key press " + str(event.keyval))
+
+        if popup_showing:
+            if event.keyval == gtk.keysyms.Up:
+                self.__results_view.navigate_up()
+                return True
+            elif event.keyval == gtk.keysyms.Down:
+                self.__results_view.navigate_down()
+                return True
+            elif event.keyval == gtk.keysyms.Tab:
+                self.__results_view.navigate_down()
+                return True
+            elif event.keyval == gtk.keysyms.KP_Enter or event.keyval == gtk.keysyms.Return or \
+                 event.keyval == gtk.keysyms.ISO_Enter:
+                self.__results_view.navigate_activate()
+                self.__results_window.hide()
+                return True
+            elif event.keyval == gtk.keysyms.Escape:
+                self.__results_window.hide()
+                return True
+            else:
+                return False
+        else:
+            return False
+    
 class SearchStock(Stock):
     """Search.  It's what's for dinner."""
     __gsignals__ = {
@@ -22,10 +213,8 @@ class SearchStock(Stock):
         
         self.__box = hippo.CanvasBox()
         
-        _logger.debug("constructing deskbar")        
-        self.__deskbar = deskbar_embed.Deskbar()
-        self.__deskbar.connect('match-selected', lambda d: self.emit('match-selected'))
-        self.__widget = hippo.CanvasWidget(widget=self.__deskbar)
+        self.__entry = SearchEntry()
+        self.__widget = hippo.CanvasWidget(widget=self.__entry)
         self.__box.append(self.__widget)
         self.__empty_box = CanvasVBox()
 
@@ -34,4 +223,72 @@ class SearchStock(Stock):
 
     def focus(self):
         _logger.debug("doing focus")
-        self.__deskbar.focus()
+        self.__entry.focus()
+            
+if __name__ == '__main__':
+
+    class TestSearchResult(search.SearchResult):
+        def __init__(self, provider, text):
+            super(TestSearchResult, self).__init__(provider)
+            self.__text = text
+
+        def get_title(self):
+            return self.__text
+
+        def get_detail(self):
+            return "Extra details about this, " + self.__text
+
+        def get_icon(self):
+            """Returns an icon for the result"""
+            return None
+
+        def _on_highlighted(self):
+            """Action when user has highlighted the result"""
+            _logger.debug("highlighted result " + self.get_title())            
+
+        def _on_activated(self):
+            """Action when user has activated the result"""
+            _logger.debug("activated result " + self.get_title())
+
+    class TestSearchProvider(search.SearchProvider):    
+        def __init__(self):
+            super(TestSearchProvider, self).__init__()
+
+        def get_heading(self):
+            return "Test Items"
+
+        def perform_search(self, query, consumer):
+            stuff_to_search_in = [
+                'Hello world',
+                'abcdefg',
+                'This is some text',
+                'The quick brown fox jumped over the lazy dog',
+                'Hello planet!',
+                'abcxyz',
+                'testing 123',
+                'search',
+                'search2',
+                'searched' ]
+
+            results = []
+            for s in stuff_to_search_in:
+                if query in s:
+                    results.append(TestSearchResult(self, s))
+            consumer.add_results(results)
+
+    def construct_provider():
+        return TestSearchProvider()
+
+    search.register_provider_constructor('test', construct_provider)
+    search.enable_search_provider('test')
+
+    window = gtk.Window()
+    window.set_border_width(50) ## to test positioning of results window 
+    entry = SearchEntry()
+    entry.show()
+    window.add(entry)
+    window.show()
+
+    loop = gobject.MainLoop()
+    loop.run()
+
