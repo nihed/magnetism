@@ -37,21 +37,21 @@ public class JavascriptStringTag extends SimpleTagSupport {
 			case '\r':
 				sb.append("\\r");
 				break;
-			case '\"':
-				sb.append("\\\"");
-				break;
-			case '\'':
-				sb.append("\\'");
-				break;
 			case '\\':
 				sb.append("\\\\");
 				break;
-			// These xml characters don't need escaping if 
-			// our web pages are right, since the script section should
-			// be cdata'd or something, but paranoia never hurt anyone
+			// We use unicode escapes for all XML characters inside the string
+			// so that we can safely use the jsString tag inside an attribute
+		    // value, say. Note that although we use a unicode escape for 
+			// ' here, the outer ' is still going to be there literally
+			// so the caller is responsible for making sure that's OK. (The
+			// enclosing attribute should be quoted with ", for example.)
+			// But that's static and easy to verify. 
 			case '&':
 			case '<':
 			case '>':
+			case '\"':
+			case '\'':
 				sb.append(String.format("\\u%04X", new Integer(c)));
 				break;
 			default:

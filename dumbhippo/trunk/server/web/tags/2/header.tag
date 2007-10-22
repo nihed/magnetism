@@ -84,7 +84,7 @@
 					<jsp:attribute name="id">dhGlobalSearchEntry</jsp:attribute>
 					<jsp:attribute name="class">dh-text-input</jsp:attribute>
 					<jsp:attribute name="name">q</jsp:attribute>
-					<jsp:attribute name="value">${searchText}</jsp:attribute>
+					<jsp:attribute name="value"><c:out value="${searchText}"/></jsp:attribute>
 				</jsp:element>
 				<input type="submit"  value="Go"/>
 			</form>
