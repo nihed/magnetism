@@ -72,7 +72,7 @@
 					<jsp:attribute name="type">text</jsp:attribute>
 					<jsp:attribute name="id">dhSearchBoxEntry</jsp:attribute>
 					<jsp:attribute name="name">q</jsp:attribute>
-					<jsp:attribute name="value"><c:out value="${searchText}>/></jsp:attribute>
+					<jsp:attribute name="value"><c:out value="${searchText}"/></jsp:attribute>
 				</jsp:element>
 				</td><td valign="top"><img id="dhSearchBoxFind" src="/images3/${buildStamp}/find.gif" width="39" height="16" onclick="dhSearchSubmit()"/></td>
 				</tr>
