@@ -278,7 +278,8 @@ class SelfStock(AbstractMugshotStock):
         self._model = DataModel(globals.server_name)
         
         self.__myself = None
-        self._model.add_connected_handler(self.__on_connected)
+        self._model.add_initialized_handler(self.__on_initialized) 
+        self._model.add_connected_handler(self.__on_connected) 
         if self._model.connected:
             self.__on_connected()
         else:
@@ -317,6 +318,10 @@ class SelfStock(AbstractMugshotStock):
             _logger.debug("Couldn't find org.gnome.FastUserSwitch service, ignoring")
             self.__fus_service = None
             pass
+
+    def __on_initialized(self):
+        if not self._model.connected:
+            self.emit('info-loaded')
 
     def __on_connected(self):
         _logger.debug("doing datamodel connected handler")
