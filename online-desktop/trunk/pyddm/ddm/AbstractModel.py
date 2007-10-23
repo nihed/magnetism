@@ -12,12 +12,22 @@ class AbstractModel(object):
     """
 
     def __init__(self):
+        self.__initialized_handlers = []
         self.__connected_handlers = []
         self.__disconnected_handlers = []
         self.__added_handlers = []
         self.__removed_handlers = []
         self.__resources = {}
         self.connected = False
+        self.__last_handled_connected = False
+
+    def add_initialized_handler(self, handler):
+        """Add a handler that will be called when we initialize the model and find out if we can get connected to the server"""
+        self.__initialized_handlers.append(handler)
+
+    def remove_initialized_handler(self, handler):
+        """Remove a handler added with add_initialized_handler"""
+        self.__initialized_handlers.remove(handler)
 
     def add_connected_handler(self, handler):
         """Add a handler that will be called when we become connected to the server"""
@@ -120,24 +130,30 @@ class AbstractModel(object):
             
             return resource
 
+    def _on_initialized(self):
+        for handler in self.__initialized_handlers:
+            handler()    
+
     def _on_connected(self):
-        if self.connected:
+        if self.__last_handled_connected:
             return
 
         # On reconnection, all previous state is irrelevant
         self.__resources = {}
         
-        self.connected = True
         for handler in self.__connected_handlers:
             handler()
 
+        self.__last_handled_connected = True 
+
     def _on_disconnected(self):
-        if not self.connected:
+        if not self.__last_handled_connected:
             return
-        
-        self.connected = False
+       
         for handler in self.__disconnected_handlers:
             handler()
+
+        self.__last_handled_connected = False
 
     def _set_self_id(self, self_id):
         self.self_id = self_id
