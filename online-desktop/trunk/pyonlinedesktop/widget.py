@@ -60,12 +60,14 @@ _IG_MiniMessage.prototype = {
         module_prefs = doc.find('ModulePrefs')
         self.title = module_prefs.attrib.get('title', None)
         self.description = module_prefs.attrib.get('description', None)
-        self.thumbnail = module_prefs.attrib.get('thumbnail', None)
-        if self.thumbnail and base_srcurl:
-            self.thumbnail = urlparse.urljoin(base_srcurl, self.thumbnail)
-        self.screenshot = module_prefs.attrib.get('screenshot', None)
-        if self.screenshot and base_srcurl:
-            self.screenshot = urlparse.urljoin(base_srcurl, self.screenshot)        
+        self.thumbnail = module_prefs.attrib.get('thumbnail', '')
+        self.screenshot = module_prefs.attrib.get('screenshot', '')
+        ig_pfx = '/ig/modules/'
+        # Compatibility with builtin Google gadgets
+        if self.thumbnail.startswith(ig_pfx) or self.screenshot.startswith(ig_pfx):
+            self.__canonicalize_using_baseurl("http://www.google.com/")
+        else:
+            self.__canonicalize_using_baseurl(base_srcurl)  
         self.height = module_prefs.attrib.get('height', '200')
         self.prefs = {}
         for prefnode in doc.findall('UserPref'):
@@ -113,8 +115,15 @@ _IG_MiniMessage.prototype = {
             self.content = ('url', href)
         elif content_node.attrib['type'] == 'online-desktop-builtin':
             self.content = ('online-desktop-builtin', content_node.text)
+            self.__canonicalize_using_baseurl(base_srcurl)
         else:
-            raise WidgetError("Unknown content type")           
+            raise WidgetError("Unknown content type")
+        
+    def __canonicalize_using_baseurl(self, baseurl):
+        for attr in ('screenshot', 'thumbnail',):
+            v = getattr(self, attr)
+            if v:
+                setattr(self, attr, urlparse.urljoin(baseurl, v))
    
     def __default_prefs_js(self):
         result = StringIO()
