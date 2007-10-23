@@ -13,18 +13,19 @@ from pyonlinedesktop.widget import *
 _logger = logging.getLogger("od.GoogleGadget")
   
 class Gadget(gtk.VBox):
-    def __init__(self, url, env):
+    def __init__(self, metadata, env):
         super(Gadget, self).__init__()
       
         f = gtk.Frame()
         self.__moz = mozembed_wrap.MozClient()
-        _logger.debug("Reading module url %s", url)
-        self.__content = content = WidgetParser(url, urllib2.urlopen(url), env)
-        (content_type, content_data) = content.content
+        self.__metadata = metadata
+        (content_type, content) = metadata.content
         if content_type == 'html':
-            self.__moz.set_data("http://www.google.com/", content_data)
+            _logger.debug("using content HTML: %s", content)
+            self.__moz.set_data("http://www.google.com/", content)
         elif content_type == 'url':
-            self.__moz.load_url(content_data)
+            _logger.debug("using content url: %s", content)            
+            self.__moz.load_url(content)
         else:
             pass
             
@@ -34,7 +35,7 @@ class Gadget(gtk.VBox):
         f.add(self.__moz)
         self.pack_start(f, expand=True)
         self.__moz.show_all()
-        self.__moz.set_size_request(200, int(content.height))
+        self.__moz.set_size_request(200, int(metadata.height))
 
     def __on_temp_moz_location(self, tm, *args):
         uri = tm.get_location()        
@@ -52,7 +53,7 @@ class Gadget(gtk.VBox):
 
     def __on_open_uri(self, m, uri):
         _logger.debug("got open uri: %s", uri)
-        if self.__content.content[0] == 'url' and self.__content.content[1] == uri:
+        if self.__metadata.content[0] == 'url' and self.__metadata.content[1] == uri:
             return False
         if not uri.startswith("http"):
             return False
@@ -84,7 +85,8 @@ def main():
     vb = gtk.VBox()
     win.set_deletable(False)
     for url in sys.argv[1:]:
-        widget = Gadget(url, widget_environ) 
+        metadata = WidgetParser(url, urllib2.urlopen(url), widget_environ)
+        widget = Gadget(metadata, widget_environ) 
         vb.add(widget)
     #win.set_title(widget.get_title())
     win.add(vb)

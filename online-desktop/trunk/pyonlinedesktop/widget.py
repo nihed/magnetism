@@ -49,18 +49,23 @@ _IG_MiniMessage.prototype = {
 '''    
     def __init__(self, srcurl, f, env, baseurl=None):
         self.srcurl = srcurl
+        base_srcurl = baseurl or os.path.dirname(srcurl)
         doc = xml.etree.ElementTree.ElementTree()        
+     
+        self.__lang = u'en'
+     
+        self.__required_urls = {}
      
         doc.parse(f)
         module_prefs = doc.find('ModulePrefs')
         self.title = module_prefs.attrib.get('title', None)
         self.description = module_prefs.attrib.get('description', None)
         self.thumbnail = module_prefs.attrib.get('thumbnail', None)
-        if self.thumbnail and baseurl:
-            self.thumbnail = urlparse.urljoin(baseurl, self.thumbnail)
+        if self.thumbnail and base_srcurl:
+            self.thumbnail = urlparse.urljoin(base_srcurl, self.thumbnail)
         self.screenshot = module_prefs.attrib.get('screenshot', None)
-        if self.screenshot and baseurl:
-            self.screenshot = urlparse.urljoin(baseurl, self.screenshot)        
+        if self.screenshot and base_srcurl:
+            self.screenshot = urlparse.urljoin(base_srcurl, self.screenshot)        
         self.height = module_prefs.attrib.get('height', '200')
         self.prefs = {}
         for prefnode in doc.findall('UserPref'):
@@ -68,7 +73,22 @@ _IG_MiniMessage.prototype = {
                 self.prefs[prefnode.attrib['name']] = (prefnode.attrib['default_value'],)
             except KeyError, e:
                 _logger.debug("parse failed for pref", exc_info=True)
-
+        
+        relurl_re = re.compile('^[A-Za-z/._]+$')    
+        for localenode in module_prefs.findall('Locale'):
+            lang = localenode.attrib.get('lang', 'en')
+            if lang != self.__lang:
+                _logger.debug("ignoring lang %s", lang)
+                continue
+            msgs_url = localenode.attrib.get('messages', None)
+            if not msgs_url:
+                continue
+            if not relurl_re.match(msgs_url):
+                _logger.debug("failed relative URL match: %s", msgs_url)
+                continue
+            msgs_url = urlparse.urljoin(srcurl, msgs_url)
+            self.__required_urls[msgs_url] = self.__on_received_locale
+            
         content_node = doc.find('Content')
         self.__content_uri = None
         self.content_type = content_node.attrib['type']
@@ -85,7 +105,7 @@ _IG_MiniMessage.prototype = {
                 htmlcontent += '''</script></head><body>''' + content + '''</body></html>'''
                 self.content = ('html', htmlcontent)
             else:
-                gmodule_url = 'http://gmodules.com/ig/ifr?url=' + urllib.quote(url)
+                gmodule_url = 'http://gmodules.com/ig/ifr?url=' + urllib.quote(srcurl)
                 self.content = ('url', gmodule_url)
         elif content_node.attrib['type'] == 'url':
             href = content_node.attrib['href']
@@ -108,3 +128,51 @@ _IG_MiniMessage.prototype = {
             result.write(',\n')
         result.write('''}\n''')
         return result.getvalue()
+
+    def get_required_urls(self):
+        for url in self.__required_urls:
+            yield url
+    
+    def process_urls(self, urldata):
+        for url, content in urldata.iteritems():
+            func = self.__required_urls[url]
+            func(url, content)
+            
+    def __substitute_locale_msgs(self, value, msgs):
+        oldidx = 0
+        msgkey = '__MSG_'
+        msgkey_len = len(msgkey)
+        buf = StringIO()
+        while True:
+            idx = value.find(msgkey, oldidx)
+            if idx < 0:
+                break
+            buf.write(value[oldidx:idx])
+            keystart = idx+msgkey_len
+            keyend = value.find('__', keystart)
+            if keyend < 0:
+                break
+            key = value[keystart:keyend]
+            val = msgs[key].strip()
+            _logger.debug("substituting environment %s => %s", key, val)
+            buf.write(val)
+            oldidx = keyend+2
+        buf.write(value[oldidx:])
+        return buf.getvalue()
+          
+    def __on_received_locale(self, url, content):
+        _logger.debug("got url %s => %d chars", url, len(content))
+        doc = xml.etree.ElementTree.ElementTree()
+        doc.parse(StringIO(content))
+        msgs = {}          
+        for msg in doc.findall('msg'):
+            name = msg.attrib.get('name', None)
+            if not name:
+                continue
+            msgs[name] = msg.text
+        _logger.debug("parsed %d msgs", len(msgs))
+        for k in ('title', 'description',):
+            oldv = getattr(self, k)
+            newv = self.__substitute_locale_msgs(oldv, msgs)
+            setattr(self, k, newv)
+        
