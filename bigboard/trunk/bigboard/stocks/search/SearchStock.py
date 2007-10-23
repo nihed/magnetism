@@ -5,6 +5,8 @@ import gobject, gtk, gnomeapplet, gconf
 import hippo
 
 import bigboard.libbig as libbig
+from bigboard.libbig.imagecache import URLImageCache
+from bigboard.libbig.http import AsyncHTTPFetcher
 from bigboard.stock import Stock
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasVBox
 import bigboard.search as search
@@ -59,11 +61,15 @@ class ResultsView(search.SearchConsumer):
         ## 2 = title + detail markup
         ## 3 = heading
         
-        self.__store = gtk.TreeStore(object, gtk.gdk.Pixbuf, str, str)
+        self.__store = gtk.TreeStore(object, object, str, str)
         
         self.__view = gtk.TreeView(self.__store)
         self.__view.set_headers_visible(False)
         
+        self.__icon_size = 24
+        self.__view.insert_column_with_data_func(-1, '',
+                                                 gtk.CellRendererPixbuf(),
+                                                 self.__render_icon)
         column = gtk.TreeViewColumn('Result')
         
         renderer = gtk.CellRendererText()
@@ -163,12 +169,51 @@ class ResultsView(search.SearchConsumer):
             detail_markup = self.__bold_query(r.get_detail())
             markup = "<span size='large'>%s</span>\n<span color='#aaaaaa'>%s</span>" % \
                    (title_markup, detail_markup)
+            icon = r.get_icon()
+            if not icon:
+                icon = r.get_icon_url()
+                if icon:
+                    image_cache = URLImageCache()
+                    image_cache.get(icon, self.__handle_image_load, self.__handle_image_error, format='pixbuf')
             self.__store.append(None,
-                                [ r, r.get_icon(),
+                                ( r, icon,
                                   markup,
-                                  r.get_provider().get_heading() ] )
+                                  r.get_provider().get_heading() ) )
         self.__update_showing()
+                    
+    def __findobj(self, obj, idx=0):
+        iter = self.__store.get_iter_first()
+        while iter:
+            val = self.__store.get_value(iter, idx)
+            if val == obj:
+                return iter
+            iter = self.__store.iter_next(iter)
+            
+    def __render_icon(self, col, cell, model, iter):
+        pixbuf = model.get(iter, 1)[0]
+        _logger.debug("render pixbuf %s", pixbuf)
+        if isinstance(pixbuf, gtk.gdk.Pixbuf):
+            cell.set_property('pixbuf', pixbuf)
+        elif pixbuf and (not pixbuf.startswith('http')):
+            cell.set_property('stock-id', pixbuf)
+            cell.set_property('stock-size', 24)
+        else:
+            cell.set_property('pixbuf', None)
 
+    def __handle_image_load(self, url, pixbuf):
+        _logger.debug("got load for %s: %s", url, pixbuf)
+        iter = self.__findobj(url, 1)
+        if not iter:
+            _logger.debug("no result visible for %s", url)
+            return
+        pixbuf = pixbuf.scale_simple(self.__icon_size, self.__icon_size, gtk.gdk.INTERP_BILINEAR)        
+        self.__store.set(iter, 1, pixbuf)
+        path = self.__store.get_path(iter)        
+        self.__store.row_changed(path, iter)
+        
+    def __handle_image_error(self, url, exc):
+        # note exception is automatically added to log
+        logging.error("failed to load image for '%s': %s", url, exc)  #FIXME queue retry                
 
 class SearchEntry(gtk.Entry):
     def __init__(self, *args, **kwargs):

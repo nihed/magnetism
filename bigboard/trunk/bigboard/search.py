@@ -25,6 +25,10 @@ class SearchResult(object):
     def get_icon(self):
         """Returns an icon for the result"""
         return None
+    
+    def get_icon_url(self):
+        """Returns a URL for an icon for the result"""
+        return None        
 
     def _on_highlighted(self):
         """Action when user has highlighted the result"""
