@@ -208,12 +208,15 @@ class StockManager(gobject.GObject):
             baseurl = 'file://' + self.__get_moddir_for_builtin(url)
         else:
             baseurl = os.path.dirname(url)
-        metainfo = pyonlinedesktop.widget.WidgetParser(url, urllib2.urlopen(srcurl), self.__widget_environ, baseurl=baseurl)
-        ## FIXME this is a hack - we need to move async processing into Exchange probably
-        url_contents = {}
-        for url in metainfo.get_required_urls():
-            url_contents[url] = urllib2.urlopen(url).read()
-        metainfo.process_urls(url_contents)
+        try:
+            metainfo = pyonlinedesktop.widget.WidgetParser(url, urllib2.urlopen(srcurl), self.__widget_environ, baseurl=baseurl)
+            ## FIXME this is a hack - we need to move async processing into Exchange probably
+            url_contents = {}
+            for url in metainfo.get_required_urls():
+                url_contents[url] = urllib2.urlopen(url).read()
+            metainfo.process_urls(url_contents)
+        except urllib2.HTTPError, e:
+            _logger.warn("Failed to load %s", url, exc_info=True)
             
         self.__metainfo_cache[url] = metainfo
         return metainfo 
