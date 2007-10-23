@@ -207,7 +207,7 @@ class StockManager(gobject.GObject):
             srcurl = 'file://' + os.path.join(self.__stockdir, url[len(builtin_scheme):])
             baseurl = 'file://' + self.__get_moddir_for_builtin(url)
         else:
-            baseurl = os.path.basename(url)
+            baseurl = os.path.dirname(url)
         metainfo = pyonlinedesktop.widget.WidgetParser(url, urllib2.urlopen(srcurl), self.__widget_environ, baseurl=baseurl)
         ## FIXME this is a hack - we need to move async processing into Exchange probably
         url_contents = {}
