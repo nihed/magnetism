@@ -18,6 +18,8 @@ _logger = logging.getLogger("bigboard.stocks.SearchStock")
 
 class ResultsView(search.SearchConsumer):
 
+    RESULT_TYPE_MAX = 3
+    
     def __init__(self, *args, **kwargs):
         super(ResultsView, self).__init__(*args, **kwargs)
 
@@ -126,7 +128,9 @@ class ResultsView(search.SearchConsumer):
         return markup
 
     def add_results(self, results):
-        for r in results:
+        for i,r in enumerate(results):
+            if i >= self.RESULT_TYPE_MAX:
+                break
             title_markup = self.__bold_query(r.get_title())
             detail_markup = self.__bold_query(r.get_detail())
             markup = "<span size='large'>%s</span>\n<span color='#aaaaaa'>%s</span>" % \
