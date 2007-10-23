@@ -314,6 +314,7 @@ class Exchange(hippo.CanvasBox):
         self.__stockbox = hippo.CanvasBox()
         self.append(self.__stockbox)
         if pymodule:
+            pymodule.connect('visible', self.__render_pymodule)
             self.__render_pymodule()
         else:
             self.__render_google_gadget()    
@@ -332,7 +333,7 @@ class Exchange(hippo.CanvasBox):
         rendered = GoogleGadgetContainer(self.__metainfo, self.__env)
         self.__stockbox.append(rendered)
     
-    def __render_pymodule(self):
+    def __render_pymodule(self, *args):
         self.__size = size = Stock.SIZE_BULL
         self.__stockbox.remove_all()
         self.__pymodule.set_size(size)
