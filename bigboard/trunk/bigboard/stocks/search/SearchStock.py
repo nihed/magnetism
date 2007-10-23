@@ -16,6 +16,34 @@ if __name__ == '__main__':
         
 _logger = logging.getLogger("bigboard.stocks.SearchStock")
 
+## this class is so each search has its own "context" and
+## we ignore async search results from a search that is no longer
+## the current search. Owner stores the current ResultsConsumer
+## and delegate is another search.SearchConsumer
+class ResultsConsumer(search.SearchConsumer):
+    def __init__(self, owner, delegate):
+        super(ResultsConsumer, self).__init__()
+        self.__owner = owner
+        self.__delegate = delegate
+        
+    def clear_results(self):
+        if self.__owner.get_current_consumer() == self:
+            self.__delegate.clear_results()
+        else:
+            _logger.debug("ignoring old async clear_results")
+
+    def add_results(self, results):
+        if self.__owner.get_current_consumer() == self:
+            self.__delegate.add_results(results)
+        else:
+            _logger.debug("ignoring old async add_results")
+
+    def set_query(self, query):
+        if self.__owner.get_current_consumer() == self:
+            self.__delegate.set_query(query)
+        else:
+            _logger.debug("ignoring old async set_query")
+
 class ResultsView(search.SearchConsumer):
 
     RESULT_TYPE_MAX = 3
@@ -146,6 +174,8 @@ class SearchEntry(gtk.Entry):
     def __init__(self, *args, **kwargs):
         super(SearchEntry,self).__init__(*args, **kwargs)
 
+        self.__current_consumer = None
+
         self.__results_window = gtk.Window(gtk.WINDOW_POPUP)
         self.__results_window.set_resizable(False)
         self.__results_window.set_focus_on_map(False)
@@ -158,6 +188,9 @@ class SearchEntry(gtk.Entry):
         self.connect('changed', self.__on_changed)
         self.connect('key-press-event', self.__on_key_press)
         self.connect('focus-out-event', self.__on_focus_out)
+
+    def get_current_consumer(self):
+        return self.__current_consumer
 
     def __on_changed(self, entry):
 
@@ -179,8 +212,8 @@ class SearchEntry(gtk.Entry):
 
         query = self.get_text()
         _logger.debug("Searching for '%s'" % query)
-        search.perform_search(query, self.__results_view)
-
+        self.__current_consumer = ResultsConsumer(self, self.__results_view)
+        search.perform_search(query, self.__current_consumer)
 
     def __on_focus_out(self, entry, event):
         _logger.debug("focus out of search entry")

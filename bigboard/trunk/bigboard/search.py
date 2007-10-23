@@ -67,6 +67,10 @@ class SearchConsumer(object):
     def add_results(self, results):
         """Called 0 to N times as results come in"""
         pass
+
+    def set_query(self, query):
+        """Called to set the query we're currently searching for (allows consumer to e.g. highlight search terms in results)"""
+        pass
     
 __constructors = {}
 __providers = {}

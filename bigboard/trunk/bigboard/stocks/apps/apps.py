@@ -591,15 +591,11 @@ class AppSearchProvider(search.SearchProvider):
     def __init__(self, repo):
         super(AppSearchProvider, self).__init__()
         self.__repo = repo
-        self.__current_query = ''
 
     def get_heading(self):
         return "Applications"
 
-    def __on_search_results(self, applications, category, search_terms, consumer):
-        if search_terms != self.__current_query:
-            return ## we've gotten a new query since we asked for this one
-        
+    def __on_search_results(self, applications, category, search_terms, consumer):        
         results = []
         for a in applications:
             results.append(AppSearchResult(self, a))
@@ -608,9 +604,7 @@ class AppSearchProvider(search.SearchProvider):
             consumer.add_results(results)
         
     def perform_search(self, query, consumer):
-        self.__current_query = query
-
-        self.__repo.search(None, self.__current_query,
+        self.__repo.search(None, query,
                            lambda apps, category, terms: self.__on_search_results(apps, category, terms, consumer))
 
 search.register_provider_constructor('apps', lambda: AppSearchProvider(get_apps_repo()))
