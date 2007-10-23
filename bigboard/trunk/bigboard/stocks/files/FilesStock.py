@@ -161,9 +161,8 @@ def compare_by_date(file_a, file_b):
     return cmp(file_b.get_access_time(), file_a.get_access_time())
 
 class FileSearchResult(search.SearchResult):
-    def __init__(self, provider, query, file):
+    def __init__(self, provider, file):
         super(FileSearchResult, self).__init__(provider)
-        self.__query = query
         self.__file = file
 
     def get_title(self):
@@ -198,7 +197,7 @@ class FileSearchProvider(search.SearchProvider):
         lower_query = query.lower()
         for f in files:
             if lower_query in f.get_name().lower() or lower_query in f.get_full_name().lower():
-                results.append(FileSearchResult(self, query, f))
+                results.append(FileSearchResult(self, f))
 
         if len(results) > 0:
             consumer.add_results(results)

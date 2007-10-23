@@ -17,6 +17,8 @@ import apps, appbrowser, apps_widgets, apps_directory
 
 from ddm import DataModel
 
+import bigboard.search as search
+
 _logger = logging.getLogger("bigboard.stocks.AppsStock")
 
 GCONF_KEY_APP_SIZE = '/apps/bigboard/application_list_size'
@@ -35,6 +37,8 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
     }    
     def __init__(self, *args, **kwargs):
         super(AppsStock, self).__init__(*args, **kwargs)
+
+        search.enable_search_provider('apps')
 
         self.__model = bigboard.globals.get_data_model()
 

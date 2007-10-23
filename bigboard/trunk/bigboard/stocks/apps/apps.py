@@ -15,6 +15,7 @@ from bigboard.libbig.http import AsyncHTTPFetcher
 from bigboard.libbig.xmlquery import query as xml_query, get_attrs as xml_get_attrs
 import urlparse
 import xml.dom, xml.dom.minidom
+import bigboard.search as search
 
 _logger = logging.getLogger("bigboard.stocks.AppsStock")
 
@@ -498,6 +499,7 @@ class AppsRepo(gobject.GObject):
                         ## created, and then we'll re-sync in response
 
     def __on_search_results(self, results_handler, category, search_terms, app_resources):
+        _logger.debug("Got search results for search_terms='%s'", search_terms);
         ## on the first results_handler to be called, we'll need to remove the pending
         ## query
         if search_terms:
@@ -560,5 +562,55 @@ def get_apps_repo():
     global __apps_repo
     if __apps_repo is None:
         __apps_repo = AppsRepo()
-    return __apps_repo
-    
+    return __apps_repo    
+
+class AppSearchResult(search.SearchResult):
+    def __init__(self, provider, app):
+        super(AppSearchResult, self).__init__(provider)
+        self.__app = app
+
+    def get_title(self):
+        return self.__app.get_name()
+
+    def get_detail(self):
+        return self.__app.get_description()
+
+    def get_icon(self):
+        """Returns an icon for the result"""
+        return None
+
+    def _on_highlighted(self):
+        """Action when user has highlighted the result"""
+        pass
+
+    def _on_activated(self):
+        """Action when user has activated the result"""
+        self.__app.launch()
+
+class AppSearchProvider(search.SearchProvider):    
+    def __init__(self, repo):
+        super(AppSearchProvider, self).__init__()
+        self.__repo = repo
+        self.__current_query = ''
+
+    def get_heading(self):
+        return "Applications"
+
+    def __on_search_results(self, applications, category, search_terms, consumer):
+        if search_terms != self.__current_query:
+            return ## we've gotten a new query since we asked for this one
+        
+        results = []
+        for a in applications:
+            results.append(AppSearchResult(self, a))
+
+        if len(results) > 0:
+            consumer.add_results(results)
+        
+    def perform_search(self, query, consumer):
+        self.__current_query = query
+
+        self.__repo.search(None, self.__current_query,
+                           lambda apps, category, terms: self.__on_search_results(apps, category, terms, consumer))
+
+search.register_provider_constructor('apps', lambda: AppSearchProvider(get_apps_repo()))
