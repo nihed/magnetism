@@ -60,8 +60,9 @@ class ResultsView(search.SearchConsumer):
         ## 1 = icon
         ## 2 = title + detail markup
         ## 3 = heading
+        ## 4 = sort key, 0 for a heading, 1 for a non-heading
         
-        self.__store = gtk.TreeStore(object, object, str, str)
+        self.__store = gtk.TreeStore(object, object, str, str, int)
         
         self.__view = gtk.TreeView(self.__store)
         self.__view.set_headers_visible(False)
@@ -74,28 +75,54 @@ class ResultsView(search.SearchConsumer):
         
         renderer = gtk.CellRendererText()
         column.pack_start(renderer)
-        column.set_attributes(renderer, markup=2)
+        #column.set_attributes(renderer, markup=2)
+        column.set_cell_data_func(renderer, self.__cell_data_method)
         
         self.__view.append_column(column)
 
         self.__view.get_selection().connect('changed', self.__on_selection_changed)
         self.__view.connect('row-activated', self.__on_row_activated)
+
+        self.__added_headings = set()
         
     def get_widget(self):
         return self.__view
+
+    def __cell_data_method(self, column, renderer, model, iter):
+        markup = model.get_value(iter, 2)
+        result = model.get_value(iter, 0)
+        renderer.set_property('markup', markup)
+        if result:
+            renderer.set_property('background', None)
+        else:
+            # this is a heading
+            renderer.set_property('background', 'light blue')
 
     def __on_selection_changed(self, selection):
         (model, rows) = selection.get_selected_rows()
         if len(rows) > 0:
             iter = model.get_iter(rows[0]) # rows is a list of path
             result = model.get_value(iter, 0)
-            result._on_highlighted()
+            ## result is None for a heading row            
+            if result:
+                result._on_highlighted()
+            else:
+                # don't select heading rows
+                selection.unselect_iter(iter)
+                next = model.iter_next(iter)
+                if next:
+                    result = model.get_value(next, 0) ## see if it's another heading
+                    if result:
+                        selection.select_iter(next)
+                        ## keep the cursor with it
+                        self.__view.set_cursor(model.get_path(next))
             
     def __on_row_activated(self, tree, path, view_column):
         model = tree.get_model()
         iter = model.get_iter(path)
         result = model.get_value(iter, 0)
-        result._on_activated()
+        if result:
+            result._on_activated()
             
     def __update_showing(self):
         toplevel = self.__view.get_toplevel()
@@ -146,6 +173,7 @@ class ResultsView(search.SearchConsumer):
         
     def clear_results(self):
         self.__store.clear()
+        self.__added_headings = set()
         self.__update_showing()
 
     def __bold_query(self, text):        
@@ -169,16 +197,32 @@ class ResultsView(search.SearchConsumer):
             detail_markup = self.__bold_query(r.get_detail())
             markup = "<span size='large'>%s</span>\n<span color='#aaaaaa'>%s</span>" % \
                    (title_markup, detail_markup)
+
+            heading = r.get_provider().get_heading()
+            if heading not in self.__added_headings:
+                self.__store.append(None,
+                                    [ None, None,
+                                      xml.sax.saxutils.escape(heading),
+                                      heading, 0 ])
+                self.__added_headings.add(heading)
+
             icon = r.get_icon()
             if not icon:
                 icon = r.get_icon_url()
                 if icon:
                     image_cache = URLImageCache()
                     image_cache.get(icon, self.__handle_image_load, self.__handle_image_error, format='pixbuf')
-            self.__store.append(None,
-                                ( r, icon,
-                                  markup,
-                                  r.get_provider().get_heading() ) )
+
+            self.__store.append(None, [ r, icon,
+                                        markup,
+                                        heading, 1 ] )
+
+        ## sort headings before search entries
+        self.__store.set_sort_column_id(4, gtk.SORT_ASCENDING)
+
+        ## sort headings in alpha order
+        self.__store.set_sort_column_id(3, gtk.SORT_ASCENDING)            
+
         self.__update_showing()
                     
     def __findobj(self, obj, idx=0):
@@ -334,7 +378,7 @@ if __name__ == '__main__':
 
         def get_icon(self):
             """Returns an icon for the result"""
-            return None
+            return 'gtk-open'
 
         def _on_highlighted(self):
             """Action when user has highlighted the result"""
@@ -345,11 +389,12 @@ if __name__ == '__main__':
             _logger.debug("activated result " + self.get_title())
 
     class TestSearchProvider(search.SearchProvider):    
-        def __init__(self):
+        def __init__(self, heading):
             super(TestSearchProvider, self).__init__()
+            self.__heading = heading
 
         def get_heading(self):
-            return "Test Items"
+            return self.__heading
 
         def perform_search(self, query, consumer):
             stuff_to_search_in = [
@@ -373,8 +418,17 @@ if __name__ == '__main__':
     def construct_provider():
         return TestSearchProvider()
 
-    search.register_provider_constructor('test', construct_provider)
-    search.enable_search_provider('test')
+    search.register_provider_constructor('test1', lambda: TestSearchProvider("A_TestItems"))
+    search.enable_search_provider('test1')
+
+    search.register_provider_constructor('test2', lambda: TestSearchProvider("B_TestItems"))
+    search.enable_search_provider('test2')
+
+    search.register_provider_constructor('test3', lambda: TestSearchProvider("C_TestItems"))
+    search.enable_search_provider('test3')
+
+    search.register_provider_constructor('test4', lambda: TestSearchProvider("D_TestItems"))
+    search.enable_search_provider('test4')
 
     window = gtk.Window()
     window.set_border_width(50) ## to test positioning of results window 
