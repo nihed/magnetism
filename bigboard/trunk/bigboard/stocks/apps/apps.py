@@ -578,6 +578,9 @@ class AppSearchResult(search.SearchResult):
     def get_icon(self):
         """Returns an icon for the result"""
         return None
+    
+    def get_icon_url(self):
+        return self.__app.get_icon_url()
 
     def _on_highlighted(self):
         """Action when user has highlighted the result"""
