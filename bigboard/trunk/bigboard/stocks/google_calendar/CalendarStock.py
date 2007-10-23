@@ -167,6 +167,12 @@ class Event(AutoStruct):
         full_id = self.__event_entry.id.text
         return full_id[full_id.rfind("/")+1:]
 
+    def open(self):
+        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', self.get_link())
+
+    def open_map(self):
+        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', "http://maps.google.com/maps?q=" + self.get_event_entry().where[0].value_string)
+
 class EventsParser:
     def __init__(self, data):
         self.__events = []
@@ -382,10 +388,10 @@ class EventDetailsDisplay(hippo.CanvasBox):
     def __on_activate_web(self, canvas_item):
         self.emit("close")
         _logger.debug("activated event %s", self)
-        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', self.__event.get_link())
+        self.__event.open()
 
     def __on_activated_event_map_link(self, canvas_item):
-        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', "http://maps.google.com/maps?q=" + self.__event.get_event_entry().where[0].value_string)
+        self.__event.open_map()
 
     def __on_activated_calendar_link(self, canvas_item, index):
         self.emit("close")
@@ -644,7 +650,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
                 event.update({ 'color' : color})
             self.__on_load_events(p.get_events(), calendar_feed_url, event_range_start, event_range_end)
         except xml.sax.SAXException, e:
-            __on_failed_load(sys.exc_info())
+            self.__on_failed_load(sys.exc_info())
 
     # we could use the calendar off each event, assuming they are all from the same calendar
     # but it's better to make it work for loading events from multiple calendars too
@@ -1014,3 +1020,5 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         p.connect("close", self.__close_slideout)
         return True
 
+    def get_events(self):
+        return self.__events
