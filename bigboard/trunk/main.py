@@ -206,17 +206,26 @@ class StockManager(gobject.GObject):
         if url.startswith(builtin_scheme):
             srcurl = 'file://' + os.path.join(self.__stockdir, url[len(builtin_scheme):])
             baseurl = 'file://' + self.__get_moddir_for_builtin(url)
+        else:
+            baseurl = os.path.basename(url)
         metainfo = pyonlinedesktop.widget.WidgetParser(url, urllib2.urlopen(srcurl), self.__widget_environ, baseurl=baseurl)
+        ## FIXME this is a hack - we need to move async processing into Exchange probably
+        url_contents = {}
+        for url in metainfo.get_required_urls():
+            url_contents[url] = urllib2.urlopen(url).read()
+        metainfo.process_urls(url_contents)
+            
         self.__metainfo_cache[url] = metainfo
         return metainfo 
     
     def render(self, module, **kwargs):
         (content_type, content_data) = module.content
+        pymodule = None
         if content_type == 'online-desktop-builtin':
-            loaded = self.__load_builtin(module, **kwargs)
-            if not loaded: 
+            pymodule = self.__load_builtin(module, **kwargs)
+            if not pymodule: 
                 return None
-            return self.__render_builtin(loaded)            
+        return Exchange(module, self.__widget_environ, pymodule=pymodule, is_notitle=(module.srcurl in self.__hardcoded_urls))
         
     def render_url(self, url, **kwargs):
         return self.render(self.load_metainfo(url), **kwargs)
@@ -254,38 +263,44 @@ class StockManager(gobject.GObject):
         except:
             _logger.exception("failed to add stock %s", classname)
             return None
-        
-    def __render_builtin(self, stock):
-        return Exchange(stock)
                 
     @defer_idle_func(timeout=100)     
     def __on_listings_change(self, *args):
         _logger.debug("processing listings change")
         self.emit("listings-changed")
          
+class GoogleGadgetContainer(hippo.CanvasWidget):
+    def __init__(self, metainfo, env):
+        super(GoogleGadgetContainer, self).__init__()
+        from pyonlinedesktop import ggadget        
+        self.widget = ggadget.Gadget(metainfo, env)
+        self.widget.show_all() 
+        self.set_property('widget', self.widget)   
+         
 class Exchange(hippo.CanvasBox):
-    """A container for stocks."""
+    """A renderer for stocks."""
     
-    def __init__(self, stock):
+    def __init__(self, metainfo, env, pymodule=None, is_notitle=False):
         hippo.CanvasBox.__init__(self,  
                                  orientation=hippo.ORIENTATION_VERTICAL,
                                  spacing=4)      
         self.__size = None
-        self.__stock = stock
+        self.__metainfo = metainfo
+        self.__env = env
+        self.__pymodule = pymodule
         self.__ticker_text = None
         self.__ticker_container = None
         self.__mini_more_button = None
         self.__sep = Separator()
         self.append(self.__sep)
         self.__expanded = True
-        if not stock.get_ticker() in ("-", ""):
-            text = stock.get_ticker()
+        if not is_notitle:
             self.__ticker_container = GradientHeader()
-            self.__ticker_text = hippo.CanvasText(text=text, font="14px", xalign=hippo.ALIGNMENT_START)
+            self.__ticker_text = hippo.CanvasText(text=metainfo.title, font="14px", xalign=hippo.ALIGNMENT_START)
             self.__ticker_text.connect("button-press-event", lambda text, event: self.__toggle_expanded())  
             self.__ticker_container.append(self.__ticker_text, hippo.PACK_EXPAND)
             
-            if stock.has_more_button():
+            if pymodule and pymodule.has_more_button():
                 more_button = Button(label='More', label_ypadding=-2)
                 more_button.set_property('yalign', hippo.ALIGNMENT_CENTER)
                 more_button.connect("activated", lambda l: stock.on_more_clicked())
@@ -296,42 +311,47 @@ class Exchange(hippo.CanvasBox):
                 self.append(self.__mini_more_button)
             
             self.append(self.__ticker_container)
-        self.__stock.connect("visible", lambda s, v: self.set_size(self.__size))
         self.__stockbox = hippo.CanvasBox()
         self.append(self.__stockbox)
+        if pymodule:
+            self.__render_pymodule()
+        else:
+            self.__render_google_gadget()    
     
     def __toggle_expanded(self):
         self.__expanded = not self.__expanded
         self.set_child_visible(self.__stockbox, self.__expanded)
     
-    def get_stock(self):
-        return self.__stock
+    def get_metainfo(self):
+        return self.__metainfo
     
-    def get_srcurl(self):
-        return self.__stock.get_metainfo().srcurl
+    def get_pymodule(self):
+        return self.__pymodule
     
-    def set_size(self, size):
-        self.__size = size
+    def __render_google_gadget(self):
+        rendered = GoogleGadgetContainer(self.__metainfo, self.__env)
+        self.__stockbox.append(rendered)
+    
+    def __render_pymodule(self):
+        self.__size = size = Stock.SIZE_BULL
         self.__stockbox.remove_all()
-        self.__stock.set_size(size)
-        content = self.__stock.get_content(size) 
+        self.__pymodule.set_size(size)
+        content = self.__pymodule.get_content(size) 
         if self.__ticker_container:
             self.set_child_visible(self.__ticker_container, not not content)
         self.set_child_visible(self.__sep,
                                (not not content) and \
                                ((self.__ticker_container and size == Stock.SIZE_BEAR) \
                                 or (size == Stock.SIZE_BULL
-                                    and ((not self.__ticker_container) or (self.__stock.get_ticker() == "-")))))
+                                    and ((not self.__ticker_container) or (self.__pymodule.get_ticker() == "-")))))
         if self.__mini_more_button:
             self.set_child_visible(self.__mini_more_button, size == Stock.SIZE_BEAR)
         self.set_child_visible(self.__stockbox, not not content)
         if not content:
-            _logger.debug("no content for stock %s", self.__stock)
+            _logger.debug("no content for stock %s", self.__pymodule)
             return
         self.__stockbox.append(content)
         padding = 4
-        if size == Stock.SIZE_BEAR:
-            padding = 2  
         self.__stockbox.set_property("padding_left", padding)
         self.__stockbox.set_property("padding_right", padding)
         if self.__ticker_text:
@@ -398,8 +418,8 @@ class BigBoardPanel(dbus.service.Object):
         hardcoded_metas = map(lambda url: self.__stock_manager.load_metainfo(url), self.__hardcoded_stocks)
         for metainfo in hardcoded_metas:
             self.__append_metainfo(metainfo, notitle=True)    
-        self.__self_stock = self._exchanges[self.__hardcoded_stocks[0]].get_stock()
-        self.__search_stock = self._exchanges[self.__hardcoded_stocks[1]].get_stock()
+        self.__self_stock = self._exchanges[self.__hardcoded_stocks[0]].get_pymodule()
+        self.__search_stock = self._exchanges[self.__hardcoded_stocks[1]].get_pymodule()
         gobject.idle_add(self.__sync_listing)
         
         self.__self_stock.connect('info-loaded', lambda *args: self.__initial_appearance())
@@ -449,8 +469,7 @@ class BigBoardPanel(dbus.service.Object):
         if not exchange:
             _logger.debug("failed to load stock from %s", metainfo.srcurl)
             return
-        _logger.debug("adding stock %s", exchange.get_stock())
-        exchange.set_size(self.__get_size())
+        _logger.debug("adding stock %s", exchange)
         self._stocks_box.append(exchange)
         
     @log_except(_logger)
@@ -458,7 +477,7 @@ class BigBoardPanel(dbus.service.Object):
         _logger.debug("doing stock listing sync")
         new_listed = list(self.__stock_manager.get_listed())       
         for exchange in list(self._stocks_box.get_children()):
-            if exchange.get_stock().get_metainfo().srcurl in self.__hardcoded_stocks:
+            if exchange.get_metainfo().srcurl in self.__hardcoded_stocks:
                 continue
             _logger.debug("removing %s", exchange)
             self._stocks_box.remove(exchange)
@@ -517,24 +536,10 @@ class BigBoardPanel(dbus.service.Object):
         expanded = gconf.client_get_default().get_bool(GCONF_PREFIX + 'expand')
         gconf.client_get_default().set_bool(GCONF_PREFIX + 'expand', not expanded)
             
-    def _sync_size(self, *args):       
-        self._header_box.set_child_visible(self._title, self.__get_size() == Stock.SIZE_BULL)
-        if self.__get_size() == Stock.SIZE_BEAR:
-            if self._size_button:
-                self._header_box.remove(self._size_button)
-                self._header_box.append(self._size_button, hippo.PACK_EXPAND)
-                self._size_button.set_property('image-name', 'bigboard-expand.png')
-            self._canvas.set_size_request(Stock.SIZE_BEAR_CONTENT_PX, 42)
-        else:
-            if self._size_button:
-                self._header_box.remove(self._size_button)
-                self._header_box.append(self._size_button, hippo.PACK_END)            
-                self._size_button.set_property('image-name', 'bigboard-collapse.png')       
-            self._canvas.set_size_request(Stock.SIZE_BULL_CONTENT_PX, 42)
-            
-        for exchange in self._exchanges.itervalues():
-            _logger.debug("resizing exchange %s to %s", exchange, self.__get_size())
-            exchange.set_size(self.__get_size())
+    def _sync_size(self, *args):
+        # This function should be deleted basically; we no longer support size changes.
+                   
+        self._canvas.set_size_request(Stock.SIZE_BULL_CONTENT_PX, 42)
         
         _logger.debug("queuing resize")
         self._dw.queue_resize()  

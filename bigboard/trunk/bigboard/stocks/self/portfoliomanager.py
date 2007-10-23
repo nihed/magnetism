@@ -179,13 +179,13 @@ class StockList(OverviewTable):
                 itemsections.append((section, srcurl))
         for (section, srcurl) in itemsections:
             self.remove_stock(srcurl, section)
+        for metainfo in listed:
+            _logger.debug("displaying LISTED stock %s", metainfo.srcurl)
+            self.add_stock(metainfo, LISTED)
         for metainfo in all:
-            islisted = metainfo in listed
-            if metainfo in listed:
-                sect = LISTED
-            else:
-                sect = UNLISTED
-            self.add_stock(metainfo, sect)
+            if metainfo not in listed:
+                _logger.debug("displaying UNLISTED stock %s", metainfo.srcurl)                
+                self.add_stock(metainfo, UNLISTED)
              
 class PortfolioManager(hippo.CanvasWindow):
     def __init__(self, panel):
@@ -227,6 +227,14 @@ class PortfolioManager(hippo.CanvasWindow):
         self.__on_minimize_key_changed()
         minimized_box.append(self.__minimized_check)
         self.__left_box.append(minimized_box)
+        gadget_box = CanvasHBox()
+        gadget_box.append(hippo.CanvasText(text='Widget Link: ', font="12px"))
+        self.__google_gadget_entry = hippo.CanvasEntry()
+        gadget_box.append(self.__google_gadget_entry, hippo.PACK_EXPAND)
+        self.__google_gadget_add_button = Button(label='Add')
+        gadget_box.append(self.__google_gadget_add_button)
+        self.__google_gadget_add_button.connect('activated', self.__on_google_gadget_add)
+        self.__left_box.append(gadget_box)
     
         self.__right_scroll = hippo.CanvasScrollbars()
         self.__right_scroll.set_policy(hippo.ORIENTATION_HORIZONTAL,
@@ -249,6 +257,16 @@ class PortfolioManager(hippo.CanvasWindow):
         self.connect("key-press-event", lambda win, event: self.__on_keypress(event))
                
         self.set_root(self.__box)
+        
+    def __on_google_gadget_add(self, but):
+        _logger.debug("got add for ggadget")
+        url = self.__google_gadget_entry.get_property('text')
+        try:
+            urlparse.urlparse(url)
+        except:
+            _logger.debug("invalid URL: %s", url)
+            return
+        self.__mgr.set_listed(url, True)        
 
     def __set_profile_stock(self, url):
         self.__profile_box.clear()
