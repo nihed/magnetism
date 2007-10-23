@@ -200,8 +200,22 @@ class PeopleSearchProvider(search.SearchProvider):
         
         for p in self.__tracker.contacts:
             #_logger.debug("contact: " + str(p))
-            if query in p.name:
+
+            email = None
+            try:
+                email = p.email
+            except AttributeError:
+                email = None
+
+            aim = None
+            try:
+                aim = p.aim
+            except AttributeError:
+                aim = None
+            
+            if query in p.name or (email and (query in email)) or (aim and (query in aim)):
                 results.append(PeopleSearchResult(self, p))
+                
         for p in self.__tracker.aim_users:
             #_logger.debug("aim: " + str(p))
             pass ## FIXME
