@@ -156,17 +156,27 @@ class SearchEntry(gtk.Entry):
         self.connect('focus-out-event', self.__on_focus_out)
 
     def __on_changed(self, entry):
+
+        ## Move the window first, THEN perform search,
+        ## since the search can synchronously return
+        ## results which shows the popup window.
+
+        ## results view shows its own toplevel if it is not empty;
+        ## kind of weird, but simple
+
+        entry_toplevel = self.get_toplevel()
+        if self.window and entry_toplevel and \
+               isinstance(entry_toplevel, gtk.Window) and \
+               entry_toplevel.window:
+            rect = entry_toplevel.window.get_frame_extents()
+            entry_origin = self.window.get_origin()
+            self.__results_window.move(rect.x + rect.width,
+                                       entry_origin[1])
+
         query = self.get_text()
         _logger.debug("Searching for '%s'" % query)
         search.perform_search(query, self.__results_view)
 
-        entry_toplevel = self.get_toplevel()
-        if entry_toplevel and isinstance(entry_toplevel, gtk.Window) and entry_toplevel.window:
-            rect = entry_toplevel.window.get_frame_extents()
-            self.__results_window.move(rect.x + rect.width,
-                                       rect.y)
-
-        ## results view shows its own toplevel if it is not empty; kind of weird, but simple
 
     def __on_focus_out(self, entry, event):
         _logger.debug("focus out of search entry")
