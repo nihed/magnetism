@@ -194,8 +194,10 @@ class ResultsView(search.SearchConsumer):
         _logger.debug("render pixbuf %s", pixbuf)
         if isinstance(pixbuf, gtk.gdk.Pixbuf):
             cell.set_property('pixbuf', pixbuf)
+        # Yes, this is gross - we should probably store URL parameters
+        # in another column
         elif pixbuf and (not pixbuf.startswith('http')):
-            cell.set_property('stock-id', pixbuf)
+            cell.set_property('icon-name', pixbuf)
             cell.set_property('stock-size', 24)
         else:
             cell.set_property('pixbuf', None)

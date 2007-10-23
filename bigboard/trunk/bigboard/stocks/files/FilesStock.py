@@ -173,7 +173,7 @@ class FileSearchResult(search.SearchResult):
 
     def get_icon(self):
         """Returns an icon for the result"""
-        return None
+        return self.__file.get_image_name()
 
     def _on_highlighted(self):
         """Action when user has highlighted the result"""
