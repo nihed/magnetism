@@ -10,6 +10,7 @@ import bigboard.globals
 import bigboard.slideout
 import bigboard.profile
 import bigboard.search as search
+import bigboard.libbig as libbig
 
 import peoplebrowser
 from peoplewidgets import PersonItem, ProfileItem
@@ -185,7 +186,7 @@ class PeopleSearchResult(search.SearchResult):
 
     def _on_activated(self):
         """Action when user has activated the result"""
-        pass
+        libbig.show_url(self.__person.homeUrl)
 
 class PeopleSearchProvider(search.SearchProvider):    
     def __init__(self, tracker):
