@@ -271,10 +271,15 @@ class SearchEntry(gtk.Entry):
         self.__results_window.set_resizable(False)
         self.__results_window.set_focus_on_map(False)
         
+        vbox = gtk.VBox()
+        self.__results_window.add(vbox)
+        
         self.__results_view = ResultsView()
         treeview = self.__results_view.get_widget()
-        treeview.show()
-        self.__results_window.add(treeview)
+        frame = gtk.Frame()
+        frame.add(treeview)
+        vbox.add(frame)
+        vbox.show_all()
 
         self.connect('changed', self.__on_changed)
         self.connect('key-press-event', self.__on_key_press)
@@ -291,6 +296,9 @@ class SearchEntry(gtk.Entry):
 
         ## results view shows its own toplevel if it is not empty;
         ## kind of weird, but simple
+        
+        padding_left = 4
+        unpadding_top = 20
 
         entry_toplevel = self.get_toplevel()
         if self.window and entry_toplevel and \
@@ -298,8 +306,8 @@ class SearchEntry(gtk.Entry):
                entry_toplevel.window:
             rect = entry_toplevel.window.get_frame_extents()
             entry_origin = self.window.get_origin()
-            self.__results_window.move(rect.x + rect.width,
-                                       entry_origin[1])
+            self.__results_window.move(rect.x + rect.width + padding_left,
+                                       entry_origin[1] - unpadding_top)
 
         query = self.get_text()
         _logger.debug("Searching for '%s'" % query)
