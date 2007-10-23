@@ -89,11 +89,15 @@ class TwistedModel(AbstractModel):
         
         self._xmlstream = xmlstream
     
+        self.connected = True
+        self._on_initialized() 
         self._on_connected()
 
     def __on_auth_failed(self, xmlstream):
         global reactor
         print 'Auth failed!'
+        self.connected = False
+        self._on_initialized() 
         reactor.stop()
 
     def __get_resource_id(self, resource_element):

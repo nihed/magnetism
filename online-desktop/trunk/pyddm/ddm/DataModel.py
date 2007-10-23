@@ -92,7 +92,8 @@ class DataModel(AbstractModel):
         _logger.error("Caught D-BUS error: %s", err)
 
     def __on_connected_changed(self, connected, self_id):
-        _logger.debug("Connected status changed: %s", connected)       
+        _logger.debug("Connected status changed: %s", connected)      
+        self.connected = connected  
         if connected:
             self.__on_connected(self_id)
         else:
@@ -122,7 +123,11 @@ class DataModel(AbstractModel):
             self._set_self_id(self_id)
 
     def __get_connected_reply(self, connected):
-#        if connected:
+         self.connected = connected 
+
+         self._on_initialized() 
+         # this is a hack -- we pretend that we are connected so that we can get
+         # the information that has been cached by the mugshot client
          if self.self_id != None:
              self._on_connected()
 
@@ -236,7 +241,7 @@ class _DBusQuery(Query):
     def execute(self):
         # FIXME: Would it be better to call the __on_error? Doing that sync could cause problems.
         #   If we decide to continue raising an exception here, we should use a subclass
-        if not self.__model.connected:
+        if not self.__model.connected and self.__model.self_id == None:
             raise Exception("Not connected")
 
         method_uri = self.__method[0] + "#" + self.__method[1]
@@ -266,7 +271,7 @@ class _DBusUpdate(Query):
     def execute(self):
         # FIXME: Would it be better to call the __on_error? Doing that sync could cause problems.
         #   If we decide to continue raising an exception here, we should use a subclass
-        if not self.__model.connected:
+        if not self.__model.connected and self.__model.self_id == None:
             raise Exception("Not connected")
 
         method_uri = self.__method[0] + "#" + self.__method[1]
