@@ -9,9 +9,12 @@ from bigboard.stock import AbstractMugshotStock
 import bigboard.globals
 import bigboard.slideout
 import bigboard.profile
+import bigboard.search as search
 
 import peoplebrowser
 from peoplewidgets import PersonItem, ProfileItem
+
+_logger = logging.getLogger("bigboard.stocks.PeopleStock")
 
 class PeopleStock(AbstractMugshotStock):
     def __init__(self, *args, **kwargs):
@@ -52,6 +55,10 @@ class PeopleStock(AbstractMugshotStock):
             
         for user in self.__tracker.local_users:
             self.__on_local_user_added(self.__tracker.local_users, user)
+
+        ## add a new search provider (FIXME never gets disabled)
+        search.enable_search_provider('people',
+                                      lambda: PeopleSearchProvider(self.__tracker))
 
     def get_authed_content(self, size):
         return self.__box
@@ -155,3 +162,52 @@ class PeopleStock(AbstractMugshotStock):
             self.__people_browser.hide()
         else:
             self.__people_browser.present()
+
+
+class PeopleSearchResult(search.SearchResult):
+    def __init__(self, provider, person):
+        super(PeopleSearchResult, self).__init__(provider)
+        self.__person = person
+
+    def get_title(self):
+        return self.__person.name
+
+    def get_detail(self):
+        return self.__person.name
+
+    def get_icon(self):
+        """Returns an icon for the result"""
+        return None
+
+    def _on_highlighted(self):
+        """Action when user has highlighted the result"""
+        pass
+
+    def _on_activated(self):
+        """Action when user has activated the result"""
+        pass
+
+class PeopleSearchProvider(search.SearchProvider):    
+    def __init__(self, tracker):
+        super(PeopleSearchProvider, self).__init__()
+        self.__tracker = tracker
+
+    def get_heading(self):
+        return "People"
+        
+    def perform_search(self, query, consumer):
+        results = []
+        
+        for p in self.__tracker.contacts:
+            #_logger.debug("contact: " + str(p))
+            if query in p.name:
+                results.append(PeopleSearchResult(self, p))
+        for p in self.__tracker.aim_users:
+            #_logger.debug("aim: " + str(p))
+            pass ## FIXME
+        for p in self.__tracker.local_users:
+            #_logger.debug("local: " + str(p))
+            pass ## FIXME            
+
+        if len(results) > 0:
+            consumer.add_results(results)
