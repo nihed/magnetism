@@ -46,7 +46,8 @@ DISTCLEANFILES =
 MAINTAINERCLEANFILES =
 BUILT_SOURCES =
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = 
+pkgconfig_DATA =
+TESTS =
 
 CANVASSRCDIR=$(top_srcdir)/canvas-dist
 

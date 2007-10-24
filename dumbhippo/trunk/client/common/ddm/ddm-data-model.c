@@ -243,7 +243,7 @@ ddm_data_model_lookup_resource(DDMDataModel *model,
     return g_hash_table_lookup(model->resources, resource_id);
 }
 
-DDMDataResource *
+static DDMDataResource *
 ensure_resource_internal(DDMDataModel *model,
                          const char   *resource_id,
                          const char   *class_id,
@@ -280,7 +280,7 @@ ddm_data_model_ensure_resource(DDMDataModel *model,
                                const char   *resource_id,
                                const char   *class_id)
 {
-    ensure_resource_internal(model, resource_id, class_id, FALSE);
+    return ensure_resource_internal(model, resource_id, class_id, FALSE);
 }
 
 DDMDataResource *
@@ -288,7 +288,7 @@ ddm_data_model_ensure_local_resource(DDMDataModel *model,
                                      const char   *resource_id,
                                      const char   *class_id)
 {
-    ensure_resource_internal(model, resource_id, class_id, TRUE);
+    return ensure_resource_internal(model, resource_id, class_id, TRUE);
 }
 
 void

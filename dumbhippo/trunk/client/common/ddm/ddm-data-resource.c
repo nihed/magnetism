@@ -2,6 +2,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "ddm-data-fetch.h"
 #include "ddm-data-resource-internal.h"
@@ -43,6 +44,12 @@ struct _DDMDataResource
     GSList *connections;
     GSList *properties;
 };
+
+GQuark
+ddm_data_error_quark (void)
+{
+  return g_quark_from_static_string ("ddm-data-error-quark");
+}
 
 void
 ddm_data_value_get_element(DDMDataValue *value,
@@ -201,7 +208,7 @@ ddm_data_resource_get_class_id (DDMDataResource *resource)
 gboolean
 ddm_data_resource_get_local (DDMDataResource *resource)
 {
-    g_return_val_if_fail(resource != NULL, NULL);
+    g_return_val_if_fail(resource != NULL, FALSE);
 
     return resource->local;
 }
@@ -279,6 +286,47 @@ set_default_value(DDMDataType  type,
     }
 }
 
+static const char *
+type_to_string(DDMDataType type)
+{
+    const char *result;
+    
+    switch (DDM_DATA_BASE(type)) {
+    case DDM_DATA_NONE:
+        result = "list:none";
+        break;
+    case DDM_DATA_BOOLEAN:
+        result = "list:boolean";
+        break;
+    case DDM_DATA_INTEGER:
+        result = "list:integer";
+        break;
+    case DDM_DATA_LONG:
+        result = "list:long";
+        break;
+    case DDM_DATA_FLOAT:
+        result = "list:float";
+        break;
+    case DDM_DATA_STRING:
+        result = "list:string";
+        break;
+    case DDM_DATA_RESOURCE:
+        result = "list:resource";
+        break;
+    case DDM_DATA_URL:
+        result = "list:url";
+        break;
+    default:
+        result = "list:<unknown>";
+        break;
+    }
+
+    if (!DDM_DATA_IS_LIST(type))
+        result += 5;
+
+    return result;
+}
+
 void
 ddm_data_resource_get(DDMDataResource *resource,
                       ...)
@@ -302,9 +350,15 @@ ddm_data_resource_get(DDMDataResource *resource,
 
         for (l = resource->properties; l; l = l->next) {
             DDMDataProperty *property = l->data;
-            if (strcmp(name, property->qname->name) == 0 && type == property->value.type) {
-                set_value(type, &property->value, location);
-                goto next_property;
+            if (strcmp(name, property->qname->name) == 0) {
+                if (type == property->value.type) {
+                    set_value(type, &property->value, location);
+                    goto next_property;
+                } else if (property->value.type != DDM_DATA_NONE) {
+                    g_warning("Property %s: Type %s doesn't match requested type %s",
+                              name,
+                              type_to_string(property->value.type), type_to_string(type));
+                }
             }
         }
 
@@ -340,9 +394,15 @@ ddm_data_resource_get_by_qname(DDMDataResource *resource,
 
         for (l = resource->properties; l; l = l->next) {
             DDMDataProperty *property = l->data;
-            if (qname == property->qname && type == property->value.type) {
-                set_value(type, &property->value, location);
-                goto next_property;
+            if (qname == property->qname) {
+                if (type == property->value.type) {
+                    set_value(type, &property->value, location);
+                    goto next_property;
+                } else if (property->value.type != DDM_DATA_NONE) {
+                    g_warning("Property %s#%s: Type %s doesn't match requested type %s",
+                              qname->uri, qname->name,
+                              type_to_string(property->value.type), type_to_string(type));
+                }
             }
         }
 
@@ -469,8 +529,8 @@ ddm_data_resource_disconnect (DDMDataResource *resource,
     }
 }
 
-static void
-data_value_clear(DDMDataValue *value)
+void
+ddm_data_value_clear(DDMDataValue *value)
 {
     if (DDM_DATA_IS_LIST(value->type)) {
         switch (DDM_DATA_BASE(value->type)) {
@@ -567,7 +627,7 @@ static gboolean
 data_property_set(DDMDataProperty *property,
                   DDMDataValue    *value)
 {
-    data_value_clear(&property->value);
+    ddm_data_value_clear(&property->value);
 
     if (DDM_DATA_IS_LIST(property->value.type)) {
         g_warning("data_property_set() called with a list type");
@@ -691,7 +751,7 @@ remove_property(DDMDataResource *resource,
                 DDMDataProperty *property)
 {
     resource->properties = g_slist_remove(resource->properties, property);
-    data_value_clear(&property->value);
+    ddm_data_value_clear(&property->value);
     if (property->default_children) {
         ddm_data_fetch_unref(property->default_children);
     }
@@ -820,7 +880,7 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
             break;
         case DDM_DATA_UPDATE_REPLACE:
             if (property != NULL) {
-                data_value_clear(&property->value);                
+                ddm_data_value_clear(&property->value);                
             } else {
                 property = add_property(resource, property_id, cardinality);
             }
@@ -839,7 +899,7 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
             if (property == NULL) {
                 property = add_property(resource, property_id, cardinality);
             } else {
-                data_value_clear(&property->value);
+                ddm_data_value_clear(&property->value);
             }
             changed = TRUE;
             break;
@@ -1011,6 +1071,119 @@ ddm_data_value_to_string(DDMDataValue *value)
     default:
         return g_strdup("UNKNOWN");
     }
+}
+
+static char*
+make_absolute_url(const char *maybe_relative,
+                  const char *base_url,
+                  GError    **error)
+{
+    if (*maybe_relative == '/') {
+        if (base_url == NULL) {
+            g_set_error(error,
+                        DDM_DATA_ERROR,
+                        DDM_DATA_ERROR_BAD_REPLY,
+                        "Relative URL with no base URL");
+            return NULL;
+        }
+        return g_strconcat(base_url, maybe_relative, NULL);
+    } else if (g_str_has_prefix(maybe_relative, "http:") || g_str_has_prefix(maybe_relative, "https:")) {
+        return g_strdup(maybe_relative);
+    } else {
+        g_warning("weird url '%s', not sure what to do with it", maybe_relative);
+        return g_strdup(maybe_relative);
+    }
+}
+
+gboolean
+ddm_data_value_from_string (DDMDataValue *value,
+                            DDMDataType   type,
+                            const char   *str,
+                            const char   *base_url,
+                            GError      **error)
+{
+    char *str_stripped;
+    
+    g_return_val_if_fail(value != NULL, FALSE);
+    g_return_val_if_fail(str != NULL, FALSE);
+    
+    str_stripped = g_strdup(str);
+    g_strstrip(str_stripped);
+
+    value->type = type;
+    
+    switch (type) {
+    case DDM_DATA_BOOLEAN:
+        value->u.boolean = g_ascii_strcasecmp(str_stripped, "true") == 0;
+        goto success;
+    case DDM_DATA_INTEGER:
+        {
+            char *end;
+            long v = strtol(str_stripped, &end, 10);
+            if (*str == '\0' || *end != '\0') {
+                g_set_error(error,
+                            DDM_DATA_ERROR,
+                            DDM_DATA_ERROR_BAD_REPLY,
+                            "Invalid float property value '%s'", str);
+                goto error;
+            }
+            value->u.integer = CLAMP(v, G_MININT, G_MAXINT);
+        }
+        goto success;
+    case DDM_DATA_LONG:
+        {
+            char *end;
+            value->u.long_ = g_ascii_strtoll(str_stripped, &end, 10);
+            if (*str == '\0' || *end != '\0') {
+                g_set_error(error,
+                            DDM_DATA_ERROR,
+                            DDM_DATA_ERROR_BAD_REPLY,
+                            "Invalid long property value '%s'", str);
+                goto error;
+            }
+        }
+        goto success;
+    case DDM_DATA_FLOAT:
+        {
+            char *end;
+            value->u.float_ = g_ascii_strtod(str_stripped, &end);
+            if (*str == '\0' || *end != '\0') {
+                g_set_error(error,
+                            DDM_DATA_ERROR,
+                            DDM_DATA_ERROR_BAD_REPLY,
+                            "Invalid float property value '%s'", str);
+                goto error;
+            }
+        }
+        goto success;
+    case DDM_DATA_STRING:
+        value->u.string = g_strdup(str);
+        goto success;
+    case DDM_DATA_URL:
+        value->u.string = make_absolute_url(str_stripped, base_url, error);
+        if (value->u.string == NULL)
+            goto error;
+        goto success;
+    case DDM_DATA_RESOURCE:
+        g_critical("Data type DDM_DATA_RESOURCE invalid in ddm_data_value_from_string()");
+        goto error;
+    case DDM_DATA_NONE:
+        g_critical("Data type DDM_DATA_RESOURCE invalid in ddm_data_value_from_string()");
+        goto error;
+    case DDM_DATA_LIST:
+        g_critical("Data type DDM_DATA_RESOURCE invalid in ddm_data_value_from_string()");
+        goto error;
+    }
+
+    g_critical("Invalid data type %d in ddm_data_value_from_string()", type);
+
+ error:
+    g_free(str_stripped);
+    return FALSE;
+
+ success:
+    g_free(str_stripped);
+    return TRUE;
 }
 
 static void

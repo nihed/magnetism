@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?><!-- -*- sgml-indent-step: 4; fill-column: 120 -*- -->
+<m:model xmlns:m="http://mugshot.org/p/system" m:resourceBase="http://mugshot.org/o/">
+    <resource xmlns="http://mugshot.org/p/o/externalAccount" m:resourceId="externalAccount/USER1.MYSPACE">
+	<accountType m:type="+s">MYSPACE</accountType>
+	<sentiment m:type="+s">LOVE</sentiment>
+	<link m:type="+u">http://myspace.example.com/john.doe</link>
+    </resource>
+    <resource xmlns="http://mugshot.org/p/o/user" m:resourceId="user/USER2">
+	<name m:type="+s">Sally Smith</name>
+    </resource>
+    <resource xmlns="http://mugshot.org/p/o/user" m:resourceId="user/USER1">
+	<name m:type="+s">John Doe</name>
+	<externalAccounts m:type="+r?" m:defaultChildren="+" m:resourceId="externalAccount/USER1.MYSPACE"/>
+	<contacts m:type="r*" m:resourceId="user/USER2"/>
+	<contacters m:type="r*" m:update="clear"/>
+    </resource>
+</m:model>
