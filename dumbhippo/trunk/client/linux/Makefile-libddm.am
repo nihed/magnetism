@@ -63,13 +63,48 @@ BUILT_SOURCES += $(LIBDDM_BUILT_SOURCEFILES)
 
 nodist_libddm_1_la_SOURCES=$(LIBDDM_SOURCEFILES) $(LIBDDM_BUILT_SOURCEFILES)
 
-noinst_PROGRAMS += test-ddm
+######################################################################
+# Build test-specific source files into a convenience library
 
-test_ddm_CPPFLAGS=$(AM_CPPFLAGS) \
-		$(LIBDDM_CFLAGS)
+noinst_LTLIBRARIES += libddm-test.la
+
+libddm_test_la_CPPFLAGS =		\
+	$(AM_CPPFLAGS)			\
+	$(LIBDDM_CFLAGS)		\
+	 -DDDM_COMPILATION=1
+
+libddm_test_la_LIBADD = $(LIBDDM_LIBS) libddm-1.la
+
+nodist_libddm_test_la_SOURCES = 			\
+	$(COMMONSRCDIR)/ddm/static-file-parser.c	\
+	$(COMMONSRCDIR)/ddm/static-file-parser.h
+
+######################################################################
+# Test programs
+
+# We use noinst_PROGRAMS not check_PROGRAMS so if someone changes the API
+# without running 'make check', they still break the build
+noinst_PROGRAMS +=				\
+	test-static-file-parser			\
+	test-ddm
+
+TESTS_ENVIRONMENT=DDM_SRCDIR=$(COMMONSRCDIR)/ddm
+
+# Note that test-ddm isn't really a "test", it's a demo
+TESTS +=					\
+	test-static-file-parser
+
+test_ddm_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS)
 test_ddm_LDADD=libddm-1.la
 
 nodist_test_ddm_SOURCES=$(COMMONSRCDIR)/ddm/test-ddm.c
+
+test_static_file_parser_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
+test_static_file_parser_LDADD=libddm-1.la libddm-test.la
+
+nodist_test_static_file_parser_SOURCES=$(COMMONSRCDIR)/ddm/test-static-file-parser.c
+
+######################################################################
 
 ## we need to nodist these because otherwise automake would copy 
 ## ../common to distdir/../common which puts common outside of distdir.
@@ -80,4 +115,3 @@ libddm-dist-hook:
 	cp $(LIBDDM_SOURCEFILES) $(nodist_libddminclude_HEADERS) $(nodist_test_ddm_SOURCES) $(distdir)/common-dist/ddm
 #	mkdir $(distdir)/common-dist/ddm/generated
 #	cp $(COMMONSRCDIR)/ddm/ddm-common-marshal.list $(distdir)/common-dist/ddm
-

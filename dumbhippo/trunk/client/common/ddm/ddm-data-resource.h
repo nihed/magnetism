@@ -14,6 +14,24 @@
 
 G_BEGIN_DECLS
 
+GQuark ddm_data_error_quark(void);
+
+#define DDM_DATA_ERROR (ddm_data_error_quark())
+
+/* We use this enumeration both as a raw error code in contexts where
+ * we don't have more text, and as a set of error codes for the
+ * DDM_DATA_ERROR GError domain.
+ */
+typedef enum {
+    DDM_DATA_ERROR_NO_CONNECTION = -1,
+    DDM_DATA_ERROR_BAD_REPLY = -2,
+    DDM_DATA_ERROR_INTERNAL = -3,
+    DDM_DATA_ERROR_BAD_REQUEST = 400,
+    DDM_DATA_ERROR_FORBIDDEN = 403,
+    DDM_DATA_ERROR_ITEM_NOT_FOUND = 404,
+    DDM_DATA_ERROR_INTERNAL_SERVER_ERROR = 500
+} DDMDataError;
+
 typedef enum {
     DDM_DATA_UPDATE_ADD,
     DDM_DATA_UPDATE_REPLACE,
@@ -112,8 +130,17 @@ GSList          *  ddm_data_resource_get_properties        (DDMDataResource    *
 void               ddm_data_resource_on_resource_change    (DDMDataResource    *resource,
                                                             GSList             *changed_properties);
 
+gboolean ddm_data_value_from_string (DDMDataValue *value,
+                                     DDMDataType   type,
+                                     const char   *str,
+                                     const char   *base_url,
+                                     GError      **error);
+
+void ddm_data_value_clear(DDMDataValue *value);
+
 /* for debugging */
 char* ddm_data_value_to_string (DDMDataValue *value);
+
 
 /* Sometimes it's useful to create the resource object first, and set the class_id later */
 void     ddm_data_resource_set_class_id    (DDMDataResource    *resource,

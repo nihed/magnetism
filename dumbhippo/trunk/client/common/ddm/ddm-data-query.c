@@ -147,13 +147,12 @@ _ddm_data_query_new (DDMDataModel *model,
     if (fetch_string != NULL) {
         fetch = ddm_data_fetch_from_string(fetch_string);
         if (fetch == NULL) {
-            g_warning("Invalid fetch string '%s'", fetch);
+            g_warning("Invalid fetch string '%s'", fetch_string);
             return NULL;
         }
+    } else {
+        fetch = NULL;
     }
-        
-
-    
 
     query =  g_new0(DDMDataQuery, 1);
     query->model = model;

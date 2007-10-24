@@ -10,20 +10,11 @@
 #ifndef __DDM_DATA_QUERY_H__
 #define __DDM_DATA_QUERY_H__
 
+#include <ddm/ddm-data-fetch.h>
 #include <ddm/ddm-data-model.h>
 #include <ddm/ddm-data-resource.h>
 
 G_BEGIN_DECLS
-
-typedef enum {
-    DDM_DATA_ERROR_NO_CONNECTION = -1,
-    DDM_DATA_ERROR_BAD_REPLY = -2,
-    DDM_DATA_ERROR_INTERNAL = -3,
-    DDM_DATA_ERROR_BAD_REQUEST = 400,
-    DDM_DATA_ERROR_FORBIDDEN = 403,
-    DDM_DATA_ERROR_ITEM_NOT_FOUND = 404,
-    DDM_DATA_ERROR_INTERNAL_SERVER_ERROR = 500
-} DDMDataError;
 
 typedef void (*DDMSingleHandler) (DDMDataResource *result,
                                   gpointer           user_data);

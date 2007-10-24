@@ -4492,6 +4492,7 @@ typedef struct {
     GSList *resource_bases;
     GSList *default_namespaces;
     GSList *namespaces;
+    char *base_url;
 } DMContext;
 
 /* Cut-and-paste to poke into loudmouth internal structures :-( */
@@ -4504,6 +4505,8 @@ static void
 dm_context_init(DMContext       *context,
                 HippoConnection *connection)
 {
+    char *server;
+    
     context->connection = connection;
     context->model = hippo_data_cache_get_model(connection->cache);
     context->system_uri = g_intern_string("http://mugshot.org/p/system");
@@ -4511,6 +4514,18 @@ dm_context_init(DMContext       *context,
     context->resource_bases = NULL;
     context->default_namespaces = NULL;
     context->namespaces = NULL;
+
+    server = hippo_platform_get_web_server(connection->platform,
+                                           connection->auth_server_type);
+    context->base_url = g_strconcat("http:", server, NULL);
+    g_free(server);
+}
+
+static void
+dm_context_finish(DMContext *context)
+{
+    g_assert(context->nodes == NULL);
+    g_free(context->base_url);
 }
 
 static gboolean
@@ -4738,71 +4753,24 @@ dm_context_get_value(DMContext      *context,
         return TRUE;
     } else {
         LmMessageNode *node = context->nodes->data;
-        gboolean result = TRUE;
-        char *str;
+        GError *error = NULL;
         
         if (type == DDM_DATA_RESOURCE) {
             g_warning("m:resourceId not found for a resource property value");
             return FALSE;
         }
 
-        str = g_strdup(node->value != NULL ? node->value : "");
-        g_strstrip(str);
-
-        value->type = type;
-        switch (type) {
-        case DDM_DATA_BOOLEAN:
-            value->u.boolean = g_ascii_strcasecmp(str, "true") == 0;
-            break;
-        case DDM_DATA_INTEGER:
-            {
-                char *end;
-                long v = strtol(str, &end, 10);
-                if (*str == '\0' || *end != '\0') {
-                    g_warning("Invalid float property value '%s'", str);
-                    result = FALSE;
-                }
-                value->u.integer = CLAMP(v, G_MININT, G_MAXINT);
-            }
-            break;
-        case DDM_DATA_LONG:
-            {
-                char *end;
-                value->u.long_ = g_ascii_strtoll(str, &end, 10);
-                if (*str == '\0' || *end != '\0') {
-                    g_warning("Invalid long property value '%s'", str);
-                    result = FALSE;
-                }
-            }
-            break;
-        case DDM_DATA_FLOAT:
-            {
-                char *end;
-                value->u.float_ = g_ascii_strtod(str, &end);
-                if (*str == '\0' || *end != '\0') {
-                    g_warning("Invalid float property value '%s'", str);
-                    result = FALSE;
-                }
-            }
-            break;
-        case DDM_DATA_STRING:
-            value->u.string = node->value != NULL ? node->value : "";
-            break;
-        case DDM_DATA_URL:
-            value->u.string = hippo_connection_make_absolute_url(context->connection, str);
-            break;
-        case DDM_DATA_NONE:
-        case DDM_DATA_RESOURCE:
-        case DDM_DATA_LIST:
-            g_assert_not_reached();
-            break;
+        if (!ddm_data_value_from_string(value, type,
+                                        node->value != NULL ? node->value : "",
+                                        context->base_url,
+                                        &error)) {
+            g_warning("%s", error->message);
+            g_error_free(error);
+            return FALSE;
         }
 
-        g_free(str);
-        
-        return result;
+        return TRUE;
     }
-
 }
 
 static void
@@ -4861,6 +4829,7 @@ update_property(DMContext            *context,
             changed = ddm_data_resource_update_property(resource, property_qname, update, cardinality,
                                                         default_include, default_children,
                                                         &value);
+            ddm_data_value_clear(&value);
         }
     }
 
@@ -4938,7 +4907,6 @@ on_query_reply(LmMessageHandler *handler,
     DDMDataError error_code = DDM_DATA_ERROR_INTERNAL;
     
     dm_context_init(&context, message_context->connection);
-    dm_context_push_node(&context, node);
 
     if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_ERROR) {
         LmMessageNode *error_node;
@@ -4957,6 +4925,8 @@ on_query_reply(LmMessageHandler *handler,
         
         goto out;
     }
+    
+    dm_context_push_node(&context, node);
 
     /* We take an empty IQ reply (no child element) as being an empty result list; this would
      * be an odd way for a server to implement a query, but makes sense for updates, that
@@ -5020,6 +4990,8 @@ on_query_reply(LmMessageHandler *handler,
     g_assert(context.nodes == NULL);
 
  out:
+    dm_context_finish(&context);
+    
     if (error_message != NULL) {
         ddm_data_query_error(query, error_code, error_message);
     }
@@ -5133,7 +5105,7 @@ handle_data_notify (HippoConnection *connection,
     }
 
     dm_context_pop_node(&context);
-    g_assert(context.nodes == NULL);
+    dm_context_finish(&context);
     
     return found;
 }
