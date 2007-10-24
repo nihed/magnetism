@@ -75,6 +75,7 @@ class AppOverview(CanvasVBox):
         # FIXME - don't show up-down controls until they work
         #self.__controls_box.append(self.__up_down_controls)
 
+        self.__app = None
         if app:
             self.set_app(app)
 
@@ -131,19 +132,11 @@ class AppOverview(CanvasVBox):
 def categorize(apps):    
     """Given a set of applications, returns a map <string,set<Application>> based on category name."""
     categories = {}
-    local_categories = {}
     for app in apps:
         cat = app.get_category()
-        local_cat = app.get_local_category()
         if not categories.has_key(cat):
             categories[cat] = set()
         categories[cat].add(app)  
-        if not local_categories.has_key(local_cat):
-            local_categories[local_cat] = set()
-        local_categories[local_cat].add(app)
-    # heuristic for detecting when we don't have enough data from data model
-    if len(categories) <= 2:
-        return local_categories
     return categories
         
 class Bar(hippo.CanvasBox):
@@ -249,7 +242,8 @@ class AppExtras(CanvasVBox):
         self.__headerbox = CanvasHBox()
         self.append(self.__headerbox)
 
-        self.__left_title = hippo.CanvasText(text="New Popular %s" % (self.__catname,),
+        thing = self.__get_section_name()
+        self.__left_title = hippo.CanvasText(text="New Popular %s" % (thing,),
                                              font="12px Bold",
                                              xalign=hippo.ALIGNMENT_START)
         self.__headerbox.append(self.__left_title)
@@ -266,6 +260,9 @@ class AppExtras(CanvasVBox):
         self.append(self.__app_pair2)
 
         self.__repo = apps.get_apps_repo()
+
+    def __get_section_name(self):
+        return self.__catname or 'Apps'
 
     def have_apps(self):
         return not not self.__found_app_count
@@ -302,7 +299,7 @@ class AppExtras(CanvasVBox):
         self.emit("more-info", None)
 
     def __sync(self):
-        thing = self.__catname or 'apps'
+        thing = self.__get_section_name()
         if self.__apps:
             if self.__search:
                 if self.__have_search_hits:
