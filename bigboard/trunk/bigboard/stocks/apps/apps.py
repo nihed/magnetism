@@ -159,9 +159,9 @@ class Application(object):
 
 ## one-shot object that does an http fetch              
 class AppsHttpDownloader:
-    def __init__(self, handler):
+    def __init__(self, relative_url, handler):
         ## just hardcode this for the moment
-        self.__relative_url = '/xml/allapplications'
+        self.__relative_url = relative_url
         self.__handler = handler
         
     def __load_app_from_xml(self, node):
@@ -310,7 +310,8 @@ class AppsRepo(gobject.GObject):
 
             self.__get_all_apps_pending = True
 
-            downloader = AppsHttpDownloader(self.__on_got_global_all_apps_from_http)
+            downloader = AppsHttpDownloader('/xml/allapplications',
+                                            self.__on_got_global_all_apps_from_http)
             downloader.go()
 
     def __on_query_error(self, where, error_code, message):
