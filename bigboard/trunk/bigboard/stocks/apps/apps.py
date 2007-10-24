@@ -66,8 +66,8 @@ class Application(object):
         return self.__resource and self.__resource.usageCount or 0
 
     def get_category(self):
-        ## FIXME should this be category or categoryDisplayName ?
-        return self.__resource and self.__resource.categoryDisplayName or "Other"
+        ## FIXME should this be category or categoryDisplayName ?       
+        return self.__resource and self.__resource.categoryDisplayName or self.get_local_category()
 
     def get_local_category(self):
         return ((self.__menu_entry and self.__menu_entry.parent) and self.__menu_entry.parent.get_name()) or "Other"
