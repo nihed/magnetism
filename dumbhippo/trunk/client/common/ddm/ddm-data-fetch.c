@@ -436,7 +436,11 @@ ddm_data_fetch_to_string_internal(DDMDataFetch *fetch,
 char *
 ddm_data_fetch_to_string(DDMDataFetch *fetch)
 {
-    GString *out = g_string_new(NULL);
+    GString *out;
+
+    g_return_val_if_fail(fetch != NULL, NULL);
+
+    out = g_string_new(NULL);
 
     ddm_data_fetch_to_string_internal(fetch, out);
 

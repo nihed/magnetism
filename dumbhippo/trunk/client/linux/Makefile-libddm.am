@@ -75,9 +75,10 @@ libddm_test_la_CPPFLAGS =		\
 
 libddm_test_la_LIBADD = $(LIBDDM_LIBS) libddm-1.la
 
-nodist_libddm_test_la_SOURCES = 			\
-	$(COMMONSRCDIR)/ddm/static-file-parser.c	\
-	$(COMMONSRCDIR)/ddm/static-file-parser.h
+nodist_libddm_test_la_SOURCES =				\
+	$(COMMONSRCDIR)/ddm/static-file-backend.c	\
+	$(COMMONSRCDIR)/ddm/static-file-backend.h	\
+	$(COMMONSRCDIR)/ddm/static-file-parser.c
 
 ######################################################################
 # Test programs
@@ -86,13 +87,15 @@ nodist_libddm_test_la_SOURCES = 			\
 # without running 'make check', they still break the build
 noinst_PROGRAMS +=				\
 	test-static-file-parser			\
+	test-static-file-backend		\
 	test-ddm
 
 TESTS_ENVIRONMENT=DDM_SRCDIR=$(COMMONSRCDIR)/ddm
 
 # Note that test-ddm isn't really a "test", it's a demo
 TESTS +=					\
-	test-static-file-parser
+	test-static-file-parser			\
+	test-static-file-backend
 
 test_ddm_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS)
 test_ddm_LDADD=libddm-1.la
@@ -103,6 +106,11 @@ test_static_file_parser_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILA
 test_static_file_parser_LDADD=libddm-1.la libddm-test.la
 
 nodist_test_static_file_parser_SOURCES=$(COMMONSRCDIR)/ddm/test-static-file-parser.c
+
+test_static_file_backend_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
+test_static_file_backend_LDADD=libddm-1.la libddm-test.la
+
+nodist_test_static_file_backend_SOURCES=$(COMMONSRCDIR)/ddm/test-static-file-backend.c
 
 ######################################################################
 

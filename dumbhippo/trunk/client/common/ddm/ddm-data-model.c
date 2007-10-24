@@ -112,6 +112,20 @@ ddm_data_model_new_with_backend (const DDMDataModelBackend *backend,
     return model;
 }
 
+DDMDataModel*
+ddm_data_model_new_no_backend (void)
+{
+    DDMDataModel *model;
+
+    model = g_object_new(DDM_TYPE_DATA_MODEL, NULL);
+
+    model->backend = NULL;
+    model->backend_data = NULL;
+    model->free_backend_data_func = NULL;
+
+    return model;
+}
+
 gboolean
 ddm_data_model_get_connected(DDMDataModel   *model)
 {
@@ -149,6 +163,7 @@ ddm_data_model_query_params(DDMDataModel *model,
     DDMQName *method_qname;
 
     g_return_val_if_fail (DDM_IS_DATA_MODEL(model), NULL);
+    g_return_val_if_fail (model->backend != NULL, NULL);
 
     method_qname = ddm_qname_from_uri(method);
     if (method_qname == NULL)
@@ -202,7 +217,8 @@ ddm_data_model_update_params(DDMDataModel *model,
     DDMQName *method_qname;
 
     g_return_val_if_fail (DDM_IS_DATA_MODEL(model), NULL);
-
+    g_return_val_if_fail (model->backend != NULL, NULL);
+    
     method_qname = ddm_qname_from_uri(method);
     if (method_qname == NULL) /* Invalid method URI */
         return NULL;

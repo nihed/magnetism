@@ -20,7 +20,7 @@ main(int argc, char **argv)
 
     g_type_init();
 
-    model = ddm_data_model_get_default();
+    model = ddm_data_model_new_no_backend();
 
     srcdir = g_getenv("DDM_SRCDIR");
     if (srcdir == NULL)
