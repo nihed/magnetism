@@ -18,6 +18,7 @@ class AbstractModel(object):
         self.__added_handlers = []
         self.__removed_handlers = []
         self.__resources = {}
+        self.initialized = False
         self.connected = False
         self.__last_handled_connected = False
 
@@ -133,6 +134,7 @@ class AbstractModel(object):
     def _on_initialized(self):
         for handler in self.__initialized_handlers:
             handler()    
+        self.initialized = True
 
     def _on_connected(self):
         if self.__last_handled_connected:
