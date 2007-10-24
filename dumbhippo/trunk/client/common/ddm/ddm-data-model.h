@@ -36,6 +36,8 @@ DDMDataModel *ddm_data_model_get_default        (void);
 DDMDataModel *ddm_data_model_new_with_backend   (const DDMDataModelBackend *backend,
                                                  void                      *backend_data,
                                                  GFreeFunc                  free_backend_data_func);
+/* Used testing purposes; you can't call query or update on such a backend */
+DDMDataModel *ddm_data_model_new_no_backend     (void);
 gboolean      ddm_data_model_get_connected      (DDMDataModel   *model);
 DDMDataQuery *ddm_data_model_query              (DDMDataModel   *model,
                                                  const char     *method,
