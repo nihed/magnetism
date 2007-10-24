@@ -177,8 +177,8 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
             self.__set_subtitle("Popular Applications")
 
         ## note the "-" in front of the cmp to sort descending
-        apps_in_set.sort(lambda a, b: - cmp(a.get_usage_count(), b.get_usage_count()))
-        
+        apps_in_set.sort(lambda a, b: - cmp(int(a.get_usage_count()), int(b.get_usage_count())))
+   
         for i, app in enumerate(apps_in_set):
             if i >= static_size:
                 break
@@ -200,7 +200,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
 
         #_logger.debug("usage: %s", usage)
 
-        if usage is False:
+        if usage is False and self.__model.connected:
             self.__set_message("Enable application tracking", 
                                globals.get_baseurl() + "/account")        
 

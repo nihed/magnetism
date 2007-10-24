@@ -152,7 +152,7 @@ class Application(object):
             global_mugshot.get_mugshot().install_application(self.__resource.id, self.__resource.packageNames, self.__resource.desktopNames)            
 
     def __str__(self):
-        return "<App:%s,local:%d>" % (self.get_name(), self.is_local())
+        return "<App:%s,local:%d,usageCount:%s>" % (self.get_name(), self.is_local(), self.get_usage_count())
 
     def __repr__(self):
         return self.__str__()
@@ -160,7 +160,6 @@ class Application(object):
 ## one-shot object that does an http fetch              
 class AppsHttpDownloader:
     def __init__(self, relative_url, handler):
-        ## just hardcode this for the moment
         self.__relative_url = relative_url
         self.__handler = handler
         
@@ -246,7 +245,7 @@ class AppsRepo(gobject.GObject):
         super(AppsRepo, self).__init__(*args, **kwargs)        
 
         self.__model = bigboard.globals.get_data_model()
-
+        self.__model.add_initialized_handler(self.__on_initialized) 
         self.__model.add_connected_handler(self.__on_connected)
         
         self.__myself = None
@@ -272,9 +271,22 @@ class AppsRepo(gobject.GObject):
 
         self.__get_all_apps_pending = False
         self.__got_all_apps = False
+        self.__get_popular_apps_pending = False
+        self.__got_popular_apps = False
         
+        if self.__model.initialized:
+            self.__on_initialized()
+
         if self.__model.connected:
             self.__on_connected()        
+
+    def __on_initialized(self):
+        if not self.__model.connected and not self.__got_popular_apps and not self.__get_popular_apps_pending:
+            _logger.debug("will get popular apps from http")
+            self.__get_popular_apps_pending = True
+            downloader = AppsHttpDownloader('/xml/popularapplications',
+                                            self.__on_got_global_popular_apps_from_http)
+            downloader.go()
 
     def __on_connected(self):
         # When we disconnect from the server we freeze existing content, then on reconnect
@@ -354,6 +366,21 @@ class AppsRepo(gobject.GObject):
     def __on_got_global_popular_apps(self, app_resources):
         _logger.debug("Got %d global popular apps" % len(app_resources))
         self.__global_top_apps = map(self.get_app_for_resource, app_resources)
+
+        if len(app_resources) > 0:
+            self.__got_popular_apps = True
+
+        self.__get_popular_apps_pending = False
+        self.emit("global-top-apps-changed", self.__global_top_apps)
+
+    def __on_got_global_popular_apps_from_http(self, app_attrs):
+        _logger.debug("Got %d global popular apps from http" % len(app_attrs))
+        self.__global_top_apps = map(self.get_app_for_attrs, app_attrs)
+
+        if len(app_attrs) > 0:
+            self.__got_popular_apps = True
+
+        self.__get_popular_apps_pending = False
         self.emit("global-top-apps-changed", self.__global_top_apps)
 
     def __on_got_global_all_apps(self, app_resources):
@@ -524,6 +551,9 @@ class AppsRepo(gobject.GObject):
     def search(self, category, search_terms, results_handler):
         _logger.debug("search for category %s search_terms %s" % (category, search_terms))
 
+        if not self.__model.connected:
+            return
+ 
         ## we want to avoid doing the same search twice in parallel, so if we already have
         ## a pending query for a given category or terms, we use it.
 
