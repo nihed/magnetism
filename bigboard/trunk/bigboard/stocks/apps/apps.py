@@ -1,4 +1,4 @@
-import logging, time, re, os, sys
+import logging, time, re, os, sys, string
 
 from ddm import DataModel
 
@@ -587,6 +587,26 @@ class AppsRepo(gobject.GObject):
 
         if need_execute:
             query.execute()
+            
+    def search_local_fast_sync(self, search_terms):
+        ws_re = re.compile('\s+')
+        searched_attrs = ['name',]
+        def get_searchable_values(app):
+            return map(string.lower, (app.get_name(), app.get_generic_name()))
+        def app_matches(app):
+            for term in ws_re.split(search_terms):
+                term = term.lower()
+                for attr in get_searchable_values(appvalue):
+                    for word in ws_re.split(attr):
+                        if word.startswith(term):
+                            matched = True
+                            return True
+            return False
+        for appvalue in self.__all_apps:
+            if not appvalue.is_installed():
+                continue
+            if app_matches(appvalue):
+                yield appvalue
 
 __apps_repo = None
 def get_apps_repo():
@@ -638,7 +658,8 @@ class AppSearchProvider(search.SearchProvider):
             consumer.add_results(results)
         
     def perform_search(self, query, consumer):
-        self.__repo.search(None, query,
-                           lambda apps, category, terms: self.__on_search_results(apps, category, terms, consumer))
-
+        results = map(lambda a: AppSearchResult(self, a), self.__repo.search_local_fast_sync(query))
+        if results:
+            consumer.add_results(results)
+            
 search.register_provider_constructor('apps', lambda: AppSearchProvider(get_apps_repo()))
