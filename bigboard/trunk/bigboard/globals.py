@@ -60,7 +60,7 @@ def get_baseurl():
     ## is supposed to have an offline mode.
     url = None
     model = get_data_model()
-    if model.connected:
+    if model.self_id:
         url = model.get_web_base_url()
         
     ## next we fall back to the server name set by command line option,

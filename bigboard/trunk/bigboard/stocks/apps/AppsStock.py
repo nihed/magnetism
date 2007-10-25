@@ -43,7 +43,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__model = bigboard.globals.get_data_model()
 
         self.__model.add_connected_handler(self.__on_connected)
-        if self.__model.connected:
+        if self.__model.self_id:
             self.__on_connected()
         
         self.__box = CanvasVBox(spacing=3)
@@ -172,7 +172,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         apps_in_set = []
         if usage:
             apps_in_set = pinned_apps
-        if len(apps_in_set) == 0:
+        if len(apps_in_set) == 0 and len(global_top_apps) > 0:
             apps_in_set = global_top_apps
             self.__set_subtitle("Popular Applications")
 
