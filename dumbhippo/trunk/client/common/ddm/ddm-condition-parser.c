@@ -17,7 +17,7 @@
  *     | value = value
  *     | value                     # same as value = true
  *   value :=
- *       '-' ? (integer | float)   # numeric literal
+ *       '-' ? (integer)           # numeric literal
  *     | true | false              # boolean literal
  *     | string                    # string literal
  *     | source.identifier         # property on a source resource
@@ -46,11 +46,21 @@ typedef struct {
 } ConditionToken;
 
 /* GScanner configuration */;
+
+/* Note about floats:
+ *
+ * Turning on scan_float will break parsing of '.', because of
+ * a bug in GScanner (http://bugzilla.gnome.org/show_bug.cgi?id=490235),
+ * The hack that I used to get around this (before I decided that I didn't
+ * want floats), was to add '.' to cset_identifier_nth, and then in
+ * ddm_condition_from_string(), when building the token array, manually
+ * check identifiers aginst the forms source.<no_dots> and target.<no_dots>
+ * and split them apart into three tokens.
+ */
 static const GScannerConfig scanner_config = {
     .cset_skip_characters = " \t\n",
     .cset_identifier_first = G_CSET_A_2_Z G_CSET_a_2_z "_",
-    /* See comment in ddm_condition_to_string() about the presence of . here */
-    .cset_identifier_nth = G_CSET_A_2_Z G_CSET_a_2_z "0123456789_.",
+    .cset_identifier_nth = G_CSET_A_2_Z G_CSET_a_2_z "0123456789_",
     .cpair_comment_single = NULL,
     .case_sensitive = TRUE,
     .skip_comment_multi = TRUE, /* C style comments */
@@ -62,7 +72,7 @@ static const GScannerConfig scanner_config = {
     .scan_symbols = TRUE,
     .scan_binary = FALSE,
     .scan_octal = TRUE,
-    .scan_float = TRUE,
+    .scan_float = FALSE,
     .scan_hex = TRUE,
     .scan_hex_dollar = FALSE,
     .scan_string_sq = TRUE,
@@ -130,7 +140,7 @@ skip_parens(ConditionToken *tokens,
     return -1;
 }
 
-/* value := '-' ? (integer | float) | string | source.identifier | target.identifier | true | false */
+/* value := '-' ? integer | string | source.identifier | target.identifier | true | false */
 static gboolean
 condition_value_from_tokens(ConditionToken    *tokens,
                             int                len,
@@ -139,19 +149,11 @@ condition_value_from_tokens(ConditionToken    *tokens,
     if (len == 1 && tokens[0].type == G_TOKEN_INT) {
         value->type = DDM_CONDITION_VALUE_INTEGER;
         value->u.integer = tokens[0].value.v_int64;
-    } else if (len == 1 && tokens[0].type == G_TOKEN_FLOAT) {
-        value->type = DDM_CONDITION_VALUE_FLOAT;
-        value->u.float_ = tokens[0].value.v_float;
     } else if (len == 2 &&
                tokens[0].type == '-' &&
                tokens[1].type == G_TOKEN_INT) {
         value->type = DDM_CONDITION_VALUE_INTEGER;
         value->u.integer = - tokens[1].value.v_int64;
-    } else if (len == 2 &&
-               tokens[0].type == '-' &&
-               tokens[1].type == G_TOKEN_FLOAT) {
-        value->type = DDM_CONDITION_VALUE_FLOAT;
-        value->u.float_ = - tokens[1].value.v_float;
     } else if (len == 1 && tokens[0].type == G_TOKEN_STRING) {
         value->type = DDM_CONDITION_VALUE_STRING;
         value->u.string = tokens[0].value.v_string;
@@ -217,16 +219,17 @@ term_from_tokens(ConditionToken *tokens,
         if (!condition_value_from_tokens(tokens, len, &left))
             return NULL;
 
-        if (!(left.type == DDM_CONDITION_VALUE_SOURCE_PROPERTY ||
-              left.type == DDM_CONDITION_VALUE_TARGET_PROPERTY ||
-              left.type == DDM_CONDITION_VALUE_BOOLEAN))
+        if (left.type == DDM_CONDITION_VALUE_BOOLEAN)
+            return ddm_condition_new_boolean(left.u.boolean);
+        else if (left.type == DDM_CONDITION_VALUE_SOURCE_PROPERTY ||
+                 left.type == DDM_CONDITION_VALUE_TARGET_PROPERTY)
         {
+            right.type = DDM_CONDITION_VALUE_BOOLEAN;
+            right.u.boolean = TRUE;
+        } else {
             g_warning("Bad type of value for isolated boolean term");
             return NULL;
         }
-
-        right.type = DDM_CONDITION_VALUE_BOOLEAN;
-        right.u.boolean = TRUE;
     }
         
     return ddm_condition_new_equal(&left, &right);
@@ -426,7 +429,6 @@ ddm_condition_from_string (const char *str)
         case SYMBOL_FALSE:
             break;
 
-        case G_TOKEN_FLOAT:
         case G_TOKEN_INT:
             token.value = scanner->value;
             break;
@@ -436,49 +438,7 @@ ddm_condition_from_string (const char *str)
             break;
             
         case G_TOKEN_IDENTIFIER:
-            /* A bug in GScanner (http://bugzilla.gnome.org/show_bug.cgi?id=490235)
-             * means that we can't parse <symbol>.<identifier> in that way, so
-             * we add . to cst_identifier_nth, and then split things apart ourselves.
-             * This does prohibit people from writing 'source . <propertyName>', but
-             * that's unusual in any case.
-             */
-            {
-                const char *s = scanner->value.v_identifier;
-                const char *dot = strchr(s, '.');
-
-                if (dot != NULL) {
-                    ConditionToken tmp_token;
-                    memset(&tmp_token.value, 0, sizeof(tmp_token.value));
-                    
-                    if (strchr(dot + 1, '.') != NULL ||
-                        dot[1] == '\0' ||
-                        (dot[1] >= '0' && dot[1] <= '9'))
-                    {
-                        g_warning("Bad property path %s", s);
-                        goto error;
-                    }
-
-                    if (g_str_has_prefix(s, "source.")) {
-                        tmp_token.type = SYMBOL_SOURCE;
-                        g_array_append_val(tokens, tmp_token);
-                    } else if (g_str_has_prefix(s, "target.")) {
-                        tmp_token.type = SYMBOL_TARGET;
-                        g_array_append_val(tokens, tmp_token);
-                    } else {
-                        g_warning("Bad property path %s", s);
-                        goto error;
-                    }
-
-                    tmp_token.type = '.';
-                    g_array_append_val(tokens, tmp_token);
-
-                    token.value.v_identifier = g_strdup(dot + 1);
-                    
-                } else {
-                    token.value.v_identifier = g_strdup(s);
-                }
-                
-            }
+            token.value.v_identifier = g_strdup(scanner->value.v_identifier);
             break;
             
         default:
@@ -527,6 +487,12 @@ condition_value_to_string(DDMConditionValue *value,
         g_string_append(result, "target.");
         g_string_append(result, value->u.string);
         break;
+    case DDM_CONDITION_VALUE_PROPERTY:
+        /* Only occurs in partially resolved conditions, so we don't bother
+         * stringifying here.
+         */
+        g_string_append(result,"<property>");
+        break;
     case DDM_CONDITION_VALUE_STRING:
         {
             char *p;
@@ -551,9 +517,6 @@ condition_value_to_string(DDMConditionValue *value,
     case DDM_CONDITION_VALUE_INTEGER:
         g_string_append_printf(result, "%" G_GINT64_MODIFIER "d", value->u.integer);
         break;
-    case DDM_CONDITION_VALUE_FLOAT:
-        g_string_append_printf(result, "%g", value->u.float_);
-        break;
     }
 }
 
@@ -562,11 +525,21 @@ condition_to_string_recurse(DDMCondition *condition,
                             GString      *result,
                             gboolean      toplevel)
 {
-    if (condition->type != DDM_CONDITION_EQUAL && !toplevel) {
+    if (condition->type != DDM_CONDITION_EQUAL &&
+        condition->type != DDM_CONDITION_TRUE &&
+        condition->type != DDM_CONDITION_FALSE &&
+        !toplevel)
+    {
         g_string_append_c(result, '(');
     }
     
     switch (condition->type) {
+    case DDM_CONDITION_TRUE:
+        g_string_append(result, "true");
+        break;
+    case DDM_CONDITION_FALSE:
+        g_string_append(result, "false");
+        break;
     case DDM_CONDITION_OR:
         condition_to_string_recurse(condition->u.or.left, result, FALSE);
         g_string_append(result, " or ");
@@ -588,7 +561,11 @@ condition_to_string_recurse(DDMCondition *condition,
         break;
     }
 
-    if (condition->type != DDM_CONDITION_EQUAL && !toplevel) {
+    if (condition->type != DDM_CONDITION_EQUAL &&
+        condition->type != DDM_CONDITION_TRUE &&
+        condition->type != DDM_CONDITION_FALSE &&
+        !toplevel)
+    {
         g_string_append_c(result, ')');
     }
 }
