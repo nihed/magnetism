@@ -20,6 +20,8 @@
  *       '-' ? (integer)           # numeric literal
  *     | true | false              # boolean literal
  *     | string                    # string literal
+ *     | source                    # source resource itself
+ *     | target                    # target resource itself
  *     | source.identifier         # property on a source resource
  *     | target.identifier         # property on the target resource
  *
@@ -157,6 +159,10 @@ condition_value_from_tokens(ConditionToken    *tokens,
     } else if (len == 1 && tokens[0].type == G_TOKEN_STRING) {
         value->type = DDM_CONDITION_VALUE_STRING;
         value->u.string = tokens[0].value.v_string;
+    } else if (len == 1 && tokens[0].type == SYMBOL_SOURCE) {
+        value->type = DDM_CONDITION_VALUE_SOURCE;
+    } else if (len == 1 && tokens[0].type == SYMBOL_TARGET) {
+        value->type = DDM_CONDITION_VALUE_TARGET;
     } else if (len == 3 &&
                tokens[0].type == SYMBOL_SOURCE &&
                tokens[1].type == '.' &&
@@ -479,6 +485,12 @@ condition_value_to_string(DDMConditionValue *value,
                           GString           *result)
 {
     switch (value->type) {
+    case DDM_CONDITION_VALUE_SOURCE:
+        g_string_append(result, "source");
+        break;
+    case DDM_CONDITION_VALUE_TARGET:
+        g_string_append(result, "target");
+        break;
     case DDM_CONDITION_VALUE_SOURCE_PROPERTY:
         g_string_append(result, "source.");
         g_string_append(result, value->u.string);
@@ -492,6 +504,12 @@ condition_value_to_string(DDMConditionValue *value,
          * stringifying here.
          */
         g_string_append(result,"<property>");
+        break;
+    case DDM_CONDITION_VALUE_RESOURCE:
+        /* Only occurs in partially resolved conditions, so we don't bother
+         * stringifying here.
+         */
+        g_string_append(result,"<resource>");
         break;
     case DDM_CONDITION_VALUE_STRING:
         {
