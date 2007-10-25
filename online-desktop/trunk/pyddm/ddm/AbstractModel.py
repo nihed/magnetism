@@ -14,13 +14,18 @@ class AbstractModel(object):
     def __init__(self):
         self.__initialized_handlers = []
         self.__connected_handlers = []
+        self.__server_connected_handlers = []
         self.__disconnected_handlers = []
         self.__added_handlers = []
         self.__removed_handlers = []
         self.__resources = {}
         self.initialized = False
+        # self_id that is not None means that the model is connected
+        self.self_id = None
+        # connected is True only when we can talk to the server/ the network is present
         self.connected = False
-        self.__last_handled_connected = False
+        self.__handled_model_connected = False
+        self.__handled_server_connected = False
 
     def add_initialized_handler(self, handler):
         """Add a handler that will be called when we initialize the model and find out if we can get connected to the server"""
@@ -31,12 +36,20 @@ class AbstractModel(object):
         self.__initialized_handlers.remove(handler)
 
     def add_connected_handler(self, handler):
-        """Add a handler that will be called when we become connected to the server"""
+        """Add a handler that will be called when we become connected to the model"""
         self.__connected_handlers.append(handler)
 
     def remove_connected_handler(self, handler):
         """Remove a handler added with add_connected_handler"""
         self.__connected_handlers.remove(handler)
+
+    def add_server_connected_handler(self, handler):
+        """Add a handler that will be called when we become connected to the server"""
+        self.__server_connected_handlers.append(handler)
+
+    def remove_server_connected_handler(self, handler):
+        """Remove a handler added with add_connected_handler"""
+        self.__server_connected_handlers.remove(handler)
 
     def add_disconnected_handler(self, handler):
         """Add a handler that will be called when we become disconnected from the server"""
@@ -137,25 +150,37 @@ class AbstractModel(object):
         self.initialized = True
 
     def _on_connected(self):
-        if self.__last_handled_connected:
+        if not self.__handled_model_connected:
+      
+            # On reconnection, all previous state is irrelevant
+            self.__resources = {}
+        
+            for handler in self.__connected_handlers:
+                handler()
+
+            self.__handled_model_connected = True 
+
+        if self.connected:
+            self._on_server_connected()
+
+    def _on_server_connected(self):
+        if self.__handled_server_connected:
             return
 
-        # On reconnection, all previous state is irrelevant
-        self.__resources = {}
-        
-        for handler in self.__connected_handlers:
+        for handler in self.__server_connected_handlers:
             handler()
 
-        self.__last_handled_connected = True 
+        self.__handled_server_connected = True
 
     def _on_disconnected(self):
-        if not self.__last_handled_connected:
+        if not self.__handled_model_connected:
             return
        
         for handler in self.__disconnected_handlers:
             handler()
 
-        self.__last_handled_connected = False
+        self.__handled_model_connected = False
+        self.__handled_server_connected = False
 
     def _set_self_id(self, self_id):
         self.self_id = self_id
