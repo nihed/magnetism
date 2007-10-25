@@ -14,4 +14,6 @@ gboolean ddm_static_file_parse (const char    *filename,
 				DDMDataModel  *model,
 				GError       **error);
 
+G_END_DECLS
+
 #endif /* __STATIC_FILE_BACKEND_H__ */
