@@ -281,7 +281,7 @@ class AppsRepo(gobject.GObject):
             self.__on_connected()        
 
     def __on_initialized(self):
-        if not self.__model.connected and not self.__got_popular_apps and not self.__get_popular_apps_pending:
+        if not self.__model.connected and not self.__model.self_id and not self.__got_popular_apps and not self.__get_popular_apps_pending:
             _logger.debug("will get popular apps from http")
             self.__get_popular_apps_pending = True
             downloader = AppsHttpDownloader('/xml/popularapplications',
