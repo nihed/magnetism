@@ -29,7 +29,7 @@ do_test(const char *input,
 
     ddm_condition_free(condition);
 
-    g_debug("SUCCESS: %s", input);
+    /*    g_debug("SUCCESS: %s", input); */
 }
 
 static void
