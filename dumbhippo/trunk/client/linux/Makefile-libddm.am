@@ -89,6 +89,7 @@ nodist_libddm_test_la_SOURCES =				\
 # Note that test-ddm isn't really a "test", it's a demo
 ddm_tests =					\
 	test-condition-parser			\
+	test-condition-reduce			\
 	test-static-file-parser			\
 	test-static-file-backend
 
@@ -106,6 +107,11 @@ test_condition_parser_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATI
 test_condition_parser_LDADD=libddm-1.la
 
 nodist_test_condition_parser_SOURCES=$(COMMONSRCDIR)/ddm/test-condition-parser.c
+
+test_condition_reduce_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
+test_condition_reduce_LDADD=libddm-1.la libddm-test.la
+
+nodist_test_condition_reduce_SOURCES=$(COMMONSRCDIR)/ddm/test-condition-reduce.c
 
 test_ddm_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS)
 test_ddm_LDADD=libddm-1.la

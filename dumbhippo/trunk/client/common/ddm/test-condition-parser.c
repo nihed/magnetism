@@ -46,14 +46,14 @@ int main(void)
     do_test_i("source.b = false");
     do_test_i("source.i = 1");
     do_test_i("source.i = 1");
-    do_test_i("source.f = 1.5");
-    do_test_i("source.f = -1.5");
     do_test_i("source.a = 1 or source.b = 2");
     do_test_i("source.a = 1 and source.b = 2");
     do_test_i("not source.a = 1");
     do_test("source.a", "source.a = true");
-    do_test("target.a = 1 and target.b = 2 or not source.c = 1.5",
-            "(target.a = 1 and target.b = 2) or (not source.c = 1.5)");
+    do_test("true", "true");
+    do_test("false", "false");
+    do_test("target.a = 1 and target.b = 2 or not source.c = 3",
+            "(target.a = 1 and target.b = 2) or (not source.c = 3)");
     
     return result ? 0 : 1;
 }
