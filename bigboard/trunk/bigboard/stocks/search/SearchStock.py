@@ -354,9 +354,11 @@ class SearchEntry(gtk.Entry):
                  event.keyval == gtk.keysyms.ISO_Enter:
                 self.__force_search_update()                
                 self.__results_view.navigate_activate()
+                entry.set_property('text', '')                
                 self.__results_window.hide()
                 return True
             elif event.keyval == gtk.keysyms.Escape:
+                entry.set_property('text', '')
                 self.__results_window.hide()
                 return True
             else:
