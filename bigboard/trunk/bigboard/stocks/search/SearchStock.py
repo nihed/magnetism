@@ -1,6 +1,6 @@
 import sys, logging, os, xml.sax.saxutils
 
-import gobject, gtk, gnomeapplet, gconf
+import gobject, gtk, gnomeapplet, gconf, pango
 
 import hippo
 
@@ -74,6 +74,7 @@ class ResultsView(search.SearchConsumer):
         column = gtk.TreeViewColumn('Result')
         
         renderer = gtk.CellRendererText()
+        renderer.set_property('ellipsize', pango.ELLIPSIZE_END)
         column.pack_start(renderer)
         #column.set_attributes(renderer, markup=2)
         column.set_cell_data_func(renderer, self.__cell_data_method)
@@ -269,6 +270,7 @@ class SearchEntry(gtk.Entry):
         self.__results_window = gtk.Window(gtk.WINDOW_POPUP)
         self.__results_window.set_resizable(False)
         self.__results_window.set_focus_on_map(False)
+        self.__results_window.set_size_request(500, -1)
         
         vbox = gtk.VBox()
         self.__results_window.add(vbox)
