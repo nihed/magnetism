@@ -88,5 +88,16 @@ main(int argc, char **argv)
     do_test("source.name = 'Sally Smith'", user1, user2, TRUE);
     do_test("source.name = 'Sally Smith'", user2, user1, FALSE);
 
+    /* target.<property> = source should result in a property identical to
+     * to <resource>
+     */
+    do_test("target.contacts = source", user1, user2, TRUE);
+    do_test("target.contacts = source", user2, user1, FALSE);
+
+    /* source.<property> = target is a more useful inverse-mapping
+     */
+    do_test("source.contacts = target", user2, user1, TRUE);
+    do_test("source.contacts = target", user2, user1, TRUE);
+    
     return result ? 0 : 1;
 }

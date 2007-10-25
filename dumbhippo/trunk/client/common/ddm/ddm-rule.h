@@ -22,8 +22,11 @@ typedef enum {
 } DDMConditionType;
 
 typedef enum {
+    DDM_CONDITION_VALUE_SOURCE,
+    DDM_CONDITION_VALUE_TARGET,
     DDM_CONDITION_VALUE_SOURCE_PROPERTY,
     DDM_CONDITION_VALUE_TARGET_PROPERTY,
+    DDM_CONDITION_VALUE_RESOURCE,
     DDM_CONDITION_VALUE_PROPERTY,
     DDM_CONDITION_VALUE_BOOLEAN,
     DDM_CONDITION_VALUE_INTEGER,
@@ -42,6 +45,7 @@ struct _DDMConditionValue {
          * to add floats as well.
          */
         char *string;
+        DDMDataResource *resource;
         DDMDataProperty *property;
     } u;
 };

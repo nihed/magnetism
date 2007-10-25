@@ -42,12 +42,12 @@ int main(void)
 {
     do_test_i("source.s = \"Parking Lot\"");
     do_test_i("target.s = \"Parking Lot\"");
+    do_test_i("source = target");
     do_test_i("source.b = true");
     do_test_i("source.b = false");
     do_test_i("source.i = 1");
     do_test_i("source.i = 1");
     do_test_i("source.a = 1 or source.b = 2");
-    do_test_i("source.a = 1 and source.b = 2");
     do_test_i("not source.a = 1");
     do_test("source.a", "source.a = true");
     do_test("true", "true");

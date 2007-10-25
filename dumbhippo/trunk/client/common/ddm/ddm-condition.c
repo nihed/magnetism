@@ -150,12 +150,22 @@ condition_value_reduce(DDMConditionValue *value,
      * ddm_data_property_get_by_qname; that would mean passing the
      * source/target classes through the parsing code
      */
-    if (value->type == DDM_CONDITION_VALUE_SOURCE_PROPERTY && is_source) {
-        value->type = DDM_CONDITION_VALUE_PROPERTY;
-        value->u.property = ddm_data_resource_get_property(resource, value->u.string);
-    } else if (value->type == DDM_CONDITION_VALUE_TARGET_PROPERTY && !is_source) {
-        value->type = DDM_CONDITION_VALUE_PROPERTY;
-        value->u.property = ddm_data_resource_get_property(resource, value->u.string);
+    if (is_source) {
+        if (value->type == DDM_CONDITION_VALUE_SOURCE) {
+            value->type = DDM_CONDITION_VALUE_RESOURCE;
+            value->u.resource = resource;
+        } else if (value->type == DDM_CONDITION_VALUE_SOURCE_PROPERTY) {
+            value->type = DDM_CONDITION_VALUE_PROPERTY;
+            value->u.property = ddm_data_resource_get_property(resource, value->u.string);
+        }
+    } else {
+        if (value->type == DDM_CONDITION_VALUE_TARGET) {
+            value->type = DDM_CONDITION_VALUE_RESOURCE;
+            value->u.resource = resource;
+        } else if (value->type == DDM_CONDITION_VALUE_TARGET_PROPERTY) {
+            value->type = DDM_CONDITION_VALUE_PROPERTY;
+            value->u.property = ddm_data_resource_get_property(resource, value->u.string);
+        }
     }
 }
 
@@ -282,6 +292,9 @@ compare_property_literal_1_1(DDMDataValue      *property,
             return FALSE;
         return strcmp(property->u.string, literal->u.string) == 0;
     case DDM_DATA_RESOURCE:
+        if (literal->type != DDM_CONDITION_VALUE_RESOURCE)
+            return FALSE;
+        return property->u.resource == literal->u.resource; 
     case DDM_DATA_FLOAT:
         return FALSE;
     case DDM_DATA_NONE:
@@ -351,6 +364,12 @@ compare_literals(DDMConditionValue *left,
         if (right->type != DDM_CONDITION_VALUE_STRING)
             return FALSE;
         return strcmp(left->u.string, right->u.string) == 0;
+    case DDM_CONDITION_VALUE_RESOURCE:
+        if (right->type != DDM_CONDITION_VALUE_RESOURCE)
+            return FALSE;
+        return left->u.resource == right->u.resource;
+    case DDM_CONDITION_VALUE_SOURCE:
+    case DDM_CONDITION_VALUE_TARGET:
     case DDM_CONDITION_VALUE_SOURCE_PROPERTY:
     case DDM_CONDITION_VALUE_TARGET_PROPERTY:
     case DDM_CONDITION_VALUE_PROPERTY:
@@ -367,12 +386,21 @@ condition_value_compare(DDMConditionValue *left,
 {
     gboolean result;
     
-    if (left->type == DDM_CONDITION_VALUE_SOURCE_PROPERTY ||
+    if (left->type == DDM_CONDITION_VALUE_SOURCE ||
+        left->type == DDM_CONDITION_VALUE_TARGET ||
+        left->type == DDM_CONDITION_VALUE_SOURCE_PROPERTY ||
         left->type == DDM_CONDITION_VALUE_TARGET_PROPERTY ||
+        right->type == DDM_CONDITION_VALUE_SOURCE ||
+        right->type == DDM_CONDITION_VALUE_TARGET ||
         right->type == DDM_CONDITION_VALUE_SOURCE_PROPERTY ||
         right->type == DDM_CONDITION_VALUE_TARGET_PROPERTY)
         return NULL; /* Not fully reduced */
-    
+
+    /* Note that 'literal' here mostly refers to literals in the condition
+     * expression, but also to DDM_CONDITION_VALUE_RESOURCE, which is
+     * a substitution from 'source' or 'target'. 'literal', is however
+     * a better anme than "not a property"
+     */
     if (left->type == DDM_CONDITION_VALUE_PROPERTY &&
         right->type == DDM_CONDITION_VALUE_PROPERTY)
         result = compare_properties(left->u.property, right->u.property);
