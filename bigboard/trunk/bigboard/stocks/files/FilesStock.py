@@ -140,13 +140,13 @@ class GoogleFile(File):
         self._access_time = google.parse_timestamp(self.__doc_entry.updated.text)
 
         if self.__doc_entry.category[0].label == "document":
-            self._image_name = 'bigboard-document.png'
+            self._image_name = 'bigboard-document'
         elif self.__doc_entry.category[0].label == "spreadsheet":
-            self._image_name = 'bigboard-spreadsheet.png'
+            self._image_name = 'bigboard-spreadsheet'
         elif self.__doc_entry.category[0].label == "presentation":
-            self._image_name = 'bigboard-presentation.png'
+            self._image_name = 'bigboard-presentation'
         else:
-            self._image_name = 'document.png'
+            self._image_name = 'document'
             _logger.warn("Unknown Google Docs category %s", self.__doc_entry.category.text)
 
         self._url = self.__doc_entry.GetAlternateLink().href

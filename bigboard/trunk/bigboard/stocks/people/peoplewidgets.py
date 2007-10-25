@@ -274,7 +274,7 @@ class TrackItem(hippo.CanvasBox, DataBoundItem):
         DataBoundItem.__init__(self, track)
 
         image = hippo.CanvasImage(yalign=hippo.ALIGNMENT_START,
-                                  image_name="bigboard-music.png",
+                                  image_name="bigboard-music",
                                   border_right=6)
         self.append(image)
         

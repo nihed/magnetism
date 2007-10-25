@@ -259,7 +259,7 @@ class SelfStock(AbstractMugshotStock):
         self._namephoto_box_child.append(self._name)  
 
         self._bulb = hippo.CanvasImage(scale_width=17, scale_height=22, xalign=hippo.ALIGNMENT_END, yalign=hippo.ALIGNMENT_CENTER)
-        self._bulb.set_property("image-name", 'bigboard-bulb-bw.png')
+        self._bulb.set_property("image-name", 'bigboard-bulb-bw')
         self._namephoto_box_child.append(self._bulb, hippo.PACK_EXPAND)
         
         self._namephoto_box.set_child(self._namephoto_box_child)      
@@ -297,9 +297,9 @@ class SelfStock(AbstractMugshotStock):
 
     def __on_sync_prelight(self, prelighted):
         if prelighted:
-            self._bulb.set_property("image-name", 'bigboard-bulb.png')
+            self._bulb.set_property("image-name", 'bigboard-bulb')
         else:
-            self._bulb.set_property("image-name", 'bigboard-bulb-bw.png')
+            self._bulb.set_property("image-name", 'bigboard-bulb-bw')
 
     def __idle_first_time_signin_check(self):
         ws = dbus.SessionBus().get_object('org.freedesktop.od.Engine', '/org/gnome/web_services')
