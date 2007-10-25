@@ -247,6 +247,7 @@ class AppsRepo(gobject.GObject):
         self.__model = bigboard.globals.get_data_model()
         self.__model.add_initialized_handler(self.__on_initialized) 
         self.__model.add_connected_handler(self.__on_connected)
+        self.__model.add_server_connected_handler(self.__on_server_connected)
         
         self.__myself = None
     
@@ -277,11 +278,14 @@ class AppsRepo(gobject.GObject):
         if self.__model.initialized:
             self.__on_initialized()
 
-        if self.__model.connected:
+        if self.__model.self_id:
             self.__on_connected()        
 
+        if self.__model.connected:
+            self.__on_server_connected()
+
     def __on_initialized(self):
-        if not self.__model.connected and not self.__model.self_id and not self.__got_popular_apps and not self.__get_popular_apps_pending:
+        if not self.__model.self_id and not self.__got_popular_apps and not self.__get_popular_apps_pending:
             _logger.debug("will get popular apps from http")
             self.__get_popular_apps_pending = True
             downloader = AppsHttpDownloader('/xml/popularapplications',
@@ -307,6 +311,7 @@ class AppsRepo(gobject.GObject):
         query.add_error_handler(lambda code, msg: self.__on_query_error("getPopularApplications", code, msg))
         query.execute()
 
+    def __on_server_connected(self):
         if not self.__got_all_apps and not self.__get_all_apps_pending:
             ## getAllApplications is just too slow over XMPP
 
@@ -325,6 +330,7 @@ class AppsRepo(gobject.GObject):
             downloader = AppsHttpDownloader('/xml/allapplications',
                                             self.__on_got_global_all_apps_from_http)
             downloader.go()
+
 
     def __on_query_error(self, where, error_code, message):
         _logger.warn("Query '" + where + "' failed, code " + str(error_code) + " message: " + str(message))

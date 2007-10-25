@@ -392,7 +392,7 @@ class Google(gobject.GObject):
         
         self.__ddm_identity = None
         self.__model.add_connected_handler(self.__on_data_model_connected)
-        if self.__model.connected:
+        if self.__model.self_id:
             self.__on_data_model_connected()
         else:
             _logger.debug("datamodel not connected, deferring")       

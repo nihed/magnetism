@@ -280,7 +280,7 @@ class SelfStock(AbstractMugshotStock):
         self.__myself = None
         self._model.add_initialized_handler(self.__on_initialized) 
         self._model.add_connected_handler(self.__on_connected) 
-        if self._model.connected:
+        if self._model.self_id:
             self.__on_connected()
         else:
             _logger.debug("datamodel not connected, deferring")     

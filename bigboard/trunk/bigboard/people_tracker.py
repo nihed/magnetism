@@ -161,7 +161,7 @@ class PeopleTracker(Singleton):
         self.__users_by_aim = _MultiDict()
         self.__users_by_resource_id = _MultiDict()
         
-        if self.__model.connected:
+        if self.__model.self_id:
             self.__on_connected()        
         
     def __on_connected(self):
