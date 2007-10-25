@@ -281,6 +281,7 @@ class SearchEntry(gtk.Entry):
         vbox.add(frame)
         vbox.show_all()
 
+        self.__idle_search_id = 0
         self.connect('changed', self.__on_changed)
         self.connect('key-press-event', self.__on_key_press)
         self.connect('focus-out-event', self.__on_focus_out)
@@ -289,7 +290,16 @@ class SearchEntry(gtk.Entry):
         return self.__current_consumer
 
     def __on_changed(self, entry):
-
+        if self.__idle_search_id == 0:
+            self.__idle_search_id = gobject.timeout_add(200, self.__idle_do_search)
+    
+    def __force_search_update(self):
+        if self.__idle_search_id > 0:
+            gobject.source_remove(self.__idle_search_id)
+            self.__idle_do_search()
+    
+    def __idle_do_search(self):
+        self.__idle_search_id = 0
         ## Move the window first, THEN perform search,
         ## since the search can synchronously return
         ## results which shows the popup window.
@@ -328,16 +338,20 @@ class SearchEntry(gtk.Entry):
 
         if popup_showing:
             if event.keyval == gtk.keysyms.Up:
+                self.__force_search_update()
                 self.__results_view.navigate_up()
                 return True
             elif event.keyval == gtk.keysyms.Down:
+                self.__force_search_update()                
                 self.__results_view.navigate_down()
                 return True
             elif event.keyval == gtk.keysyms.Tab:
+                self.__force_search_update()                
                 self.__results_view.navigate_down()
                 return True
             elif event.keyval == gtk.keysyms.KP_Enter or event.keyval == gtk.keysyms.Return or \
                  event.keyval == gtk.keysyms.ISO_Enter:
+                self.__force_search_update()                
                 self.__results_view.navigate_activate()
                 self.__results_window.hide()
                 return True
