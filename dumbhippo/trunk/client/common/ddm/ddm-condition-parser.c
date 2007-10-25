@@ -103,105 +103,6 @@ static const struct {
 static DDMCondition *or_condition_from_tokens(ConditionToken *tokens,
                                               int             len);
 
-static DDMCondition *
-new_condition(DDMConditionType type)
-{
-    DDMCondition *condition;
-    
-    condition = g_slice_new(DDMCondition);
-    condition->type = type;
-
-    return condition;
-}
-
-static DDMCondition *
-new_equal_condition(DDMConditionValue *left,
-                    DDMConditionValue *right)
-{
-    DDMCondition *condition = new_condition(DDM_CONDITION_EQUAL);
-    condition->u.equal.left = *left;
-    condition->u.equal.right = *right;
-
-    if (left->type == DDM_CONDITION_VALUE_STRING ||
-        left->type == DDM_CONDITION_VALUE_SOURCE_PROPERTY ||
-        left->type == DDM_CONDITION_VALUE_TARGET_PROPERTY)
-        condition->u.equal.left.u.string = g_strdup(condition->u.equal.left.u.string);
-    
-    if (right->type == DDM_CONDITION_VALUE_STRING ||
-        right->type == DDM_CONDITION_VALUE_SOURCE_PROPERTY ||
-        right->type == DDM_CONDITION_VALUE_TARGET_PROPERTY)
-        condition->u.equal.right.u.string = g_strdup(condition->u.equal.right.u.string);
-
-    return condition;
-}
-
-static DDMCondition *
-new_not_condition(DDMCondition *child)
-{
-    DDMCondition *condition = new_condition(DDM_CONDITION_NOT);
-    
-    condition->u.not.child = child;
-
-    return condition;
-}
-
-static DDMCondition *
-new_and_condition(DDMCondition *left,
-                  DDMCondition *right)
-{
-    DDMCondition *condition = new_condition(DDM_CONDITION_AND);
-    
-    condition->u.and.left = left;
-    condition->u.and.right = right;
-
-    return condition;
-}
-
-static DDMCondition *
-new_or_condition(DDMCondition *left,
-                 DDMCondition *right)
-{
-    DDMCondition *condition = new_condition(DDM_CONDITION_OR);
-    
-    condition->u.or.left = left;
-    condition->u.or.right = right;
-
-    return condition;
-}
-
-static void
-condition_value_clear(DDMConditionValue *value)
-{
-    if (value->type == DDM_CONDITION_VALUE_STRING ||
-        value->type == DDM_CONDITION_VALUE_SOURCE_PROPERTY ||
-        value->type == DDM_CONDITION_VALUE_TARGET_PROPERTY)
-        g_free(value->u.string);
-}
-
-void
-ddm_condition_free(DDMCondition *condition)
-{
-    switch (condition->type) {
-    case DDM_CONDITION_OR:
-        ddm_condition_free(condition->u.or.left);
-        ddm_condition_free(condition->u.or.right);
-        break;
-    case DDM_CONDITION_AND:
-        ddm_condition_free(condition->u.and.left);
-        ddm_condition_free(condition->u.and.right);
-        break;
-    case DDM_CONDITION_NOT:
-        ddm_condition_free(condition->u.not.child);
-        break;
-    case DDM_CONDITION_EQUAL:
-        condition_value_clear(&condition->u.equal.left);
-        condition_value_clear(&condition->u.equal.right);
-        break;
-    }
-
-    g_slice_free(DDMCondition, condition);
-}
-
 static int
 skip_parens(ConditionToken *tokens,
             int             start,
@@ -328,7 +229,7 @@ term_from_tokens(ConditionToken *tokens,
         right.u.boolean = TRUE;
     }
         
-    return new_equal_condition(&left, &right);
+    return ddm_condition_new_equal(&left, &right);
 
 }
 
@@ -351,7 +252,7 @@ not_condition_from_tokens(ConditionToken *tokens,
         return NULL;
 
     if (tokens[0].type == SYMBOL_NOT) {
-        return new_not_condition(child);
+        return ddm_condition_new_not(child);
     } else {
         return child;
     }
@@ -385,7 +286,7 @@ and_condition_from_tokens(ConditionToken *tokens,
             }
 
             if (result != NULL)
-                result = new_and_condition(result, child);
+                result = ddm_condition_new_and(result, child);
             else
                 result = child;
             
@@ -400,7 +301,7 @@ and_condition_from_tokens(ConditionToken *tokens,
     }
 
     if (result != NULL)
-        result = new_and_condition(result, child);
+        result = ddm_condition_new_and(result, child);
     else
         result = child;
 
@@ -441,7 +342,7 @@ or_condition_from_tokens(ConditionToken *tokens,
             }
 
             if (result != NULL)
-                result = new_or_condition(result, child);
+                result = ddm_condition_new_or(result, child);
             else
                 result = child;
             
@@ -456,7 +357,7 @@ or_condition_from_tokens(ConditionToken *tokens,
     }
 
     if (result != NULL)
-        result = new_or_condition(result, child);
+        result = ddm_condition_new_or(result, child);
     else
         result = child;
 

@@ -67,6 +67,14 @@ struct _DDMCondition {
 DDMCondition *ddm_condition_from_string (const char   *str);
 char         *ddm_condition_to_string   (DDMCondition *condition);
 
+DDMCondition *ddm_condition_new_equal (DDMConditionValue *left,
+                                       DDMConditionValue *right);
+DDMCondition *ddm_condition_new_not   (DDMCondition      *child);
+DDMCondition *ddm_condition_new_and   (DDMCondition      *left,
+                                       DDMCondition      *right);
+DDMCondition *ddm_condition_new_or    (DDMCondition      *left,
+                                       DDMCondition      *right);
+
 void          ddm_condition_free        (DDMCondition *condition);
 
 gboolean      ddm_condition_matches_source(DDMDataResource *source_resource);

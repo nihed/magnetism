@@ -41,6 +41,7 @@ nodist_libddminclude_HEADERS=				\
 
 LIBDDM_SOURCEFILES =						\
 	$(COMMONSRCDIR)/ddm/ddm-condition-parser.c		\
+	$(COMMONSRCDIR)/ddm/ddm-condition.c			\
 	$(COMMONSRCDIR)/ddm/ddm-data-fetch.c			\
 	$(COMMONSRCDIR)/ddm/ddm-data-model.c			\
 	$(COMMONSRCDIR)/ddm/ddm-data-model-dbus.c		\
