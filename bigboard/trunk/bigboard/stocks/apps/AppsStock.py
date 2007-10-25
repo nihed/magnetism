@@ -182,6 +182,13 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         for i, app in enumerate(apps_in_set):
             if i >= static_size:
                 break
+
+            # don't display apps that are not installed if the user is not logged in;
+            # because the user should be able to see the same list regardless of whether
+            # they are connected, we don't check self.__model.connected here
+            if not self.__model.self_id and not app.is_installed():
+                continue
+
             display = apps_widgets.AppDisplay(apps_widgets.AppLocation.STOCK, app)
             display.connect("button-press-event", lambda display, event: display.launch()) 
             #_logger.debug("setting static set app: %s", app)
