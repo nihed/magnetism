@@ -63,7 +63,7 @@ class Application(object):
         return self.__resource and self.__resource.genericName or ""
 
     def get_usage_count(self):
-        return self.__resource and self.__resource.usageCount or 0
+        return self.__resource and int(self.__resource.usageCount) or 0
 
     def get_category(self):
         ## FIXME should this be category or categoryDisplayName ?       
