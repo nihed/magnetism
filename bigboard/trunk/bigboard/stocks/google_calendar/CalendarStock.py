@@ -894,14 +894,14 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
 
 
         if index > 0:
-            up_button.set_property('image-name', 'bigboard-up-arrow-enabled.png') 
+            up_button.set_property('image-name', 'bigboard-up-arrow-enabled') 
         else:
-            up_button.set_property('image-name', 'bigboard-up-arrow-disabled.png')         
+            up_button.set_property('image-name', 'bigboard-up-arrow-disabled')         
 
         if end_index < len(self.__events_for_day_displayed):
-            down_button.set_property('image-name', 'bigboard-down-arrow-enabled.png') 
+            down_button.set_property('image-name', 'bigboard-down-arrow-enabled') 
         else:
-            down_button.set_property('image-name', 'bigboard-down-arrow-disabled.png') 
+            down_button.set_property('image-name', 'bigboard-down-arrow-disabled') 
 
         self.__move_up = False
         self.__move_down = False 
@@ -913,7 +913,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         control_box.set_property("padding-top", 5) 
 
         left_button = hippo.CanvasImage()
-        left_button.set_property('image-name', 'bigboard-left-button.png') 
+        left_button.set_property('image-name', 'bigboard-left-button') 
         left_button.set_clickable(True)
         left_button.connect("button-press-event", lambda text, event: self.__do_prev())
         left_button.set_property("padding-right", 4)
@@ -921,16 +921,16 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
 
         today_button = hippo.CanvasImage()
         if self.__day_displayed == datetime.date.today():
-            today_button.set_property('image-name', 'bigboard-today-disabled.png') 
+            today_button.set_property('image-name', 'bigboard-today-disabled') 
             today_button.set_clickable(False)
         else:
-            today_button.set_property('image-name', 'bigboard-today-enabled.png') 
+            today_button.set_property('image-name', 'bigboard-today-enabled') 
             today_button.set_clickable(True)
             today_button.connect("button-press-event", lambda text, event: self.__on_today_button())
         control_box.append(today_button)
 
         right_button = hippo.CanvasImage()
-        right_button.set_property('image-name', 'bigboard-right-button.png') 
+        right_button.set_property('image-name', 'bigboard-right-button') 
         right_button.set_clickable(True)
         right_button.connect("button-press-event", lambda text, event: self.__do_next())
         right_button.set_property("padding-left", 4)

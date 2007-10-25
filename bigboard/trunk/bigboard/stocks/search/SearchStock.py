@@ -62,7 +62,7 @@ class ResultsView(search.SearchConsumer):
         ## 3 = heading
         ## 4 = sort key, 0 for a heading, 1 for a non-heading
         
-        self.__store = gtk.TreeStore(object, object, str, str, int)
+        self.__store = gtk.TreeStore(object, object, str, str, int, str)
         
         self.__view = gtk.TreeView(self.__store)
         self.__view.set_headers_visible(False)
@@ -203,19 +203,21 @@ class ResultsView(search.SearchConsumer):
                 self.__store.append(None,
                                     [ None, None,
                                       xml.sax.saxutils.escape(heading),
-                                      heading, 0 ])
+                                      heading, 0, None ])
                 self.__added_headings.add(heading)
 
             icon = r.get_icon()
-            if not icon:
-                icon = r.get_icon_url()
-                if icon:
-                    image_cache = URLImageCache()
-                    image_cache.get(icon, self.__handle_image_load, self.__handle_image_error, format='pixbuf')
+            icon_is_url = False
+            if icon and icon.startswith(os.sep):
+                icon = gtk.gdk.pixbuf_new_from_file_at_size(icon, self.__icon_size, self.__icon_size)
+            icon_url = r.get_icon_url()
 
             self.__store.append(None, [ r, icon,
                                         markup,
-                                        heading, 1 ] )
+                                        heading, 1, icon_url ] )
+            if icon_url:
+                image_cache = URLImageCache()
+                image_cache.get(icon_url, self.__handle_image_load, self.__handle_image_error, format='pixbuf')            
 
         ## sort headings before search entries
         self.__store.set_sort_column_id(4, gtk.SORT_ASCENDING)
@@ -234,21 +236,18 @@ class ResultsView(search.SearchConsumer):
             iter = self.__store.iter_next(iter)
             
     def __render_icon(self, col, cell, model, iter):
-        pixbuf = model.get(iter, 1)[0]
-        _logger.debug("render pixbuf %s", pixbuf)
+        pixbuf = model.get(iter, 1)[0]  
         if isinstance(pixbuf, gtk.gdk.Pixbuf):
             cell.set_property('pixbuf', pixbuf)
-        # Yes, this is gross - we should probably store URL parameters
-        # in another column
-        elif pixbuf and (not pixbuf.startswith('http')):
+        elif isinstance(pixbuf, basestring):
             cell.set_property('icon-name', pixbuf)
-            cell.set_property('stock-size', 24)
+            cell.set_property('stock-size', gtk.ICON_SIZE_SMALL_TOOLBAR)
         else:
             cell.set_property('pixbuf', None)
 
     def __handle_image_load(self, url, pixbuf):
         _logger.debug("got load for %s: %s", url, pixbuf)
-        iter = self.__findobj(url, 1)
+        iter = self.__findobj(url, 5)
         if not iter:
             _logger.debug("no result visible for %s", url)
             return

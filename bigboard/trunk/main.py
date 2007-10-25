@@ -62,15 +62,18 @@ except OSError, e:
     _logger.debug("caught error reading desktop path", exc_info=True)
     DESKTOP_PATH = os.path.expanduser('~/Desktop') 
 
-def _find_in_datadir(fname):
-    if BB_DATADIR:
-        return os.path.join(BB_DATADIR, fname)
+def _get_datadirs():
     datadir_env = os.getenv('XDG_DATA_DIRS')
     if datadir_env:
         datadirs = datadir_env.split(':')
     else:
         datadirs = ['/usr/share/']
-    datadirs = map(lambda x: os.path.join(x, 'bigboard'), datadirs)
+    return map(lambda x: os.path.join(x, 'bigboard'), datadirs)
+
+def _find_in_datadir(fname):
+    if BB_DATADIR:
+        return os.path.join(BB_DATADIR, fname)
+    datadirs = _get_datadirs()
     for dir in datadirs:
         fpath = os.path.join(dir, fname)
         if os.access(fpath, os.R_OK):
@@ -680,8 +683,6 @@ class BigBoardPanel(dbus.service.Object):
 # TODO: figure out an algorithm for removing pixbufs from the cache
 _pixbufcache = {}
 def load_image_hook(img_name):
-    if img_name.startswith('bigboard-'):
-        img_name = _find_in_datadir(img_name)
     try:
         pixbuf = _pixbufcache[img_name]
     except KeyError, e:
@@ -778,7 +779,11 @@ def main():
     bignative.set_program_name("bigboard")
     bignative.install_focus_docks_hack()
     
-    hippo.canvas_set_load_image_hook(load_image_hook)    
+    hippo.canvas_set_load_image_hook(load_image_hook)
+    
+    icon_datadir = _get_datadirs()[0]
+    _logger.debug("adding to icon theme path: %s", icon_datadir)
+    gtk.icon_theme_get_default().prepend_search_path(icon_datadir)
 
     bus = dbus.SessionBus() 
     bus_name = dbus.service.BusName(BUS_NAME_STR, bus=bus)
