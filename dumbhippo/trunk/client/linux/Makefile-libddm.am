@@ -40,6 +40,7 @@ nodist_libddminclude_HEADERS=				\
 	$(COMMONSRCDIR)/ddm/ddm-qname.h
 
 LIBDDM_SOURCEFILES =						\
+	$(COMMONSRCDIR)/ddm/ddm-condition-parser.c		\
 	$(COMMONSRCDIR)/ddm/ddm-data-fetch.c			\
 	$(COMMONSRCDIR)/ddm/ddm-data-model.c			\
 	$(COMMONSRCDIR)/ddm/ddm-data-model-dbus.c		\
@@ -49,6 +50,7 @@ LIBDDM_SOURCEFILES =						\
 	$(COMMONSRCDIR)/ddm/ddm-data-query.c			\
 	$(COMMONSRCDIR)/ddm/ddm-data-query-internal.h		\
 	$(COMMONSRCDIR)/ddm/ddm-notification-set.c		\
+	$(COMMONSRCDIR)/ddm/ddm-rule.h				\
 	$(COMMONSRCDIR)/ddm/ddm-qname.c				\
 	$(COMMONSRCDIR)/ddm/hippo-dbus-helper.c			\
 	$(COMMONSRCDIR)/ddm/hippo-dbus-helper.h			\
@@ -83,19 +85,26 @@ nodist_libddm_test_la_SOURCES =				\
 ######################################################################
 # Test programs
 
+# Note that test-ddm isn't really a "test", it's a demo
+ddm_tests =					\
+	test-condition-parser			\
+	test-static-file-parser			\
+	test-static-file-backend
+
 # We use noinst_PROGRAMS not check_PROGRAMS so if someone changes the API
 # without running 'make check', they still break the build
 noinst_PROGRAMS +=				\
-	test-static-file-parser			\
-	test-static-file-backend		\
+	$(ddm_tests)				\
 	test-ddm
+
+TESTS += $(ddm_tests)
 
 TESTS_ENVIRONMENT=DDM_SRCDIR=$(COMMONSRCDIR)/ddm
 
-# Note that test-ddm isn't really a "test", it's a demo
-TESTS +=					\
-	test-static-file-parser			\
-	test-static-file-backend
+test_condition_parser_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
+test_condition_parser_LDADD=libddm-1.la
+
+nodist_test_condition_parser_SOURCES=$(COMMONSRCDIR)/ddm/test-condition-parser.c
 
 test_ddm_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS)
 test_ddm_LDADD=libddm-1.la
