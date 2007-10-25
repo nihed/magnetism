@@ -4517,7 +4517,7 @@ dm_context_init(DMContext       *context,
 
     server = hippo_platform_get_web_server(connection->platform,
                                            connection->auth_server_type);
-    context->base_url = g_strconcat("http:", server, NULL);
+    context->base_url = g_strconcat("http://", server, NULL);
     g_free(server);
 }
 
