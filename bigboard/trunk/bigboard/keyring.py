@@ -22,7 +22,7 @@ class Keyring:
     def is_available(self):
         return gnomekeyring.is_available()
 
-    # this can through a TypeError if no matching item is found with 
+    # this can throw a TypeError if no matching item is found with 
     # bignative.keyring_find_items_sync()
     def get_logins(self, whatfor):
         username_password_dict = {} 
@@ -56,7 +56,8 @@ class Keyring:
         if self.is_available():    
             try:   
                 found = bignative.keyring_find_items_sync(gnomekeyring.ITEM_GENERIC_SECRET,
-                                                          { 'whatfor' : whatfor } )
+                                                          { 'appname' : "BigBoard",
+                                                            'whatfor' : whatfor } )
                 for f in found:
                     gnomekeyring.item_delete_sync('session', f.item_id)
             except TypeError:
@@ -74,7 +75,9 @@ class Keyring:
             keyring_item_id = gnomekeyring.item_create_sync('session',
                                                             gnomekeyring.ITEM_GENERIC_SECRET,
                                                             "BigBoard",
-                                                            dict(appname="BigBoard", whatfor=whatfor, username=username),
+                                                            dict(appname="BigBoard",
+                                                                 whatfor=whatfor,
+                                                                 username=username),
                                                             password, True)
             if self.__ids.has_key(whatfor):
                 self.__ids[whatfor][username] = keyring_item_id
