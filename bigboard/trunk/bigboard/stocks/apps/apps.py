@@ -30,7 +30,21 @@ class Application(object):
         self.__pinned = False
         
     def get_id(self):
-        return self.__resource.id
+        return self.__resource and self.__resource.id or self.__menu_entry.get_desktop_file_path()
+
+    def get_app_name_from_file_name(self):
+        # this is intended for local apps
+        if not self.__menu_entry:
+            return ""
+
+        file_path = self.__menu_entry.get_desktop_file_path()     
+        app_name_start = file_path.rfind("/") + 1
+        app_name_end = file_path.rfind(".")
+        #_logger.debug("name %s file path %s start %s end %s", self.get_name(), file_path, app_name_start, app_name_end)
+        if app_name_start < 0 or app_name_end < 0:
+            return ""
+        else:
+            return file_path[app_name_start:app_name_end]
 
     def is_local(self):
         return self.__resource is None
@@ -421,7 +435,7 @@ class AppsRepo(gobject.GObject):
         for id,app in self.__ddm_apps.iteritems():
             app.recheck_installed()
             
-        self.emit("local-apps-changed", self.get_local_apps())
+        self.emit("local-apps-changed", self.__local_apps.itervalues())
 
     def get_app_for_resource(self, app_resource):
         if not self.__ddm_apps.has_key(app_resource.id):
@@ -482,7 +496,7 @@ class AppsRepo(gobject.GObject):
         return self.__ddm_apps.itervalues()
 
     def get_local_apps(self):
-        return self.__local_apps.itervalues()    
+        return self.__local_apps.values()    
 
     def get_pinned_apps(self):
         return self.__my_pinned_apps
