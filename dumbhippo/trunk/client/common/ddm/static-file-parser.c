@@ -61,7 +61,9 @@ typedef struct {
 } SFElement;
 
 typedef struct {
+    GMarkupParseContext *context;
     DDMDataModel *model;
+    gboolean local;
     
     SFParseState state;
     GSList *elements;
@@ -85,15 +87,47 @@ typedef struct {
     const char *uri;
 } SFNamespace;
 
+static void static_file_start_element (GMarkupParseContext  *context,
+                                       const gchar          *element_name,
+                                       const gchar         **attribute_names,
+                                       const gchar         **attribute_values,
+                                       gpointer              user_data,
+                                       GError              **error);
+static void static_file_end_element   (GMarkupParseContext  *context,
+                                       const gchar          *element_name,
+                                       gpointer              user_data,
+                                       GError              **error);
+static void static_file_text          (GMarkupParseContext  *context,
+                                       const gchar          *text,
+                                       gsize                 text_len,
+                                       gpointer              user_data,
+                                       GError              **error);
+static void static_file_passthrough   (GMarkupParseContext  *context,
+                                       const gchar          *passthrough_text,
+                                       gsize                 text_len,
+                                       gpointer              user_data,
+                                       GError              **error);
+static void static_file_error         (GMarkupParseContext  *context,
+                                       GError               *error,
+                                       gpointer              user_data);
+
+static const GMarkupParser static_file_parser = {
+    static_file_start_element,
+    static_file_end_element,
+    static_file_text,
+    static_file_passthrough,
+    static_file_error
+};
+
 static void
-sf_parse_info_init(SFParseInfo *info,
-                   DDMDataModel *model)
+sf_parse_info_init(SFParseInfo  *info,
+                   DDMDataModel *model,
+                   gboolean      local)
 {
+    memset(info, 0, sizeof(*info));
+    
     info->model = model;
     info->state = STATE_OUTSIDE;
-
-    info->elements = NULL;
-    info->element = NULL;
 
     info->names[NAME_INVALID] = NULL;
     info->names[NAME_DEFAULT_CHILDREN] = ddm_qname_get(SYSTEM_NAMESPACE, "defaultChildren");
@@ -103,11 +137,10 @@ sf_parse_info_init(SFParseInfo *info,
     info->names[NAME_TYPE] = ddm_qname_get(SYSTEM_NAMESPACE, "type");
     info->names[NAME_UPDATE] = ddm_qname_get(SYSTEM_NAMESPACE, "update");
 
-    info->current_resource = NULL;
-    info->current_property_id = NULL;
-    info->current_default_children = NULL;
-    
-    info->value = NULL;
+    info->context = g_markup_parse_context_new(&static_file_parser,
+                                               G_MARKUP_TREAT_CDATA_AS_TEXT,
+                                               info,
+                                               NULL);
 }
 
 static gboolean
@@ -349,6 +382,8 @@ sf_parse_info_push_element(SFParseInfo         *info,
 static void
 sf_parse_info_finish(SFParseInfo *info)
 {
+    g_markup_parse_context_free(info->context);
+
     while (info->elements)
         sf_parse_info_pop_element(info);
 
@@ -453,9 +488,13 @@ static_file_start_element (GMarkupParseContext *context,
             absolute_resource_id = get_absolute_resource_id(info, resource_id, error);
             if (!absolute_resource_id)
                 return;
-                
-            info->current_resource = ddm_data_model_ensure_resource(info->model, absolute_resource_id,
-                                                                    element->name->uri);
+
+            if (info->local)
+                info->current_resource = ddm_data_model_ensure_local_resource(info->model, absolute_resource_id,
+                                                                              element->name->uri);
+            else
+                info->current_resource = ddm_data_model_ensure_resource(info->model, absolute_resource_id,
+                                                                        element->name->uri);
 
             g_free(absolute_resource_id);
             
@@ -696,21 +735,12 @@ static_file_error (GMarkupParseContext *context,
 {
 }
 
-static const GMarkupParser static_file_parser = {
-    static_file_start_element,
-    static_file_end_element,
-    static_file_text,
-    static_file_passthrough,
-    static_file_error
-};
-
 gboolean
 ddm_static_file_parse(const char   *filename,
                       DDMDataModel *model,
                       GError      **error)
 {
     SFParseInfo info;
-    GMarkupParseContext *context;
     gboolean result;
     char *text;
     gsize len;
@@ -722,19 +752,30 @@ ddm_static_file_parse(const char   *filename,
     if (!g_file_get_contents(filename, &text, &len, error))
         return FALSE;
     
-    sf_parse_info_init(&info, model);
+    sf_parse_info_init(&info, model, FALSE);
     
-    info.model = model;
-    info.state = STATE_OUTSIDE;
+    result = g_markup_parse_context_parse(info.context, text, len, error);
 
-    context = g_markup_parse_context_new(&static_file_parser,
-                                         G_MARKUP_TREAT_CDATA_AS_TEXT,
-                                         &info,
-                                         NULL);
+    sf_parse_info_finish(&info);
+
+    return result;
+}
+
+gboolean
+ddm_static_load_local_string(const char   *str,
+                             DDMDataModel *model,
+                             GError      **error)
+{
+    SFParseInfo info;
+    gboolean result;
     
-    result = g_markup_parse_context_parse(context, text, len, error);
+    g_return_val_if_fail(str != NULL, FALSE);
+    g_return_val_if_fail(DDM_IS_DATA_MODEL(model), FALSE);
+    g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-    g_markup_parse_context_free(context);
+    sf_parse_info_init(&info, model, TRUE);
+    
+    result = g_markup_parse_context_parse(info.context, str, strlen(str), error);
 
     sf_parse_info_finish(&info);
 
