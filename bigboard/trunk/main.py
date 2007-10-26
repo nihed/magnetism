@@ -18,7 +18,7 @@ import pyonlinedesktop.widget
 
 import bigboard
 import bigboard.big_widgets
-from bigboard.big_widgets import Sidebar, CommandShell, CanvasHBox, CanvasVBox, ActionLink, Button
+from bigboard.big_widgets import Sidebar, CanvasHBox, CanvasVBox, ActionLink, Button
 from bigboard.stock import Stock
 import bigboard.libbig
 try:
@@ -657,8 +657,10 @@ class BigBoardPanel(dbus.service.Object):
     def Shell(self):
         if self.__shell:
             self.__shell.destroy()
-        self.__shell = CommandShell({'panel': self,
-                                     'scratch_window': self.__create_scratch_window})
+        import bigboard.pyshell
+        self.__shell = bigboard.pyshell.CommandShell({'panel': self,
+                                     '               scratch_window': self.__create_scratch_window},
+                                                     savepath=os.path.expanduser('~/.bigboard/pyshell.py'))
         self.__shell.show_all()
         self.__shell.present_with_time(gtk.get_current_event_time())
         
