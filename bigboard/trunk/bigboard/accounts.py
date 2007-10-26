@@ -59,6 +59,9 @@ class Account(gobject.GObject):
     def _get_gconf_dir(self):
         return self.__gconf_dir
 
+    def _set_gconf_dir(self, gconf_dir):
+        self.__gconf_dir = gconf_dir
+
     def _update_from_origin(self, **kwargs):
         """This is the only way to modify an Account object. It should be invoked only on change notification or refreshed data from the original origin of the account."""
 
@@ -78,10 +81,13 @@ class Accounts(gobject.GObject):
         "account-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)), 
         "account-removed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
         }
+
     def __init__(self, *args, **kwargs):
         super(Accounts, self).__init__(*args, **kwargs)
 
-        self.__accounts = set()
+        self.__gconf_accounts = set()
+        self.__weblogin_accounts = set()
+        self.__enabled_accounts = set()
 
         ## this is a hash from AccountKind to (username, password) from the weblogindriver
         self.__weblogin_info = {}
@@ -101,15 +107,15 @@ class Accounts(gobject.GObject):
 
         self.__reload_from_gconf()
 
-    def find_account_by_kind(self, kind):
-        for a in self.__accounts:
+    def __find_weblogin_account_by_kind(self, kind):
+        for a in self.__weblogin_accounts:
             if a.get_kind() == kind:
                 return a
 
         return None
 
     def __find_account_by_gconf_dir(self, gconf_dir):
-        for a in self.__accounts:
+        for a in self.__gconf_accounts:
             if a._get_gconf_dir() == gconf_dir:
                 return a
 
@@ -120,7 +126,9 @@ class Accounts(gobject.GObject):
         ## note that "kind" is never updated (not allowed to change without
         ## making a new Account object)
 
-        was_enabled = account.get_enabled()
+        was_enabled = account in self.__enabled_accounts
+        if was_enabled != account.get_enabled():
+            raise Error("account enabled state messed up")
 
         fields = { }
 
@@ -150,6 +158,8 @@ class Accounts(gobject.GObject):
             ## persist across restarts.
             fields['enabled'] = False
 
+            self.__gconf_accounts.remove(account)
+
         ## second, look at weblogin driver, though we don't want to prefer
         ## its password over keyring, so there's some trickiness
         weblogin_password = None
@@ -161,8 +171,11 @@ class Accounts(gobject.GObject):
             ## if account was not disabled explicitly by gconf, we enable it
             if 'enabled' not in fields:
                 fields['enabled'] = True
+        else:
+            self.__weblogin_accounts.remove(account)
 
         ## third, look for password in keyring
+        k = keyring.get_keyring()                
         if False:
             ## FIXME
             if 'password' not in fields:
@@ -174,22 +187,23 @@ class Accounts(gobject.GObject):
 
         ## after compositing all this information, update our account object
         account._update_from_origin(fields)
+        
 
-        ## and finally remove the account if it's no longer used
+        ## now add or remove the account from the set of enabled accounts
         if was_enabled and not account.get_enabled():
-            self.__accounts.remove(account)
+            self.__enabled_accounts.remove(account)
             self.emit('account-removed', account)
+        elif not was_enabled and account.get_enabled():
+            self.__enabled_accounts.add(account)
+            self.emit('account-added', account)            
 
-    def __ensure_and_update_account_for_kind(self, kind):
-        account = self.find_account_by_kind(kind)
+    def __ensure_and_update_weblogin_by_kind(self, kind):
+        account = self.__find_weblogin_account_by_kind(kind)
         added = False
         if not account:
             account = Account(kind)
-            self.__accounts.add(account)
-            added = True
+            self.__weblogin_accounts.add(account)
         self.__update_account(account)
-        if added:
-            self.emit('account-added', account)
 
     def __try_ensure_and_update_account_for_gconf_dir(self, gconf_dir):
         account = self.__find_account_by_gconf_dir(gconf_dir)
@@ -210,13 +224,16 @@ class Accounts(gobject.GObject):
         if not kind:
             _logger.error("unknown account kind in gconf")
             return
-            
-        account = Account(kind, gconf_dir=gconf_dir)
-        self.__accounts.add(account)
+
+        account = self.__find_weblogin_account_by_kind(kind)
+        if account:
+            account._set_gconf_dir(gconf_dir)
+        else:
+            account = Account(kind, gconf_dir=gconf_dir)
+
+        self.__gconf_accounts.add(account)
         
         self.__update_account(account)
-
-        self.emit('account-added', account)
             
     def __reload_from_gconf(self):
         gconf_dirs = self.__gconf.all_dirs('/apps/bigboard/accounts')
@@ -245,7 +262,7 @@ class Accounts(gobject.GObject):
 
         ## now update any old accounts that are no longer in gconf,
         ## which should result in enabled=False
-        for a in self.__accounts:
+        for a in self.__gconf_accounts:
             gconf_dir = a._get_gconf_dir()
             if gconf_dir and gconf_dir not in self.__gconf_info:
                 self.__update_account(a)
@@ -281,4 +298,58 @@ class Accounts(gobject.GObject):
 
     @log_except(_logger)
     def __on_dbus_error(self, err):
-        self.__logger.error("D-BUS error: %s", err)
+        self.__logger.error("D-BUS error: %s", err)    
+
+    def __find_unused_gconf_dir(self, kind):
+        ## find an unused gconf dir
+        i = 0
+        while True:
+            gconf_dir = kind.get_id() + "_" + str(i)
+            if not self.__find_account_by_gconf_dir(gconf_dir):
+                return gconf_dir
+            else:
+                i = i + 1
+
+    def save_account_changes(self, account, new_properties):
+        gconf_dir = account._get_gconf_dir()
+        if not gconf_dir:
+            gconf_dir = self.__find_unused_gconf_dir(account.get_kind())
+
+            ## associate the Account with this new gconf dir.
+            ## basically this means if a weblogindriver account
+            ## is modified, it becomes a gconf account also.
+            ## We would also do this on seeing a new gconf
+            ## dir appear in gconf spontaneously, but doing
+            ## it here ensures that we definitely attach
+            ## to the proper previous Account
+            account._set_gconf_dir(gconf_dir)
+            self.__gconf_accounts.add(account)
+            
+        base_key = '/apps/bigboard/accounts/' + gconf_dir
+        
+        def set_account_prop(gconf, base_key, prop, value):
+            gconf.set_value(base_key + '/' + prop, value)
+
+        set_account_prop(self.__gconf, base_key, 'kind', account.get_kind())
+
+        if 'username' in new_properties:
+            set_account_prop(self.__gconf, base_key, 'username', new_properties['username'])
+        if 'url' in new_properties:
+            set_account_prop(self.__gconf, base_key, 'url', new_properties['url'])
+
+        ## enable it last, so we ignore the other settings until we do this
+        if 'enabled' in new_properties:
+            set_account_prop(self.__gconf, base_key, 'enabled', new_properties['enabled'])            
+        
+        ## FIXME set the password in keyring
+
+    def create_account(self, kind):
+        gconf_dir = self.__find_unused_gconf_dir(kind)
+        
+        base_key = '/apps/bigboard/accounts/' + gconf_dir
+        self.__gconf.set_value(base_key + '/kind', kind.get_id())
+        self.__gconf.set_value(base_key + '/enabled', True)
+
+    def get_accounts(self):
+        return self.__enabled_accounts
+    

@@ -9,7 +9,6 @@ from bigboard.libbig.singletonmixin import Singleton
 from bigboard.libbig.http import AsyncHTTPFetcher
 from bigboard import libbig
 from bigboard.workboard import WorkBoard
-import bigboard.keyring as keyring
 import libbig.logutil
 from bigboard.libbig.gutil import *
 from libbig.logutil import log_except
@@ -402,8 +401,6 @@ class Google(gobject.GObject):
                                                        self.__on_signon_changed)
         self.__recheck_signons()
 
-        k = keyring.get_keyring()
-
         # this line allows to enter new Google account information on bigboard restarts    
         # k.remove_logins(self.__default_domain)
         self.__mail_checker = None
@@ -504,8 +501,9 @@ class Google(gobject.GObject):
     def __on_auth_cancel(self):
         self.__username = None
         self.__password = None
-        # delete it persistently
-        keyring.get_keyring().remove_logins(self.__storage_key) 
+
+        ## FIXME delete our stored password or mark it as failed somehow (in-process)
+        
         self.emit("auth", False)        
         self.__consider_checking_mail()
         self.__auth_requested = False
