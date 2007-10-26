@@ -22,7 +22,12 @@ import bigboard.search as search
 _logger = logging.getLogger("bigboard.stocks.AppsStock")
 
 GCONF_KEY_APP_SIZE = '/apps/bigboard/application_list_size'
-            
+
+# TODO: with some applications, the name of the file is less predictable, while the official name of the application is more predictable, 
+# for example on my system Evolution is redhat-evolution-mail and Open Office Writer is openoffice.org-1.9-writer,
+# so we might try to do this selection using the names, such as "Firefox Web Browser", "Terminal", "File Browser", "Email", "Text Editor", etc.
+POPULAR_APPS = ["mozilla-firefox", "gnome-terminal", "gnome-nautilus", "evolution", "gnome-gedit", "evince", "mozilla-thunderbird", "rhythmbox", "totem", "gnome-eog", "gnome-file-roller", "epiphany", "openoffice.org-write", "liferia", "xchat", "synaptic", "pup", "gnome-volume-control", "openoffice.org-clac", "gnome-gcalctool", "gnome-system-monitor", "amarok", "gimp", "xchat-gnome", "gnome-bug-buddy", "gnu-emacs", "eclipse", "gaim", "openoffice.org-impress", "vncviewer"]
+    
 class AppDisplayLauncher(apps_widgets.AppDisplay):
     def __init__(self):
         super(AppDisplayLauncher, self).__init__()
@@ -166,18 +171,28 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         usage = self.__repo.get_app_usage_enabled()
         pinned_apps = self.__repo.get_pinned_apps()
         global_top_apps = self.__repo.get_global_top_apps()
+        local_apps = self.__repo.get_local_apps()
         static_size = gconf.client_get_default().get_int(GCONF_KEY_APP_SIZE) or 7
 
         self.__set_subtitle(None)
         apps_in_set = []
+        using_local_apps = False
         if usage:
             apps_in_set = pinned_apps
-        if len(apps_in_set) == 0 and len(global_top_apps) > 0:
-            apps_in_set = global_top_apps
-            self.__set_subtitle("Popular Applications")
+        if len(apps_in_set) == 0:
+            if len(global_top_apps) > 0:
+                apps_in_set = global_top_apps
+                self.__set_subtitle("Popular Applications")
+            elif len(local_apps) > 0:
+                apps_in_set = local_apps
+                using_local_apps = True
 
-        ## note the "-" in front of the cmp to sort descending
-        apps_in_set.sort(lambda a, b: - cmp(a.get_usage_count(), b.get_usage_count()))
+        if using_local_apps:
+            apps_in_set = filter(lambda a: POPULAR_APPS.count(a.get_app_name_from_file_name()) > 0, apps_in_set)
+            apps_in_set.sort(lambda a, b: cmp(POPULAR_APPS.index(a.get_app_name_from_file_name()), POPULAR_APPS.index(b.get_app_name_from_file_name())))
+        else: 
+            ## note the "-" in front of the cmp to sort descending
+            apps_in_set.sort(lambda a, b: - cmp(a.get_usage_count(), b.get_usage_count()))
    
         for i, app in enumerate(apps_in_set):
             if i >= static_size:
