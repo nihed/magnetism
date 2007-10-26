@@ -784,8 +784,13 @@ def main():
     
     hippo.canvas_set_load_image_hook(load_image_hook)
     
-    icon_datadir = _get_datadirs()[0]
-    _logger.debug("adding to icon theme path: %s", icon_datadir)
+    icon_datadir = None
+    for path in _get_datadirs():
+        if os.path.isdir(path):
+            icon_datadir = path
+            break
+    if icon_datadir:
+        _logger.debug("adding to icon theme path: %s", icon_datadir)
     gtk.icon_theme_get_default().prepend_search_path(icon_datadir)
 
     bus = dbus.SessionBus() 
