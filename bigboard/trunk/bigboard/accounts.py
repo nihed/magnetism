@@ -174,20 +174,27 @@ class Accounts(gobject.GObject):
         else:
             self.__weblogin_accounts.remove(account)
 
+        ## after compositing all this information, update our account object
+        account._update_from_origin(fields)
+
+        ## use updated information to find password
+        fields = {}
+        
         ## third, look for password in keyring
         k = keyring.get_keyring()                
-        if False:
-            ## FIXME
-            if 'password' not in fields:
-                fields['password'] = password
-
+        password = k.get_password(kind=account.get_kind().get_id(),
+                                  username=account.get_username(),
+                                  url=account.get_url())
+        if 'password' not in fields:
+            fields['password'] = password
+            
         ## fourth, if no password in keyring, use the weblogin one
         if weblogin_password and 'password' not in fields:
             fields['password'] = weblogin_password
 
-        ## after compositing all this information, update our account object
-        account._update_from_origin(fields)
-        
+        ## update account object again if we might have the password
+        if 'password' in fields:
+            account._update_from_origin(fields)
 
         ## now add or remove the account from the set of enabled accounts
         if was_enabled and not account.get_enabled():
@@ -311,6 +318,27 @@ class Accounts(gobject.GObject):
                 i = i + 1
 
     def save_account_changes(self, account, new_properties):
+
+        ## special-case handling of password since it goes in the keyring
+        if 'password' in new_properties:
+            if 'username' in new_properties:
+                username = new_properties['username']
+            else:
+                username = account.get_username()
+
+            if 'url' in new_properties:
+                url = new_properties['url']
+            else:
+                url = account.get_url()
+
+            k = keyring.get_keyring()            
+            k.store_login(kind=account.get_kind().get_id(),
+                          username=username,
+                          url=url,
+                          password=new_properties['password'])
+
+        ## now do everything else by stuffing it in gconf
+            
         gconf_dir = account._get_gconf_dir()
         if not gconf_dir:
             gconf_dir = self.__find_unused_gconf_dir(account.get_kind())
@@ -339,9 +367,7 @@ class Accounts(gobject.GObject):
 
         ## enable it last, so we ignore the other settings until we do this
         if 'enabled' in new_properties:
-            set_account_prop(self.__gconf, base_key, 'enabled', new_properties['enabled'])            
-        
-        ## FIXME set the password in keyring
+            set_account_prop(self.__gconf, base_key, 'enabled', new_properties['enabled'])
 
     def create_account(self, kind):
         gconf_dir = self.__find_unused_gconf_dir(kind)
@@ -352,4 +378,11 @@ class Accounts(gobject.GObject):
 
     def get_accounts(self):
         return self.__enabled_accounts
+
+    def get_accounts_with_kind(self, kind):
+        accounts = set()
+        for a in self.__enabled_accounts:
+            if a.get_kind() == kind:
+                accounts.add(a)
+        return accounts
     
