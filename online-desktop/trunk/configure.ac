@@ -5,7 +5,7 @@ AC_INIT(apps/gmail/gmail.desktop.in)
 AC_CONFIG_SRCDIR(od-session)
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE(online-desktop, 0.2.20)
+AM_INIT_AUTOMAKE(online-desktop, 0.2.21)
 GNOME_COMMON_INIT
 
 AM_CONFIG_HEADER(config/config.h)
