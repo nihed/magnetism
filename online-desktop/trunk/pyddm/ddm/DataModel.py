@@ -138,9 +138,11 @@ class DataModel(AbstractModel):
         return self.__web_base_url
         
     def query(self, method, fetch=None, single_result=False, **kwargs):
+        _logger.debug("doing query: %s fetch=%s, single_result=%s", method, fetch, single_result)
         return _DBusQuery(self, method, fetch, single_result, kwargs)
 
     def update(self, method, **kwargs):
+        _logger.debug("doing update: %s", method)        
         return _DBusUpdate(self, method, kwargs)
 
     def __update_property_from_dbus(self, resource, property_struct, notifications):
