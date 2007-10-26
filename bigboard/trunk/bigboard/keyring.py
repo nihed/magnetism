@@ -7,82 +7,146 @@ except:
 
 _logger = logging.getLogger("bigboard.Keyring")
 
+class KeyringItem(object):
+    def __init__(self, kind, username='', url='', password=''):
+        super(KeyringItem, self).__init__()        
+        self.__kind = kind
+        self.__username = username
+        self.__url = url
+        self.__password = password
+
+    def get_kind(self):
+        return self.__kind
+
+    def get_username(self):
+        return self.__username
+
+    def get_url(self):
+        return self.__url
+
+    def get_password(self):
+        return self.__password
+
+    def set_kind(self, kind):
+        self.__kind = kind
+
+    def set_username(self, username):
+        self.__username = username
+
+    def set_url(self, url):
+        self.__url = url
+
+    def set_password(self, password):
+        self.__password = password
+
+    def __repr__(self):
+        return '{kind=%s username=%s url=%s len(password)=%d}' % (self.__kind, self.__username, self.__url, len(self.__password))
+
+### The keyring is a map from the tuple (kind,username,url) to a password.
+### In gnome-keyring itself we add to the tuple appname=BigBoard
 class Keyring:
     def __init__(self, is_singleton):
         if not is_singleton == 42:
             raise Exception("use keyring.get_keyring()")
-        # self.__ids and self.__fallback are dictionaries, keyed off 'whatfor', with values
-        # that are dictionaries, keyed off 'username'. The values in inner dictionaries in 
-        # self.__ids are keyring ids. The values in inner dictionaries in self.__fallback 
-        # are passwords. This works best for retrieving and storing username-password pairs
-        # for a particular service. In case of Google, usernames are e-mails.
-        self.__ids = {}
-        self.__fallback = {}
+
+        ### an in-memory substitute for gnome-keyring, set of KeyringItem, used
+        ### when the real keyring is not available
+        self.__fallback_items = set()
 
     def is_available(self):
         return gnomekeyring.is_available()
 
-    # this can throw a TypeError if no matching item is found with 
-    # bignative.keyring_find_items_sync()
-    def get_logins(self, whatfor):
-        username_password_dict = {} 
+    # Returns a set of KeyringItem
+    def get_logins(self, kind, username, url):
+        matches = set()
+
         if not self.is_available():
-            if self.__fallback.has_key(whatfor):
-                _logger.debug("using fallback")
-                return self.__fallback[whatfor]
-            else:
-                return username_password_dict
-       
-        # we can use values from self.__ids if we are looking for a particular 
-        # username, but just using this to get all logins wouldn't work, because
-        # extra logins for the service might be stored in the keyring
-        # don't try to use gnomekeyring.find_items_sync, it's broken
-        found = bignative.keyring_find_items_sync(gnomekeyring.ITEM_GENERIC_SECRET,
-                                                  { 'whatfor' : whatfor } )
-        for f in found:
-            if f.attributes.has_key("username"):
-                _logger.debug("found attribute 'username': %s", f.attributes["username"])
-                username = f.attributes["username"]
-                username_password_dict[username] = f.secret
+            for ki in self.__fallback_items:
+                if ki.get_kind() == kind and \
+                   ki.get_username() == username and \
+                   ki.get_url() == url:
+                    matches.add(ki)
 
-        return username_password_dict
+        else:
+            # don't try to use gnomekeyring.find_items_sync, it's broken
+            try:
+                found = bignative.keyring_find_items_sync(gnomekeyring.ITEM_GENERIC_SECRET,
+                                                          dict(appname='BigBoard',
+                                                               kind=kind,
+                                                               username=username,
+                                                               url=url))
+            except TypeError:
+                found = set()
+                
+            for f in found:
+                ki = KeyringItem(kind=f.attributes['kind'],
+                                 username=f.attributes['username'],
+                                 url=f.attributes['url'],
+                                 password=f.secret)
+                matches.add(ki)
+
+        return matches
+
+    def get_password(self, kind, username, url):
+      logins = self.get_logins(kind, username, url)
+      if len(logins) > 0:
+          return logins.pop().get_password()
+      else:
+          return None
         
-    def remove_logins(self, whatfor):
-        if self.__fallback.has_key(whatfor):
-            del self.__fallback[whatfor]
-        if self.__ids.has_key(whatfor):
-            del self.__ids[whatfor]
+    def remove_logins(self, kind, username, url):
+        new_fallbacks = set()
+        for ki in self.__fallback_items:
+            if ki.get_kind() == kind and \
+                   ki.get_username() == username and \
+                   ki.get_url() == url:
+                pass
+            else:
+                new_fallbacks.add(ki)
+                
+        self.__fallback_items = new_fallbacks
 
-        if self.is_available():    
+        if self.is_available():
             try:   
                 found = bignative.keyring_find_items_sync(gnomekeyring.ITEM_GENERIC_SECRET,
-                                                          { 'appname' : "BigBoard",
-                                                            'whatfor' : whatfor } )
-                for f in found:
-                    gnomekeyring.item_delete_sync('session', f.item_id)
+                                                          dict(appname='BigBoard',
+                                                               kind=kind,
+                                                               username=username,
+                                                               url=url))
             except TypeError:
-                pass
- 
-    def store_login(self, whatfor, username, password):
+                found = set()
+                
+            for f in found:
+                gnomekeyring.item_delete_sync('session', f.item_id)
+  
+    def store_login(self, kind, username, url, password):
         _logger.debug("storing login " + username)
         if not self.is_available():
-            self.__fallback[whatfor] = (username, password)
-            if self.__fallback.has_key(whatfor):
-                self.__fallback[whatfor][username] = password
+            found = None
+            for ki in self.__fallback_items:
+                if ki.get_kind() == kind and \
+                       ki.get_username() == username and \
+                       ki.get_url() == url:
+                    found = ki
+
+            if found:
+                found.set_password(password)
             else:
-                self.__fallback[whatfor] = {username : password} 
+                ki = KeyringItem(kind=kind,
+                                 username=username,
+                                 url=url,
+                                 password=password)
+                self.__fallback_items.add(ki)
+
         else:  
             keyring_item_id = gnomekeyring.item_create_sync('session',
                                                             gnomekeyring.ITEM_GENERIC_SECRET,
                                                             "BigBoard",
                                                             dict(appname="BigBoard",
-                                                                 whatfor=whatfor,
-                                                                 username=username),
+                                                                 kind=kind,
+                                                                 username=username,
+                                                                 url=url),
                                                             password, True)
-            if self.__ids.has_key(whatfor):
-                self.__ids[whatfor][username] = keyring_item_id
-            else:
-                self.__ids[whatfor] = {username : keyring_item_id} 
 
 keyring_inst = None
 def get_keyring():
@@ -101,10 +165,12 @@ if __name__ == '__main__':
     print ring.is_available()
 
     print "storing"
-    ring.store_login('frap', 'qxr', 'def')
+    ring.store_login(kind='google', username='havoc.pennington+foo@gmail.com',
+                     url='http://google.com/', password='frob')
 
     print "getting"
-    print ring.get_logins('frap')
+    print ring.get_logins(kind='google', username='havoc.pennington+foo@gmail.com',
+                          url='http://google.com/')
 
     print "done"
     
