@@ -161,7 +161,11 @@ class AsyncHTTPFetcher(Singleton):
             headers['Cache-Control'] = 'no-store'
         (response, content) = h.request(url, **http_kwargs)
         if response.status == 200:
-            gobject.idle_add(lambda: self.__emit_results(url, kwargs['cb'], content, is_refetch=is_refetch))
+            resultfn = lambda: self.__emit_results(url, kwargs['cb'], content, is_refetch=is_refetch)
+            if is_refetch:
+                resultfn()
+            else:
+                gobject.idle_add(resultfn)
         elif 'response_errcb' in kwargs:
             gobject.idle_add(lambda: kwargs['response_errcb'](url, response, content))
         elif 'refetch' not in kwargs:
