@@ -965,6 +965,8 @@ a string that contains the response entity body.
             if method in ["GET", "HEAD"] and 'range' not in headers:
                 headers['accept-encoding'] = 'compress, gzip'
 
+            cache_control = _parse_cache_control(headers)
+
             info = email.Message.Message()
             cached_value = None
             if self.cache:
@@ -989,7 +991,14 @@ a string that contains the response entity body.
                 # RFC 2616 Section 13.10
                 self.cache.delete(cachekey)
 
-            if cached_value and method in ["GET", "HEAD"] and self.cache and 'range' not in headers:
+            if not cached_value and cache_control.has_key('only-if-cached'):
+                # Immediately handle the case where we are instructed to only
+                # check the cache; RFC 2616 Section 14.9.4
+                info['status'] = '504'
+                content = ""
+                response = Response(info)
+                return (response, content)             
+            elif cached_value and method in ["GET", "HEAD"] and self.cache and 'range' not in headers:
                 if info.has_key('-x-permanent-redirect-url'):
                     # Should cached permanent redirects be counted in our redirection count? For now, yes.
                     (response, new_content) = self.request(info['-x-permanent-redirect-url'], "GET", headers = headers, redirections = redirections - 1)
@@ -1007,12 +1016,8 @@ a string that contains the response entity body.
                     entry_disposition = _entry_disposition(info, headers) 
                     
                     if entry_disposition == "FRESH":
-                        if not cached_value:
-                            info['status'] = '504'
-                            content = ""
                         response = Response(info)
-                        if cached_value:
-                            response.fromcache = True
+                        response.fromcache = True
                         return (response, content)
 
                     if entry_disposition == "STALE":
