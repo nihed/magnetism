@@ -386,7 +386,7 @@ class SearchStock(Stock):
 
     def focus(self):
         _logger.debug("doing focus")
-        self.__entry.focus()
+        self.__entry.grab_focus()
             
 if __name__ == '__main__':
 

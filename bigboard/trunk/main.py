@@ -586,6 +586,7 @@ class BigBoardPanel(dbus.service.Object):
         if not self._shown:
             _logger.debug("handling popout activation")
             self.__handle_activation()
+            self._dw.present_with_time(gtk.get_current_event_time())
             self.__search_stock.focus()
         else:
             _logger.debug("handling popout deactivation")            
