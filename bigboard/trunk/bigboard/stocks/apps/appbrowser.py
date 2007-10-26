@@ -226,9 +226,8 @@ class AppExtras(CanvasVBox):
         "more-info" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
     }
     def __init__(self, filterfunc, **args):
-        super(AppExtras, self).__init__(background_color=0x888888FF,
-                                        color=0xFFFFFFFF,
-                                        padding=4,
+        super(AppExtras, self).__init__(background_color=0xFFF9DDFF,
+                                        color=0x3F3F3FFF,
                                         **args)
 
         self.__search = False
@@ -239,7 +238,7 @@ class AppExtras(CanvasVBox):
         self.__have_search_hits = False        
         self.__found_app_count = 0
 
-        self.__headerbox = CanvasHBox()
+        self.__headerbox = CanvasHBox(padding=6)
         self.append(self.__headerbox)
 
         thing = self.__get_section_name()
@@ -247,9 +246,9 @@ class AppExtras(CanvasVBox):
                                              font="12px Bold",
                                              xalign=hippo.ALIGNMENT_START)
         self.__headerbox.append(self.__left_title)
-
+        # TODO this won't underline properly until ActionLink->set_underline listens for text changes
+        # underline=pango.UNDERLINE_LOW
         self.__right_title = ActionLink(font="12px",
-                                        color=0xFFFFFFFF,
                                         xalign=hippo.ALIGNMENT_END)
         self.__right_title.connect("activated", self.__on_more_popular)
         self.__headerbox.append(self.__right_title, hippo.PACK_EXPAND)
@@ -309,7 +308,8 @@ class AppExtras(CanvasVBox):
                     self.__left_title.set_property('markup', "No results for <b>%s</b>" % (gobject.markup_escape_text(self.__search),))
             else:
                 self.__left_title.set_property('text', "New Popular %s" % (thing,))
-            self.__right_title.set_property('text', u"More Popular %s \u00BB" % (thing,))
+            self.__right_title.set_property('text', u"More Popular %s" % (thing,))
+
         elif self.__apps is None:
             self.__left_title.set_property('text', '')
             self.__right_title.set_property("text", "Loading popular %s..." % (thing,))
@@ -326,7 +326,7 @@ class AppExtras(CanvasVBox):
                 continue
             if self.__search_filter and (not self.__search_filter(app)):
                 continue
-            app_view = apps_widgets.AppDisplay(apps_widgets.AppLocation.APP_BROWSER, app, color=0xFFFFFFFF)
+            app_view = apps_widgets.AppDisplay(apps_widgets.AppLocation.APP_BROWSER, app, color=0x3F3F3FFF)
             app_view.connect("title-clicked", self.__on_app_clicked)
             app_view.set_description_mode(True)
             if found > 1:
