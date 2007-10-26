@@ -37,7 +37,7 @@
       <owner>bigboard</owner>
       <type>list</type>
       <list_type>string</list_type>
-      <default>[builtin://files.xml,builtin://apps.xml,builtin://people.xml,builtin://google_calendar.xml]</default>
+      <default>[builtin://files.xml,builtin://apps.xml,builtin://people.xml]</default>
       <locale name="C">
 		<short>The list of visible stocks; supersedes old listings key.</short>
       </locale>
