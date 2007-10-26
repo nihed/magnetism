@@ -27,7 +27,7 @@ _IG_Prefs.prototype = {
   getString: function(key) {
     return __IG_PREFS_DEFAULTS[key];
   },
-  getInt: function(key) {
+  getInt: function(key) { 
     return __IG_PREFS_DEFAULTS[key];    
   },
   getBool: function(key) {
@@ -52,7 +52,7 @@ _IG_MiniMessage.prototype = {
         base_srcurl = baseurl or os.path.dirname(srcurl)
         doc = xml.etree.ElementTree.ElementTree()        
      
-        self.__lang = u'en'
+        self.__lang = os.environ.get('LANG', 'en_US.UTF-8').split('.', 1)[0]
      
         self.__required_urls = {}
      
@@ -76,18 +76,22 @@ _IG_MiniMessage.prototype = {
             except KeyError, e:
                 _logger.debug("parse failed for pref", exc_info=True)
         
-        relurl_re = re.compile('^[A-Za-z/._]+$')    
+        relurl_re = re.compile('^[A-Za-z/._]+$')
+        matching_locales = {}    
         for localenode in module_prefs.findall('Locale'):
-            lang = localenode.attrib.get('lang', 'en')
-            if lang != self.__lang:
+            lang = localenode.attrib.get('lang', u'en')
+            if not self.__lang.startswith(lang):
                 _logger.debug("ignoring lang %s", lang)
                 continue
             msgs_url = localenode.attrib.get('messages', None)
             if not msgs_url:
                 continue
+            matching_locales[lang] = msgs_url
+        for lang, msgs_url in matching_locales.iteritems():
             if not relurl_re.match(msgs_url):
-                _logger.debug("failed relative URL match: %s", msgs_url)
-                continue
+                if not msgs_url.startswith(base_srcurl):
+                    _logger.debug("failed same-domain URL match (using baseurl %s): %s", base_srcurl, msgs_url)
+                    continue
             msgs_url = urlparse.urljoin(srcurl, msgs_url)
             self.__required_urls[msgs_url] = self.__on_received_locale
             
