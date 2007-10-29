@@ -4267,16 +4267,18 @@ hippo_state_to_string(HippoState state)
     return "WHAT THE?";
 }
 
-char*
-hippo_connection_make_absolute_url(HippoConnection *connection,
-                                   const char      *maybe_relative)
+
+static char *
+hippo_connection_make_absolute_url_for_server(HippoConnection *connection,
+                                              HippoServerType  server_type,
+                                              const char      *maybe_relative)
 {
     if (*maybe_relative == '/') {
         char *server;
         char *url;
         
         server = hippo_platform_get_web_server(connection->platform,
-                                               connection->auth_server_type);
+                                               server_type);
         url = g_strdup_printf("http://%s%s", server, maybe_relative);
         g_free(server);
 
@@ -4289,13 +4291,21 @@ hippo_connection_make_absolute_url(HippoConnection *connection,
     }
 }
 
+char*
+hippo_connection_make_absolute_url(HippoConnection *connection,
+                                   const char      *maybe_relative)
+{
+	return hippo_connection_make_absolute_url_for_server(connection, connection->auth_server_type, maybe_relative);
+}
+
 void
 hippo_connection_open_maybe_relative_url(HippoConnection *connection,
                                          const char      *relative_url)
 {
     char *url;
-    url = hippo_connection_make_absolute_url(connection,
-                                             relative_url);
+    /* For opening a web page in this process, we always use the Mugshot Stacker server. */
+    url = hippo_connection_make_absolute_url_for_server(connection, HIPPO_SERVER_STACKER,
+                                                        relative_url);
     hippo_platform_open_url(connection->platform,
                             connection->login_browser,
                             url);
