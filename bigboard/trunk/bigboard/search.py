@@ -36,7 +36,7 @@ class SearchResult(object):
 
     def _on_activated(self):
         """Action when user has activated the result"""
-        raise Error("No activation action implemented for search result")
+        raise Exception("No activation action implemented for search result")
         
 class SearchProvider(object):
     """An object that can provide SearchResult given a search string"""
@@ -53,11 +53,11 @@ class SearchProvider(object):
 
     def get_heading(self):
         """The human-readable heading to be displayed above search results from this provider"""
-        raise Error("get_heading() method not implemented on SearchProvider %s" % id)
+        raise Exception("get_heading() method not implemented on SearchProvider %s" % id)
 
     def perform_search(self, query, consumer):
         """Performs a search and calls add_results() on the consumer as they arrive"""
-        raise Error("perform_search() not implemented on SearchProvider %s" % id)
+        raise Exception("perform_search() not implemented on SearchProvider %s" % id)
     
 class SearchConsumer(object):
     """An object that hears back about search results"""
@@ -86,7 +86,7 @@ def register_provider_constructor(id, constructor):
     This is optional, if your search provider is global; if it's per-stock you can
     also provide a constructor to enable_search_provider()."""
     if id in __constructors:
-        raise Error("Already registered search provider constructor %s " % id)
+        raise Exception("Already registered search provider constructor %s " % id)
     __constructors[id] = constructor        
 
 
@@ -98,7 +98,7 @@ def enable_search_provider(id, constructor = None):
     if id in __constructors:
         constructor = __constructors[id]
     if not constructor:
-        raise Error("No search provider constructor registered or provided for %s" % id)
+        raise Exception("No search provider constructor registered or provided for %s" % id)
     
     if id in __enabled_counts:
         __enabled_counts[id] = __enabled_counts[id] + 1
@@ -112,10 +112,10 @@ def disable_search_provider(id):
         __enabled_counts[id] = __enabled_counts[id] - 1
         if __enabled_counts[id] == 0:
             if id not in __providers:
-                raise Error("Disabled search provider %s was not present" % id)
+                raise Exception("Disabled search provider %s was not present" % id)
             del __providers[id]
     else:
-        raise Error("Search provider %s disabled but not enabled" % id)
+        raise Exception("Search provider %s disabled but not enabled" % id)
 
 def perform_search(query, consumer):
     """Clear results on consumer, ask all enabled providers to run the given search, and add the results to the consumer"""
