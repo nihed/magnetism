@@ -76,8 +76,6 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
          
         self.__set_message('Loading...')
 
-        bigboard.logins.get_logins().connect('changed', lambda *args: self.__sync())
-
         self.__repo = apps.get_apps_repo()
 
         self.__repo.connect('enabled-changed', self.__on_usage_enabled_changed)
