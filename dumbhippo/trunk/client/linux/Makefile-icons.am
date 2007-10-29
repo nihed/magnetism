@@ -3,10 +3,21 @@ hugeicondir=$(datadir)/$(HUGEICONSUBDIR)
 hugeicon_DATA=				\
 	$(HUGEICONSUBDIR)/mugshot.png
 
+LARGEICONSUBDIR=icons/hicolor/64x64/apps
+largeicondir=$(datadir)/$(LARGEICONSUBDIR)
+largeicon_DATA=				\
+	$(LARGEICONSUBDIR)/mugshot.png
+
 NORMALICONSUBDIR=icons/hicolor/48x48/apps
 normalicondir=$(datadir)/$(NORMALICONSUBDIR)
 normalicon_DATA=				\
 	$(NORMALICONSUBDIR)/mugshot.png
+
+SUBNORMALICONSUBDIR=icons/hicolor/40x40/apps
+subnormalicondir=$(datadir)/$(SUBNORMALICONSUBDIR)
+subnormalicon_DATA=				\
+	$(SUBNORMALICONSUBDIR)/mugshot_notification.png		\
+	$(SUBNORMALICONSUBDIR)/mugshot_notification_disabled.png
 
 MEDIUMICONSUBDIR=icons/hicolor/32x32/apps
 mediumicondir=$(datadir)/$(MEDIUMICONSUBDIR)
@@ -37,5 +48,7 @@ EXTRA_DIST +=					\
 	$(smallericon_DATA)			\
 	$(smallishicon_DATA)			\
 	$(mediumicon_DATA)			\
+	$(subnormalicon_DATA)			\
 	$(normalicon_DATA)			\
+	$(largicon_DATA)			\
 	$(hugeicon_DATA)
