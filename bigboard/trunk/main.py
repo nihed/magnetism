@@ -819,7 +819,7 @@ widget "*bigboard-nopad-button" style "bigboard-nopad-button"
     
     panel.show()
 
-    bigboard.google.get_google() # for side effect of creating the Google object
+    bigboard.google.init()
     #bigboard.presence.get_presence() # for side effect of creating Presence object
         
     gtk.gdk.threads_enter()

@@ -1,36 +1,72 @@
+import logging
+import hippo
 import bigboard.google as google
-import bigboard.libbig.polling as polling
+import bigboard.accounts as accounts
+import accounts_dialog
 
-polling_periodicity_seconds = 120
+_logger = logging.getLogger("bigboard.Google")
 
-class GoogleStock(polling.Task):
-    def __init__(self, *args, **kwargs):
+## this base class is messed up, because the polling and account data
+## tracking should be in a model object, not in the view (stock).
+## Some stuff in here is view-specific though, like the _create_login_button
+## method.
+
+class GoogleStock(object):
+    def __init__(self, action_id, **kwargs):
+        super(GoogleStock, self).__init__(**kwargs)
+
         # A dictionary of authenticated google accounts, with keys that are used
         # to identify those accounts within the stock.
         self.googles = set()
+        self.__googles_by_account = {} ## map accounts.Account => google.Google
 
-        polling.Task.__init__(self, polling_periodicity_seconds * 1000)
+        self.__action_id = action_id
 
-        gobj_list = google.get_googles()
-        for gobj in gobj_list:
-            gobj.connect("auth", self.on_google_auth)
-            if gobj.have_auth():
-                self.on_google_auth(gobj, True) 
-            else:
-                gobj.request_auth()
+        accts = accounts.get_accounts()
+        for a in accts.get_accounts_with_kind(accounts.KIND_GOOGLE):
+            self.__on_account_added(a)
+        accts.connect('account-added', self.__on_account_added)
+        accts.connect('account-removed', self.__on_account_removed)
 
-    def on_google_auth(self, gobj, have_auth):
-        if have_auth:           
-            self.googles.add(gobj)
-            self.update_google_data(gobj)
-            if not self.is_running():
-                self.start()
-        elif gobj in self.googles:
-          self.stop()
-          self.remove_google_data(gobj)
-          self.googles.remove(gobj)
+        ## FIXME need to unhook everything when stock is removed
 
-    def do_periodic_task(self):
-        self.update_google_data() 
+    def __on_account_added(self, acct):
+        gobj = google.get_google_for_account(acct)
+        gobj.add_poll_action_func(self.__action_id, lambda gobj: self.update_google_data(gobj))
+        self.googles.add(gobj)
+        self.__googles_by_account[acct] = gobj
 
+        ## update_google_data() should be called in the poll action
+    
+    def __on_account_removed(self, acct):
+        ## we keep our own __googles_by_account because google.get_google_for_account()
+        ## will have dropped the Google before this point
+        gobj = self.__googles_by_account[acct]
+        gobj.remove_poll_action(self.__action_id)
+        self.googles.remove(gobj)
+        del self.__googles_by_account[acct]
 
+        ## hook for derived classes
+        self.remove_google_data(gobj)
+
+    def have_one_good_google(self):
+        for g in self.googles:
+            if not g.get_current_auth_credentials_known_bad():
+                return True
+
+        return False
+
+    def __open_login_dialog(self):
+        accounts_dialog.open_dialog()
+
+    def _create_login_button(self):
+        button = hippo.CanvasButton(text="Login to Google")
+        button.connect('activated', lambda button: self.__open_login_dialog())
+        return button
+
+    def update_google_data(self, gobj=None):
+        pass
+
+    def remove_google_data(self, gobj):
+        pass
+    

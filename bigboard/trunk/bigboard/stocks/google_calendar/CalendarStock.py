@@ -438,7 +438,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
 
         # these are at the end since they have the side effect of calling on_mugshot_ready it seems?
         AbstractMugshotStock.__init__(self, *args, **kwargs)
-        google_stock.GoogleStock.__init__(self, *args, **kwargs)
+        google_stock.GoogleStock.__init__(self, 'calendar', **kwargs)
 
         bus = dbus.SessionBus()
         o = bus.get_object('org.freedesktop.Notifications', '/org/freedesktop/Notifications')
@@ -548,7 +548,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
                 #  you must first close the existing Firefox process, or restart your system."
                 time.sleep(2)
                 done_with_sleep_state = 2  
-            libbig.show_url(create_account_url(google_account.get_auth()[0]))
+            libbig.show_url(create_account_url(google_account.get_account().get_username_as_google_email()))
             if done_with_sleep_state == 0:
                 done_with_sleep_state = 1
         
@@ -591,7 +591,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         self.__refresh_events()
 
     def __on_calendar_list_load(self, url, data, gobj):
-        _logger.debug("loaded calendar list %s", data)
+        _logger.debug("loaded calendar list %d chars" % (len(data)))
         google_key = gobj
         if google_key is None:
             _logger.warn("didn't find google_key for %s", gobj)
@@ -738,8 +738,9 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
     def __refresh_events(self):      
         self.__box.remove_all()
 
-        if not self.is_running():
-            self.__box.append(hippo.CanvasText(xalign=hippo.ALIGNMENT_CENTER, text="Sign into GMail"))
+        if not self.have_one_good_google():
+            button = self._create_login_button()
+            self.__box.append(button)
             return
 
         title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
@@ -970,8 +971,9 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
      
     def __on_failed_load(self, response):
         _logger.debug("load failed")
-        pass
-
+        ## this displays the "need to log in" thing
+        self.__refresh_events()
+    
     def __update_calendar_list_and_events(self, selected_gobj = None):
         _logger.debug("retrieving calendar list")
         # we update events in __on_calendar_list_load() 

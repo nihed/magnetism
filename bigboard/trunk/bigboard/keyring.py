@@ -89,12 +89,14 @@ class Keyring:
 
     def get_password(self, kind, username, url):
       logins = self.get_logins(kind, username, url)
+      _logger.debug("got logins: %s" % (str(logins)))
       if len(logins) > 0:
           return logins.pop().get_password()
       else:
           return None
         
     def remove_logins(self, kind, username, url):
+        _logger.debug("removing login (%s, %s, %s)" % (kind, username, url))
         new_fallbacks = set()
         for ki in self.__fallback_items:
             if ki.get_kind() == kind and \
@@ -120,7 +122,12 @@ class Keyring:
                 gnomekeyring.item_delete_sync('session', f.item_id)
   
     def store_login(self, kind, username, url, password):
-        _logger.debug("storing login " + username)
+
+        if not password:
+            self.remove_logins(kind, username, url)
+            return
+
+        _logger.debug("storing login (%s, %s, %s)" % (kind, username, url))
         if not self.is_available():
             found = None
             for ki in self.__fallback_items:
