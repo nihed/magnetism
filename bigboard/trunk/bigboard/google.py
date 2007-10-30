@@ -3,7 +3,6 @@ import xml, xml.sax
 
 import hippo, gobject, gtk, dbus, dbus.glib
 
-from ddm import DataModel
 import bigboard.globals as globals
 from bigboard.libbig.singletonmixin import Singleton
 from bigboard.libbig.http import AsyncHTTPFetcher
@@ -15,6 +14,8 @@ from libbig.logutil import log_except
 from libbig.struct import AutoStruct, AutoSignallingStruct
 import libbig.polling
 import htmllib
+import bigboard.accounts as accounts
+import gdata.docs as gdocs
 
 _logger = logging.getLogger("bigboard.Google")
 
@@ -65,58 +66,6 @@ def parse_timestamp(timestamp, tz=None):
 
 def fmt_date_for_feed_request(date):
     return datetime.datetime.utcfromtimestamp(time.mktime(date.timetuple())).strftime("%Y-%m-%dT%H:%M:%S")
-
-class AbstractDocument(AutoStruct):
-    def __init__(self):
-        AutoStruct.__init__(self, { 'title' : 'Untitled', 'link' : None })
-
-class SpreadsheetDocument(AbstractDocument):
-    def __init__(self):
-        AbstractDocument.__init__(self)
-
-class WordProcessorDocument(AbstractDocument):
-    def __init__(self):
-        AbstractDocument.__init__(self)
-
-class DocumentsParser(xml.sax.ContentHandler):
-    def __init__(self):
-        self.__docs = []
-        self.__inside_title = False
-
-    def startElement(self, name, attrs):
-        #print "<" + name + ">"
-        #print attrs.getNames() # .getValue('foo')
-
-        if name == 'entry':
-            d = SpreadsheetDocument()
-            self.__docs.append(d)
-        elif len(self.__docs) > 0:
-            d = self.__docs[-1]
-            if name == 'title':
-                self.__inside_title = True
-            elif name == 'link':
-                rel = attrs.getValue('rel')
-                href = attrs.getValue('href')
-                type = attrs.getValue('type')
-                #print str((rel, href, type))
-                if rel == 'alternate' and type == 'text/html':
-                    d.update({'link' : href})
-
-    def endElement(self, name):
-        #print "</" + name + ">"
-        
-        if name == 'title':
-            self.__inside_title = False
-
-    def characters(self, content):
-        #print content
-        if len(self.__docs) > 0:
-            d = self.__docs[-1]
-            if self.__inside_title:
-                d.update({'title' : content})
-
-    def get_documents(self):
-        return self.__docs
 
 #class RemoveTagsParser(xml.sax.ContentHandler):
 #    def __init__(self):
@@ -265,10 +214,20 @@ class AsyncHTTPFetcherWithAuth(object):
             # in my experience sys.exc_info() is some kind of junk here, while "e" is useful
             gobject.idle_add(lambda: errcb(url, response) and False)
 
-class CheckMailTask(libbig.polling.Task):
+class GooglePollAction(object):
     def __init__(self, google):
-        libbig.polling.Task.__init__(self, 1000 * 120, initial_interval=1000*5)
         self.__google = google
+
+    def get_google(self):
+        return self.__google
+
+    def update(self):
+        pass        
+
+class MailPollAction(GooglePollAction):
+    def __init__(self, google):
+        super(MailPollAction, self).__init__(google)
+
         self.__ids_seen = {}
         self.__newest_modified_seen = None
 
@@ -366,194 +325,154 @@ class CheckMailTask(libbig.polling.Task):
     def __on_fetch_error(self, exc_info):
         pass
 
+    def update(self):
+        self.get_google().fetch_new_mail(self.__on_fetched_mail, self.__on_fetch_error)
+
+class GenericPollAction(GooglePollAction):
+    def __init__(self, google, func):
+        super(GenericPollAction, self).__init__(google)
+        self.__func = func
+
+    def update(self):
+        self.__func(self.get_google())
+
+class CheckGoogleTask(libbig.polling.Task):
+    def __init__(self, google):
+        libbig.polling.Task.__init__(self, 1000 * 120, initial_interval=1000*5)
+        self.__google = google
+        self.__actions = {} ## hash from id to [add count, GooglePollAction object]
+
+    def add_action(self, id, action_constructor):
+        if id not in self.__actions:
+            action = action_constructor()
+            self.__actions[id] = [1, action]
+        else:
+            self.__actions[id][0] = self.__actions[id][0] + 1
+
+    def remove_action(self, id):
+        if id not in self.__actions:
+            raise Exception("removing action id that wasn't added")
+        self.__actions[id][0] = self.__actions[id][0] - 1
+        if self.__actions[id][0] == 0:
+            del self.__actions[id]
+        
     def do_periodic_task(self):
-        self.__google.fetch_new_mail(self.__on_fetched_mail, self.__on_fetch_error)
+        for (id, a) in self.__actions.values():
+            a.update()
 
 class Google(gobject.GObject):
     __gsignals__ = {
-        "auth" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))
+        ## "auth-badness-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))
     }
 
-    def __init__(self, login_label, storage_key, default_domain='gmail.com', type_hint=None):
+    def __init__(self, account):
         super(Google, self).__init__()
         self.__logger = logging.getLogger("bigboard.Google")
-        self.__username = None
-        self.__password = None
+        self.__last_username_tried = ''
+        self.__last_password_tried = ''
+        self.__last_auth_attempt_failed = False
         self.__fetcher = AsyncHTTPFetcherWithAuth()
-        self.__auth_requested = False
-        self.__post_auth_hooks = []
-        self.__login_label = login_label
-        self.__storage_key = storage_key
-        self.__default_domain = default_domain
-        self.__type_hint = type_hint
+        self.__account = account
 
-        self.__model = DataModel(globals.server_name)
-        
-        self.__ddm_identity = None
-        self.__model.add_connected_handler(self.__on_data_model_connected)
-        if self.__model.self_id:
-            self.__on_data_model_connected()
+        self.__checker = CheckGoogleTask(self)
+        self.add_poll_action('mail', lambda: MailPollAction(self))
+
+        self.__account.connect('changed', lambda account: self.__on_account_changed())
+        self.__on_account_changed()
+
+    def get_account(self):
+        return self.__account
+
+    def destroy(self):
+        ## FIXME close down all the polling tasks and remove all signal handlers
+        self.__checker.stop()
+
+    def add_poll_action(self, id, action_constructor):
+        self.__checker.add_action(id, action_constructor)
+
+    def remove_poll_action(self, id):
+        self.__checker.remove_action(id)
+
+    def add_poll_action_func(self, id, func):
+        self.__checker.add_action(id, lambda: GenericPollAction(self, func))
+
+    def __consider_checking(self):
+        if self.get_current_auth_credentials_known_bad():
+            _logger.debug("Disabling google polling since auth credentials known bad")
+            self.__checker.stop()
         else:
-            _logger.debug("datamodel not connected, deferring")       
+            _logger.debug("Enabling google polling since auth credentials maybe good")
+            self.__checker.start()
 
-        self.__weblogindriver_proxy = dbus.SessionBus().get_object('org.gnome.WebLoginDriver', '/weblogindriver')
-        self.__weblogindriver_proxy.connect_to_signal("SignonChanged",
-                                                       self.__on_signon_changed)
-        self.__recheck_signons()
+    def __auth_needs_retry(self):
 
-        # this line allows to enter new Google account information on bigboard restarts    
-        # k.remove_logins(self.__default_domain)
-        self.__mail_checker = None
+        username = self.__account.get_username_as_google_email()
+        password = self.__account.get_password()
 
-        self.__username = None
-        self.__password = None
-        self.__on_auth_cancel()
+        _logger.debug("auth retry for google username %s" % (username))
 
-    def __consider_checking_mail(self):
-        if self.__username and self.__password:
-            if not self.__mail_checker:
-                self.__mail_checker = CheckMailTask(self)
-            self.__mail_checker.start()
-        elif self.__mail_checker:
-            self.__mail_checker.stop()
+        self.__last_username_tried = username
+        self.__last_password_tried = password
+        self.__last_auth_attempt_failed = False
 
-    def __handle_matched_signon(self, username, password):
-        if self.__type_hint == 'GMail':
-            username = username + "@gmail.com"
-            _logger.debug("using GMail identity %s", username)
-            self.__on_auth_ok(username, password)
-        elif self.__type_hint == 'GAFYD-Mail':
-            if not self.__ddm_identity:
-                _logger.debug("no DDM identity, skipping GAFYD mail")
-                return
-            if not hasattr(self.__ddm_identity, 'googleEnabledEmails'):
-                _logger.debug("No googleEnabledEmails in DDM identity")
-                return
-            for email in self.__ddm_identity.googleEnabledEmails:                             
-                (emailuser, emailhost) = email.split('@', 1) # TODO is this right?
-                if emailuser == username:
-                    _logger.debug("matched username %s (%s) with googleEnabledEmail", emailuser, email)
-                    self.__on_auth_ok(email, password)
+        self.__consider_checking()
+
+    def __on_auth_failed(self, failed_username, failed_password, errcb):
+        _logger.debug("bad auth for google")
+
+        if failed_username == self.__last_username_tried and \
+           failed_password == self.__last_password_tried:
+            self.__last_auth_attempt_failed = True
+            self.__consider_checking()
+
+        errcb({ 'status' : 401, 'message' : 'Bad or missing username or password' })
+
+    def get_current_auth_credentials_known_bad(self):
+        return self.__account.get_username_as_google_email() == '' or \
+               self.__account.get_password() == '' or \
+             self.__last_auth_attempt_failed
+
+    def __on_account_changed(self):
+        auth_changed = False
+        if self.__last_username_tried != self.__account.get_username_as_google_email():
+            auth_changed = True
+        if self.__last_password_tried != self.__account.get_password():
+            auth_changed = True
+
+        _logger.debug("google account changed, auth_changed=%d" % (auth_changed))
+
+        if auth_changed:
+            self.__auth_needs_retry()
+
+    def __call_if_may_have_auth(self, func, errfunc):
+        if self.get_current_auth_credentials_known_bad():
+            errfunc({ 'status' : 401, 'message' : 'Bad or missing username or password' })
         else:
-            _logger.error("unknown type hint %s...oops!", self.__type_hint)
-
-    def __check_signons(self, signons):
-        for signon in signons:
-            if 'hint' not in signon: continue
-            if signon['hint'] == self.__type_hint:
-                _logger.debug("hint %s matched signon %s", self.__type_hint, signon)
-                self.__handle_matched_signon(signon['username'], base64.b64decode(signon['password']))
-                return
-            
-    def __recheck_signons(self):
-        self.__weblogindriver_proxy.GetSignons(reply_handler=self.__on_get_signons_reply,
-                                               error_handler=self.__on_dbus_error)        
-            
-    def __on_data_model_connected(self, *args):
-        _logger.debug("got data model connection")
-        query = self.__model.query_resource(self.__model.self_id, "+;googleEnabledEmails +")
-        query.add_handler(self.__on_google_enabled_emails)
-        query.add_error_handler(self.__on_datamodel_error)        
-        query.execute()
-        
-    def __on_datamodel_error(self, code, str):
-        _logger.error("datamodel error %s: %s", code, str)        
-        
-    def __on_google_enabled_emails(self, myself):
-        self.__ddm_identity = myself     
-        myself.connect(self.__on_ddm_identity_changed)
-        self.__on_ddm_identity_changed(myself)
-        
-    def __on_ddm_identity_changed(self, myself):
-        _logger.debug("ddm identity (%s) changed", myself.resource_id)
-        call_idle_once(self.__recheck_signons)
-
-    @log_except(_logger)
-    def __on_get_signons_reply(self, signondata):
-        _logger.debug("got signons reply")
-        for hostname,signons in signondata.iteritems():
-            self.__check_signons(signons)
-
-    @log_except(_logger)
-    def __on_signon_changed(self, signons):
-        _logger.debug("signons changed: %s", signons)
-        self.__check_signons(signons)
-
-    @log_except(_logger)
-    def __on_dbus_error(self, err):
-        self.__logger.error("D-BUS error: %s", err)
-
-    def __on_auth_ok(self, username, password):
-        if '@' not in username:
-            username = username + '@' + self.__default_domain
-        self.__username = username
-        self.__password = password
-        self.__auth_requested = False
-
-        hooks = self.__post_auth_hooks
-        self.__post_auth_hooks = []
-        for h in hooks:
-            h()
-        self.emit("auth", True)
-
-        self.__consider_checking_mail()
-
-    def __on_auth_cancel(self):
-        self.__username = None
-        self.__password = None
-
-        ## FIXME delete our stored password or mark it as failed somehow (in-process)
-        
-        self.emit("auth", False)        
-        self.__consider_checking_mail()
-        self.__auth_requested = False
-        self.__with_login_info(lambda: True)
-
-    def have_auth(self):
-        return (self.__username is not None) and (self.__password is not None)
-
-    def get_auth(self):
-        return (self.__username, self.__password)
-
-    def get_storage_key(self):
-        return self.__storage_key
-
-    def __with_login_info(self, func, reauth=False):
-        """Call func after we get username and password"""
-
-        if self.__username and self.__password:
-            # _logger.debug("auth looks valid")   
             func()
-            return
-
-        else:
-            _logger.debug("auth request pending; not resending")            
-        self.__post_auth_hooks.append(func)
-
-    def __on_bad_auth(self):
-        _logger.debug("got bad auth; invoking reauth")
-        # don't null username, leave it filled in
-        self.__password = None
-        self.__auth_requested = False
-        self.__with_login_info(lambda: True, reauth=True)
 
     ### Calendar
 
     def __have_login_fetch_calendar_list(self, cb, errcb):
 
+        username = self.__account.get_username_as_google_email()
+        password = self.__account.get_password()
+
         # there is a chance that someone might have access to more than 25 calendars, so let's
         # specify 1000 for max-results to make sure we get information about all calendars 
-        uri = 'http://www.google.com/calendar/feeds/' + self.__username + '?max-results=1000'
+        uri = 'http://www.google.com/calendar/feeds/' + username + '?max-results=1000'
 
-        self.__fetcher.fetch(uri, self.__username, self.__password,
+        self.__fetcher.fetch(uri, username, password,
                              lambda url, data: cb(url, data, self),
                              lambda url, resp: errcb(resp),
-                             lambda url: self.__on_bad_auth())
+                             lambda url: self.__on_auth_failed(username, password, errcb))
 
     def fetch_calendar_list(self, cb, errcb):
-        self.__with_login_info(lambda: self.__have_login_fetch_calendar_list(cb, errcb))
+        self.__call_if_may_have_auth(lambda: self.__have_login_fetch_calendar_list(cb, errcb), errcb)
 
     def __have_login_fetch_calendar(self, cb, errcb, calendar_feed_url, event_range_start, event_range_end):
+
+        username = self.__account.get_username_as_google_email()
+        password = self.__account.get_password()        
 
         min_and_max_str = ""
         if event_range_start is not None and event_range_end is not None:
@@ -564,57 +483,55 @@ class Google(gobject.GObject):
             min_and_max_str =  "?start-min=" + fmt_date_for_feed_request(event_range_start) + "&start-max=" + fmt_date_for_feed_request(event_range_end) + "&singleevents=true" + "&max-results=1000"
 
         if calendar_feed_url is None:
-            uri = 'http://www.google.com/calendar/feeds/' + self.__username + '/private/full' + min_and_max_str
+            uri = 'http://www.google.com/calendar/feeds/' + username + '/private/full' + min_and_max_str
         else:
             uri = calendar_feed_url + min_and_max_str
 
-        self.__fetcher.fetch(uri, self.__username, self.__password,
+        self.__fetcher.fetch(uri, username, password,
                              lambda url, data: cb(url, data, calendar_feed_url, event_range_start, event_range_end, self),
                              lambda url, resp: errcb(resp),
-                             lambda url: self.__on_bad_auth())
+                             lambda url: self.__on_auth_failed(username, password, errcb))
 
     def fetch_calendar(self, cb, errcb, calendar_feed_url = None, event_range_start = None, event_range_end = None):
-        self.__with_login_info(lambda: self.__have_login_fetch_calendar(cb, errcb, calendar_feed_url, event_range_start, event_range_end))
-
-    def request_auth(self):
-        self.__with_login_info(lambda: True)
+        self.__call_if_may_have_auth(lambda: self.__have_login_fetch_calendar(cb, errcb, calendar_feed_url, event_range_start, event_range_end), errcb)
 
     ### Recent Documents
 
     def __on_documents_load(self, url, data, cb, errcb):
         self.__logger.debug("loaded documents from " + url)
-        try:
-            p = DocumentsParser()
-            xml.sax.parseString(data, p)
-            cb(p.get_documents())
-        except xml.sax.SAXException, e:
-            errcb(sys.exc_info())
+        document_list = gdocs.DocumentListFeedFromString(data)   
+        cb(document_list.entry)
 
     def __on_documents_error(self, url, exc_info, errcb):
         self.__logger.debug("error loading documents from " + url)
         errcb(exc_info)
 
     def __have_login_fetch_documents(self, cb, errcb):
+        username = self.__account.get_username_as_google_email()
+        password = self.__account.get_password()        
+        
         uri = 'http://docs.google.com/feeds/documents/private/full'
         # uri = 'http://spreadsheets.google.com/feeds/spreadsheets/private/full'
 
-        self.__fetcher.fetch(uri, self.__username, self.__password,
-                             lambda url, data: cb(url, data, self),
-                             lambda url, resp: errcb(resp),
-                             lambda url: self.__on_bad_auth())
+        self.__fetcher.fetch(uri, username, password,
+                             lambda url, data: self.__on_documents_load(url, data, cb, errcb),
+                             lambda url, resp: self.__on_documents_error(url, resp, errcb),
+                             lambda url: self.__on_auth_failed(username, password, errcb))
 
     def fetch_documents(self, cb, errcb):
-        self.__with_login_info(lambda: self.__have_login_fetch_documents(cb, errcb))
+        self.__call_if_may_have_auth(lambda: self.__have_login_fetch_documents(cb, errcb), errcb)
 
     ### New Mail
 
     def get_mail_base_url(self):
-        if not self.__username:
+        username = self.__account.get_username_as_google_email()
+        
+        if not username:
             return None
             
-        at_sign = self.__username.find('@')
+        at_sign = username.find('@')
 
-        domain = self.__username[at_sign+1:]
+        domain = username[at_sign+1:]
 
         if not domain.endswith('gmail.com'):
             uri = 'http://mail.google.com/a/' + domain
@@ -639,44 +556,63 @@ class Google(gobject.GObject):
 
     def __have_login_fetch_new_mail(self, cb, errcb):
 
+        username = self.__account.get_username_as_google_email()
+        password = self.__account.get_password()        
+
         uri = self.get_mail_base_url() + '/feed/atom'
 
-        self.__fetcher.fetch(uri, self.__username, self.__password,
+        self.__fetcher.fetch(uri, username, password,
                              lambda url, data: self.__on_new_mail_load(url, data, cb, errcb),
                              lambda url, exc_info: self.__on_new_mail_error(url, exc_info, errcb),
-                             lambda url: self.__on_bad_auth())
+                             lambda url: self.__on_auth_failed(username, password, errcb))
 
     def fetch_new_mail(self, cb, errcb):
-        self.__with_login_info(lambda: self.__have_login_fetch_new_mail(cb, errcb))
+        self.__call_if_may_have_auth(lambda: self.__have_login_fetch_new_mail(cb, errcb), errcb)
 
-_google_personal_instance = None
-def get_google_at_personal():
-    global _google_personal_instance
-    if _google_personal_instance is None:
-        _google_personal_instance = Google(login_label='Google Personal', storage_key='google', type_hint='GMail')
-    return _google_personal_instance
-
-_google_work_instance = None
-def get_google_at_work():
-    global _google_work_instance
-    if _google_work_instance is None:
-        _google_work_instance = Google(login_label='Google Work', storage_key='google-work', type_hint='GAFYD-Mail')
-    return _google_work_instance
+__googles_by_account = {}
+__initialized = False
 
 def get_googles():
-    return [get_google_at_personal(), get_google_at_work()]
+    global __googles_by_account
+    return __googles_by_account.values()
 
-## this is a hack to allow incrementally porting code to multiple
-## google accounts, it doesn't really make any sense long-term
-def get_google():
-    personal = get_google_at_personal()
-    work = get_google_at_work()
-    if personal.have_auth():
-        return personal
-    elif work.have_auth():
-        return work
-    else:
-        return personal
+def get_google_for_account(account):
+    global __googles_by_account
+    return __googles_by_account[account]
+
+def __refresh_googles(a):
+    global __googles_by_account    
+    gaccounts = a.get_accounts_with_kind(accounts.KIND_GOOGLE)
+    new_googles = {}
+    for g in gaccounts:
+        if g in __googles_by_account:
+            new_googles[g] = __googles_by_account[g]
+        else:
+            new_googles[g] = Google(g)
+
+    for (g, old) in __googles_by_account.items():
+        if g not in new_googles:
+            old.destroy()
+            
+    __googles_by_account = new_googles
+
+def __on_account_added(a, account):
+    __refresh_googles(a)
+
+def __on_account_removed(a, account):
+    __refresh_googles(a)
+
+def init():
+    global __initialized
+    
+    if __initialized:
+        return
+    __initialized = True
+    
+    a = accounts.get_accounts()
+    __refresh_googles(a)
+    a.connect('account-added', __on_account_added)
+    a.connect('account-removed', __on_account_removed)
         
 if __name__ == '__main__':
 

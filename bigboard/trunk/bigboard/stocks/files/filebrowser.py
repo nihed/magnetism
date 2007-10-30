@@ -60,10 +60,10 @@ class FileBrowser(hippo.CanvasWindow):
  
         for google_account in self.__stock.googles:
             # don't list invalid accounts we might have picked up from the signons file
-            if not google_account.have_auth():
+            if google_account.get_current_auth_credentials_known_bad():
                 continue  
-            google_docs_link = ActionLink(text=google_account.get_auth()[0] + " Docs", font="14px", padding_bottom=4, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
-            google_docs_link.connect("activated", webbrowser.open, create_account_url(google_account.get_auth()[0]))
+            google_docs_link = ActionLink(text=google_account.get_account().get_username_as_google_email() + " Docs", font="14px", padding_bottom=4, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
+            google_docs_link.connect("activated", webbrowser.open, create_account_url(google_account.get_account().get_username_as_google_email()))
             browse_options.append(google_docs_link)
 
         self.__search_box = CanvasHBox(padding_top=4, padding_bottom=4)        

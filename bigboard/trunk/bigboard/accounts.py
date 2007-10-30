@@ -22,7 +22,7 @@ class AccountKind(object):
 KIND_GOOGLE = AccountKind("google")
 
 def kind_from_string(s):
-    for kind in (KIND_GOOGLE):
+    for kind in [KIND_GOOGLE]:
         if s == kind.get_id():
             return kind
     return None
@@ -34,6 +34,7 @@ class Account(gobject.GObject):
 
     def __init__(self, kind, username='', password='', url='', enabled=True, gconf_dir=None):
         super(Account, self).__init__()
+        
         self.__kind = kind
         self.__username = username
         self.__password = password
@@ -41,11 +42,21 @@ class Account(gobject.GObject):
         self.__enabled = enabled
         self.__gconf_dir = gconf_dir
 
+        _logger.debug("Created account %s" % (str(self)))
+
     def get_kind(self):
         return self.__kind
 
     def get_username(self):
         return self.__username
+
+    def get_username_as_google_email(self):
+        if self.__username == '':
+            return self.__username
+        elif '@' not in self.__username:
+            return self.__username + '@gmail.com'
+        else:
+            return self.__username
 
     def get_password(self):
         return self.__password
@@ -62,15 +73,17 @@ class Account(gobject.GObject):
     def _set_gconf_dir(self, gconf_dir):
         self.__gconf_dir = gconf_dir
 
-    def _update_from_origin(self, **kwargs):
+    def _update_from_origin(self, new_props):
         """This is the only way to modify an Account object. It should be invoked only on change notification or refreshed data from the original origin of the account."""
 
         ## check it out!
         changed = False
-        for (key,value) in kwargs.items():
-            old = self.__dict__['__' + key]
+        for (key,value) in new_props.items():
+            if value is None:
+                value = ''
+            old = getattr(self, '_Account__' + key)
             if old != value:
-                self.__dict__['__' + key] = value
+                setattr(self, '_Account__' + key, value)
                 changed = True
 
         if changed:
@@ -123,12 +136,14 @@ class Accounts(gobject.GObject):
 
     def __update_account(self, account):
 
+        _logger.debug("Updating account %s" % (str(account)))
+
         ## note that "kind" is never updated (not allowed to change without
         ## making a new Account object)
 
         was_enabled = account in self.__enabled_accounts
         if was_enabled != account.get_enabled():
-            raise Error("account enabled state messed up")
+            raise Exception("account enabled state messed up")
 
         fields = { }
 
@@ -172,7 +187,8 @@ class Accounts(gobject.GObject):
             if 'enabled' not in fields:
                 fields['enabled'] = True
         else:
-            self.__weblogin_accounts.remove(account)
+            if account in self.__weblogin_accounts:
+                self.__weblogin_accounts.remove(account)
 
         ## after compositing all this information, update our account object
         account._update_from_origin(fields)
@@ -185,12 +201,18 @@ class Accounts(gobject.GObject):
         password = k.get_password(kind=account.get_kind().get_id(),
                                   username=account.get_username(),
                                   url=account.get_url())
-        if 'password' not in fields:
+        if password and 'password' not in fields:
+            _logger.debug("using password from keyring")
             fields['password'] = password
             
         ## fourth, if no password in keyring, use the weblogin one
         if weblogin_password and 'password' not in fields:
+            _logger.debug("using password from weblogin")
             fields['password'] = weblogin_password
+
+        ## if no password found, the password has to be set to empty
+        if 'password' not in fields:
+            fields['password'] = ''
 
         ## update account object again if we might have the password
         if 'password' in fields:
@@ -208,8 +230,9 @@ class Accounts(gobject.GObject):
         account = self.__find_weblogin_account_by_kind(kind)
         added = False
         if not account:
-            account = Account(kind)
+            account = Account(kind, enabled=True)
             self.__weblogin_accounts.add(account)
+            self.__enabled_accounts.add(account)
         self.__update_account(account)
 
     def __try_ensure_and_update_account_for_gconf_dir(self, gconf_dir):
@@ -236,22 +259,32 @@ class Accounts(gobject.GObject):
         if account:
             account._set_gconf_dir(gconf_dir)
         else:
-            account = Account(kind, gconf_dir=gconf_dir)
+            account = Account(kind, gconf_dir=gconf_dir, enabled=False)
 
         self.__gconf_accounts.add(account)
         
         self.__update_account(account)
+
+    def __remove_dirname(self, gconf_key):
+        i = gconf_key.rfind('/')
+        return gconf_key[i+1:]
             
     def __reload_from_gconf(self):
         gconf_dirs = self.__gconf.all_dirs('/apps/bigboard/accounts')
 
+        _logger.debug("Reloading %s from gconf" % (str(gconf_dirs)))
+
         new_gconf_infos = {}
         for gconf_dir in gconf_dirs:
-            base_key = '/apps/bigboard/accounts/' + gconf_dir
-
+            base_key = gconf_dir
+            gconf_dir = self.__remove_dirname(gconf_dir)
+            
             gconf_info = {}
             def get_account_prop(gconf, gconf_info, base_key, prop):
-                value = gconf.get_value(base_key + '/' + prop)
+                try:
+                    value = gconf.get_value(base_key + '/' + prop)
+                except ValueError:
+                    value = None
                 if value:
                     gconf_info[prop] = value
             get_account_prop(self.__gconf, gconf_info, base_key, 'kind')
@@ -319,6 +352,9 @@ class Accounts(gobject.GObject):
 
     def save_account_changes(self, account, new_properties):
 
+        _logger.debug("Saving new props for account %s: %s" % (str(account), str(new_properties.keys())))
+        set_password = False
+
         ## special-case handling of password since it goes in the keyring
         if 'password' in new_properties:
             if 'username' in new_properties:
@@ -331,11 +367,14 @@ class Accounts(gobject.GObject):
             else:
                 url = account.get_url()
 
-            k = keyring.get_keyring()            
+            k = keyring.get_keyring()
+            
             k.store_login(kind=account.get_kind().get_id(),
                           username=username,
                           url=url,
                           password=new_properties['password'])
+
+            set_password = True
 
         ## now do everything else by stuffing it in gconf
             
@@ -356,6 +395,9 @@ class Accounts(gobject.GObject):
         base_key = '/apps/bigboard/accounts/' + gconf_dir
         
         def set_account_prop(gconf, base_key, prop, value):
+            _logger.debug("prop %s value %s" % (prop, str(value)))
+            if isinstance(value, AccountKind):
+                value = value.get_id()
             gconf.set_value(base_key + '/' + prop, value)
 
         set_account_prop(self.__gconf, base_key, 'kind', account.get_kind())
@@ -368,6 +410,11 @@ class Accounts(gobject.GObject):
         ## enable it last, so we ignore the other settings until we do this
         if 'enabled' in new_properties:
             set_account_prop(self.__gconf, base_key, 'enabled', new_properties['enabled'])
+
+        ## keyring doesn't have change notification so we have to do the work for it
+        if set_password:
+            ## this should notice a new password
+            self.__update_account(account)
 
     def create_account(self, kind):
         gconf_dir = self.__find_unused_gconf_dir(kind)
@@ -386,3 +433,11 @@ class Accounts(gobject.GObject):
                 accounts.add(a)
         return accounts
     
+__accounts = None
+
+def get_accounts():
+    global __accounts
+    if not __accounts:
+        __accounts = Accounts()
+
+    return __accounts

@@ -9,7 +9,6 @@ import hippo
 
 from pyonlinedesktop.fsutil import VfsMonitor
 
-import gdata.docs as gdocs
 import bigboard.libbig as libbig
 from bigboard.libbig.logutil import log_except
 from bigboard.libbig.gutil import *
@@ -209,7 +208,7 @@ class FilesStock(Stock, google_stock.GoogleStock):
     """Shows recent files."""
     def __init__(self, *args, **kwargs):
         Stock.__init__(self, *args, **kwargs)
-        google_stock.GoogleStock.__init__(self, *args, **kwargs)
+        google_stock.GoogleStock.__init__(self, 'files', **kwargs)
 
         # files in this list are either LocalFile or GoogleFile 
         self.__files = []
@@ -236,10 +235,10 @@ class FilesStock(Stock, google_stock.GoogleStock):
 
     def update_google_data(self, selected_gobj = None):
         if selected_gobj is not None:
-            selected_gobj.fetch_documents(self.__on_documents_load, self.__on_failed_load)
+            selected_gobj.fetch_documents(lambda entries: self.__on_documents_load(entries, selected_gobj), self.__on_failed_load)
         else:            
             for gobj in self.googles:
-                gobj.fetch_documents(self.__on_documents_load, self.__on_failed_load)    
+                gobj.fetch_documents(lambda entries: self.__on_documents_load(entries, gobj), self.__on_failed_load)    
 
     def __remove_files_for_key(self, source_key):
         files_to_keep = []
@@ -256,11 +255,11 @@ class FilesStock(Stock, google_stock.GoogleStock):
         self._panel.action_taken()
         subprocess.Popen(['gnome-open', fobj.get_url()])        
 
-    def __on_documents_load(self, url, data, gobj):
-        document_list = gdocs.DocumentListFeedFromString(data)   
+    def __on_documents_load(self, document_entries, gobj):
         self.__remove_files_for_key(gobj) 
-        for document_entry in document_list.entry:
-            google_file = GoogleFile(gobj, gobj.get_auth()[0], document_entry)
+        for document_entry in document_entries:
+            google_file = GoogleFile(gobj, gobj.get_account().get_username_as_google_email(),
+                                     document_entry)
             google_file.connect('activated', self.__on_file_activated)
             self.__files.append(google_file)
         self.__files.sort(compare_by_date)
