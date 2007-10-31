@@ -230,6 +230,9 @@ class FilesStock(Stock, google_stock.GoogleStock):
         search.enable_search_provider('files', constructor=self.__construct_search_provider)
         #### FIXME need to figure out when to call search.disable_search_provider
 
+    def _on_delisted(self):
+        self._delist_google()
+
     def __construct_search_provider(self):
         return FileSearchProvider(stock=self)
 

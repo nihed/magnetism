@@ -10,6 +10,18 @@ def _run_logging(f, logger, *args):
         logger.exception('Exception in idle')        
     return False
 
+class DisconnectSet(object):
+    def __init__(self):
+        super(DisconnectSet, self).__init__()
+        self.__connections = set()
+
+    def add(self, object, id):
+        self.__connections.add((object, id))
+
+    def disconnect_all(self):
+        for (object, id) in self.__connections:
+            object.disconnect(id)
+
 def call_timeout(timeout, func, *args, **kwargs):
     if 'logger' in kwargs:
         logger = kwargs['logger']
@@ -64,4 +76,4 @@ def read_subprocess_idle(args, cb):
     watchid = gobject.io_add_watch(subp.stdout.fileno(), gobject.IO_IN | gobject.IO_ERR | gobject.IO_HUP, handle_data_avail)
     return watchid
 
-__all__ = ['call_timeout', 'call_idle', 'call_timeout_once', 'call_idle_once', 'defer_idle_func', 'read_subprocess_idle']
+__all__ = ['call_timeout', 'call_idle', 'call_timeout_once', 'call_idle_once', 'defer_idle_func', 'read_subprocess_idle', 'DisconnectSet']

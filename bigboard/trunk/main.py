@@ -324,6 +324,10 @@ class Exchange(hippo.CanvasBox):
             self.__render_pymodule()
         else:
             self.__render_google_gadget()    
+
+    def on_delisted(self):
+        _logger.debug("on_delisted exchange %s" % (str(self)))
+        self.__unrender_pymodule()
     
     def __toggle_expanded(self):
         self.__expanded = not self.__expanded
@@ -364,6 +368,15 @@ class Exchange(hippo.CanvasBox):
         if self.__ticker_text:
             self.set_child_visible(self.__ticker_container, size == Stock.SIZE_BULL)
 
+    def __unrender_pymodule(self):
+        if not self.__pymodule:
+            _logger.debug("Not a pymodule exchange")
+            return
+
+        _logger.debug("delisting pymodule %s" % (str(self.__pymodule)))
+        self.__pymodule.on_delisted()
+        self.__pymodule = None
+
 class BigBoardPanel(dbus.service.Object):
     def __init__(self, bus_name):
         dbus.service.Object.__init__(self, bus_name, '/bigboard/panel')
@@ -382,7 +395,7 @@ class BigBoardPanel(dbus.service.Object):
     
         self.__autohide_id = 0
         
-        self._exchanges = {}
+        self._exchanges = {} ## metainfo.srcurl to Exchange
 
         self._canvas = hippo.Canvas()
         self._dw.get_content().add(self._canvas)
@@ -482,12 +495,21 @@ class BigBoardPanel(dbus.service.Object):
     @log_except(_logger)
     def __sync_listing(self):
         _logger.debug("doing stock listing sync")
-        new_listed = list(self.__stock_manager.get_listed())       
+        new_listed = list(self.__stock_manager.get_listed())
+        new_listed_srcurls = map(lambda mi: mi.srcurl, new_listed)
         for exchange in list(self._stocks_box.get_children()):
             if exchange.get_metainfo().srcurl in self.__hardcoded_stocks:
                 continue
-            _logger.debug("removing %s", exchange)
+
+            _logger.debug("unrendering %s", exchange)
+            
             self._stocks_box.remove(exchange)
+
+            if exchange.get_metainfo().srcurl not in new_listed_srcurls:
+                _logger.debug("removing %s", exchange)                
+                del self._exchanges[exchange.get_metainfo().srcurl]
+                exchange.on_delisted()
+            
         for metainfo in new_listed:
             self.__append_metainfo(metainfo)
         _logger.debug("done with stock load")            
