@@ -44,8 +44,8 @@ public class JavascriptStringTest extends TestCase {
 			};
 		final String[] expected = {
 				"'abc'",
-				"'\\''",
-				"'\\\"'",
+				"'\\u0027'",
+				"'\\u0022'",
 				"'\\r'",
 				"'\\n'",
 				"'\\u000C'",
