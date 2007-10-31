@@ -40,6 +40,11 @@ class GoogleStock(object):
     def _delist_google(self):
         self.__connections.disconnect_all()
 
+        ## detach from all the accounts
+        accts = self.__googles_by_account.keys()
+        for a in accts:
+            self.__on_account_removed(a)
+
     def __on_account_added(self, acct):
         gobj = google.get_google_for_account(acct)
         gobj.add_poll_action_func(self.__action_id, lambda gobj: self.update_google_data(gobj))
