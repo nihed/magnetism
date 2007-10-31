@@ -6,6 +6,7 @@ import bigboard.accounts as accounts
 import bigboard.globals as globals
 import libbig.logutil
 from libbig.logutil import log_except
+import bigboard.libbig.gutil as gutil
 
 _logger = logging.getLogger("bigboard.AccountsDialog")
 
@@ -45,9 +46,14 @@ class AccountEditor(gtk.VBox):
         self.show_all()
 
         self.__on_account_changed(self.__account)
-        self.__account.connect('changed', self.__on_account_changed)
+        self.__changed_id = self.__account.connect('changed', self.__on_account_changed)
 
         self.__password_entry.set_activates_default(True)
+
+        self.connect('destroy', self.__on_destroy)
+
+    def __on_destroy(self, self2):
+        self.__account.disconnect(self.__changed_id)
 
     def __on_account_changed(self, account):
         self.__username_entry.set_text(account.get_username())
@@ -78,13 +84,33 @@ class Dialog(gtk.Dialog):
 
         self.__editors_by_account = {}
 
-        accts = accounts.get_accounts().get_accounts_with_kind(accounts.KIND_GOOGLE)
-        if len(accts) == 0:
+        self.__connections = gutil.DisconnectSet()
+
+        accts = accounts.get_accounts()
+        id = accts.connect('account-added', self.__on_account_added)
+        self.__connections.add(accts, id)
+        id = accts.connect('account-removed', self.__on_account_removed)
+        self.__connections.add(accts, id)
+
+        google_accounts = accts.get_accounts_with_kind(accounts.KIND_GOOGLE)
+        if len(google_accounts) == 0:
             accounts.get_accounts().create_account(accounts.KIND_GOOGLE)
         else:
-            for a in accts:
-                self.__editors_by_account[a] = AccountEditor(account=a)
-                self.vbox.pack_start(self.__editors_by_account[a])
+            for a in google_accounts:
+                self.__on_account_added(a)
+
+    ## should be a destroy() that disconnects connections, but we never destroy anyway
+
+    def __on_account_added(self, a):
+        if a.get_kind() == accounts.KIND_GOOGLE and a not in self.__editors_by_account:
+            self.__editors_by_account[a] = AccountEditor(account=a)
+            self.vbox.pack_end(self.__editors_by_account[a])            
+
+    def __on_account_removed(self, a):
+        if a in self.__editors_by_account:
+            editor = self.__editors_by_account[a]
+            del self.__editors_by_account[a]
+            editor.destroy() ## should remove it from vbox
 
     def __on_delete_event(self, dialog, event):
         self.hide()

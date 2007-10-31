@@ -349,12 +349,15 @@ class CheckGoogleTask(libbig.polling.Task):
         else:
             self.__actions[id][0] = self.__actions[id][0] + 1
 
+        _logger.debug("check count bumped to %d for google check action %s" % (self.__actions[id][0], id))
+
     def remove_action(self, id):
         if id not in self.__actions:
             raise Exception("removing action id that wasn't added")
         self.__actions[id][0] = self.__actions[id][0] - 1
+        _logger.debug("check count reduced to %d for google check action %s" % (self.__actions[id][0], id))
         if self.__actions[id][0] == 0:
-            del self.__actions[id]
+            del self.__actions[id]            
         
     def do_periodic_task(self):
         for (id, a) in self.__actions.values():
