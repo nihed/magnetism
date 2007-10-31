@@ -58,6 +58,15 @@ class Stock(gobject.GObject):
         # For use in subclasses as well
         self._logger = logging.getLogger('bigboard.stocks.' + self._id)  
         _logger.debug("initializing")
+
+    def on_delisted(self):
+        """Called when stock is shut down (removed)"""
+        _logger.debug("on_delisted stock %s" % (self._id))
+        self._on_delisted() ## saves derived classes the need to chain up
+
+    def _on_delisted(self):
+        """The most-derived concrete stock object can override this instead of on_delisted, then not chain up"""
+        pass
         
     def get_id(self):
         return self._id
@@ -114,14 +123,25 @@ class AbstractMugshotStock(Stock):
         self._dependent_handlers = []
         
         self._mugshot = global_mugshot.get_mugshot()
-        self._mugshot.connect("initialized", lambda mugshot: self._on_mugshot_initialized())
+        self.__connections = DisconnectSet()
+
+        id = self._mugshot.connect("initialized", lambda mugshot: self._on_mugshot_initialized())
+        self.__connections.add(self._mugshot, id)
         if self._mugshot.get_initialized():
             call_idle(self.__invoke_mugshot_initialized)
-        self._mugshot.connect("connection-status", lambda mugshot, auth, xmpp, contacts: self.__handle_mugshot_connection_status(auth, xmpp, contacts))
+
+        id = self._mugshot.connect("connection-status", lambda mugshot, auth, xmpp, contacts: self.__handle_mugshot_connection_status(auth, xmpp, contacts))
+        self.__connections.add(self._mugshot, id)        
+
         call_idle(self.__handle_mugshot_connection_status, *self._mugshot.current_connection_status())  
         
         self.__cursize = None
         self.__box = hippo.CanvasBox()
+
+    def on_delisted(self):
+        self.__connections.disconnect_all()
+
+        super(AbstractMugshotStock, self).on_delisted()
 
     def __sync_content(self):
         self.__box.remove_all()        

@@ -447,6 +447,9 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
 
         self._add_more_button(self.__on_more_button)
 
+    def _on_delisted(self):
+        self._delist_google()
+
     def __change_day(self):
         self.__close_slideout()
         self.__events_for_day_displayed = None

@@ -3,6 +3,7 @@ import hippo
 import bigboard.google as google
 import bigboard.accounts as accounts
 import accounts_dialog
+import bigboard.libbig.gutil as gutil
 
 _logger = logging.getLogger("bigboard.Google")
 
@@ -22,13 +23,22 @@ class GoogleStock(object):
 
         self.__action_id = action_id
 
+        self.__connections = gutil.DisconnectSet()
+
         accts = accounts.get_accounts()
         for a in accts.get_accounts_with_kind(accounts.KIND_GOOGLE):
             self.__on_account_added(a)
-        accts.connect('account-added', self.__on_account_added)
-        accts.connect('account-removed', self.__on_account_removed)
+        id = accts.connect('account-added', self.__on_account_added)
+        self.__connections.add(accts, id)
+        id = accts.connect('account-removed', self.__on_account_removed)
+        self.__connections.add(accts, id)
 
-        ## FIXME need to unhook everything when stock is removed
+        
+
+    ## we can't just override _on_delisted() because of multiple inheritance,
+    ## so our subclasses have to override it then call this
+    def _delist_google(self):
+        self.__connections.disconnect_all()
 
     def __on_account_added(self, acct):
         gobj = google.get_google_for_account(acct)
