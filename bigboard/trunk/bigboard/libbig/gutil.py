@@ -18,6 +18,16 @@ class DisconnectSet(object):
     def add(self, object, id):
         self.__connections.add((object, id))
 
+    def disconnect_object(self, object_to_disconnect):
+        to_remove = []        
+        for (object, id) in self.__connections:
+            if object == object_to_disconnect:
+                object.disconnect(id)
+                to_remove.append((object, id))
+
+        for (object, id) in to_remove:
+            self.__connections.remove((object, id))
+                
     def disconnect_all(self):
         for (object, id) in self.__connections:
             object.disconnect(id)

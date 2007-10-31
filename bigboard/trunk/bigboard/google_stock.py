@@ -31,9 +31,7 @@ class GoogleStock(object):
         id = accts.connect('account-added', self.__on_account_added)
         self.__connections.add(accts, id)
         id = accts.connect('account-removed', self.__on_account_removed)
-        self.__connections.add(accts, id)
-
-        
+        self.__connections.add(accts, id)        
 
     ## we can't just override _on_delisted() because of multiple inheritance,
     ## so our subclasses have to override it then call this

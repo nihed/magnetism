@@ -598,7 +598,11 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         google_key = gobj
         if google_key is None:
             _logger.warn("didn't find google_key for %s", gobj)
-            return 
+            return
+        if gobj not in self.googles:
+            _logger.debug("loaded a calendar from already-removed google account")
+            return
+        
         # parse calendar list feed into a list of Calendar objects
         calendar_list = gcalendar.CalendarListFeedFromString(data)
         updated_calendar_dictionary = {}
@@ -645,7 +649,12 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         google_key = gobj
         if google_key is None:
             _logger.warn("didn't find google_key for %s", gobj)
-            return 
+            return
+
+        if gobj not in self.googles:
+            _logger.debug("loaded a calendar from already-removed google account")
+            return
+        
         try:
             p = EventsParser(data)
             color = self.__calendars[calendar_feed_url][google_key].color.value 
