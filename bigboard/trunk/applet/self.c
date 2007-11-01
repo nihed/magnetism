@@ -138,8 +138,8 @@ apps_compare_usage_descending_func(const void *a,
     int usage_a;
     int usage_b;
 
-    usage_a = app_get_usage_count(a);
-    usage_b = app_get_usage_count(b);
+    usage_a = app_get_usage_count((void*)a);
+    usage_b = app_get_usage_count((void*)b);
 
     if (usage_a < usage_b)
         return 1;

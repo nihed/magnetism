@@ -384,7 +384,7 @@ class BigBoardPanel(dbus.service.Object):
         _logger.info("constructing")
                 
         self._dw = Sidebar(True, GCONF_PREFIX + 'visible')
-        self._shown = False
+        self.__popped_out = False
         self.__shell = None
         
         gconf_client = gconf.client_get_default()
@@ -445,8 +445,10 @@ class BigBoardPanel(dbus.service.Object):
         self.__self_stock.connect('info-loaded', lambda *args: self.__initial_appearance())
         self.__search_stock.connect('match-selected', self.__on_search_match_selected)
 
-        gconf_client.notify_add(GCONF_PREFIX + 'visible', self.__sync_visible)
-        self.__sync_visible()
+        ## visible=True means we never hide, visible=False means we "autohide" and popout
+        ## when the hotkey or applet is used
+        gconf_client.notify_add(GCONF_PREFIX + 'visible', self.__sync_visible_mode)
+        self.__sync_visible_mode()
         
     @log_except(_logger)
     def __initial_appearance(self):
@@ -476,7 +478,7 @@ class BigBoardPanel(dbus.service.Object):
     @log_except()
     def __on_focus(self):
         _logger.debug("got focus keypress")
-        self.toggle_popout()
+        self.toggle_popout(gtk.get_current_event_time())
 
     def __append_metainfo(self, metainfo, **kwargs):
         try:
@@ -526,38 +528,7 @@ class BigBoardPanel(dbus.service.Object):
     
     @log_except()
     def __on_search_match_selected(self, search):
-        self.action_taken()
-        
-    def __handle_deactivation(self, immediate=False):
-        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
-        if not vis and self.__autohide_id == 0:
-            _logger.debug("enqueued autohide timeout")            
-            self.__autohide_id = gobject.timeout_add(immediate and 1 or 1500, self.__idle_do_hide)        
-            
-    @log_except()
-    def __idle_do_hide(self):
-        _logger.debug("in idle hide")
-        self.__autohide_id = 0
-        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
-        if vis:
-            return  
-        _logger.debug("setting shown=False")      
-        self._shown = False
-        self._dw.hide()
-        
-    @log_except()
-    def __sync_visible(self, *args):
-        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
-        self.__queue_strut()
-        if vis:
-            self._dw.show()
-            self.ExpandedChanged(True)
-        else:
-            self._dw.hide()
-            if not gconf.client_get_default().get_bool(GCONF_PREFIX + 'first_time_minimize_seen'):
-                dialog = FirstTimeMinimizeDialog(True)
-                dialog.show_all()        
-            self.ExpandedChanged(False)
+        self.action_taken()        
         
     @log_except()
     def _toggle_size(self):
@@ -578,72 +549,119 @@ class BigBoardPanel(dbus.service.Object):
 
     @log_except()
     def __idle_do_strut(self):
-        _logger.debug("idle strut set")
+        _logger.debug("setting strut in idle")
         self._dw.do_set_wm_strut()
-        _logger.debug("idle strut set complete")
         return False
 
     def __queue_strut(self):
         # TODO - this is kind of gross; we need the strut change to happen after
         # the resize, but that appears to be an ultra-low priority internally
         # so we can't easily queue something directly after.
-        gobject.timeout_add(250, self.__idle_do_strut)
-        
-    def show(self):
-        self.__sync_visible()
+        call_timeout_once(250, self.__idle_do_strut)
         
     def get_desktop_path(self):
-        return DESKTOP_PATH
+        return DESKTOP_PATH        
 
+    ## There are two aspects to the sidebar state:
+    ## the "visible" gconf key is like the old gnome-panel "autohide"
+    ## preference. i.e. if !visible, the sidebar is normally collapsed
+    ## and you have to use a hotkey or the applet to pop it out.
+    ## So the second piece of state is self.__popped_out, which is whether
+    ## the sidebar is currently popped out. If visible=True, the sidebar
+    ## is always popped out, i.e. self.__popped_out should be True always.
+
+    ## Shows the sidebar
     def __handle_activation(self):
-        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
-        if not vis:
-            _logger.debug("showing all")
-            self._dw.show_all()
-            self._shown = True
-        if self.__get_size() == Stock.SIZE_BEAR:
-            self._toggle_size()        
+        if not self.__popped_out:
+            _logger.debug("popping out")
+            self._dw.show()
+            self.__queue_strut()
+            self.__popped_out = True
+            self.EmitPoppedOutChanged()
 
-    def toggle_popout(self):
-        if not self._shown:
-            _logger.debug("handling popout activation")
+    ## Hides the sidebar, possibly after a delay, only if visible mode is False
+    def __handle_deactivation(self, immediate=False):
+        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
+        if self.__popped_out and not vis and self.__autohide_id == 0:
+            _logger.debug("enqueued autohide timeout")            
+            self.__autohide_id = gobject.timeout_add(immediate and 1 or 1500, self.__idle_do_hide)        
+            
+    @log_except()
+    def __idle_do_hide(self):
+        _logger.debug("in idle hide")
+        self.__autohide_id = 0
+        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
+        if vis or not self.__popped_out:
+            return  
+
+        _logger.debug("unpopping out")
+        self.__popped_out = False
+        self._dw.hide()
+        self.__queue_strut()
+        self.EmitPoppedOutChanged()
+
+    ## syncs our current state to a change in the gconf setting for visible mode
+    @log_except()
+    def __sync_visible_mode(self, *args):
+        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
+        if vis and not self.__popped_out:
             self.__handle_activation()
-            self._dw.present_with_time(gtk.get_current_event_time())
-            self.__search_stock.focus()
-        else:
-            _logger.debug("handling popout deactivation")            
+        elif not vis:
+            self.__handle_deactivation()
+            if not gconf.client_get_default().get_bool(GCONF_PREFIX + 'first_time_minimize_seen'):
+                dialog = FirstTimeMinimizeDialog(True)
+                dialog.show_all()
+
+        ## this is needed because the Sidebar widget knows about the 'visible' gconf key,
+        ## and if we're not in visible mode (in autohide mode), it never sets the strut.
+        ## However the Sidebar widget does not itself listen for changes on the gconf key.
+        self.__queue_strut()
+        
+    ## Pops out the sidebar, and focuses it (if the sidebar is in visible mode, only has to focus)
+    def __do_popout(self, xtimestamp):
+        if not self.__popped_out:
+            _logger.debug("popout requested")
+            self.__handle_activation()
+
+        ## focus even if we were already shown
+        self._dw.present_with_time(xtimestamp)
+        self.__search_stock.focus()
+
+    ## Hides the sidebar, only if not in visible mode
+    def __do_unpopout(self):
+        if self.__popped_out:
+            _logger.debug("unpopout requested")            
             self.__handle_deactivation(True)
 
-    def __do_unexpand(self):
-        gconf.client_get_default().set_bool(GCONF_PREFIX + 'visible', False)
+    def toggle_popout(self, xtimestamp):
+        if self.__popped_out:
+            self.__do_unpopout()
+        else:
+            self.__do_popout(xtimestamp)
 
-    @dbus.service.method(BUS_IFACE_PANEL)
-    def Unexpand(self):
-        _logger.debug("got unexpand method call")
-        return self.__do_unexpand()
-
-    def __do_expand(self):
-        gconf.client_get_default().set_bool(GCONF_PREFIX + 'visible', True)
-
-    def toggle_expand(self):
+    def __set_visible_mode(self, setting):
         vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
-        vis = not vis
-        gconf.client_get_default().set_bool(GCONF_PREFIX + 'visible', vis)
+        if setting != vis:
+            gconf.client_get_default().set_bool(GCONF_PREFIX + 'visible', setting)
 
     @dbus.service.method(BUS_IFACE_PANEL)
-    def Expand(self):
-        _logger.debug("got expand method call")
-        return self.__do_expand()
-
-    @dbus.service.method(BUS_IFACE_PANEL)
-    def EmitExpandedChanged(self):
-        _logger.debug("got emitExpandedChanged method call")
-        self.ExpandedChanged(gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible'))
+    def EmitPoppedOutChanged(self):
+        _logger.debug("got emitPoppedOutChanged method call")        
+        self.PoppedOutChanged(self.__popped_out)
         
     @dbus.service.method(BUS_IFACE_PANEL)
-    def TogglePopout(self):
-        _logger.debug("got toggle popout method call")
-        return self.toggle_popout()  
+    def Popout(self, xtimestamp):
+        _logger.debug("got popout method call")
+        return self.__do_popout(xtimestamp)
+
+    @dbus.service.method(BUS_IFACE_PANEL)
+    def Unpopout(self):
+        _logger.debug("got unpopout method call")
+
+        ## force us into autohide mode, since otherwise unpopout would not make sense
+        self.__set_visible_mode(False)
+
+        return self.__do_unpopout()
 
     @dbus.service.method(BUS_IFACE_PANEL)
     def Reboot(self):
@@ -702,7 +720,7 @@ class BigBoardPanel(dbus.service.Object):
 
     @dbus.service.signal(BUS_IFACE_PANEL,
                          signature='b')
-    def ExpandedChanged(self, is_expanded):
+    def PoppedOutChanged(self, is_popped_out):
         pass
 
 # TODO: figure out an algorithm for removing pixbufs from the cache
@@ -838,8 +856,6 @@ widget "*bigboard-nopad-button" style "bigboard-nopad-button"
     
     _logger.debug("Creating panel")
     panel = BigBoardPanel(bus_name)
-    
-    panel.show()
 
     bigboard.google.init()
     #bigboard.presence.get_presence() # for side effect of creating Presence object

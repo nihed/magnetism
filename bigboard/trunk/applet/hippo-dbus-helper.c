@@ -991,7 +991,8 @@ emit_signal_valist_appender(DBusConnection          *connection,
             g_warning("no memory to append signal args");
         }
     }
-    
+
+    /* FIXME this is broken, signals only have in_args, not out_args */
     if (!dbus_message_has_signature(message, member->out_args)) {
         g_warning("Tried to emit signal %s %s with args %s but should have been %s",
                   interface, signal_name, dbus_message_get_signature(message), member->out_args);
@@ -1002,6 +1003,23 @@ emit_signal_valist_appender(DBusConnection          *connection,
     dbus_connection_send(connection, message, NULL);
 
     dbus_message_unref(message);
+}
+
+static void
+emit_signal_appender(DBusConnection          *connection,
+                            const char              *path,
+                            const char              *interface,
+                            const char              *signal_name,
+                            HippoDBusArgAppender     appender,
+                            void                    *appender_data,
+                            int                      first_arg_type,
+                            ...)
+{
+  va_list args;
+
+  va_start(args, first_arg_type);
+  emit_signal_valist_appender(connection, path, interface, signal_name, appender, appender_data, first_arg_type, args);
+  va_end(args);
 }
 
 void
@@ -1024,10 +1042,8 @@ hippo_dbus_helper_emit_signal_appender (DBusConnection          *connection,
                                         HippoDBusArgAppender     appender,
                                         void                    *appender_data)
 {
-    va_list dummy_args;
-    
-    emit_signal_valist_appender(connection, path, interface, signal_name,
-                                appender, appender_data, DBUS_TYPE_INVALID, dummy_args);
+    emit_signal_appender(connection, path, interface, signal_name,
+                         appender, appender_data, DBUS_TYPE_INVALID);
 }
 
 void
@@ -1861,7 +1877,6 @@ hippo_dbus_proxy_unref(HippoDBusProxy          *proxy)
     }
 }
 
-
 static DBusMessage*
 call_method_sync_valist_appender (HippoDBusProxy          *proxy,
                                   const char              *method,
@@ -1917,6 +1932,24 @@ call_method_sync_valist_appender (HippoDBusProxy          *proxy,
     return NULL;
 }
 
+static DBusMessage*
+call_method_sync_appender (HippoDBusProxy          *proxy,
+                           const char              *method,
+                           DBusError               *error,
+                           HippoDBusArgAppender     appender,
+                           void                    *appender_data,
+                           int                      first_arg_type,
+                           ...)
+{
+    DBusMessage *result;
+    va_list args;
+
+    va_start(args, first_arg_type);
+    result = call_method_sync_valist_appender(proxy, method, error, appender, appender_data, first_arg_type, args);
+    va_end(args);
+    return result;
+}
+
 DBusMessage*
 hippo_dbus_proxy_call_method_sync_valist (HippoDBusProxy          *proxy,
                                           const char              *method,
@@ -1935,11 +1968,8 @@ hippo_dbus_proxy_call_method_sync_appender  (HippoDBusProxy        *proxy,
                                              HippoDBusArgAppender   appender,
                                              void                  *appender_data)
 {
-    va_list dummy_valist;
-    
-    return call_method_sync_valist_appender(proxy, method, error,
-                                            appender, appender_data, DBUS_TYPE_INVALID,
-                                            dummy_valist);
+    return call_method_sync_appender(proxy, method, error,
+                                     appender, appender_data, DBUS_TYPE_INVALID);
 }
 
 DBusMessage*
@@ -2119,6 +2149,24 @@ call_method_async_valist_appender(HippoDBusProxy          *proxy,
     return;
 }
 
+static void
+call_method_async_appender(HippoDBusProxy          *proxy,
+                           const char              *method,
+                           HippoDBusReplyHandler    handler,
+                           void                    *data,
+                           DBusFreeFunction         free_data_func,
+                           HippoDBusArgAppender     appender,
+                           void                    *appender_data,
+                           int                      first_arg_type,
+                           ...)
+{
+  va_list args;
+
+  va_start(args, first_arg_type);
+  call_method_async_valist_appender(proxy, method, handler, data, free_data_func, appender, appender_data, first_arg_type, args);
+  va_end(args);
+}
+
 void
 hippo_dbus_proxy_call_method_async_valist(HippoDBusProxy          *proxy,
                                           const char              *method,
@@ -2141,10 +2189,8 @@ hippo_dbus_proxy_call_method_async_appender (HippoDBusProxy        *proxy,
                                              HippoDBusArgAppender   appender,
                                              void                  *appender_data)
 {
-    va_list dummy_args;
-    
-    call_method_async_valist_appender(proxy, method, handler, data, free_data_func,
-                                      appender, appender_data, DBUS_TYPE_INVALID, dummy_args);
+    call_method_async_appender(proxy, method, handler, data, free_data_func,
+                               appender, appender_data, DBUS_TYPE_INVALID);
 }
 
 
@@ -2242,6 +2288,23 @@ hippo_dbus_proxy_VOID__VOID(HippoDBusProxy *proxy,
 }
 
 dbus_bool_t
+hippo_dbus_proxy_VOID__UINT32 (HippoDBusProxy  *proxy,
+                               const char      *method,
+                               dbus_uint32_t    in1)
+{
+    DBusMessage *reply;
+    DBusError derror;
+    
+    dbus_error_init(&derror);    
+    reply = hippo_dbus_proxy_call_method_sync(proxy, method, &derror,
+                                              DBUS_TYPE_UINT32, &in1,
+                                              DBUS_TYPE_INVALID);
+    
+    return hippo_dbus_proxy_finish_method_call_freeing_reply(reply, method, &derror,
+                                                             DBUS_TYPE_INVALID);
+}
+
+dbus_bool_t
 hippo_dbus_proxy_INT32__VOID(HippoDBusProxy *proxy,
                              const char     *method,
                              dbus_int32_t   *out1_p)
@@ -2261,7 +2324,7 @@ hippo_dbus_proxy_INT32__VOID(HippoDBusProxy *proxy,
 dbus_bool_t
 hippo_dbus_proxy_INT32__INT32(HippoDBusProxy *proxy,
                               const char     *method,
-                              dbus_int32_t    in1_p,
+                              dbus_int32_t    in1,
                               dbus_int32_t   *out1_p)
 {
     DBusMessage *reply;
@@ -2269,7 +2332,7 @@ hippo_dbus_proxy_INT32__INT32(HippoDBusProxy *proxy,
 
     dbus_error_init(&derror);    
     reply = hippo_dbus_proxy_call_method_sync(proxy, method, &derror,
-                                              DBUS_TYPE_INT32, &in1_p,
+                                              DBUS_TYPE_INT32, &in1,
                                               DBUS_TYPE_INVALID);
     
     return hippo_dbus_proxy_finish_method_call_freeing_reply(reply, method, &derror,
