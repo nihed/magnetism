@@ -65,6 +65,9 @@ typedef struct _DDMDataProperty      DDMDataProperty;
 typedef struct _DDMDataFetch         DDMDataFetch; /* Avoid circular include */
 typedef struct _DDMDataResource      DDMDataResource;
 
+typedef struct _DDMClient            DDMClient;    /* Avoid circular include */
+
+
 typedef void (*DDMDataFunction) (DDMDataResource *resource,
                                  GSList            *changed_properties,
                                  gpointer           user_data);
@@ -89,21 +92,25 @@ void ddm_data_value_get_element(DDMDataValue *value,
 
 const char *ddm_data_resource_get_resource_id (DDMDataResource *resource);
 const char *ddm_data_resource_get_class_id    (DDMDataResource *resource);
-gboolean    ddm_data_resource_get_local       (DDMDataResource *resource);
+gboolean    ddm_data_resource_is_local        (DDMDataResource *resource);
 
 void ddm_data_resource_get               (DDMDataResource *resource,
                                           ...) G_GNUC_NULL_TERMINATED;
 void ddm_data_resource_get_by_qname      (DDMDataResource *resource,
                                           ...) G_GNUC_NULL_TERMINATED;
 
-void ddm_data_resource_connect          (DDMDataResource   *resource,
-                                         const char        *property,
-                                         DDMDataFunction    function,
-                                         gpointer           user_data);
+void ddm_data_resource_connect          (DDMDataResource *resource,
+                                         const char      *property,
+                                         DDMDataFunction  function,
+                                         gpointer         user_data);
 void ddm_data_resource_connect_by_qname (DDMDataResource *resource,
                                          DDMQName        *property,
                                          DDMDataFunction  function,
                                          gpointer         user_data);
+void ddm_data_resource_set_client_fetch (DDMDataResource *resource,
+                                         DDMClient       *client,
+                                         DDMDataFetch    *fetch);
+
 void ddm_data_resource_disconnect       (DDMDataResource *resource,
                                          DDMDataFunction  function,
                                          gpointer         user_data);
@@ -127,8 +134,6 @@ DDMDataProperty *  ddm_data_resource_get_property          (DDMDataResource    *
 DDMDataProperty *  ddm_data_resource_get_property_by_qname (DDMDataResource    *resource,
                                                             DDMQName           *qname);
 GSList          *  ddm_data_resource_get_properties        (DDMDataResource    *resource);
-void               ddm_data_resource_on_resource_change    (DDMDataResource    *resource,
-                                                            GSList             *changed_properties);
 
 gboolean ddm_data_value_from_string (DDMDataValue *value,
                                      DDMDataType   type,

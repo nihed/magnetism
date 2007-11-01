@@ -25,11 +25,8 @@ typedef void (*DDMErrorHandler)  (DDMDataError     error,
                                   const char        *message,
                                   gpointer           user_data);
 
-DDMDataModel *ddm_data_query_get_model          (DDMDataQuery     *query);
-DDMQName *    ddm_data_query_get_qname          (DDMDataQuery     *query);
-const char *  ddm_data_query_get_fetch_string   (DDMDataQuery     *query);
-DDMDataFetch *ddm_data_query_get_fetch          (DDMDataQuery     *query);
-gboolean      ddm_data_query_is_update          (DDMDataQuery     *query);
+/******* For applications *******/
+
 void          ddm_data_query_set_single_handler (DDMDataQuery     *query,
                                                  DDMSingleHandler  handler,
                                                  gpointer          user_data);
@@ -43,14 +40,26 @@ void          ddm_data_query_set_error_handler  (DDMDataQuery     *query,
                                                  DDMErrorHandler   handler,
                                                  gpointer          user_data);
 
-GHashTable *ddm_data_query_get_params (DDMDataQuery *query);
-void        ddm_data_query_response   (DDMDataQuery *query,
-                                       GSList       *results);
-void        ddm_data_query_error      (DDMDataQuery *query,
-                                       DDMDataError  error,
-                                       const char   *message);
+/***** For data model backends ******/
 
+DDMDataModel *ddm_data_query_get_model        (DDMDataQuery *query);
+DDMQName *    ddm_data_query_get_qname        (DDMDataQuery *query);
+const char *  ddm_data_query_get_fetch_string (DDMDataQuery *query);
+DDMDataFetch *ddm_data_query_get_fetch        (DDMDataQuery *query);
+gboolean      ddm_data_query_is_update        (DDMDataQuery *query);
+GHashTable *  ddm_data_query_get_params       (DDMDataQuery *query);
+GSList *      ddm_data_query_get_results      (DDMDataQuery *query);
 
+/* Called by the backend when a response is received from upstream */
+
+void ddm_data_query_response (DDMDataQuery *query,
+                              GSList       *results);
+void ddm_data_query_error    (DDMDataQuery *query,
+                              DDMDataError  error,
+                              const char   *message);
+
+/* Debugging convenience */
+const char *ddm_data_query_get_id_string (DDMDataQuery *query);
 
 G_END_DECLS
 

@@ -128,6 +128,7 @@ sf_parse_info_init(SFParseInfo  *info,
     
     info->model = model;
     info->state = STATE_OUTSIDE;
+    info->local = local;
 
     info->names[NAME_INVALID] = NULL;
     info->names[NAME_DEFAULT_CHILDREN] = ddm_qname_get(SYSTEM_NAMESPACE, "defaultChildren");
@@ -625,16 +626,31 @@ static_file_end_element (GMarkupParseContext *context,
             if (info->current_update == DDM_DATA_UPDATE_ADD) {
                 if (info->current_type == DDM_DATA_RESOURCE) {
                     value.type = DDM_DATA_RESOURCE;
+
+                    /* We create the resource, even if we don't know it's class_id; this is useful
+                     * at least for the local data case where we want to point to some remote
+                     * resource that hasn't been fetched yet. The class_id will be filled in later
+                     * once we fetch. We have to do the lookup/ensure in two stages, since we don't
+                     * know that it's a remote resource until we don't find it from the local parsing.
+                     */
+#if 1
+                    value.u.resource = ddm_data_model_lookup_resource(info->model, info->value->str);
+                    if (value.u.resource == NULL)
+                        value.u.resource = ddm_data_model_ensure_resource(info->model, info->value->str, NULL);
+#else
+                    /* The alternative */
                     value.u.resource = ddm_data_model_lookup_resource(info->model, info->value->str);
                     
                     if (value.u.resource == NULL) {
                         g_set_error (error,
                                      G_MARKUP_ERROR,
                                      G_MARKUP_ERROR_INVALID_CONTENT,
-                                 "Reference to a resource %s that we don't know about",
+                                     "Reference to a resource %s that we don't know about",
+                                     
                                      info->value->str);
-                    return;
+                        return;
                     }
+#endif                        
                 } else {
                     if (!ddm_data_value_from_string(&value, info->current_type, info->value->str,
                                                     NULL, error))
@@ -735,30 +751,51 @@ static_file_error (GMarkupParseContext *context,
 {
 }
 
-gboolean
-ddm_static_file_parse(const char   *filename,
-                      DDMDataModel *model,
-                      GError      **error)
+static gboolean
+static_file_parse_internal(const char   *filename,
+                           DDMDataModel *model,
+                           gboolean      local,
+                           GError      **error)
 {
     SFParseInfo info;
     gboolean result;
     char *text;
     gsize len;
     
-    g_return_val_if_fail(filename != NULL, FALSE);
-    g_return_val_if_fail(DDM_IS_DATA_MODEL(model), FALSE);
-    g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
-
     if (!g_file_get_contents(filename, &text, &len, error))
         return FALSE;
     
-    sf_parse_info_init(&info, model, FALSE);
+    sf_parse_info_init(&info, model, local);
     
     result = g_markup_parse_context_parse(info.context, text, len, error);
 
     sf_parse_info_finish(&info);
 
     return result;
+}
+
+gboolean
+ddm_static_file_parse(const char   *filename,
+                      DDMDataModel *model,
+                      GError      **error)
+{
+    g_return_val_if_fail(filename != NULL, FALSE);
+    g_return_val_if_fail(DDM_IS_DATA_MODEL(model), FALSE);
+    g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+    return static_file_parse_internal(filename, model, FALSE, error);
+}
+
+gboolean
+ddm_static_load_local_file(const char   *filename,
+                           DDMDataModel *model,
+                           GError      **error)
+{
+    g_return_val_if_fail(filename != NULL, FALSE);
+    g_return_val_if_fail(DDM_IS_DATA_MODEL(model), FALSE);
+    g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+    return static_file_parse_internal(filename, model, TRUE, error);
 }
 
 gboolean

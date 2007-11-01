@@ -28,6 +28,10 @@ struct _DDMDataModelBackend
                                  DDMDataQuery *query,
                                  void         *backend_data);
 
+    /* Do idle processing; at the beginning of ddm_data_model_flush */
+    void     (* flush)          (DDMDataModel *model,
+                                 void         *backend_data);
+
     GCallback _ddm_padding_1;
     GCallback _ddm_padding_2;
     GCallback _ddm_padding_3;
@@ -35,7 +39,6 @@ struct _DDMDataModelBackend
     GCallback _ddm_padding_5;
     GCallback _ddm_padding_6;
     GCallback _ddm_padding_7;
-    GCallback _ddm_padding_8;
 };
 
 G_END_DECLS

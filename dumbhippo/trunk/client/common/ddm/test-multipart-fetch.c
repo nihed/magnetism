@@ -56,10 +56,8 @@ main(int argc, char **argv)
 
     DDMDataResource *result;
     DDMDataResource *user1;
-    DDMDataResource *user2;
-    const char *name;
-    GSList *contacts;
-    GSList *contacters;
+    DDMDataResource *buddy1;
+    DDMDataResource *user;
 
     g_type_init();
 
@@ -74,31 +72,26 @@ main(int argc, char **argv)
 
     g_free(filename);
 
-    result = query_resource(model, "http://mugshot.org/o/user/USER1", "name;contacts;contacters");
+    filename = g_build_filename(srcdir, "test-local-data.xml", NULL);
+    if (!ddm_static_load_local_file(filename, model, &error))
+        g_error("Failed to add_local data to test model: %s", error->message);
+
+    g_free(filename);
+
+    result = query_resource(model, "online-desktop:/o/pidgin-buddy/AIM.JohnDoe1", "user name");
+
+    buddy1 = ddm_data_model_lookup_resource(model, "online-desktop:/o/pidgin-buddy/AIM.JohnDoe1");
+    g_assert(buddy1 != NULL);
 
     user1 = ddm_data_model_lookup_resource(model, "http://mugshot.org/o/user/USER1");
     g_assert(user1 != NULL);
 
-    g_assert(result == user1);
-    
-    user2 = ddm_data_model_lookup_resource(model, "http://mugshot.org/o/user/USER2");
-    g_assert(user2 != NULL);
-
-    name = NULL;
-    contacts = NULL;
-    contacters = NULL;
-    ddm_data_resource_get(user1,
-                          "name", DDM_DATA_STRING, &name,
-                          "contacts", DDM_DATA_RESOURCE | DDM_DATA_LIST, &contacts,
-                          "contacters", DDM_DATA_RESOURCE | DDM_DATA_LIST, &contacters,
+    user = NULL;
+    ddm_data_resource_get(buddy1,
+                          "user", DDM_DATA_RESOURCE, &user,
                           NULL);
 
-    g_assert(strcmp(name, "John Doe") == 0);
-
-    g_assert(g_slist_length(contacts) == 1);
-    g_assert(contacts->data == user2);
-
-    g_assert(g_slist_length(contacters) == 0);
+    g_assert(user == user1);
 
     return 0;
 }
