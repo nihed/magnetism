@@ -2288,6 +2288,23 @@ hippo_dbus_proxy_VOID__VOID(HippoDBusProxy *proxy,
 }
 
 dbus_bool_t
+hippo_dbus_proxy_VOID__UINT32 (HippoDBusProxy  *proxy,
+                               const char      *method,
+                               dbus_uint32_t    in1)
+{
+    DBusMessage *reply;
+    DBusError derror;
+    
+    dbus_error_init(&derror);    
+    reply = hippo_dbus_proxy_call_method_sync(proxy, method, &derror,
+                                              DBUS_TYPE_UINT32, &in1,
+                                              DBUS_TYPE_INVALID);
+    
+    return hippo_dbus_proxy_finish_method_call_freeing_reply(reply, method, &derror,
+                                                             DBUS_TYPE_INVALID);
+}
+
+dbus_bool_t
 hippo_dbus_proxy_INT32__VOID(HippoDBusProxy *proxy,
                              const char     *method,
                              dbus_int32_t   *out1_p)
@@ -2307,7 +2324,7 @@ hippo_dbus_proxy_INT32__VOID(HippoDBusProxy *proxy,
 dbus_bool_t
 hippo_dbus_proxy_INT32__INT32(HippoDBusProxy *proxy,
                               const char     *method,
-                              dbus_int32_t    in1_p,
+                              dbus_int32_t    in1,
                               dbus_int32_t   *out1_p)
 {
     DBusMessage *reply;
@@ -2315,7 +2332,7 @@ hippo_dbus_proxy_INT32__INT32(HippoDBusProxy *proxy,
 
     dbus_error_init(&derror);    
     reply = hippo_dbus_proxy_call_method_sync(proxy, method, &derror,
-                                              DBUS_TYPE_INT32, &in1_p,
+                                              DBUS_TYPE_INT32, &in1,
                                               DBUS_TYPE_INVALID);
     
     return hippo_dbus_proxy_finish_method_call_freeing_reply(reply, method, &derror,

@@ -272,6 +272,8 @@ setting_arrived(const char *key,
     DBusMessageIter variant_iter;
     
     if (value == NULL) {
+        g_debug("No value known for '%s' with type '%s'",
+                value, sad->signature);        
         reply = dbus_message_new_error_printf(sad->method_call, HIPPO_DBUS_PREFS_ERROR_NOT_FOUND,                                      
                                               _("No value known for key '%s'"), key);
         goto out;
@@ -289,11 +291,15 @@ setting_arrived(const char *key,
                                 value,
                                 &variant_iter,
                                 FALSE)) {
+        g_debug("Failed to parse '%s' as type '%s'",
+                value, sad->signature);
         dbus_message_unref(reply);
         reply = dbus_message_new_error_printf(sad->method_call, HIPPO_DBUS_PREFS_ERROR_WRONG_TYPE,  
                                               _("Value was '%s' not parseable as type '%s'"),
                                               value, sad->signature);
         goto out;
+    } else {
+        g_debug("  parsed value '%s' as type '%s'", value, sad->signature);
     }
 
     dbus_message_iter_close_container(&iter, &variant_iter);
