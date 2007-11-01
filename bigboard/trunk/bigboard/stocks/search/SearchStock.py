@@ -48,7 +48,7 @@ class ResultsConsumer(search.SearchConsumer):
 
 class ResultsView(search.SearchConsumer):
 
-    RESULT_TYPE_MAX = 3
+    RESULT_TYPE_MAX = 4
     
     def __init__(self, *args, **kwargs):
         super(ResultsView, self).__init__(*args, **kwargs)
