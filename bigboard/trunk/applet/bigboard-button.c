@@ -38,7 +38,7 @@
 
 static void
 wncklet_set_tooltip (GtkWidget  *widget,
-		     const char *tip)
+                     const char *tip)
 {
         GtkTooltips *tooltips;
 
@@ -56,101 +56,101 @@ wncklet_set_tooltip (GtkWidget  *widget,
 
 static void
 wncklet_display_about (GtkWidget   *applet,
-		       GtkWidget  **dialog,
-		       const char  *name,
-		       const char  *copyright,
-		       const char  *comments,
-		       const char **authors,
-		       const char **documenters,
-		       const char  *translator_credits,
-		       const char  *icon_name,
-		       const char  *wmclass_name,
-		       const char  *wmclass_class)
+                       GtkWidget  **dialog,
+                       const char  *name,
+                       const char  *copyright,
+                       const char  *comments,
+                       const char **authors,
+                       const char **documenters,
+                       const char  *translator_credits,
+                       const char  *icon_name,
+                       const char  *wmclass_name,
+                       const char  *wmclass_class)
 {
-	if (*dialog) {
-		gtk_window_set_screen (GTK_WINDOW (*dialog),
-				       gtk_widget_get_screen (applet));
-		gtk_window_present (GTK_WINDOW (*dialog));
-		return;
-	}
+        if (*dialog) {
+                gtk_window_set_screen (GTK_WINDOW (*dialog),
+                                       gtk_widget_get_screen (applet));
+                gtk_window_present (GTK_WINDOW (*dialog));
+                return;
+        }
 
-	*dialog = gtk_about_dialog_new ();
-	g_object_set (*dialog,
-		      "name",  name,
-		      "version", VERSION,
-		      "copyright", copyright,
-		      "comments", comments,
-		      "authors", authors,
-		      "documenters", documenters,
-		      "translator-credits", translator_credits,
-		      "logo-icon-name", icon_name,
-		      NULL);
+        *dialog = gtk_about_dialog_new ();
+        g_object_set (*dialog,
+                      "name",  name,
+                      "version", VERSION,
+                      "copyright", copyright,
+                      "comments", comments,
+                      "authors", authors,
+                      "documenters", documenters,
+                      "translator-credits", translator_credits,
+                      "logo-icon-name", icon_name,
+                      NULL);
 
-	gtk_window_set_wmclass (GTK_WINDOW (*dialog),
-				wmclass_name, wmclass_class);
-	gtk_window_set_screen (GTK_WINDOW (*dialog),
-			       gtk_widget_get_screen (applet));
+        gtk_window_set_wmclass (GTK_WINDOW (*dialog),
+                                wmclass_name, wmclass_class);
+        gtk_window_set_screen (GTK_WINDOW (*dialog),
+                               gtk_widget_get_screen (applet));
 
-	gtk_window_set_icon_name (GTK_WINDOW (*dialog), icon_name);
-	g_signal_connect (*dialog, "destroy",
-			  (GCallback) gtk_widget_destroyed, dialog);
+        gtk_window_set_icon_name (GTK_WINDOW (*dialog), icon_name);
+        g_signal_connect (*dialog, "destroy",
+                          (GCallback) gtk_widget_destroyed, dialog);
 
-	g_signal_connect (*dialog, "response",
-			  G_CALLBACK (gtk_widget_destroy),
-			  NULL);
+        g_signal_connect (*dialog, "response",
+                          G_CALLBACK (gtk_widget_destroy),
+                          NULL);
 
-	gtk_widget_show (*dialog);
+        gtk_widget_show (*dialog);
 }
 
 static void
 wncklet_display_help (GtkWidget  *widget,
-		      const char *doc_id,
-		      const char *filename,
-		      const char *link_id)
+                      const char *doc_id,
+                      const char *filename,
+                      const char *link_id)
 {
 #if 0
-	GError *error = NULL;
+        GError *error = NULL;
 
-	gnome_help_display_desktop_on_screen (NULL, doc_id, filename, link_id,
-					      gtk_widget_get_screen (widget),
-					      &error);
+        gnome_help_display_desktop_on_screen (NULL, doc_id, filename, link_id,
+                                              gtk_widget_get_screen (widget),
+                                              &error);
 
-	if (error) {
-		GtkWidget *dialog;
+        if (error) {
+                GtkWidget *dialog;
 
-		dialog = gtk_message_dialog_new (NULL,
-						 GTK_DIALOG_DESTROY_WITH_PARENT,
-						 GTK_MESSAGE_ERROR,
-						 GTK_BUTTONS_OK,
-						 _("There was an error displaying help: %s"),
-						 error->message);
+                dialog = gtk_message_dialog_new (NULL,
+                                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                 GTK_MESSAGE_ERROR,
+                                                 GTK_BUTTONS_OK,
+                                                 _("There was an error displaying help: %s"),
+                                                 error->message);
 
-		g_signal_connect (dialog, "response",
-				  G_CALLBACK (gtk_widget_destroy),
-				  NULL);
+                g_signal_connect (dialog, "response",
+                                  G_CALLBACK (gtk_widget_destroy),
+                                  NULL);
 
-		gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
-		gtk_window_set_screen (GTK_WINDOW (dialog),
-				       gtk_widget_get_screen (widget));
-		gtk_widget_show (dialog);
-		g_error_free (error);
-	}
+                gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
+                gtk_window_set_screen (GTK_WINDOW (dialog),
+                                       gtk_widget_get_screen (widget));
+                gtk_widget_show (dialog);
+                g_error_free (error);
+        }
 #endif
 }
 
 
 static void
 wncklet_connect_while_alive (gpointer    object,
-			     const char *signal,
-			     GCallback   func,
-			     gpointer    func_data,
-			     gpointer    alive_object)
+                             const char *signal,
+                             GCallback   func,
+                             gpointer    func_data,
+                             gpointer    alive_object)
 {
-	GClosure *closure;
+        GClosure *closure;
 
-	closure = g_cclosure_new (func, func_data, NULL);
-	g_object_watch_closure (G_OBJECT (alive_object), closure);
-	g_signal_connect_closure_by_id (object,
+        closure = g_cclosure_new (func, func_data, NULL);
+        g_object_watch_closure (G_OBJECT (alive_object), closure);
+        g_signal_connect_closure_by_id (object,
                                         g_signal_lookup (signal, G_OBJECT_TYPE (object)), 0,
                                         closure,
                                         FALSE);
@@ -240,9 +240,9 @@ handle_bigboard_unavailable(DBusConnection *connection,
         ButtonData *button_data;
 
         button_data = data;
-        
+
         update_showing_bigboard (button_data, FALSE);
-        g_debug ("got bb unavailable\n");        
+        g_debug ("got bb unavailable\n");
 }
 
 static const HippoDBusSignalTracker signal_handlers[] = {
@@ -306,7 +306,7 @@ update_size (ButtonData *button_data,
 /* this is when the panel size changes */
 static void
 button_size_allocated (GtkWidget       *button,
-		       GtkAllocation   *allocation,
+                       GtkAllocation   *allocation,
                        ButtonData      *button_data)
 {
         switch (button_data->orient) {
@@ -327,24 +327,24 @@ update_icon (ButtonData *button_data)
         GdkPixbuf *scaled;
         int        icon_size;
         GError    *error;
-        int	   focus_width = 0;
-        int	   focus_pad = 0;
-        int	   thickness = 0;
+        int        focus_width = 0;
+        int        focus_pad = 0;
+        int        thickness = 0;
         int        xrequest, yrequest;
 
         /* FIXME this function could do a lot more short-circuiting and maybe
          * save some effort
          */
-        
+
         if (!button_data->icon_theme)
                 return;
 
-		gtk_image_clear (GTK_IMAGE (button_data->image));
-		
+        gtk_image_clear (GTK_IMAGE (button_data->image));
+
         if (button_data->showing_bigboard) {
-        	g_debug ("showing bb, not setting icon\n");
-        	gtk_widget_set_size_request(button_data->image, 1, 1);        	        
-        	return;
+                g_debug ("showing bb, not setting icon\n");
+                gtk_widget_set_size_request(button_data->image, 1, 1);
+                return;
         }
 
         gtk_widget_style_get (button_data->button,
@@ -381,7 +381,7 @@ update_icon (ButtonData *button_data)
                 icon_size = 48;
         else
                 icon_size = 60;
-        
+
         if (button_data->user_photo) {
                 icon = button_data->user_photo;
                 g_object_ref(icon);
@@ -408,7 +408,7 @@ update_icon (ButtonData *button_data)
                         return;
                 }
         }
-        
+
         width = gdk_pixbuf_get_width (icon);
         height = gdk_pixbuf_get_height (icon);
 
@@ -444,7 +444,7 @@ update_icon (ButtonData *button_data)
          * smaller and b) get infinite request/alloc loops
          */
         gtk_widget_set_size_request(button_data->image, xrequest, yrequest);
-        
+
         g_object_unref (icon);
 }
 
@@ -460,16 +460,16 @@ static const BonoboUIVerb bigboard_button_menu_verbs [] = {
 static void
 update_button_display (ButtonData *button_data)
 {
-		if (!button_data->showing_bigboard)
-				wncklet_set_tooltip (button_data->button, _("Click here to show the desktop sidebar."));
-		else
-				wncklet_set_tooltip (button_data->button, NULL);
+        if (!button_data->showing_bigboard)
+                wncklet_set_tooltip (button_data->button, _("Click here to show the desktop sidebar."));
+        else
+                wncklet_set_tooltip (button_data->button, NULL);
 }
 
 static void
 update_button_state (ButtonData *button_data)
 {
-      	update_icon (button_data);
+        update_icon (button_data);
         update_button_display (button_data);
 }
 
@@ -525,7 +525,7 @@ applet_destroyed (GtkWidget       *applet,
 
         if (button_data->user_photo)
                 g_object_unref(button_data->user_photo);
-        
+
         g_free (button_data);
 }
 
@@ -554,9 +554,9 @@ button_motion_timeout (gpointer data)
 
 static void
 button_drag_leave (GtkWidget          *widget,
-		   GdkDragContext     *context,
-		   guint               time,
-		   ButtonData    *button_data)
+                   GdkDragContext     *context,
+                   guint               time,
+                   ButtonData    *button_data)
 {
         if (button_data->button_activate != 0) {
                 g_source_remove (button_data->button_activate);
@@ -566,11 +566,11 @@ button_drag_leave (GtkWidget          *widget,
 
 static gboolean
 button_drag_motion (GtkWidget          *widget,
-		    GdkDragContext     *context,
-		    gint                x,
-		    gint                y,
-		    guint               time,
-		    ButtonData    *button_data)
+                    GdkDragContext     *context,
+                    gint                x,
+                    gint                y,
+                    guint               time,
+                    ButtonData    *button_data)
 {
 
         if (button_data->button_activate == 0)
@@ -611,7 +611,7 @@ bigboard_button_applet_realized (PanelApplet *applet,
 
 static void
 theme_changed_callback (GtkIconTheme    *icon_theme,
-			ButtonData      *button_data)
+                        ButtonData      *button_data)
 {
         update_icon (button_data);
 }
@@ -656,7 +656,7 @@ bigboard_button_add_to_widget (GtkWidget *applet)
                           G_CALLBACK (bigboard_button_applet_realized), button_data);
 
         button_data->button = gtk_button_new ();
-        
+
         gtk_widget_set_name (button_data->button, "bigboard-button");
         gtk_rc_parse_string ("\n"
                              "   style \"bigboard-button-style\"\n"
@@ -678,14 +678,14 @@ bigboard_button_add_to_widget (GtkWidget *applet)
                           G_CALLBACK (button_clicked_callback), button_data);
 
         gtk_container_set_border_width (GTK_CONTAINER (button_data->button), 0);
-        gtk_container_add (GTK_CONTAINER (button_data->button), button_data->image);        
+        gtk_container_add (GTK_CONTAINER (button_data->button), button_data->image);
 
         button_data->launchers = launchers_new();
-        
+
         hbox = gtk_hbox_new(FALSE, 0);
         gtk_box_pack_start(GTK_BOX(hbox), button_data->button, FALSE, TRUE, 0);
         gtk_box_pack_start(GTK_BOX(hbox), button_data->launchers, FALSE, TRUE, 0);
-        
+
         gtk_container_add (GTK_CONTAINER (button_data->applet), hbox);
 
         g_signal_connect (G_OBJECT (button_data->button),
@@ -725,7 +725,7 @@ bigboard_button_add_to_widget (GtkWidget *applet)
         }
 
         self_add_icon_changed_callback(user_photo_changed_callback, button_data);
-        
+
         gtk_widget_show_all (hbox);
 
         return button_data;
@@ -774,7 +774,7 @@ log_handler(const char    *log_domain,
         }
 
         gstr = g_string_new(log_domain);
-        
+
         g_string_append(gstr, prefix);
         g_string_append(gstr, message);
 
@@ -785,7 +785,7 @@ log_handler(const char    *log_domain,
 
         g_print("%s\n", gstr->str);
         g_string_free(gstr, TRUE);
-        
+
 #ifdef G_OS_WIN32
         // glib will do this for us, but if we abort in our own code which has
         // debug symbols, visual studio gets less confused about the backtrace.
@@ -807,7 +807,7 @@ bigboard_button_applet_fill (PanelApplet *applet)
         g_log_set_handler(G_LOG_DOMAIN,
                           (GLogLevelFlags) (G_LOG_LEVEL_DEBUG | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION),
                           log_handler, NULL);
-        
+
         panel_applet_set_flags (applet, PANEL_APPLET_EXPAND_MINOR);
 
         button_data = bigboard_button_add_to_widget (GTK_WIDGET (applet));
@@ -890,9 +890,9 @@ button_clicked_callback (GtkWidget       *button,
                          ButtonData      *button_data)
 {
         if (button_data->bb_proxy) {
-				hippo_dbus_proxy_VOID__VOID (button_data->bb_proxy, "TogglePopout");
+                hippo_dbus_proxy_VOID__VOID (button_data->bb_proxy, "TogglePopout");
         }
-        
+
         update_button_display (button_data);
 }
 
@@ -910,14 +910,14 @@ online_desktop_factory (PanelApplet *applet,
 }
 
 
-#if 1
+#ifndef TEST_MODE
 
 #if APPLET_INPROCESS
 PANEL_APPLET_BONOBO_SHLIB_FACTORY ("OAFIID:GNOME_OnlineDesktop_BigBoardFactory",
-				   PANEL_TYPE_APPLET,
-				   "BigBoardApplets",
-				   online_desktop_factory,
-				   NULL);
+                                   PANEL_TYPE_APPLET,
+                                   "BigBoardApplets",
+                                   online_desktop_factory,
+                                   NULL);
 #else
 PANEL_APPLET_BONOBO_FACTORY ("OAFIID:GNOME_OnlineDesktop_BigBoardFactory",
                              PANEL_TYPE_APPLET,
@@ -947,7 +947,7 @@ print_http_result_func(const char *content_type,
                 g_print("Received HTTP data, %d bytes content type %s\n",
                         (int) content_or_error->len, content_type);
                 exit(0);
-        }   
+        }
 }
 
 int
@@ -955,15 +955,15 @@ main (int argc, char **argv)
 {
 #if 1
         GtkWidget *window;
-        
+
         gtk_init (&argc, &argv);
-                
+
         log_debug_messages = TRUE;
         g_log_set_default_handler(log_handler, NULL);
         g_log_set_handler(G_LOG_DOMAIN,
                           (GLogLevelFlags) (G_LOG_LEVEL_DEBUG | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION),
                           log_handler, NULL);
-        
+
         window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
         bigboard_button_add_to_widget (window);
@@ -981,23 +981,23 @@ main (int argc, char **argv)
 #else
         GMainLoop *loop;
         DBusConnection *connection;
-        
+
         g_type_init();
-        
+
         connection = dbus_bus_get (DBUS_BUS_SESSION, NULL);
         dbus_connection_setup_with_g_main(connection, NULL);
-        
+
         http_get(connection, "http://www.yahoo.com/",
                  print_http_result_func,
                  NULL);
-        
+
         loop = g_main_loop_new(NULL, FALSE);
 
         g_main_loop_run(loop);
 
         dbus_connection_unref(connection);
-        
+
         return 0;
-#endif  
+#endif
 }
 #endif /* main() test mode */
