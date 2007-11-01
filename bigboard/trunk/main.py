@@ -575,6 +575,8 @@ class BigBoardPanel(dbus.service.Object):
         if not self.__popped_out:
             _logger.debug("popping out")
             self._dw.show()
+            # we would prefer to need this, if iconify() worked on dock windows
+            #self._dw.deiconify()
             self.__queue_strut()
             self.__popped_out = True
             self.EmitPoppedOutChanged()
@@ -596,6 +598,12 @@ class BigBoardPanel(dbus.service.Object):
 
         _logger.debug("unpopping out")
         self.__popped_out = False
+        ## would be better to iconify, not hide - hide withdraws the
+        ## window, iconify should leave bigboard in the Ctrl+Alt+Tab
+        ## order.
+        ## Unfortunately, it appears metacity disallows minimize on
+        ## dock windows.
+        #self._dw.iconify()
         self._dw.hide()
         self.__queue_strut()
         self.EmitPoppedOutChanged()
