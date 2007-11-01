@@ -61,6 +61,8 @@ class DockWindow(gtk.Window):
         and/or desktop icons will not overlap this window\'s allocated area.
         See http://standards.freedesktop.org/wm-spec/latest for details.
         '''
+        _logger.debug("Setting WM strut, remove=%d, window=%s" % (remove, str(self.window)))
+        
         if self.window and remove:
             self.window.property_delete("_NET_WM_STRUT")
             return
@@ -69,7 +71,7 @@ class DockWindow(gtk.Window):
         
         if self.edge_gravity != gtk.gdk.GRAVITY_WEST:
             raise "haven't implemented gravities other than WEST"
-        
+
         if self.window:
             # values are left, right, top, bottom
             propvals = [0, 0, 0, 0]
