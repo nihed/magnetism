@@ -58,6 +58,9 @@ class Application(object):
     def get_desktop(self):
         return self.__desktop_entry
 
+    def get_exec_format_string(self):
+        return self.__desktop_entry and self.__desktop_entry.get_string("Exec") or None
+
     def get_pinned(self):
         return self.__pinned
 
@@ -610,23 +613,40 @@ class AppsRepo(gobject.GObject):
             
     def search_local_fast_sync(self, search_terms):
         ws_re = re.compile('\s+')
-        searched_attrs = ['name',]
+
         def get_searchable_values(app):
-            return map(string.lower, (app.get_name(), app.get_generic_name()))
+            ## these should be in order of "relevance" i.e. we give a higher result score
+            ## for matching earlier searchable values
+            return map(string.lower, (app.get_name(), app.get_generic_name(), app.get_exec_format_string()))
         def app_matches(app):
+            match_rank = 0            
             for term in ws_re.split(search_terms):
                 term = term.lower()
-                for attr in get_searchable_values(appvalue):
+                searchable_values = get_searchable_values(appvalue)
+                for i, attr in enumerate(searchable_values):
+                    if not attr:
+                        continue
                     for word in ws_re.split(attr):
                         if word.startswith(term):
-                            matched = True
-                            return True
-            return False
+                            match_rank = match_rank + (len(searchable_values) - i)
+            return match_rank
+
+        results = []
         for appvalue in self.__all_apps:
             if not appvalue.is_installed():
                 continue
-            if app_matches(appvalue):
-                yield appvalue
+            rank = app_matches(appvalue)
+            if rank > 0:
+                results.append( (rank, appvalue.get_usage_count(), appvalue) )
+
+        ## sort descending by rank then usage count
+        results.sort(lambda a, b: a[0] == b[0] and \
+                     cmp(b[1], a[1]) or \
+                     cmp(b[0], a[0]))
+
+        _logger.debug("search results %s" % (str(results)))
+
+        return map(lambda r: r[2], results)
 
 __apps_repo = None
 def get_apps_repo():
