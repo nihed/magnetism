@@ -30,6 +30,8 @@ libddm_1_la_LDFLAGS= -export-symbols-regex "^[^_].*" -version-info $(DDM_LT_CURR
 libddmincludedir = $(includedir)/ddm-1/ddm
 nodist_libddminclude_HEADERS=				\
 	$(COMMONSRCDIR)/ddm/ddm.h			\
+	$(COMMONSRCDIR)/ddm/ddm-client.h		\
+	$(COMMONSRCDIR)/ddm/ddm-data-fetch.h		\
 	$(COMMONSRCDIR)/ddm/ddm-data-fetch.h		\
 	$(COMMONSRCDIR)/ddm/ddm-data-model.h		\
 	$(COMMONSRCDIR)/ddm/ddm-data-model-backend.h	\
@@ -40,6 +42,9 @@ nodist_libddminclude_HEADERS=				\
 	$(COMMONSRCDIR)/ddm/ddm-qname.h
 
 LIBDDM_SOURCEFILES =						\
+	$(COMMONSRCDIR)/ddm/ddm-client.c			\
+	$(COMMONSRCDIR)/ddm/ddm-client-notification.c		\
+	$(COMMONSRCDIR)/ddm/ddm-client-notification.h		\
 	$(COMMONSRCDIR)/ddm/ddm-condition-parser.c		\
 	$(COMMONSRCDIR)/ddm/ddm-condition.c			\
 	$(COMMONSRCDIR)/ddm/ddm-data-fetch.c			\
@@ -50,9 +55,13 @@ LIBDDM_SOURCEFILES =						\
 	$(COMMONSRCDIR)/ddm/ddm-data-resource-internal.h	\
 	$(COMMONSRCDIR)/ddm/ddm-data-query.c			\
 	$(COMMONSRCDIR)/ddm/ddm-data-query-internal.h		\
+	$(COMMONSRCDIR)/ddm/ddm-local-client.c			\
+	$(COMMONSRCDIR)/ddm/ddm-local-client.h			\
 	$(COMMONSRCDIR)/ddm/ddm-notification-set.c		\
 	$(COMMONSRCDIR)/ddm/ddm-rule.h				\
 	$(COMMONSRCDIR)/ddm/ddm-qname.c				\
+	$(COMMONSRCDIR)/ddm/ddm-work-item.c			\
+	$(COMMONSRCDIR)/ddm/ddm-work-item.h			\
 	$(COMMONSRCDIR)/ddm/hippo-dbus-helper.c			\
 	$(COMMONSRCDIR)/ddm/hippo-dbus-helper.h			\
 	$(COMMONSRCDIR)/ddm/hippo-dbus-helper-rename.h
@@ -90,6 +99,8 @@ nodist_libddm_test_la_SOURCES =				\
 ddm_tests =					\
 	test-condition-parser			\
 	test-condition-reduce			\
+	test-multipart-fetch			\
+	test-notification			\
 	test-static-file-parser			\
 	test-static-file-backend
 
@@ -117,6 +128,16 @@ test_ddm_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS)
 test_ddm_LDADD=libddm-1.la
 
 nodist_test_ddm_SOURCES=$(COMMONSRCDIR)/ddm/test-ddm.c
+
+test_multipart_fetch_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
+test_multipart_fetch_LDADD=libddm-1.la libddm-test.la
+
+nodist_test_multipart_fetch_SOURCES=$(COMMONSRCDIR)/ddm/test-multipart-fetch.c
+
+test_notification_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
+test_notification_LDADD=libddm-1.la libddm-test.la
+
+nodist_test_notification_SOURCES=$(COMMONSRCDIR)/ddm/test-notification.c
 
 test_static_file_parser_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
 test_static_file_parser_LDADD=libddm-1.la libddm-test.la

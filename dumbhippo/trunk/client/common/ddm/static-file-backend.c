@@ -22,7 +22,6 @@ typedef struct {
 
 typedef struct {
     DDMDataModel *ddm_model;
-    int idle_source;
     GSList *pending_requests;
 
     DDMDataModel *backend_model;
@@ -255,9 +254,6 @@ static_file_remove_model (DDMDataModel *ddm_model,
     
     g_object_set_data(G_OBJECT(ddm_model), "dbus-data-model", NULL);
 
-    if (static_file_model->idle_source)
-        g_source_remove(static_file_model->idle_source);
-
     while (static_file_model->pending_requests != NULL) {
         PendingRequest *pr = static_file_model->pending_requests->data;
         static_file_model->pending_requests = g_slist_delete_link(static_file_model->pending_requests,
@@ -274,25 +270,12 @@ static_file_remove_model (DDMDataModel *ddm_model,
     g_free(static_file_model);
 }
 
-static gboolean
-pending_request_idle(gpointer data)
-{
-    StaticFileModel *static_file_model = data;
-
-    ddm_static_file_model_flush(static_file_model->ddm_model);
-    
-    return FALSE;
-}
-
 static void
 model_add_pending_request(StaticFileModel *static_file_model,
                           PendingRequest  *pr)
 {
     static_file_model->pending_requests = g_slist_append(static_file_model->pending_requests, pr);
-
-    if (static_file_model->idle_source == 0) {
-        static_file_model->idle_source = g_idle_add(pending_request_idle, static_file_model);
-    }
+    ddm_data_model_schedule_flush(static_file_model->ddm_model);
 }
 
 static void
@@ -329,12 +312,35 @@ static_file_send_update (DDMDataModel *ddm_model,
     model_add_pending_request(static_file_model, pr);
 }
 
+static void
+static_file_flush (DDMDataModel *model,
+                   void         *backend_data)
+{
+    StaticFileModel *static_file_model = get_static_file_model(model);
+
+    while (static_file_model->pending_requests != NULL) {
+        PendingRequest *pr = static_file_model->pending_requests->data;
+        static_file_model->pending_requests = g_slist_remove(static_file_model->pending_requests,
+                                                             static_file_model->pending_requests->data);
+        
+        if (pr->type == PENDING_REQUEST_QUERY) {
+            model_process_query(static_file_model, pr->query);
+        } else if (pr->type == PENDING_REQUEST_UPDATE) {
+            model_process_update(static_file_model, pr->query);
+        } else {
+            g_error("unknown pending request type");
+        }
+        
+        g_free(pr);
+    }
+}
+
 static const DDMDataModelBackend static_file_backend = {
     static_file_add_model,
     static_file_remove_model,
     static_file_send_query,
     static_file_send_update,
-    NULL,
+    static_file_flush
 };
 
 DDMDataModel*
@@ -356,29 +362,3 @@ ddm_static_file_model_new (const char *filename,
     return model;
 }
 
-void
-ddm_static_file_model_flush (DDMDataModel *model)
-{
-    StaticFileModel *static_file_model = get_static_file_model(model);
-
-    while (static_file_model->pending_requests != NULL) {
-        PendingRequest *pr = static_file_model->pending_requests->data;
-        static_file_model->pending_requests = g_slist_remove(static_file_model->pending_requests,
-                                                             static_file_model->pending_requests->data);
-        
-        if (pr->type == PENDING_REQUEST_QUERY) {
-            model_process_query(static_file_model, pr->query);
-        } else if (pr->type == PENDING_REQUEST_UPDATE) {
-            model_process_update(static_file_model, pr->query);
-        } else {
-            g_error("unknown pending request type");
-        }
-        
-        g_free(pr);
-    }
-
-    if (static_file_model->idle_source != 0) {
-        g_source_remove(static_file_model->idle_source);
-        static_file_model->idle_source = 0;
-    }
-}

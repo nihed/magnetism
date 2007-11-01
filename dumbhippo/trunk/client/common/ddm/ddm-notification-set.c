@@ -71,10 +71,12 @@ send_notification_foreach(gpointer key,
                           gpointer value,
                           gpointer data)
 {
+#if 0    
     /* DDMNotificationSet *notifications = data; */
     ResourceInfo *info = value;
 
     ddm_data_resource_on_resource_change(info->resource, info->changed_properties);
+#endif
 }
 
 void

@@ -36,8 +36,9 @@ query_resource(DDMDataModel    *model,
     query = ddm_data_model_query_resource(model, resource_id, fetch);
     ddm_data_query_set_single_handler(query, on_query_result, &result);
     ddm_data_query_set_error_handler(query, on_query_error, &error);
-    
-    ddm_static_file_model_flush(model);
+
+    while (ddm_data_model_needs_flush(model))
+        ddm_data_model_flush(model);
 
     if (error != NULL)
         g_error("Error from getResource, resource_id=%s, fetch=%s: %s", resource_id, fetch, error);

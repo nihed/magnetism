@@ -72,10 +72,16 @@ DDMDataResource *ddm_data_model_ensure_local_resource (DDMDataModel   *model,
                                                        const char     *resource_id,
                                                        const char     *class_id);
 
-/* should only be called by backends */
-void          ddm_data_model_set_connected      (DDMDataModel   *model,
-                                                 gboolean        connected);
+/* Do all processing normally done on idle */
 
+gboolean ddm_data_model_needs_flush (DDMDataModel *model);
+void     ddm_data_model_flush       (DDMDataModel *model);
+
+/* should only be called by backends */
+
+void ddm_data_model_schedule_flush (DDMDataModel *model);
+void ddm_data_model_set_connected  (DDMDataModel *model,
+                                    gboolean      connected);
 
 G_END_DECLS
 

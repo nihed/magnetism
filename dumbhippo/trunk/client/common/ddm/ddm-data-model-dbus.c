@@ -403,7 +403,7 @@ handle_incoming_resource_update(DBusModel          *dbus_model,
         dbus_message_iter_next(&prop_array_iter);
     }
     
-    return resource;
+    return indirect ? NULL : resource;
 }
 
 /* query_to_respond_to is NULL for a notification */
@@ -444,7 +444,7 @@ handle_incoming_resource_updates(DBusModel          *dbus_model,
         
         resource = handle_incoming_resource_update(dbus_model, &resource_struct_iter, notifications);
 
-        if (query_to_respond_to)
+        if (query_to_respond_to && resource != NULL)
             resources = g_slist_prepend(resources, resource);
 
         dbus_message_iter_next(&resource_array_iter);

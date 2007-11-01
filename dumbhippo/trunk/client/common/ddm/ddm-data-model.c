@@ -9,6 +9,7 @@
 #include "ddm-data-model-backend.h"
 #include "ddm-data-resource-internal.h"
 #include "ddm-data-query-internal.h"
+#include "ddm-local-client.h"
 
 static void      ddm_data_model_init                (DDMDataModel       *model);
 static void      ddm_data_model_class_init          (DDMDataModelClass  *klass);
@@ -20,10 +21,20 @@ struct _DDMDataModel {
     GObject parent;
 
     const DDMDataModelBackend *backend;
-    void                      *backend_data;
-    GFreeFunc                  free_backend_data_func;
+    void *backend_data;
+    GFreeFunc free_backend_data_func;
+
+    DDMClient *local_client;
     
     GHashTable *resources;
+    GHashTable *changed_resources;
+
+    GQueue *work_items;
+
+    gint64 next_query_serial;
+    gint64 max_answered_query_serial;
+
+    guint flush_idle;
 
     guint connected : 1;
 };
@@ -45,6 +56,12 @@ static void
 ddm_data_model_init(DDMDataModel *model)
 {
     model->resources = g_hash_table_new(g_str_hash, g_str_equal);
+    model->changed_resources = g_hash_table_new(g_direct_hash, NULL);
+    model->work_items = g_queue_new();
+
+    model->max_answered_query_serial = -1;
+
+    model->local_client = _ddm_local_client_new(model);
 }
 
 static void
@@ -78,16 +95,26 @@ ddm_data_model_dispose(GObject *object)
         model->backend_data = NULL;
         model->free_backend_data_func = NULL;
     }
-    
+
     G_OBJECT_CLASS(ddm_data_model_parent_class)->dispose(object);
 }
 
 static void
 ddm_data_model_finalize(GObject *object)
 {
-#if 0
     DDMDataModel *model = DDM_DATA_MODEL(object);
-#endif
+
+    if (model->flush_idle != 0)
+        g_source_remove(model->flush_idle);
+
+    /* FIXME: cancel and remove everything still in here */
+    g_queue_free(model->work_items);
+    
+    /* FIXME: actually clean up the resources */
+    g_hash_table_destroy(model->resources);
+    g_hash_table_destroy(model->changed_resources);
+
+    g_object_unref(model->local_client);
 
     G_OBJECT_CLASS(ddm_data_model_parent_class)->finalize(object);
 }
@@ -153,11 +180,37 @@ params_from_valist(va_list vap)
     return params;
 }
 
-DDMDataQuery *
-ddm_data_model_query_params(DDMDataModel *model,
-                            const char   *method,
-                            const char   *fetch,
-                            GHashTable   *params)
+static void
+dump_param_foreach(gpointer k,
+                   gpointer v,
+                   gpointer data)
+{
+    DDMDataQuery *query = data;
+    const char *key = k;
+    const char *value = v;
+    const char *id_string = ddm_data_query_get_id_string(query);
+    
+    g_debug("%s: %s='%s'", id_string, key, value);
+}
+
+static void
+debug_dump_query(DDMDataQuery *query)
+{
+    const char *id_string = ddm_data_query_get_id_string(query);
+    DDMQName *qname = ddm_data_query_get_qname(query);
+    
+    g_debug("%s: Sending to server", id_string);
+    g_debug("%s: uri=%s#%s", id_string, qname->uri, qname->name);
+    g_debug("%s: fetch=%s", id_string, ddm_data_query_get_fetch_string(query));
+    g_hash_table_foreach(ddm_data_query_get_params(query), dump_param_foreach, query);
+}
+
+static DDMDataQuery *
+data_model_query_params_internal(DDMDataModel *model,
+                                 const char   *method,
+                                 const char   *fetch,
+                                 GHashTable   *params,
+                                 gboolean      force_remote)
 {
     DDMDataQuery *query;
     DDMQName *method_qname;
@@ -169,10 +222,58 @@ ddm_data_model_query_params(DDMDataModel *model,
     if (method_qname == NULL)
         return NULL;
 
-    query = _ddm_data_query_new(model, method_qname, fetch, params);
+    query = _ddm_data_query_new(model, method_qname, fetch, params, model->next_query_serial++);
+    if (query == NULL) /* Bad fetch string */
+        return NULL;
 
+    if (!force_remote && method_qname == ddm_qname_get("http://mugshot.org/p/system", "getResource")) {
+        const char *resource_id = g_hash_table_lookup(params, "resourceId");
+        DDMDataResource *resource;
+        GSList *results;
+        
+        if (resource_id == NULL) {
+            /* FIXME: ERROR ASYNC HERE */
+            return NULL;
+        }
+
+        /* The reason why we ensure (without specifying a class_id) here is so that
+         * we can record the fetches as they go out and avoid sending duplicate
+         * fetches to the server even if we've never fetched anything for the
+         * resource before.
+         *
+         * The actual fetch will be done when we process the response work item
+         * and find out what we are missing.
+         *
+         * We do the lookup first to avoid complaints about calling ensure_resource()
+         * on a local resource.
+         */
+        resource = ddm_data_model_lookup_resource(model, resource_id);
+        if (resource == NULL)
+            resource = ddm_data_model_ensure_resource(model, resource_id, NULL);
+        results = g_slist_prepend(NULL, resource);
+
+        _ddm_data_query_local_response(query, results);
+        
+        g_slist_free(results);
+        
+        return query;
+    }
+    
+    debug_dump_query(query);
     model->backend->send_query(model, query, model->backend_data);
     return query;
+}
+
+DDMDataQuery *
+ddm_data_model_query_params(DDMDataModel *model,
+                            const char   *method,
+                            const char   *fetch,
+                            GHashTable   *params)
+{
+    g_return_val_if_fail (DDM_IS_DATA_MODEL(model), NULL);
+    g_return_val_if_fail (model->backend != NULL, NULL);
+
+    return data_model_query_params_internal(model, method, fetch, params, FALSE);
 }
 
 DDMDataQuery *
@@ -196,6 +297,28 @@ ddm_data_model_query(DDMDataModel *model,
     return query;
 }
 
+static DDMDataQuery *
+data_model_query_internal(DDMDataModel *model,
+                          const char   *method,
+                          const char   *fetch,
+                          gboolean      force_remote,
+                          ...)
+{
+    DDMDataQuery *query;
+    GHashTable *params;
+    va_list vap;
+
+    va_start(vap, force_remote);
+    params = params_from_valist(vap);
+    va_end(vap);
+
+    query = data_model_query_params_internal(model, method, fetch, params, force_remote);
+
+    g_hash_table_destroy(params);
+
+    return query;
+}
+
 DDMDataQuery *
 ddm_data_model_query_resource(DDMDataModel *model,
                               const char     *resource_id,
@@ -203,9 +326,21 @@ ddm_data_model_query_resource(DDMDataModel *model,
 {
     g_return_val_if_fail (DDM_IS_DATA_MODEL(model), NULL);
 
-    return ddm_data_model_query(model, "http://mugshot.org/p/system#getResource", fetch,
-                                "resourceId", resource_id,
-                                NULL);
+    return data_model_query_internal(model, "http://mugshot.org/p/system#getResource", fetch, FALSE,
+                                     "resourceId", resource_id,
+                                     NULL);
+}
+
+DDMDataQuery *
+_ddm_data_model_query_remote_resource(DDMDataModel *model,
+                                      const char   *resource_id,
+                                      const char   *fetch)
+{
+    g_return_val_if_fail (DDM_IS_DATA_MODEL(model), NULL);
+
+    return data_model_query_internal(model, "http://mugshot.org/p/system#getResource", fetch, TRUE,
+                                     "resourceId", resource_id,
+                                     NULL);
 }
 
 DDMDataQuery *
@@ -223,10 +358,10 @@ ddm_data_model_update_params(DDMDataModel *model,
     if (method_qname == NULL) /* Invalid method URI */
         return NULL;
 
-    query = _ddm_data_query_new_update(model, method_qname, params);
-    if (query == NULL) /* Bad fetch string */
-        return NULL;
+    query = _ddm_data_query_new_update(model, method_qname, params, model->next_query_serial++);
 
+    debug_dump_query(query);
+    
     model->backend->send_update(model, query, model->backend_data);
     
     return query;
@@ -271,20 +406,24 @@ ensure_resource_internal(DDMDataModel *model,
 
     resource = g_hash_table_lookup(model->resources, resource_id);
     if (resource) {
-        if ((local != FALSE) != ddm_data_resource_get_local(resource)) {
+        if ((local != FALSE) != ddm_data_resource_is_local(resource)) {
             g_warning("Mismatch for 'local' nature of resource '%s', old=%d, new=%d",
                       resource_id, !local, local);
         }
 
         if (class_id) {
             const char *old_class_id = ddm_data_resource_get_class_id(resource);
-            if (old_class_id && strcmp(class_id, old_class_id) != 0)
-                g_warning("Mismatch for class_id of resource '%s', old=%s, new=%s",
-                          resource_id, old_class_id, class_id);
+            if (old_class_id) {
+                if (strcmp(class_id, old_class_id) != 0)
+                    g_warning("Mismatch for class_id of resonurce '%s', old=%s, new=%s",
+                              resource_id, old_class_id, class_id);
+            } else {
+                ddm_data_resource_set_class_id(resource, class_id);
+            }
         }
 
     } else {
-        resource = _ddm_data_resource_new(resource_id, class_id, local);
+        resource = _ddm_data_resource_new(model, resource_id, class_id, local);
         g_hash_table_insert(model->resources, (char *)ddm_data_resource_get_resource_id(resource), resource);
     }
 
@@ -318,3 +457,209 @@ ddm_data_model_set_connected (DDMDataModel   *model,
     model->connected = connected;
     g_signal_emit(G_OBJECT(model), signals[CONNECTED_CHANGED], 0, connected);
 }
+
+void
+_ddm_data_model_mark_changed(DDMDataModel    *model,
+                             DDMDataResource *resource)
+{
+    if (g_hash_table_lookup(model->changed_resources, resource) == NULL) {
+        g_hash_table_insert(model->changed_resources, resource, resource);
+    }
+
+    ddm_data_model_schedule_flush(model);
+}
+
+static gboolean
+do_flush(gpointer data)
+{
+    ddm_data_model_flush(data);
+
+    return FALSE;
+}
+
+void
+ddm_data_model_schedule_flush (DDMDataModel *model)
+{
+    if (model->flush_idle == 0)
+        model->flush_idle = g_idle_add(do_flush, model);
+}
+
+static int
+compare_work_items(gconstpointer  a,
+                   gconstpointer  b,
+                   gpointer       data)
+{
+    const DDMWorkItem *item_a = a;
+    const DDMWorkItem *item_b = b;
+
+    gint64 serial_a = _ddm_work_item_get_min_serial(item_a);
+    gint64 serial_b = _ddm_work_item_get_min_serial(item_b);
+
+    return (serial_a < serial_b) ? -1 : (serial_a == serial_b ? 0 : 1);
+}
+
+void
+_ddm_data_model_add_work_item (DDMDataModel    *model,
+                               DDMWorkItem     *item)
+{
+    GList *l;
+    
+    _ddm_work_item_ref(item);
+
+    /* Two situations:
+     *
+     * We have a new item with min_serial = -1; it probably goes right
+     * near the beginning of the queue.
+     *
+     * We have an item that now has a min_serial because we've sent a
+     * request to the server; it goes at the end of the queue.
+     *
+     * Slightly over-optimize here by handling the two cases separately.
+     * Note that both cases are different from g_queue_insert_sorted()
+     * because we insert after on the tie-break to avoid reordering
+     * when we pull things off the front.
+     */
+    if (_ddm_work_item_get_min_serial(item) == -1) {
+        for (l = model->work_items->head; l; l = l->next) {
+            if (compare_work_items(l->data, item, NULL) > 0)
+                break;
+        }
+
+        if (l == NULL)
+            g_queue_push_tail(model->work_items, item);
+        else
+            g_queue_insert_before(model->work_items, l, item);
+        
+    } else {
+        for (l = model->work_items->tail; l; l = l->prev) {
+            if (compare_work_items(l->data, item, NULL) <= 0)
+                break;
+        }
+        
+        if (l == NULL)
+            g_queue_push_head(model->work_items, item);
+        else
+            g_queue_insert_after(model->work_items, l, item);
+    }
+    
+
+    ddm_data_model_schedule_flush(model);
+}
+
+gboolean
+ddm_data_model_needs_flush(DDMDataModel *model)
+{
+    return model->flush_idle != 0;
+}
+
+static void
+flush_notifications_foreach(gpointer key,
+                            gpointer value,
+                            gpointer data)
+{
+    DDMDataResource *resource = key;
+    DDMClientNotificationSet *notification_set = data;
+
+    _ddm_data_resource_resolve_notifications(resource, notification_set);
+}
+
+static void
+data_model_flush_notifications(DDMDataModel *model)
+{
+    DDMClientNotificationSet *notification_set;
+    
+    if (g_hash_table_size(model->changed_resources) == 0)
+        return;
+
+    notification_set = _ddm_client_notification_set_new(model);
+
+    g_hash_table_foreach(model->changed_resources, flush_notifications_foreach, notification_set);
+    g_hash_table_remove_all(model->changed_resources);
+
+    _ddm_client_notification_set_add_work_items(notification_set);
+    _ddm_client_notification_set_unref(notification_set);
+}
+
+static void
+data_model_flush_work_items(DDMDataModel *model)
+{
+    GList *items;
+    GList *l;
+    int count = 0;
+    
+    /* Find the work items that might possibly be ready to process */
+    count = 0;
+    for (l = model->work_items->head; l; l = l->next) {
+        DDMWorkItem *item = l->data;
+
+        if (_ddm_work_item_get_min_serial(item) > model->max_answered_query_serial)
+            break;
+
+        count++;
+    }
+
+    /* And chop them out of the list of pending items */
+    if (l == model->work_items->head) {
+        return;
+    } else if (l == NULL) {
+        items = model->work_items->head;
+        model->work_items->head = NULL;
+        model->work_items->tail = NULL;
+        model->work_items->length = 0;
+    } else {
+        l->prev->next = NULL;
+        l->prev = NULL;
+        
+        items = model->work_items->head;
+        model->work_items->head = l;
+        model->work_items->length -= count;
+    }
+
+    /* Now walk through the possibly ready items, process them and insert them
+     * back into the list if they are still not ready.
+     */
+    for (l = items; l; l = l->next) {
+        DDMWorkItem *item = l->data;
+
+        if (!_ddm_work_item_process(item))
+            _ddm_data_model_add_work_item(model, item);
+
+        _ddm_work_item_unref(item);
+    }
+
+    g_list_free(items);
+}
+
+void
+ddm_data_model_flush(DDMDataModel *model)
+{
+    if (model->flush_idle == 0)
+        return;
+
+    g_debug("Flushing Data Model");
+
+    g_source_remove(model->flush_idle);
+    model->flush_idle = 0;
+
+    if (model->backend->flush)
+        model->backend->flush(model, model->backend_data);
+
+    data_model_flush_notifications(model);
+    data_model_flush_work_items(model);
+}
+
+void
+_ddm_data_model_query_answered (DDMDataModel *model,
+                                DDMDataQuery *query)
+{
+    gint64 serial = _ddm_data_query_get_serial(query);
+    if (serial > model->max_answered_query_serial)
+        model->max_answered_query_serial = serial;
+}
+
+DDMClient *
+_ddm_data_model_get_local_client (DDMDataModel *model)
+{
+    return model->local_client;
+}
+

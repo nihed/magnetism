@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "ddm-data-fetch.h"
+#include "ddm-data-model-internal.h"
 #include "ddm-data-resource-internal.h"
 
 typedef enum {
@@ -15,6 +16,7 @@ typedef enum {
 
 typedef struct _DataProperty DataProperty;
 typedef struct _DataConnection DataConnection;
+typedef struct _DataClient DataClient;
 
 struct _DDMDataProperty {
     DDMQName *qname;
@@ -35,14 +37,27 @@ struct _DataConnection {
     gpointer user_data;
 };
 
+struct _DataClient {
+    DDMClient *client;
+    DDMDataFetch *fetch;
+};
+
 struct _DDMDataResource
 {
+    DDMDataModel *model;
     char *resource_id;
     char *class_id;
     gboolean local;
 
-    GSList *connections;
+    GSList *clients;
+    GSList *connections; /* Local connections */
     GSList *properties;
+    GSList *changed_properties;
+
+    DDMDataFetch *received_fetch;
+    DDMDataFetch *requested_fetch;
+    gint64 requested_serial;
+
 };
 
 GQuark
@@ -127,7 +142,7 @@ ddm_data_property_get_value(DDMDataProperty *property,
                             DDMDataValue    *value)
 {
     g_return_if_fail(property != NULL);
-    
+
     *value = property->value;
 }
 
@@ -164,15 +179,21 @@ ddm_data_property_get_default_children(DDMDataProperty *property)
 }
 
 DDMDataResource *
-_ddm_data_resource_new(const char *resource_id,
-                       const char *class_id,
-                       gboolean    local)
+_ddm_data_resource_new(DDMDataModel *model,
+                       const char   *resource_id,
+                       const char   *class_id,
+                       gboolean      local)
 {
     DDMDataResource *resource = g_new0(DDMDataResource, 1);
 
+    resource->model = model;
     resource->resource_id = g_strdup(resource_id);
     ddm_data_resource_set_class_id(resource, class_id);
     resource->local = local != FALSE;
+    resource->requested_fetch = NULL;
+    resource->requested_serial = -1;
+    resource->received_fetch = NULL;
+    resource->local = local;
 
     return resource;
 }
@@ -206,7 +227,7 @@ ddm_data_resource_get_class_id (DDMDataResource *resource)
 }
 
 gboolean
-ddm_data_resource_get_local (DDMDataResource *resource)
+ddm_data_resource_is_local (DDMDataResource *resource)
 {
     g_return_val_if_fail(resource != NULL, FALSE);
 
@@ -441,8 +462,7 @@ ddm_data_resource_get_property_by_qname(DDMDataResource *resource,
         DDMDataProperty *property = l->data;
         
         if (qname == property->qname)
-            return property;
-    }
+            return property;    }
     
     return NULL;
 }
@@ -469,10 +489,10 @@ _ddm_data_resource_get_default_properties(DDMDataResource *resource)
 }
 
 void
-ddm_data_resource_connect(DDMDataResource *resource,
-                          const char        *property,
-                          DDMDataFunction  function,
-                          gpointer           user_data)
+ddm_data_resource_connect (DDMDataResource *resource,
+                           const char      *property,
+                           DDMDataFunction  function,
+                           gpointer         user_data)
 {
     DataConnection *connection;
 
@@ -494,7 +514,7 @@ void
 ddm_data_resource_connect_by_qname (DDMDataResource *resource,
                                     DDMQName        *property,
                                     DDMDataFunction  function,
-                                    gpointer           user_data)
+                                    gpointer         user_data)
 {
     DataConnection *connection;
 
@@ -510,6 +530,37 @@ ddm_data_resource_connect_by_qname (DDMDataResource *resource,
     }
 
     resource->connections = g_slist_prepend(resource->connections, connection);
+}
+
+void
+ddm_data_resource_set_client_fetch (DDMDataResource *resource,
+                                    DDMClient       *client,
+                                    DDMDataFetch    *fetch)
+{
+    GSList *l;
+    DataClient *data_client;
+
+    for (l = resource->clients; l; l = l->next) {
+        data_client = l->data;
+        if (data_client->client == client) {
+            if (fetch)
+                ddm_data_fetch_ref(fetch);
+            
+            ddm_data_fetch_unref(data_client->fetch);
+            if (fetch) {
+                data_client->fetch = fetch;
+            } else {
+                resource->clients = g_slist_remove(resource->clients, data_client);
+                g_free(data_client);
+            }
+
+            return;
+        }
+    }
+
+    data_client = g_new(DataClient, 1);
+    data_client->client = client;
+    data_client->fetch = ddm_data_fetch_ref(fetch);
 }
 
 void
@@ -913,12 +964,17 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
             property->default_children = ddm_data_fetch_from_string(default_children);
     }
 
+    if (changed && g_slist_find(resource->changed_properties, property->qname) == NULL) {
+        resource->changed_properties = g_slist_prepend(resource->changed_properties, property->qname);
+        _ddm_data_model_mark_changed(resource->model, resource);
+    }
+
     return changed;
 }
 
 void
-ddm_data_resource_on_resource_change(DDMDataResource *resource,
-                                     GSList            *changed_properties)
+_ddm_data_resource_send_local_notifications (DDMDataResource *resource,
+                                             GSList          *changed_properties)
 {
     GSList *connection_node = resource->connections;
     GSList *property_node;
@@ -953,6 +1009,47 @@ ddm_data_resource_on_resource_change(DDMDataResource *resource,
             connection_node = next;
         }
     }
+}
+
+static gboolean
+data_resource_needs_local_notifications (DDMDataResource *resource,
+                                         GSList          *changed_properties)
+{
+    GSList *connection_node = resource->connections;
+    GSList *property_node;
+
+    while (connection_node) {
+        GSList *next = connection_node->next;
+        DataConnection *connection = connection_node->data;
+        
+        if (connection->type == CONNECTION_TYPE_ANY)
+            return TRUE;
+
+        connection_node = next;
+    }
+
+    for (property_node = changed_properties; property_node != NULL; property_node = property_node->next) {
+        DDMQName *property_id = property_node->data;
+            
+        connection_node = resource->connections;
+        
+        while (connection_node) {
+            GSList *next = connection_node->next;
+            DataConnection *connection = connection_node->data;
+            
+            if (connection->type == CONNECTION_TYPE_NAME) {
+                if (connection->match.name == property_id->name)
+                    return TRUE;
+            } else if (connection->type == CONNECTION_TYPE_QNAME) {
+                if (connection->match.qname == property_id)
+                    return TRUE;
+            }
+            
+            connection_node = next;
+        }
+    }
+
+    return FALSE;
 }
 
 gboolean
@@ -1218,3 +1315,84 @@ _ddm_data_resource_dump(DDMDataResource *resource)
     }
 }
 
+DDMDataFetch *
+_ddm_data_resource_get_received_fetch (DDMDataResource *resource)
+{
+    return resource->received_fetch;
+}
+
+DDMDataFetch *
+_ddm_data_resource_get_requested_fetch (DDMDataResource *resource)
+{
+    return resource->requested_fetch;
+}
+
+gint64
+_ddm_data_resource_get_requested_serial (DDMDataResource *resource)
+{
+    return resource->requested_serial;
+}
+
+void
+_ddm_data_resource_fetch_requested (DDMDataResource *resource,
+                                    DDMDataFetch    *fetch,
+                                    guint64          serial)
+{
+    if (resource->requested_fetch == NULL) {
+        resource->requested_fetch = ddm_data_fetch_ref(fetch);
+    } else {
+        DDMDataFetch *old_requested = resource->requested_fetch;
+        resource->requested_fetch = ddm_data_fetch_merge(old_requested, fetch);
+        ddm_data_fetch_unref(old_requested);
+    }
+
+    resource->requested_serial = serial;
+}
+
+void
+_ddm_data_resource_fetch_received (DDMDataResource *resource,
+                                   DDMDataFetch    *received_fetch)
+{
+    if (resource->received_fetch == NULL) {
+        resource->received_fetch = ddm_data_fetch_ref(received_fetch);
+    } else {
+        DDMDataFetch *old_received = resource->received_fetch;
+        resource->received_fetch = ddm_data_fetch_merge(old_received, received_fetch);
+        ddm_data_fetch_unref(old_received);
+    }
+}
+
+void
+_ddm_data_resource_resolve_notifications (DDMDataResource          *resource,
+                                          DDMClientNotificationSet *notification_set)
+{
+    GSList *l;
+    
+    for (l = resource->clients; l; l = l->next) {
+        DataClient *data_client = l->data;
+
+        _ddm_client_notification_set_add(notification_set,
+                                         resource,
+                                         data_client->client,
+                                         data_client->fetch,
+                                         resource->changed_properties);
+    }
+
+    if (data_resource_needs_local_notifications(resource, resource->changed_properties)) {
+        /* received_fetch here is an overestimate, since it covers both local connections
+         * and connections on behalf of clients; we possibly should keep separetely
+         * the fetches resulting from locally-generated queries. And overestimate doesn't
+         * hurt much, however.
+         *
+         * See also comment in ddm-data-query.c:mark_received_fetches()
+         */
+        _ddm_client_notification_set_add(notification_set,
+                                         resource,
+                                         _ddm_data_model_get_local_client(resource->model),
+                                         resource->received_fetch,
+                                         resource->changed_properties);
+    }
+
+    g_slist_free(resource->changed_properties);
+    resource->changed_properties = NULL;
+}

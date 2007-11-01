@@ -4,14 +4,33 @@
 
 #include <ddm/ddm-data-fetch.h>
 #include <ddm/ddm-data-resource.h>
+#include <ddm/ddm-data-model.h>
+#include "ddm-client-notification.h"
 
 G_BEGIN_DECLS
 
-DDMDataResource *_ddm_data_resource_new (const char *resource_id,
-                                         const char *class_id,
-                                         gboolean    local);
+DDMDataResource *_ddm_data_resource_new (DDMDataModel    *model,
+                                         const char      *resource_id,
+                                         const char      *class_id,
+                                         gboolean         local);
 
 GSList *_ddm_data_resource_get_default_properties (DDMDataResource *resource);
+
+DDMDataFetch *_ddm_data_resource_get_received_fetch   (DDMDataResource *resource);
+DDMDataFetch *_ddm_data_resource_get_requested_fetch  (DDMDataResource *resource);
+gint64        _ddm_data_resource_get_requested_serial (DDMDataResource *resource);
+
+void _ddm_data_resource_fetch_requested (DDMDataResource *resource,
+                                         DDMDataFetch    *fetch,
+                                         guint64          serial);
+void _ddm_data_resource_fetch_received  (DDMDataResource *resource,
+                                         DDMDataFetch    *received_fetch);
+
+void _ddm_data_resource_send_local_notifications (DDMDataResource    *resource,
+                                                  GSList             *changed_properties);
+
+void _ddm_data_resource_resolve_notifications (DDMDataResource          *resource,
+                                               DDMClientNotificationSet *notification_set);
 
 void _ddm_data_resource_dump(DDMDataResource *resource);
 
