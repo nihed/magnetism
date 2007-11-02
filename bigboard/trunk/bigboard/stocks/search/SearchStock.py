@@ -46,8 +46,12 @@ class ResultsConsumer(search.SearchConsumer):
         else:
             _logger.debug("ignoring old async set_query")
 
-class ResultsView(search.SearchConsumer):
-
+class ResultsView(gobject.GObject, search.SearchConsumer):
+    __gsignals__ = {
+        ## this signal is used to autohide the sidebar when a result is selected
+        "match-selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
+    }
+    
     RESULT_TYPE_MAX = 4
     
     def __init__(self, *args, **kwargs):
@@ -123,6 +127,7 @@ class ResultsView(search.SearchConsumer):
         iter = model.get_iter(path)
         result = model.get_value(iter, 0)
         if result:
+            self.emit('match-selected')
             result._on_activated()
             
     def __update_showing(self):
@@ -262,6 +267,11 @@ class ResultsView(search.SearchConsumer):
         logging.error("failed to load image for '%s': %s", url, exc)  #FIXME queue retry                
 
 class SearchEntry(gtk.Entry):
+    __gsignals__ = {
+        ## this signal is used to autohide the sidebar when a result is selected
+        "match-selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
+    }
+    
     def __init__(self, *args, **kwargs):
         super(SearchEntry,self).__init__(*args, **kwargs)
 
@@ -276,6 +286,8 @@ class SearchEntry(gtk.Entry):
         self.__results_window.add(vbox)
         
         self.__results_view = ResultsView()
+        self.__results_view.connect('match-selected', lambda obj: self.emit('match-selected'))
+        
         treeview = self.__results_view.get_widget()
         frame = gtk.Frame()
         frame.add(treeview)
@@ -368,9 +380,7 @@ class SearchEntry(gtk.Entry):
     
 class SearchStock(Stock):
     """Search.  It's what's for dinner."""
-    __gsignals__ = {
-        "match-selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
-    }    
+
     def __init__(self, *args, **kwargs):
         super(SearchStock,self).__init__(*args, **kwargs)
         
@@ -380,6 +390,9 @@ class SearchStock(Stock):
         self.__widget = hippo.CanvasWidget(widget=self.__entry)
         self.__box.append(self.__widget)
         self.__empty_box = CanvasVBox()
+
+        ## notify the main panel when a search result is chosen
+        self.__entry.connect('match-selected', lambda obj: self._panel.action_taken())
 
     def get_content(self, size):
         return size == self.SIZE_BULL and self.__box or self.__empty_box

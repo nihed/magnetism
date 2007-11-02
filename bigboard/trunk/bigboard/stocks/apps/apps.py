@@ -161,12 +161,16 @@ class Application(object):
     def recheck_installed(self):
         old_installed = self.__desktop_entry is not None
         self.__desktop_entry = self.__lookup_desktop()
-            
-    def launch(self):
+
+    ## called only by apps repo
+    def _do_launch(self):
         if self.__desktop_entry:
             self.__desktop_entry.launch([])
         else:
             global_mugshot.get_mugshot().install_application(self.__resource.id, self.__resource.packageNames, self.__resource.desktopNames)            
+    
+    def launch(self):
+        get_apps_repo().launch(self)        
 
     def __str__(self):
         return "<App:%s,local:%d,usageCount:%s>" % (self.get_name(), self.is_local(), self.get_usage_count())
@@ -256,7 +260,8 @@ class AppsRepo(gobject.GObject):
         "my-pinned-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "my-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "global-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "local-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
+        "local-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "app-launched" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
         }
     def __init__(self, *args, **kwargs):
         super(AppsRepo, self).__init__(*args, **kwargs)        
@@ -439,6 +444,10 @@ class AppsRepo(gobject.GObject):
             app.recheck_installed()
             
         self.emit("local-apps-changed", self.__local_apps.itervalues())
+
+    def launch(self, app):
+        app._do_launch()
+        self.emit('app-launched', app)
 
     def get_app_for_resource(self, app_resource):
         if not self.__ddm_apps.has_key(app_resource.id):
