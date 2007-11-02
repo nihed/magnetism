@@ -85,6 +85,8 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
         
         self.__view.append_column(column)
 
+        ## BROWSE means don't let user select nothing (as with SINGLE)
+        self.__view.get_selection().set_mode(gtk.SELECTION_BROWSE)
         self.__view.get_selection().connect('changed', self.__on_selection_changed)
         self.__view.connect('row-activated', self.__on_row_activated)
 
@@ -196,6 +198,7 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
         return markup
 
     def add_results(self, results):
+        was_empty = not self.__store.get_iter_first()
         for i,r in enumerate(results):
             if i >= self.RESULT_TYPE_MAX:
                 break
@@ -230,6 +233,12 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
 
         ## sort headings in alpha order
         self.__store.set_sort_column_id(3, gtk.SORT_ASCENDING)            
+
+        ## if we were empty, select first item
+        if was_empty:
+            iter = self.__store.get_iter_first()
+            if iter:
+                self.__view.get_selection().select_iter(iter)
 
         self.__update_showing()
                     

@@ -877,7 +877,7 @@ widget "*bigboard-nopad-button" style "bigboard-nopad-button"
     #bigboard.presence.get_presence() # for side effect of creating Presence object
         
     gtk.gdk.threads_enter()
-    _logger.debug("Enter mainloop")    
+    _logger.debug("Enter mainloop")
     gtk.main()
     gtk.gdk.threads_leave()
 
