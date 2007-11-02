@@ -83,6 +83,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__repo.connect('my-pinned-apps-changed', self.__on_my_pinned_apps_changed)
         self.__repo.connect('my-top-apps-changed', self.__on_my_top_apps_changed)
         self.__repo.connect('global-top-apps-changed', self.__on_global_top_apps_changed)
+        self.__repo.connect('app-launched', self.__on_app_launched)
 
         self.__sync()
 
@@ -117,6 +118,9 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
     def __on_app_size_changed(self, *args):
         _logger.debug("app size changed")  
         self.__sync()
+
+    def __on_app_launched(self, repo, app):
+        self._panel.action_taken()
 
     def __on_more_button(self):
         _logger.debug("more!")

@@ -443,7 +443,6 @@ class BigBoardPanel(dbus.service.Object):
         gobject.idle_add(self.__sync_listing)
         
         self.__self_stock.connect('info-loaded', lambda *args: self.__initial_appearance())
-        self.__search_stock.connect('match-selected', self.__on_search_match_selected)
 
         ## visible=True means we never hide, visible=False means we "autohide" and popout
         ## when the hotkey or applet is used
@@ -472,8 +471,8 @@ class BigBoardPanel(dbus.service.Object):
     @log_except()
     def __idle_show_we_exist(self):
         _logger.debug("showing we exist")
-        self.__handle_activation()
-        self.__handle_deactivation()
+        self.__enter_popped_out_state()
+        self.__leave_popped_out_state()
 
     @log_except()
     def __on_focus(self):
@@ -521,14 +520,12 @@ class BigBoardPanel(dbus.service.Object):
         
     def __get_size(self):
         return Stock.SIZE_BULL
-    
+
+    ## If the user performs an action such as launching an app,
+    ## that should close a popped-out sidebar, call this
     def action_taken(self):
-        _logger.debug("action taken")           
-        self.__handle_deactivation(immediate=True)
-    
-    @log_except()
-    def __on_search_match_selected(self, search):
-        self.action_taken()        
+        _logger.debug("action taken")
+        self.__leave_popped_out_state(immediate=True)
         
     @log_except()
     def _toggle_size(self):
@@ -571,7 +568,7 @@ class BigBoardPanel(dbus.service.Object):
     ## is always popped out, i.e. self.__popped_out should be True always.
 
     ## Shows the sidebar
-    def __handle_activation(self):
+    def __enter_popped_out_state(self):
         if not self.__popped_out:
             _logger.debug("popping out")
             self._dw.show()
@@ -582,11 +579,11 @@ class BigBoardPanel(dbus.service.Object):
             self.EmitPoppedOutChanged()
 
     ## Hides the sidebar, possibly after a delay, only if visible mode is False
-    def __handle_deactivation(self, immediate=False):
+    def __leave_popped_out_state(self, immediate=False):
         vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
         if self.__popped_out and not vis and self.__autohide_id == 0:
             _logger.debug("enqueued autohide timeout")            
-            self.__autohide_id = gobject.timeout_add(immediate and 1 or 1500, self.__idle_do_hide)        
+            self.__autohide_id = gobject.timeout_add(immediate and 1 or 1500, self.__idle_do_hide) 
             
     @log_except()
     def __idle_do_hide(self):
@@ -613,9 +610,9 @@ class BigBoardPanel(dbus.service.Object):
     def __sync_visible_mode(self, *args):
         vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
         if vis and not self.__popped_out:
-            self.__handle_activation()
+            self.__enter_popped_out_state()
         elif not vis:
-            self.__handle_deactivation()
+            self.__leave_popped_out_state()
             if not gconf.client_get_default().get_bool(GCONF_PREFIX + 'first_time_minimize_seen'):
                 dialog = FirstTimeMinimizeDialog(True)
                 dialog.show_all()
@@ -629,7 +626,7 @@ class BigBoardPanel(dbus.service.Object):
     def __do_popout(self, xtimestamp):
         if not self.__popped_out:
             _logger.debug("popout requested")
-            self.__handle_activation()
+            self.__enter_popped_out_state()
 
         ## focus even if we were already shown
         self._dw.present_with_time(xtimestamp)
@@ -638,8 +635,8 @@ class BigBoardPanel(dbus.service.Object):
     ## Hides the sidebar, only if not in visible mode
     def __do_unpopout(self):
         if self.__popped_out:
-            _logger.debug("unpopout requested")            
-            self.__handle_deactivation(True)
+            _logger.debug("unpopout requested")
+            self.__leave_popped_out_state(True)
 
     def toggle_popout(self, xtimestamp):
         if self.__popped_out:
