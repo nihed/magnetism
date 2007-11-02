@@ -75,8 +75,10 @@ on_got_icon(GdkPixbuf  *new_icon,
 {
     App *app;
     GdkPixbuf *scaled;
-    
+
+#ifdef VERBOSE_HTTP
     g_debug("Got reply to http GET for app icon");
+#endif
     
     app = data;
     
@@ -112,7 +114,7 @@ download_new_icon_url(App        *app,
         return;
 
     if (app->icon_url) {
-        g_debug("Sending http request for app icon %s", app->icon_url);
+        /* g_debug("Sending http request for app icon %s", app->icon_url); */
         http_get_pixbuf(connection,
                         app->icon_url,
                         on_got_icon,

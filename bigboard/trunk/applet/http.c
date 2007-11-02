@@ -85,7 +85,9 @@ handle_error (void            *object,
     const char *what;
     Request *r;
 
+#ifdef VERBOSE_HTTP
     g_debug("Got Error() in http sink");
+#endif
     
     r = object;
     
@@ -109,7 +111,9 @@ handle_begin (void            *object,
     const char *content_type;
     gint64 estimated_size;
 
+#ifdef VERBOSE_HTTP
     g_debug("Got Begin() in http sink");
+#endif
     
     r = object;
 
@@ -130,8 +134,10 @@ handle_begin (void            *object,
     r->content_type = g_strdup(content_type);
     r->content = g_string_sized_new(MIN(estimated_size, 1024*64) + 16);
 
+#ifdef VERBOSE_HTTP
     g_debug("  content-type '%s' estimated size %d", content_type, (int) estimated_size);
-
+#endif
+    
     return dbus_message_new_method_return(message);
 }
 
@@ -142,7 +148,9 @@ handle_end (void            *object,
 {
     Request *r;
 
+#ifdef VERBOSE_HTTP
     g_debug("Got End() in http sink");
+#endif
     
     r = object;
 
@@ -177,7 +185,9 @@ handle_data (void            *object,
     gint64 estimated_remaining;
     DBusMessageIter toplevel_iter, array_iter;
 
+#ifdef VERBOSE_HTTP
     g_debug("Got Data() in http sink");
+#endif
     
     r = object;
 
@@ -236,7 +246,9 @@ on_request_reply(DBusMessage *reply,
 {
     Request *r = data;
 
+#ifdef VERBOSE_HTTP
     g_debug("Got reply to http request message");
+#endif
     
     if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_ERROR) {
         const char *message = NULL;
@@ -311,8 +323,10 @@ pixbuf_closure_func(const char *content_type,
     Request *r;
 
     r = data;
-    
+
+#ifdef VERBOSE_HTTP
     g_debug("Got reply to http GET for pixbuf");
+#endif
     
     if (content_type == NULL) {
         g_printerr("Failed to download image: %s\n",
@@ -403,8 +417,10 @@ http_get_full(DBusConnection *connection,
                                        DBUS_TYPE_INVALID);
     hippo_dbus_proxy_unref(proxy);
 
+#ifdef VERBOSE_HTTP
     g_debug("requesting http url '%s' using sink path '%s'",
             r->url, r->sink_path);
+#endif
 }
 
 void

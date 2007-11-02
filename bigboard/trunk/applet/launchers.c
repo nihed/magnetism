@@ -24,7 +24,8 @@ update_button_icon(GtkWidget *button)
 
     icon = app_get_icon(app);
     
-    image = gtk_bin_get_child(GTK_BIN(button));
+    image = gtk_bin_get_child(GTK_BIN(button));    
+    
     gtk_image_set_from_pixbuf(GTK_IMAGE(image), icon);
     
     if (icon == NULL)
@@ -105,7 +106,7 @@ app_launch(App       *app,
         return FALSE;
     }
 
-    return desktop_launch(screen, desktop_names, error);
+    return desktop_launch_list(screen, desktop_names, error);
 }
 
 static void
@@ -120,7 +121,18 @@ on_button_clicked(GtkWidget *button,
     error = NULL;
     if (!app_launch(app, gtk_widget_get_screen(button),
                     &error)) {
-        g_printerr("Failed to launch app: %s\n", error->message);
+        GtkWidget *dialog;
+        dialog = gtk_message_dialog_new_with_markup (NULL, /* parent */
+                                                     GTK_DIALOG_NO_SEPARATOR,
+                                                     GTK_MESSAGE_ERROR,
+                                                     GTK_BUTTONS_CLOSE,
+                                                     "<b>%s</b>\n%s",
+                                                     "Unable to start application",
+                                                     error->message);
+        g_signal_connect(dialog, "response", G_CALLBACK(gtk_object_destroy), NULL);
+        gtk_window_present(GTK_WINDOW(dialog));
+        
+        /* g_printerr("Failed to launch app: %s\n", error->message); */
         g_error_free(error);
     }
 }
@@ -135,15 +147,20 @@ make_button_for_app(LaunchersData *ld,
     button = gtk_button_new();
     image = gtk_image_new();
     gtk_widget_show(image);
-
+    
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
     gtk_widget_set_name (button, "bigboard-button-launcher-button");
     gtk_rc_parse_string ("\n"
                          "   style \"bigboard-button-launcher-button-style\"\n"
                          "   {\n"
+                         "      xthickness=0\n"
+                         "      ythickness=0\n"                         
                          "      GtkWidget::focus-line-width=0\n"
                          "      GtkWidget::focus-padding=0\n"
-                         "      GtkButton::interior-focus=0\n"
+                         "      GtkButton::default-border={0,0,0,0}\n"
+                         "      GtkButton::default-outside-border={0,0,0,0}\n"
+                         "      GtkButton::inner-border={0,0,0,0}\n" 
+                         "      GtkButton::interior-focus=0\n"                         
                              "   }\n"
                          "\n"
                          "    widget \"*.bigboard-button-launcher-button\" style \"bigboard-button-launcher-button-style\"\n"
@@ -256,7 +273,7 @@ launchers_new(void)
     GtkWidget *hbox;
     LaunchersData *ld;
     
-    hbox = gtk_hbox_new(FALSE, 0);
+    hbox = gtk_hbox_new(FALSE, 1);
 
     ld = g_new0(LaunchersData, 1);
     ld->box = hbox;

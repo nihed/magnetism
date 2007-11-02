@@ -21,7 +21,6 @@ typedef struct {
 
 typedef struct {
     DDMDataModel *ddm_model;
-    DDMDataQuery *self_query;
     DDMDataResource *self_resource;
     char *photo_url;
     GdkPixbuf *icon;
@@ -326,16 +325,19 @@ on_ddm_connected_changed(DDMDataModel *ddm_model,
 {
     SelfData *sd = data;
 
-    if (connected && sd->self_query == NULL) {        
-        sd->self_query =
-            ddm_data_model_query_resource(ddm_model,
-                                          /* the child fetch in [] does not work yet */
-                                          "online-desktop:/o/global", "self [ photoUrl;topApplications+ ]");
+    if (connected) {        
+        DDMDataQuery *query;
 
-        ddm_data_query_set_multi_handler(sd->self_query,
+        query = ddm_data_model_query_resource(ddm_model,
+                                              /* the child fetch in [] does not work yet */
+                                              "online-desktop:/o/global", "self [ photoUrl;topApplications+ ]");
+
+        /* query frees itself when either handler is called */
+        
+        ddm_data_query_set_multi_handler(query,
                                          on_query_response, sd);    
         
-        ddm_data_query_set_error_handler(sd->self_query,
+        ddm_data_query_set_error_handler(query,
                                          on_query_error, sd);
     }
 }
