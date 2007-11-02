@@ -824,7 +824,7 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
     GSList *l;
     gboolean changed;
 
-#if 1
+#if 0
     g_debug("updating resource '%s' property %s update %d new value %s",
             resource->resource_id, property_id->name, update,
             value ? ddm_data_value_to_string(value) : "NULL" ); /* leak! FIXME remove from production */
