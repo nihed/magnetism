@@ -405,7 +405,12 @@ class BigBoardPanel(dbus.service.Object):
         self._canvas.set_root(self._main_box)
      
         self._header_box = GradientHeader()
-        self._header_box.connect("button-press-event", self.__on_header_buttonpress)     
+        self._header_box.connect("button-press-event", self.__on_header_buttonpress)             
+
+        self.__unpopout_button = Button(label='Hide', label_ypadding=-2)
+        self.__unpopout_button.set_property('yalign', hippo.ALIGNMENT_CENTER)
+        self.__unpopout_button.connect("activated", lambda button: self.__do_unpopout())
+        self._header_box.append(self.__unpopout_button, hippo.PACK_END)
      
         self._title = hippo.CanvasText(text="My Desktop", font="Bold 14px", xalign=hippo.ALIGNMENT_START)
      
@@ -571,6 +576,7 @@ class BigBoardPanel(dbus.service.Object):
     def __enter_popped_out_state(self):
         if not self.__popped_out:
             _logger.debug("popping out")
+
             self._dw.show()
             # we would prefer to need this, if iconify() worked on dock windows
             #self._dw.deiconify()
@@ -609,6 +615,11 @@ class BigBoardPanel(dbus.service.Object):
     @log_except()
     def __sync_visible_mode(self, *args):
         vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
+
+        ## unpopout button is only visible if unpopout is allowed
+        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
+        self.__unpopout_button.set_visible(not vis)
+        
         if vis and not self.__popped_out:
             self.__enter_popped_out_state()
         elif not vis:
