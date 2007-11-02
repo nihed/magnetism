@@ -91,6 +91,8 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
         self.__view.connect('row-activated', self.__on_row_activated)
 
         self.__added_headings = set()
+
+        self.__last_selected_path = None
         
     def get_widget(self):
         return self.__view
@@ -110,19 +112,52 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
         if len(rows) > 0:
             iter = model.get_iter(rows[0]) # rows is a list of path
             result = model.get_value(iter, 0)
+
+            _logger.debug("row %s is selected and its search result is %s" % (str(rows[0]), str(result)))
+            
             ## result is None for a heading row            
             if result:
                 result._on_highlighted()
             else:
                 # don't select heading rows
                 selection.unselect_iter(iter)
-                next = model.iter_next(iter)
+
+                down = True
+                if self.__last_selected_path:
+                    path = model.get_path(iter)
+                    ## see if we moved up onto the heading rather than down onto it
+                    if path[0] < self.__last_selected_path[0]:
+                        down = False
+
+                next = None
+                if down:
+                    next = model.iter_next(iter)
+                else:
+                    path = model.get_path(iter)
+                    if path[0] > 0:
+                        ## go to previous
+                        next = model.get_iter((path[0]-1))
+                    else:
+                        ## the top heading in the list, so move down
+                        next = model.iter_next(iter)
+                    
                 if next:
                     result = model.get_value(next, 0) ## see if it's another heading
+
+                    _logger.debug("  fixing selection to go to %s if result %s is not None" % (str(model.get_path(next)), str(result)))
+                    
                     if result:
                         selection.select_iter(next)
                         ## keep the cursor with it
                         self.__view.set_cursor(model.get_path(next))
+
+            ## record the current row as the last-selected row
+            (model, rows) = selection.get_selected_rows()
+            if len(rows) > 0:
+                self.__last_selected_path = rows[0]
+            else:
+                self.__last_selected_path = None
+            _logger.debug("  recorded last selected path as %s" % (str(self.__last_selected_path)))
             
     def __on_row_activated(self, tree, path, view_column):
         model = tree.get_model()
@@ -198,7 +233,8 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
         return markup
 
     def add_results(self, results):
-        was_empty = not self.__store.get_iter_first()
+        _logger.debug("adding %d results" % (len(results)))
+        
         for i,r in enumerate(results):
             if i >= self.RESULT_TYPE_MAX:
                 break
@@ -226,16 +262,25 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
                                         heading, 1, icon_url ] )
             if icon_url:
                 image_cache = URLImageCache()
-                image_cache.get(icon_url, self.__handle_image_load, self.__handle_image_error, format='pixbuf')            
+                image_cache.get(icon_url, self.__handle_image_load, self.__handle_image_error, format='pixbuf')
+
+        (model, rows) = self.__view.get_selection().get_selected_rows()
+        _logger.debug("before sort, selection is %s" % (str(rows)))
+        select_first_row = False
+        ## row 0 and 1 are the same, since a header is 0, if we select it we really select 1        
+        if len(rows) == 0 or rows[0][0] == 0 or rows[0][0] == 1:
+            select_first_row = True;
 
         ## sort headings before search entries
         self.__store.set_sort_column_id(4, gtk.SORT_ASCENDING)
-
+        
         ## sort headings in alpha order
-        self.__store.set_sort_column_id(3, gtk.SORT_ASCENDING)            
+        self.__store.set_sort_column_id(3, gtk.SORT_ASCENDING)
 
-        ## if we were empty, select first item
-        if was_empty:
+        ## select first item if current selection was the first item before;
+        ## by default tree view will have selected nothing, or will have
+        ## moved the previous selection when it sorted.
+        if select_first_row:
             iter = self.__store.get_iter_first()
             if iter:
                 self.__view.get_selection().select_iter(iter)
@@ -459,7 +504,7 @@ if __name__ == '__main__':
             results = []
             for s in stuff_to_search_in:
                 if query in s:
-                    results.append(TestSearchResult(self, s))
+                    results.append(TestSearchResult(self, s + " " + self.__heading))
             consumer.add_results(results)
 
     def construct_provider():
