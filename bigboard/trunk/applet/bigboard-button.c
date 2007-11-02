@@ -175,6 +175,8 @@ typedef struct {
 
         DBusConnection *connection;
         HippoDBusProxy *bb_proxy;
+
+        guint update_icon_idle;
 } ButtonData;
 
 static void display_help_dialog         (BonoboUIComponent *uic,
@@ -183,7 +185,7 @@ static void display_help_dialog         (BonoboUIComponent *uic,
 static void display_about_dialog        (BonoboUIComponent *uic,
                                          ButtonData        *button_data,
                                          const gchar       *verbname);
-static void update_icon                 (ButtonData        *button_data);
+static void queue_update_icon           (ButtonData        *button_data);
 static void update_button_state         (ButtonData        *button_data);
 static void update_button_display       (ButtonData        *button_data);
 static void update_showing_bigboard     (ButtonData        *button_data,
@@ -194,6 +196,9 @@ static void button_toggled_callback     (GtkWidget         *button,
                                          ButtonData        *button_data);
 static void user_photo_changed_callback (GdkPixbuf         *pixbuf,
                                          void              *data);
+static void button_size_allocated       (GtkWidget         *button,
+                                         GtkAllocation     *allocation,
+                                         ButtonData        *button_data);
 
 static void
 handle_popped_out_changed(DBusConnection *connection,
@@ -280,7 +285,11 @@ update_orientation (ButtonData       *button_data,
 
         button_data->orient = new_orient;
 
-        update_icon (button_data);
+        /* orientation change changes which size we want to pick */
+        g_debug("simulating size allocate due to orientation change");
+        button_size_allocated(button_data->button, &button_data->button->allocation, button_data);
+        
+        queue_update_icon (button_data);        
 }
 
 static void
@@ -300,7 +309,7 @@ update_size (ButtonData *button_data,
 
         button_data->size = size;
 
-        update_icon (button_data);
+        queue_update_icon (button_data);
 }
 
 /* this is when the panel size changes */
@@ -309,6 +318,7 @@ button_size_allocated (GtkWidget       *button,
                        GtkAllocation   *allocation,
                        ButtonData      *button_data)
 {
+        g_debug("Got size allocation %dx%d", allocation->width, allocation->height);
         switch (button_data->orient) {
         case GTK_ORIENTATION_HORIZONTAL:
                 update_size (button_data, allocation->height);
@@ -319,49 +329,51 @@ button_size_allocated (GtkWidget       *button,
         }
 }
 
-static void
-update_icon (ButtonData *button_data)
+static gboolean
+update_icon_idle (ButtonData *button_data)
 {
         int width, height;
         GdkPixbuf *icon;
         GdkPixbuf *scaled;
         int        icon_size;
         GError    *error;
-        int        focus_width = 0;
-        int        focus_pad = 0;
-        int        thickness = 0;
         int        xrequest, yrequest;
+        GtkRequisition empty_button_request;
 
         /* FIXME this function could do a lot more short-circuiting and maybe
          * save some effort
          */
-
+        g_debug("Updating icon, allocated size=%d", button_data->size);
+        
         if (!button_data->icon_theme)
-                return;
+                goto done;
 
         gtk_image_clear (GTK_IMAGE (button_data->image));
-
-        gtk_widget_style_get (button_data->button,
-                              "focus-line-width", &focus_width,
-                              "focus-padding", &focus_pad,
-                              NULL);
-
+        
+        gtk_widget_set_size_request (button_data->image, 10, 10); /* we undo this later, it's just in case the button special-cases 0x0 contents */
+        gtk_widget_size_request (GTK_WIDGET(button_data->button), &empty_button_request);
+        empty_button_request.width -= 10;
+        empty_button_request.height -= 10;
+        
+        icon_size = 0;
         xrequest = -1;
         yrequest = -1;
         switch (button_data->orient) {
         case GTK_ORIENTATION_HORIZONTAL:
-                thickness = button_data->button->style->ythickness;
-                xrequest = button_data->size - 2 * (focus_width + focus_pad + thickness);
+                xrequest = button_data->size - empty_button_request.width;
+                if (xrequest < 0)
+                        xrequest = 0;
                 yrequest = 12;
+                icon_size = xrequest;
                 break;
         case GTK_ORIENTATION_VERTICAL:
-                thickness = button_data->button->style->xthickness;
                 xrequest = 12;
-                yrequest = button_data->size - 2 * (focus_width + focus_pad + thickness);
+                yrequest = button_data->size - empty_button_request.height;
+                if (yrequest < 0)
+                        yrequest = 0;
+                icon_size = yrequest;
                 break;
         }
-
-        icon_size = button_data->size - 2 * (focus_width + focus_pad + thickness);
 
         /* clamp icon size to a max of 60 which is the native server-side size
          */
@@ -376,6 +388,9 @@ update_icon (ButtonData *button_data)
         else
                 icon_size = 60;
 
+        g_debug("Settled on icon size %d, and image widget request %dx%d, based on empty button request %dx%d",
+                icon_size, xrequest, yrequest, empty_button_request.width, empty_button_request.height);
+        
         if (button_data->user_photo) {
                 icon = button_data->user_photo;
                 g_object_ref(icon);
@@ -399,7 +414,7 @@ update_icon (ButtonData *button_data)
                         gtk_image_set_from_stock (GTK_IMAGE (button_data->image),
                                                   GTK_STOCK_MISSING_IMAGE,
                                                   GTK_ICON_SIZE_SMALL_TOOLBAR);
-                        return;
+                        goto done;
                 }
         }
 
@@ -411,11 +426,11 @@ update_icon (ButtonData *button_data)
         /* Make it fit on the given panel */
         switch (button_data->orient) {
         case GTK_ORIENTATION_HORIZONTAL:
-                width = (icon_size * width) / height;
+                width = (icon_size * width) / (double) height;
                 height = icon_size;
                 break;
         case GTK_ORIENTATION_VERTICAL:
-                height = (icon_size * height) / width;
+                height = (icon_size * height) / (double) width;
                 width = icon_size;
                 break;
         }
@@ -440,6 +455,27 @@ update_icon (ButtonData *button_data)
         gtk_widget_set_size_request(button_data->image, xrequest, yrequest);
 
         g_object_unref (icon);
+
+#ifdef GUI_LOG
+        {
+                GtkRequisition with_image_request;
+                gtk_widget_size_request(button_data->button, &with_image_request);
+                g_debug("Entire button will request %dx%d", with_image_request.width, with_image_request.height);
+        }
+#endif
+        
+done:
+        button_data->update_icon_idle = 0;
+        return FALSE;
+}
+
+static void
+queue_update_icon(ButtonData *button_data)
+{
+        if (button_data->update_icon_idle == 0) {
+                button_data->update_icon_idle =
+                        g_idle_add((GSourceFunc) update_icon_idle, button_data);
+        }
 }
 
 static const BonoboUIVerb bigboard_button_menu_verbs [] = {
@@ -454,7 +490,7 @@ static const BonoboUIVerb bigboard_button_menu_verbs [] = {
 static void
 update_button_display (ButtonData *button_data)
 {
-        update_icon (button_data);
+        queue_update_icon (button_data);
         
         if (button_data->showing_bigboard)
                 wncklet_set_tooltip (button_data->button, _("Click here to hide the desktop sidebar."));
@@ -511,6 +547,11 @@ applet_destroyed (GtkWidget       *applet,
                 button_data->button_activate = 0;
         }
 
+        if (button_data->update_icon_idle != 0) {
+                g_source_remove (button_data->update_icon_idle);
+                button_data->update_icon_idle = 0;
+        }
+        
         if (button_data->icon_theme != NULL) {
                 g_signal_handlers_disconnect_by_func (button_data->icon_theme,
                                                       theme_changed_callback,
@@ -608,7 +649,7 @@ static void
 theme_changed_callback (GtkIconTheme    *icon_theme,
                         ButtonData      *button_data)
 {
-        update_icon (button_data);
+        queue_update_icon (button_data);
 }
 
 static void
@@ -628,7 +669,6 @@ user_photo_changed_callback (GdkPixbuf         *pixbuf,
 
         update_button_display (button_data);
 }
-
 
 static ButtonData*
 bigboard_button_add_to_widget (GtkWidget *applet)
@@ -726,6 +766,39 @@ bigboard_button_add_to_widget (GtkWidget *applet)
         return button_data;
 }
 
+#ifdef GUI_LOG
+static void
+log_to_text_view(const char *message)
+{
+        static GtkWidget *window = NULL;
+        static GtkWidget *textview = NULL;
+        GtkTextBuffer *buffer;
+        GtkTextIter iter;
+        
+        if (window == NULL) {
+                GtkWidget *sw;
+                
+                window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
+                g_signal_connect (G_OBJECT(window), "destroy", G_CALLBACK(gtk_widget_destroyed), &window);
+                
+                textview = gtk_text_view_new();
+                sw = gtk_scrolled_window_new(NULL, NULL);
+                gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+                gtk_container_add(GTK_CONTAINER(window), sw);
+                gtk_container_add(GTK_CONTAINER(sw), textview);
+                gtk_window_set_default_size(GTK_WINDOW(window), 500, 700);
+
+                gtk_widget_show_all(window);
+        }
+
+        buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textview));
+        gtk_text_buffer_get_end_iter(buffer, &iter);
+        gtk_text_buffer_insert(buffer, &iter, message, -1);
+        gtk_text_buffer_insert(buffer, &iter, "\n", -1);
+}
+#endif
+
 static gboolean log_debug_messages = FALSE;
 
 static void
@@ -770,6 +843,7 @@ log_handler(const char    *log_domain,
 
         gstr = g_string_new(log_domain);
 
+        g_string_append(gstr, " ");
         g_string_append(gstr, prefix);
         g_string_append(gstr, message);
 
@@ -778,7 +852,11 @@ log_handler(const char    *log_domain,
                 g_string_erase(gstr, gstr->len - 1, 1);
         }
 
-        g_print("%s\n", gstr->str);
+#ifdef GUI_LOG
+        log_to_text_view(gstr->str);
+#else
+        g_printerr("%s\n", gstr->str);
+#endif
         g_string_free(gstr, TRUE);
 
 #ifdef G_OS_WIN32
@@ -798,6 +876,10 @@ bigboard_button_applet_fill (PanelApplet *applet)
 {
         ButtonData *button_data;
 
+#ifdef GUI_LOG
+        log_debug_messages = TRUE;
+#endif
+        
         g_log_set_default_handler(log_handler, NULL);
         g_log_set_handler(G_LOG_DOMAIN,
                           (GLogLevelFlags) (G_LOG_LEVEL_DEBUG | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION),
@@ -807,6 +889,7 @@ bigboard_button_applet_fill (PanelApplet *applet)
 
         button_data = bigboard_button_add_to_widget (GTK_WIDGET (applet));
 
+        g_debug ("Got panel applet size %d", panel_applet_get_size (applet));
         update_size (button_data,
                      panel_applet_get_size (applet));
 
