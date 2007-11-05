@@ -751,10 +751,12 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         self.__box.remove_all()
 
         if not self.have_one_good_google():
+            _logger.debug("Creating login button")
             button = self._create_login_button()
             self.__box.append(button)
             return
 
+        _logger.debug("have a google login, refreshing events")
         title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         title.set_property("text", fmt_date(self.__day_displayed))
         title.set_property("font", "13px Bold")
@@ -987,11 +989,13 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         self.__refresh_events()
     
     def __update_calendar_list_and_events(self, selected_gobj = None):
-        _logger.debug("retrieving calendar list")
+        _logger.debug("retrieving calendar list, selected=%s", selected_gobj)
+        self.__refresh_events()
         # we update events in __on_calendar_list_load() 
         if selected_gobj is not None:
             selected_gobj.fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)
         else:            
+            _logger.debug("updating calendar, current googles=%s", self.googles)
             for gobj in self.googles:
                 gobj.fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)      
 
