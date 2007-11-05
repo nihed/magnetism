@@ -97,16 +97,16 @@ class Dialog(gtk.Dialog):
             accounts.get_accounts().create_account(accounts.KIND_GOOGLE)
         else:
             for a in google_accounts:
-                self.__on_account_added(a)
+                self.__on_account_added(accts, a)
 
     ## should be a destroy() that disconnects connections, but we never destroy anyway
 
-    def __on_account_added(self, a):
+    def __on_account_added(self, accts, a):
         if a.get_kind() == accounts.KIND_GOOGLE and a not in self.__editors_by_account:
             self.__editors_by_account[a] = AccountEditor(account=a)
             self.vbox.pack_end(self.__editors_by_account[a])            
 
-    def __on_account_removed(self, a):
+    def __on_account_removed(self, accts, a):
         if a in self.__editors_by_account:
             editor = self.__editors_by_account[a]
             del self.__editors_by_account[a]
