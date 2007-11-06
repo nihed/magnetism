@@ -232,6 +232,26 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
                                     xml.sax.saxutils.escape(text[j:]))
         return markup
 
+    def __find_insert_iter(self, heading):
+        """Find where to append underneath a given heading"""
+        seen = False        
+        iter = self.__store.get_iter_first()
+        while iter:
+            row_heading = self.__store.get_value(iter, 3)
+
+            if row_heading == heading:
+                seen = True
+            elif seen:
+                ## return the first iter that does not match the heading but is after the heading
+                ## (this skips all existing stuff with the heading, as well as the heading row itself)
+                return iter
+
+            iter = self.__store.iter_next(iter)
+
+        ## if the insertion point is at the end, we return None
+        return None
+        
+
     def add_results(self, results):
         _logger.debug("adding %d results" % (len(results)))
         
@@ -257,9 +277,10 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
                 icon = gtk.gdk.pixbuf_new_from_file_at_size(icon, self.__icon_size, self.__icon_size)
             icon_url = r.get_icon_url()
 
-            self.__store.append(None, [ r, icon,
-                                        markup,
-                                        heading, 1, icon_url ] )
+            end_of_heading = self.__find_insert_iter(heading)
+            self.__store.append(end_of_heading, [ r, icon,
+                                                  markup,
+                                                  heading, 1, icon_url ] )
             if icon_url:
                 image_cache = URLImageCache()
                 image_cache.get(icon_url, self.__handle_image_load, self.__handle_image_error, format='pixbuf')
@@ -270,12 +291,6 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
         ## row 0 and 1 are the same, since a header is 0, if we select it we really select 1        
         if len(rows) == 0 or rows[0][0] == 0 or rows[0][0] == 1:
             select_first_row = True;
-
-        ## sort headings before search entries
-        self.__store.set_sort_column_id(4, gtk.SORT_ASCENDING)
-        
-        ## sort headings in alpha order
-        self.__store.set_sort_column_id(3, gtk.SORT_ASCENDING)
 
         ## select first item if current selection was the first item before;
         ## by default tree view will have selected nothing, or will have
@@ -503,7 +518,7 @@ if __name__ == '__main__':
 
             results = []
             for s in stuff_to_search_in:
-                if query in s:
+                if query.lower() in s.lower():
                     results.append(TestSearchResult(self, s + " " + self.__heading))
             consumer.add_results(results)
 
