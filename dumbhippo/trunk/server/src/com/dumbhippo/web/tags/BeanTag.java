@@ -17,6 +17,7 @@ import com.dumbhippo.web.BrowserBean;
 import com.dumbhippo.web.Download;
 import com.dumbhippo.web.DownloadBean;
 import com.dumbhippo.web.FromJspContext;
+import com.dumbhippo.web.Context;
 import com.dumbhippo.web.PagePositions;
 import com.dumbhippo.web.PagePositionsBean;
 import com.dumbhippo.web.Scope;
@@ -136,7 +137,10 @@ public class BeanTag extends SimpleTagSupport {
 			throw new RuntimeException("Can't instantiate " + clazz.getName(), e);
 		}
 		
-		for (Class<?> c = clazz; c.getPackage() == clazz.getPackage(); c = c.getSuperclass()) {
+		/* This are already too many types of injections. Do not add anything more here; 
+		 * replace everything but FromJspContext with a single @Inject annotation;
+		 * there is an example in DMClassHolder.java */
+		for (Class<?> c = clazz; c.getPackage() == clazz.getPackage(); c = c.getSuperclass()) {			
 			for (Field f : c.getDeclaredFields()) {
 				if (f.isAnnotationPresent(Signin.class)) {
 					// if the field is UserSigninBean or subclass, then
@@ -156,6 +160,8 @@ public class BeanTag extends SimpleTagSupport {
 				} else if (f.isAnnotationPresent(PagePositions.class) &&
 						f.getType().isAssignableFrom(PagePositionsBean.class)) {
 						setField(o, f, getPagePositionsBean());
+				} else if (f.isAnnotationPresent(Context.class)) {
+						setField(o, f, (PageContext)getJspContext());						
 				} else if (f.isAnnotationPresent(FromJspContext.class)) {
 					FromJspContext a = f.getAnnotation(FromJspContext.class);
 					String key = a.value();
