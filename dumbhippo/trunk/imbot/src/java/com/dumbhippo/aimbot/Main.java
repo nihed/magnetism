@@ -8,7 +8,6 @@ import javax.jms.Message;
 import javax.jms.ObjectMessage;
 
 import org.apache.log4j.Appender;
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.DailyRollingFileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;

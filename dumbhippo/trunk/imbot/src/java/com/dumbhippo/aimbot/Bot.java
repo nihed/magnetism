@@ -44,6 +44,21 @@ class Bot implements Runnable {
 	/* list of names this bot has recently identified itself to */
 	private static Map<Buddy,Long> identifiedTo = new HashMap<Buddy,Long>();
 	
+	private static final long RECENT_CONVERSATION_EXPIRY_SECS = 60;
+	private static final int RECENT_CONVERSATION_CUTOFF_COUNT = 5;
+	private class BuddyRecentConversation {
+		public long startTime;
+		public int count;
+		public long endTime;
+		public BuddyRecentConversation(long startTime) {
+			this.startTime = startTime;
+			this.count = 0;
+			this.endTime = startTime;
+		}
+	};
+	
+	private static Map<Buddy,BuddyRecentConversation> recentConversations = new HashMap<Buddy,BuddyRecentConversation>();
+	
 	private ScreenName name;
 	private String pass;
 	
@@ -153,14 +168,44 @@ class Bot implements Runnable {
 		public void handleMessage(Buddy buddy, String messageHtml) {
 			logger.info(name + " message from " + buddy.getName() + ": " + messageHtml);
 			
+			// Ignore messages from self; we regularly send ourself a PING to stay online apparently,
+			// but we don't want to attempt to do anything with it.
 			if (buddy.getName().equals(name)) {
-				logger.info("ignoring message from this bot's screen name; (AIM bot policy warning?)");
 				return;
+			}
+			
+			// There is apparently a situation in which if we hit a message limit, and try to
+			// respond to a user, the AIM software will send us a message seemingly from the
+			// user about the limit, which we then reply to, ad infinitum.  Just drop those
+			// messages here.
+			String[] badPhrases = {"over limit"};
+			for (String phrase: badPhrases) {
+				if (messageHtml.indexOf(phrase) >= 0) {
+					logger.debug("found bad phrase in message, dropping");
+					return;
+				}
 			}
 			
 			Client client = aim;
 			if (client == null)
-				return;		
+				return;
+			
+			BuddyRecentConversation lastConversation = recentConversations.get(buddy);
+			long curTime = new Date().getTime();
+			if (lastConversation == null) {
+				lastConversation = new BuddyRecentConversation(curTime);
+			} else {
+				 if ((curTime - lastConversation.endTime)/1000 > RECENT_CONVERSATION_EXPIRY_SECS) {
+					lastConversation = new BuddyRecentConversation(curTime);
+				 } else {
+					 lastConversation.count += 1;
+					 lastConversation.endTime = curTime;
+					 if (lastConversation.count > RECENT_CONVERSATION_CUTOFF_COUNT) {
+						 logger.debug("conversation count " + lastConversation.count + " is larger than cuttoff, dropping message");
+					 	return;
+					 }
+				 }
+			}
 			
 			/* send them the intro message if we haven't already done so recently */
 			sayIdentification(buddy, false);
