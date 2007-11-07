@@ -55,7 +55,9 @@ G_DEFINE_TYPE(DDMDataModel, ddm_data_model, G_TYPE_OBJECT);
 static void
 ddm_data_model_init(DDMDataModel *model)
 {
-    model->resources = g_hash_table_new(g_str_hash, g_str_equal);
+    model->resources = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                             NULL,
+                                             (GDestroyNotify)ddm_data_resource_unref);
     model->changed_resources = g_hash_table_new(g_direct_hash, NULL);
     model->work_items = g_queue_new();
 
@@ -444,6 +446,27 @@ ddm_data_model_ensure_local_resource(DDMDataModel *model,
                                      const char   *class_id)
 {
     return ensure_resource_internal(model, resource_id, class_id, TRUE);
+}
+
+static gboolean
+model_reset_foreach (gpointer key,
+                     gpointer value,
+                     gpointer data)
+{
+    DDMDataResource *resource = value;
+
+    if (ddm_data_resource_is_local(resource)) {
+        _ddm_data_resource_reset(resource);
+        return FALSE;
+    } else {
+        return TRUE;
+    }
+}
+
+void
+ddm_data_model_reset (DDMDataModel *model)
+{
+    g_hash_table_foreach_remove(model->resources, model_reset_foreach, NULL);
 }
 
 void

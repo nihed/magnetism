@@ -40,6 +40,8 @@ mugshot_SOURCES	=				\
 	src/hippo-dbus-local.h			\
 	src/hippo-dbus-model.c			\
 	src/hippo-dbus-model.h			\
+	src/hippo-dbus-model-client.c		\
+	src/hippo-dbus-model-client.h		\
 	src/hippo-dbus-mugshot.c		\
 	src/hippo-dbus-mugshot.h		\
 	src/hippo-dbus-pidgin.c			\

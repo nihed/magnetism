@@ -14,6 +14,7 @@ G_BEGIN_DECLS
 
 #define DDM_INSIDE_DDM_H 1
 
+#include <ddm/ddm-client.h>
 #include <ddm/ddm-data-fetch.h>
 #include <ddm/ddm-data-model.h>
 #include <ddm/ddm-data-model-backend.h>

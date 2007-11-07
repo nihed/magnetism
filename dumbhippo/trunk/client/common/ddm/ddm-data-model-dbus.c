@@ -623,6 +623,8 @@ handle_connected_changed(DBusConnection *connection,
         return;
     }
 
+    if (is_connected)
+        ddm_data_model_reset(dbus_model->ddm_model);
     ddm_data_model_set_connected(dbus_model->ddm_model, is_connected);
     if (is_connected)
         model_send_pending(dbus_model);
