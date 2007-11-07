@@ -80,6 +80,13 @@ void     ddm_data_model_flush       (DDMDataModel *model);
 /* should only be called by backends */
 
 void ddm_data_model_schedule_flush (DDMDataModel *model);
+
+/* Generally a backend will first reset() and then call set_connected(TRUE);
+ * the reason for the separation is to allow the backend to restablish
+ * local properties that reference remote properties.
+ */
+void ddm_data_model_reset          (DDMDataModel *model);
+
 void ddm_data_model_set_connected  (DDMDataModel *model,
                                     gboolean      connected);
 

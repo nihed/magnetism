@@ -86,6 +86,9 @@ struct _DDMDataValue {
     } u;
 };
 
+DDMDataResource *ddm_data_resource_ref   (DDMDataResource *resource);
+void             ddm_data_resource_unref (DDMDataResource *resource);
+
 void ddm_data_value_get_element(DDMDataValue *value,
                                 GSList         *element_node,
                                 DDMDataValue *element);
@@ -107,9 +110,12 @@ void ddm_data_resource_connect_by_qname (DDMDataResource *resource,
                                          DDMQName        *property,
                                          DDMDataFunction  function,
                                          gpointer         user_data);
-void ddm_data_resource_set_client_fetch (DDMDataResource *resource,
-                                         DDMClient       *client,
-                                         DDMDataFetch    *fetch);
+
+void          ddm_data_resource_set_client_fetch (DDMDataResource *resource,
+                                                  DDMClient       *client,
+                                                  DDMDataFetch    *fetch);
+DDMDataFetch *ddm_data_resource_get_client_fetch (DDMDataResource *resource,
+                                                  DDMClient       *client);
 
 void ddm_data_resource_disconnect       (DDMDataResource *resource,
                                          DDMDataFunction  function,

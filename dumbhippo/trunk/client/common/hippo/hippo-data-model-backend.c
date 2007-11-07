@@ -79,6 +79,13 @@ on_connection_connected_changed(HippoConnection *connection,
     const char *self_id;
     DDMQName *self_id_prop;
     DDMDataValue value;
+
+    /* We first "reset" - deleting all non-local resources from the model, and all property
+     * values that reference non-local properties; then we add back the "self" property, which
+     * references the local resource, *then* we signal that we are reconnected, so that the
+     * self property is already there.
+     */
+    ddm_data_model_reset(hippo_model->ddm_model);
     
     global_resource = ddm_data_model_ensure_local_resource(hippo_model->ddm_model,
                                                            DDM_GLOBAL_RESOURCE, DDM_GLOBAL_RESOURCE_CLASS);
@@ -88,8 +95,7 @@ on_connection_connected_changed(HippoConnection *connection,
         self_id = NULL;
     }
 
-    self_id_prop = ddm_qname_get(DDM_GLOBAL_RESOURCE_CLASS,
-                                 "self");
+    self_id_prop = ddm_qname_get(DDM_GLOBAL_RESOURCE_CLASS, "self");
     if (self_id) {
         value.type = DDM_DATA_RESOURCE;
         value.u.resource = ddm_data_model_ensure_resource(hippo_model->ddm_model,
@@ -167,9 +173,15 @@ do_offline_query(gpointer data)
 
     if (hippo_model == NULL)
         return FALSE;  /* in case model was nuked before getting to idle */
-    
+
+    if (hippo_model->disk_cache == NULL) {
+        ddm_data_query_error(query,
+                             DDM_DATA_ERROR_INTERNAL,
+                             "No connection and query is not cached");
+        return FALSE;
+    }
+
     _hippo_disk_cache_do_query(hippo_model->disk_cache, query);
-    
     return FALSE;
 }
 

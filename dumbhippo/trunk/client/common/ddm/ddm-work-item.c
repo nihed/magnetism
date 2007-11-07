@@ -347,8 +347,10 @@ _ddm_work_item_process (DDMWorkItem *item)
             }
             break;
         case ITEM_QUERY_RESPONSE:
-            _ddm_data_query_run_response(item->u.query_response.query);
-            break;
+            {
+                _ddm_data_query_run_response(item->u.query_response.query);
+                break;
+            }
         }
     } else {
         g_debug("%s: have unsatisfied fetches; need responses; min_serial=%" G_GINT64_MODIFIER "d", item->id_string,

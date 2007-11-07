@@ -44,6 +44,8 @@ struct _DataClient {
 
 struct _DDMDataResource
 {
+    guint refcount;
+    
     DDMDataModel *model;
     char *resource_id;
     char *class_id;
@@ -129,6 +131,17 @@ ddm_data_value_free_element(DDMDataValue *value,
     g_warning("Type value '%d' not valid", DDM_DATA_BASE(value->type));
 }
 
+static void
+ddm_data_property_free(DDMDataProperty *property)
+{
+    ddm_data_value_clear(&property->value);
+
+    if (property->default_children)
+        ddm_data_fetch_unref(property->default_children);
+
+    g_free(property);
+}
+
 DDMQName *
 ddm_data_property_get_qname(DDMDataProperty *property)
 {
@@ -178,6 +191,13 @@ ddm_data_property_get_default_children(DDMDataProperty *property)
     return property->default_children;
 }
 
+static void
+data_client_free(DataClient *data_client)
+{
+    ddm_data_fetch_unref(data_client->fetch);
+    g_free(data_client);
+}
+
 DDMDataResource *
 _ddm_data_resource_new(DDMDataModel *model,
                        const char   *resource_id,
@@ -185,6 +205,8 @@ _ddm_data_resource_new(DDMDataModel *model,
                        gboolean      local)
 {
     DDMDataResource *resource = g_new0(DDMDataResource, 1);
+
+    resource->refcount = 1;
 
     resource->model = model;
     resource->resource_id = g_strdup(resource_id);
@@ -196,6 +218,124 @@ _ddm_data_resource_new(DDMDataModel *model,
     resource->local = local;
 
     return resource;
+}
+
+typedef gboolean (*ForeachRemoveFunc) (gpointer data,
+                                       gpointer user_data);
+
+static GSList *
+slist_foreach_remove(GSList            *list,
+                     ForeachRemoveFunc  func,
+                     gpointer           user_data)
+{
+    GSList *l = list;
+    GSList *prev = NULL;
+
+    while (l) {
+        GSList *next = l->next;
+        if ((*func)(l->data, user_data)) {
+            if (prev != NULL)
+                prev->next = next;
+            else
+                list = next;
+        } else {
+            prev = l;
+        }
+
+        l = next;
+    }
+
+    return list;
+}
+
+static gboolean
+reset_resource_value_foreach(gpointer     data,
+                             gpointer     user_data)
+{
+    DDMDataResource *resource = data;
+
+    return !resource->local;
+}
+
+static gboolean
+reset_property_foreach(gpointer    data,
+                       gpointer    user_data)
+{
+    DDMDataProperty *property = data;
+
+    if (DDM_DATA_BASE(property->value.type) != DDM_DATA_RESOURCE)
+        return FALSE;
+
+    if (DDM_DATA_IS_LIST(property->value.type)) {
+        property->value.u.list = slist_foreach_remove(property->value.u.list, reset_resource_value_foreach, NULL);
+        reset_resource_value_foreach(data, user_data);
+        return FALSE;
+    } else {
+        if (!property->value.u.resource->local) {
+            ddm_data_property_free(property);
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    }
+}
+
+void
+_ddm_data_resource_reset (DDMDataResource *resource)
+{
+    g_return_if_fail(resource != NULL);
+    g_return_if_fail(resource->local);
+
+    resource->properties = slist_foreach_remove(resource->properties, reset_property_foreach, NULL);
+
+    if (resource->requested_fetch != NULL) {
+        ddm_data_fetch_unref(resource->requested_fetch);
+        resource->requested_fetch = NULL;
+    }
+    
+    if (resource->received_fetch != NULL) {
+        ddm_data_fetch_unref(resource->received_fetch);
+        resource->received_fetch = NULL;
+    }
+
+    resource->requested_serial = -1;    
+}
+
+DDMDataResource *
+ddm_data_resource_ref (DDMDataResource *resource)
+{
+    g_return_val_if_fail(resource != NULL, NULL);
+    g_return_val_if_fail(resource->refcount > 0, NULL);
+
+    resource->refcount++;
+
+    return resource;
+}
+
+void
+ddm_data_resource_unref (DDMDataResource *resource)
+{
+    g_return_if_fail(resource != NULL);
+    g_return_if_fail(resource->refcount > 0);
+
+    resource->refcount--;
+    if (resource->refcount == 0) {
+        g_free(resource->resource_id);
+        g_free(resource->class_id);
+
+        g_slist_foreach(resource->clients, (GFunc)data_client_free, NULL);
+        g_slist_foreach(resource->connections, (GFunc)g_free, NULL);
+        g_slist_foreach(resource->properties, (GFunc)ddm_data_property_free, NULL);
+
+        g_slist_free(resource->changed_properties);
+
+        if (resource->received_fetch != NULL)
+            ddm_data_fetch_unref(resource->received_fetch);
+        if (resource->requested_fetch != NULL)
+            ddm_data_fetch_unref(resource->requested_fetch);
+        
+        g_free(resource);
+    }
 }
 
 void
@@ -543,30 +683,47 @@ ddm_data_resource_set_client_fetch (DDMDataResource *resource,
     for (l = resource->clients; l; l = l->next) {
         data_client = l->data;
         if (data_client->client == client) {
-            if (fetch)
-                ddm_data_fetch_ref(fetch);
-            
-            ddm_data_fetch_unref(data_client->fetch);
             if (fetch) {
+                ddm_data_fetch_ref(fetch);
+                ddm_data_fetch_unref(data_client->fetch);
+            
                 data_client->fetch = fetch;
             } else {
                 resource->clients = g_slist_remove(resource->clients, data_client);
-                g_free(data_client);
+                data_client_free(data_client);
             }
 
             return;
         }
     }
 
-    data_client = g_new(DataClient, 1);
-    data_client->client = client;
-    data_client->fetch = ddm_data_fetch_ref(fetch);
+    if (fetch) {
+        data_client = g_new(DataClient, 1);
+        data_client->client = client;
+        data_client->fetch = ddm_data_fetch_ref(fetch);
+    }
+}
+
+DDMDataFetch *
+ddm_data_resource_get_client_fetch (DDMDataResource *resource,
+                                    DDMClient       *client)
+{
+    GSList *l;
+    DataClient *data_client;
+
+    for (l = resource->clients; l; l = l->next) {
+        data_client = l->data;
+        if (data_client->client == client)
+            return data_client->fetch;
+    }
+
+    return NULL;
 }
 
 void
 ddm_data_resource_disconnect (DDMDataResource *resource,
                               DDMDataFunction  function,
-                              gpointer           user_data)
+                              gpointer         user_data)
 {
     GSList *l;
 
@@ -802,12 +959,7 @@ remove_property(DDMDataResource *resource,
                 DDMDataProperty *property)
 {
     resource->properties = g_slist_remove(resource->properties, property);
-    ddm_data_value_clear(&property->value);
-    if (property->default_children) {
-        ddm_data_fetch_unref(property->default_children);
-    }
-
-    g_free(property);
+    ddm_data_property_free(property);
 }
 
 /* return value is whether something changed (we need to emit notification) */

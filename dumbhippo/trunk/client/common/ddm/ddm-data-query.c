@@ -280,7 +280,24 @@ data_query_response_internal (DDMDataQuery *query,
     DDMWorkItem *item;
     GSList *l;
 
-    if (!local) {
+    /* It's possible that we succeeded in getting a list of results, but
+     * couldn't even find out the class_id for the results (particularly
+     * for getResource, where a simple failed query shows this way)
+     * In this case, treat the whole thing as a failure.
+     */
+    for (l = results; l; l = l->next) {
+        if (ddm_data_resource_get_class_id(l->data) == NULL) {
+            g_debug("%s: resource %s has no class ID, failing query",
+                    query->id_string, ddm_data_resource_get_resource_id(l->data));
+            
+            ddm_data_query_error(query,
+                                 DDM_DATA_ERROR_ITEM_NOT_FOUND,
+                                 "Couldn't get details of result items");
+            return;
+        }
+    }
+            
+   if (!local) {
         g_debug("%s: Received response", query->id_string);
         
         for (l = results; l; l = l->next) {
@@ -369,6 +386,31 @@ ddm_data_query_error (DDMDataQuery *query,
     g_return_if_fail(query != NULL);
 
     g_debug("%s: Got error response: %s (%d)", query->id_string, message != NULL ? message : "<null>", error);
+
+    /* For a getResource query for a particular resource, we want to mark the
+     * fetch as 'received', so that we don't try to fetch it again. This is
+     * especially important for keeping our multi-part fetch code from going
+     * into an infinite loop; if we make a fetch, and it returns an error,
+     * don't try again.
+     *
+     * FIXME: This isn't really right; a 404 on a getResource shouldn't
+     * keep us from successfully trying to getResource again later if that
+     * resource appears. Possibly we want to track errored fetches separately
+     * with a timeout for retrying the errored fetch.
+     */
+    if (query->qname == ddm_qname_get("http://mugshot.org/p/system", "getResource")) {
+        const char *resource_id = g_hash_table_lookup(query->params, "resourceId");
+        if (resource_id == NULL) {
+            /* Shouldn't happen; we validate application-supplied getResource queries */
+            g_warning("%s: Null resource_id for getresource query when marking error response", query->id_string);
+        } else {
+            DDMDataResource *resource = ddm_data_model_lookup_resource(query->model, resource_id);
+            if (resource != NULL) {
+                g_debug("%s: marking fetch 'received' on errored getResource for %s'", query->id_string, resource_id);
+                _ddm_data_resource_fetch_received(resource, query->fetch);
+            }
+        }
+    }
 
     _ddm_data_model_query_answered(query->model, query);
     
