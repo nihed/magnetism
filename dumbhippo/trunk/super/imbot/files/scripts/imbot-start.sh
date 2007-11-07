@@ -22,7 +22,7 @@ echo "classpath $deps"
 "$JAVA" -Xdebug 					\
      -server 						\
      -classpath $deps:$targetdir/conf:$targetdir/dumbhippo-imbot.jar 	\
-     com.dumbhippo.aimbot.Main  >$targetdir/logs/imbot.log 2>&1 &
+     -Dimbot.logdir="${targetdir}/logs" com.dumbhippo.aimbot.Main 2>&1 &
 
 pid=$!
 

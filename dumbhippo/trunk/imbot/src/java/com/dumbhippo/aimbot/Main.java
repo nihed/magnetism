@@ -1,10 +1,15 @@
 package com.dumbhippo.aimbot;
 
+import java.io.File;
+import java.io.IOException;
+
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.ObjectMessage;
 
+import org.apache.log4j.Appender;
 import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.DailyRollingFileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 import org.slf4j.Logger;
@@ -157,12 +162,13 @@ public class Main {
 		return t;
 	}
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		
 		// init log4j, if we weren't lazy we might load it from a config file, 
 		// but we are lazy
 		org.apache.log4j.Logger log4jRoot = org.apache.log4j.Logger.getRootLogger();
-		ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%d %-5p [%c] (%t): %m%n"));
+		Appender appender = new DailyRollingFileAppender(new PatternLayout("%d %-5p [%c] (%t): %m%n"), 
+				                                         new File(System.getProperty("imbot.logdir"), "imbot.log").getPath(), "'.'yyyy-MM-dd");
 		log4jRoot.addAppender(appender);
 		log4jRoot.setLevel(Level.DEBUG);
 		
