@@ -8,6 +8,9 @@ from ddm.Query import *
 from ddm.NotificationSet import *
 from ddm.Resource import *
 
+# For idle handling
+import gobject
+
 _logger = logging.getLogger('mugshot.DataModel')
 
 def _escape_byte(m):
@@ -54,89 +57,89 @@ class DataModel(AbstractModel):
     def __real_init(self, server_name):
         AbstractModel.__init__(self)
 
-        self.__web_base_url = None
-        
         self.server_name = server_name # server_name can be None for "whatever engine is running"
 
         bus = dbus.SessionBus()
         bus_proxy = bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
         bus_proxy.connect_to_signal("NameOwnerChanged",
-                                    self.__update_proxy,
+                                    self.__on_name_owner_changed,
                                     arg0=_make_bus_name(server_name))
+        self._proxy = None        
         self.__update_proxy()
 
         self.callback = _DBusCallback(self, bus)
 
-    def __update_proxy(self, *args):
-        self._on_disconnected()
+    def __on_name_owner_changed(self, name, old_owner, new_owner):
+        self._proxy = None
+        if new_owner != '':
+            self.__update_proxy()
+        else:
+            self.__go_offline()
 
+    def __update_proxy(self, *args):
         bus = dbus.SessionBus()
         targetname = _make_bus_name(self.server_name)
         try:
             _logger.debug("Looking for engine %s", targetname)            
             self._proxy = bus.get_object(targetname, '/org/freedesktop/od/data_model')
         except dbus.DBusException:
+            # Probably means the engine couldn't be activated
             _logger.debug("Failed to get proxy for %s", targetname, exc_info=True)
+            self.__go_offline()
             return
         
-        _logger.debug("Found model, querying status")          
-        # Order matters ... we want the self_id to be there before we call on_connect
-        self._proxy.Get('org.freedesktop.od.Model', 'SelfId', reply_handler=self.__get_self_id_reply, error_handler=self.__on_dbus_error)
+        _logger.debug("Found new model, querying ready state")
 
-        self._proxy.Get('org.freedesktop.od.Model', 'WebBaseUrl', reply_handler=self.__get_web_base_url_reply, error_handler=self.__on_dbus_error)
-        
-        self._proxy.connect_to_signal("ConnectedChanged", self.__on_connected_changed, dbus_interface='org.freedesktop.od.Model')
-        self._proxy.Get('org.freedesktop.od.Model', 'Connected', reply_handler=self.__get_connected_reply, error_handler=self.__on_dbus_error)        
+        self._proxy.connect_to_signal("Ready", self.__on_ready, dbus_interface='org.freedesktop.od.Model')
+        self._proxy.Get('org.freedesktop.od.Model', 'Ready', reply_handler=self.__get_ready_reply, error_handler=self.__get_ready_error)
 
-    def __on_dbus_error(self, err):
-        _logger.error("Caught D-BUS error: %s", err)
+    def __get_ready_reply(self, ready):
+        _logger.debug("Got reply for ready state, Ready=%s", ready)
+        if ready:
+            self.__on_ready()
 
-    def __on_connected_changed(self, connected, self_id):
-        _logger.debug("Connected status changed: %s", connected)      
-        self.connected = connected  
-        if connected:
-            self.__on_connected(self_id)
-        else:
-            self.__on_disconnected()
+    def __get_ready_error(self, err):
+        # Probably means that the engine died
+        _logger.error("Caught D-BUS error asking for Ready: %s", err)
+        self.__go_offline()
 
-    def __on_connected(self, self_id):
-        if self_id == '':
-            self._set_self_id(None)
-        else:
-            self._set_self_id(self_id)
-        self._on_connected()
+    def __on_ready(self):
+        self._reset()
 
-    def __on_disconnected(self):
-        self._on_disconnected()
+        _logger.debug("Doing initial query")
 
-    def __get_web_base_url_reply(self, baseurl):
-        _logger.debug("Got base url %s", baseurl)
-        if baseurl == '':
-            baseurl = None
-        self.__web_base_url = baseurl
+        query = self.query_resource("online-desktop:/o/global", "self +;webBaseUrl;online")
+        query.add_handler(self.__on_initial_query_success)
+        query.add_error_handler(self.__on_initial_query_error)
+        query.execute()
+            
+    def __on_initial_query_success(self, resource):
+        self._on_ready()
+            
+    def __on_initial_query_error(self, code, message):
+        # Probably means that the engine died
+        _logger.error("Got an error response to the initial query: %s", message)
+        self.__go_offline()
 
-    def __get_self_id_reply(self, self_id):
-        _logger.debug("Got self id %s", self_id)  
-        if self_id == '':
-            self._set_self_id(None)
-        else:
-            self._set_self_id(self_id)
+    def __go_offline(self):
+        # Common handling if an error occurs in the initialization path or we lose the
+        # connection to the server; we change the state to be offline and if we were
+        # still in the "not yet ready" state, signal the end of initialization
+        #
+        if self.global_resource == None:
+            self._reset()
+        notifications = NotificationSet(self)
+        self.global_resource._update_property(("online-desktop:/p/o/global", "online"),
+                                              UPDATE_REPLACE, CARDINALITY_1, False,
+                                              notifications)
+        notifications.send()
 
-    def __get_connected_reply(self, connected):
-         self.connected = connected 
-
-         self._on_initialized() 
-         # this is a hack -- we pretend that we are connected so that we can get
-         # the information that has been cached by the mugshot client
-         if self.self_id != None:
-             self._on_connected()
+        if not self.ready:
+            self._on_ready()
 
     def _get_proxy(self):
         return self._proxy
 
-    def get_web_base_url(self):
-        return self.__web_base_url
-        
     def query(self, method, fetch=None, single_result=False, **kwargs):
         _logger.debug("doing query: %s fetch=%s, single_result=%s", method, fetch, single_result)
         return _DBusQuery(self, method, fetch, single_result, kwargs)
@@ -164,6 +167,8 @@ class DataModel(AbstractModel):
                 raise Exception("Resource-valued element points to a resource we don't know about: " + str(value))
         elif type_byte == ord('s') or type_byte == ord('u'):
             value = value.__str__()
+        elif type_byte == ord('b'):
+            value = bool(value)
             
         if cardinality_byte == ord('.'):
             cardinality = CARDINALITY_1
@@ -240,11 +245,14 @@ class _DBusQuery(Query):
         _logger.error('Caught error: %s', err.message)
         self._on_error(ERROR_FAILED, err.message)
 
+    def __async_no_connection_error(self):
+        self._on_error(ERROR_NO_CONNECTION, "No connection to engine to data model engine")
+        return False
+
     def execute(self):
-        # FIXME: Would it be better to call the __on_error? Doing that sync could cause problems.
-        #   If we decide to continue raising an exception here, we should use a subclass
-        if not self.__model.connected and self.__model.self_id == None:
-            raise Exception("Not connected")
+        if self.__model._proxy == None:
+            self._on_error(ERROR_NO_CONNECTION, "No connection to data model engine")
+            return
 
         method_uri = self.__method[0] + "#" + self.__method[1]
         #_logger.debug("executing query method: '%s' fetch: '%s' params: '%s'", method_uri, self.__fetch, self._params)
@@ -270,11 +278,14 @@ class _DBusUpdate(Query):
         _logger.error('Caught error: %s', err.message)
         self._on_error(ERROR_FAILED, err.message)
 
+    def __async_no_connection_error(self):
+        self._on_error(ERROR_NO_CONNECTION, "No connection to engine")
+        return False
+
     def execute(self):
-        # FIXME: Would it be better to call the __on_error? Doing that sync could cause problems.
-        #   If we decide to continue raising an exception here, we should use a subclass
-        if not self.__model.connected and self.__model.self_id == None:
-            raise Exception("Not connected")
+        if self.__model._proxy == None:
+            gobject.idle_add(self.__async_no_connection_error)
+            return
 
         method_uri = self.__method[0] + "#" + self.__method[1]
         _logger.debug("executing update method: '%s' params: '%s'", method_uri, self._params)
