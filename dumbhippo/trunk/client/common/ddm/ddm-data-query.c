@@ -390,7 +390,6 @@ _ddm_data_query_mark_error(DDMDataQuery *query,
 {
     g_return_if_fail(query != NULL);
     g_return_if_fail(message != NULL);
-    g_return_if_fail(query->results == NULL);
 
     g_debug("%s: Got error response: %s (%d)", query->id_string, message != NULL ? message : "<null>", error);
 
