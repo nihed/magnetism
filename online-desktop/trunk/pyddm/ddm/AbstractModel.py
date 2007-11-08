@@ -12,64 +12,39 @@ class AbstractModel(object):
     """
 
     def __init__(self):
-        self.__initialized_handlers = []
-        self.__connected_handlers = []
-        self.__server_connected_handlers = []
-        self.__disconnected_handlers = []
+        self.__ready_handlers = []
         self.__added_handlers = []
         self.__removed_handlers = []
         self.__resources = {}
-        self.initialized = False
-        # self_id that is not None means that the model is connected
-        self.self_id = None
-        # connected is True only when we can talk to the server/ the network is present
-        self.connected = False
-        self.__handled_model_connected = False
-        self.__handled_server_connected = False
+        self.ready = False
+        self.global_resource = None
+        self.self_resource = None
 
-    def add_initialized_handler(self, handler):
-        """Add a handler that will be called when we initialize the model and find out if we can get connected to the server"""
-        self.__initialized_handlers.append(handler)
+    def add_ready_handler(self, handler):
+        """Add a handler that will be called a) when we become ready b) on reconnection"""
+        self.__ready_handlers.append(handler)
 
-    def remove_initialized_handler(self, handler):
-        """Remove a handler added with add_initialized_handler"""
-        self.__initialized_handlers.remove(handler)
-
-    def add_connected_handler(self, handler):
-        """Add a handler that will be called when we become connected to the model"""
-        self.__connected_handlers.append(handler)
-
-    def remove_connected_handler(self, handler):
-        """Remove a handler added with add_connected_handler"""
-        self.__connected_handlers.remove(handler)
-
-    def add_server_connected_handler(self, handler):
-        """Add a handler that will be called when we become connected to the server"""
-        self.__server_connected_handlers.append(handler)
-
-    def remove_server_connected_handler(self, handler):
-        """Remove a handler added with add_connected_handler"""
-        self.__server_connected_handlers.remove(handler)
-
-    def add_disconnected_handler(self, handler):
-        """Add a handler that will be called when we become disconnected from the server"""
-        self.__disconnected_handlers.append(handler)
-
-    def remove_disconnected_handler(self, handler):
-        """Remove a handler added with add_disconnected_handler"""
-        self.__disconnected_handlers.remove(handler)
+    def remove_ready_handler(self, handler):
+        """Remove a handler added with add_ready_handler"""
+        self.__ready_handlers.remove(handler)
 
     def add_added_handler(self, handler):
-        """Add a handler that will be called when a resource is added"""
+        """Add a handler that will be called when a resource is added.
+
+        This should never be used by a normal appplication, it's for ddm-viewer.
+        """
         self.__added_handlers.append(handler)
 
     def remove_added_handler(self, handler):
-        """Remove a handler added with add_added_handler"""
+        """Remove a handler added with add_added_handler """
         self.__added_handlers.remove(handler)
 
     ## of course, currently we never remove resources...
     def add_removed_handler(self, handler):
-        """Add a handler that will be called when a resource is removed"""
+        """Add a handler that will be called when a resource is removed
+
+        This should never be used by a normal appplication, it's for ddm-viewer.
+        """
         self.__removed_handlers.append(handler)
 
     def remove_removed_handler(self, handler):
@@ -97,11 +72,11 @@ class AbstractModel(object):
         """
         raise NotImplementedException()
 
-    def query_resource(self, resource_id, fetch):
+    def query_resource(self, resource, fetch):
         """Create a query object for the standard system method 'getResource'.
 
         Arguments:
-        method -- the ID of the resource to retrieve
+        resource -- a resource object or resource ID
         fetch -- the fetch string to use for retrieving data. (default '+')
 
         The query will return the resource object if found, otherwise
@@ -109,6 +84,11 @@ class AbstractModel(object):
         until you call execute() on it.
         
         """
+
+        if isinstance(resource, Resource):
+            resource_id = resource.resource_id
+        else:
+            resource_id = resource
         
         return self.query(("http://mugshot.org/p/system", "getResource"),
                           fetch,
@@ -130,6 +110,12 @@ class AbstractModel(object):
         
         raise NotImplementedException()
 
+    def _reset(self):
+        self.__resources = {}
+        self.global_resource = self._ensure_resource("online-desktop:/o/global", "online-desktop:/p/o/global")
+        self.self_resource = None
+        self.global_resource.connect(self.__on_self_changed, "self")
+    
     def _get_resource(self, resource_id):
         return self.__resources[resource_id]
 
@@ -144,43 +130,10 @@ class AbstractModel(object):
             
             return resource
 
-    def _on_initialized(self):
-        for handler in self.__initialized_handlers:
+    def _on_ready(self):
+        self.ready = True
+        for handler in self.__ready_handlers:
             handler()    
-        self.initialized = True
 
-    def _on_connected(self):
-        if not self.__handled_model_connected:
-      
-            # On reconnection, all previous state is irrelevant
-            self.__resources = {}
-        
-            for handler in self.__connected_handlers:
-                handler()
-
-            self.__handled_model_connected = True 
-
-        if self.connected:
-            self._on_server_connected()
-
-    def _on_server_connected(self):
-        if self.__handled_server_connected:
-            return
-
-        for handler in self.__server_connected_handlers:
-            handler()
-
-        self.__handled_server_connected = True
-
-    def _on_disconnected(self):
-        if not self.__handled_model_connected:
-            return
-       
-        for handler in self.__disconnected_handlers:
-            handler()
-
-        self.__handled_model_connected = False
-        self.__handled_server_connected = False
-
-    def _set_self_id(self, self_id):
-        self.self_id = self_id
+    def __on_self_changed(self, global_resource):
+        self.self_resource = global_resource.self;

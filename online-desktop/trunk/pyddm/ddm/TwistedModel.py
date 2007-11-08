@@ -23,37 +23,66 @@ class TwistedModel(AbstractModel):
     
     """
     
-    def __init__(self, server="mugshot.org:5222", username=None, password=None):
+    def __init__(self, web_server="mugshot.org", xmpp_server=None, username=None, password=None):
         """Create a new TwistedModel instance that connects to the specified server.
 
         Arguments:
-        server: Server to connect to. The port may be specified by appending it after
-           a colon. If the port is not specified, a default value will be used (default='mugshot.org')
+        web_server: Web server to connect to. The port may be specified by appending it after
+           a colon. If the port is not specified, a default value will be used. (default='mugshot.org')
+        xmpp_server: XMPP server to connect to. The port may be specified by appending it after
+           a colon. If the port is not specified, a default value will be used.
+           If no xmpp server is specified, the web server hostname will be used.
         username: GUID of the user to connect as (if not specified, found from cookies.txt)
         password: Password of the user (if not specified, found from cookies.txt)
         
         """
         AbstractModel.__init__(self)
 
-        colon = server.find(":")
+        colon = web_server.find(":")
         if (colon >= 0):
-            self.server = server[:colon]
-            self.port = int(server[colon + 1:])
+            self.web_server = web_server[:colon]
+            self.web_port = int(web_server[colon + 1:])
         else:
-            self.server = server
-            if server == "mugshot.org":
-                self.port = 5222
+            self.web_server = web_server
+            if web_server == "mugshot.org":
+                self.web_port = 80
+            elif web_server == "dogfood.mugshot.org":
+                self.web_port = 9080
             else:
-                self.port = 21020
+                self.web_port = 8080
 
+        if self.web_port == 80:
+            web_port = ""
+        else:
+            web_port = ":" + `self.web_port`
+
+        self.web_base_url = "http://%s%s" % (self.web_server, web_port)
+
+        self.xmpp_port = None
+        if xmpp_server != None:
+            colon = xmpp_server.find(":")
+            if (colon >= 0):
+                self.xmpp_server = xmpp_server[:colon]
+                self.xmpp_port = int(xmpp_server[colon + 1:])
+            else:
+                self.xmpp_server =xmpp_server
+        else:
+            self.xmpp_server = self.web_server
+
+        if self.xmpp_port == None:
+            if self.web_port == 80:
+                self.xmpp_port = 5122
+            else:
+                self.xmpp_port = 21020
+        
         if username == None and password == None:
-            username, password = _parse_cookies(self.server)
+            username, password = _parse_cookies(self.web_server)
         elif username != None or password != None:
             raise MustLoginException("Either both user and password must be specified or neither")
 
         # FIXME: Use a legal resource
         self.username = username
-        user_jid = jid.JID("%s@%s/mugshot-python" % (_guid_to_jabber_id(username), self.server))
+        user_jid = jid.JID("%s@%s/mugshot-python" % (_guid_to_jabber_id(username), self.web_server))
         self.__factory = client.basicClientFactory(user_jid, password)
         self._xmlstream = None
 
@@ -65,12 +94,12 @@ class TwistedModel(AbstractModel):
         presumbaly want to start the main loop itself.
         
         """
-        
+
         global reactor
         self.__factory.addBootstrap(xmlstream.STREAM_AUTHD_EVENT, self.__on_auth_succeeded)
         self.__factory.addBootstrap(client.BasicAuthenticator.AUTH_FAILED_EVENT, self.__on_auth_failed)
  
-        reactor.connectTCP(self.server, self.port, self.__factory)
+        reactor.connectTCP(self.xmpp_server, self.xmpp_port, self.__factory)
         reactor.run()
         
 
@@ -88,16 +117,34 @@ class TwistedModel(AbstractModel):
         xmlstream.addObserver('/message', self.__on_message)
         
         self._xmlstream = xmlstream
-    
-        self.connected = True
-        self._on_initialized() 
-        self._on_connected()
+
+        self._reset()
+        
+        notifications = NotificationSet(self)        
+        self.global_resource._update_property(("online-desktop:/p/o/global", "online"),
+                                              UPDATE_REPLACE, CARDINALITY_1, True,
+                                              notifications)
+
+        self.global_resource._update_property(("online-desktop:/p/o/global", "webBaseUrl"),
+                                              UPDATE_REPLACE, CARDINALITY_1,  self.web_base_url,
+                                              notifications)
+
+        self_resource_id = self.web_base_url + "/o/user/" + self.username
+        self_resource = self._ensure_resource(self_resource_id,
+                                              "http://mugshot.org/p/o/user")
+        
+        self.global_resource._update_property(("online-desktop:/p/o/global", "self"),
+                                              UPDATE_REPLACE, CARDINALITY_01, self_resource,
+                                              notifications)
+
+        notifications.send()
+        
+        self._on_ready()
 
     def __on_auth_failed(self, xmlstream):
         global reactor
         print 'Auth failed!'
-        self.connected = False
-        self._on_initialized() 
+        
         reactor.stop()
 
     def __get_resource_id(self, resource_element):

@@ -45,21 +45,25 @@ def on_global_query_success(global_resource):
 def on_global_query_failure(code, message):
     print message
     
-def on_connect():
-    print "Connected"
+def online_changed(resource):
+    print "Online: ", resource.online
+    
+def on_ready():
+    print "Ready"
 
-    query = model.query_resource(model.self_id, "+;contacts +;contacters +;lovedAccounts +;email;aim")
-    query.add_handler(on_self_query_success)
-    query.add_error_handler(on_self_query_failure)
-    query.execute()
+    if model.self_resource != None:
+        query = model.query_resource(model.self_resource, "+;contacts +;contacters +;lovedAccounts +;email;aim")
+        query.add_handler(on_self_query_success)
+        query.add_error_handler(on_self_query_failure)
+        query.execute()
 
-    query = model.query_resource("online-desktop:/o/global", "onlineBuddies +")
+    query = model.query_resource(model.global_resource, "onlineBuddies +")
     query.add_handler(on_global_query_success)
     query.add_error_handler(on_global_query_failure)
     query.execute()
-
-def on_disconnect():
-    print "Disconnected"
+    
+    model.global_resource.connect(online_changed, "online")
+    online_changed(model.global_resource)
 
 parser = OptionParser()
 parser.add_option("-s", "--server", default="localinstance.mugshot.org:8080", help="Mugshot server to connect to (default localinstance.mugshot.org:8080)")
@@ -69,10 +73,9 @@ if len(args) > 0:
     sys.exit(1)
 
 model = DataModel(options.server)
-model.add_connected_handler(on_connect)
-model.add_disconnected_handler(on_disconnect)
-if model.connected:
-    on_connect()
+model.add_ready_handler(on_ready)
+if model.ready:
+    on_ready()
 
 loop = gobject.MainLoop()
 loop.run()
