@@ -239,18 +239,18 @@ item_fetch_additional(DDMWorkItem     *item,
         if (children != NULL) {
             ddm_data_property_get_value(property, &value);
             
-            g_assert (DDM_DATA_BASE(value.type) == DDM_DATA_RESOURCE);
-            
-            if (DDM_DATA_IS_LIST(value.type)) {
-                GSList *l;
-                
-                for (l = value.u.list; l; l = l->next) {
-                    if (!item_fetch_additional(item, l->data, children))
+            if (DDM_DATA_BASE(value.type) == DDM_DATA_RESOURCE) { /* Could also be NONE */
+                if (DDM_DATA_IS_LIST(value.type)) {
+                    GSList *l;
+                    
+                    for (l = value.u.list; l; l = l->next) {
+                        if (!item_fetch_additional(item, l->data, children))
+                            all_satisfied = FALSE;
+                    }
+                } else {
+                    if (!item_fetch_additional(item, value.u.resource, children))
                         all_satisfied = FALSE;
                 }
-            } else {
-                if (!item_fetch_additional(item, value.u.resource, children))
-                    all_satisfied = FALSE;
             }
         }
     }
@@ -317,13 +317,30 @@ _ddm_work_item_process (DDMWorkItem *item)
         break;
     case ITEM_QUERY_RESPONSE:
         {
-            GSList *resources = ddm_data_query_get_results(item->u.query_response.query);
-            for (l = resources; l; l = l->next) {
-                DDMDataResource *resource = l->data;
-                
-                if (!item_fetch_additional(item, resource,
-                                           ddm_data_query_get_fetch(item->u.query_response.query)))
-                    all_satisfied = FALSE;
+            DDMDataQuery *query = item->u.query_response.query;
+            
+            if (!ddm_data_query_has_error(query)) {
+                GSList *resources = ddm_data_query_get_results(query);
+                for (l = resources; l; l = l->next) {
+                    DDMDataResource *resource = l->data;
+                    
+                    if (item_fetch_additional(item, resource,
+                                              ddm_data_query_get_fetch(query))) {
+                        if (ddm_data_resource_get_class_id(resource) == NULL) {
+                            /* This means that we've done everything we can and we still know
+                             * nothing about the resource.
+                             */
+                            _ddm_data_query_mark_error(query,
+                                                       DDM_DATA_ERROR_ITEM_NOT_FOUND,
+                                                       "Couldn't get details of result item");
+                            all_satisfied = TRUE;
+                            break;
+
+                        }
+                    } else {
+                        all_satisfied = FALSE;
+                    }
+                }
             }
         }
         break;

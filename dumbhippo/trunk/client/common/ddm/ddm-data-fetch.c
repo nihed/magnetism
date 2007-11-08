@@ -503,7 +503,7 @@ ddm_data_fetch_merge(DDMDataFetch *fetch,
             fetch_property_copy(&result->properties[total_properties], &other->properties[j]);
             j++;
         } else {
-            fetch_property_merge(&result->properties[total_properties], &fetch->properties[i], &fetch->properties[i]);
+            fetch_property_merge(&result->properties[total_properties], &fetch->properties[i], &other->properties[j]);
             i++;
             j++;
         }

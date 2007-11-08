@@ -936,10 +936,14 @@ static void
 hippo_connection_connect_failure(HippoConnection *connection,
                                  const char      *message)
 {
+    /* message can be NULL */
     g_debug("Connection failure message: '%s'", message ? message : "NULL");
 
-    /* message can be NULL */
     hippo_connection_clear(connection);
+    
+    if (connection->state == HIPPO_STATE_REDIRECTING)
+        return;
+
     hippo_connection_start_retry_timeout(connection);
     hippo_connection_state_change(connection, HIPPO_STATE_RETRYING);
 }
@@ -3950,8 +3954,9 @@ handle_stream_error (LmMessageHandler *handler,
     if (child) {
         char *redirect_host = g_strdup(child->value);
         g_debug("Got see-other-host message, redirected to '%s'", redirect_host);
-        
-        hippo_connection_signout(connection);
+
+        hippo_connection_state_change(connection, HIPPO_STATE_REDIRECTING);
+        hippo_connection_disconnect(connection);
         hippo_connection_connect(connection, redirect_host);
         g_free (redirect_host);
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
@@ -4201,6 +4206,7 @@ hippo_connection_get_tooltip(HippoConnection *connection)
         tip = _("%s (please log in to mugshot.org)");
         break;
     case HIPPO_STATE_CONNECTING:
+    case HIPPO_STATE_REDIRECTING:
     case HIPPO_STATE_AUTHENTICATING:
         tip = _("%s (connecting - please wait)");
         break;    
@@ -4252,6 +4258,8 @@ hippo_state_to_string(HippoState state)
         return "SIGN_IN_WAIT";
     case HIPPO_STATE_CONNECTING:
         return "CONNECTING";
+    case HIPPO_STATE_REDIRECTING:
+        return "REDIRECTING";
     case HIPPO_STATE_RETRYING:
         return "RETRYING";
     case HIPPO_STATE_AUTHENTICATING:

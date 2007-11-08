@@ -1145,20 +1145,26 @@ handle_name_owner_changed(DBusConnection *connection,
     if (service == NULL)
         return; /* we don't care about this */
 
-    if (service->owner &&
-        (new_owner == NULL ||
-         strcmp(service->owner, new_owner) != 0)) {
-        /* Our previously-believed owner is going away */
+    if ((new_owner == NULL ||
+         (service->owner != NULL && strcmp(service->owner, new_owner) != 0))) {
+        /* Our previously-believed owner is going away, or we didn't find
+         * the service on startup. */
         char *owner;
-        
-        g_hash_table_remove(helper->services_by_owner,
-                            service->owner);
-        owner = service->owner;
-        service->owner = NULL;
 
-        g_debug("Service '%s' is now unavailable, old owner was '%s'",
-                service->well_known_name,
-                owner);
+        if (service->owner) {
+            g_hash_table_remove(helper->services_by_owner,
+                                service->owner);
+            owner = service->owner;
+            service->owner = NULL;
+            
+            g_debug("Service '%s' is now unavailable, old owner was '%s'",
+                    service->well_known_name,
+                    owner);
+        } else {
+            g_debug("Service '%s' not available on startup",
+                    service->well_known_name);
+        }
+
         (* service->tracker->unavailable_handler) (connection,
                                                    service->well_known_name,
                                                    owner,
@@ -1241,7 +1247,6 @@ on_get_owner_reply(DBusPendingCall *pending,
             if (*v_STRING == '\0')
                 v_STRING = NULL;
 
-            /* this will do nothing if going NULL->NULL on startup */
             handle_name_owner_changed(god->connection,
                                       god->well_known_name,
                                       NULL,
@@ -1269,6 +1274,19 @@ on_get_owner_reply(DBusPendingCall *pending,
                 dbus_message_unref(msg);
             }
         }
+    } else  {
+        /*
+         * Probably org.freedesktop.DBus.Error.NameHasNoOwner, but we might as well treat
+         * all error messages the same.
+         */
+        const char *message = NULL;
+        dbus_message_get_args(reply, NULL, DBUS_TYPE_STRING, &message, DBUS_TYPE_INVALID);
+        g_debug("GetNameOwner failed: %s", message);
+        
+        handle_name_owner_changed(god->connection,
+                                  god->well_known_name,
+                                  NULL,
+                                  NULL);
     }
     
     dbus_message_unref(reply);

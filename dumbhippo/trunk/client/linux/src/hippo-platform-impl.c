@@ -791,6 +791,7 @@ get_status_message(HippoConnection *connection)
         msg = _("Mugshot is not connected - please log in to mugshot.org");
         break;
     case HIPPO_STATE_CONNECTING:
+    case HIPPO_STATE_REDIRECTING:
     case HIPPO_STATE_AUTHENTICATING:
         msg = _("Mugshot is trying to connect to mugshot.org");
         break;    

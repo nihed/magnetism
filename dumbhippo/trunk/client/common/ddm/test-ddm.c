@@ -58,29 +58,19 @@ on_resource_changed(DDMDataResource *resource,
 }
 
 static void
-on_query_response(GSList            *resources,
-                  gpointer           user_data)
+on_query_response(DDMDataResource *resource,
+                  gpointer         user_data)
 {
-    GSList *l;
-
-    for (l = resources; l != NULL; l = l->next) {
-        DDMDataResource *resource = l->data;
-        GSList *properties;    
+    GSList *properties;    
     
-        g_print("Resource '%s' received in reply to query\n",
-                ddm_data_resource_get_resource_id(resource));
-        
-        properties = ddm_data_resource_get_properties(resource);
-        
-        print_resource_properties(resource, properties);
-
-        g_slist_free(properties);
-        
-        ddm_data_resource_connect(resource,
-                                  NULL, /* NULL = all properties */
-                                  on_resource_changed,
-                                  NULL);
-    }
+    g_print("Resource '%s' received in reply to query\n",
+            ddm_data_resource_get_resource_id(resource));
+    
+    properties = ddm_data_resource_get_properties(resource);
+    
+    print_resource_properties(resource, properties);
+    
+    g_slist_free(properties);
 }
 
 static void
@@ -91,36 +81,42 @@ on_query_error(DDMDataError     error,
     g_printerr("Failed to get query reply: '%s'\n", message);
 }
 
+static void
+on_ready(DDMDataModel *model)
+{
+    DDMDataQuery *query;
+    DDMDataResource *self_resource;
+
+    self_resource = ddm_data_model_get_self_resource(model);
+    if (self_resource != NULL) {
+        ddm_data_model_query_resource(model, self_resource,
+                                      "name;photoUrl;lovedAccounts +");
+        ddm_data_resource_connect(self_resource, NULL, on_resource_changed, NULL);
+    }
+    
+    query = ddm_data_model_query_resource(model,
+                                          ddm_data_model_get_global_resource(model),
+                                          "self [ photoUrl ]");
+    if (query == NULL) {
+        g_printerr("Failed to query global resource\n");
+        return;
+    }
+    
+    ddm_data_query_set_single_handler(query, on_query_response, NULL);    
+    ddm_data_query_set_error_handler(query, on_query_error, NULL);
+}
+
 int
 main(int argc, char **argv)
 {
-    DDMDataQuery *global_resource_query;
     GMainLoop *loop;
     
     g_type_init();
     
     ddm_model = ddm_data_model_get_default();
 
-#if 0
-    global_resource_query = ddm_data_model_query_resource(ddm_model,
-                                                          "http://dogfood.mugshot.org:9080/o/user/c4a3fc1f528070",
-                                                          "topApplications+;contacts+;settings+");
-#else
-    global_resource_query = ddm_data_model_query_resource(ddm_model,
-                                                          "online-desktop:/o/global", "self [ photoUrl ]");
-#endif
-    
-    if (global_resource_query == NULL) {
-        g_printerr("Failed to query global resource\n");
-        return 1;
-    }
-    
-    ddm_data_query_set_multi_handler(global_resource_query,
-                                     on_query_response, NULL);    
-    
-    ddm_data_query_set_error_handler(global_resource_query,
-                                     on_query_error, NULL);
-    
+    g_signal_connect(ddm_model, "ready", G_CALLBACK(on_ready), NULL);
+
     loop = g_main_loop_new(NULL, FALSE);
     g_main_loop_run(loop);
     g_main_loop_unref(loop);

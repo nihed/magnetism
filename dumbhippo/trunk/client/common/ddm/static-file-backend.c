@@ -77,14 +77,13 @@ model_process_query_recurse(StaticFileModel *static_file_model,
         DDMDataProperty *frontend_property;
         DDMQName *property_id;
         DDMDataValue value;
-        DDMDataFetch *children;
         DDMDataCardinality cardinality;
         gboolean default_include;
         DDMDataFetch *default_children;
         char *default_children_string;
         GSList *l;
 
-        ddm_data_fetch_iter_next(&iter, &backend_property, &children);
+        ddm_data_fetch_iter_next(&iter, &backend_property, NULL);
 
         property_id = ddm_data_property_get_qname(backend_property);
         
@@ -158,16 +157,17 @@ model_process_query_recurse(StaticFileModel *static_file_model,
         
         if (children != NULL) {
             ddm_data_property_get_value(backend_property, &value);
-            g_assert(DDM_DATA_BASE(value.type) == DDM_DATA_RESOURCE);
             
-            if (DDM_DATA_IS_LIST(value.type)) {
-                for (l = value.u.list; l; l = l->next) {
+            if (DDM_DATA_BASE(value.type) == DDM_DATA_RESOURCE) { /* Could also be NONE */
+                if (DDM_DATA_IS_LIST(value.type)) {
+                    for (l = value.u.list; l; l = l->next) {
+                        model_process_query_recurse(static_file_model, query,
+                                                    l->data, children);
+                    }
+                } else {
                     model_process_query_recurse(static_file_model, query,
-                                                l->data, children);
+                                                value.u.resource, children);
                 }
-            } else {
-                model_process_query_recurse(static_file_model, query,
-                                            value.u.resource, children);
             }
         }
     }

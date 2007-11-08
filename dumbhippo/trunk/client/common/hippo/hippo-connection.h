@@ -12,6 +12,7 @@ typedef enum {
     HIPPO_STATE_SIGNED_OUT,     // User hasn't asked to connect
     HIPPO_STATE_SIGN_IN_WAIT,   // Waiting for the user to sign in
     HIPPO_STATE_CONNECTING,     // Waiting for connecting to server
+    HIPPO_STATE_REDIRECTING,    // Redirection from load balancer to real server
     HIPPO_STATE_RETRYING,       // Connection to server failed, retrying
     HIPPO_STATE_AUTHENTICATING, // Waiting for authentication
     HIPPO_STATE_AUTH_WAIT,      // Authentication failed, waiting for new creds

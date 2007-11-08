@@ -30,9 +30,8 @@ struct _DataClientMap {
     GHashTable *clients;
 };
 
-static void        on_connected_changed    (DDMDataModel    *ddm_model,
-                                            gboolean         connected,
-                                            void            *data);
+static void        on_ready    (DDMDataModel    *ddm_model,
+                                void            *data);
 
 static guint
 data_client_id_hash(const DataClientId *id)
@@ -318,48 +317,19 @@ handle_forget (void            *object,
 }
 
 static dbus_bool_t
-handle_get_connected(void            *object,
-                     const char      *prop_name,
-                     DBusMessageIter *append_iter,
-                     DBusError       *error)
+handle_get_ready(void            *object,
+                 const char      *prop_name,
+                 DBusMessageIter *append_iter,
+                 DBusError       *error)
 {
     DDMDataModel *ddm_model;
-    dbus_bool_t connected;
+    dbus_bool_t ready;
     
     ddm_model = hippo_app_get_data_model(hippo_get_app());
 
-    connected = ddm_data_model_get_connected(ddm_model);
+    ready = ddm_data_model_is_ready(ddm_model);
 
-    dbus_message_iter_append_basic(append_iter, DBUS_TYPE_BOOLEAN, &connected);
-
-    return TRUE;
-}
-
-static char *
-get_self_id()
-{
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
-    HippoConnection *hippo_connection = hippo_data_cache_get_connection(cache);
-    const char *self_resource_id = hippo_connection_get_self_resource_id(hippo_connection);
-
-    if (self_resource_id == NULL) {
-        return g_strdup("");
-    } else {
-        return g_strdup(self_resource_id);
-    }
-}
-
-static dbus_bool_t
-handle_get_self_id(void            *object,
-                   const char      *prop_name,
-                   DBusMessageIter *append_iter,
-                   DBusError       *error)
-{
-    char *resource_id = get_self_id();
-    
-    dbus_message_iter_append_basic(append_iter, DBUS_TYPE_STRING, &resource_id);
-
-    g_free(resource_id);
+    dbus_message_iter_append_basic(append_iter, DBUS_TYPE_BOOLEAN, &ready);
 
     return TRUE;
 }
@@ -382,34 +352,6 @@ handle_get_server(void            *object,
     dbus_message_iter_append_basic(append_iter, DBUS_TYPE_STRING, &server);
     
     g_free(server);
-    
-    return TRUE;
-}
-
-static dbus_bool_t
-handle_get_web_base_url(void            *object,
-                        const char      *prop_name,
-                        DBusMessageIter *append_iter,
-                        DBusError       *error)
-{
-    char *server;
-    char *url;
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
-    HippoConnection *hippo_connection = hippo_data_cache_get_connection(cache);
-    HippoPlatform *platform = hippo_connection_get_platform(hippo_connection);
-
-    /* DESKTOP hardcoded here since this is the data model API, nothing to do with stacker */
-    server = hippo_platform_get_web_server(platform, HIPPO_SERVER_DESKTOP);
-
-    /* Note, no trailing '/', don't add one here because relative urls are given
-     * starting with '/' and so you want to be able to do baseurl + relativeurl
-     */
-    url = g_strdup_printf("http://%s", server);
-    
-    dbus_message_iter_append_basic(append_iter, DBUS_TYPE_STRING, &url);
-    
-    g_free(server);
-    g_free(url);
     
     return TRUE;
 }
@@ -459,42 +401,22 @@ static const HippoDBusMember model_members[] = {
      */
     { HIPPO_DBUS_MEMBER_METHOD, "Forget", "os", "", handle_forget },
 
-    /* ConnectedChanged: connected status changed (this signal will be replaced
-     * eventually by moving self id and the online flag into global resource)
+    /* Ready: Start fetching application data from the data model
      * 
      * Parameters:
-     *  boolean connected = true/false
-     *  string selfId
      * 
      */
-    { HIPPO_DBUS_MEMBER_SIGNAL, "ConnectedChanged", "", "bs", NULL },
+    { HIPPO_DBUS_MEMBER_SIGNAL, "Ready", "", "", NULL },
     
     { 0, NULL }
 };
 
 static const HippoDBusProperty model_properties[] = {
-    { "Connected",  "b", handle_get_connected, NULL },
-
-
-    /* FIXME This is probably broken to have here, since it's just a special
-     * case of something that should be in the data model anyway, right?
-     */
-    { "SelfId",     "s", handle_get_self_id, NULL },
+    { "Ready",  "b", handle_get_ready, NULL },
 
     /* this should return the server we are encoding in the dbus bus name, like foo.bar.org:8080 */
     { "Server",     "s", handle_get_server, NULL },
 
-    /* right now this will be the server with http:// in front, but
-     * in theory could have https or a path on the host or
-     * something. The url should NOT have a trailing '/', though
-     * the one returned by the old "org.mugshot.Mugshot" API does.
-     */
-
-    /* All URLs in the data model have already been made absolute
-     * on receipt from the server, so this is just useful if you want to construct
-     * an URL like /account. FIXME: Such URL's perhaps should also be in the data model
-     */
-    { "WebBaseUrl", "s", handle_get_web_base_url, NULL },
     { NULL }
 };
 
@@ -512,8 +434,8 @@ hippo_dbus_init_model(DBusConnection *connection)
 
     ddm_model = hippo_app_get_data_model(hippo_get_app());
     
-    g_signal_connect(G_OBJECT(ddm_model), "connected-changed", G_CALLBACK(on_connected_changed),
-                     connection);
+    g_signal_connect(G_OBJECT(ddm_model), "ready",
+                     G_CALLBACK(on_ready), connection);
 }
 
 static gboolean
@@ -542,65 +464,22 @@ hippo_dbus_model_name_gone(const char *name)
 }
 
 static void
-on_connected_changed(DDMDataModel *ddm_model,
-                     gboolean      connected,
-                     void         *data)
+on_ready(DDMDataModel *ddm_model,
+         void         *data)
 {
     DBusConnection *connection = data;
     
-    if (connected) {
-        DataClientMap *map = data_client_map_get(ddm_model);
-        char *resource_id = get_self_id();
+    DataClientMap *map = data_client_map_get(ddm_model);
 
-        /* Once a client receives ConnectedChanged, it must forget its current
-         * state and start over. It would be a little more efficent to just remove
-         * all connections and leave the D-BUS disconnection-watches in place,
-         * that might be important if we had dozens of clients.
-         */
-        g_hash_table_remove_all(map->clients);
+    /* Once a client receives Ready, it must forget its current
+     * state and start over. It would be a little more efficent to just remove
+     * all connections and leave the D-BUS disconnection-watches in place,
+     * that might be important if we had dozens of clients.
+     */
+    g_hash_table_remove_all(map->clients);
         
-        hippo_dbus_helper_emit_signal(connection,
-                                      HIPPO_DBUS_MODEL_PATH, HIPPO_DBUS_MODEL_INTERFACE,
-                                      "ConnectedChanged",
-                                      DBUS_TYPE_BOOLEAN, &connected,
-                                      DBUS_TYPE_STRING, &resource_id,
-                                      DBUS_TYPE_INVALID);
-
-        g_free(resource_id);
-    } else {
-        const char *empty_string;
-
-        empty_string = "";
-
-        /* Including an empty string for the self-id might make you think that being disconnected
-         * means that there is no longer a self-id. That's, however, wrong. The self_id is
-         * *independent* of the connected state and can be used to fetch things out of the
-         * offline cache.
-         *
-         * In fact, I think the whole existence of a ConnectedChanged signal is possibly a confusing
-         * thing. There are two different events:
-         *
-         * Connected:
-         * - The connected boolean is true
-         * - All prior notification's you've registered have been removed
-         * - All data you might be caching is invalid, dump it
-         * - The selfId might have changed
-         * - Start fetching your data from scratch with the assumption that everything has changed
-         *
-         * Disconnected:
-         * - The connected boolean is false
-         *
-         * So while the two events *do* signal changes in the Connected boolean, they otherwise require
-         * entirely different handling on the part of the recipient.
-         *
-         * This also means that even if the connected boolean moved in the global resource, you'd
-         * still want the "Connected" signal.
-         */
-        hippo_dbus_helper_emit_signal(connection,
-                                      HIPPO_DBUS_MODEL_PATH, HIPPO_DBUS_MODEL_INTERFACE,
-                                      "ConnectedChanged",
-                                      DBUS_TYPE_BOOLEAN, &connected,
-                                      DBUS_TYPE_STRING, &empty_string,
-                                      DBUS_TYPE_INVALID);
-    }
+    hippo_dbus_helper_emit_signal(connection,
+                                  HIPPO_DBUS_MODEL_PATH, HIPPO_DBUS_MODEL_INTERFACE,
+                                  "Ready",
+                                  DBUS_TYPE_INVALID);
 }

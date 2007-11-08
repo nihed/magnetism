@@ -18,6 +18,13 @@ DDMDataQuery *_ddm_data_query_new_update(DDMDataModel   *model,
                                          GHashTable     *params,
                                          gint64          serial);
 
+/* Like ddm_data_query_error_async(), but for use when a
+ * QueryResponse work item is already in the work queue.
+ */
+void _ddm_data_query_mark_error (DDMDataQuery *query,
+                                 DDMDataError  error,
+                                 const char   *message);
+
 /* Called when we short-circuit a getResource response and throw
  * it immediately on the work-item pile
  */

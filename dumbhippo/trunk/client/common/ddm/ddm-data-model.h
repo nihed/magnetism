@@ -39,6 +39,11 @@ DDMDataModel *ddm_data_model_new_with_backend   (const DDMDataModelBackend *back
 /* Used testing purposes; you can't call query or update on such a backend */
 DDMDataModel *ddm_data_model_new_no_backend     (void);
 gboolean      ddm_data_model_get_connected      (DDMDataModel   *model);
+gboolean      ddm_data_model_is_ready           (DDMDataModel   *model);
+
+DDMDataResource *ddm_data_model_get_global_resource (DDMDataModel *model);
+DDMDataResource *ddm_data_model_get_self_resource   (DDMDataModel *model);
+
 DDMDataQuery *ddm_data_model_query              (DDMDataModel   *model,
                                                  const char     *method,
                                                  const char     *fetch,
@@ -47,9 +52,14 @@ DDMDataQuery *ddm_data_model_query_params       (DDMDataModel   *model,
                                                  const char     *method,
                                                  const char     *fetch,
                                                  GHashTable     *params);
-DDMDataQuery *ddm_data_model_query_resource     (DDMDataModel   *model,
-                                                 const char     *resource_id,
-                                                 const char     *fetch);
+
+DDMDataQuery *ddm_data_model_query_resource       (DDMDataModel    *model,
+                                                   DDMDataResource *resource,
+                                                   const char      *fetch);
+DDMDataQuery *ddm_data_model_query_resource_by_id (DDMDataModel    *model,
+                                                   const char      *resource_id,
+                                                   const char      *fetch);
+
 DDMDataQuery *ddm_data_model_update             (DDMDataModel   *model,
                                                  const char     *method,
                                                  ...) G_GNUC_NULL_TERMINATED;
@@ -89,6 +99,12 @@ void ddm_data_model_reset          (DDMDataModel *model);
 
 void ddm_data_model_set_connected  (DDMDataModel *model,
                                     gboolean      connected);
+void ddm_data_model_signal_ready   (DDMDataModel *model);
+
+void ddm_data_model_set_global_resource (DDMDataModel    *model,
+                                         DDMDataResource *global_resource);
+void ddm_data_model_set_self_resource   (DDMDataModel    *model,
+                                         DDMDataResource *self_resource);
 
 G_END_DECLS
 

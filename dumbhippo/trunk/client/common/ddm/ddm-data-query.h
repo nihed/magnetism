@@ -49,14 +49,24 @@ DDMDataFetch *ddm_data_query_get_fetch        (DDMDataQuery *query);
 gboolean      ddm_data_query_is_update        (DDMDataQuery *query);
 GHashTable *  ddm_data_query_get_params       (DDMDataQuery *query);
 GSList *      ddm_data_query_get_results      (DDMDataQuery *query);
+gboolean      ddm_data_query_has_error        (DDMDataQuery *query);
 
 /* Called by the backend when a response is received from upstream */
 
 void ddm_data_query_response (DDMDataQuery *query,
                               GSList       *results);
+
 void ddm_data_query_error    (DDMDataQuery *query,
                               DDMDataError  error,
                               const char   *message);
+
+/* Like ddm_data_query_error(), but calls the callback asynchronously;
+ * this should generally be used when an error occurs while sending
+ * a DDMDataQuery.
+ */
+void ddm_data_query_error_async (DDMDataQuery *query,
+                                 DDMDataError  error,
+                                 const char   *message);
 
 /* Debugging convenience */
 const char *ddm_data_query_get_id_string (DDMDataQuery *query);
