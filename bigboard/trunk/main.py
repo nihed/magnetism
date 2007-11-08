@@ -446,8 +446,11 @@ class BigBoardPanel(dbus.service.Object):
         self.__self_stock = self._exchanges[self.__hardcoded_stocks[0]].get_pymodule()
         self.__search_stock = self._exchanges[self.__hardcoded_stocks[1]].get_pymodule()
         gobject.idle_add(self.__sync_listing)
-        
-        self.__self_stock.connect('info-loaded', lambda *args: self.__initial_appearance())
+
+        if self.__self_stock.info_loaded:
+            self.__initial_appearance()
+        else:
+            self.__self_stock.connect('info-loaded', lambda *args: self.__initial_appearance())
 
         ## visible=True means we never hide, visible=False means we "autohide" and popout
         ## when the hotkey or applet is used

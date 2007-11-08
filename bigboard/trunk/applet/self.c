@@ -109,14 +109,9 @@ on_photo_changed(DDMDataResource *resource,
                  GSList          *changed_properties,
                  gpointer         user_data)
 {
-    SelfData *sd;
-
-    sd = user_data;
-
-    if (sd->self_resource == resource)
-        update_photo_from_self(sd);
-    else
-        g_warning("Got photo changed notification for someone else?");
+    SelfData *sd = user_data;
+    
+    update_photo_from_self(sd);
 }
 
 static void
@@ -250,64 +245,57 @@ on_applications_changed(DDMDataResource *resource,
                         GSList          *changed_properties,
                         gpointer         user_data)
 {
-    SelfData *sd;
-
-    sd = user_data;
+    SelfData *sd = user_data;
     
-    if (sd->self_resource == resource)
-        update_applications_from_self(sd);
-    else
-        g_warning("Got apps changed notification for someone else?");    
+    update_applications_from_self(sd);
 }
 
 static void
-on_query_response(GSList            *resources,
-                  gpointer           user_data)
+on_query_response(DDMDataResource *self_resource,
+                  gpointer         user_data)
 {
     SelfData *sd;
 
     sd = user_data;
 
-    /* we ignore the returned resources and just fetch out
-     * the one we wanted
-     */
-    if (sd->self_resource == NULL) {
-        DDMDataResource *global_resource;
-
-        global_resource = ddm_data_model_lookup_resource(sd->ddm_model,
-                                                         "online-desktop:/o/global");
-        if (global_resource == NULL) {
-            g_printerr("No global resource in data model");
-            return;
-        }
-
-        ddm_data_resource_get(global_resource,
-                              "self", DDM_DATA_RESOURCE, &sd->self_resource,
-                              NULL);
+    if (self_resource)
+        ddm_data_resource_ref(self_resource);
+    
+    if (sd->self_resource) {
+        ddm_data_resource_disconnect(sd->self_resource,
+                                     on_photo_changed,
+                                     sd);
+        ddm_data_resource_disconnect(sd->self_resource,
+                                     on_applications_changed,
+                                     sd);
         
-        if (sd->self_resource == NULL) {
-            g_printerr("No self resource on global resource");
-            return;
-        }
-
-        update_photo_from_self(sd);
-        update_applications_from_self(sd);
-        
-        /* FIXME hack since child fetch does not work yet */
-        ddm_data_model_query_resource(sd->ddm_model,
-                                      ddm_data_resource_get_resource_id(sd->self_resource),
-                                      "topApplications+");
-        
-        ddm_data_resource_connect(sd->self_resource,
-                                  "photoUrl",
-                                  on_photo_changed,
-                                  sd);
-
-        ddm_data_resource_connect(sd->self_resource,
-                                  "topApplications",
-                                  on_applications_changed,
-                                  sd);
+        ddm_data_resource_unref(sd->self_resource);
     }
+
+    sd->self_resource = self_resource;
+    
+    if (sd->self_resource == NULL) {
+        g_debug("No self resource on global resource");
+        /* If there was previous data; just leave it there. It's not 100% clear
+         * to me that this is right ... the only time self should go from there
+         * to not there is when the user clears there online.gnome.org login
+         * entirely.
+         */
+        return;
+    }
+    
+    ddm_data_resource_connect(sd->self_resource,
+                              "photoUrl",
+                              on_photo_changed,
+                              sd);
+    
+    ddm_data_resource_connect(sd->self_resource,
+                              "topApplications",
+                              on_applications_changed,
+                              sd);
+    
+    update_photo_from_self(sd);
+    update_applications_from_self(sd);
 }
 
 static void
@@ -315,27 +303,26 @@ on_query_error(DDMDataError     error,
                const char      *message,
                gpointer         user_data)
 {
-    g_printerr("Failed to get query reply: '%s'\n", message);
+    g_printerr("Query for photoUrl and topApplications failed: '%s'\n", message);
 }
 
 static void
-on_ddm_connected_changed(DDMDataModel *ddm_model,
-                         gboolean      connected,
-                         void         *data)
+on_ddm_ready(DDMDataModel *ddm_model,
+             void         *data)
 {
     SelfData *sd = data;
-
-    if (connected) {        
+    DDMDataResource *self_resource = ddm_data_model_get_self_resource(ddm_model);
+    
+    if (self_resource) {
         DDMDataQuery *query;
-
-        query = ddm_data_model_query_resource(ddm_model,
-                                              /* the child fetch in [] does not work yet */
-                                              "online-desktop:/o/global", "self [ photoUrl;topApplications+ ]");
-
+        
+        query = ddm_data_model_query_resource(ddm_model, self_resource,
+                                              "photoUrl; topApplications +");
+        
         /* query frees itself when either handler is called */
         
-        ddm_data_query_set_multi_handler(query,
-                                         on_query_response, sd);    
+        ddm_data_query_set_single_handler(query,
+                                          on_query_response, sd);    
         
         ddm_data_query_set_error_handler(query,
                                          on_query_error, sd);
@@ -352,9 +339,13 @@ get_self_data(void)
         global_self_data->ddm_model = ddm_data_model_get_default();
 
         g_signal_connect(G_OBJECT(global_self_data->ddm_model),
-                         "connected-changed",
-                         G_CALLBACK(on_ddm_connected_changed),
+                         "ready",
+                         G_CALLBACK(on_ddm_ready),
                          global_self_data);
+
+        if (ddm_data_model_is_ready(global_self_data->ddm_model)) {
+            on_ddm_ready(global_self_data->ddm_model, global_self_data);
+        }
     }
 
     return global_self_data;

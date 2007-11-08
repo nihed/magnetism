@@ -278,12 +278,9 @@ class SelfStock(AbstractMugshotStock):
         self._model = DataModel(globals.server_name)
         
         self.__myself = None
-        self._model.add_initialized_handler(self.__on_initialized) 
-        self._model.add_connected_handler(self.__on_connected) 
-        if self._model.self_id:
-            self.__on_connected()
-        else:
-            _logger.debug("datamodel not connected, deferring")     
+        self._model.add_ready_handler(self.__on_ready)
+
+        self.info_loaded = False
 
         self.__slideout = None
         self.__slideout_display = None
@@ -295,6 +292,9 @@ class SelfStock(AbstractMugshotStock):
         #TODO: need to make this conditional on knowing firefox has started already somehow
         #gobject.timeout_add(2000, self.__idle_first_time_signin_check)
 
+        if self._model.ready:
+            self.__on_ready()
+            
     def __on_sync_prelight(self, prelighted):
         if prelighted:
             self._bulb.set_property("image-name", 'bigboard-bulb')
@@ -319,31 +319,32 @@ class SelfStock(AbstractMugshotStock):
             self.__fus_service = None
             pass
 
-    def __on_initialized(self):
-        if not self._model.connected:
+    def __info_now_loaded(self):
+        if not self.info_loaded:
+            self.info_loaded = True
             self.emit('info-loaded')
 
-    def __on_connected(self):
-        _logger.debug("doing datamodel connected handler")
-        self._box.set_child_visible(self._signin, self._model.self_id == None)
-        self._box.set_child_visible(self._whereim_box, self._model.self_id != None)
+    def __on_ready(self):
+        self._box.set_child_visible(self._signin, self._model.self_resource == None)
+        self._box.set_child_visible(self._whereim_box, self._model.self_resource != None)
 
-        query = self._model.query_resource(self._model.self_id, "+;lovedAccounts +")
-        query.add_handler(self.__on_got_self)
-        query.add_error_handler(self.__on_self_datamodel_error)
-        query.execute()
-        
-    def __on_datamodel_error(self, code, str):
-        _logger.error("datamodel error %s: %s", code, str)
+        if self._model.self_resource != None:
+            query = self._model.query_resource(self._model.self_resource, "+;lovedAccounts +")
+            query.add_handler(self.__on_got_self)
+            query.add_error_handler(self.__on_self_datamodel_error)
+            query.execute()
+        else:
+            self.__info_now_loaded()
         
     def __on_self_datamodel_error(self, code, str):
         _logger.error("datamodel error %s: %s", code, str)
-	self.emit('info-loaded')
+        self.__info_now_loaded()
 
     def __on_got_self(self, myself):
         self.__myself = myself     
         myself.connect(self.__on_self_changed)
-        self.__on_self_changed(myself)    
+        self.__on_self_changed(myself)
+        self.__info_now_loaded()
         
     def __handle_mugshot_connection_status(self, auth, xmpp, contacts):
         self._box.set_child_visible(self._whereim_box, not not auth)
@@ -419,4 +420,3 @@ class SelfStock(AbstractMugshotStock):
 
         if self.__slideout_display != None:
             self.__slideout_display.update_self(myself)
-        self.emit("info-loaded")

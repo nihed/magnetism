@@ -240,7 +240,7 @@ class PeopleBrowser(hippo.CanvasWindow):
         self.__people_list.remove_user(contact, CONTACTS)
         
     def __on_local_user_added(self, list, user):
-        if user.resource_id == self.__model.self_id:
+        if user == self.__model.self_resource:
             return
         
         self.__people_list.add_user(user, LOCAL_PEOPLE)

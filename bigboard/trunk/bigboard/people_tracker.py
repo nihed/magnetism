@@ -146,7 +146,7 @@ class PeopleTracker(Singleton):
     
     def __init__(self):
         self.__model = DataModel(bigboard.globals.server_name)
-        self.__model.add_connected_handler(self.__on_connected)
+        self.__model.add_ready_handler(self.__on_ready)
 
         self.__myself = None
         self.__globalResource = None
@@ -161,10 +161,10 @@ class PeopleTracker(Singleton):
         self.__users_by_aim = _MultiDict()
         self.__users_by_resource_id = _MultiDict()
         
-        if self.__model.self_id:
-            self.__on_connected()        
+        if self.__model.ready:
+            self.__on_ready()
         
-    def __on_connected(self):
+    def __on_ready(self):
 
         # When we disconnect from the server we freeze existing content, then on reconnect
         # we clear everything and start over.
@@ -174,10 +174,10 @@ class PeopleTracker(Singleton):
         if self.__myself != None:
             self.__set_new_contacts([])
             self.__myself.disconnect(self.__on_contacts_changed)
-        
-            self.__myself = None
 
-        query = self.__model.query_resource(self.__model.self_id, "contacts [+;aim;email;contactStatus]")
+            self.__myself = None
+        
+        query = self.__model.query_resource(self.__model.self_resource, "contacts [+;aim;email;contactStatus]")
         query.add_handler(self.__on_got_self)
         query.execute()
         
@@ -187,7 +187,7 @@ class PeopleTracker(Singleton):
 
             self.__globalResource = None
 
-        query = self.__model.query_resource("online-desktop:/o/global", "onlineBuddies +")
+        query = self.__model.query_resource(self.__model.global_resource, "onlineBuddies +")
         query.add_handler(self.__on_got_buddies)
         query.execute()
         

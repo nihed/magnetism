@@ -66,7 +66,7 @@ class PersonItem(PhotoContentItem, DataBoundItem):
         self.__current_track = None
         self.__current_track_timeout = None
 
-        query = model.query_resource(self.resource.resource_id, "currentTrack +;currentTrackPlayTime")
+        query = model.query_resource(self.resource, "currentTrack +;currentTrackPlayTime")
         query.add_handler(self.__update_current_track)
         query.execute()
 
@@ -445,7 +445,7 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         self.connect_resource(self.__update_loved_accounts, "lovedAccounts")
         self.connect_resource(self.__update_local_buddy, "localBuddy")
         
-        query = DataModel(bigboard.globals.server_name).query_resource(self.resource.resource_id, "lovedAccounts +")
+        query = DataModel(bigboard.globals.server_name).query_resource(self.resource, "lovedAccounts +")
         query.add_handler(self.__update_loved_accounts)
         query.execute()
         

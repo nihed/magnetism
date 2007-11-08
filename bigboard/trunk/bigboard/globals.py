@@ -60,8 +60,11 @@ def get_baseurl():
     ## is supposed to have an offline mode.
     url = None
     model = get_data_model()
-    if model.self_id:
-        url = model.get_web_base_url()
+    if model.global_resource:
+        try:
+            return model.global_resource.webBaseUrl
+        except AttributeError:
+            pass
         
     ## next we fall back to the server name set by command line option,
     ## see set_server_name() above which is called from main.py
