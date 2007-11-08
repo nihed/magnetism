@@ -194,9 +194,11 @@ class Bot implements Runnable {
 			long curTime = new Date().getTime();
 			if (lastConversation == null) {
 				lastConversation = new BuddyRecentConversation(curTime);
+				recentConversations.put(buddy, lastConversation);
 			} else {
 				 if ((curTime - lastConversation.endTime)/1000 > RECENT_CONVERSATION_EXPIRY_SECS) {
 					lastConversation = new BuddyRecentConversation(curTime);
+					recentConversations.put(buddy, lastConversation);					
 				 } else {
 					 lastConversation.count += 1;
 					 lastConversation.endTime = curTime;
