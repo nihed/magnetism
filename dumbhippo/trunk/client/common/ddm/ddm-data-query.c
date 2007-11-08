@@ -19,7 +19,10 @@ struct _DDMDataQuery {
     char *fetch_string;
     DDMDataFetch *fetch;
     GHashTable *params;
+    
     GSList *results;
+    DDMDataError error;
+    char *error_message;
 
     HandlerType handler_type;
     union {
@@ -85,6 +88,12 @@ GSList *
 ddm_data_query_get_results (DDMDataQuery *query)
 {
     return query->results;
+}
+
+gboolean
+ddm_data_query_has_error (DDMDataQuery *query)
+{
+    return query->error_message != NULL;
 }
 
 void
@@ -218,8 +227,10 @@ ddm_data_query_free (DDMDataQuery *query)
     g_free(query->fetch_string);
     g_hash_table_destroy(query->params);
 
-    g_slist_free(query->results);
     g_free(query->id_string);
+
+    g_slist_free(query->results);
+    g_free(query->error_message);
     
     g_free(query);
 }
@@ -255,16 +266,16 @@ mark_received_fetches(DDMDataResource *resource,
         if (children != NULL) {
             ddm_data_property_get_value(property, &value);
             
-            g_assert (DDM_DATA_BASE(value.type) == DDM_DATA_RESOURCE);
-            
-            if (DDM_DATA_IS_LIST(value.type)) {
-                GSList *l;
-                
-                for (l = value.u.list; l; l = l->next) {
-                    mark_received_fetches(l->data, children, local);
+            if (DDM_DATA_BASE(value.type) == DDM_DATA_RESOURCE) { /* Could also be NONE */
+                if (DDM_DATA_IS_LIST(value.type)) {
+                    GSList *l;
+                    
+                    for (l = value.u.list; l; l = l->next) {
+                        mark_received_fetches(l->data, children, local);
+                    }
+                } else {
+                    mark_received_fetches(value.u.resource, children, local);
                 }
-            } else {
-                mark_received_fetches(value.u.resource, children, local);
             }
         }
     }
@@ -280,23 +291,6 @@ data_query_response_internal (DDMDataQuery *query,
     DDMWorkItem *item;
     GSList *l;
 
-    /* It's possible that we succeeded in getting a list of results, but
-     * couldn't even find out the class_id for the results (particularly
-     * for getResource, where a simple failed query shows this way)
-     * In this case, treat the whole thing as a failure.
-     */
-    for (l = results; l; l = l->next) {
-        if (ddm_data_resource_get_class_id(l->data) == NULL) {
-            g_debug("%s: resource %s has no class ID, failing query",
-                    query->id_string, ddm_data_resource_get_resource_id(l->data));
-            
-            ddm_data_query_error(query,
-                                 DDM_DATA_ERROR_ITEM_NOT_FOUND,
-                                 "Couldn't get details of result items");
-            return;
-        }
-    }
-            
    if (!local) {
         g_debug("%s: Received response", query->id_string);
         
@@ -323,6 +317,7 @@ ddm_data_query_response (DDMDataQuery *query,
                          GSList       *results)
 {
     g_return_if_fail(query != NULL);
+    g_return_if_fail(query->error_message == NULL);
     
     data_query_response_internal(query, results, FALSE);
 }
@@ -332,6 +327,7 @@ _ddm_data_query_local_response (DDMDataQuery *query,
                                 GSList       *results)
 {
     g_return_if_fail(query != NULL);
+    g_return_if_fail(query->error_message == NULL);
     
     data_query_response_internal(query, results, TRUE);
 }
@@ -340,6 +336,15 @@ void
 _ddm_data_query_run_response (DDMDataQuery *query)
 {
     g_return_if_fail(query != NULL);
+
+    if (query->error_message) {
+        if (query->error_handler)    
+            query->error_handler(query->error, query->error_message, query->error_handler_data);
+    
+        ddm_data_query_free(query);
+
+        return;
+    }
 
     g_debug("%s: Have complete fetch, running response", query->id_string);
     
@@ -379,13 +384,18 @@ _ddm_data_query_run_response (DDMDataQuery *query)
 }
 
 void
-ddm_data_query_error (DDMDataQuery *query,
-                      DDMDataError  error,
-                      const char   *message)
+_ddm_data_query_mark_error(DDMDataQuery *query,
+                           DDMDataError  error,
+                           const char   *message)
 {
     g_return_if_fail(query != NULL);
+    g_return_if_fail(message != NULL);
+    g_return_if_fail(query->results == NULL);
 
     g_debug("%s: Got error response: %s (%d)", query->id_string, message != NULL ? message : "<null>", error);
+
+    query->error = error;
+    query->error_message = g_strdup(message);
 
     /* For a getResource query for a particular resource, we want to mark the
      * fetch as 'received', so that we don't try to fetch it again. This is
@@ -413,11 +423,37 @@ ddm_data_query_error (DDMDataQuery *query,
     }
 
     _ddm_data_model_query_answered(query->model, query);
+}
+
+void
+ddm_data_query_error (DDMDataQuery *query,
+                      DDMDataError  error,
+                      const char   *message)
+{
+    g_return_if_fail(query != NULL);
+    g_return_if_fail(message != NULL);
+    g_return_if_fail(query->results == NULL);
+
+    _ddm_data_query_mark_error(query, error, message);
+    _ddm_data_query_run_response(query);
+}
+
+void
+ddm_data_query_error_async (DDMDataQuery *query,
+                            DDMDataError  error,
+                            const char   *message)
+{
+    DDMWorkItem *item;
+
+    g_return_if_fail(query != NULL);
+    g_return_if_fail(message != NULL);
+    g_return_if_fail(query->results == NULL);
+
+    _ddm_data_query_mark_error(query, error, message);
     
-    if (query->error_handler)    
-        query->error_handler(error, message, query->error_handler_data);
-    
-    ddm_data_query_free(query);
+    item = _ddm_work_item_query_response_new(query->model, query);
+    _ddm_data_model_add_work_item(query->model, item);
+    _ddm_work_item_unref(item);
 }
 
 gint64

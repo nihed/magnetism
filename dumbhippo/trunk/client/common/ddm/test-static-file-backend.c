@@ -33,7 +33,7 @@ query_resource(DDMDataModel    *model,
     DDMDataResource *result = NULL;
     const char *error = NULL;
     
-    query = ddm_data_model_query_resource(model, resource_id, fetch);
+    query = ddm_data_model_query_resource_by_id(model, resource_id, fetch);
     ddm_data_query_set_single_handler(query, on_query_result, &result);
     ddm_data_query_set_error_handler(query, on_query_error, &error);
 

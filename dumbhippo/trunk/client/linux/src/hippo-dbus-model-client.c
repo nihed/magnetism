@@ -56,7 +56,7 @@ data_client_connection_new (HippoDBusModelClient  *client,
     DataClientConnection *connection = g_new0(DataClientConnection, 1);
 
     connection->client = client;
-    connection->resource = resource;
+    connection->resource = ddm_data_resource_ref(resource);
     connection->fetch = NULL;
 
     return connection;
@@ -81,6 +81,8 @@ static void
 data_client_connection_destroy(DataClientConnection *connection)
 {
     ddm_data_resource_set_client_fetch(connection->resource, DDM_CLIENT(connection->client), NULL);
+    ddm_data_resource_unref(connection->resource);
+
     g_free(connection);
 }
 

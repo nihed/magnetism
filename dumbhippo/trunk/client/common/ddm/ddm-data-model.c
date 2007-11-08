@@ -29,6 +29,9 @@ struct _DDMDataModel {
     GHashTable *resources;
     GHashTable *changed_resources;
 
+    DDMDataResource *global_resource;
+    DDMDataResource *self_resource;
+
     GQueue *work_items;
 
     gint64 next_query_serial;
@@ -36,6 +39,7 @@ struct _DDMDataModel {
 
     guint flush_idle;
 
+    guint ready : 1;
     guint connected : 1;
 };
 
@@ -45,6 +49,7 @@ struct _DDMDataModelClass {
 
 enum {
     CONNECTED_CHANGED,
+    READY,
     LAST_SIGNAL
 };
 
@@ -82,6 +87,15 @@ ddm_data_model_class_init(DDMDataModelClass *klass)
                       NULL, NULL,
                       g_cclosure_marshal_VOID__BOOLEAN,
                       G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+    
+    signals[READY] =
+        g_signal_new ("ready",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
 }
 
 static void
@@ -112,9 +126,13 @@ ddm_data_model_finalize(GObject *object)
     /* FIXME: cancel and remove everything still in here */
     g_queue_free(model->work_items);
     
-    /* FIXME: actually clean up the resources */
     g_hash_table_destroy(model->resources);
     g_hash_table_destroy(model->changed_resources);
+
+    if (model->global_resource)
+        ddm_data_resource_unref(model->global_resource);
+    if (model->self_resource)
+        ddm_data_resource_unref(model->self_resource);
 
     g_object_unref(model->local_client);
 
@@ -161,6 +179,14 @@ ddm_data_model_get_connected(DDMDataModel   *model)
     g_return_val_if_fail(DDM_IS_DATA_MODEL(model), FALSE);
 
     return model->connected;
+}
+
+gboolean
+ddm_data_model_is_ready(DDMDataModel   *model)
+{
+    g_return_val_if_fail(DDM_IS_DATA_MODEL(model), FALSE);
+
+    return model->ready;
 }
 
 static GHashTable *
@@ -234,8 +260,10 @@ data_model_query_params_internal(DDMDataModel *model,
         GSList *results;
         
         if (resource_id == NULL) {
-            /* FIXME: ERROR ASYNC HERE */
-            return NULL;
+            ddm_data_query_error_async (query,
+                                        DDM_DATA_ERROR_BAD_REQUEST,
+                                        "resourceId parameter is required for http://mugshot.org/p/system#getResource");
+            return query;
         }
 
         /* The reason why we ensure (without specifying a class_id) here is so that
@@ -322,11 +350,27 @@ data_model_query_internal(DDMDataModel *model,
 }
 
 DDMDataQuery *
-ddm_data_model_query_resource(DDMDataModel *model,
-                              const char     *resource_id,
-                              const char     *fetch)
+ddm_data_model_query_resource (DDMDataModel    *model,
+                               DDMDataResource *resource,
+                               const char      *fetch)
 {
     g_return_val_if_fail (DDM_IS_DATA_MODEL(model), NULL);
+    g_return_val_if_fail (resource != NULL, NULL);
+    g_return_val_if_fail (fetch != NULL, NULL);
+
+    return data_model_query_internal(model, "http://mugshot.org/p/system#getResource", fetch, FALSE,
+                                     "resourceId", ddm_data_resource_get_resource_id(resource),
+                                     NULL);
+}
+
+DDMDataQuery *
+ddm_data_model_query_resource_by_id(DDMDataModel *model,
+                                    const char     *resource_id,
+                                    const char     *fetch)
+{
+    g_return_val_if_fail (DDM_IS_DATA_MODEL(model), NULL);
+    g_return_val_if_fail (resource_id != NULL, NULL);
+    g_return_val_if_fail (fetch != NULL, NULL);
 
     return data_model_query_internal(model, "http://mugshot.org/p/system#getResource", fetch, FALSE,
                                      "resourceId", resource_id,
@@ -467,6 +511,16 @@ void
 ddm_data_model_reset (DDMDataModel *model)
 {
     g_hash_table_foreach_remove(model->resources, model_reset_foreach, NULL);
+
+    if (model->global_resource != NULL && !ddm_data_resource_is_local(model->global_resource)) {
+        ddm_data_resource_unref(model->global_resource);
+        model->global_resource = NULL;
+    }
+    
+    if (model->self_resource != NULL && !ddm_data_resource_is_local(model->self_resource)) {
+        ddm_data_resource_unref(model->self_resource);
+        model->self_resource = NULL;
+    }
 }
 
 void
@@ -479,6 +533,13 @@ ddm_data_model_set_connected (DDMDataModel   *model,
 
     model->connected = connected;
     g_signal_emit(G_OBJECT(model), signals[CONNECTED_CHANGED], 0, connected);
+}
+
+void
+ddm_data_model_signal_ready (DDMDataModel *model)
+{
+    model->ready = TRUE;
+    g_signal_emit(G_OBJECT(model), signals[READY], 0);
 }
 
 void
@@ -686,3 +747,46 @@ _ddm_data_model_get_local_client (DDMDataModel *model)
     return model->local_client;
 }
 
+void
+ddm_data_model_set_global_resource (DDMDataModel    *model,
+                                    DDMDataResource *global_resource)
+{
+    if (global_resource == model->global_resource)
+        return;
+
+    if (model->global_resource)
+        ddm_data_resource_unref(model->global_resource);
+    
+    model->global_resource = global_resource;
+    
+    if (model->global_resource)
+        ddm_data_resource_ref(model->global_resource);
+}
+
+void
+ddm_data_model_set_self_resource (DDMDataModel    *model,
+                                  DDMDataResource *self_resource)
+{
+    if (self_resource == model->self_resource)
+        return;
+
+    if (model->self_resource)
+        ddm_data_resource_unref(model->self_resource);
+    
+    model->self_resource = self_resource;
+    
+    if (model->self_resource)
+        ddm_data_resource_ref(model->self_resource);
+}
+
+DDMDataResource *
+ddm_data_model_get_global_resource(DDMDataModel *model)
+{
+    return model->global_resource;
+}
+
+DDMDataResource *
+ddm_data_model_get_self_resource(DDMDataModel *model)
+{
+    return model->self_resource;
+}
