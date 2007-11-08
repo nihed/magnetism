@@ -268,7 +268,6 @@ class AppsRepo(gobject.GObject):
 
         self.__model = bigboard.globals.get_data_model()
         self.__model.add_ready_handler(self.__on_ready)
-        self.__model.add_server_connected_handler(self.__on_server_connected)
         
         self.__myself = None
     
@@ -298,9 +297,6 @@ class AppsRepo(gobject.GObject):
         
         if self.__model.ready:
             self.__on_ready()        
-
-        if self.__model.connected:
-            self.__on_server_connected()
 
     def __on_ready(self):
         # When we disconnect from the server we freeze existing content, then on reconnect
