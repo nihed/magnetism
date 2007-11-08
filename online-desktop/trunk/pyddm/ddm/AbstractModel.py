@@ -87,8 +87,10 @@ class AbstractModel(object):
 
         if isinstance(resource, Resource):
             resource_id = resource.resource_id
-        else:
+        elif isinstance(resource, basestring):
             resource_id = resource
+        else:
+            raise ValueError("resource argument must be Resource or resource ID, not %r" % resource)
         
         return self.query(("http://mugshot.org/p/system", "getResource"),
                           fetch,
