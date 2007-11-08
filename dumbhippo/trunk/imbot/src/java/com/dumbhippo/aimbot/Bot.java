@@ -190,24 +190,8 @@ class Bot implements Runnable {
 			if (client == null)
 				return;
 			
-			BuddyRecentConversation lastConversation = recentConversations.get(buddy);
-			long curTime = new Date().getTime();
-			if (lastConversation == null) {
-				lastConversation = new BuddyRecentConversation(curTime);
-				recentConversations.put(buddy, lastConversation);
-			} else {
-				 if ((curTime - lastConversation.endTime)/1000 > RECENT_CONVERSATION_EXPIRY_SECS) {
-					lastConversation = new BuddyRecentConversation(curTime);
-					recentConversations.put(buddy, lastConversation);					
-				 } else {
-					 lastConversation.count += 1;
-					 lastConversation.endTime = curTime;
-					 if (lastConversation.count > RECENT_CONVERSATION_CUTOFF_COUNT) {
-						 logger.debug("conversation count " + lastConversation.count + " is larger than cuttoff, dropping message");
-					 	return;
-					 }
-				 }
-			}
+			if (!checkRateLimit(buddy))
+				return;
 			
 			/* send them the intro message if we haven't already done so recently */
 			sayIdentification(buddy, false);
@@ -348,6 +332,28 @@ class Bot implements Runnable {
 			client.sendMessage(buddy, null, "Hi, I'm the Mugshot bot.  (see my <a href=\"http://mugshot.org/privacy\">privacy policy</a>)");
 			identifiedTo.put(buddy, System.currentTimeMillis());
 		}
+	}
+	
+	private synchronized boolean checkRateLimit(Buddy buddy) {
+		BuddyRecentConversation lastConversation = recentConversations.get(buddy);
+		long curTime = new Date().getTime();
+		if (lastConversation == null) {
+			lastConversation = new BuddyRecentConversation(curTime);
+			recentConversations.put(buddy, lastConversation);
+		} else {
+			 if ((curTime - lastConversation.endTime)/1000 > RECENT_CONVERSATION_EXPIRY_SECS) {
+				lastConversation = new BuddyRecentConversation(curTime);
+				recentConversations.put(buddy, lastConversation);					
+			 } else {
+				 lastConversation.count += 1;
+				 lastConversation.endTime = curTime;
+				 if (lastConversation.count > RECENT_CONVERSATION_CUTOFF_COUNT) {
+					 logger.debug("conversation count " + lastConversation.count + " is larger than cuttoff, dropping message");
+				 	return false;
+				 }
+			 }
+		}	
+		return true;
 	}
 	
 	private void sayBusyThinking(Buddy buddy) {
