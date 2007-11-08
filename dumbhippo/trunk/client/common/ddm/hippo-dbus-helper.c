@@ -19,11 +19,14 @@ typedef struct {
 } HippoDBusObject;
 
 typedef struct {
+    guint refcount;
+    DBusConnection *connection;
     char *well_known_name;
     char *owner;
     void *data;
     const HippoDBusServiceTracker *tracker;
     const HippoDBusSignalTracker  *signal_handlers;
+    guint removed : 1;
 } HippoDBusService;
 
 typedef struct {
@@ -1047,7 +1050,8 @@ hippo_dbus_helper_emit_signal(DBusConnection          *connection,
 }
 
 static HippoDBusService*
-service_new(const char                    *well_known_name,
+service_new(DBusConnection                *connection,
+            const char                    *well_known_name,
             const HippoDBusServiceTracker *tracker,
             const HippoDBusSignalTracker  *signal_handlers,
             void                          *data)
@@ -1055,6 +1059,8 @@ service_new(const char                    *well_known_name,
     HippoDBusService *service;
 
     service = g_new0(HippoDBusService, 1);
+    service->refcount = 1;
+    service->connection = connection;
     service->well_known_name = g_strdup(well_known_name);
     service->tracker = tracker;
     service->signal_handlers = signal_handlers;
@@ -1063,12 +1069,23 @@ service_new(const char                    *well_known_name,
     return service;
 }
 
-static void
-service_free(HippoDBusService *service)
+static HippoDBusService *
+service_ref(HippoDBusService *service)
 {
-    g_free(service->well_known_name);
-    g_free(service->owner);
-    g_free(service);
+    service->refcount++;
+
+    return service;
+}
+
+static void
+service_unref(HippoDBusService *service)
+{
+    service->refcount--;
+    if (service->refcount == 0) {
+        g_free(service->well_known_name);
+        g_free(service->owner);
+        g_free(service);
+    }
 }
 
 static void
@@ -1127,6 +1144,16 @@ set_owner_matched(DBusConnection *connection,
         dbus_bus_remove_match(connection, s, NULL);
     
     g_free(s);
+}
+
+static void
+on_startup_nonexistence(HippoDBusService *service)
+{
+    if (!service->removed)
+        (* service->tracker->unavailable_handler) (service->connection,
+                                                   service->well_known_name,
+                                                   NULL,
+                                                   service->data);
 }
 
 static void
@@ -1190,33 +1217,30 @@ handle_name_owner_changed(DBusConnection *connection,
     }
 }
 
-typedef struct {
-    DBusConnection *connection;
-    char *well_known_name;
-    gboolean start_if_not_running;
-} GetOwnerData;
-
-static GetOwnerData*
-get_owner_data_new(DBusConnection *connection,
-                   const char     *well_known_name,
-                   gboolean        start_if_not_running)
-{
-    GetOwnerData *god;
-    god = g_new0(GetOwnerData, 1);
-    god->connection = connection;
-    god->well_known_name = g_strdup(well_known_name);
-    god->start_if_not_running = start_if_not_running;
-    dbus_connection_ref(connection);
-
-    return god;
-}
-
 static void
-get_owner_data_free(GetOwnerData *god)
+on_start_service_by_name_reply(DBusPendingCall *pending,
+                               void            *user_data)
 {
-    dbus_connection_unref(god->connection);
-    g_free(god->well_known_name);
-    g_free(god);
+    DBusMessage *reply;
+    HippoDBusService *service;
+
+    service = user_data;
+    
+    reply = dbus_pending_call_steal_reply(pending);
+    if (reply == NULL) {
+        g_warning("NULL reply in on_start_service_by_name_reply?");
+        return;
+    }
+    
+    if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_METHOD_RETURN) {
+        /* Just ignore, we'll get a NameOwnerChanged */
+    } else {
+        const char *message = "Unknown error";
+        dbus_message_get_args(reply, NULL, DBUS_TYPE_STRING, &message, DBUS_TYPE_INVALID);
+        
+        g_warning("Initial activation of service '%s' failed: %s", service->well_known_name, message);
+        on_startup_nonexistence(service);        
+    }
 }
 
 static void
@@ -1224,9 +1248,9 @@ on_get_owner_reply(DBusPendingCall *pending,
                    void            *user_data)
 {
     DBusMessage *reply;
-    GetOwnerData *god;
+    HippoDBusService *service;
 
-    god = user_data;
+    service = user_data;
     
     reply = dbus_pending_call_steal_reply(pending);
     if (reply == NULL) {
@@ -1239,54 +1263,68 @@ on_get_owner_reply(DBusPendingCall *pending,
         if (!dbus_message_get_args(reply, NULL,
                                    DBUS_TYPE_STRING, &v_STRING,
                                    DBUS_TYPE_INVALID)) {
-            g_debug("GetNameOwner has wrong args '%s'",
-                    dbus_message_get_signature(reply));
+            g_warning("GetNameOwner has wrong args '%s'",
+                      dbus_message_get_signature(reply));
+            on_startup_nonexistence(service);
         } else {
-            g_debug("Got name owner '%s' for '%s'",
-                    v_STRING, god->well_known_name);
-            if (*v_STRING == '\0')
-                v_STRING = NULL;
-
-            handle_name_owner_changed(god->connection,
-                                      god->well_known_name,
+            handle_name_owner_changed(service->connection,
+                                      service->well_known_name,
                                       NULL,
                                       v_STRING);
+        }
+    } else  {
+        if (strcmp(dbus_message_get_error_name(reply),
+                   "org.freedesktop.DBus.Error.NameHasNoOwner") == 0) {
 
             /* One time on startup, we will start the service if
              * it's not running, which should lead to a notification.
              * We don't check the error though and just give up
              * if it fails.
              */
-            if (v_STRING == NULL && god->start_if_not_running) {
+            if ((service->tracker->flags & HIPPO_DBUS_SERVICE_START_IF_NOT_RUNNING) != 0) {
                 DBusMessage *msg;
                 dbus_uint32_t flags;
-                
+                DBusPendingCall *call;
+
                 msg = dbus_message_new_method_call (DBUS_SERVICE_DBUS,
                                                     DBUS_PATH_DBUS,
                                                     DBUS_INTERFACE_DBUS,
                                                     "StartServiceByName");
-
+                
                 flags = 0;
-                if (dbus_message_append_args (msg, DBUS_TYPE_STRING, &god->well_known_name,
-                                              DBUS_TYPE_UINT32, &flags, DBUS_TYPE_INVALID)) {
-                    dbus_connection_send(god->connection, msg, NULL);
+                if (!dbus_message_append_args (msg, DBUS_TYPE_STRING, &service->well_known_name,
+                                               DBUS_TYPE_UINT32, &flags, DBUS_TYPE_INVALID))
+                    g_error("out of memory");
+
+                call = NULL;
+                if (!dbus_connection_send_with_reply(service->connection, msg, &call, -1))
+                    g_error("out of memory");
+
+                /* Call == NULL means that we're already disconnected; in that case, we'll
+                 * omit any notification and assume that we're in some sort of
+                 * start-and-immediately-exit race.
+                 */
+                if (call != NULL) {
+                    if (!dbus_pending_call_set_notify(call, on_start_service_by_name_reply,
+                                                      service_ref(service),
+                                                      (DBusFreeFunction) service_unref))
+                        g_error("out of memory");
+
+                    /* rely on connection to hold a reference to it */
+                    dbus_pending_call_unref(call);
                 }
                 dbus_message_unref(msg);
+            } else {
+                on_startup_nonexistence(service);
             }
-        }
-    } else  {
-        /*
-         * Probably org.freedesktop.DBus.Error.NameHasNoOwner, but we might as well treat
-         * all error messages the same.
-         */
-        const char *message = NULL;
-        dbus_message_get_args(reply, NULL, DBUS_TYPE_STRING, &message, DBUS_TYPE_INVALID);
-        g_debug("GetNameOwner failed: %s", message);
+            
+        } else {
+            const char *message = "Unknown error";
         
-        handle_name_owner_changed(god->connection,
-                                  god->well_known_name,
-                                  NULL,
-                                  NULL);
+            dbus_message_get_args(reply, NULL, DBUS_TYPE_STRING, &message, DBUS_TYPE_INVALID);
+            g_warning("GetNameOwner failed: %s", message);
+            on_startup_nonexistence(service);
+        }
     }
     
     dbus_message_unref(reply);
@@ -1309,7 +1347,7 @@ hippo_dbus_helper_register_service_tracker (DBusConnection                *conne
     /* multiple registrations for the same name isn't allowed for now */
     g_return_if_fail(g_hash_table_lookup(helper->services_by_well_known, well_known_name) == NULL);
     
-    service = service_new(well_known_name, tracker, signal_handlers, data);
+    service = service_new(connection, well_known_name, tracker, signal_handlers, data);
 
     g_hash_table_replace(helper->services_by_well_known, service->well_known_name, service);
 
@@ -1329,23 +1367,24 @@ hippo_dbus_helper_register_service_tracker (DBusConnection                *conne
         g_error("out of memory");
     
     call = NULL;               
-    dbus_connection_send_with_reply(connection, get_owner, &call, -1);
+    if (!dbus_connection_send_with_reply(connection, get_owner, &call, -1))
+        g_error("out of memory");
+
+    /* Call == NULL means that we're already disconnected; in that case, we'll
+     * omit any notification and assume that we're in some sort of
+     * start-and-immediately-exit race.
+     */
     if (call != NULL) {
-        GetOwnerData *god;
-        
-        god = get_owner_data_new(connection, well_known_name,
-                                 (tracker->flags & HIPPO_DBUS_SERVICE_START_IF_NOT_RUNNING) != 0);
-        
         if (!dbus_pending_call_set_notify(call, on_get_owner_reply,
-                                          god,
-                                          (DBusFreeFunction) get_owner_data_free))
+                                          service_ref(service),
+                                          (DBusFreeFunction) service_unref))
             g_error("out of memory");
         
         /* rely on connection to hold a reference to it, if finalized
-         * I think on_get_song_props_reply won't get called though, 
-         * which is fine currently
+         * I think on_get_owner_reply won't get called. Again we just omit
+         * notification.
          */
-        dbus_pending_call_unref(call);        
+        dbus_pending_call_unref(call);
     }
 }
 
@@ -1366,6 +1405,8 @@ hippo_dbus_helper_unregister_service_tracker (DBusConnection                *con
         g_warning("Multiple registered trackers for same service doesn't work yet");
         return;
     }
+
+    service->removed = TRUE;
     
     set_signal_handlers_matched(connection, well_known_name, service->signal_handlers, FALSE);
     set_owner_matched(connection, well_known_name, FALSE);
@@ -1381,7 +1422,7 @@ hippo_dbus_helper_unregister_service_tracker (DBusConnection                *con
                                                    service->data);
     }
 
-    service_free(service);
+    service_unref(service);
 }
 
 static gboolean attempt_session_connect_timeout(void *data);
