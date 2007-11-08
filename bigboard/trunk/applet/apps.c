@@ -172,7 +172,7 @@ app_new(DDMDataResource *resource)
 
     app = g_object_new(APP_TYPE, NULL);
 
-    app->resource = resource;
+    app->resource = ddm_data_resource_ref(resource);
 
     ddm_data_resource_connect(app->resource,
                               NULL, /* NULL = all properties */
@@ -206,6 +206,7 @@ app_finalize (GObject *object)
     ddm_data_resource_disconnect(app->resource,
                                  on_app_resource_changed,
                                  app);
+    ddm_data_resource_unref(app->resource);
 }
 
 void

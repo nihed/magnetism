@@ -47,10 +47,6 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
 
         self.__model = bigboard.globals.get_data_model()
 
-        self.__model.add_connected_handler(self.__on_connected)
-        if self.__model.self_id:
-            self.__on_connected()
-        
         self.__box = CanvasVBox(spacing=3)
         self.__message = hippo.CanvasText()
         self.__message_link = ActionLink()
@@ -85,9 +81,13 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__repo.connect('global-top-apps-changed', self.__on_global_top_apps_changed)
         self.__repo.connect('app-launched', self.__on_app_launched)
 
+        self.__model.add_ready_handler(self.__on_ready)
+        if self.__model.ready:
+            self.__on_ready()
+
         self.__sync()
 
-    def __on_connected(self):
+    def __on_ready(self):
         # When we disconnect from the server we freeze existing content, then on reconnect
         # we clear everything and start over.
         _logger.debug("Connected to data model")
@@ -203,7 +203,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
             # don't display apps that are not installed if the user is not logged in;
             # because the user should be able to see the same list regardless of whether
             # they are connected, we don't check self.__model.connected here
-            if not self.__model.self_id and not app.is_installed():
+            if not self.__model.self_resource and not app.is_installed():
                 continue
 
             display = apps_widgets.AppDisplay(apps_widgets.AppLocation.STOCK, app)

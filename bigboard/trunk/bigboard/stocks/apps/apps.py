@@ -267,8 +267,7 @@ class AppsRepo(gobject.GObject):
         super(AppsRepo, self).__init__(*args, **kwargs)        
 
         self.__model = bigboard.globals.get_data_model()
-        self.__model.add_initialized_handler(self.__on_initialized) 
-        self.__model.add_connected_handler(self.__on_connected)
+        self.__model.add_ready_handler(self.__on_ready)
         self.__model.add_server_connected_handler(self.__on_server_connected)
         
         self.__myself = None
@@ -297,46 +296,51 @@ class AppsRepo(gobject.GObject):
         self.__get_popular_apps_pending = False
         self.__got_popular_apps = False
         
-        if self.__model.initialized:
-            self.__on_initialized()
-
-        if self.__model.self_id:
-            self.__on_connected()        
+        if self.__model.ready:
+            self.__on_ready()        
 
         if self.__model.connected:
             self.__on_server_connected()
 
-    def __on_initialized(self):
-        if not self.__model.self_id and not self.__got_popular_apps and not self.__get_popular_apps_pending:
-            _logger.debug("will get popular apps from http")
-            self.__get_popular_apps_pending = True
-            downloader = AppsHttpDownloader('/xml/popularapplications',
-                                            self.__on_got_global_popular_apps_from_http)
-            downloader.go()
-
-    def __on_connected(self):
+    def __on_ready(self):
         # When we disconnect from the server we freeze existing content, then on reconnect
         # we clear everything and start over.
-        _logger.debug("Connected to data model")
+        _logger.debug("Data model now ready")
 
-        query = self.__model.query_resource(self.__model.self_id, "topApplications[+;description;category;categoryDisplayName;packageNames];pinnedApplications[+;description;category;categoryDisplayName;packageNames];applicationUsageEnabled")
-        query.add_handler(self.__on_got_self)
-        query.add_error_handler(lambda code, msg: self.__on_query_error("self resource", code, msg))
-        query.execute()
+        if self.__model.self_resource != None:
+            query = self.__model.query_resource(self.__model.self_resource, "topApplications[+;description;category;categoryDisplayName;packageNames];pinnedApplications[+;description;category;categoryDisplayName;packageNames];applicationUsageEnabled")
+            query.add_handler(self.__on_got_self)
+            query.add_error_handler(lambda code, msg: self.__on_query_error("self resource", code, msg))
+            query.execute()
 
-        query = self.__model.query(("http://online.gnome.org/p/application", "getPopularApplications"),
-                                   "+;description;category;categoryDisplayName;packageNames",
-                                   single_result=False,
-                                   start=0)
+            query = self.__model.query(("http://online.gnome.org/p/application", "getPopularApplications"),
+                                       "+;description;category;categoryDisplayName;packageNames",
+                                       single_result=False,
+                                       start=0)
 
-        query.add_handler(self.__on_got_global_popular_apps)
-        query.add_error_handler(lambda code, msg: self.__on_query_error("getPopularApplications", code, msg))
-        query.execute()
+            query.add_handler(self.__on_got_global_popular_apps)
+            query.add_error_handler(lambda code, msg: self.__on_query_error("getPopularApplications", code, msg))
+            query.execute()
+        else:
+            if not self.__got_popular_apps and not self.__get_popular_apps_pending:
+                _logger.debug("will get popular apps from http")
+                self.__get_popular_apps_pending = True
+                downloader = AppsHttpDownloader('/xml/popularapplications',
+                                                self.__on_got_global_popular_apps_from_http)
+                downloader.go()
 
-    def __on_server_connected(self):
+        # getAllApplications is just too slow over XMPP, so we always do it over HTTP
+        #
+        # We possibly should remove self.__got_all_apps and just re-download whenever we
+        # become ready, since there might have been changes to the apps database while
+        # we were disconnected.
+        #
+        # We probably should also redownload periodically even if we stay connected.
+        #
+        # These changes would require some careful examination of the caching setup to
+        # avoid overloading the server.
+        #
         if not self.__got_all_apps and not self.__get_all_apps_pending:
-            ## getAllApplications is just too slow over XMPP
-
             ## do the getAllApplications last since it emits the all-apps-loaded signal when complete
 
             #query = self.__model.query(("http://online.gnome.org/p/application", "getAllApplications"),
@@ -352,7 +356,6 @@ class AppsRepo(gobject.GObject):
             downloader = AppsHttpDownloader('/xml/allapplications',
                                             self.__on_got_global_all_apps_from_http)
             downloader.go()
-
 
     def __on_query_error(self, where, error_code, message):
         _logger.warn("Query '" + where + "' failed, code " + str(error_code) + " message: " + str(message))
