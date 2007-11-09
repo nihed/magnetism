@@ -10,6 +10,7 @@
 #include "ddm-data-resource-internal.h"
 #include "ddm-data-query-internal.h"
 #include "ddm-local-client.h"
+#include "ddm-rule.h"
 
 static void      ddm_data_model_init                (DDMDataModel       *model);
 static void      ddm_data_model_class_init          (DDMDataModelClass  *klass);
@@ -23,6 +24,9 @@ struct _DDMDataModel {
     const DDMDataModelBackend *backend;
     void *backend_data;
     GFreeFunc free_backend_data_func;
+
+    GHashTable *rules_by_target;
+    GHashTable *rules_by_source;
 
     DDMClient *local_client;
     
@@ -58,11 +62,29 @@ static int signals[LAST_SIGNAL];
 G_DEFINE_TYPE(DDMDataModel, ddm_data_model, G_TYPE_OBJECT);
 
 static void
+free_rule_list(GSList *rule_list)
+{
+    g_slist_foreach(rule_list, (GFunc)ddm_rule_free, NULL);
+    g_slist_free(rule_list);
+}
+
+static void
 ddm_data_model_init(DDMDataModel *model)
 {
     model->resources = g_hash_table_new_full(g_str_hash, g_str_equal,
                                              NULL,
                                              (GDestroyNotify)ddm_data_resource_unref);
+
+    /* rules_by_target and rules_by_source together own the reference to the rule.
+     * We consider the reference owned by rules_by_target
+     */
+    model->rules_by_target = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                                   (GDestroyNotify)g_free,
+                                                   (GDestroyNotify)free_rule_list);
+    model->rules_by_source = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                                   (GDestroyNotify)g_free,
+                                                   (GDestroyNotify)g_slist_free);
+    
     model->changed_resources = g_hash_table_new(g_direct_hash, NULL);
     model->work_items = g_queue_new();
 
@@ -648,6 +670,47 @@ flush_notifications_foreach(gpointer key,
 }
 
 static void
+get_values_foreach(gpointer key,
+                   gpointer value,
+                   gpointer data)
+{
+    GSList **values = data;
+
+    *values = g_slist_prepend(*values, value);
+}
+
+static GSList *
+hash_table_get_values(GHashTable *hash_table)
+{
+    GSList *values = NULL;
+
+    g_hash_table_foreach(hash_table, get_values_foreach, &values);
+
+    return values;
+}
+
+static void
+data_model_flush_rules(DDMDataModel *model)
+{
+    GSList *resources_to_process;
+    GSList *l;
+    
+    if (g_hash_table_size(model->changed_resources) == 0)
+        return;
+
+    /* We need to snapshot the changed resources, since the set of changd resources
+     * may be extended as we process rules.
+     */
+    resources_to_process = hash_table_get_values(model->changed_resources);
+
+    for (l = resources_to_process; l; l = l->next) {
+        _ddm_data_resource_update_rule_properties(l->data);
+    }
+
+    g_slist_free(resources_to_process);
+}
+
+static void
 data_model_flush_notifications(DDMDataModel *model)
 {
     DDMClientNotificationSet *notification_set;
@@ -728,8 +791,142 @@ ddm_data_model_flush(DDMDataModel *model)
     if (model->backend->flush)
         model->backend->flush(model, model->backend_data);
 
+    data_model_flush_rules(model);
     data_model_flush_notifications(model);
     data_model_flush_work_items(model);
+}
+
+void
+ddm_data_model_add_rule (DDMDataModel       *model,
+                         const char         *target_class_id,
+                         const char         *target_property,
+                         const char         *source_class_id,
+                         DDMDataCardinality  cardinality,
+                         gboolean            default_include,
+                         const char         *default_children,
+                         const char         *condition)
+{
+    DDMRule *rule;
+    GSList *target_rules;
+    GSList *source_rules;
+
+    g_return_if_fail(DDM_IS_DATA_MODEL(model));
+    g_return_if_fail(target_class_id != NULL);
+    g_return_if_fail(target_property != NULL);
+    g_return_if_fail(source_class_id != NULL);
+    g_return_if_fail(cardinality == DDM_DATA_CARDINALITY_01 || cardinality == DDM_DATA_CARDINALITY_N);
+    g_return_if_fail(condition != NULL);
+
+    rule = ddm_rule_new(target_class_id, target_property,
+                        source_class_id,
+                        cardinality, default_include, default_children,
+                        condition);
+    
+    if (rule == NULL) /* failed validation, will have warned */
+        return;
+
+    target_rules = g_hash_table_lookup(model->rules_by_target, target_class_id);
+    target_rules = g_slist_prepend(target_rules, rule);
+    g_hash_table_replace(model->rules_by_target,
+                         g_strdup(target_class_id),
+                         target_rules);
+    
+    source_rules = g_hash_table_lookup(model->rules_by_source, source_class_id);
+    source_rules = g_slist_prepend(source_rules, rule);
+    g_hash_table_replace(model->rules_by_source,
+                         g_strdup(source_class_id),
+                         source_rules);
+}
+
+typedef struct {
+    const char *class_id;
+    DDMCondition *condition;
+    gboolean find_sources;
+    GSList *results;
+} FindResourcesClosure;
+
+static void
+find_resources_foreach(gpointer key,
+                       gpointer value,
+                       gpointer data)
+{
+    DDMDataResource *resource = value;
+    FindResourcesClosure *closure = data;
+    const char *class_id = ddm_data_resource_get_class_id(resource);
+    gboolean match;
+
+    if (class_id == NULL || strcmp(class_id, closure->class_id) != 0)
+        return;
+
+    if (closure->find_sources)
+        match = ddm_condition_matches_source(closure->condition, resource);
+    else
+        match = ddm_condition_matches_target(closure->condition, resource);
+
+    if (!match)
+        return;
+
+    closure->results = g_slist_prepend(closure->results, resource);
+}
+
+static GSList *
+find_resources(DDMDataModel *model,
+               const char   *class_id,
+               DDMCondition *condition,
+               gboolean      find_sources)
+{
+    /* This is the most inefficient implementation possible; to improve, you'd
+     * want to:
+     *
+     *  A) Index resources in the model by class_id
+     *  B) Index resources in the model by property values that rules match upon
+     *
+     * It might be easiest to do B with an explicit:
+     *
+     *  ddm_data_model_add_index(DDMDataModel *model,
+     *                           const char   *property_uri);
+     */
+    
+    FindResourcesClosure closure;
+
+    closure.class_id = class_id;
+    closure.condition = condition;
+    closure.find_sources = find_sources;
+    closure.results = NULL;
+
+    g_hash_table_foreach(model->resources, find_resources_foreach, &closure);
+
+    return closure.results;
+}
+
+GSList *
+_ddm_data_model_find_sources(DDMDataModel *model,
+                             const char   *source_class_id,
+                             DDMCondition *condition)
+{
+    return find_resources(model, source_class_id, condition, TRUE);
+}
+
+GSList *
+_ddm_data_model_find_targets(DDMDataModel *model,
+                             const char   *target_class_id,
+                             DDMCondition *condition)
+{
+    return find_resources(model, target_class_id, condition, FALSE);
+}
+
+GSList *
+_ddm_data_model_get_target_rules(DDMDataModel *model,
+                                 const char   *class_id)
+{
+    return g_hash_table_lookup(model->rules_by_target, class_id);
+}
+
+GSList *
+_ddm_data_model_get_source_rules(DDMDataModel *model,
+                                 const char   *class_id)
+{
+    return g_hash_table_lookup(model->rules_by_source, class_id);
 }
 
 void

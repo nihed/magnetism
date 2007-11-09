@@ -7,6 +7,7 @@
 #include "ddm-data-fetch.h"
 #include "ddm-data-model-internal.h"
 #include "ddm-data-resource-internal.h"
+#include "ddm-rule.h"
 
 typedef enum {
     CONNECTION_TYPE_ANY,
@@ -19,11 +20,24 @@ typedef struct _DataConnection DataConnection;
 typedef struct _DataClient DataClient;
 
 struct _DDMDataProperty {
+    DDMDataResource *resource;
+    
     DDMQName *qname;
     DDMDataValue value;
     DDMDataFetch *default_children;
     guint cardinality : 4;
     guint default_include : 1;
+
+    /* We could use a flag bit and smaller allocation to save space for non-rule-properties */
+
+    /* Rule this property came from or NULL */
+    DDMRule *rule;
+
+    /* List of sources for this rule. For CARDINALITY_N, this is the same as value.u.list,
+     * but for CARDINALITY_01, we pick just one source out out of the list of sources.
+     */
+    GSList *rule_sources;
+    
 };
 
 struct _DataConnection {
@@ -50,6 +64,9 @@ struct _DDMDataResource
     char *resource_id;
     char *class_id;
     gboolean local;
+
+    /* Properties that reference this resource as the source of a rule */
+    GSList *referencing_rule_properties;
 
     GSList *clients;
     GSList *connections; /* Local connections */
@@ -945,6 +962,7 @@ add_property(DDMDataResource   *resource,
 {
     DDMDataProperty *property = g_new0(DDMDataProperty, 1);
 
+    property->resource = resource;
     property->qname = qname;
     property->cardinality = cardinality;
     property->value.type = DDM_DATA_NONE;
@@ -960,6 +978,16 @@ remove_property(DDMDataResource *resource,
 {
     resource->properties = g_slist_remove(resource->properties, property);
     ddm_data_property_free(property);
+}
+
+static void
+mark_property_changed(DDMDataResource *resource,
+                      DDMDataProperty *property)
+{
+    if (g_slist_find(resource->changed_properties, property->qname) == NULL) {
+        resource->changed_properties = g_slist_prepend(resource->changed_properties, property->qname);
+        _ddm_data_model_mark_changed(resource->model, resource);
+    }
 }
 
 /* return value is whether something changed (we need to emit notification) */
@@ -1116,10 +1144,8 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
             property->default_children = ddm_data_fetch_from_string(default_children);
     }
 
-    if (changed && g_slist_find(resource->changed_properties, property->qname) == NULL) {
-        resource->changed_properties = g_slist_prepend(resource->changed_properties, property->qname);
-        _ddm_data_model_mark_changed(resource->model, resource);
-    }
+    if (changed)
+        mark_property_changed(resource, property);
 
     return changed;
 }
@@ -1511,6 +1537,338 @@ _ddm_data_resource_fetch_received (DDMDataResource *resource,
         DDMDataFetch *old_received = resource->received_fetch;
         resource->received_fetch = ddm_data_fetch_merge(old_received, received_fetch);
         ddm_data_fetch_unref(old_received);
+    }
+}
+
+static DDMDataProperty *
+resource_ensure_rule_property(DDMDataResource *resource,
+                              DDMRule         *rule)
+{
+    GSList *l;
+    DDMDataProperty *property;
+    
+    for (l = resource->properties; l; l = l->next) {
+        property = l->data;
+        if (property->qname == rule->target_property)
+            return property;
+    }
+
+    property = g_new0(DDMDataProperty, 1);
+
+    property->resource = resource;
+    property->qname = rule->target_property;
+    property->cardinality = rule->cardinality;
+    property->value.type = DDM_DATA_NONE;
+    property->default_include = rule->default_include;
+    property->default_children = rule->default_children;
+    if (property->default_children)
+        ddm_data_fetch_ref(property->default_children);
+
+    property->rule = rule;
+    property->rule_sources = NULL;
+
+    resource->properties = g_slist_prepend(resource->properties, property);
+
+    return property;
+}
+
+static void
+property_update_value_from_rule_sources(DDMDataProperty *property)
+{
+    gboolean changed = FALSE;
+
+    if (property->cardinality == DDM_DATA_CARDINALITY_N) {
+        if (property->rule_sources == NULL) {
+            if (DDM_DATA_BASE(property->value.type) != DDM_DATA_NONE) {
+                g_assert(property->value.type == (DDM_DATA_RESOURCE | DDM_DATA_LIST));
+                
+                g_slist_free(property->value.u.list);
+                property->value.type = DDM_DATA_NONE;
+                changed = TRUE;
+            }
+        } else {
+            if (DDM_DATA_BASE(property->value.type) != DDM_DATA_NONE) {
+                g_assert(property->value.type == (DDM_DATA_RESOURCE | DDM_DATA_LIST));
+                g_slist_free(property->value.u.list);
+            } else {
+                property->value.type = DDM_DATA_RESOURCE | DDM_DATA_LIST;
+            }
+            
+            property->value.u.list = g_slist_copy(property->rule_sources);
+            changed = TRUE;
+        }
+    } else { /* DDM_DATA_CARDINALITY_01 */
+        if (property->rule_sources == NULL) {
+            if (DDM_DATA_BASE(property->value.type) != DDM_DATA_NONE) {
+                g_assert(property->value.type == DDM_DATA_RESOURCE);
+                
+                property->value.type = DDM_DATA_NONE;
+                changed = TRUE;
+            }
+        } else {
+            if (DDM_DATA_BASE(property->value.type) != DDM_DATA_NONE) {
+                g_assert(property->value.type == DDM_DATA_RESOURCE);
+
+                if (property->rule_sources->data != property->value.u.resource) {
+                    property->value.u.resource = property->rule_sources->data;
+                    changed = TRUE;
+                }
+            } else {
+                property->value.type = DDM_DATA_RESOURCE;
+                property->value.u.resource = property->rule_sources->data;
+                changed = TRUE;
+            }
+        }
+    }
+
+    if (changed)
+        mark_property_changed(property->resource, property);
+
+}
+
+static int
+compare_resources(gconstpointer a,
+                  gconstpointer b)
+{
+    return ((size_t)a < (size_t)b) ? -1 : (((size_t)a == (size_t)b) ? 0 : 1);
+}
+
+static void
+property_add_rule_source(DDMDataProperty *property,
+                         DDMDataResource *source)
+{
+    GSList *l;
+    GSList *prev = NULL;
+
+    l = property->rule_sources;
+    while (TRUE) {
+        int cmp;
+        
+        if (l) {
+            cmp = compare_resources(source, l->data);
+        } else {
+            cmp = 1;
+        }
+
+        if (cmp == 0)
+            return;
+        else if (cmp > 0) {
+            GSList *node = g_slist_prepend(l, source);
+            
+            if (prev)
+                prev->next = node;
+            else
+                property->rule_sources = node;
+
+            g_debug("Adding rule source %s to %s:%s#%s",
+                    source->resource_id, property->resource->resource_id,
+                    property->qname->uri, property->qname->name);
+            
+            source->referencing_rule_properties = g_slist_prepend(source->referencing_rule_properties, property->resource);
+            property_update_value_from_rule_sources(property);
+            
+            return;
+        }
+
+        prev = l;
+        l = l->next;
+    }
+}
+
+static void
+property_remove_rule_source(DDMDataProperty *property,
+                            DDMDataResource *source)
+{
+    GSList *l;
+    GSList *prev = NULL;
+
+    for (l = property->rule_sources; l; l = l->next) {
+        int cmp = compare_resources(source, l->data);
+        if (cmp == 0) {
+            if (prev)
+                prev->next = l->next;
+            else
+                property->rule_sources = l->next;
+            g_slist_free1(l);
+
+            source->referencing_rule_properties = g_slist_remove(source->referencing_rule_properties, property->resource);
+            property_update_value_from_rule_sources(property);
+            
+            g_debug("Removing rule source %s from %s:%s#%s",
+                    source->resource_id, property->resource->resource_id,
+                    property->qname->uri, property->qname->name);
+    
+            return;
+        } else if (cmp > 0) {
+            break;
+        }
+
+        prev = l;
+    }
+}
+
+/* Diff two lists sorted by the comparison function 'compare', and create
+ * two new lists (free with g_slist_free) of the values that were added
+ * or removed.
+ */
+static void
+find_deltas(GSList      *list,
+            GSList      *new_list,
+            GCompareFunc compare,
+            GSList     **added,
+            GSList     **removed)
+{
+    GSList *l = list;
+    GSList *m = new_list;
+
+    *added = NULL;
+    *removed = NULL;
+
+    while (l || m) {
+        int cmp;
+        
+        if (l && m)
+            cmp = (*compare)(l->data, m->data);
+        else if (l)
+            cmp = -1;
+        else
+            cmp = 1;
+
+        if (cmp < 0) {
+            /* value to remove */
+            *removed = g_slist_prepend(*removed, l->data);
+
+            l = l->next;
+        } else if (cmp > 0) {
+            /* value to add */
+            *added = g_slist_prepend(*added, m->data);
+
+            m = m->next;
+        } else {
+            l = l->next;
+            m = m->next;
+        }
+    }
+}
+
+/* takes ownership of sources */
+static void
+property_update_rule_sources(DDMDataProperty *property,
+                             GSList          *sources)
+{
+    GSList *added;
+    GSList *removed;
+    GSList *l;
+
+    sources = g_slist_sort(sources, compare_resources);
+    
+    find_deltas(property->rule_sources, sources, compare_resources, &added, &removed);
+
+    if (added == NULL && removed == NULL) {
+        g_slist_free(sources);
+        return;
+    }
+
+    g_debug("Recomputed rule sources for %s:%s#%s",
+            property->resource->resource_id,
+            property->qname->uri, property->qname->name);
+            
+    g_slist_free(property->rule_sources);
+    property->rule_sources = sources;
+
+    for (l = removed; l; l = l->next) {
+        DDMDataResource *source = l->data;
+        g_debug("   removed %s", source->resource_id);
+        source->referencing_rule_properties = g_slist_remove(source->referencing_rule_properties,
+                                                             property);
+    }
+
+    for (l = added; l; l = l->next) {
+        DDMDataResource *source = l->data;
+        g_debug("   added %s", source->resource_id);
+        source->referencing_rule_properties = g_slist_prepend(source->referencing_rule_properties,
+                                                              property);
+    }
+    
+    property_update_value_from_rule_sources(property);
+
+    g_slist_free(added);
+    g_slist_free(removed);
+}
+
+void
+_ddm_data_resource_update_rule_properties(DDMDataResource *resource)
+{
+    GSList *target_rules;
+    GSList *source_rules;
+    GSList *l;
+    
+    /* First remove any property values that previously referenced this resource
+     * that no longer apply
+     */
+    l = resource->referencing_rule_properties;
+    while (l) {
+        DDMDataProperty *property = l->data;
+        DDMCondition *condition;
+        GSList *l_next = l->next;
+
+        condition = ddm_rule_build_source_condition(property->rule, property->resource);
+
+        if (!ddm_condition_matches_source(condition, resource))
+            property_remove_rule_source(property, resource);
+        
+        ddm_condition_free(condition);
+        
+        l = l_next;
+    }
+
+    /* Now find properties that currently reference this resource and, if necessary
+     * add them.
+     */
+    source_rules = _ddm_data_model_get_source_rules(resource->model, resource->class_id);
+    for (l = source_rules; l; l = l->next) {
+        DDMRule *rule = l->data;
+        DDMCondition *condition;
+        GSList *targets;
+        GSList *ll;
+
+        condition = ddm_rule_build_target_condition(rule, resource);
+        targets = _ddm_data_model_find_targets(resource->model,
+                                               rule->target_class_id,
+                                               condition);
+
+        for (ll = targets; ll; ll = ll->next) {
+            DDMDataResource *target = ll->data;
+            DDMDataProperty *property;
+            
+            property = resource_ensure_rule_property(target, rule);
+            property_add_rule_source(property, resource);
+        }
+
+        ddm_condition_free(condition);
+        g_slist_free(targets);
+    }
+
+    /* Finally, for all rules with this class as target, find all matching sources, and
+     * merge them into the current property value
+     */
+    target_rules = _ddm_data_model_get_target_rules(resource->model, resource->class_id);
+    for (l = target_rules; l; l = l->next) {
+        DDMRule *rule = l->data;
+        DDMCondition *condition;
+        DDMDataProperty *property;
+        GSList *sources;
+
+        condition = ddm_rule_build_source_condition(rule, resource);
+        sources = _ddm_data_model_find_sources(resource->model,
+                                               rule->source_class_id,
+                                               condition);
+
+        property = resource_ensure_rule_property(resource, rule);
+
+        /* update_rule_sources takes ownership of sources */
+        property_update_rule_sources(property, sources);
+        ddm_condition_free(condition);
     }
 }
 
