@@ -1159,7 +1159,6 @@ on_startup_nonexistence(HippoDBusService *service)
 static void
 handle_name_owner_changed(DBusConnection *connection,
                           const char     *well_known_name,
-                          /* old and new may be NULL */
                           const char     *old_owner,
                           const char     *new_owner)
 {
@@ -1178,19 +1177,14 @@ handle_name_owner_changed(DBusConnection *connection,
          * the service on startup. */
         char *owner;
 
-        if (service->owner) {
-            g_hash_table_remove(helper->services_by_owner,
-                                service->owner);
-            owner = service->owner;
-            service->owner = NULL;
-            
-            g_debug("Service '%s' is now unavailable, old owner was '%s'",
-                    service->well_known_name,
-                    owner);
-        } else {
-            g_debug("Service '%s' not available on startup",
-                    service->well_known_name);
-        }
+        g_hash_table_remove(helper->services_by_owner,
+                            service->owner);
+        owner = service->owner;
+        service->owner = NULL;
+        
+        g_debug("Service '%s' is now unavailable, old owner was '%s'",
+                service->well_known_name,
+                owner ? owner : "");
 
         (* service->tracker->unavailable_handler) (connection,
                                                    service->well_known_name,
