@@ -3,6 +3,7 @@
 #ifndef __DDM_RULE_H__
 #define __DDM_RULE_H__
 
+#include "ddm-data-fetch.h"
 #include "ddm-data-resource.h"
 
 G_BEGIN_DECLS
@@ -48,6 +49,16 @@ struct _DDMConditionValue {
         DDMDataResource *resource;
         DDMDataProperty *property;
     } u;
+};
+
+struct _DDMRule {
+    char *target_class_id;
+    DDMQName *target_property;
+    char *source_class_id;
+    DDMDataCardinality cardinality;
+    gboolean default_include;
+    DDMDataFetch *default_children;
+    DDMCondition *condition;
 };
 
 typedef struct {
@@ -107,6 +118,13 @@ DDMRule      *ddm_rule_new (const char         *target_class_id,
                             gboolean            default_include,
                             const char         *default_children,
                             const char         *condition);
+
+DDMQName           *ddm_rule_get_target_property (DDMRule *rule);
+DDMDataCardinality *ddm_rule_get_cardinality     (DDMRule *rule);
+const char         *ddm_rule_get_target_class_id (DDMRule *rule);
+const char         *ddm_rule_get_source_class_id (DDMRule *rule);
+
+void ddm_rule_free (DDMRule *rule);
 
 DDMCondition *ddm_rule_build_target_condition(DDMRule         *rule,
                                               DDMDataResource *source_resource);

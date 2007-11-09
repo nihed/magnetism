@@ -343,6 +343,27 @@ static const DDMDataModelBackend static_file_backend = {
     static_file_flush
 };
 
+static void
+setup_global_resource(DDMDataModel *model)
+{
+    DDMDataResource *global_resource;
+    DDMDataValue value;
+
+    global_resource = ddm_data_model_ensure_resource(model,
+                                                     DDM_GLOBAL_RESOURCE, DDM_GLOBAL_RESOURCE_CLASS);
+    ddm_data_model_set_global_resource(model, global_resource);
+    
+    value.type = DDM_DATA_BOOLEAN;
+    value.u.boolean = TRUE;
+
+    ddm_data_resource_update_property(global_resource,
+                                      ddm_qname_get(DDM_GLOBAL_RESOURCE_CLASS, "online"),
+                                      DDM_DATA_UPDATE_REPLACE,
+                                      DDM_DATA_CARDINALITY_1,
+                                      FALSE, NULL,
+                                      &value);
+}
+
 DDMDataModel*
 ddm_static_file_model_new (const char *filename,
                            GError    **error)
@@ -353,6 +374,8 @@ ddm_static_file_model_new (const char *filename,
 
     static_file_model = get_static_file_model(model);
     static_file_model->backend_model = ddm_data_model_new_no_backend();
+
+    setup_global_resource(model);
     
     if (!ddm_static_file_parse(filename, static_file_model->backend_model, error)) {
         /* FIXME: cleanup and free the models */

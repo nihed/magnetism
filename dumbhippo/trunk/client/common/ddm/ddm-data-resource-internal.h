@@ -31,6 +31,8 @@ void _ddm_data_resource_fetch_received  (DDMDataResource *resource,
 void _ddm_data_resource_send_local_notifications (DDMDataResource    *resource,
                                                   GSList             *changed_properties);
 
+void _ddm_data_resource_update_rule_properties(DDMDataResource *resource);
+
 void _ddm_data_resource_resolve_notifications (DDMDataResource          *resource,
                                                DDMClientNotificationSet *notification_set);
 

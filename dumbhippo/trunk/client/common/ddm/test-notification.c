@@ -1,58 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
 #include <string.h>
-
-#include "static-file-backend.h"
-#include "ddm-data-query.h"
-
-static DDMDataModel *model = NULL;
-
-static void
-on_query_result (DDMDataResource *result,
-                 gpointer         user_data)
-{
-    DDMDataResource **result_location = user_data;
-    *result_location = result;
-}
-
-static void
-on_query_error (DDMDataError     error,
-                const char      *message,
-                gpointer         user_data)
-{
-    const char **message_location = user_data;
-    
-    g_assert(message != NULL);
-    *message_location = g_strdup(message);
-}
-
-static void
-flush_model(DDMDataModel *model) {
-    while (ddm_data_model_needs_flush(model))
-        ddm_data_model_flush(model);
-
-}
-
-static DDMDataResource *
-query_resource(DDMDataModel    *model,
-               const char      *resource_id,
-               const char      *fetch)
-{
-    DDMDataQuery *query;
-    DDMDataResource *result = NULL;
-    const char *error = NULL;
-    
-    query = ddm_data_model_query_resource_by_id(model, resource_id, fetch);
-    ddm_data_query_set_single_handler(query, on_query_result, &result);
-    ddm_data_query_set_error_handler(query, on_query_error, &error);
-
-    flush_model(model);
-
-    if (error != NULL)
-        g_error("Error from getResource, resource_id=%s, fetch=%s: %s", resource_id, fetch, error);
-
-    return result;
-}
+#include "test-utils.h"
 
 static void
 on_buddy1_changed(DDMDataResource *resource,
@@ -68,7 +17,7 @@ on_buddy1_changed(DDMDataResource *resource,
 
     g_assert(strcmp(ddm_data_resource_get_resource_id(resource), "online-desktop:/o/pidgin-buddy/AIM.JohnDoe1") == 0);
 
-    user2 = ddm_data_model_lookup_resource(model, "http://mugshot.org/o/user/USER2");
+    user2 = ddm_data_model_lookup_resource(test_get_model(), "http://mugshot.org/o/user/USER2");
     g_assert(user2 != NULL);
 
     user = NULL;
@@ -89,10 +38,8 @@ on_buddy1_changed(DDMDataResource *resource,
 int
 main(int argc, char **argv)
 {
-    GError *error = NULL;
-    const char *srcdir;
-    char *filename;
-
+    DDMDataModel *model;
+    
     DDMDataResource *result;
     DDMDataResource *user1;
     DDMDataResource *user2;
@@ -103,26 +50,9 @@ main(int argc, char **argv)
 
     gboolean was_changed = FALSE;
 
-    g_type_init();
+    model = test_init(TRUE);
 
-    srcdir = g_getenv("DDM_SRCDIR");
-    if (srcdir == NULL)
-        g_error("DDM_SRCDIR is not set");
-
-    filename = g_build_filename(srcdir, "test-data.xml", NULL);
-    model = ddm_static_file_model_new(filename, &error);
-    if (model == NULL)
-        g_error("Failed to create test model: %s", error->message);
-
-    g_free(filename);
-
-    filename = g_build_filename(srcdir, "test-local-data.xml", NULL);
-    if (!ddm_static_load_local_file(filename, model, &error))
-        g_error("Failed to add_local data to test model: %s", error->message);
-
-    g_free(filename);
-
-    result = query_resource(model, "online-desktop:/o/pidgin-buddy/AIM.JohnDoe1", "user name");
+    result = test_query_resource("online-desktop:/o/pidgin-buddy/AIM.JohnDoe1", "fixedUser name");
 
     buddy1 = ddm_data_model_lookup_resource(model, "online-desktop:/o/pidgin-buddy/AIM.JohnDoe1");
     g_assert(buddy1 != NULL);
@@ -132,7 +62,7 @@ main(int argc, char **argv)
 
     user = NULL;
     ddm_data_resource_get(buddy1,
-                          "user", DDM_DATA_RESOURCE, &user,
+                          "fixedUser", DDM_DATA_RESOURCE, &user,
                           NULL);
 
     g_assert(user == user1);
@@ -149,12 +79,12 @@ main(int argc, char **argv)
     value.u.resource = user2;
 
     ddm_data_resource_update_property(buddy1,
-                                      ddm_qname_get("online-desktop://p/o/buddy", "user"),
+                                      ddm_qname_get("online-desktop://p/o/buddy", "fixedUser"),
                                       DDM_DATA_UPDATE_REPLACE, DDM_DATA_CARDINALITY_01,
                                       FALSE, NULL,
                                       &value);
 
-    flush_model(model);
+    test_flush();
 
     g_assert(was_changed);
 

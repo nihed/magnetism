@@ -2,57 +2,12 @@
 
 #include <string.h>
 
-#include "static-file-backend.h"
-#include "ddm-data-query.h"
-
-static void
-on_query_result (DDMDataResource *result,
-                 gpointer         user_data)
-{
-    DDMDataResource **result_location = user_data;
-    *result_location = result;
-}
-
-static void
-on_query_error (DDMDataError     error,
-                const char      *message,
-                gpointer         user_data)
-{
-    const char **message_location = user_data;
-    
-    g_assert(message != NULL);
-    *message_location = g_strdup(message);
-}
-
-static DDMDataResource *
-query_resource(DDMDataModel    *model,
-               const char      *resource_id,
-               const char      *fetch)
-{
-    DDMDataQuery *query;
-    DDMDataResource *result = NULL;
-    const char *error = NULL;
-    
-    query = ddm_data_model_query_resource_by_id(model, resource_id, fetch);
-    ddm_data_query_set_single_handler(query, on_query_result, &result);
-    ddm_data_query_set_error_handler(query, on_query_error, &error);
-
-    while (ddm_data_model_needs_flush(model))
-        ddm_data_model_flush(model);
-
-    if (error != NULL)
-        g_error("Error from getResource, resource_id=%s, fetch=%s: %s", resource_id, fetch, error);
-
-    return result;
-}
+#include "test-utils.h"
 
 int
 main(int argc, char **argv)
 {
-    GError *error = NULL;
     DDMDataModel *model;
-    const char *srcdir;
-    char *filename;
 
     DDMDataResource *result;
     DDMDataResource *user1;
@@ -61,20 +16,9 @@ main(int argc, char **argv)
     GSList *contacts;
     GSList *contacters;
 
-    g_type_init();
+    model = test_init(FALSE);
 
-    srcdir = g_getenv("DDM_SRCDIR");
-    if (srcdir == NULL)
-        g_error("DDM_SRCDIR is not set");
-
-    filename = g_build_filename(srcdir, "test-data.xml", NULL);
-    model = ddm_static_file_model_new(filename, &error);
-    if (model == NULL)
-        g_error("Failed to create test model: %s", error->message);
-
-    g_free(filename);
-
-    result = query_resource(model, "http://mugshot.org/o/user/USER1", "name;contacts;contacters");
+    result = test_query_resource("http://mugshot.org/o/user/USER1", "name;contacts;contacters");
 
     user1 = ddm_data_model_lookup_resource(model, "http://mugshot.org/o/user/USER1");
     g_assert(user1 != NULL);

@@ -7,11 +7,13 @@
     </resource>
     <resource xmlns="http://mugshot.org/p/o/user" m:resourceId="user/USER2">
 	<name m:type="+s">Sally Smith</name>
+	<aim m:type="s?">SSCoolJ</aim>
     </resource>
     <resource xmlns="http://mugshot.org/p/o/user" m:resourceId="user/USER1">
 	<name m:type="+s">John Doe</name>
 	<externalAccounts m:type="+r?" m:defaultChildren="+" m:resourceId="externalAccount/USER1.MYSPACE"/>
 	<contacts m:type="r*" m:resourceId="user/USER2"/>
 	<contacters m:type="r*" m:update="clear"/>
+	<aim m:type="s?">JohnDoe1</aim>
     </resource>
 </m:model>

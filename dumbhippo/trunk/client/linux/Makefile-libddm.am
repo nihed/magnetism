@@ -58,6 +58,7 @@ LIBDDM_SOURCEFILES =						\
 	$(COMMONSRCDIR)/ddm/ddm-local-client.c			\
 	$(COMMONSRCDIR)/ddm/ddm-local-client.h			\
 	$(COMMONSRCDIR)/ddm/ddm-notification-set.c		\
+	$(COMMONSRCDIR)/ddm/ddm-rule.c				\
 	$(COMMONSRCDIR)/ddm/ddm-rule.h				\
 	$(COMMONSRCDIR)/ddm/ddm-qname.c				\
 	$(COMMONSRCDIR)/ddm/ddm-work-item.c			\
@@ -90,7 +91,10 @@ libddm_test_la_LIBADD = $(LIBDDM_LIBS) libddm-1.la
 nodist_libddm_test_la_SOURCES =				\
 	$(COMMONSRCDIR)/ddm/static-file-backend.c	\
 	$(COMMONSRCDIR)/ddm/static-file-backend.h	\
-	$(COMMONSRCDIR)/ddm/static-file-parser.c
+	$(COMMONSRCDIR)/ddm/static-file-parser.c	\
+	$(COMMONSRCDIR)/ddm/test-utils.c		\
+	$(COMMONSRCDIR)/ddm/test-utils.h
+
 
 ######################################################################
 # Test programs
@@ -101,6 +105,7 @@ ddm_tests =					\
 	test-condition-reduce			\
 	test-multipart-fetch			\
 	test-notification			\
+	test-rules				\
 	test-static-file-parser			\
 	test-static-file-backend
 
@@ -138,6 +143,11 @@ test_notification_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
 test_notification_LDADD=libddm-1.la libddm-test.la
 
 nodist_test_notification_SOURCES=$(COMMONSRCDIR)/ddm/test-notification.c
+
+test_rules_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
+test_rules_LDADD=libddm-1.la libddm-test.la
+
+nodist_test_rules_SOURCES=$(COMMONSRCDIR)/ddm/test-rules.c
 
 test_static_file_parser_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
 test_static_file_parser_LDADD=libddm-1.la libddm-test.la

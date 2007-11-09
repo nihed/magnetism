@@ -4,6 +4,7 @@
 
 #include "ddm-data-model.h"
 #include "ddm-data-resource.h"
+#include "ddm-rule.h"
 #include "ddm-work-item.h"
 
 G_BEGIN_DECLS
@@ -20,6 +21,20 @@ DDMDataQuery *_ddm_data_model_query_remote_resource (DDMDataModel *model,
                                                      const char     *fetch);
 
 DDMClient *_ddm_data_model_get_local_client (DDMDataModel *model);
+
+/* Result should be freed by caller */
+GSList *_ddm_data_model_find_sources (DDMDataModel *model,
+                                      const char   *source_class_id,
+                                      DDMCondition *condition);
+GSList *_ddm_data_model_find_targets (DDMDataModel *model,
+                                      const char   *target_class_id,
+                                      DDMCondition *condition);
+
+/* Result owned by model */
+GSList *_ddm_data_model_get_target_rules(DDMDataModel *model,
+                                         const char   *class_id);
+GSList *_ddm_data_model_get_source_rules(DDMDataModel *model,
+                                         const char   *class_id);
 
 G_END_DECLS
 

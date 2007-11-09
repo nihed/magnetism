@@ -38,6 +38,16 @@ DDMDataModel *ddm_data_model_new_with_backend   (const DDMDataModelBackend *back
                                                  GFreeFunc                  free_backend_data_func);
 /* Used testing purposes; you can't call query or update on such a backend */
 DDMDataModel *ddm_data_model_new_no_backend     (void);
+
+void ddm_data_model_add_rule (DDMDataModel       *model,
+                              const char         *target_class_id,
+                              const char         *target_property,
+                              const char         *source_class_id,
+                              DDMDataCardinality  cardinality,
+                              gboolean            default_include,
+                              const char         *default_children,
+                              const char         *condition);
+
 gboolean      ddm_data_model_get_connected      (DDMDataModel   *model);
 gboolean      ddm_data_model_is_ready           (DDMDataModel   *model);
 
@@ -66,6 +76,7 @@ DDMDataQuery *ddm_data_model_update             (DDMDataModel   *model,
 DDMDataQuery *ddm_data_model_update_params      (DDMDataModel   *model,
                                                  const char     *method,
                                                  GHashTable     *params);
+
 DDMDataResource *ddm_data_model_lookup_resource (DDMDataModel   *model,
                                                  const char     *resource_id);
 DDMDataResource *ddm_data_model_ensure_resource (DDMDataModel   *model,

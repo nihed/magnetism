@@ -442,7 +442,7 @@ dbus_model_set_offline(DBusModel *dbus_model)
     ddm_data_model_set_global_resource(dbus_model->ddm_model, global_resource);
     
     value.type = DDM_DATA_BOOLEAN;
-    value.u.string = FALSE;
+    value.u.boolean = FALSE;
 
     ddm_data_resource_update_property(global_resource,
                                       ddm_qname_get(DDM_GLOBAL_RESOURCE_CLASS, "online"),
