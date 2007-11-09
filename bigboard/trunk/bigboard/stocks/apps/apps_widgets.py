@@ -80,7 +80,7 @@ class AppDisplay(PhotoContentItem):
         if self.__app.is_installed() or self.__app_location == AppLocation.DESCRIPTION_HEADER:
             self.__subtitle.set_property("text", self.__app.get_generic_name() or self.__app.get_tooltip() or self.__app.get_comment())
         ## for now, install won't work if not connected
-        elif self.__app_location == AppLocation.STOCK and globals.get_data_model().connected:
+        elif self.__app_location == AppLocation.STOCK and globals.get_data_model().ready and globals.get_data_model().global_resource.online:
             self.__subtitle.set_property('text', "(Click to Install)")
         else:
             self.__subtitle.set_property('text', "(Not Installed)")

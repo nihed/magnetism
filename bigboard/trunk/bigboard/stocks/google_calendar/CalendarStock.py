@@ -704,7 +704,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
                         reminder_seconds = int(reminder.minutes) * 60  
                         # _logger.debug('delta days %s delta seconds %s reminder seconds %s %s\n '% (delta.days, delta_seconds, reminder_seconds, reminder.extension_attributes['method']))
                         # schedule notifications for alerts that need to happen before the next time we poll events
-                        if reminder.extension_attributes['method'] == 'alert' and (delta_seconds - google_stock.polling_periodicity_seconds) < reminder_seconds and not self.__event_alerts.has_key(event.get_link() + reminder.minutes):   
+                        if reminder.extension_attributes['method'] == 'alert' and (delta_seconds - _events_polling_periodicity_seconds) < reminder_seconds and not self.__event_alerts.has_key(event.get_link() + reminder.minutes):   
                            
                            self.__event_alerts[event.get_link() + reminder.minutes] = event
                            if delta_seconds > reminder_seconds:
