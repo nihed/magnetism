@@ -582,7 +582,10 @@ class AppsRepo(gobject.GObject):
     def search(self, category, search_terms, results_handler):
         _logger.debug("search for category %s search_terms %s" % (category, search_terms))
 
-        if not self.__model.connected:
+        ## this is not really right - there's more work to disable the search box if not .global_resource.online, 
+        ## etc.
+        if not self.__model.ready:
+            _logger.debug("search not working since not ready, FIXME")
             return
  
         ## we want to avoid doing the same search twice in parallel, so if we already have

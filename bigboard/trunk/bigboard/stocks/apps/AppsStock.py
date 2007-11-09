@@ -200,9 +200,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
             if i >= static_size:
                 break
 
-            # don't display apps that are not installed if the user is not logged in;
-            # because the user should be able to see the same list regardless of whether
-            # they are connected, we don't check self.__model.connected here
+            # don't display apps that are not installed if the user is not logged in
             if not self.__model.self_resource and not app.is_installed():
                 continue
 
@@ -224,7 +222,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
 
         #_logger.debug("usage: %s", usage)
 
-        if usage is False and self.__model.connected:
+        if usage is False and self.__model.ready and self.__model.global_resource.online:
             self.__set_message("Enable application tracking", 
                                globals.get_baseurl() + "/account")        
 
