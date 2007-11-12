@@ -10,7 +10,7 @@
 #include "hippo-platform-impl.h"
 #include "hippo-dbus-server.h"
 #include "hippo-dbus-client.h"
-#include "hippo-dbus-im.h"
+#include "hippo-im.h"
 #include "hippo-idle.h"
 #include "hippo-ui.h"
 
@@ -902,7 +902,7 @@ main(int argc, char **argv)
                             options.restart_argv, options.restart_argc);
 
     hippo_dbus_init_services(dbus);
-    hippo_dbus_init_im();
+    hippo_im_init();
     
     /* get rid of all this, the app has taken over */
     g_object_unref(dbus);

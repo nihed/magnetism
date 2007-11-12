@@ -8,8 +8,11 @@
 #include "hippo-dbus-helper.h"
 
 #include "main.h"
-#include "hippo-dbus-im.h"
+#include "hippo-im.h"
 #include "hippo-dbus-im-client.h"
+
+#define HIPPO_DBUS_IM_INTERFACE "org.freedesktop.od.IM"
+#define HIPPO_DBUS_IM_PATH "/org/freedesktop/od/im"
 
 #define IM_RESOURCE_BASE "online-desktop:/o"
 
@@ -58,9 +61,9 @@ handle_get_icon_reply(DBusMessage *reply,
 
     dbus_message_iter_get_fixed_array(&byte_array_iter, &bytes, &bytes_len);
 
-    hippo_dbus_im_update_buddy_icon(ir->buddy_id,
-                                    ir->hash, content_type,
-                                    bytes, bytes_len);
+    hippo_im_update_buddy_icon(ir->buddy_id,
+                               ir->hash, content_type,
+                               bytes, bytes_len);
 
     g_hash_table_remove(ir->id->icon_requests,
                         ir->hash);
@@ -177,18 +180,18 @@ notify_buddy(ImData             *id,
 
     resource_id = make_buddy_resource_id(id, protocol, name);
 
-    hippo_dbus_im_update_buddy(resource_id,
-                               protocol,
-                               name, alias,
-                               is_online,
-                               status,
-                               webdav_url);
+    hippo_im_update_buddy(resource_id,
+                          protocol,
+                          name, alias,
+                          is_online,
+                          status,
+                          webdav_url);
 
     /* has_icon_hash() allows icon==NULL. It checks whether
      * the buddy we have stored has a matching hash, including
      * matching hash of NULL
      */
-    if (!hippo_dbus_im_has_icon_hash(resource_id, icon)) {
+    if (!hippo_im_has_icon_hash(resource_id, icon)) {
         make_icon_request(id, icon, resource_id);
     } else {
         g_debug("It looks like we already have icon %s", icon ? icon : "(none)");
@@ -235,7 +238,7 @@ find_removed_resources_foreach(gpointer key,
 
     if (closure->new_resource_ids == NULL ||
         g_hash_table_lookup(closure->new_resource_ids, old_resource_id) == NULL)
-        hippo_dbus_im_remove_buddy(old_resource_id);
+        hippo_im_remove_buddy(old_resource_id);
 }
 
 static void

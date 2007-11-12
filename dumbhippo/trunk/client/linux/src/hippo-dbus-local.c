@@ -5,7 +5,7 @@
 #include <string.h>
 #include "hippo-dbus-helper.h"
 #include "hippo-dbus-local.h"
-#include "hippo-dbus-im.h"
+#include "hippo-im.h"
 
 #define MUGSHOT_INFO_NAME "org.mugshot.Mugshot"
 #define STANDARD_INFO_NAME "org.freedesktop.od.Standard"
@@ -184,15 +184,15 @@ update_im_buddy(const char           *session_id)
     char *resource_id = make_resource_id(session_id);
 
     if (!local_buddy || local_buddy->user_resource_id == NULL) {
-        hippo_dbus_im_remove_buddy(resource_id);
+        hippo_im_remove_buddy(resource_id);
     } else {
         /* It would be more complete to provide the unix name exported over the local service
          * as the alias, but right now we won't actually use it for anything, so we don't
          * bother pulling it out.
          */
-        hippo_dbus_im_update_buddy(resource_id,
-                                   "mugshot-local", local_buddy->user_resource_id, NULL,
-                                   TRUE, "Around", local_buddy->webdav_url);
+        hippo_im_update_buddy(resource_id,
+                              "mugshot-local", local_buddy->user_resource_id, NULL,
+                              TRUE, "Around", local_buddy->webdav_url);
     }
     
     g_free(resource_id);

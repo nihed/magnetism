@@ -6,14 +6,14 @@
 
 #include <ddm/ddm.h>
 
-#include "hippo-dbus-im.h"
+#include "hippo-im.h"
 #include "main.h"
 
 #define BUDDY_CLASS "online-desktop:/p/o/buddy"
 
 typedef struct {
     GHashTable *buddies;
-} HippoDBusIm;
+} HippoIm;
 
 typedef struct {
     char *resource_id;
@@ -25,10 +25,10 @@ typedef struct {
     char *webdav_url;
     char *icon_hash;
     char *icon_data_url;
-} HippoDBusImBuddy;
+} HippoImBuddy;
 
 static void 
-hippo_dbus_im_buddy_destroy(HippoDBusImBuddy *buddy)
+hippo_im_buddy_destroy(HippoImBuddy *buddy)
 {
     g_free(buddy->resource_id);
     g_free(buddy->protocol);
@@ -42,28 +42,28 @@ hippo_dbus_im_buddy_destroy(HippoDBusImBuddy *buddy)
 }
 
 static void
-hippo_dbus_im_destroy(HippoDBusIm *im)
+hippo_im_destroy(HippoIm *im)
 {
     g_hash_table_destroy(im->buddies);
     g_free(im);
 }
 
-static HippoDBusIm *
-hippo_dbus_im_get(HippoDataCache *cache)
+static HippoIm *
+hippo_im_get(HippoDataCache *cache)
 {
-    HippoDBusIm *im = g_object_get_data(G_OBJECT(cache), "hippo-dbus-im");
+    HippoIm *im = g_object_get_data(G_OBJECT(cache), "hippo-dbus-im");
     if (im == NULL) {
-        im = g_new0(HippoDBusIm, 1);
+        im = g_new0(HippoIm, 1);
         im->buddies = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                            NULL, (GDestroyNotify)hippo_dbus_im_buddy_destroy);
-        g_object_set_data_full(G_OBJECT(cache), "hippo-dbus-im", im, (GDestroyNotify)hippo_dbus_im_destroy);
+                                            NULL, (GDestroyNotify)hippo_im_buddy_destroy);
+        g_object_set_data_full(G_OBJECT(cache), "hippo-dbus-im", im, (GDestroyNotify)hippo_im_destroy);
     }
 
     return im;
 }
 
 void
-hippo_dbus_init_im(void)
+hippo_im_init(void)
 {
 }
 
@@ -103,17 +103,17 @@ build_data_url(const char           *icon_content_type,
 }
 
 void
-hippo_dbus_im_update_buddy_icon (const char           *buddy_id,
-                                 const char           *icon_hash,
-                                 const char           *icon_content_type,
-                                 const char           *icon_binary_data,
-                                 int                   icon_data_len)
+hippo_im_update_buddy_icon (const char           *buddy_id,
+                            const char           *icon_hash,
+                            const char           *icon_content_type,
+                            const char           *icon_binary_data,
+                            int                   icon_data_len)
 {
     DDMDataValue value;
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
-    HippoDBusIm *im = hippo_dbus_im_get(cache);
+    HippoIm *im = hippo_im_get(cache);
     DDMDataModel *model = hippo_data_cache_get_model(cache);
-    HippoDBusImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
+    HippoImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
     DDMDataResource *buddy_resource;
 
     g_debug("Updating buddy icon %s %s", buddy_id, icon_hash);
@@ -152,13 +152,13 @@ hippo_dbus_im_update_buddy_icon (const char           *buddy_id,
 }
 
 gboolean
-hippo_dbus_im_has_icon_hash (const char           *buddy_id,
-                             const char           *icon_hash)
+hippo_im_has_icon_hash (const char           *buddy_id,
+                        const char           *icon_hash)
 {
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
-    HippoDBusIm *im = hippo_dbus_im_get(cache);
+    HippoIm *im = hippo_im_get(cache);
 
-    HippoDBusImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
+    HippoImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
 
     if (buddy == NULL) {
         return FALSE;
@@ -172,23 +172,23 @@ hippo_dbus_im_has_icon_hash (const char           *buddy_id,
 }
 
 void
-hippo_dbus_im_update_buddy(const char           *buddy_id,
-                           const char           *protocol,
-                           const char           *name,
-                           const char           *alias,
-                           gboolean              is_online,
-                           const char           *status,
-                           const char           *webdav_url)
+hippo_im_update_buddy(const char           *buddy_id,
+                      const char           *protocol,
+                      const char           *name,
+                      const char           *alias,
+                      gboolean              is_online,
+                      const char           *status,
+                      const char           *webdav_url)
 {
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
-    HippoDBusIm *im = hippo_dbus_im_get(cache);
+    HippoIm *im = hippo_im_get(cache);
     DDMDataModel *model = hippo_data_cache_get_model(cache);
     gboolean new_buddy = FALSE;
     gboolean online_changed;
     DDMDataResource *buddy_resource;
     DDMDataValue value;
     gboolean buddy_changed = FALSE;
-    HippoDBusImBuddy *buddy;
+    HippoImBuddy *buddy;
 
     g_return_if_fail(buddy_id != NULL);
     g_return_if_fail(protocol != NULL);
@@ -197,7 +197,7 @@ hippo_dbus_im_update_buddy(const char           *buddy_id,
 
     buddy = g_hash_table_lookup(im->buddies, buddy_id);    
     if (buddy == NULL) {
-        buddy = g_new0(HippoDBusImBuddy, 1);
+        buddy = g_new0(HippoImBuddy, 1);
         buddy->resource_id = g_strdup(buddy_id);
         g_hash_table_insert(im->buddies, buddy->resource_id, buddy);
         new_buddy = TRUE;
@@ -336,14 +336,14 @@ hippo_dbus_im_update_buddy(const char           *buddy_id,
 }
 
 void 
-hippo_dbus_im_remove_buddy(const char         *buddy_id)
+hippo_im_remove_buddy(const char         *buddy_id)
 {
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
-    HippoDBusIm *im = hippo_dbus_im_get(cache);
+    HippoIm *im = hippo_im_get(cache);
     DDMDataModel *model = hippo_data_cache_get_model(cache);
     DDMDataResource *system_resource = get_system_resource(model);
 
-    HippoDBusImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
+    HippoImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
 
     if (buddy == NULL)
         return;
