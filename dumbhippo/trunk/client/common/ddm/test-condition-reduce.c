@@ -88,6 +88,11 @@ main(int argc, char **argv)
     do_test("source.name = 'Sally Smith'", user1, user2, TRUE);
     do_test("source.name = 'Sally Smith'", user2, user1, FALSE);
 
+    /* Some tests of missing values */
+    do_test("source.unset = false",        user1, user2, TRUE);
+    do_test("source.unset = true",         user1, user2, FALSE);
+    do_test("source.unset = target.unset", user2, user1, TRUE);
+
     /* target.<property> = source should result in a property identical to
      * to <resource>
      */
