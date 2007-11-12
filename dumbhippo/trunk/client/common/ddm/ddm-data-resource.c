@@ -775,6 +775,8 @@ ddm_data_resource_set_client_fetch (DDMDataResource *resource,
         data_client = g_new(DataClient, 1);
         data_client->client = client;
         data_client->fetch = ddm_data_fetch_ref(fetch);
+
+        resource->clients = g_slist_prepend(resource->clients, data_client);
     }
 }
 
