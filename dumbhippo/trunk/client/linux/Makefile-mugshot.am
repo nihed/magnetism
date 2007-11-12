@@ -32,8 +32,6 @@ mugshot_SOURCES	=				\
 	src/hippo-dbus-helper-rename.h		\
 	src/hippo-dbus-http.c			\
 	src/hippo-dbus-http.h			\
-	src/hippo-dbus-im.c			\
-	src/hippo-dbus-im.h			\
 	src/hippo-dbus-im-client.c		\
 	src/hippo-dbus-im-client.h		\
 	src/hippo-dbus-local.c			\
@@ -60,6 +58,8 @@ mugshot_SOURCES	=				\
 	src/hippo-http.h			\
 	src/hippo-idle.c                	\
 	src/hippo-idle.h                	\
+	src/hippo-im.c				\
+	src/hippo-im.h				\
 	src/hippo-pixbuf-cache.c		\
 	src/hippo-pixbuf-cache.h		\
 	src/hippo-person-renderer.c		\
