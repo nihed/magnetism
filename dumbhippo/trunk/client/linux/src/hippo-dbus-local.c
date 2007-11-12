@@ -178,20 +178,19 @@ make_resource_id(const char *session_id)
 }
 
 static void
-update_im_buddy(DDMNotificationSet *notifications,
-                const char           *session_id)
+update_im_buddy(const char           *session_id)
 {
     LocalBuddy *local_buddy = get_local_buddy(session_id);
     char *resource_id = make_resource_id(session_id);
 
     if (!local_buddy || local_buddy->user_resource_id == NULL) {
-        hippo_dbus_im_remove_buddy(notifications, resource_id);
+        hippo_dbus_im_remove_buddy(resource_id);
     } else {
         /* It would be more complete to provide the unix name exported over the local service
          * as the alias, but right now we won't actually use it for anything, so we don't
          * bother pulling it out.
          */
-        hippo_dbus_im_update_buddy(notifications, resource_id,
+        hippo_dbus_im_update_buddy(resource_id,
                                    "mugshot-local", local_buddy->user_resource_id, NULL,
                                    TRUE, "Around", local_buddy->webdav_url);
     }
@@ -372,9 +371,8 @@ update_im_buddies_foreach(void *key,
 {
     const char *session_id = key;
     LocalBuddy *local_buddy = value;
-    DDMNotificationSet *notifications = data;
 
-    update_im_buddy(notifications, session_id);
+    update_im_buddy(session_id);
 
     if (local_buddy->user_resource_id == NULL && local_buddy->webdav_url == NULL) {
         g_free(local_buddy);
@@ -387,7 +385,6 @@ update_im_buddies_foreach(void *key,
 static gboolean
 get_info_from_all_sessions(HippoDBusProxy *proxy)
 {
-    DDMNotificationSet *notifications;
     DBusMessage *reply;
     DBusError derror;
     dbus_bool_t retval;
@@ -397,8 +394,6 @@ get_info_from_all_sessions(HippoDBusProxy *proxy)
 
     seen_mugshot_ids = g_hash_table_new_full(g_str_hash, g_str_equal, (GDestroyNotify)g_free, NULL);
     
-    notifications = hippo_dbus_im_start_notifications();    
-            
     info_name = MUGSHOT_INFO_NAME;
     dbus_error_init(&derror);
     reply = hippo_dbus_proxy_call_method_sync(proxy, "GetInfoFromAllSessions",
@@ -485,10 +480,8 @@ get_info_from_all_sessions(HippoDBusProxy *proxy)
     g_hash_table_foreach(local_buddies, clean_standard_info_foreach, seen_standard_ids);
     g_hash_table_destroy(seen_standard_ids);
 
-    g_hash_table_foreach_remove(local_buddies, update_im_buddies_foreach, notifications);
+    g_hash_table_foreach_remove(local_buddies, update_im_buddies_foreach, NULL);
 
-    hippo_dbus_im_send_notifications(notifications);
-    
     return retval;
 }
 
@@ -527,7 +520,6 @@ handle_info_changed(DBusConnection *connection,
                     void           *data)
 {
     DBusMessageIter iter, struct_iter;
-    DDMNotificationSet *notifications;
     const char *name;
     char *session_id = NULL;
     
@@ -547,8 +539,6 @@ handle_info_changed(DBusConnection *connection,
     dbus_message_iter_next(&iter);
     dbus_message_iter_recurse(&iter, &struct_iter);
 
-    notifications = hippo_dbus_im_start_notifications();
-    
     if (strcmp(name, MUGSHOT_INFO_NAME) == 0) {
         session_id = read_and_update_mugshot_info(&struct_iter);
     } else if (strcmp(name, STANDARD_INFO_NAME) == 0) {
@@ -556,11 +546,9 @@ handle_info_changed(DBusConnection *connection,
     }
 
     if (session_id) {
-        update_im_buddy(notifications, session_id);
+        update_im_buddy(session_id);
         maybe_remove_local_buddy(session_id);
     }
-    
-    hippo_dbus_im_send_notifications(notifications);
 }
 
 static void
@@ -569,7 +557,6 @@ handle_info_removed(DBusConnection *connection,
                     void           *data)
 {
     DBusMessageIter iter, session_props_iter;
-    DDMNotificationSet *notifications;
     const char *name;
     char *machine_id;
     char *session_id;
@@ -595,18 +582,14 @@ handle_info_removed(DBusConnection *connection,
     if (!read_session_info(&session_props_iter, &machine_id, &session_id))
         return;
     
-    notifications = hippo_dbus_im_start_notifications();
-
     if (strcmp(name, MUGSHOT_INFO_NAME) == 0) {
         update_mugshot_info(session_id, NULL);
     } else if (strcmp(name, STANDARD_INFO_NAME) == 0) {
         update_standard_info(session_id, NULL);
     }
 
-    update_im_buddy(notifications, session_id);
+    update_im_buddy(session_id);
     maybe_remove_local_buddy(session_id);
-        
-    hippo_dbus_im_send_notifications(notifications);
         
     g_free(machine_id);
     g_free(session_id);

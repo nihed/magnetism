@@ -37,7 +37,6 @@ handle_get_icon_reply(DBusMessage *reply,
     const char *content_type;
     const char *bytes;
     int bytes_len;
-    DDMNotificationSet *notifications;
 
     g_debug("Received icon %s for %s", ir->hash, ir->buddy_id);
     
@@ -59,13 +58,9 @@ handle_get_icon_reply(DBusMessage *reply,
 
     dbus_message_iter_get_fixed_array(&byte_array_iter, &bytes, &bytes_len);
 
-    notifications = hippo_dbus_im_start_notifications();
-    
-    hippo_dbus_im_update_buddy_icon(notifications, ir->buddy_id,
+    hippo_dbus_im_update_buddy_icon(ir->buddy_id,
                                     ir->hash, content_type,
                                     bytes, bytes_len);
-
-    hippo_dbus_im_send_notifications(notifications);
 
     g_hash_table_remove(ir->id->icon_requests,
                         ir->hash);
@@ -126,7 +121,6 @@ read_basic_variant(DBusMessageIter *variant_iter,
 static void
 notify_buddy(ImData             *id,
              DBusMessageIter    *buddy_iter,
-             DDMNotificationSet *notifications,
              GHashTable         *new_resource_ids /* may be NULL */)
 {
     char *resource_id = NULL;
@@ -183,8 +177,7 @@ notify_buddy(ImData             *id,
 
     resource_id = make_buddy_resource_id(id, protocol, name);
 
-    hippo_dbus_im_update_buddy(notifications,
-                               resource_id,
+    hippo_dbus_im_update_buddy(resource_id,
                                protocol,
                                name, alias,
                                is_online,
@@ -216,7 +209,6 @@ handle_buddy_changed(DBusConnection *connection,
 {
     ImData *id = data;
     DBusMessageIter toplevel_iter, buddy_iter;
-    DDMNotificationSet *notifications;
     
     if (id->reload_idle != 0)
         return; /* no point doing any work if we're going to do a full reload anyway */
@@ -225,16 +217,11 @@ handle_buddy_changed(DBusConnection *connection,
     g_assert(dbus_message_iter_get_arg_type(&toplevel_iter) == DBUS_TYPE_ARRAY);
     dbus_message_iter_recurse(&toplevel_iter, &buddy_iter);
     
-    notifications = hippo_dbus_im_start_notifications();
-    
-    notify_buddy(id, &buddy_iter, notifications, NULL);
-
-    hippo_dbus_im_send_notifications(notifications);
+    notify_buddy(id, &buddy_iter, NULL);
 }
 
 
 typedef struct {
-    DDMNotificationSet *notifications;
     GHashTable *new_resource_ids;
 } FindRemovedResourcesClosure;
 
@@ -248,17 +235,15 @@ find_removed_resources_foreach(gpointer key,
 
     if (closure->new_resource_ids == NULL ||
         g_hash_table_lookup(closure->new_resource_ids, old_resource_id) == NULL)
-        hippo_dbus_im_remove_buddy(closure->notifications, old_resource_id);
+        hippo_dbus_im_remove_buddy(old_resource_id);
 }
 
 static void
 remove_old_resources(GHashTable         *old_resource_ids,
-                     DDMNotificationSet *notifications,
                      GHashTable         *new_resource_ids /* may be NULL */)
 {
     FindRemovedResourcesClosure closure;
 
-    closure.notifications = notifications;
     closure.new_resource_ids = new_resource_ids;
     
     g_hash_table_foreach(old_resource_ids,
@@ -271,9 +256,6 @@ load_state_from_buddy_list(ImData          *id,
                            DBusMessageIter *buddy_array_iter)
 {
     GHashTable *new_buddy_resource_ids;
-    DDMNotificationSet *notifications;
-    
-    notifications = hippo_dbus_im_start_notifications();
     
     new_buddy_resource_ids = g_hash_table_new_full(g_str_hash, g_str_equal,
                                                    g_free, NULL);
@@ -284,18 +266,16 @@ load_state_from_buddy_list(ImData          *id,
         g_assert(dbus_message_iter_get_arg_type(buddy_array_iter) == DBUS_TYPE_ARRAY);
         dbus_message_iter_recurse(buddy_array_iter, &buddy_iter);
 
-        notify_buddy(id, &buddy_iter, notifications, new_buddy_resource_ids);        
+        notify_buddy(id, &buddy_iter, new_buddy_resource_ids);        
         
         dbus_message_iter_next(buddy_array_iter);
     }
 
     /* Figure out what we removed */
-    remove_old_resources(id->resource_ids, notifications, new_buddy_resource_ids);
+    remove_old_resources(id->resource_ids, new_buddy_resource_ids);
     
     g_hash_table_destroy(id->resource_ids);
     id->resource_ids = new_buddy_resource_ids;
-    
-    hippo_dbus_im_send_notifications(notifications);
 }
 
 static void
@@ -380,7 +360,6 @@ handle_service_unavailable(DBusConnection *connection,
                            void           *data)
 {
     ImData *id = data;
-    DDMNotificationSet *notifications;
 
     if (id->im_proxy == NULL)
         return;
@@ -393,13 +372,9 @@ handle_service_unavailable(DBusConnection *connection,
         id->reload_idle = 0;
     }
     
-    notifications = hippo_dbus_im_start_notifications();
-
-    remove_old_resources(id->resource_ids, notifications, NULL);
+    remove_old_resources(id->resource_ids, NULL);
 
     g_hash_table_remove_all(id->resource_ids);
-
-    hippo_dbus_im_send_notifications(notifications);
 }
 
 static const HippoDBusSignalTracker signal_handlers[] = {

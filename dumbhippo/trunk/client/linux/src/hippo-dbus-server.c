@@ -10,7 +10,6 @@
 #include "hippo-dbus-client.h"
 #include "hippo-dbus-contacts.h"
 #include "hippo-dbus-cookies.h"
-#include "hippo-dbus-im.h"
 #include "hippo-dbus-model.h"
 #include "hippo-dbus-mugshot.h"
 #include "hippo-dbus-pidgin.h"
@@ -409,7 +408,6 @@ hippo_dbus_init_services(HippoDBus   *dbus)
     
     hippo_dbus_init_contacts(connection, FALSE);
 
-    hippo_dbus_init_im(connection, FALSE);
     hippo_dbus_init_local(connection);
     hippo_dbus_init_pidgin(connection);    
     hippo_dbus_init_model(connection);
