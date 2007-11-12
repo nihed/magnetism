@@ -54,6 +54,7 @@ int main(void)
     do_test("false", "false");
     do_test("target.a = 1 and target.b = 2 or not source.c = 3",
             "(target.a = 1 and target.b = 2) or (not source.c = 3)");
+    do_test_i("(source.aim = target.name and target.protocol = \"aim\") or (source.xmpp = target.name and target.protocol = \"xmpp\")");
     
     return result ? 0 : 1;
 }
