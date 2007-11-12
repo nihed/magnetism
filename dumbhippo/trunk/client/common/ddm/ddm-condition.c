@@ -169,6 +169,34 @@ condition_value_reduce(DDMConditionValue *value,
     }
 }
 
+/* Here's how we do comparisons. The basics are:
+ *
+ * 1) scalar values compare equal to each other if they have the same value
+ * 2) a scalar value compares equal to a list if the scalar has the same
+ *    value as one of the members of the list
+ * 3) Two lists compare false and generate a warning
+ *
+ * But:
+ *
+ * 4) Missing values are treated like scalar false
+ * 5) Comparing a scalar boolean value with a list coerces the list to a
+ *    boolean value of "is the list empty"
+ *
+ * In tabular form:
+ *
+ *               <missing> false  true  <other>    []   [...]
+ *  <missing>        T       T      F      F       T      F  
+ *  false                    T      F      F       T      F  
+ *  true                            T      F       F      T  
+ *  <other>                               (1)      F     (2)
+ *  []                                            (3)    (3)
+ *  [...]                                                (3)
+ *
+ * (1) A scalar is equal to another scalar, iff they have equal values
+ * (2) A scalar is equal to a list iff it is present in the list
+ * (3) False with a warning
+ */
+    
 static gboolean
 compare_properties_1_1(DDMDataValue *left,
                        DDMDataValue *right)
@@ -216,15 +244,24 @@ compare_properties_n_1(DDMDataValue *list_value,
                        DDMDataValue *scalar_value)
 {
     GSList *l;
+    gboolean empty;
 
-    g_return_val_if_fail(DDM_DATA_IS_LIST(list_value->type), FALSE);
+    g_return_val_if_fail(list_value->type == DDM_DATA_NONE || DDM_DATA_IS_LIST(list_value->type), FALSE);
+    
+    empty = list_value->type == DDM_DATA_NONE || list_value->u.list == NULL;
 
-    for (l = list_value->u.list; l; l = l->next) {
-        DDMDataValue element;
-        
-        ddm_data_value_get_element(list_value, l, &element);
-        if (compare_properties_1_1(&element, scalar_value))
-            return TRUE;
+    if (scalar_value->type == DDM_DATA_BOOLEAN)
+        return !empty == !!scalar_value->type;
+    else if (empty)
+        return FALSE;
+    else {
+        for (l = list_value->u.list; l; l = l->next) {
+            DDMDataValue element;
+            
+            ddm_data_value_get_element(list_value, l, &element);
+            if (compare_properties_1_1(&element, scalar_value))
+                return TRUE;
+        }
     }
 
     return FALSE;
@@ -235,20 +272,37 @@ compare_properties(DDMDataProperty *left,
                    DDMDataProperty *right)
 {
     DDMDataCardinality left_cardinality;
-    DDMDataCardinality right_cardinality = ddm_data_property_get_cardinality(right);
+    DDMDataCardinality right_cardinality;
     DDMDataValue left_value;
     DDMDataValue right_value;
 
-    /* Missing properties never compare equal to anything. So, NULL != NULL */
+    if (left == NULL) {
+        left_cardinality = DDM_DATA_CARDINALITY_1;
+        left_value.type = DDM_DATA_BOOLEAN;
+        left_value.u.boolean = FALSE;
+    } else {
+        left_cardinality = ddm_data_property_get_cardinality(left);
+        ddm_data_property_get_value(left, &left_value);
 
-    if (left == NULL || right == NULL)
-        return FALSE;
-    
-    left_cardinality = ddm_data_property_get_cardinality(left);
-    right_cardinality = ddm_data_property_get_cardinality(right);
+        if (left_cardinality != DDM_DATA_CARDINALITY_N && left_value.type == DDM_DATA_NONE) {
+            left_value.type = DDM_DATA_BOOLEAN;
+            left_value.u.boolean = FALSE;
+        }
+    }
 
-    ddm_data_property_get_value(left, &left_value);
-    ddm_data_property_get_value(right, &right_value);
+    if (right == NULL) {
+        right_cardinality = DDM_DATA_CARDINALITY_1;
+        right_value.type = DDM_DATA_BOOLEAN;
+        right_value.u.boolean = FALSE;
+    } else {
+        right_cardinality = ddm_data_property_get_cardinality(right);
+        ddm_data_property_get_value(right, &right_value);
+        
+        if (right_cardinality != DDM_DATA_CARDINALITY_N && right_value.type == DDM_DATA_NONE) {
+            right_value.type = DDM_DATA_BOOLEAN;
+            right_value.u.boolean = FALSE;
+        }
+    }
 
     if (DDM_DATA_BASE(left_value.type) == DDM_DATA_FLOAT ||
         DDM_DATA_BASE(right_value.type) == DDM_DATA_FLOAT) {
@@ -298,6 +352,7 @@ compare_property_literal_1_1(DDMDataValue      *property,
     case DDM_DATA_FLOAT:
         return FALSE;
     case DDM_DATA_NONE:
+        break;
     case DDM_DATA_LIST:
         break;
     }
@@ -311,15 +366,24 @@ compare_property_literal_n_1(DDMDataValue      *list_value,
                              DDMConditionValue *literal)
 {
     GSList *l;
+    gboolean empty;
 
-    g_return_val_if_fail(DDM_DATA_IS_LIST(list_value->type), FALSE);
+    g_return_val_if_fail(list_value->type == DDM_DATA_NONE || DDM_DATA_IS_LIST(list_value->type), FALSE);
 
-    for (l = list_value->u.list; l; l = l->next) {
-        DDMDataValue element;
+    empty = list_value->type == DDM_DATA_NONE || list_value->u.list == NULL;
+    
+    if (literal->type == DDM_CONDITION_VALUE_BOOLEAN) {
+        return !empty == !!literal->u.boolean;
+    } else if (empty) {
+        return FALSE;
+    } else {
+        for (l = list_value->u.list; l; l = l->next) {
+            DDMDataValue element;
         
-        ddm_data_value_get_element(list_value, l, &element);
-        if (compare_property_literal_1_1(&element, literal))
-            return TRUE;
+            ddm_data_value_get_element(list_value, l, &element);
+            if (compare_property_literal_1_1(&element, literal))
+                return TRUE;
+        }
     }
 
     return FALSE;
@@ -332,13 +396,19 @@ compare_property_literal(DDMDataProperty   *property,
     DDMDataCardinality property_cardinality;
     DDMDataValue property_value;
 
-    /* Missing properties never compare equal to anything. So, NULL != NULL */
+    if (property == NULL) {
+        property_cardinality = DDM_DATA_CARDINALITY_1;
+        property_value.type = DDM_DATA_BOOLEAN;
+        property_value.u.boolean = FALSE;
+    } else {
+        property_cardinality = ddm_data_property_get_cardinality(property);
+        ddm_data_property_get_value(property, &property_value);
 
-    if (property == NULL)
-        return FALSE;
-    
-    property_cardinality = ddm_data_property_get_cardinality(property);
-    ddm_data_property_get_value(property, &property_value);
+        if (property_cardinality != DDM_DATA_CARDINALITY_N && property_value.type == DDM_DATA_NONE) {
+            property_value.type = DDM_DATA_BOOLEAN;
+            property_value.u.boolean = FALSE;
+        }
+    }
 
     if (property_cardinality == DDM_DATA_CARDINALITY_N) {
         return compare_property_literal_n_1(&property_value, literal);
