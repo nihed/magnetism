@@ -284,6 +284,8 @@ and_condition_from_tokens(ConditionToken *tokens,
             if (i == -1) {
                 have_error = TRUE;
                 goto out;
+            } else if (i == len) {
+                break;
             }
         }
         
@@ -340,6 +342,8 @@ or_condition_from_tokens(ConditionToken *tokens,
             if (i == -1) {
                 have_error = TRUE;
                 goto out;
+            } else if (i == len) {
+                break;
             }
         }
         

@@ -868,12 +868,12 @@ ddm_data_model_add_rule (DDMDataModel       *model,
     if (source_rules) {
         source_rules = g_slist_prepend(source_rules, rule);
         g_hash_table_insert(model->rules_by_source,
-                            (char *)source_class_id,
+                            (char *)source_class_id, /* old value is kept */
                             source_rules);
     } else {
         source_rules = g_slist_prepend(NULL, rule);
         g_hash_table_insert(model->rules_by_source,
-                            g_strdup(source_class_id), /* old value is kept */
+                            g_strdup(source_class_id),
                             source_rules);
     }
 }
