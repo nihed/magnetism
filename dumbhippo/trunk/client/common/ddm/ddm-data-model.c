@@ -62,24 +62,10 @@ static int signals[LAST_SIGNAL];
 G_DEFINE_TYPE(DDMDataModel, ddm_data_model, G_TYPE_OBJECT);
 
 static void
-free_rule_list(GSList *rule_list)
-{
-    g_slist_foreach(rule_list, (GFunc)ddm_rule_free, NULL);
-    g_slist_free(rule_list);
-}
-
-static void
 ddm_data_model_init(DDMDataModel *model)
 {
-    /* rules_by_target and rules_by_source together own the reference to the rule.
-     * We consider the reference owned by rules_by_target
-     */
-    model->rules_by_target = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                                   (GDestroyNotify)g_free,
-                                                   (GDestroyNotify)free_rule_list);
-    model->rules_by_source = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                                   (GDestroyNotify)g_free,
-                                                   (GDestroyNotify)g_slist_free);
+    model->rules_by_target = g_hash_table_new(g_str_hash, g_str_equal);
+    model->rules_by_source = g_hash_table_new(g_str_hash, g_str_equal);
     
     model->resources = g_hash_table_new_full(g_str_hash, g_str_equal,
                                              NULL,
@@ -140,6 +126,31 @@ ddm_data_model_dispose(GObject *object)
 }
 
 static void
+free_source_rules_foreach(gpointer key,
+                          gpointer value,
+                          gpointer data)
+{
+    char *class_id = key;
+    GSList *rule_list = value;
+
+    g_free(class_id);
+    g_slist_foreach(rule_list, (GFunc)ddm_rule_free, NULL);
+    g_slist_free(rule_list);
+}
+
+static void
+free_target_rules_foreach(gpointer key,
+                          gpointer value,
+                          gpointer data)
+{
+    char *class_id = key;
+    GSList *rule_list = value;
+    
+    g_free(class_id);
+    g_slist_free(rule_list);
+}
+
+static void
 ddm_data_model_finalize(GObject *object)
 {
     DDMDataModel *model = DDM_DATA_MODEL(object);
@@ -157,6 +168,12 @@ ddm_data_model_finalize(GObject *object)
         ddm_data_resource_unref(model->global_resource);
     if (model->self_resource)
         ddm_data_resource_unref(model->self_resource);
+
+    g_hash_table_foreach(model->rules_by_source, free_source_rules_foreach, NULL);
+    g_hash_table_destroy(model->rules_by_source);
+
+    g_hash_table_foreach(model->rules_by_target, free_target_rules_foreach, NULL);
+    g_hash_table_destroy(model->rules_by_target);
 
     g_object_unref(model->local_client);
 
@@ -834,16 +851,31 @@ ddm_data_model_add_rule (DDMDataModel       *model,
         return;
 
     target_rules = g_hash_table_lookup(model->rules_by_target, target_class_id);
-    target_rules = g_slist_prepend(target_rules, rule);
-    g_hash_table_replace(model->rules_by_target,
-                         g_strdup(target_class_id),
-                         target_rules);
+    if (target_rules) {
+        target_rules = g_slist_prepend(target_rules, rule);
+        g_hash_table_insert(model->rules_by_target,
+                            (char *)target_class_id, /* old value is kept */
+                            target_rules);
+    } else {
+        target_rules = g_slist_prepend(NULL, rule);
+        g_hash_table_insert(model->rules_by_target,
+                            g_strdup(target_class_id),
+                            target_rules);
+    }
     
     source_rules = g_hash_table_lookup(model->rules_by_source, source_class_id);
     source_rules = g_slist_prepend(source_rules, rule);
-    g_hash_table_replace(model->rules_by_source,
-                         g_strdup(source_class_id),
-                         source_rules);
+    if (source_rules) {
+        source_rules = g_slist_prepend(source_rules, rule);
+        g_hash_table_insert(model->rules_by_source,
+                            (char *)source_class_id,
+                            source_rules);
+    } else {
+        source_rules = g_slist_prepend(NULL, rule);
+        g_hash_table_insert(model->rules_by_source,
+                            g_strdup(source_class_id), /* old value is kept */
+                            source_rules);
+    }
 }
 
 typedef struct {
