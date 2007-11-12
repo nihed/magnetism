@@ -91,6 +91,22 @@ main(int argc, char **argv)
 
     g_assert(g_slist_length(aimBuddies) == 1);
     g_assert(aimBuddies->data == buddy1);
+
+    /* Now reset the model as if reconnecting to a remote server, and check that
+     * it cleaned up references to remote resources;x
+     */
+
+    ddm_data_model_reset(model);
     
+    ddm_data_resource_get(buddy1,
+                          "user", DDM_DATA_RESOURCE, &user,
+                          NULL);
+    g_assert(user == NULL);
+
+    /* Flush to make sure that we have nothing queued up from the reset that will
+     * cause problems
+     */
+    test_flush();
+
     return 0;
 }

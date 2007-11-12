@@ -14,7 +14,10 @@ DDMDataResource *_ddm_data_resource_new (DDMDataModel    *model,
                                          const char      *class_id,
                                          gboolean         local);
 
-void _ddm_data_resource_reset (DDMDataResource *resource);
+/* Called on reconnection to the backend server. returns TRUE if the resource
+ * should be removed from the resource table.
+ */
+gboolean _ddm_data_resource_reset (DDMDataResource *resource);
 
 GSList *_ddm_data_resource_get_default_properties (DDMDataResource *resource);
 
