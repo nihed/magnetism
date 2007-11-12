@@ -128,9 +128,9 @@ skip_parens(ConditionToken *tokens,
 
     level = 1;
     for (i = start + 1; i < len; i++) {
-        if (tokens[start].type == '(') {
+        if (tokens[i].type == '(') {
             level++;
-        } else if (tokens[start].type == ')') {
+        } else if (tokens[i].type == ')') {
             level--;
             if (level == 0)
                 return i + 1;
