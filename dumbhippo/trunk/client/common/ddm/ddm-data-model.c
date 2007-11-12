@@ -71,10 +71,6 @@ free_rule_list(GSList *rule_list)
 static void
 ddm_data_model_init(DDMDataModel *model)
 {
-    model->resources = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                             NULL,
-                                             (GDestroyNotify)ddm_data_resource_unref);
-
     /* rules_by_target and rules_by_source together own the reference to the rule.
      * We consider the reference owned by rules_by_target
      */
@@ -85,7 +81,13 @@ ddm_data_model_init(DDMDataModel *model)
                                                    (GDestroyNotify)g_free,
                                                    (GDestroyNotify)g_slist_free);
     
-    model->changed_resources = g_hash_table_new(g_direct_hash, NULL);
+    model->resources = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                             NULL,
+                                             (GDestroyNotify)ddm_data_resource_unref);
+    model->changed_resources = g_hash_table_new_full(g_direct_hash, NULL,
+                                                     NULL,
+                                                     (GDestroyNotify)ddm_data_resource_unref);
+
     model->work_items = g_queue_new();
 
     model->max_answered_query_serial = -1;
@@ -521,18 +523,24 @@ model_reset_foreach (gpointer key,
 {
     DDMDataResource *resource = value;
 
-    if (ddm_data_resource_is_local(resource)) {
-        _ddm_data_resource_reset(resource);
-        return FALSE;
-    } else {
-        return TRUE;
-    }
+    return _ddm_data_resource_reset(resource);
+}
+
+static gboolean
+model_reset_changed_resource_foreach (gpointer key,
+                                      gpointer value,
+                                      gpointer data)
+{
+    DDMDataResource *resource = value;
+
+    return !ddm_data_resource_is_local(resource);
 }
 
 void
 ddm_data_model_reset (DDMDataModel *model)
 {
     g_hash_table_foreach_remove(model->resources, model_reset_foreach, NULL);
+    g_hash_table_foreach_remove(model->changed_resources, model_reset_changed_resource_foreach, NULL);
 
     if (model->global_resource != NULL && !ddm_data_resource_is_local(model->global_resource)) {
         ddm_data_resource_unref(model->global_resource);
@@ -569,7 +577,7 @@ _ddm_data_model_mark_changed(DDMDataModel    *model,
                              DDMDataResource *resource)
 {
     if (g_hash_table_lookup(model->changed_resources, resource) == NULL) {
-        g_hash_table_insert(model->changed_resources, resource, resource);
+        g_hash_table_insert(model->changed_resources, resource, ddm_data_resource_ref(resource));
     }
 
     ddm_data_model_schedule_flush(model);

@@ -79,6 +79,9 @@ struct _DDMDataResource
 
 };
 
+static void property_remove_rule_source(DDMDataProperty *property,
+                                        DDMDataResource *source);
+
 GQuark
 ddm_data_error_quark (void)
 {
@@ -275,6 +278,21 @@ reset_resource_value_foreach(gpointer     data,
 }
 
 static gboolean
+reset_resource_rule_source_foreach(gpointer     data,
+                                   gpointer     user_data)
+{
+    DDMDataResource *source = data;
+    DDMDataProperty *property = user_data;
+
+    if (!source->local) {
+        source->referencing_rule_properties = g_slist_remove(source->referencing_rule_properties, property);
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
+static gboolean
 reset_property_foreach(gpointer    data,
                        gpointer    user_data)
 {
@@ -282,6 +300,8 @@ reset_property_foreach(gpointer    data,
 
     if (DDM_DATA_BASE(property->value.type) != DDM_DATA_RESOURCE)
         return FALSE;
+
+    property->rule_sources = slist_foreach_remove(property->rule_sources, reset_resource_rule_source_foreach, property);
 
     if (DDM_DATA_IS_LIST(property->value.type)) {
         property->value.u.list = slist_foreach_remove(property->value.u.list, reset_resource_value_foreach, NULL);
@@ -297,25 +317,57 @@ reset_property_foreach(gpointer    data,
     }
 }
 
-void
+gboolean
 _ddm_data_resource_reset (DDMDataResource *resource)
 {
-    g_return_if_fail(resource != NULL);
-    g_return_if_fail(resource->local);
+    g_return_val_if_fail(resource != NULL, FALSE);
 
-    resource->properties = slist_foreach_remove(resource->properties, reset_property_foreach, NULL);
+    if (resource->local) {
+        /* For a local resource, we need to go through the properties, see which properties
+         * reference remote resources, and remove those property values.
+         */
+        
+        resource->properties = slist_foreach_remove(resource->properties, reset_property_foreach, NULL);
+        
+        if (resource->requested_fetch != NULL) {
+            ddm_data_fetch_unref(resource->requested_fetch);
+            resource->requested_fetch = NULL;
+        }
+        
+        if (resource->received_fetch != NULL) {
+            ddm_data_fetch_unref(resource->received_fetch);
+            resource->received_fetch = NULL;
+        }
 
-    if (resource->requested_fetch != NULL) {
-        ddm_data_fetch_unref(resource->requested_fetch);
-        resource->requested_fetch = NULL;
+        resource->requested_serial = -1;
+
+        return FALSE;
+        
+    } else {
+        /* For a remote resource, we remove the resource entirely from the resource table.
+         * after unlinking it from properties that reference it and that it references.
+         */
+        
+        GSList *l;
+
+        for (l = resource->properties; l; l = l->next) {
+            DDMDataProperty *property = l->data;
+            GSList *ll;
+
+            for (ll = property->rule_sources; ll; ll = ll->next) {
+                DDMDataResource *source = ll->data;
+
+                source->referencing_rule_properties = g_slist_remove(source->referencing_rule_properties, property);
+            }
+        }
+
+        while (resource->referencing_rule_properties) {
+            DDMDataProperty *property = resource->referencing_rule_properties->data;
+            property_remove_rule_source(property, resource);
+        }
+        
+        return TRUE;
     }
-    
-    if (resource->received_fetch != NULL) {
-        ddm_data_fetch_unref(resource->received_fetch);
-        resource->received_fetch = NULL;
-    }
-
-    resource->requested_serial = -1;    
 }
 
 DDMDataResource *
@@ -337,6 +389,11 @@ ddm_data_resource_unref (DDMDataResource *resource)
 
     resource->refcount--;
     if (resource->refcount == 0) {
+        if (resource->referencing_rule_properties != NULL) {
+            g_warning("Freeing resource '%s' that is still referenced", resource->resource_id);
+            g_slist_free(resource->referencing_rule_properties);
+        }
+        
         g_free(resource->resource_id);
         g_free(resource->class_id);
 
@@ -1664,7 +1721,7 @@ property_add_rule_source(DDMDataProperty *property,
                     source->resource_id, property->resource->resource_id,
                     property->qname->uri, property->qname->name);
             
-            source->referencing_rule_properties = g_slist_prepend(source->referencing_rule_properties, property->resource);
+            source->referencing_rule_properties = g_slist_prepend(source->referencing_rule_properties, property);
             property_update_value_from_rule_sources(property);
             
             return;
@@ -1691,7 +1748,7 @@ property_remove_rule_source(DDMDataProperty *property,
                 property->rule_sources = l->next;
             g_slist_free1(l);
 
-            source->referencing_rule_properties = g_slist_remove(source->referencing_rule_properties, property->resource);
+            source->referencing_rule_properties = g_slist_remove(source->referencing_rule_properties, property);
             property_update_value_from_rule_sources(property);
             
             g_debug("Removing rule source %s from %s:%s#%s",
