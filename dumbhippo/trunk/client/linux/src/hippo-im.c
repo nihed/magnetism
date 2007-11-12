@@ -65,12 +65,30 @@ hippo_im_get(HippoDataCache *cache)
 void
 hippo_im_init(void)
 {
-}
+    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    DDMDataModel *model = hippo_data_cache_get_model(cache);
 
-static DDMDataResource *
-get_system_resource(DDMDataModel *model)
-{
-    return ddm_data_model_ensure_local_resource(model, DDM_GLOBAL_RESOURCE, DDM_GLOBAL_RESOURCE_CLASS);
+    ddm_data_model_add_rule(model,
+                            "online-desktop:/p/o/buddy",
+                            "online-desktop:/p/o/buddy#user",
+                            "http://mugshot.org/p/o/user",
+                            DDM_DATA_CARDINALITY_01, FALSE, NULL,
+                            "(source.aim = target.name and target.protocol = 'aim') or "
+                            "(source.xmpp = target.name and target.protocol = 'xmpp')");
+    
+    ddm_data_model_add_rule(model,
+                            "online-desktop:/p/o/global",
+                            "online-desktop:/p/o/global#aimBuddies",
+                            "online-desktop:/p/o/buddy",
+                            DDM_DATA_CARDINALITY_N, FALSE, NULL,
+                            "source.protocol = 'aim' and not source.deleted");
+    
+    ddm_data_model_add_rule(model,
+                            "online-desktop:/p/o/global",
+                            "online-desktop:/p/o/global#xmppBuddies",
+                            "online-desktop:/p/o/buddy",
+                            DDM_DATA_CARDINALITY_N, FALSE, NULL,
+                            "source.protocol = 'xmpp' and not source.deleted");
 }
 
 static gboolean
@@ -171,6 +189,27 @@ hippo_im_has_icon_hash (const char           *buddy_id,
     }
 }
 
+static char *
+canonicalize_aim_name(const char *name)
+{
+    /* This roughly matches the canonicalization we do on the server
+     * ... actually the server lower-cases non-ASCII characters as well,
+     * but there are no examples of such AIM names in a sample of 1000+
+     * AIM names currently registered.
+     */
+    
+    GString *result = g_string_new(NULL);
+    const char *p = name;
+    for (p = name; *p; p++) {
+        if (g_ascii_isupper(*p))
+            g_string_append_c(result, g_ascii_tolower(*p));
+        else if (*p != ' ')
+            g_string_append_c(result, *p);
+    }
+
+    return g_string_free(result, FALSE);
+}
+
 void
 hippo_im_update_buddy(const char           *buddy_id,
                       const char           *protocol,
@@ -189,6 +228,7 @@ hippo_im_update_buddy(const char           *buddy_id,
     DDMDataValue value;
     gboolean buddy_changed = FALSE;
     HippoImBuddy *buddy;
+    char *canonical_name;
 
     g_return_if_fail(buddy_id != NULL);
     g_return_if_fail(protocol != NULL);
@@ -204,6 +244,19 @@ hippo_im_update_buddy(const char           *buddy_id,
     }
 
     buddy_resource = ddm_data_model_ensure_local_resource(model, buddy_id, BUDDY_CLASS);
+
+    if (new_buddy) {
+        value.type = DDM_DATA_BOOLEAN;
+        value.u.boolean = FALSE;
+    
+        ddm_data_resource_update_property(buddy_resource,
+                                          ddm_qname_get(BUDDY_CLASS, "deleted"),
+                                          DDM_DATA_UPDATE_REPLACE,
+                                          DDM_DATA_CARDINALITY_1,
+                                          FALSE, NULL,
+                                          &value);
+
+    }
 
     if (new_buddy || !compare_strings(protocol, buddy->protocol)) {
         g_free(buddy->protocol);
@@ -222,13 +275,20 @@ hippo_im_update_buddy(const char           *buddy_id,
         buddy_changed = !new_buddy;
     }
 
-    if (new_buddy || !compare_strings(name, buddy->name)) {
+    if (protocol != NULL && strcmp(protocol, "aim") == 0)
+        canonical_name = canonicalize_aim_name(name);
+    else
+        canonical_name = g_strdup(name);
+
+    /* FIXME: We should really canonicalize XMPP names as well */
+
+    if (new_buddy || !compare_strings(name, canonical_name)) {
         g_free(buddy->name);
-        buddy->name = g_strdup(name);
+        buddy->name = canonical_name;
 
         value.type = DDM_DATA_STRING;
         value.u.string = buddy->name;
-        
+
         ddm_data_resource_update_property(buddy_resource,
                                           ddm_qname_get(BUDDY_CLASS, "name"),
                                           DDM_DATA_UPDATE_REPLACE,
@@ -237,6 +297,8 @@ hippo_im_update_buddy(const char           *buddy_id,
                                           &value);
         
         buddy_changed = !new_buddy;
+    } else {
+        g_free(canonical_name);
     }
 
     if (new_buddy || !compare_strings(alias, buddy->alias)) {
@@ -317,22 +379,6 @@ hippo_im_update_buddy(const char           *buddy_id,
         
         buddy_changed = !new_buddy;
     }
-
-    if (online_changed || (new_buddy && buddy->is_online)) {
-        DDMDataResource *system_resource = get_system_resource(model);
-        DDMDataValue value;
-
-        value.type = DDM_DATA_RESOURCE;
-        value.u.resource = buddy_resource;
-        
-        ddm_data_resource_update_property(system_resource,
-                                          ddm_qname_get(DDM_GLOBAL_RESOURCE_CLASS, "onlineBuddies"),
-                                          buddy->is_online ? DDM_DATA_UPDATE_ADD : DDM_DATA_UPDATE_DELETE,
-                                          DDM_DATA_CARDINALITY_N,
-                                          FALSE, NULL,
-                                          &value);
-        
-    }
 }
 
 void 
@@ -341,27 +387,25 @@ hippo_im_remove_buddy(const char         *buddy_id)
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
     HippoIm *im = hippo_im_get(cache);
     DDMDataModel *model = hippo_data_cache_get_model(cache);
-    DDMDataResource *system_resource = get_system_resource(model);
+    DDMDataResource *buddy_resource;
+    DDMDataValue value;
 
     HippoImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
 
     if (buddy == NULL)
         return;
 
-    if (buddy->is_online) {
-        DDMDataResource *buddy_resource = ddm_data_model_lookup_resource(model, buddy_id);
-        DDMDataValue value;
+    buddy_resource = ddm_data_model_ensure_local_resource(model, buddy_id, BUDDY_CLASS);
 
-        value.type = DDM_DATA_RESOURCE;
-        value.u.resource = buddy_resource;
-        
-        ddm_data_resource_update_property(system_resource,
-                                          ddm_qname_get(DDM_GLOBAL_RESOURCE_CLASS, "onlineBuddies"),
-                                          DDM_DATA_UPDATE_DELETE,
-                                          DDM_DATA_CARDINALITY_N,
-                                          FALSE, NULL,
-                                          &value);
-    }
+    value.type = DDM_DATA_BOOLEAN;
+    value.u.boolean = TRUE;
+    
+    ddm_data_resource_update_property(buddy_resource,
+                                      ddm_qname_get(BUDDY_CLASS, "deleted"),
+                                      DDM_DATA_UPDATE_REPLACE,
+                                      DDM_DATA_CARDINALITY_1,
+                                      FALSE, NULL,
+                                      &value);
 
     g_hash_table_remove(im->buddies, buddy_id);
 }
