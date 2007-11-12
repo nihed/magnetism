@@ -322,7 +322,6 @@ add_resource_to_message(HippoDBusModelClient *client,
 
     if (is_notification) {
         new_fetch = ddm_data_fetch_ref(fetch);
-        total_fetch = ddm_data_fetch_ref(fetch);
     } else {
         if (connection->fetch)
             new_fetch = ddm_data_fetch_subtract(fetch, connection->fetch);
@@ -331,15 +330,15 @@ add_resource_to_message(HippoDBusModelClient *client,
         
         if (new_fetch == NULL && indirect)
             return;
-        
-        if (connection->fetch)
-            total_fetch = ddm_data_fetch_merge(fetch, connection->fetch);
-        else
-            total_fetch = ddm_data_fetch_ref(fetch);
-        
-        data_client_connection_set_fetch(connection, total_fetch);
     }
 
+    if (connection->fetch)
+        total_fetch = ddm_data_fetch_merge(fetch, connection->fetch);
+    else
+        total_fetch = ddm_data_fetch_ref(fetch);
+    
+    data_client_connection_set_fetch(connection, total_fetch);
+    
     if (new_fetch) {
         ddm_data_fetch_iter_init(&fetch_iter, resource, new_fetch);
         while (ddm_data_fetch_iter_has_next(&fetch_iter)) {
