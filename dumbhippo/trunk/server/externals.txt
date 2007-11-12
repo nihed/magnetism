@@ -53,3 +53,7 @@ File: mysql-connector-java-3.1.12-bin.jar
 Source: mysql.com
 License: GPL
 License: Apache 2.0
+
+File: facebook.jar
+Source: http://developers.facebook.com/resources.php
+License: BSD 
