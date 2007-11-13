@@ -186,11 +186,11 @@ tcp_listener_init(void)
     
     g_assert(server == NULL);
 
-    /* missing port and all_interfaces in this address requires a
+    /* missing port and bind=* in this address requires a
      * recent D-Bus, as does the anonymous login mechanism
      */
     dbus_error_init(&derror);
-    server = dbus_server_listen("tcp:all_interfaces=true", &derror);
+    server = dbus_server_listen("tcp:bind=*", &derror);
     if (server == NULL) {
         g_printerr("Error listening on TCP: %s\n", derror.message);
         return FALSE;
