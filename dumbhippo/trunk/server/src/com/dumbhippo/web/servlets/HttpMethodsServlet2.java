@@ -254,7 +254,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 				}
 
 				public Class<?> getType() {
-					return UserBlockData.class;
+					return EmailResource.class;
 				}
 				
 			});
