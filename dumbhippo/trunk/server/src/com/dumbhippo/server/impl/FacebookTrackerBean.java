@@ -98,6 +98,37 @@ public class FacebookTrackerBean implements FacebookTracker {
 		    notifier.onFacebookEvent(facebookAccount.getExternalAccount().getAccount().getOwner(), loginStatusEvent);
 	}
 
+	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String sessionKey, String facebookUserId, boolean applicationEnabled) throws FacebookSystemException {
+		ExternalAccount externalAccount = externalAccounts.getOrCreateExternalAccount(viewpoint, ExternalAccountType.FACEBOOK);
+		
+		FacebookAccount facebookAccount;
+		if (externalAccount.getExtra() == null) {
+		    facebookAccount = new FacebookAccount(externalAccount);
+		    em.persist(facebookAccount);
+		    externalAccount.setExtra(Long.toString(facebookAccount.getId()));
+		    externalAccounts.setSentiment(externalAccount, Sentiment.LOVE);
+		} else {
+			facebookAccount = em.find(FacebookAccount.class, Long.parseLong(externalAccount.getExtra()));
+			if (facebookAccount == null)
+				throw new RuntimeException("Invalid FacebookAccount id " + externalAccount.getExtra() + " is stored in externalAccount " + externalAccount);
+		}
+		
+		if (facebookAccount.getFacebookUserId() != null 
+			&& !facebookAccount.getFacebookUserId().equals(facebookUserId)) {
+				throw new FacebookSystemException("We do not support changing your Facebook account yet.");
+	    }
+			
+	    facebookAccount.setSessionKey(sessionKey);
+		facebookAccount.setFacebookUserId(facebookUserId);
+	    if (sessionKey != null)
+		    facebookAccount.setSessionKeyValid(true);	
+	    facebookAccount.setApplicationEnabled(applicationEnabled);
+			
+		FacebookEvent loginStatusEvent = getLoginStatusEvent(facebookAccount, true);
+		if (loginStatusEvent != null)  
+		    notifier.onFacebookEvent(facebookAccount.getExternalAccount().getAccount().getOwner(), loginStatusEvent);
+	}
+	
 	// FIXME this is calling web services with a transaction open, which holds 
 	// a db connection open so other threads can't use it, and could also 
 	// time out the transaction
