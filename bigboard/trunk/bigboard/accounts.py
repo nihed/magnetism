@@ -105,10 +105,15 @@ class Accounts(gobject.GObject):
         ## this is a hash from AccountKind to (username, password) from the weblogindriver
         self.__weblogin_info = {}
 
-        self.__weblogindriver_proxy = dbus.SessionBus().get_object('org.gnome.WebLoginDriver', '/weblogindriver')
-        self.__weblogindriver_proxy.connect_to_signal("SignonChanged",
-                                                       self.__on_signon_changed)
-        self.__recheck_signons()
+        try:
+            self.__weblogindriver_proxy = dbus.SessionBus().get_object('org.gnome.WebLoginDriver', '/weblogindriver')
+            self.__weblogindriver_proxy.connect_to_signal("SignonChanged",
+                                                           self.__on_signon_changed)
+        except dbus.DBusException, e:
+            _logger.debug("weblogindriver not available")
+            self.__weblogindriver_proxy = None
+        if self.__weblogindriver_proxy:
+            self.__recheck_signons()
 
         self.__gconf = gconf.client_get_default()
         self.__gconf.add_dir('/apps/bigboard/accounts', gconf.CLIENT_PRELOAD_RECURSIVE)
