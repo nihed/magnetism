@@ -5,7 +5,6 @@
 #include <string.h>
 #include "hippo-dbus-helper.h"
 #include "hippo-dbus-pidgin.h"
-#include "hippo-dbus-im.h"
 #include "hippo-dbus-im-client.h"
 
 #define GAIM_BUS_NAME "net.sf.gaim.GaimService"
