@@ -4,7 +4,7 @@ import hippo
 from ddm import DataModel
 
 import bigboard
-from bigboard.people_tracker import PeopleTracker, sort_users
+from bigboard.people_tracker import PeopleTracker, sort_people
 from bigboard.stock import AbstractMugshotStock
 import bigboard.globals
 import bigboard.slideout
@@ -46,16 +46,16 @@ class PeopleStock(AbstractMugshotStock):
         self.__tracker = PeopleTracker()
         self.__tracker.contacts.connect("added", self.__on_contact_added)
         self.__tracker.contacts.connect("removed", self.__on_contact_removed)
-        self.__tracker.local_users.connect("added", self.__on_local_user_added)
-        self.__tracker.local_users.connect("removed", self.__on_local_user_removed)
+        self.__tracker.local_people.connect("added", self.__on_local_person_added)
+        self.__tracker.local_people.connect("removed", self.__on_local_person_removed)
 
         self.__model = DataModel(bigboard.globals.server_name)
 
-        for user in self.__tracker.contacts:
-            self.__on_contact_added(self.__tracker.contacts, user)
+        for person in self.__tracker.contacts:
+            self.__on_contact_added(self.__tracker.contacts, person)
             
-        for user in self.__tracker.local_users:
-            self.__on_local_user_added(self.__tracker.local_users, user)
+        for person in self.__tracker.local_people:
+            self.__on_local_person_added(self.__tracker.local_people, person)
 
         ## add a new search provider (FIXME never gets disabled)
         search.enable_search_provider('people',
@@ -83,52 +83,53 @@ class PeopleStock(AbstractMugshotStock):
         show_separator = len(self.__local_items) != 0 and len(self.__contact_items) != 0
         self.__box.set_child_visible(self.__separator, show_separator)
 
-    def __add_user(self, user, box, map):
-        self._logger.debug("user added to people stock %s" % (user.name))
-        if map.has_key(user.resource_id):
+    def __add_person(self, person, box, map):
+        self._logger.debug("person added to people stock %s" % (person.display_name))
+        if map.has_key(person):
             return
         
-        item = PersonItem(user)
-        box.insert_sorted(item, hippo.PACK_IF_FITS, lambda a,b: sort_users(a.resource, b.resource))
+        item = PersonItem(person)
+        box.insert_sorted(item, hippo.PACK_IF_FITS, lambda a,b: sort_people(a.person, b.person))
 
-        def resort(resource):
+        def resort(*args):
             box.remove(item)
-            box.insert_sorted(item, hippo.PACK_IF_FITS, lambda a,b: sort_users(a.resource, b.resource))
+            box.insert_sorted(item, hippo.PACK_IF_FITS, lambda a,b: sort_people(a.person, b.person))
+
+        if person.is_user:
+            person.resource.connect(resort, 'contactStatus')
+        person.connect('display-name-changed', resort)
         
-        user.connect(resort, 'contactStatus')
-        user.connect(resort, 'name')
-        
-        map[user.resource_id] = item
+        map[person] = item
         self.__set_item_size(item, self.get_size())
         item.connect('activated', self.__handle_item_pressed)
 
         self.__update_separators()
 
-    def __remove_user(self, user, box, map):
+    def __remove_person(self, person, box, map):
         try:
-            item = map[user.resource_id]
+            item = map[person]
         except KeyError:
             return
         
         item.destroy()
-        del map[user.resource_id]
+        del map[person]
         
         self.__update_separators()
 
     def __on_contact_added(self, list, contact):
-        self.__add_user(contact, self.__contact_box, self.__contact_items)
+        self.__add_person(contact, self.__contact_box, self.__contact_items)
         
     def __on_contact_removed(self, list, contact):
-        self.__remove_user(contact, self.__contact_box, self.__contact_items)
+        self.__remove_person(contact, self.__contact_box, self.__contact_items)
         
-    def __on_local_user_added(self, list, user):
-        if user == self.__model.self_resource:
+    def __on_local_person_added(self, list, person):
+        if person == self.__model.self_resource:
             return
         
-        self.__add_user(user, self.__local_box, self.__local_items)
+        self.__add_person(person, self.__local_box, self.__local_items)
         
-    def __on_local_user_removed(self, list, user):
-        self.__remove_user(user, self.__local_box, self.__local_items)
+    def __on_local_person_removed(self, list, person):
+        self.__remove_person(person, self.__local_box, self.__local_items)
         
     def __close_slideout(self, *args):
         if self.__slideout:
@@ -147,7 +148,7 @@ class PeopleStock(AbstractMugshotStock):
         coords = item.get_screen_coords()
         self.__slideout.slideout_from(coords[0] + item.get_allocation()[0] + 4, coords[1])
 
-        p = ProfileItem(item.get_user(),
+        p = ProfileItem(item.get_person(),
                         border=1,
                         border_color = 0x0000000ff)
 
@@ -203,24 +204,21 @@ class PeopleSearchProvider(search.SearchProvider):
             #_logger.debug("contact: " + str(p))
 
             email = None
-            try:
-                email = p.email
-            except AttributeError:
-                email = None
+            if person.is_user:
+                try:
+                    email = p.resource.email
+                except AttributeError:
+                    pass
 
-            aim = None
-            try:
-                aim = p.aim
-            except AttributeError:
-                aim = None
+            aim = p.aim
             
-            if query in p.name or (email and (query in email)) or (aim and (query in aim)):
+            if query in p.display_name or (email and (query in email)) or (p.aim and (query in p.aim)):
                 results.append(PeopleSearchResult(self, p))
                 
-        for p in self.__tracker.aim_users:
+        for p in self.__tracker.aim_people:
             #_logger.debug("aim: " + str(p))
             pass ## FIXME
-        for p in self.__tracker.local_users:
+        for p in self.__tracker.local_people:
             #_logger.debug("local: " + str(p))
             pass ## FIXME            
 

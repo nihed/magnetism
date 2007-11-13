@@ -18,6 +18,10 @@ STATUS_MUSIC = 0
 def _open_aim(aim):
     os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'aim:GoIM?screenname=' + cgi.escape(aim))
 
+def _open_xmpp(xmpp):
+    # FIXME
+    pass
+
 def _open_webdav(url):
     # We pass around WebDAV URL's using the standard http:// scheme, but nautilus wants dav://
     # instead.
@@ -27,10 +31,10 @@ def _open_webdav(url):
     
     os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', url)
 
-class PersonItem(PhotoContentItem, DataBoundItem):
-    def __init__(self, user, **kwargs):
+class PersonItem(PhotoContentItem):
+    def __init__(self, person, **kwargs):
         PhotoContentItem.__init__(self, **kwargs)
-        DataBoundItem.__init__(self, user)
+        self.person = person
         
         model = DataModel(bigboard.globals.server_name)
 
@@ -66,18 +70,22 @@ class PersonItem(PhotoContentItem, DataBoundItem):
         self.__current_track = None
         self.__current_track_timeout = None
 
-        query = model.query_resource(self.resource, "currentTrack +;currentTrackPlayTime")
-        query.add_handler(self.__update_current_track)
-        query.execute()
+        if self.person.is_user:
+            query = model.query_resource(self.person.resource, "currentTrack +;currentTrackPlayTime")
+            query.add_handler(self.__update_current_track)
+            query.execute()
 
-        self.connect_resource(self.__update, 'name')
-        self.connect_resource(self.__update, 'photoUrl')
-        self.connect_resource(self.__update_aim_buddy, 'aimBuddy')
-        self.connect_resource(self.__update_current_track, 'currentTrack')
-        self.connect_resource(self.__update_current_track, 'currentTrackPlayTime')
-        self.__update(self.resource)
-        self.__update_aim_buddy(self.resource)
-        self.__update_current_track(self.resource)
+            self.person.resource.connect(self.__update_current_track, 'currentTrack')
+            self.person.resource.connect(self.__update_current_track, 'currentTrackPlayTime')
+            self.__update_current_track(self.person.resource)
+            
+        self.person.connect('display-name-changed', self.__update)
+        self.person.connect('icon-url-changed', self.__update)
+        
+        self.person.connect('aim-buddy-changed', self.__update_aim_buddy)
+        
+        self.__update(self.person)
+        self.__update_aim_buddy(self.person)
 
     def __update_color(self):
         if self.__pressed:
@@ -103,8 +111,8 @@ class PersonItem(PhotoContentItem, DataBoundItem):
 
         return False
 
-    def get_user(self):
-        return self.resource
+    def get_person(self):
+        return self.person
 
     def set_size(self, size):
         if size == bigboard.stock.SIZE_BULL:
@@ -116,32 +124,29 @@ class PersonItem(PhotoContentItem, DataBoundItem):
             self.__photo.set_property('xalign', hippo.ALIGNMENT_CENTER)
             self.__photo.set_property('yalign', hippo.ALIGNMENT_CENTER)
 
-    def __update(self, user):
-        self.__name.set_property("text", self.resource.name)
-        self.__photo.set_url(self.resource.photoUrl)
+    def __update(self, person):
+        self.__name.set_property("text", self.person.display_name)
+        self.__photo.set_url(self.person.icon_url)
 
-    def __update_aim_buddy(self, user):
-        if self.__aim_icon:
-            self.__aim_icon.destroy()
-            self.__aim_icon = None
-
-        try:
-            buddy = self.resource.aimBuddy
-        except AttributeError:
-            return
-
-        self.__aim_icon = AimIcon(buddy)
-        self.__presence_box.append(self.__aim_icon)
+    def __update_aim_buddy(self, person):
+        if person.aim_buddy:
+            if not self.__aim_icon:
+                self.__aim_icon = AimIcon(person.aim_buddy)
+                self.__presence_box.append(self.__aim_icon)
+        else:
+            if self.__aim_icon:
+                self.__aim_icon.destroy()
+                self.__aim_icon = None
 
     def __timeout_track(self):
         self.__current_track_timeout = None
-        self.__update_current_track(self.resource)
+        self.__update_current_track(self.person.resource)
         return False
 
-    def __update_current_track(self, user):
+    def __update_current_track(self, person):
         try:
-            current_track = self.resource.currentTrack
-            current_track_play_time = self.resource.currentTrackPlayTime / 1000.
+            current_track = self.person.resource.currentTrack
+            current_track_play_time = self.person.resource.currentTrackPlayTime / 1000.
         except AttributeError:
             current_track = None
             current_track_play_time = -1
@@ -221,7 +226,7 @@ class ExternalAccountIcon(CanvasHBox):
         self.__acct = acct
         self.__acct.connect(self.__sync)
         self.__sync()
-        
+         
     def __sync(self):
         self.__img.set_url(self.__acct.iconUrl)
         
@@ -386,15 +391,15 @@ class LocalFilesLink(hippo.CanvasBox, DataBoundItem):
     def __open_webdav(self, object):
         _open_webdav(self.__get_url())
 
-class ProfileItem(hippo.CanvasBox, DataBoundItem):
+class ProfileItem(hippo.CanvasBox):
     __gsignals__ = {
         "close": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
        }
         
-    def __init__(self, user, **kwargs):
+    def __init__(self, person, **kwargs):
         kwargs['orientation'] = hippo.ORIENTATION_VERTICAL
         hippo.CanvasBox.__init__(self, **kwargs)
-        DataBoundItem.__init__(self, user)
+        self.person = person
 
         self.__header = hippo.CanvasGradient(orientation=hippo.ORIENTATION_HORIZONTAL,
                                              start_color=0xf2f2f2f2,
@@ -403,9 +408,10 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         self.__name = hippo.CanvasText(font="22px", padding=6)
         self.__header.append(self.__name)
 
-        mugshot_link = ActionLink(text="Mugshot", padding=6)
-        self.__header.append(mugshot_link, flags=hippo.PACK_END)
-        mugshot_link.connect("activated", self.__on_activate_web)
+        if person.is_user:
+            mugshot_link = ActionLink(text="Mugshot", padding=6)
+            self.__header.append(mugshot_link, flags=hippo.PACK_END)
+            mugshot_link.connect("activated", self.__on_activate_web)
 
         self.__top_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
         self.append(self.__top_box)
@@ -413,8 +419,10 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         self.__photo = CanvasMugshotURLImage(scale_width=60,
                                             scale_height=60,
                                             border=5)
-        self.__photo.set_clickable(True)
-        self.__photo.connect("activated", self.__on_activate_web)
+
+        if person.is_user:
+            self.__photo.set_clickable(True)
+            self.__photo.connect("activated", self.__on_activate_web)
         self.__top_box.append(self.__photo)
 
         self.__address_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
@@ -440,19 +448,26 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         
         self.__local_files_link = None
 
-        self.connect_resource(self.__update)
-        self.connect_resource(self.__update_contact_status, "contactStatus")
-        self.connect_resource(self.__update_loved_accounts, "lovedAccounts")
-        self.connect_resource(self.__update_local_buddy, "localBuddy")
+        self.person.connect('display-name-changed', self.__update)
+        self.person.connect('icon-url-changed', self.__update)
+        self.person.connect('aim-changed', self.__update)
+        self.person.connect('local-buddy-changed', self.__update_local_buddy)
+        self.person.connect('xmpp-changed', self.__update)
+        if person.is_user:
+            self.person.resource.connect(lambda *args: self.__update(self.person), 'email')
+            self.person.resource.connect(self.__update_contact_status, "contactStatus")
+            self.person.resource.connect(self.__update_loved_accounts, "lovedAccounts")
         
-        query = DataModel(bigboard.globals.server_name).query_resource(self.resource, "lovedAccounts +")
+        query = DataModel(bigboard.globals.server_name).query_resource(self.person.resource, "lovedAccounts +")
         query.add_handler(self.__update_loved_accounts)
         query.execute()
+
+        self.__update(self.person)
+        self.__update_local_buddy(self.person)
         
-        self.__update(self.resource)
-        self.__update_contact_status(self.resource)
-        self.__update_loved_accounts(self.resource)
-        self.__update_local_buddy(self.resource)
+        if self.person.is_user:
+            self.__update_contact_status(self.person.resource)
+            self.__update_loved_accounts(self.person.resource)
 
     def __add_status_link(self, text, current_status, new_status):
         if current_status == new_status:
@@ -461,7 +476,7 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
             def set_new_status(object):
                 model = DataModel(bigboard.globals.server_name)
                 query = model.update(("http://mugshot.org/p/contacts", "setContactStatus"),
-                                     user=self.resource,
+                                     person=self.person.resource,
                                      status=new_status)
                 query.execute()
         
@@ -470,10 +485,10 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         
         self.__contact_status_box.append(link)
         
-    def __update_contact_status(self, user):
+    def __update_contact_status(self, person):
         self.__contact_status_box.remove_all()
         try:
-            status = self.resource.contactStatus
+            status = self.person.resource.contactStatus
         except AttributeError:
             status = 0
 
@@ -486,9 +501,9 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         self.__add_status_link("Auto", status, 3)
         self.__add_status_link("Never", status, 2)
 
-    def __update_loved_accounts(self, user):
+    def __update_loved_accounts(self, person):
         try:
-            accounts = self.resource.lovedAccounts
+            accounts = self.person.resource.lovedAccounts
         except AttributeError:
             accounts = []
         
@@ -497,59 +512,61 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
             icon = ExternalAccountIcon(a)
             self.__ribbon_bar.append(icon)
 
-    def __update_local_buddy(self, user):
+    def __update_local_buddy(self, person):
         if self.__local_files_link:
             self.__local_files_link.destroy()
             self.__local_files_link = None
 
         try:
-            buddy = self.resource.localBuddy
+            buddy = person.local_buddy
         except AttributeError:
             return
 
-        self.__local_files_link = LocalFilesLink(buddy)
-        self.__link_box.append(self.__local_files_link)
+        if buddy != None:
+            self.__local_files_link = LocalFilesLink(buddy)
+            self.__link_box.append(self.__local_files_link)
 
-    def __update(self, user):
-        self.__name.set_property('text', self.resource.name)
-        self.__photo.set_url(self.resource.photoUrl)
-
-#         if profile.get_online():
-#             self.__online.set_property('text', 'Online')
-#         else:
-#             self.__online.set_property('text', 'Offline')
+    def __update(self, person):
+        self.__name.set_property('text', self.person.display_name)
+        self.__photo.set_url(self.person.icon_url)
 
         self.__address_box.remove_all()
 
-        try:
-            email = self.resource.email
-        except AttributeError:
-            email = None
-         
-        try:
-            aim = self.resource.aim
-        except AttributeError:
-            aim = None
+        email = None
+        if person.is_user:
+            try:
+                email = self.person.resource.email
+            except AttributeError:
+                pass
          
         if email != None:
             email = hippo.CanvasLink(text=email, xalign=hippo.ALIGNMENT_START)
             email.connect('activated', self.__on_activate_email)
             self.__address_box.append(email)
 
-        if aim != None:
-            aim = hippo.CanvasLink(text=aim, xalign=hippo.ALIGNMENT_START)
+        if person.aim != None:
+            aim = hippo.CanvasLink(text=person.aim, xalign=hippo.ALIGNMENT_START)
             aim.connect('activated', self.__on_activate_aim)
             self.__address_box.append(aim)
 
+        if person.xmpp != None:
+            aim = hippo.CanvasLink(text=person.aim, xalign=hippo.ALIGNMENT_START)
+            aim.connect('activated', self.__on_activate_xmpp)
+            self.__address_box.append(xmpp)
+
     def __on_activate_web(self, canvas_item):
         self.emit("close")
-        libbig.show_url(self.resource.homeUrl)
+        libbig.show_url(self.person.resource.homeUrl)
 
     def __on_activate_email(self, canvas_item):
         self.emit("close")
         # email should probably cgi.escape except it breaks if you escape the @
-        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'mailto:' + self.resource.email)
+        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'mailto:' + self.person.resource.email)
 
     def __on_activate_aim(self, canvas_item):
         self.emit("close")
-        _open_aim(self.resource.aim)
+        _open_aim(self.person.aim)
+        
+    def __on_activate_xmpp(self, canvas_item):
+        self.emit("close")
+        _open_xmpp(self.person.xmpp)
