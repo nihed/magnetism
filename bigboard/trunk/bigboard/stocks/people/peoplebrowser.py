@@ -9,7 +9,7 @@ import bigboard.globals
 import bigboard.libbig as libbig
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, ActionLink, PrelightingCanvasBox
 from bigboard.overview_table import OverviewTable
-from bigboard.people_tracker import PeopleTracker, sort_users
+from bigboard.people_tracker import PeopleTracker, sort_people
 
 from peoplewidgets import PersonItem, ProfileItem
 
@@ -17,10 +17,14 @@ _logger = logging.getLogger("bigboard.PeopleBrowser")
 
 LOCAL_PEOPLE = 0
 CONTACTS = 1
+AIM_PEOPLE = 2
+XMPP_PEOPLE = 3
 
 SECTIONS = {
     LOCAL_PEOPLE : "Local People",
-    CONTACTS : "Contacts"
+    CONTACTS : "Contacts",
+    AIM_PEOPLE : "AIM Buddies",
+    XMPP_PEOPLE : "Jabber/Google Talk/XMPP Contacts"
 }
 
 class PeopleList(OverviewTable):
@@ -43,42 +47,43 @@ class PeopleList(OverviewTable):
         self.__selected_item = None
         self.__search = None
 
-    def add_user(self, user, section):
-        if user.resource_id in self.__items[section]:
+    def add_person(self, person, section):
+        if person in self.__items[section]:
             return
         
-        item = PersonItem(user)
+        item = PersonItem(person)
         item.connect("button-press-event", self.__on_item_click)
                 
-        self.add_column_item(section, item, lambda a,b: sort_users(a.resource, b.resource))
+        self.add_column_item(section, item, lambda a,b: sort_people(a.person, b.person))
         self.__section_counts[section] += 1
         if self.__section_counts[section] == 1:
             self.__section_headers[section].set_visible(True)
                     
         def resort(resource):
             self.remove(item)
-            self.add_column_item(section, item, lambda a,b: sort_users(a.resource, b.resource))
-            
-        user.connect(resort, 'contactStatus')
-        user.connect(resort, 'name')
+            self.add_column_item(section, item, lambda a,b: sort_people(a.person, b.person))
+
+        if person.is_user:
+            person.resource.connect(resort, 'contactStatus')
+        person.connect('display-name-changed', resort)
         
         self.__update_visibility(section, item)
 
-        self.__items[section][user.resource_id] = item
+        self.__items[section][person] = item
 
-    def remove_user(self, user, section):
+    def remove_person(self, person, section):
         try:
-            item = self.__items[section][user.resource_id]
+            item = self.__items[section][person]
         except KeyError:
             return
         
         item.destroy()
-        del self.__items[section][user.resource_id]
+        del self.__items[section][person]
 
     def __update_visibility(self, section, item):
         was_visible = item.get_visible()
         
-        visible = self.__search == None or item.resource.name.lower().find(self.__search) >= 0
+        visible = self.__search == None or item.person.display_name.lower().find(self.__search) >= 0
 
         if visible != was_visible:
             if visible:
@@ -113,13 +118,13 @@ class PeopleList(OverviewTable):
             
         self.__selected_item = item
         self.__selected_item.set_force_prelight(True)
-        self.emit("selected", item.resource)
+        self.emit("selected", item.person)
 
     def __on_item_click(self, item, event):
          if event.count == 1:
              self.__select_item(item)
 
-    def select_single_visible_user(self):
+    def select_single_visible_person(self):
         visible_item = None
         
         for section in SECTIONS:
@@ -129,7 +134,7 @@ class PeopleList(OverviewTable):
                 if item.get_visible():
                     if visible_item == None:
                         visible_item = item
-                    elif visible_item.resource != item.resource:
+                    elif visible_item.person != item.person:
                         return # Two visible
                     
         if visible_item != None:
@@ -163,7 +168,7 @@ class PeopleBrowser(hippo.CanvasWindow):
 
         self.__profile_box = CanvasVBox(border=1, border_color=0x999999FF, background_color=0xFFFFFFFF)
         self.__left_box.append(self.__profile_box)
-        self.__set_profile_user(None)
+        self.__set_profile_person(None)
     
         self.__right_scroll = hippo.CanvasScrollbars()
         self.__right_scroll.set_policy(hippo.ORIENTATION_HORIZONTAL,
@@ -174,7 +179,7 @@ class PeopleBrowser(hippo.CanvasWindow):
         self.__people_list = PeopleList()
         self.__right_box.append(self.__people_list, hippo.PACK_EXPAND)
 
-        self.__people_list.connect("selected", self.__on_user_selected)
+        self.__people_list.connect("selected", self.__on_person_selected)
         
         self.__right_scroll.set_root(self.__right_box)        
         
@@ -187,24 +192,34 @@ class PeopleBrowser(hippo.CanvasWindow):
         self.__tracker = PeopleTracker()
         self.__tracker.contacts.connect("added", self.__on_contact_added)
         self.__tracker.contacts.connect("removed", self.__on_contact_removed)
-        self.__tracker.local_users.connect("added", self.__on_local_user_added)
-        self.__tracker.local_users.connect("removed", self.__on_local_user_removed)
+        self.__tracker.local_people.connect("added", self.__on_local_person_added)
+        self.__tracker.local_people.connect("removed", self.__on_local_person_removed)
+        self.__tracker.aim_people.connect("added", self.__on_aim_person_added)
+        self.__tracker.aim_people.connect("removed", self.__on_aim_person_removed)
+        self.__tracker.xmpp_people.connect("added", self.__on_xmpp_person_added)
+        self.__tracker.xmpp_people.connect("removed", self.__on_xmpp_person_removed)
 
         self.__model = DataModel(bigboard.globals.server_name)
 
-        for user in self.__tracker.contacts:
-            self.__on_contact_added(self.__tracker.contacts, user)
+        for person in self.__tracker.contacts:
+            self.__on_contact_added(self.__tracker.contacts, person)
             
-        for user in self.__tracker.local_users:
-            self.__on_local_user_added(self.__tracker.local_users, user)
+        for person in self.__tracker.local_people:
+            self.__on_local_person_added(self.__tracker.local_people, person)
 
-    def __set_profile_user(self, user):
+        for person in self.__tracker.aim_people:
+            self.__on_aim_person_added(self.__tracker.aim_people, person)
+
+        for person in self.__tracker.xmpp_people:
+            self.__on_xmpp_person_added(self.__tracker.xmpp_people, person)
+
+    def __set_profile_person(self, person):
         self.__profile_box.clear()
-        if user == None:
+        if person == None:
             self.__profile_box.set_property("box-height", 300)
         else:
             self.__profile_box.set_property("box_height", -1)
-            self.__profile_box.append(ProfileItem(user))
+            self.__profile_box.append(ProfileItem(person))
 
     def __reset(self):
         self.__search_input.set_property('text', '')
@@ -228,22 +243,41 @@ class PeopleBrowser(hippo.CanvasWindow):
         
     def __on_search_keypress(self, entry, event):
         if event.key == hippo.KEY_RETURN:
-            self.__people_list.select_single_visible_user()
+            self.__people_list.select_single_visible_person()
 
-    def __on_user_selected(self, list, user):
-         self.__set_profile_user(user)
+    def __on_person_selected(self, list, person):
+         self.__set_profile_person(person)
          
     def __on_contact_added(self, list, contact):
-        self.__people_list.add_user(contact, CONTACTS)
+        self.__people_list.add_person(contact, CONTACTS)
         
     def __on_contact_removed(self, list, contact):
-        self.__people_list.remove_user(contact, CONTACTS)
+        self.__people_list.remove_person(contact, CONTACTS)
         
-    def __on_local_user_added(self, list, user):
-        if user == self.__model.self_resource:
+    def __on_local_person_added(self, list, person):
+        if person == self.__model.self_resource:
             return
         
-        self.__people_list.add_user(user, LOCAL_PEOPLE)
+        self.__people_list.add_person(person, LOCAL_PEOPLE)
         
-    def __on_local_user_removed(self, list, user):
-        self.__people_list.remove_user(user, LOCAL_PEOPLE)
+    def __on_local_person_removed(self, list, person):
+        self.__people_list.remove_person(person, LOCAL_PEOPLE)
+
+    def __on_aim_person_added(self, list, person):
+        if person == self.__model.self_resource:
+            return
+        
+        self.__people_list.add_person(person, AIM_PEOPLE)
+        
+    def __on_aim_person_removed(self, list, person):
+        self.__people_list.remove_person(person, AIM_PEOPLE)
+
+    def __on_xmpp_person_added(self, list, person):
+        if person == self.__model.self_resource:
+            return
+        
+        self.__people_list.add_person(person, XMPP_PEOPLE)
+        
+    def __on_xmpp_person_removed(self, list, person):
+        self.__people_list.remove_person(person, XMPP_PEOPLE)
+        
