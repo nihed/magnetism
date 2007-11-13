@@ -5,8 +5,6 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<%-- <dh:bean id="facebookAdd" class="com.dumbhippo.web.pages.FacebookAddPage" scope="page"/> --%>
-
 <c:set var="pageName" value="Mugshot Verification for Facebook" scope="page"/>
     
 <head>
@@ -18,6 +16,9 @@
     <dht3:shinyBox color="grey">
         <div class="dh-page-shinybox-title-large">Thank you for trying out Mugshot application for Facebook!</div>
         <c:choose>
+            <c:when test="${!empty param['error_message']}">
+                <c:out value="${param['error_message']}"/>
+            </c:when> 
             <c:when test="${!signin.valid}">
                 <a href="/who-are-you">Log In</a> or <a href="/signup">Sign Up</a>, then try verifying your Mugshot account again on Facebook.   
             </c:when>

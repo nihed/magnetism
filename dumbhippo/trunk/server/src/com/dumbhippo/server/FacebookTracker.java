@@ -13,6 +13,8 @@ public interface FacebookTracker {
 
 	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String facebookAuthToken) throws FacebookSystemException;	
 	
+	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String sessionKey, String facebookUserId, boolean applicationEnabled) throws FacebookSystemException;
+
 	public void updateMessageCount(long facebookAccountId);
 	
 	public void updateTaggedPhotos(long facebookAccountId);

@@ -268,6 +268,16 @@
       <servlet-name>FacebookVerifyFromHomeServlet</servlet-name>
       <url-pattern>/facebook-verify-from-home</url-pattern>
    </servlet-mapping>
+
+    <servlet>
+      <servlet-name>FacebookAddServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.FacebookAddServlet</servlet-class>
+    </servlet> 
+   
+   <servlet-mapping>
+      <servlet-name>FacebookAddServlet</servlet-name>
+      <url-pattern>/facebook-add</url-pattern>
+   </servlet-mapping>   
    
    <servlet-mapping>
       <servlet-name>AbnormalErrorServlet</servlet-name>
@@ -299,7 +309,7 @@
            they are listed below for completeness -->
       <init-param>
           <param-name>noSignin</param-name>
-          <param-value>apple-dashboard-content,application,applications,applications-learnmore,badges,busy,buttons,comingsoon,error,facebook,facebook-add,files,flash,google-stacker,google-stacker-spec,google-stacker-content,group-files,licenses,mugshot-eula,public-groups,radar-theme,sharelink,sharelink-inactive,signup,summit,tour,unknownlink,upgrade,user-summary,who-are-you,robots.txt,trademark</param-value>
+          <param-value>apple-dashboard-content,application,applications,applications-learnmore,badges,busy,buttons,comingsoon,error,facebook,facebook-welcome,files,flash,google-stacker,google-stacker-spec,google-stacker-content,group-files,licenses,mugshot-eula,public-groups,radar-theme,sharelink,sharelink-inactive,signup,summit,tour,unknownlink,upgrade,user-summary,who-are-you,robots.txt,trademark</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
