@@ -74,7 +74,29 @@ hippo_im_init(void)
                             "http://mugshot.org/p/o/user",
                             DDM_DATA_CARDINALITY_01, FALSE, NULL,
                             "(source.aim = target.name and target.protocol = 'aim') or "
-                            "(source.xmpp = target.name and target.protocol = 'xmpp')");
+                            "(source.xmpp = target.name and target.protocol = 'xmpp') or "
+                            "(source = target.name and target.protocol = 'mugshot-local')");
+    
+    ddm_data_model_add_rule(model,
+                            "http://mugshot.org/p/o/user",
+                            "online-desktop:/p/o/buddy/reverse#aimBuddy",
+                            "online-desktop:/p/o/buddy",
+                            DDM_DATA_CARDINALITY_01, FALSE, NULL,
+                            "target.aim = source.name and source.protocol = 'aim' and not source.deleted");
+    
+    ddm_data_model_add_rule(model,
+                            "http://mugshot.org/p/o/user",
+                            "online-desktop:/p/o/buddy/reverse#xmppBuddy",
+                            "online-desktop:/p/o/buddy",
+                            DDM_DATA_CARDINALITY_01, FALSE, NULL,
+                            "target.xmpp = source.name and source.protocol = 'xmpp' and not source.deleted");
+    
+    ddm_data_model_add_rule(model,
+                            "http://mugshot.org/p/o/user",
+                            "online-desktop:/p/o/buddy/reverse#mugshotLocalBuddy",
+                            "online-desktop:/p/o/buddy",
+                            DDM_DATA_CARDINALITY_01, FALSE, NULL,
+                            "target = source.name and source.protocol = 'mugshot-local' and not source.deleted");
     
     ddm_data_model_add_rule(model,
                             "online-desktop:/p/o/global",
@@ -89,6 +111,13 @@ hippo_im_init(void)
                             "online-desktop:/p/o/buddy",
                             DDM_DATA_CARDINALITY_N, FALSE, NULL,
                             "source.protocol = 'xmpp' and not source.deleted");
+    
+    ddm_data_model_add_rule(model,
+                            "online-desktop:/p/o/global",
+                            "online-desktop:/p/o/global#mugshotLocalBuddies",
+                            "online-desktop:/p/o/buddy",
+                            DDM_DATA_CARDINALITY_N, FALSE, NULL,
+                            "source.protocol = 'mugshot-local' and not source.deleted");
 }
 
 static gboolean
