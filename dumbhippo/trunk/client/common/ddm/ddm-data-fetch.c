@@ -664,7 +664,10 @@ ddm_data_fetch_iter_init(DDMDataFetchIter *iter,
     iter->fetch = fetch;
     iter->resource = resource;
     iter->property_index = -1;
-    iter->default_properties = _ddm_data_resource_get_default_properties(resource);
+    if (fetch->include_default)
+        iter->default_properties = _ddm_data_resource_get_default_properties(resource);
+    else
+        iter->default_properties = NULL;
     iter->next_property = NULL;
 
     ddm_data_fetch_iter_advance(iter);
