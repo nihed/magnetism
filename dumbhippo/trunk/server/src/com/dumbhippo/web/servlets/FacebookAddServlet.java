@@ -1,20 +1,13 @@
 package com.dumbhippo.web.servlets;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Map;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
-
-import com.facebook.api.FacebookParam;
-import com.facebook.api.FacebookSignatureUtil;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
@@ -23,11 +16,12 @@ import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
-import com.dumbhippo.server.applications.ApplicationSystem;
 import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.UserSigninBean;
 import com.dumbhippo.web.WebEJBUtil;
+import com.facebook.api.FacebookParam;
+import com.facebook.api.FacebookSignatureUtil;
 
 public class FacebookAddServlet extends AbstractServlet {
 
@@ -48,10 +42,12 @@ public class FacebookAddServlet extends AbstractServlet {
 		String redirectUrl = "/facebook-welcome";
 		logger.debug("context params are:");
         for (Object o : request.getParameterMap().entrySet()) {
+        	@SuppressWarnings("unchecked")
             Map.Entry<String, String[]> mapEntry = (Map.Entry<String, String[]>)o;
             logger.debug("{} = {}", mapEntry.getKey(), mapEntry.getValue()[0]);
         }
       
+        @SuppressWarnings("unchecked")
         Map<String, CharSequence> facebookParams = FacebookSignatureUtil.extractFacebookParamsFromArray(request.getParameterMap());
         String secret = null;
         try {
