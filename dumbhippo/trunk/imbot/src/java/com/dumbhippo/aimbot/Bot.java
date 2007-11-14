@@ -178,7 +178,7 @@ class Bot implements Runnable {
 			// respond to a user, the AIM software will send us a message seemingly from the
 			// user about the limit, which we then reply to, ad infinitum.  Just drop those
 			// messages here.
-			String[] badPhrases = {"over limit"};
+			String[] badPhrases = {"over your daily limit"};
 			for (String phrase: badPhrases) {
 				if (messageHtml.indexOf(phrase) >= 0) {
 					logger.debug("found bad phrase in message, dropping");
