@@ -22,7 +22,7 @@ import com.dumbhippo.dm.filter.Filter;
 import com.dumbhippo.dm.filter.FilterCompiler;
 
 public class SetResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends DMObject<KI>> extends ResourcePropertyHolder<K,T,KI,TI> {
-	private CompiledSetFilter<K,T,KI,TI> listFilter;
+	private CompiledSetFilter<K,T,KI,TI> setFilter;
 
 	public SetResourcePropertyHolder(DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, DMClassInfo<KI,TI> classInfo, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
 		super(declaringClassHolder, ctMethod, classInfo, annotation, filter, viewerDependent);
@@ -34,7 +34,7 @@ public class SetResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends 
 		
 		Filter classFilter = getResourceClassHolder().getUncompiledItemFilter();
 		if (classFilter != null && propertyFilter == null) {
-			listFilter = getResourceClassHolder().getSetFilter();
+			setFilter = getResourceClassHolder().getSetFilter();
 		} else if (classFilter != null || propertyFilter != null) {
 			Filter toCompile;
 			if (classFilter != null)
@@ -42,9 +42,9 @@ public class SetResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends 
 			else
 				toCompile = propertyFilter;
 			
-			listFilter = FilterCompiler.compileSetFilter(declaringClassHolder.getModel(), 
-														  declaringClassHolder.getKeyClass(), 
-														  keyType, toCompile);
+			setFilter = FilterCompiler.compileSetFilter(declaringClassHolder.getModel(), 
+														declaringClassHolder.getKeyClass(), 
+														keyType, toCompile);
 		}
 	}
 
@@ -72,8 +72,8 @@ public class SetResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends 
 		@SuppressWarnings("unchecked")
 		Set<KI> itemKeys= (Set<KI>)value;
 		
-		if (filter && listFilter != null)
-			itemKeys = listFilter.filterKeys(viewpoint, key, itemKeys);
+		if (filter && setFilter != null)
+			itemKeys = setFilter.filterKeys(viewpoint, key, itemKeys);
 			
 		if (itemKeys.isEmpty())
 			return Collections.emptySet();
@@ -89,13 +89,13 @@ public class SetResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends 
 	
 	@Override
 	public Object filter(DMViewpoint viewpoint, K key, Object value) {
-		if (listFilter == null)
+		if (setFilter == null)
 			return value;
 		
 		@SuppressWarnings("unchecked")
 		Set<TI> items = (Set<TI>)value;
 
-		return listFilter.filterObjects(viewpoint, key, items);
+		return setFilter.filterObjects(viewpoint, key, items);
 	}
 
 	@Override
