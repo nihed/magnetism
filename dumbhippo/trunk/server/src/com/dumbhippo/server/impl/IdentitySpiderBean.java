@@ -677,7 +677,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 
-	public Set<Guid> computeContacts(Guid userId) {
+	public Set<Guid> computeUserContacts(Guid userId) {
 		User user = em.find(User.class, userId.toString());
 		
 		Query q = em.createQuery("SELECT ac.owner.id " +

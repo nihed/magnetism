@@ -242,12 +242,14 @@ public interface IdentitySpider {
 	/**
 	 * Compute the set of users that this user has listed as friends; this
 	 * function should not be used directly; it is an internal implementation
-	 * detail of the contact cache; use the functions below instead. 
+	 * detail of the contact cache; use the functions below instead.
+	 * Does not return contacts that are "just a resource" (that don't correspond to 
+	 * an account) 
 	 * 
 	 * @param userId GUID of the user
 	 * @return guids of contacts
 	 */
-	public Set<Guid> computeContacts(Guid userId);
+	public Set<Guid> computeUserContacts(Guid userId);
 	
 	/**
 	 * Compute the set of users that have listed this user as a friend; this
