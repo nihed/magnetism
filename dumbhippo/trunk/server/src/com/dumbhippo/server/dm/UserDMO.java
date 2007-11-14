@@ -129,7 +129,7 @@ public abstract class UserDMO extends DMObject<Guid> {
 	public Set<UserDMO> getContacts() {
 		Set<UserDMO> result = new HashSet<UserDMO>();
 		
-		for (Guid guid : identitySpider.computeContacts(user.getGuid()))
+		for (Guid guid : identitySpider.computeUserContacts(user.getGuid()))
 			result.add(session.findUnchecked(UserDMO.class, guid));
 		
 		return result;

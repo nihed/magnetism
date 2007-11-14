@@ -367,7 +367,7 @@ public class LiveState {
 					public LiveContacts create(Guid guid) {
 						LiveContacts liveContacts = new LiveContacts(guid);
 						IdentitySpider identitySpider = EJBUtil.defaultLookup(IdentitySpider.class);
-						liveContacts.setContacts(identitySpider.computeContacts(guid));
+						liveContacts.setContacts(identitySpider.computeUserContacts(guid));
 						
 						return liveContacts;
 					}
