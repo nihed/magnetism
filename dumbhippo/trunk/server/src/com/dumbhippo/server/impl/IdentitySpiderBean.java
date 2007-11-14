@@ -698,6 +698,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return result;
 	}
 	
+	// computes which user GUIDs have a contact which points to a resource
+	// which is proven-owned (AccountClaim) by the passed-in user.
+	// "People who say they have a ContactStatus with respect to userId"
 	public Set<Guid> computeContacters(Guid userId) {
 		Query q = em.createQuery("SELECT cc.account.owner.id " +
                                  "  FROM ContactClaim cc, AccountClaim ac " +
@@ -717,6 +720,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return result;
 	}
 	
+	// like computeContacters(), but also returns the status that someone has 
+	// assigned to userId. i.e. returns people who have assigned userId a ContactStatus,
+	// plus that ContactStatus they have assigned.
 	public List<Pair<Guid,ContactStatus>> computeContactersWithStatus(Guid userId) {
 		Query q = em.createQuery("SELECT cc.account.owner.id, cc.contact.status " +
                                  "  FROM ContactClaim cc, AccountClaim ac " +
