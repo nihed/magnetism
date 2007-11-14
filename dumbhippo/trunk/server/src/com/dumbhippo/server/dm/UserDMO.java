@@ -52,11 +52,15 @@ public abstract class UserDMO extends DMObject<Guid> {
 	
 	private TrackHistory currentTrack;
 	private boolean currentTrackFetched;
-	
-	private Set<UserDMO> blockingContacters;
+
+	// people who have any opinion of this UserDMO except blocked
 	private Set<UserDMO> contacters; /* Includes hot/medium/cold contacters */
+	// people who have pinned this UserDMO in their "top N"
 	private Set<UserDMO> hotContacters;
+	// people who never want this UserDMO in their pinned "top N"
 	private Set<UserDMO> coldContacters;
+	// people who have blocked this UserDMO
+	private Set<UserDMO> blockingContacters;
 	
 	@Inject
 	private EntityManager em;
@@ -203,7 +207,7 @@ public abstract class UserDMO extends DMObject<Guid> {
 		return hotContacters;
 	}
 	
-	private boolean isInContacterSet(String propertyName) {
+	private boolean viewerIsInContacterSet(String propertyName) {
 		if (viewpoint instanceof UserViewpoint) {
 			try {
 				@SuppressWarnings("unchecked")
@@ -220,17 +224,18 @@ public abstract class UserDMO extends DMObject<Guid> {
 		}
 	}
 	
+	/* Gets the ContactStatus the viewer has applied to this user */
 	@DMProperty(cached=false)
 	public int getContactStatus() {
 		ContactStatus status;
 		
-		if (isInContacterSet("blockingContacters"))
+		if (viewerIsInContacterSet("blockingContacters"))
 			status = ContactStatus.BLOCKED;
-		else if (!isInContacterSet("contacters"))
+		else if (!viewerIsInContacterSet("contacters"))
 			status = ContactStatus.NONCONTACT;
-		else if (isInContacterSet("hotContacters"))
+		else if (viewerIsInContacterSet("hotContacters"))
 			status = ContactStatus.HOT;
-		else if (isInContacterSet("coldContacters"))
+		else if (viewerIsInContacterSet("coldContacters"))
 			status = ContactStatus.COLD;
 		else
 			status = ContactStatus.MEDIUM;
