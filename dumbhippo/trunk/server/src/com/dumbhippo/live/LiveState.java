@@ -604,6 +604,7 @@ public class LiveState {
 	public void invalidateContacts(final Guid userId) {
 		// The new way of doing things, will eventually replace all of this
 		DataService.currentSessionRW().changed(UserDMO.class, userId, "contacts");
+		DataService.currentSessionRW().changed(UserDMO.class, userId, "userContacts");
 		
 		// Invalidate locally synchronously on commit
 		runTaskOnTransactionComplete(new Runnable() {

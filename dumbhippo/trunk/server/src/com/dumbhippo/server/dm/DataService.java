@@ -62,6 +62,7 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 		model.addDMClass(ExternalAccountDMO.class);
 		model.addDMClass(TrackDMO.class);
 		model.addDMClass(UserDMO.class);
+		model.addDMClass(ContactDMO.class);
 		
 		model.completeDMClasses();
 		
