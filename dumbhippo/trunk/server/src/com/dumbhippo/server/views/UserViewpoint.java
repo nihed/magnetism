@@ -8,6 +8,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.dm.ContactDMO;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -109,5 +110,17 @@ public class UserViewpoint extends Viewpoint {
 	@Override
 	public boolean canSeePrivate(Guid userId) {
 		return viewerId.equals(userId);
+	}
+	
+	@Override
+	public boolean canSeeContact(Guid contactId) {
+		try {
+			@SuppressWarnings("unchecked")
+			Guid contactOwner = (Guid)session.getRawProperty(ContactDMO.class, contactId, "owner");
+			
+			return contactOwner.equals(getViewerId());
+		} catch (NotFoundException e) {
+			return false;
+		}	
 	}
 }

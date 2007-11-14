@@ -64,6 +64,11 @@ public class AnonymousViewpoint extends Viewpoint {
 	}
 
 	@Override
+	public boolean canSeeContact(Guid contactId) {
+		return false;
+	}	
+	
+	@Override
 	public Site getSite() {
 		return site;
 	}

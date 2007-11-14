@@ -125,12 +125,23 @@ public abstract class UserDMO extends DMObject<Guid> {
 	}
 	
 	@DMProperty
-	@DMFilter("viewer.canSeeFriendsOnly(this)")
-	public Set<UserDMO> getContacts() {
+	@DMFilter("viewer.canSeeFriendsOnly(this)") // friends can see contacts that are users, but not other contacts
+	public Set<UserDMO> getUserContacts() {
 		Set<UserDMO> result = new HashSet<UserDMO>();
 		
 		for (Guid guid : identitySpider.computeUserContacts(user.getGuid()))
 			result.add(session.findUnchecked(UserDMO.class, guid));
+		
+		return result;
+	}
+	
+	@DMProperty
+	@DMFilter("viewer.canSeePrivate(this)") // friends can't see contacts that are not users with accounts
+	public Set<ContactDMO> getContacts() {
+		Set<ContactDMO> result = new HashSet<ContactDMO>();
+		
+		for (Guid guid : identitySpider.computeContacts(user.getGuid()))
+			result.add(session.findUnchecked(ContactDMO.class, guid));
 		
 		return result;
 	}
@@ -242,7 +253,9 @@ public abstract class UserDMO extends DMObject<Guid> {
 		
 		return status.ordinal();
 	}
-	
+
+	// this is a little broken, probably only getEmails() and perhaps a getPrimaryEmail() 
+	// should exist
 	@DMProperty
 	@DMFilter("viewer.canSeeFriendsOnly(this)")
 	public String getEmail() {
@@ -259,6 +272,20 @@ public abstract class UserDMO extends DMObject<Guid> {
 	
 	@DMProperty
 	@DMFilter("viewer.canSeeFriendsOnly(this)")
+	public Set<String> getEmails() {
+		Set<String> results = new HashSet<String>();
+		for (AccountClaim ac : user.getAccountClaims()) {
+			Resource r = ac.getResource();
+			if (r instanceof EmailResource)
+				results.add(((EmailResource)r).getEmail());
+		}
+		
+		return results;
+	}
+	
+	// broken; really only getAims should exist
+	@DMProperty
+	@DMFilter("viewer.canSeeFriendsOnly(this)")
 	public String getAim() {
 		for (AccountClaim ac : user.getAccountClaims()) {
 			Resource r = ac.getResource();
@@ -267,6 +294,19 @@ public abstract class UserDMO extends DMObject<Guid> {
 		}
 		
 		return null;
+	}
+	
+	@DMProperty
+	@DMFilter("viewer.canSeeFriendsOnly(this)")
+	public Set<String> getAims() {
+		Set<String> results = new HashSet<String>();
+		for (AccountClaim ac : user.getAccountClaims()) {
+			Resource r = ac.getResource();
+			if (r instanceof AimResource)
+				results.add(((AimResource)r).getScreenName());
+		}
+		
+		return results;
 	}
 	
 	@DMProperty

@@ -58,6 +58,11 @@ public class SystemViewpoint extends Viewpoint {
 		return true;
 	}
 
+	@Override
+	public boolean canSeeContact(Guid contactId) {
+		return true;
+	}	
+	
 	// the SystemViewpoint is never relative to Site.GNOME or Site.MUGSHOT
 	@Override
 	public Site getSite() {

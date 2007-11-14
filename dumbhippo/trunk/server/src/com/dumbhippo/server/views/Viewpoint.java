@@ -45,7 +45,8 @@ public abstract class Viewpoint implements DMViewpoint {
 	
 	public abstract boolean canSeeFriendsOnly(Guid userId);
 	public abstract boolean canSeePrivate(Guid userId);
-
+	public abstract boolean canSeeContact(Guid contactId);
+	
 	public abstract Site getSite();
 	
 	/**

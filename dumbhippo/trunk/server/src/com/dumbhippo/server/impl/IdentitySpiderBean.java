@@ -677,6 +677,28 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 
+	// get all contacts, even if they have no user
+	public Set<Guid> computeContacts(Guid userId) {
+		User user = em.find(User.class, userId.toString());
+		
+		Query q = em.createQuery("SELECT c.id " +
+                 				 "  FROM Contact c " +
+				                 "    WHERE c.account = :account");
+		q.setParameter("account", user.getAccount());
+		
+		Set<Guid> result = new HashSet<Guid>();
+		for (String s : TypeUtils.castList(String.class, q.getResultList())) {
+			try {
+				result.add(new Guid(s));
+			} catch (ParseException e) {
+				throw new RuntimeException("Bad GUID in database");
+			}
+		}
+		
+		return result;
+	}
+	
+	// get only contacts that point to a User
 	public Set<Guid> computeUserContacts(Guid userId) {
 		User user = em.find(User.class, userId.toString());
 		

@@ -239,6 +239,14 @@ public interface IdentitySpider {
 	
 	public void setContactStatus(UserViewpoint viewpoint, User contactUser, ContactStatus status);
 
+	/** 
+	 * Get all Contact objects associated with a given user. "Get my address book entries."
+	 * Not all Contact in the list will have an associated User
+	 * @param userId
+	 * @return
+	 */
+	public Set<Guid> computeContacts(Guid userId);
+	
 	/**
 	 * Compute the set of users that this user has listed as friends; this
 	 * function should not be used directly; it is an internal implementation
