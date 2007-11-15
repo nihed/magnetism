@@ -13,21 +13,20 @@ import base64
 
 DBusGMainLoop(set_as_default=True)
     
-def on_connect():
-    print "Connected"
+def on_ready():
+    print "Ready"
 
     ## Queries are called here for the side effect of getting them in DataModel so
     ## they will be in the tree view. Eventually we should make the query something
     ## you can put in the UI or at least on the command line.
     
-    query = model.query_resource(model.self_id, "+;contacts +;contacters +;lovedAccounts +;topApplications+;pinnedApplications+;email;aim")
+    
+    query = model.query_resource(model.self_resource.resource_id,
+                                 "+;contacts +;userContacts +;contacters +;lovedAccounts +;topApplications+;pinnedApplications+;email;aim")
     query.execute()
 
-    query = model.query_resource("online-desktop:/o/global", "onlineBuddies [+;icon]")
-    query.execute()
-
-def on_disconnect():
-    print "Disconnected"
+    #query = model.query_resource("online-desktop:/o/global", "onlineBuddies [+;icon]")
+    #query.execute()
 
 def image_from_data_url(url):
     ## data:image/png;base64,BASE64DATA
@@ -161,10 +160,9 @@ if options.server == "":
 #print "Using server: " + str(options.server)
 
 model = DataModel(server_name=options.server)
-model.add_connected_handler(on_connect)
-model.add_disconnected_handler(on_disconnect)
-if model.connected:
-    on_connect()
+model.add_ready_handler(on_ready)
+if model.ready:
+    on_ready()
 
 window = gtk.Window()
 sw = gtk.ScrolledWindow()
