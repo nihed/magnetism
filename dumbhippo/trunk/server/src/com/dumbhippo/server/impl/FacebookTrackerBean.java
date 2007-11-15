@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
+import com.dumbhippo.Site;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
@@ -33,7 +34,11 @@ import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystemException;
 import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.Notifier;
+import com.dumbhippo.server.Pageable;
+import com.dumbhippo.server.Stacker;
+import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.services.FacebookPhotoDataView;
 import com.dumbhippo.services.FacebookWebServices;
@@ -52,17 +57,22 @@ public class FacebookTrackerBean implements FacebookTracker {
 	// how long to wait on the Facebook API call
 	static protected final int REQUEST_TIMEOUT = 1000 * 12;
 	
+	static private final int INITIAL_BLOCKS_PER_PAGE = 5;
+	
 	@EJB
 	private ExternalAccountSystem externalAccounts;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em; 
-		
+	
 	@EJB
 	private Configuration config;
 	
 	@EJB
 	private Notifier notifier;
+	
+	@EJB
+	private Stacker stacker;
 	
 	@WebServiceCache
 	private FacebookPhotoDataCache taggedPhotosCache;
@@ -124,6 +134,9 @@ public class FacebookTrackerBean implements FacebookTracker {
 		    facebookAccount.setSessionKeyValid(true);	
 	    facebookAccount.setApplicationEnabled(applicationEnabled);
 			
+		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
+		ws.setProfileFbml(facebookAccount, createFbmlForUser(viewpoint.getViewer()));
+
 		FacebookEvent loginStatusEvent = getLoginStatusEvent(facebookAccount, true);
 		if (loginStatusEvent != null)  
 		    notifier.onFacebookEvent(facebookAccount.getExternalAccount().getAccount().getOwner(), loginStatusEvent);
@@ -434,5 +447,35 @@ public class FacebookTrackerBean implements FacebookTracker {
         event.getFacebookAccount().addFacebookEvent(event);
         notifier.onFacebookEventCreated(event.getFacebookAccount().getExternalAccount().getAccount().getOwner(),
         		                        event);
+	}
+	
+	private String createFbmlForUser(User user) {
+		StringBuilder fbmlSb = new StringBuilder("");
+		Pageable<BlockView> pageableMugshot = new Pageable<BlockView>("mugshot");
+		pageableMugshot.setPosition(0);
+		pageableMugshot.setInitialPerPage(INITIAL_BLOCKS_PER_PAGE);
+		pageableMugshot.setFlexibleResultCount(true);
+		stacker.pageStack(AnonymousViewpoint.getInstance(Site.NONE), user, pageableMugshot, true);
+		for (BlockView blockView : pageableMugshot.getResults()) {
+			fbmlSb.append(
+			    "<table cellspacing='0' cellpadding='0'>" +
+			    "<tbody><tr><td>" +
+	            "<img src='http://mugshot.org" + blockView.getIcon() + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
+			    "</td><td>" +
+			    blockView.getSummaryHeading() +
+		        ": <a target='_blank' href='" + getAbsoluteUrl(blockView.getSummaryLink()) + "'>" + blockView.getSummaryLinkText() + "</a>" +
+			    "</td></tr></table>");
+		}
+		fbmlSb.append("<a target='blank' style='font-size: 12px; font-weight: bold; margin-top: 10px;' href='" + getAbsoluteUrl("/person?who=" + user.getId().toString()) + "'>" +
+				      "Visit My Mugshot to See More</a>");
+		return fbmlSb.toString();
+	}
+	
+	private String getAbsoluteUrl(String link)  {
+		if (link.startsWith("/")) {
+			String baseurl = config.getBaseUrlMugshot().toExternalForm();
+			return baseurl + link;
+		}		
+		return link;
 	}
 }
