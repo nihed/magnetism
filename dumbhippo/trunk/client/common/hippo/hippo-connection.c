@@ -4741,9 +4741,9 @@ dm_context_get_type(DMContext            *context,
 }
 
 static gboolean
-dm_context_get_value(DMContext      *context,
-                     DDMDataType     type,
-                     DDMDataValue   *value)
+dm_context_get_value(DMContext       *context,
+                     DDMDataType      type,
+                     DDMDataValue    *value)
 {
     char *resource_id = dm_context_get_resource_id(context);
     
@@ -4755,14 +4755,10 @@ dm_context_get_value(DMContext      *context,
             return FALSE;
         }
 
-        resource = ddm_data_model_lookup_resource(context->model, resource_id);
-        
-        if (resource == NULL) {
-            // FIXME: We need to handle circular references
-            g_warning("Reference to a resource %s that we don't know about", resource_id);
-            g_free(resource_id);
-            return FALSE;
-        }
+        resource = ddm_data_model_ensure_resource(context->model, resource_id, NULL);
+
+        g_assert (resource != NULL);
+
         g_free(resource_id);
 
         value->type = DDM_DATA_RESOURCE;
