@@ -30,9 +30,6 @@ public class FacebookAddServlet extends AbstractServlet {
 	
 	static final long serialVersionUID = 1;
 	
-	// how long to wait on the Facebook API call
-	static protected final int REQUEST_TIMEOUT = 1000 * 12;
-	
 	private Configuration config;
 	
 	@Override
