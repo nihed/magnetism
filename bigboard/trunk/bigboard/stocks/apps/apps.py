@@ -5,11 +5,11 @@ from ddm import DataModel
 import gmenu, gobject, pango, gnomedesktop, gtk
 import gconf, hippo
 
+import bigboard
 import bigboard.globals as globals
 import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.libbig.gutil import *
-import bigboard.logins
 import apps_directory
 from bigboard.libbig.http import AsyncHTTPFetcher
 from bigboard.libbig.xmlquery import query as xml_query, get_attrs as xml_get_attrs
