@@ -1,5 +1,6 @@
 package com.dumbhippo.services;
 
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -23,6 +24,8 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.FacebookSystemException;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.facebook.api.FacebookException;
+import com.facebook.api.FacebookXmlRestClient;
 
 public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> {
 	static private final Logger logger = GlobalSetup.getLogger(FacebookWebServices.class);
@@ -313,6 +316,18 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		*/
 		
         return modifiedAlbums;
+	}
+	
+	public void setProfileFbml(FacebookAccount facebookAccount, String profileFbml) {
+		try {
+	        FacebookXmlRestClient facebookClient = new FacebookXmlRestClient(apiKey, secret, facebookAccount.getSessionKey());	
+	        facebookClient.profile_setFBML(profileFbml, Integer.valueOf(facebookAccount.getFacebookUserId()));
+		} catch (FacebookException e) {
+			logger.error("FacebookException when setting profile FBML for {}: {}",
+					     facebookAccount.getFacebookUserId(), e.toString());
+		} catch (IOException e) {
+			logger.error("IOException when converting {} to an integer", facebookAccount.getFacebookUserId());
+		}
 	}
 	
 	private String generateFacebookRequest(List<String> params) {
