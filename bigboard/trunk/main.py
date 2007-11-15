@@ -18,7 +18,7 @@ import pyonlinedesktop.widget
 
 import bigboard
 import bigboard.big_widgets
-from bigboard.big_widgets import Sidebar, CanvasHBox, CanvasVBox, ActionLink, Button
+from bigboard.big_widgets import Sidebar, CanvasHBox, CanvasVBox, ActionLink, Button, GradientHeader
 from bigboard.stock import Stock
 import bigboard.libbig
 try:
@@ -79,15 +79,6 @@ def _find_in_datadir(fname):
         if os.access(fpath, os.R_OK):
             return fpath
     return None
-
-class GradientHeader(hippo.CanvasGradient):
-    def __init__(self, **kwargs):
-        hippo.CanvasGradient.__init__(self, 
-                                      orientation=hippo.ORIENTATION_HORIZONTAL,
-                                      start_color=0xF4F4F4FF, 
-                                      end_color=0xC7C7C7FF,
-                                      padding_left=4,
-                                      color=0x333333FF, **kwargs)
 
 class Separator(hippo.CanvasBox):
     def __init__(self):

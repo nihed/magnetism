@@ -1,4 +1,4 @@
-import logging, os, subprocess, urlparse, urllib, time, threading
+import logging, os, sys, subprocess, urlparse, urllib, time, threading
 import xml.dom, xml.dom.minidom
 
 import gobject, gtk, pango
@@ -14,9 +14,10 @@ from bigboard.libbig.logutil import log_except
 from bigboard.libbig.gutil import *
 from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock
+import bigboard.slideout
 import bigboard.google as google
 import bigboard.google_stock as google_stock  
-from bigboard.big_widgets import IconLink
+from bigboard.big_widgets import IconLink, CanvasHBox, CanvasVBox, Button, GradientHeader
 from bigboard.libbig.xmlquery import query as xml_query, get_attrs as xml_get_attrs
 import bigboard.search as search
 
@@ -33,7 +34,7 @@ itheme = gtk.icon_theme_get_default()
 
 class File(gobject.GObject):
     __gsignals__ = {
-        "activated" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),                    
+        "activated" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),                    
         "changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }    
     def __init__(self):
@@ -42,9 +43,11 @@ class File(gobject.GObject):
         self._url = None
         self._name = None 
         self._full_name = None
+        self._mimetype = None
         self._image_name = None
         self._access_time = None
         self._source_key = None
+        self._size_bytes = None
 
     def is_valid(self):
         return self._is_valid
@@ -58,6 +61,12 @@ class File(gobject.GObject):
     def get_full_name(self):
         return self._full_name
 
+    def get_mimetype(self):
+        return self._mimetype
+    
+    def get_size(self):
+        return self._size_bytes
+
     def get_image_name(self):
         return self._image_name
 
@@ -70,7 +79,7 @@ class File(gobject.GObject):
     def create_icon_link(self):
         link = IconLink(self.get_name())
         link.img.set_property('image-name', self.get_image_name())
-        link.link.connect("activated", lambda *args: self.emit('activated'))
+        link.link.connect("activated", lambda *args: self.emit('activated', link))
         link.link.set_property("tooltip", self.get_full_name())
         return link   
 
@@ -101,6 +110,9 @@ class LocalFile(File):
         (vfsstat, image_name) = results
         if not vfsstat:
             self._is_valid = False
+        else:
+            self._mimetype = vfsstat.mime_type
+            self._size_bytes = vfsstat.size
         self._image_name = image_name
         self.emit("changed")
         
@@ -203,6 +215,87 @@ class FileSearchProvider(search.SearchProvider):
 
     def activate_file(self, file):
         self.__stock.activate_file(file)
+        
+        
+_kb = 1024.0
+_mb = _kb*_kb
+_gb = _mb*_kb
+def format_file_size(bytes):
+    if bytes < _kb:
+        return "%d bytes" % (bytes,)
+    elif bytes < _mb:
+        return "%.1f KB" % (bytes/_kb,)
+    elif bytes < _gb:
+        return "%.1f MB" % (bytes/_mb,)
+    else:
+        return "%.1f GB" % (bytes/_gb,)     
+    
+def _launch_vfsmimeapp(app, uri):
+    if uri.startswith('file://'):
+        uri = gnomevfs.get_local_path_from_uri(uri)
+    if hasattr(gnomevfs, 'mime_application_launch'):
+        gnomevfs.mime_application_launch(app, uri)
+    else:
+        exec_components = app[2].split(' ')
+        replaced_f = False
+        for i,component in enumerate(exec_components):
+            if component == '%f':
+                exec_components[i] = uri
+                replaced_f = True
+        if not replaced_f:
+            exec_components.append(uri)
+        subprocess.Popen(exec_components)             
+    
+class FileSlideout(CanvasVBox):
+    __gsignals__ = {
+        "close": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+       }    
+    def __init__(self, fobj):
+        super(FileSlideout, self).__init__(border=1, border_color=0x0000000ff,
+                                           spacing=4, padding=4)
+        self.__header = GradientHeader()
+        text = hippo.CanvasText(text=fobj.get_name(), font="14px", xalign=hippo.ALIGNMENT_START)
+        text.connect("button-press-event", lambda text, event: self.__toggle_expanded())  
+        self.__header.append(text, hippo.PACK_EXPAND)        
+        self.append(self.__header)
+        
+        hbox = CanvasHBox()
+        img = hippo.CanvasImage(scale_width=80, scale_height=80, xalign=hippo.ALIGNMENT_CENTER, yalign=hippo.ALIGNMENT_CENTER)
+        img.set_property('image-name', fobj.get_image_name())
+        hbox.append(img)
+        self.append(hbox)
+        
+        vbox = CanvasVBox()
+        hbox.append(vbox)
+        mime = fobj.get_mimetype()
+        if mime:
+            mimename = gnomevfs.mime_get_description(mime)
+            text = hippo.CanvasText(text=mimename, font='12px')
+            vbox.append(text)
+        size = fobj.get_size()            
+        if size is not None:
+            sizestr = format_file_size(size)
+            text = hippo.CanvasText(text=sizestr, font='12px')
+            vbox.append(text)
+        fname = os.path.dirname(fobj.get_full_name())
+        home = os.path.expanduser('~')
+        if fname.startswith(home):
+            fname = fname[:len(home)]
+        text = hippo.CanvasText(text=fname, font='12px')
+        vbox.append(text)
+        apps = gnomevfs.mime_get_all_applications(mime)
+        if apps:
+            text = hippo.CanvasText(text='Open With: ', font='Bold 14px')
+            vbox.append(text)
+            def on_app_clicked(button, app):
+                self.emit('close')
+                _logger.debug("launching app %s", app)
+                _launch_vfsmimeapp(app, fobj.get_url())            
+            for app in apps:
+                _logger.debug("mime type: %s got app %s", mime, app)
+                button = Button(label=app[1])
+                button.get_button().connect('clicked', on_app_clicked, app)
+                vbox.append(button)
 
 class FilesStock(Stock, google_stock.GoogleStock):
     """Shows recent files."""
@@ -213,7 +306,10 @@ class FilesStock(Stock, google_stock.GoogleStock):
         # files in this list are either LocalFile or GoogleFile 
         self.__files = []
         self.__display_limit = 5
-        self.__recentf_path = os.path.expanduser('~/.recently-used.xbel') 
+        self.__recentf_path = os.path.expanduser('~/.recently-used.xbel')
+        
+        self.__slideout = None 
+        self.__slideout_target = None
 
         self.desktop_path = self._panel.get_desktop_path()
 
@@ -253,10 +349,26 @@ class FilesStock(Stock, google_stock.GoogleStock):
     def remove_google_data(self, gobj):
         self.__remove_files_for_key(gobj)
         
-    def __on_file_activated(self, fobj):
+    def __on_file_activated(self, fobj, lnk):
         _logger.debug("got file activated: %s", fobj)
-        self._panel.action_taken()
-        subprocess.Popen(['gnome-open', fobj.get_url()])        
+        if self.__slideout is not None:
+            self.__slideout.destroy()
+            self.__slideout = None
+        if fobj == self.__slideout_target:
+            self.__slideout_target = None            
+            return
+        self.__slideout_target = fobj            
+        self.__slideout = bigboard.slideout.Slideout()                  
+        file_slideout = FileSlideout(fobj)
+        self.__slideout.get_root().append(file_slideout)            
+        def on_slideout_close(s):
+            self._panel.action_taken()
+            s.destroy()
+            self.__slideout = None
+        file_slideout.connect('close', on_slideout_close)
+        item = lnk.link
+        coords = item.get_context().translate_to_screen(item)
+        self.__slideout.slideout_from(204, coords[1])        
 
     def __on_documents_load(self, document_entries, gobj):
         self.__remove_files_for_key(gobj) 
@@ -324,5 +436,5 @@ class FilesStock(Stock, google_stock.GoogleStock):
     def get_files(self):
         return self.__files
 
-    def activate_file(self, file):
-        self.__on_file_activated(file)
+    def activate_file(self, fobj):
+        subprocess.Popen(['gnome-open', fobj.get_url()])
