@@ -22,11 +22,11 @@ def on_ready():
     
     
     query = model.query_resource(model.self_resource.resource_id,
-                                 "+;contacts +;userContacts +;contacters +;lovedAccounts +;topApplications+;pinnedApplications+;email;aim")
+                                 "+;contacts [+;aimBuddies];userContacts +;contacters +;lovedAccounts +;topApplications+;pinnedApplications+;email;aim")
     query.execute()
 
-    #query = model.query_resource("online-desktop:/o/global", "onlineBuddies [+;icon]")
-    #query.execute()
+    query = model.query_resource("online-desktop:/o/global", "aimBuddies [+;icon]")
+    query.execute()
 
 def image_from_data_url(url):
     ## data:image/png;base64,BASE64DATA
@@ -139,7 +139,8 @@ class Tree:
                     self.__store.append(found_row.iter, [None, name[1], name[0], value, pixbuf])
 
     def __resource_added(self, resource):
-        self.__store.append(None, [ resource.resource_id, None, None, None, None ] )
+        description = resource.resource_id #+ " is a " + resource.class_id
+        self.__store.append(None, [ description, None, None, None, None ] )
         resource.connect(self.__on_resource_changed, property=None)
         self.__on_resource_changed(resource)
 
