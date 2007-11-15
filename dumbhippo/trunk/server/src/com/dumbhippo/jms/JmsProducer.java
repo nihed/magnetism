@@ -34,7 +34,8 @@ public class JmsProducer extends JmsDestination {
 			try {
 				JmsSession session = createSession();
 				Message message = session.createObjectMessage(payload);
-				message.setStringProperty("sourceAddress", sourceAddress);
+				if (sourceAddress != null)
+					message.setStringProperty("sourceAddress", sourceAddress);
 				session.getProducer(getDestination()).send(message);
 				session.close();
 				
