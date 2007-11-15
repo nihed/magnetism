@@ -51,6 +51,16 @@ class CanvasTable(hippo.CanvasBox):
     def set_row_expand(self, row, expand):
         self.__layout.set_row_expand(row, expand)        
         
+
+class GradientHeader(hippo.CanvasGradient):
+    def __init__(self, **kwargs):
+        hippo.CanvasGradient.__init__(self, 
+                                      orientation=hippo.ORIENTATION_HORIZONTAL,
+                                      start_color=0xF4F4F4FF, 
+                                      end_color=0xC7C7C7FF,
+                                      padding_left=4,
+                                      color=0x333333FF, **kwargs)        
+        
 class ActionLink(hippo.CanvasLink):
     def __init__(self, underline=pango.UNDERLINE_NONE, **kwargs):
         if not kwargs.has_key('color'):
