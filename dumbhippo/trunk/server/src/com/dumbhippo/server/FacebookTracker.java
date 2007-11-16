@@ -5,6 +5,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.FacebookAccount;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.services.FacebookPhotoDataView;
 
@@ -15,6 +16,8 @@ public interface FacebookTracker {
 	
 	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String sessionKey, String facebookUserId, boolean applicationEnabled) throws FacebookSystemException;
 
+	public void updateFbmlForUser(User user);
+	
 	public void updateMessageCount(long facebookAccountId);
 	
 	public void updateTaggedPhotos(long facebookAccountId);

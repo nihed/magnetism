@@ -54,6 +54,7 @@ import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.ChatSystem;
+import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
@@ -127,6 +128,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	@EJB
 	private XmppMessageSender xmppMessageSystem;	
+	
+	@EJB
+	private FacebookTracker facebookTracker;
 	
 	private Map<BlockType,BlockHandler> handlers;
 	
@@ -722,10 +726,18 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				Block attached = em.find(Block.class, block.getId());
 				if (updateAllUserBlockDatas) {
 				    updateUserBlockDatas(attached, (participant != null ? participant.getGuid() : null), reason);
-			     } else if (participant != null) {
-			    	 updateParticipantUserBlockData(attached, participant.getGuid(), reason);					    	 
-			     }
+			    } else if (participant != null) {
+			        updateParticipantUserBlockData(attached, participant.getGuid(), reason);	
+			    }				
 				updateGroupBlockDatas(attached, isGroupParticipation, reason);
+
+				if (participant != null && block.getBlockType() != BlockType.FACEBOOK_EVENT) {
+				    TxUtils.runOnCommit(new Runnable() {
+					    public void run() {
+					    	facebookTracker.updateFbmlForUser(participant);
+					    }
+				    });
+				}	 
 			}
 		});
 	}

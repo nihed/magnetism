@@ -89,7 +89,7 @@ public class FacebookSystemBean implements FacebookSystem {
 	
 	public FacebookAccount lookupFacebookAccount(Viewpoint viewpoint, User user) throws NotFoundException {
 		if (!em.contains(user.getAccount()))
-			throw new RuntimeException("detached account in lookupExternalAccount()");
+			user = EJBUtil.lookupGuid(em, User.class, user.getGuid());
 	
 		ExternalAccount externalAccount = externalAccounts.lookupExternalAccount(viewpoint, user, ExternalAccountType.FACEBOOK);
 
