@@ -1,4 +1,4 @@
-import logging, os, sys, subprocess, urlparse, urllib, time, threading
+import logging, os, sys, re, subprocess, urlparse, urllib, time, threading
 import xml.dom, xml.dom.minidom
 
 import gobject, gtk, pango
@@ -19,6 +19,7 @@ import bigboard.google as google
 import bigboard.google_stock as google_stock  
 from bigboard.big_widgets import IconLink, CanvasHBox, CanvasVBox, Button, GradientHeader
 from bigboard.libbig.xmlquery import query as xml_query, get_attrs as xml_get_attrs
+import bigboard.apps_directory as apps_directory
 import bigboard.search as search
 
 import filebrowser
@@ -244,7 +245,16 @@ def _launch_vfsmimeapp(app, uri):
                 replaced_f = True
         if not replaced_f:
             exec_components.append(uri)
-        subprocess.Popen(exec_components)             
+        subprocess.Popen(exec_components)     
+        
+def get_menu_pixbuf(menuentry, size=48):
+    icon_name = re.sub(r'\.[a-z]+$','', menuentry.get_icon()) 
+    theme = gtk.icon_theme_get_default()
+    try:
+        pixbuf = theme.load_icon(icon_name, size, 0)
+    except gobject.GError, e:
+        return None
+    return pixbuf
     
 class FileSlideout(CanvasVBox):
     __gsignals__ = {
@@ -259,41 +269,60 @@ class FileSlideout(CanvasVBox):
         self.__header.append(text, hippo.PACK_EXPAND)        
         self.append(self.__header)
         
-        hbox = CanvasHBox()
-        img = hippo.CanvasImage(scale_width=80, scale_height=80, xalign=hippo.ALIGNMENT_CENTER, yalign=hippo.ALIGNMENT_CENTER)
+        hbox = CanvasHBox(spacing=4)
+        img = hippo.CanvasImage(scale_width=60, scale_height=60, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
         img.set_property('image-name', fobj.get_image_name())
         hbox.append(img)
         self.append(hbox)
         
         vbox = CanvasVBox()
         hbox.append(vbox)
+        attrs = pango.AttrList()
+        attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))  
         mime = fobj.get_mimetype()
         if mime:
             mimename = gnomevfs.mime_get_description(mime)
-            text = hippo.CanvasText(text=mimename, font='12px')
+            text = hippo.CanvasText(text=mimename, font='12px', xalign=hippo.ALIGNMENT_START)
+            text.set_property("attributes", attrs)                   
             vbox.append(text)
         size = fobj.get_size()            
         if size is not None:
             sizestr = format_file_size(size)
-            text = hippo.CanvasText(text=sizestr, font='12px')
+            text = hippo.CanvasText(text=sizestr, font='12px', xalign=hippo.ALIGNMENT_START)
+            text.set_property("attributes", attrs)               
             vbox.append(text)
         fname = os.path.dirname(fobj.get_full_name())
+        if fname.startswith('file://'):
+            fname = fname[7:]
         home = os.path.expanduser('~')
         if fname.startswith(home):
             fname = fname[:len(home)]
-        text = hippo.CanvasText(text=fname, font='12px')
+        fname = urllib.unquote(fname)            
+        text = hippo.CanvasText(text=fname, font='12px', xalign=hippo.ALIGNMENT_START)
+        text.set_property("attributes", attrs)           
         vbox.append(text)
         apps = gnomevfs.mime_get_all_applications(mime)
         if apps:
-            text = hippo.CanvasText(text='Open With: ', font='Bold 14px')
+            text = hippo.CanvasText(text='Open With: ', font='14px')
             vbox.append(text)
             def on_app_clicked(button, app):
                 self.emit('close')
                 _logger.debug("launching app %s", app)
-                _launch_vfsmimeapp(app, fobj.get_url())            
+                _launch_vfsmimeapp(app, fobj.get_url())      
+            directory = apps_directory.get_app_directory()
             for app in apps:
                 _logger.debug("mime type: %s got app %s", mime, app)
-                button = Button(label=app[1])
+                button = Button(label=app[1])             
+                try:
+                    menu = directory.lookup(app[0])
+                except KeyError, e:
+                    _logger.debug("failed to find desktop file %s", app[0])
+                    menu = None
+                if menu:
+                    pixbuf = get_menu_pixbuf(menu, size=24)        
+                    img = gtk.Image()
+                    img.set_from_pixbuf(pixbuf)
+                    button.get_button().set_property('image', img)
                 button.get_button().connect('clicked', on_app_clicked, app)
                 vbox.append(button)
 

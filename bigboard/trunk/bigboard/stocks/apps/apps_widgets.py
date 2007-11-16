@@ -4,9 +4,8 @@ import gmenu, gobject, pango, gnomedesktop
 import hippo
 import bigboard.globals as globals
 
+import bigboard.apps_directory as apps_directory
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox, ActionLink
-
-import apps_directory
 
 class AppLocation:   
     (STOCK, APP_BROWSER, DESCRIPTION_HEADER) = range(3)
