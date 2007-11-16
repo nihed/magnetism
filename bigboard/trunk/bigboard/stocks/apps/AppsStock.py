@@ -9,10 +9,11 @@ import bigboard.globals as globals
 import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.libbig.gutil import *
+import bigboard.apps_directory as apps_directory
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox, ActionLink
 import bigboard.stock
 
-import apps, appbrowser, apps_widgets, apps_directory
+import apps, appbrowser, apps_widgets
 
 from ddm import DataModel
 

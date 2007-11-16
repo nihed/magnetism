@@ -7,13 +7,14 @@ import apps
 
 import bigboard.globals as globals
 import bigboard.libbig as libbig
+import bigboard.apps_directory as apps_directory
 from bigboard.libbig.logutil import log_except
 from bigboard.libbig.gutil import *
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, CanvasTable, \
              ActionLink, IconLink, PrelightingCanvasBox, CanvasSpinner, CanvasCheckbox, Button
 from bigboard.overview_table import OverviewTable
 
-import apps_widgets, apps_directory
+import apps_widgets
 
 _logger = logging.getLogger("bigboard.AppBrowser")
 
