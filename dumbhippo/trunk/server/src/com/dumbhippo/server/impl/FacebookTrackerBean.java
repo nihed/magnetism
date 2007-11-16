@@ -15,6 +15,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -31,14 +32,17 @@ import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
+import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.FacebookSystemException;
 import com.dumbhippo.server.FacebookTracker;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.AnonymousViewpoint;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.services.FacebookPhotoDataView;
 import com.dumbhippo.services.FacebookWebServices;
@@ -72,6 +76,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 	private Notifier notifier;
 	
 	@EJB
+	@IgnoreDependency
 	private Stacker stacker;
 	
 	@WebServiceCache
@@ -79,6 +84,9 @@ public class FacebookTrackerBean implements FacebookTracker {
 	
 	@EJB
 	private CacheFactory cacheFactory;	
+	
+	@EJB
+	private FacebookSystem facebookSystem;
 	
 	@PostConstruct
 	public void init() {
@@ -98,6 +106,9 @@ public class FacebookTrackerBean implements FacebookTracker {
 			facebookAccount = em.find(FacebookAccount.class, Long.parseLong(externalAccount.getExtra()));
 			if (facebookAccount == null)
 				throw new RuntimeException("Invalid FacebookAccount id " + externalAccount.getExtra() + " is stored in externalAccount " + externalAccount);
+			// make sure the sentiment is LOVE; there is currently no way to unset it from the user interface,
+			// but we should allow changing the sentiment to HATE or at least INDIFFERENT in the future
+			externalAccounts.setSentiment(externalAccount, Sentiment.LOVE);
 		}
 		
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
@@ -121,6 +132,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 			facebookAccount = em.find(FacebookAccount.class, Long.parseLong(externalAccount.getExtra()));
 			if (facebookAccount == null)
 				throw new RuntimeException("Invalid FacebookAccount id " + externalAccount.getExtra() + " is stored in externalAccount " + externalAccount);
+			externalAccounts.setSentiment(externalAccount, Sentiment.LOVE);
 		}
 		
 		if (facebookAccount.getFacebookUserId() != null 
@@ -140,6 +152,29 @@ public class FacebookTrackerBean implements FacebookTracker {
 		FacebookEvent loginStatusEvent = getLoginStatusEvent(facebookAccount, true);
 		if (loginStatusEvent != null)  
 		    notifier.onFacebookEvent(facebookAccount.getExternalAccount().getAccount().getOwner(), loginStatusEvent);
+	}
+	
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public void updateFbmlForUser(final User user) {
+		TxUtils.assertNoTransaction();
+		try {
+			FacebookAccount facebookAccount = TxUtils.runInTransaction(new Callable<FacebookAccount>() {
+				public FacebookAccount call() {
+					try {
+					    return facebookSystem.lookupFacebookAccount(SystemViewpoint.getInstance(), user);
+					} catch (NotFoundException e) {
+						return null;
+					}
+				}	
+			});
+		    if (facebookAccount != null && facebookAccount.isApplicationEnabled()) {
+		        FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
+			    ws.setProfileFbml(facebookAccount, createFbmlForUser(user));
+            }		    
+		} catch (Exception e) {
+			logger.error("Caught an exception when getting a FacebookAccount for {}: {}", user, e.getMessage());
+			throw new RuntimeException(e);            			
+		}
 	}
 	
 	// FIXME this is calling web services with a transaction open, which holds 
