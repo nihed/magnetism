@@ -70,14 +70,20 @@ class PersonItem(PhotoContentItem):
         self.__current_track = None
         self.__current_track_timeout = None
 
-        if self.person.is_user:
-            query = model.query_resource(self.person.resource, "currentTrack +;currentTrackPlayTime")
-            query.add_handler(self.__update_current_track)
-            query.execute()
+        if self.person.is_contact:
+            try:
+                user = self.person.resource.user
+            except AttributeError:
+                user = None
 
-            self.person.resource.connect(self.__update_current_track, 'currentTrack')
-            self.person.resource.connect(self.__update_current_track, 'currentTrackPlayTime')
-            self.__update_current_track(self.person.resource)
+            if user:
+                query = model.query_resource(user, "currentTrack +;currentTrackPlayTime")
+                query.add_handler(self.__update_current_track)
+                query.execute()
+
+                user.connect(self.__update_current_track, 'currentTrack')
+                user.connect(self.__update_current_track, 'currentTrackPlayTime')
+                self.__update_current_track(user)
             
         self.person.connect('display-name-changed', self.__update)
         self.person.connect('icon-url-changed', self.__update)
@@ -408,10 +414,15 @@ class ProfileItem(hippo.CanvasBox):
         self.__name = hippo.CanvasText(font="22px", padding=6)
         self.__header.append(self.__name)
 
-        if person.is_user:
-            mugshot_link = ActionLink(text="Mugshot", padding=6)
-            self.__header.append(mugshot_link, flags=hippo.PACK_END)
-            mugshot_link.connect("activated", self.__on_activate_web)
+        if person.is_contact:
+            try:
+                user = person.resource.user
+            except AttributeError:
+                user = None
+            if user:
+                mugshot_link = ActionLink(text="Mugshot", padding=6)
+                self.__header.append(mugshot_link, flags=hippo.PACK_END)
+                mugshot_link.connect("activated", self.__on_activate_web)
 
         self.__top_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
         self.append(self.__top_box)
@@ -420,9 +431,15 @@ class ProfileItem(hippo.CanvasBox):
                                             scale_height=60,
                                             border=5)
 
-        if person.is_user:
-            self.__photo.set_clickable(True)
-            self.__photo.connect("activated", self.__on_activate_web)
+        if person.is_contact:
+            try:
+                user = person.resource.user
+            except AttributeError:
+                user = None
+            if user:
+                self.__photo.set_clickable(True)
+                self.__photo.connect("activated", self.__on_activate_web)
+
         self.__top_box.append(self.__photo)
 
         self.__address_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
@@ -453,10 +470,16 @@ class ProfileItem(hippo.CanvasBox):
         self.person.connect('aim-changed', self.__update)
         self.person.connect('local-buddy-changed', self.__update_local_buddy)
         self.person.connect('xmpp-changed', self.__update)
-        if person.is_user:
-            self.person.resource.connect(lambda *args: self.__update(self.person), 'email')
-            self.person.resource.connect(self.__update_contact_status, "contactStatus")
-            self.person.resource.connect(self.__update_loved_accounts, "lovedAccounts")
+        if person.is_contact:
+            self.person.resource.connect(lambda *args: self.__update(self.person), 'emails')
+            self.person.resource.connect(self.__update_contact_status, "status")
+            try:
+                user = person.resource.user
+            except AttributeError:
+                user = None
+            
+            if user:
+                user.connect(self.__update_loved_accounts, "lovedAccounts")
         
         query = DataModel(bigboard.globals.server_name).query_resource(self.person.resource, "lovedAccounts +")
         query.add_handler(self.__update_loved_accounts)
@@ -465,9 +488,16 @@ class ProfileItem(hippo.CanvasBox):
         self.__update(self.person)
         self.__update_local_buddy(self.person)
         
-        if self.person.is_user:
+        if self.person.is_contact:
             self.__update_contact_status(self.person.resource)
-            self.__update_loved_accounts(self.person.resource)
+
+            try:
+                user = person.resource.user
+            except AttributeError:
+                user = None
+            
+            if user:
+                self.__update_loved_accounts(user)
 
     def __add_status_link(self, text, current_status, new_status):
         if current_status == new_status:
@@ -532,15 +562,15 @@ class ProfileItem(hippo.CanvasBox):
 
         self.__address_box.remove_all()
 
-        email = None
-        if person.is_user:
+        emails = None
+        if person.is_contact:
             try:
-                email = self.person.resource.email
+                emails = self.person.resource.emails
             except AttributeError:
                 pass
          
-        if email != None:
-            email = hippo.CanvasLink(text=email, xalign=hippo.ALIGNMENT_START)
+        if emails != None and len(emails) > 0:
+            email = hippo.CanvasLink(text=emails[0], xalign=hippo.ALIGNMENT_START)
             email.connect('activated', self.__on_activate_email)
             self.__address_box.append(email)
 

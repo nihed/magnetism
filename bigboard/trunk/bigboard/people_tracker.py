@@ -38,37 +38,52 @@ class Person(gobject.GObject):
     def __init__(self, resource):
         gobject.GObject.__init__(self)
         self.resource = resource
-        self.is_user = self.resource.class_id == "http://mugshot.org/p/o/user"
+        self.is_contact = self.resource.class_id == "http://online.gnome.org/p/o/contact"
 
-        if self.is_user:
-            self.resource.connect(self.__user_name_changed, "name")
-            self.resource.connect(self.__user_photo_url_changed, "photoUrl")
-            self.resource.connect(self.__user_aim_changed, "aim")
-            self.resource.connect(self.__user_xmpp_changed, "xmpp")
-            self.resource.connect(self.__user_aim_buddy_changed, "aimBuddy")
-            self.resource.connect(self.__user_xmpp_buddy_changed, "xmppBuddy")
-            self.resource.connect(self.__user_local_buddy_changed, "mugshotLocalBuddy")
+        if self.is_contact:
+            self.resource.connect(self.__contact_name_changed, "name")
+            self.resource.connect(self.__contact_photo_url_changed, "photoUrl")
+            self.resource.connect(self.__contact_aims_changed, "aims")
+            self.resource.connect(self.__contact_xmpps_changed, "xmpps")
+            self.resource.connect(self.__contact_aim_buddies_changed, "aimBuddies")
+            self.resource.connect(self.__contact_xmpp_buddies_changed, "xmppBuddies")
+            ## FIXME restore local buddy functionality
+            #self.resource.connect(self.__contact_local_buddy_changed, "mugshotLocalBuddy")
 
-            self.__user_name_changed(resource)
-            self.__user_photo_url_changed(resource)
-            self.__user_aim_changed(resource)
-            self.__user_xmpp_changed(resource)
-            self.__user_aim_buddy_changed(resource)
-            self.__user_xmpp_buddy_changed(resource)
+            self.__contact_name_changed(resource)
+            self.__contact_photo_url_changed(resource)
+            self.__contact_aims_changed(resource)
+            self.__contact_xmpps_changed(resource)
+            self.__contact_aim_buddies_changed(resource)
+            self.__contact_xmpp_buddies_changed(resource)
+
+            ## FIXME restore local buddy functionality
+            self.local_buddy = None
         else:
+            if resource.class_id != 'online-desktop:/p/o/buddy':
+                raise Exception("unknown class ID %s for resource constructing Person" % resource.class_id)
+
             if resource.protocol == 'aim':
                 self.aim = resource.name
                 self.aim_buddy = resource
+                self.aims = [self.aim]
+                self.aim_buddies = [self.aim_buddy]
             else:
                 self.aim = None
                 self.aim_buddy = None
+                self.aims = []
+                self.aim_buddies = []
 
             if resource.protocol == 'xmpp':
                 self.xmpp = resource.name
                 self.xmpp_buddy = resource
+                self.xmpps = [self.xmpp]
+                self.xmpp_buddies = [self.xmpp_buddy]
             else:
                 self.xmpp = None
                 self.xmpp_buddy = None
+                self.xmpps = []
+                self.xmpp_buddies = []
 
             if resource.protocol == 'mugshot-local':
                 self.local_buddy = resource
@@ -81,16 +96,16 @@ class Person(gobject.GObject):
             self.__buddy_alias_changed(resource)
             self.__buddy_icon_changed(resource)
 
-    def __user_name_changed(self, resource):
+    def __contact_name_changed(self, resource):
         try:
             self.display_name = resource.name
         except AttributeError:
             # FIXME: why does this happen
-            self.display_name = "NO_NAME"
+            self.display_name = "NO_NAME_"
             
         self.emit("display-name-changed")
 
-    def __user_photo_url_changed(self, resource):
+    def __contact_photo_url_changed(self, resource):
         try:
             self.icon_url = resource.photoUrl
         except AttributeError:
@@ -98,43 +113,64 @@ class Person(gobject.GObject):
             
         self.emit("icon-url-changed")
 
-    def __user_aim_changed(self, resource):
+    def __contact_aims_changed(self, resource):
         try:
-            self.aim = resource.aim
+            self.aims = resource.aims
         except AttributeError:
+            self.aims = []
+
+        ## FIXME don't just pick one arbitrarily
+        if len(self.aims) > 0:
+            self.aim = self.aims[0]
+        else:
             self.aim = None
 
         self.emit("aim-changed")
 
-    def __user_xmpp_changed(self, resource):
+    def __contact_xmpps_changed(self, resource):
         try:
-            self.xmpp = resource.xmpp
+            self.xmpps = resource.xmpps
         except AttributeError:
+            self.xmpps = []
+        
+        ## FIXME don't just pick one arbitrarily
+        if len(self.xmpps) > 0:
+            self.xmpp = self.xmpps[0]
+        else:
             self.xmpp = None
 
         self.emit("xmpp-changed")
 
-    def __user_aim_buddy_changed(self, resource):
+    def __contact_aim_buddies_changed(self, resource):
         try:
-            self.aim_buddy = resource.aimBuddy
+            self.aim_buddies = resource.aimBuddies
         except AttributeError:
+            self.aim_buddies = []
+
+        ## FIXME don't just pick one arbitrarily
+        if len(self.aim_buddies) > 0:
+            self.aim_buddy = self.aim_buddies[0]
+        else:
             self.aim_buddy = None
 
         self.emit("aim-buddy-changed")
 
-    def __user_xmpp_buddy_changed(self, resource):
+    def __contact_xmpp_buddies_changed(self, resource):
         try:
-            self.xmpp_buddy = resource.xmppBuddy
+            self.xmpp_buddies = resource.xmppBuddies
         except AttributeError:
+            self.xmpp_buddies = []
+
+        ## FIXME don't just pick one arbitrarily
+        if len(self.xmpp_buddies) > 0:
+            self.xmpp_buddy = self.xmpp_buddies[0]
+        else:
             self.xmpp_buddy = None
 
         self.emit("xmpp-buddy-changed")
 
-    def __user_local_buddy_changed(self, resource):
-        try:
-            self.local_buddy = resource.mugshotLocalBuddy
-        except AttributeError:
-            self.local_buddy = None
+    def __contact_local_buddies_changed(self, resource):
+        ## FIXME, update the fields
 
         self.emit("local-buddy-changed")
 
@@ -178,6 +214,7 @@ class PersonSet(gobject.GObject):
         "removed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
     }
 
+## PersonSet that wraps a list of Resource objects (each resource is wrapped in a Person object)
 class SinglePersonSet(PersonSet):
     def __init__(self):
         PersonSet.__init__(self)
@@ -237,6 +274,7 @@ class SinglePersonSet(PersonSet):
     def __iter__(self):
         return self.__resolved.__iter__()
 
+## used to merge multiple PersonSet into one
 class UnionPersonSet(PersonSet):
     def __init__(self, *args):
         PersonSet.__init__(self)
@@ -297,11 +335,15 @@ class PeopleTracker(Singleton):
         # When we disconnect from the server we freeze existing content, then on reconnect
         # we clear everything and start over.
 
-        query = self.__model.query_resource(self.__model.self_resource, "contacts [+;aim;aimBuddy +;mugshotLocalBuddy +;xmpp;xmppBuddy +;email;contactStatus]")
+        contact_props = '[+;name;user;aims;aimBuddies +;mugshotLocalBuddies +;xmpps;xmppBuddies +;emails;status]'
+
+        query = self.__model.query_resource(self.__model.self_resource, "contacts %s" % contact_props)
         query.add_handler(self.__on_got_self)
         query.execute()
         
-        query = self.__model.query_resource(self.__model.global_resource, "aimBuddies [+;user [+;aim;aimBuddy +;mugshotLocalBuddy +;xmpp;xmppBuddy +;email;contactStatus]];xmppBuddies [+;user [+;aim;aimBuddy +;mugshotLocalBuddy +;xmpp;xmppBuddy +;email;contactStatus]];mugshotLocalBuddies [+;user [+;aim;aimBuddy +;mugshotLocalBuddy +;xmpp;xmppBuddy +;email;contactStatus]]")
+        query = self.__model.query_resource(self.__model.global_resource,
+                                            "aimBuddies [+;contact %s]; xmppBuddies [+;contact %s]; mugshotLocalBuddies [+;contact %s]" % (contact_props, contact_props, contact_props))
+
         query.add_handler(self.__on_got_global)
         query.execute()
 
@@ -322,8 +364,8 @@ class PeopleTracker(Singleton):
 
     def __on_contacts_changed(self, self_resource):
         new_contacts = set()
-        for user in self_resource.contacts:
-            new_contacts.add(user)
+        for contact in self_resource.contacts:
+            new_contacts.add(contact)
 
         self.contacts._update(new_contacts)
         
@@ -349,17 +391,17 @@ class PeopleTracker(Singleton):
         self.xmpp_people._update(global_resource.xmppBuddies)
 
 def sort_people(a,b):
-    if a.is_user:
+    if a.is_contact:
         try:
-            statusA = a.resource.contactStatus
+            statusA = a.resource.status
         except AttributeError:
             statusA = 0
     else:
         statusA = 0
 
-    if b.is_user:
+    if b.is_contact:
         try:
-            statusB = b.resource.contactStatus
+            statusB = b.resource.status
         except AttributeError:
             statusB = 0
     else:
