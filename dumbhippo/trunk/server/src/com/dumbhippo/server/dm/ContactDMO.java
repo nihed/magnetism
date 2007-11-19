@@ -62,12 +62,36 @@ public abstract class ContactDMO extends DMObject<Guid> {
 		if (nick == null) {
 			UserDMO user = getUser();
 			if (user != null)
-				return user.getName();
-			else
-				return null;
-		} else {
-			return nick;
+				nick = user.getName();
 		}
+		
+		// It should be safe to fall back to a full address of 
+		// some kind, since the contact is only visible to 
+		// the person who added the contact
+		
+		if (nick == null) {
+			Set<String> emails = getEmails();
+			if (!emails.isEmpty())
+				nick = emails.iterator().next();
+		}
+		
+		if (nick == null) {
+			Set<String> xmpps = getXmpps();
+			if (!xmpps.isEmpty())
+				nick = xmpps.iterator().next();
+		}		
+		
+		if (nick == null) {
+			Set<String> aims = getAims();
+			if (!aims.isEmpty())
+				nick = aims.iterator().next();
+		}
+		
+		if (nick == null) {
+			nick = "NO NAME"; // should not happen
+		}
+		
+		return nick;
 	}
 	
 	private UserDMO getUserDMOFromAccount(Account account) {
