@@ -501,12 +501,12 @@ class ProfileItem(hippo.CanvasBox):
 
     def __add_status_link(self, text, current_status, new_status):
         if current_status == new_status:
-            link =hippo.CanvasText(text=text)
+            link = hippo.CanvasText(text=text)
         else:
             def set_new_status(object):
                 model = DataModel(bigboard.globals.server_name)
                 query = model.update(("http://mugshot.org/p/contacts", "setContactStatus"),
-                                     person=self.person.resource,
+                                     contact=self.person.resource,
                                      status=new_status)
                 query.execute()
         
@@ -518,7 +518,7 @@ class ProfileItem(hippo.CanvasBox):
     def __update_contact_status(self, person):
         self.__contact_status_box.remove_all()
         try:
-            status = self.person.resource.contactStatus
+            status = self.person.resource.status
         except AttributeError:
             status = 0
 
@@ -580,8 +580,8 @@ class ProfileItem(hippo.CanvasBox):
             self.__address_box.append(aim)
 
         if person.xmpp != None:
-            aim = hippo.CanvasLink(text=person.aim, xalign=hippo.ALIGNMENT_START)
-            aim.connect('activated', self.__on_activate_xmpp)
+            xmpp = hippo.CanvasLink(text=person.aim, xalign=hippo.ALIGNMENT_START)
+            xmpp.connect('activated', self.__on_activate_xmpp)
             self.__address_box.append(xmpp)
 
     def __on_activate_web(self, canvas_item):
