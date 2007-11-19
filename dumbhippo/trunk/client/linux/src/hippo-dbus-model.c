@@ -265,7 +265,9 @@ handle_update (void            *object,
                                       DBUS_ERROR_INVALID_ARGS,
                                       _("Too many arguments"));
 
-    if (!hippo_dbus_model_client_do_update(model, message, method_uri, params)) {
+    if (!hippo_dbus_model_client_do_update(model,
+                                           hippo_dbus_get_connection(hippo_app_get_dbus(hippo_get_app())),
+                                           message, method_uri, params)) {
         /* We've already validated most arguments, so don't worry too much about getting a
          * good error message if something goes wrong at this point
          */

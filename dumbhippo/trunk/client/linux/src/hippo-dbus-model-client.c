@@ -42,6 +42,7 @@ struct _DataClientConnection {
 
 struct _DataClientQueryClosure {
     HippoDBusModelClient *client;
+    DBusConnection *connection;
     DBusMessage *message;
     DDMDataFetch *fetch;
 };
@@ -90,11 +91,13 @@ data_client_connection_destroy(DataClientConnection *connection)
 
 static DataClientQueryClosure *
 data_client_query_closure_new (HippoDBusModelClient *client,
+                               DBusConnection       *connection,
                                DBusMessage          *message,
                                DDMDataFetch         *fetch)
 {
     DataClientQueryClosure *closure = g_new0(DataClientQueryClosure, 1);
     closure->client = client ? g_object_ref(client) : NULL;
+    closure->connection = connection ? dbus_connection_ref(connection) : NULL;
     closure->message = dbus_message_ref(message);
     closure->fetch = fetch ? ddm_data_fetch_ref(fetch) : NULL;
 
@@ -108,6 +111,8 @@ data_client_query_closure_destroy (DataClientQueryClosure *closure)
         g_object_unref(closure->client);
     if (closure->fetch)
         ddm_data_fetch_unref(closure->fetch);
+    if (closure->connection)
+        dbus_connection_unref(closure->connection);
     dbus_message_unref(closure->message);
     g_free(closure);
 }
@@ -603,7 +608,7 @@ hippo_dbus_model_client_do_query (HippoDBusModelClient *client,
     g_return_val_if_fail(HIPPO_IS_DBUS_MODEL_CLIENT(client), FALSE);
     g_return_val_if_fail(!client->disconnected, FALSE);
     
-    closure = data_client_query_closure_new(client, message, fetch);
+    closure = data_client_query_closure_new(client, client->connection, message, fetch);
 
     fetch_string = ddm_data_fetch_to_string(fetch);
     query = ddm_data_model_query_params(client->model, method_uri, fetch_string, params);
@@ -629,7 +634,7 @@ on_update_success (gpointer data)
     DBusMessage *reply;
 
     reply = dbus_message_new_method_return(closure->message);
-    dbus_connection_send(closure->client->connection, reply, NULL);
+    dbus_connection_send(closure->connection, reply, NULL);
     dbus_message_unref(reply);
     
     data_client_query_closure_destroy(closure);
@@ -637,6 +642,7 @@ on_update_success (gpointer data)
 
 gboolean
 hippo_dbus_model_client_do_update (DDMDataModel *model,
+                                   DBusConnection *connection,
                                    DBusMessage  *message,
                                    const char   *method_uri,
                                    GHashTable   *params)
@@ -644,7 +650,7 @@ hippo_dbus_model_client_do_update (DDMDataModel *model,
     DataClientQueryClosure *closure;
     DDMDataQuery *query;
     
-    closure = data_client_query_closure_new(NULL, message, NULL);
+    closure = data_client_query_closure_new(NULL, connection, message, NULL);
 
     query = ddm_data_model_update_params(model, method_uri, params);
     if (query == NULL) {
