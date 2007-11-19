@@ -42,23 +42,23 @@ class Person(gobject.GObject):
 
         if self.is_contact:
             self.resource.connect(self.__contact_name_changed, "name")
-            self.resource.connect(self.__contact_photo_url_changed, "photoUrl")
             self.resource.connect(self.__contact_aims_changed, "aims")
             self.resource.connect(self.__contact_xmpps_changed, "xmpps")
             self.resource.connect(self.__contact_aim_buddies_changed, "aimBuddies")
             self.resource.connect(self.__contact_xmpp_buddies_changed, "xmppBuddies")
-            ## FIXME restore local buddy functionality
-            #self.resource.connect(self.__contact_local_buddy_changed, "mugshotLocalBuddy")
 
+            self.resource.connect(self.__contact_user_changed, "user")
+
+            self.local_buddy = None
+            self.icon_url = None
+
+            self.__contact_user_changed(resource)
             self.__contact_name_changed(resource)
-            self.__contact_photo_url_changed(resource)
             self.__contact_aims_changed(resource)
             self.__contact_xmpps_changed(resource)
             self.__contact_aim_buddies_changed(resource)
             self.__contact_xmpp_buddies_changed(resource)
 
-            ## FIXME restore local buddy functionality
-            self.local_buddy = None
         else:
             if resource.class_id != 'online-desktop:/p/o/buddy':
                 raise Exception("unknown class ID %s for resource constructing Person" % resource.class_id)
@@ -104,14 +104,6 @@ class Person(gobject.GObject):
             self.display_name = "NO_NAME_"
             
         self.emit("display-name-changed")
-
-    def __contact_photo_url_changed(self, resource):
-        try:
-            self.icon_url = resource.photoUrl
-        except AttributeError:
-            self.icon_url = None
-            
-        self.emit("icon-url-changed")
 
     def __contact_aims_changed(self, resource):
         try:
@@ -169,10 +161,46 @@ class Person(gobject.GObject):
 
         self.emit("xmpp-buddy-changed")
 
-    def __contact_local_buddies_changed(self, resource):
-        ## FIXME, update the fields
+    def __contact_user_changed(self, resource):
+        try:
+            user_resource = resource.user
+        except AttributeError:
+            user_resource = None
 
-        self.emit("local-buddy-changed")
+        _logger.debug("user changed to %s" % str(user_resource))
+
+        if user_resource:
+            user_resource.connect(self.__user_photo_url_changed, "photoUrl")
+            user_resource.connect(self.__user_local_buddy_changed, "mugshotLocalBuddy")            
+
+        self.__user_local_buddy_changed(user_resource)
+        self.__user_photo_url_changed(user_resource)
+
+    def __user_local_buddy_changed(self, user_resource):
+        new_buddy = None
+        if user_resource:
+            try:
+                new_buddy = user_resource.mugshotLocalBuddy
+            except:
+                pass
+        
+        if new_buddy != self.local_buddy:
+            self.local_buddy = new_buddy
+            self.emit("local-buddy-changed")
+
+    def __user_photo_url_changed(self, user_resource):
+        new_icon_url = None
+        if user_resource:
+            try:
+                new_icon_url = user_resource.photoUrl
+            except AttributeError:
+                pass
+            
+        _logger.debug("user photo url now %s" % str(new_icon_url))
+
+        if new_icon_url != self.icon_url:
+            self.icon_url = new_icon_url
+            self.emit("icon-url-changed")
 
     def __buddy_alias_changed(self, resource):
         try:
@@ -335,7 +363,7 @@ class PeopleTracker(Singleton):
         # When we disconnect from the server we freeze existing content, then on reconnect
         # we clear everything and start over.
 
-        contact_props = '[+;name;user;aims;aimBuddies +;mugshotLocalBuddies +;xmpps;xmppBuddies +;emails;status]'
+        contact_props = '[+;name;user [+;photoUrl;mugshotLocalBuddy];aims;aimBuddies +;mugshotLocalBuddies +;xmpps;xmppBuddies +;emails;status]'
 
         query = self.__model.query_resource(self.__model.self_resource, "contacts %s" % contact_props)
         query.add_handler(self.__on_got_self)
