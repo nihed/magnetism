@@ -78,6 +78,16 @@ hippo_im_init(void)
                             "(source.xmpp = target.name and target.protocol = 'xmpp') or "
                             "(source = target.name and target.protocol = 'mugshot-local')");
 
+    /* Add contact property to buddies */
+    ddm_data_model_add_rule(model,
+                            "online-desktop:/p/o/buddy",
+                            "online-desktop:/p/o/buddy#contact",
+                            "http://online.gnome.org/p/o/contact",
+                            DDM_DATA_CARDINALITY_01, FALSE, NULL,
+                            "(source.aims = target.name and target.protocol = 'aim') or "
+                            "(source.xmpps = target.name and target.protocol = 'xmpp') or "
+                            "(source = target.name and target.protocol = 'mugshot-local')");
+    
     /* Add aimBuddy property to users */
     ddm_data_model_add_rule(model,
                             "http://mugshot.org/p/o/user",
@@ -108,7 +118,15 @@ hippo_im_init(void)
                             "online-desktop:/p/o/buddy/reverse#aimBuddies",
                             "online-desktop:/p/o/buddy",
                             DDM_DATA_CARDINALITY_N, FALSE, NULL,
-                            "source.name = target.aims and source.protocol = 'aim' and not source.deleted");    
+                            "source.name = target.aims and source.protocol = 'aim' and not source.deleted");
+    
+    /* Add xmppBuddies property to contacts */
+    ddm_data_model_add_rule(model,
+                            "http://online.gnome.org/p/o/contact",
+                            "online-desktop:/p/o/buddy/reverse#xmppBuddies",
+                            "online-desktop:/p/o/buddy",
+                            DDM_DATA_CARDINALITY_N, FALSE, NULL,
+                            "source.name = target.xmpps and source.protocol = 'xmpp' and not source.deleted");
     
     /* Add aimBuddies property to global object */
     ddm_data_model_add_rule(model,

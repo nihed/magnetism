@@ -43,6 +43,7 @@ gboolean hippo_dbus_model_client_do_query  (HippoDBusModelClient *client,
  * here because of it's close connection to do_query()
  */
 gboolean hippo_dbus_model_client_do_update (DDMDataModel         *model,
+                                            DBusConnection       *connection,
                                             DBusMessage          *message,
                                             const char           *method_uri,
                                             GHashTable           *params);
