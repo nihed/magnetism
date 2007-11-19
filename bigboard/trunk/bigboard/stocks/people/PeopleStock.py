@@ -95,8 +95,8 @@ class PeopleStock(AbstractMugshotStock):
             box.remove(item)
             box.insert_sorted(item, hippo.PACK_IF_FITS, lambda a,b: sort_people(a.person, b.person))
 
-        if person.is_user:
-            person.resource.connect(resort, 'contactStatus')
+        if person.is_contact:
+            person.resource.connect(resort, 'status')
         person.connect('display-name-changed', resort)
         
         map[person] = item
@@ -203,16 +203,26 @@ class PeopleSearchProvider(search.SearchProvider):
         for p in self.__tracker.contacts:
             #_logger.debug("contact: " + str(p))
 
-            email = None
-            if person.is_user:
+            matched = False
+            if query in p.display_name:
+                matched = True
+
+            if p.is_contact and not matched:
+                emails = []
                 try:
-                    email = p.resource.email
+                    emails = person.resource.emails
                 except AttributeError:
                     pass
-
-            aim = p.aim
+                for email in emails:
+                    if query in email.lower():
+                        matched = True
+                        break
             
-            if query in p.display_name or (email and (query in email)) or (p.aim and (query in p.aim)):
+            if not matched:
+                if p.aim and query in p.aim:
+                    matched = True
+                    
+            if matched:
                 results.append(PeopleSearchResult(self, p))
                 
         for p in self.__tracker.aim_people:

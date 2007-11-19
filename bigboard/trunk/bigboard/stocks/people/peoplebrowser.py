@@ -63,8 +63,8 @@ class PeopleList(OverviewTable):
             self.remove(item)
             self.add_column_item(section, item, lambda a,b: sort_people(a.person, b.person))
 
-        if person.is_user:
-            person.resource.connect(resort, 'contactStatus')
+        if person.is_contact:
+            person.resource.connect(resort, 'status')
         person.connect('display-name-changed', resort)
         
         self.__update_visibility(section, item)
