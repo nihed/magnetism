@@ -63,6 +63,7 @@ import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.RevisionControl;
+import com.dumbhippo.server.dm.ContactDMO;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.UserClientMatcher;
 import com.dumbhippo.server.dm.UserDMO;
@@ -131,6 +132,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	public User lookupUser(Guid guid) {
 		return em.find(User.class, guid.toString());
+	}
+	
+	public Contact lookupContact(Guid guid) {
+		return em.find(Contact.class, guid.toString());
 	}
 	
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass,
@@ -362,9 +367,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 
-	private void invalidateContactStatus(Guid contacterId, Guid contactId) {
-		DataService.currentSessionRW().changed(UserDMO.class, contactId, "contactStatus",
-			new UserClientMatcher(contacterId));
+	private void invalidateContactStatus(Guid contacterUserId, Guid contactUserId) {
+		DataService.currentSessionRW().changed(UserDMO.class, contactUserId, "contactStatus",
+			new UserClientMatcher(contacterUserId));
 	}
 	
 	public void addVerifiedOwnershipClaim(User claimedOwner, Resource res) {
@@ -669,14 +674,30 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				contact = doCreateContact(viewer, contactUser.getAccount());
 			}
 			
-			if (contact.getStatus() != status) {
-				contact.setStatus(status);
-				invalidateContactStatus(viewer.getGuid(), contactUser.getGuid());
-				LiveState.getInstance().invalidateContacters(contactUser.getGuid());
-			}
+			setContactStatus(viewpoint, contact, status);
 		}
 	}
 
+	public void setContactStatus(UserViewpoint viewpoint, Contact contact, ContactStatus status) {
+		User viewer = viewpoint.getViewer();
+		
+		if (status == ContactStatus.NONCONTACT) {
+			removeContactPerson(viewer, contact);
+		} else {
+			if (contact.getStatus() != status) {
+				contact.setStatus(status);
+				
+				DataService.currentSessionRW().changed(ContactDMO.class, contact.getGuid(), "status");
+				
+				User contactUser = getUser(contact);
+				if (contactUser != null) {
+					invalidateContactStatus(viewer.getGuid(), contactUser.getGuid());
+					LiveState.getInstance().invalidateContacters(contactUser.getGuid());
+				}
+			}
+		}
+	}	
+	
 	// get all contacts, even if they have no user
 	public Set<Guid> computeContacts(Guid userId) {
 		User user = em.find(User.class, userId.toString());

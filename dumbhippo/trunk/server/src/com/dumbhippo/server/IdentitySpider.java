@@ -164,6 +164,8 @@ public interface IdentitySpider {
 	 */
 	public User lookupUser(Guid guid);
 	
+	public Contact lookupContact(Guid guid);
+	
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, NotFoundException;
 	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id) throws NotFoundException;
 	
@@ -239,6 +241,8 @@ public interface IdentitySpider {
 	
 	public void setContactStatus(UserViewpoint viewpoint, User contactUser, ContactStatus status);
 
+	public void setContactStatus(UserViewpoint viewpoint, Contact contact, ContactStatus status);
+	
 	/** 
 	 * Get all Contact objects associated with a given user. "Get my address book entries."
 	 * Not all Contact in the list will have an associated User

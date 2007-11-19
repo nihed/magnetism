@@ -18,8 +18,21 @@ import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.NotFoundException;
 
+/** 
+ * ContactDMO is not quite a straight wrapper of a Contact in the database, because 
+ * we go ahead and merge the info from the User a contact refers to. This is done 
+ * on the server side because if we had a web view of contacts, we'd want it to 
+ * be consistent with the client.
+ * 
+ * There are several downsides to this approach, though; the change notification 
+ * is busted right now, i.e. changing the User won't update the Contact. In addition 
+ * this approach means sending some info to the client twice, once in the User object
+ * and once as part of the Contact.
+ *
+ */
 @DMO(classId="http://online.gnome.org/p/o/contact", resourceBase="/o/contact")
 @DMFilter("viewer.canSeeContact(this)")
 public abstract class ContactDMO extends DMObject<Guid> {
@@ -45,7 +58,16 @@ public abstract class ContactDMO extends DMObject<Guid> {
 
 	@DMProperty(defaultInclude=true)
 	public String getName() {
-		return contact.getNickname();
+		String nick = contact.getNickname();
+		if (nick == null) {
+			UserDMO user = getUser();
+			if (user != null)
+				return user.getName();
+			else
+				return null;
+		} else {
+			return nick;
+		}
 	}
 	
 	private UserDMO getUserDMOFromAccount(Account account) {
@@ -101,6 +123,26 @@ public abstract class ContactDMO extends DMObject<Guid> {
 		
 		return results;
 	}	
+	
+	@DMProperty(defaultInclude=true)
+	public Set<String> getXmpps() {
+		Set<String> results = new HashSet<String>();
+		
+		for (ContactClaim cc : contact.getResources()) {
+			Resource r = cc.getResource();
+			if (r instanceof XmppResource)
+				results.add(((XmppResource)r).getJid());
+		}
+		
+		// merge in any xmpps from the User if we can see them
+		UserDMO user = getUser();
+		if (user != null) {
+			// user.getXmpps() should be filtered to our viewpoint already
+			results.addAll(user.getXmpps());
+		}
+		
+		return results;
+	}		
 	
 	@DMProperty(defaultInclude=true)
 	public UserDMO getUser() {

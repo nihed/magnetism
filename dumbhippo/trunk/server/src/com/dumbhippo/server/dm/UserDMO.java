@@ -322,6 +322,19 @@ public abstract class UserDMO extends DMObject<Guid> {
 	}
 
 	@DMProperty
+	@DMFilter("viewer.canSeeFriendsOnly(this)")
+	public Set<String> getXmpps() {
+		Set<String> results = new HashSet<String>();
+		for (AccountClaim ac : user.getAccountClaims()) {
+			Resource r = ac.getResource();
+			if (r instanceof XmppResource)
+				results.add(((XmppResource)r).getJid());
+		}
+		
+		return results;
+	}	
+	
+	@DMProperty
 	@DMFilter("viewer.canSeePrivate(this)")
 	public Set<String> getGoogleEnabledEmails() {
 		Set<String> results = new HashSet<String>();
