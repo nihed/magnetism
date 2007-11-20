@@ -599,9 +599,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			GuidPersistable object = 
 				identitySpider.lookupGuidString(GuidPersistable.class, contactObjectId);
 			if (object instanceof Person) {
-			    identitySpider.removeContactPerson(viewpoint.getViewer(), (Person)object);
+			    identitySpider.deleteContactByPerson(viewpoint.getViewer(), (Person)object);
 			} else if (object instanceof Resource) {
-				identitySpider.removeContactResource(viewpoint.getViewer(), (Resource)object);				
+				identitySpider.deleteContactByResource(viewpoint.getViewer(), (Resource)object);				
 			} else {
 				throw new RuntimeException("GuidPersistable for " + contactObjectId + " is neither Person nor Resource");		
 		    }
@@ -623,7 +623,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		    	    groupSystem.removeMember(viewpoint.getViewer(), groupMember);
 		    }
 		    invitationSystem.deleteInvitations(viewpoint, resource);
-		    identitySpider.removeContactResource(viewpoint.getViewer(), resource);	
+		    identitySpider.deleteContactByResource(viewpoint.getViewer(), resource);	
 		} catch (NotFoundException e) {
 			throw new RuntimeException("Guid not found", e);
 		} catch (ParseException e) {

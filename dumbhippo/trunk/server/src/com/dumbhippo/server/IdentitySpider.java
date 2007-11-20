@@ -207,6 +207,17 @@ public interface IdentitySpider {
 	 */
 	public Contact createContact(User user, Resource resource);
 	
+	public void addContactResource(Contact contact, Resource resource);
+	
+	/** 
+	 * Removes a resource from a Contact; notably, does not delete the contact if the contact becomes empty... maybe it should, 
+	 * though that breaks a "contact manager" type of UI.
+	 *  
+	 * @param contact
+	 * @param resource
+	 */
+	public void removeContactResource(Contact contact, Resource resource);
+	
 	/**
 	 * Add a contact to a person's account. 
 	 * 
@@ -221,7 +232,7 @@ public interface IdentitySpider {
 	 * @param user whose contact it is
 	 * @param contactPerson the person to remove from the contact list
 	 */
-	public void removeContactPerson(User user, Person contactPerson);
+	public void deleteContactByPerson(User user, Person contactPerson);
 
 	/**
 	 * Remove a contact resource from a person's account. 
@@ -229,7 +240,7 @@ public interface IdentitySpider {
 	 * @param user whose contact it is
 	 * @param contactResource the resource to remove from the contact list
 	 */
-	public void removeContactResource(User user, Resource contactResource); 
+	public void deleteContactByResource(User user, Resource contactResource); 
 		
 	/**
 	 * Remove a contact from a person's account. 
@@ -237,7 +248,7 @@ public interface IdentitySpider {
 	 * @param user whose contact it is
 	 * @param contactPerson the person to remove from the contact list
 	 */
-	public void removeContact(User user, Contact contact); 
+	public void deleteContact(User user, Contact contact); 
 	
 	public void setContactStatus(UserViewpoint viewpoint, User contactUser, ContactStatus status);
 

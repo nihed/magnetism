@@ -527,35 +527,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Account account = user.getAccount();
 		Contact contact = new Contact(account);
 
-		// FIXME we don't want contacts to have nicknames, so leave it null for
-		// now, but eventually we should change the db schema
-		// contact.setNickname(resource.getHumanReadableString());
 		em.persist(contact);
 
-		// Updating the inverse mappings is essential since they are cached;
-		// if we don't update them the second-level cache will contain stale
-		// data.
-		// Updating them won't actually update the data in the second-level
-		// cache for a non-transactional cache; rather it will flag the data to be
-		// reloaded from the database.
-		//
-		ContactClaim cc = new ContactClaim(contact, resource);
-		em.persist(cc);
-
-		contact.getResources().add(cc);
-		
-		User contactUser = getUser(resource);
-
-		LiveState liveState = LiveState.getInstance();
-		liveState.invalidateContacts(user.getGuid());
-		if (contactUser != null) {
-			invalidateContactStatus(user.getGuid(), contactUser.getGuid());			
-			liveState.invalidateContacters(contactUser.getGuid());
-		}
+		addContactResource(contact, resource);
 
 		return contact;
 	}
-
+	
 	public Contact createContact(User user, Resource resource) {
 		if (user == null)
 			throw new IllegalArgumentException("null contact owner");
@@ -568,29 +546,72 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			contact = findContactByResource(user, resource);
 		} catch (NotFoundException e) {
 			contact = doCreateContact(user, resource);
-
-			// Things work better (especially for now, when we don't fully
-			// implement spidering) if contacts own the account resource for
-			// users, and not just the EmailResource
-			if (!(resource instanceof Account)) {
-				User contactUser = lookupUserByResource(SystemViewpoint
-						.getInstance(), resource);
-
-				if (contactUser != null) {
-					ContactClaim cc = new ContactClaim(contact, contactUser
-							.getAccount());
-					em.persist(cc);
-					contact.getResources().add(cc);
-					logger.debug(
-							"Added contact resource {} pointing to account {}",
-							cc.getContact(), cc.getAccount());
-				}
-			}
 		}
 
 		return contact;
 	}
 
+	public void addContactResource(Contact contact, Resource resource) {
+		// Updating the inverse mappings is essential since they are cached;
+		// if we don't update them the second-level cache will contain stale
+		// data.
+		// Updating them won't actually update the data in the second-level
+		// cache for a non-transactional cache; rather it will flag the data to be
+		// reloaded from the database.
+		//
+		ContactClaim cc = new ContactClaim(contact, resource);
+		em.persist(cc);
+
+		contact.getResources().add(cc);
+		
+		User contactOwner = contact.getAccount().getOwner();		
+		User resourceOwner = getUser(resource);
+		
+		LiveState liveState = LiveState.getInstance();
+		liveState.invalidateContacts(contactOwner.getGuid());
+		if (resourceOwner != null) {
+			// Things work better (especially for now, when we don't fully
+			// implement spidering) if contacts own the account resource for
+			// users, and not just the EmailResource
+			if (!(resource instanceof Account)) {
+				cc = new ContactClaim(contact, resourceOwner.getAccount());
+				em.persist(cc);
+				contact.getResources().add(cc);
+				logger.debug(
+						"Added contact resource {} pointing to account {}",
+						cc.getContact(), cc.getAccount());
+			}
+			
+			invalidateContactStatus(contactOwner.getGuid(), resourceOwner.getGuid());			
+			liveState.invalidateContacters(resourceOwner.getGuid());
+		}
+	}
+		
+	public void removeContactResource(Contact contact, Resource resource) {
+		User removedUser = null;
+		
+		for (ContactClaim cc : contact.getResources()) {
+			if (cc.getResource().equals(resource)) {
+				logger.debug("removing contact claim {}", cc);
+				
+				removedUser = getUser(cc.getResource());
+				contact.getResources().remove(cc);
+				em.remove(cc);
+
+				break;
+			}
+		}
+
+		LiveState liveState = LiveState.getInstance();
+		liveState.invalidateContacts(contact.getAccount().getOwner().getGuid());
+		if (removedUser != null) {
+			invalidateContactStatus(contact.getAccount().getOwner().getGuid(), removedUser.getGuid());
+			liveState.invalidateContacters(removedUser.getGuid());
+		}
+		
+		// we could now have a 'bare' Contact with an empty set of resources
+	}
+	
 	public void addContactPerson(User user, Person contactPerson) {
 		logger.debug("adding contact " + contactPerson + " to account "
 				+ user.getAccount());
@@ -609,7 +630,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 	
-	public void removeContactPerson(User user, Person contactPerson) {
+	public void deleteContactByPerson(User user, Person contactPerson) {
 		logger.debug("removing contact {} from account {}", contactPerson, user.getAccount());
 		
 		Contact contact;
@@ -624,23 +645,23 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			}
 		}
 
-		removeContact(user, contact);
+		deleteContact(user, contact);
 	}
 
-	public void removeContactResource(User user, Resource contactResource) {
+	public void deleteContactByResource(User user, Resource contactResource) {
 		logger.debug("removing contact {} from account {}", contactResource, user.getAccount());
 		
 		Contact contact;
 		try {
 		    contact = findContactByResource(user, contactResource);
-		    removeContact(user, contact);
+		    deleteContact(user, contact);
 		} catch (NotFoundException e) {
 			logger.debug("Resource {} not found as a contact", contactResource);
 			return;
 		}
 	}
 	
-	public void removeContact(User user, Contact contact) {	
+	public void deleteContact(User user, Contact contact) {	
 		Set<User> removedUsers = new HashSet<User>();
 		
 		for (ContactClaim cc : contact.getResources()) {
@@ -664,7 +685,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		User viewer = viewpoint.getViewer();
 		
 		if (status == ContactStatus.NONCONTACT) {
-			removeContactPerson(viewer, contactUser);
+			deleteContactByPerson(viewer, contactUser);
 		} else {
 			Contact contact;
 			
@@ -682,7 +703,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		User viewer = viewpoint.getViewer();
 		
 		if (status == ContactStatus.NONCONTACT) {
-			removeContactPerson(viewer, contact);
+			deleteContactByPerson(viewer, contact);
 		} else {
 			if (contact.getStatus() != status) {
 				contact.setStatus(status);
