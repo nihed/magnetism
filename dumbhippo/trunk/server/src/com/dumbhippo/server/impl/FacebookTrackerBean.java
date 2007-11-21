@@ -145,13 +145,19 @@ public class FacebookTrackerBean implements FacebookTracker {
 	    if (sessionKey != null)
 		    facebookAccount.setSessionKeyValid(true);	
 	    facebookAccount.setApplicationEnabled(applicationEnabled);
-			
-		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
-		ws.setProfileFbml(facebookAccount, createFbmlForUser(viewpoint.getViewer()));
 
 		FacebookEvent loginStatusEvent = getLoginStatusEvent(facebookAccount, true);
 		if (loginStatusEvent != null)  
 		    notifier.onFacebookEvent(facebookAccount.getExternalAccount().getAccount().getOwner(), loginStatusEvent);
+		
+		if (applicationEnabled) {
+			final User user = viewpoint.getViewer();
+		    TxUtils.runOnCommit(new Runnable() {
+			    public void run() {
+			    	updateFbmlForUser(user);
+			    }
+		    });
+		}	 
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.NEVER)
