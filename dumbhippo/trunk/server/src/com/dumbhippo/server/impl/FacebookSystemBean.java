@@ -11,6 +11,7 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -25,11 +26,13 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FacebookEventType;
+import com.dumbhippo.persistence.FacebookResource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
@@ -55,6 +58,9 @@ public class FacebookSystemBean implements FacebookSystem {
 	
 	@EJB
 	private Configuration config;
+	
+	@EJB
+	private IdentitySpider identitySpider;
 	
 	public List<FacebookAccount> getAllAccounts() {
 		List<?> list = em.createQuery("SELECT fa FROM FacebookAccount fa").getResultList();
@@ -224,5 +230,23 @@ public class FacebookSystemBean implements FacebookSystem {
 		    			detachedFacebookAccount.getId());
 		    }
 		} 
+	}
+
+	public void createFacebookResources() {
+		List<FacebookAccount> facebookAccounts = getAllAccounts();
+		for (FacebookAccount facebookAccount : facebookAccounts) {
+			Query q = em.createQuery("from FacebookResource f where f.facebookUserId = :facebookUserId");
+			q.setParameter("facebookUserId", facebookAccount.getFacebookUserId());
+
+			FacebookResource res;
+			try {
+				res = (FacebookResource) q.getSingleResult();
+				logger.warn("resource {} already existed when we were running createFacebookResources", res);
+			} catch (NoResultException e) {
+				res = new FacebookResource(facebookAccount.getFacebookUserId());
+				em.persist(res);
+				identitySpider.addVerifiedOwnershipClaim(facebookAccount.getExternalAccount().getAccount().getOwner(), res);
+			}
+		}
 	}
 }

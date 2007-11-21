@@ -39,6 +39,7 @@ import com.dumbhippo.persistence.ContactStatus;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.FacebookResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
@@ -407,6 +408,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "aim");
 		else if (res instanceof XmppResource)
 			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "xmpp");
+		// TODO: is there a list of property names anywhere that needs to be updated?
+		else if (res instanceof FacebookResource)
+			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "facebook");
 		
 		// People may have listed the newly claimed resource as a contact
 		Collection<Guid> newContacters = findResourceContacters(res);

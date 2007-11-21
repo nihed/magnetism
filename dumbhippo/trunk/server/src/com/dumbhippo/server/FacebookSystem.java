@@ -53,4 +53,7 @@ public interface FacebookSystem {
 	
 	public void updateUserIds(List<FacebookAccount> detachedFacebookAccounts);
 	
+	// this is a migration function needed for creating FacebookResource objects that can be claimed
+	// with AccountClaim; only run this once we make the facebookUserId in FacebookAccount unique and not null
+	public void createFacebookResources();
 }
