@@ -112,6 +112,6 @@
 	<classpathentry kind="lib" path="openfire/src/plugins/userImportExport/lib/msv.jar"/>
 	<classpathentry kind="lib" path="openfire/src/plugins/userImportExport/lib/isorelax.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/dom4j-1.6.1.jar"/>
-	<classpathentry kind="lib" path="HIPPO_TRUNK_LIB/server/facebook.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/facebook.jar"/>
 	<classpathentry kind="output" path="eclipse-build"/>
 </classpath>
