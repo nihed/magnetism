@@ -1380,6 +1380,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			Object result;
 			if (transaction) {
 				result = TxUtils.runInTransaction(execution);
+				DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
 			} else {
 				result = execution.call();
 			}
