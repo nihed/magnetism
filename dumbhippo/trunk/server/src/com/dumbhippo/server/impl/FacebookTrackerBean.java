@@ -13,7 +13,9 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
@@ -21,6 +23,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.Site;
+import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
@@ -28,6 +31,7 @@ import com.dumbhippo.persistence.FacebookAlbumData;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FacebookEventType;
 import com.dumbhippo.persistence.FacebookPhotoDataStatus;
+import com.dumbhippo.persistence.FacebookResource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
@@ -35,6 +39,7 @@ import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.FacebookSystemException;
 import com.dumbhippo.server.FacebookTracker;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
@@ -88,35 +93,24 @@ public class FacebookTrackerBean implements FacebookTracker {
 	@EJB
 	private FacebookSystem facebookSystem;
 	
+	@EJB
+	private IdentitySpider identitySpider;
+	
 	@PostConstruct
 	public void init() {
 		cacheFactory.injectCaches(this);
 	}
 	
 	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String facebookAuthToken) throws FacebookSystemException {
-		ExternalAccount externalAccount = externalAccounts.getOrCreateExternalAccount(viewpoint, ExternalAccountType.FACEBOOK);
-		
-		FacebookAccount facebookAccount;
-		if (externalAccount.getExtra() == null) {
-		    facebookAccount = new FacebookAccount(externalAccount);
-		    em.persist(facebookAccount);
-		    externalAccount.setExtra(Long.toString(facebookAccount.getId()));
-		    externalAccounts.setSentiment(externalAccount, Sentiment.LOVE);
-		} else {
-			facebookAccount = em.find(FacebookAccount.class, Long.parseLong(externalAccount.getExtra()));
-			if (facebookAccount == null)
-				throw new RuntimeException("Invalid FacebookAccount id " + externalAccount.getExtra() + " is stored in externalAccount " + externalAccount);
-			// make sure the sentiment is LOVE; there is currently no way to unset it from the user interface,
-			// but we should allow changing the sentiment to HATE or at least INDIFFERENT in the future
-			externalAccounts.setSentiment(externalAccount, Sentiment.LOVE);
-		}
-		
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
-		ws.updateSession(facebookAccount, facebookAuthToken);
+		Pair<String, String> facebookInfo = ws.getSession(facebookAuthToken);
+		String sessionKey = facebookInfo.getFirst();
+		String facebookUserId = facebookInfo.getSecond();
 		
-		FacebookEvent loginStatusEvent = getLoginStatusEvent(facebookAccount, true);
-		if (loginStatusEvent != null)  
-		    notifier.onFacebookEvent(facebookAccount.getExternalAccount().getAccount().getOwner(), loginStatusEvent);
+		if (sessionKey == null || facebookUserId == null)
+			return;
+		
+		updateOrCreateFacebookAccount(viewpoint, sessionKey, facebookUserId, false);
 	}
 
 	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String sessionKey, String facebookUserId, boolean applicationEnabled) throws FacebookSystemException {
@@ -124,28 +118,58 @@ public class FacebookTrackerBean implements FacebookTracker {
 		
 		FacebookAccount facebookAccount;
 		if (externalAccount.getExtra() == null) {
-		    facebookAccount = new FacebookAccount(externalAccount);
-		    em.persist(facebookAccount);
-		    externalAccount.setExtra(Long.toString(facebookAccount.getId()));
-		    externalAccounts.setSentiment(externalAccount, Sentiment.LOVE);
+			FacebookResource res = getFacebookResource(facebookUserId);
+			facebookAccount = getFacebookAccount(facebookUserId);
+			if (res == null && facebookAccount == null) {
+				res = new FacebookResource(facebookUserId);
+				em.persist(res);
+				identitySpider.addVerifiedOwnershipClaim(viewpoint.getViewer(), res);
+			    facebookAccount = new FacebookAccount(externalAccount, facebookUserId);
+			    em.persist(facebookAccount);
+			    externalAccount.setExtra(Long.toString(facebookAccount.getId()));		
+			} else if (res != null && facebookAccount != null) {
+				AccountClaim ac = res.getAccountClaim();
+				if (ac != null) {
+					if (!ac.getOwner().equals(viewpoint.getViewer())) {
+						throw new FacebookSystemException("Facebook account " + facebookUserId + " is claimed by someone else: " + ac.getOwner());
+					} else {
+						throw new RuntimeException("Facebook account " + facebookUserId + " is claimed by the user " + viewpoint.getViewer() + " whose ExternalAccount for Facebook doesn't reflect the claim");
+					}
+				} else {
+					// we could also check here that there is no ExternalAccount of type Facebook with extra referencing 
+					// this FacebookAccount
+					assert(facebookAccount.getExternalAccount()== null);
+					identitySpider.addVerifiedOwnershipClaim(viewpoint.getViewer(), res);					
+				    externalAccount.setExtra(Long.toString(facebookAccount.getId()));	
+				}
+			} else {
+				throw new RuntimeException("Facebook resource was " + res + ", while Facebook account was " + facebookAccount + ". If one of them exists, the other one should not be null.");				
+			}
 		} else {
 			facebookAccount = em.find(FacebookAccount.class, Long.parseLong(externalAccount.getExtra()));
 			if (facebookAccount == null)
 				throw new RuntimeException("Invalid FacebookAccount id " + externalAccount.getExtra() + " is stored in externalAccount " + externalAccount);
-			externalAccounts.setSentiment(externalAccount, Sentiment.LOVE);
+			if (!facebookAccount.getFacebookUserId().equals(facebookUserId)) {
+				throw new FacebookSystemException("We do not support changing your Facebook account yet.");
+			}
+		    Query resourceQuery = em.createQuery("from FacebookResource f where f.facebookUserId = :facebookUserId");
+			resourceQuery.setParameter("facebookUserId", facebookUserId);
+			FacebookResource res = getFacebookResource(facebookUserId);
+			if (res != null) {
+				assert(res.getAccountClaim().equals(viewpoint.getViewer()));
+			} else {
+				throw new RuntimeException("No FacebookResource found for " + facebookUserId + ", while there exists a corresponding FacebookAccount");
+			}			
 		}
 		
-		if (facebookAccount.getFacebookUserId() != null 
-			&& !facebookAccount.getFacebookUserId().equals(facebookUserId)) {
-				throw new FacebookSystemException("We do not support changing your Facebook account yet.");
-	    }
-			
 	    facebookAccount.setSessionKey(sessionKey);
-		facebookAccount.setFacebookUserId(facebookUserId);
 	    if (sessionKey != null)
 		    facebookAccount.setSessionKeyValid(true);	
 	    facebookAccount.setApplicationEnabled(applicationEnabled);
-
+		// make sure the sentiment is LOVE; there is currently no way to unset it from the user interface,
+		// but we should allow changing the sentiment to HATE or at least INDIFFERENT in the future
+		externalAccounts.setSentiment(externalAccount, Sentiment.LOVE);
+	    
 		FacebookEvent loginStatusEvent = getLoginStatusEvent(facebookAccount, true);
 		if (loginStatusEvent != null)  
 		    notifier.onFacebookEvent(facebookAccount.getExternalAccount().getAccount().getOwner(), loginStatusEvent);
@@ -157,7 +181,27 @@ public class FacebookTrackerBean implements FacebookTracker {
 			    	updateFbmlForUser(user);
 			    }
 		    });
-		}	 
+		}
+	}
+	
+	private FacebookResource getFacebookResource(String facebookUserId) {
+	    Query resourceQuery = em.createQuery("from FacebookResource f where f.facebookUserId = :facebookUserId");
+		resourceQuery.setParameter("facebookUserId", facebookUserId);
+		try {
+			return (FacebookResource)resourceQuery.getSingleResult();
+		} catch (NoResultException e) {
+			return null;
+		}
+	}
+	
+	private FacebookAccount getFacebookAccount(String facebookUserId) {
+		Query accountQuery = em.createQuery("from FacebookAccount f where f.facebookUserId = :facebookUserId");
+		accountQuery.setParameter("facebookUserId", facebookUserId);
+		try {
+			return (FacebookAccount)accountQuery.getSingleResult();
+		} catch (NoResultException e) {
+			return null;
+		}		
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.NEVER)

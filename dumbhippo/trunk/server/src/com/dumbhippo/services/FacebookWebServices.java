@@ -6,10 +6,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -80,9 +78,25 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		}
 		
 		facebookAccount.setSessionKey(handler.getSessionKey());
-		facebookAccount.setFacebookUserId(handler.getFacebookUserId());
 		if (handler.getSessionKey() != null)
 	        facebookAccount.setSessionKeyValid(true);			
+	}
+	
+	public Pair<String, String> getSession(String facebookAuthToken) {
+		List<String> params = new ArrayList<String>();
+		String methodName = "facebook.auth.getSession";
+        params.add("method=" + methodName);
+		params.add("auth_token=" + facebookAuthToken);
+		
+		String wsUrl = generateFacebookRequest(params);
+			
+		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
+		
+		if (handleErrorCode(null, handler, methodName)) {
+			return new Pair<String, String>(null, null);
+		}
+		
+		return new Pair<String, String>(handler.getSessionKey(), handler.getFacebookUserId());
 	}
 	
 	/**
@@ -387,7 +401,8 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
         	return true;
         
 		if (handler.getErrorCode() > 0) {
-		    if (handler.getErrorCode() == FacebookSaxHandler.FacebookErrorCode.API_EC_PARAM_SESSION_KEY.getCode()) {
+		    if (handler.getErrorCode() == FacebookSaxHandler.FacebookErrorCode.API_EC_PARAM_SESSION_KEY.getCode() &&
+		    	facebookAccount != null) {
 			    // setSessionKeyValid to false if we received the response that the session key is no longer valid
 		    	// FIXME this is somewhat conceptually weird, because we shouldn't do web services with a transaction 
 		    	// open, which means modifying a persistence bean won't do anything persistent.
@@ -403,6 +418,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		return false;
 	}
 	
+	/*
 	public void decodeUserIds(List<FacebookAccount> facebookAccounts) {
 		logger.debug("will decode user ids for {} Facebook accounts", facebookAccounts.size());
 		StringBuffer ids = new StringBuffer();
@@ -446,5 +462,5 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		// if some ids were already decoded
 		logger.debug("decoded user ids for {} Facebook accounts", count);
 	}
-	
+	*/
  }

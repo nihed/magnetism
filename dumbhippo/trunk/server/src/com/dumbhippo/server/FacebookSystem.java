@@ -49,9 +49,11 @@ public interface FacebookSystem {
 	public String getApiKey();	
 	
 	// this is a migration function needed for moving from using Facebook beta to using Facebook 1.0 API
-	public void decodeUserIds();
-	
-	public void updateUserIds(List<FacebookAccount> detachedFacebookAccounts);
+	// It is no longer useful and is commented out since the facebook user id should not be changed once
+	// a given FacebookAccount is created.
+	// public void decodeUserIds();
+		
+	// public void updateUserIds(List<FacebookAccount> detachedFacebookAccounts);
 	
 	// this is a migration function needed for creating FacebookResource objects that can be claimed
 	// with AccountClaim; only run this once we make the facebookUserId in FacebookAccount unique and not null
