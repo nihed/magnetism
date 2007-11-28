@@ -1370,7 +1370,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		final Interpreter bsh = makeInterpreter(pw);
 		pw.flush();
 		
-		Callable<Object> execution = new Callable<Object>() {
+		final Callable<Object> execution = new Callable<Object>() {
 			public Object call() throws Exception {
 				return bsh.eval(command);
 			}
@@ -1379,8 +1379,14 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		try {
 			Object result;
 			if (transaction) {
-				result = TxUtils.runInTransaction(execution);
-				DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
+				Callable<Object> dmCallable = new Callable<Object>() {
+					public Object call() throws Exception {
+						DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
+						return execution.call();
+					}
+				};
+				result = TxUtils.runInTransaction(dmCallable);
+
 			} else {
 				result = execution.call();
 			}
