@@ -8,8 +8,6 @@ import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -37,7 +35,6 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.Viewpoint;
-import com.dumbhippo.services.FacebookWebServices;
 
 @Stateless
 public class FacebookSystemBean implements FacebookSystem {
@@ -206,6 +203,7 @@ public class FacebookSystemBean implements FacebookSystem {
 		return apiKey;
 	}
 	
+	/*
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public void decodeUserIds() {
 		FacebookSystem facebookSystem = EJBUtil.defaultLookup(FacebookSystem.class);
@@ -231,6 +229,7 @@ public class FacebookSystemBean implements FacebookSystem {
 		    }
 		} 
 	}
+	*/
 
 	public void createFacebookResources() {
 		List<FacebookAccount> facebookAccounts = getAllAccounts();

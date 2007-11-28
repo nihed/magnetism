@@ -40,9 +40,10 @@ public class FacebookAccount extends DBUnique {
 	
 	protected FacebookAccount() {}
 	
-	public FacebookAccount(ExternalAccount externalAccount) {
+	public FacebookAccount(ExternalAccount externalAccount, String facebookApiUserId) {
 		assert(externalAccount.getAccountType().equals(ExternalAccountType.FACEBOOK));
-		this.externalAccount = externalAccount;
+		setFacebookUserId(facebookApiUserId);
+		this.externalAccount = externalAccount;		
 		this.sessionKeyValid = false;
 		this.unreadMessageCount = -1;
 		this.mostRecentMessageId = -1;
@@ -61,12 +62,12 @@ public class FacebookAccount extends DBUnique {
 		this.applicationEnabled = false;
 	}
 	
-	@Column(nullable=true)
+	@Column(nullable=false, unique=true)
 	public String getFacebookUserId() {
 		return facebookApiUserId;
 	}
 	
-	public void setFacebookUserId(String facebookApiUserId) {
+	protected void setFacebookUserId(String facebookApiUserId) {
 		this.facebookApiUserId = facebookApiUserId;
 	}
 	
