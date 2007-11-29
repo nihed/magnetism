@@ -26,6 +26,7 @@ import com.dumbhippo.persistence.ContactStatus;
 import com.dumbhippo.persistence.DesktopSetting;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.FacebookResource;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
@@ -333,6 +334,17 @@ public abstract class UserDMO extends DMObject<Guid> {
 		
 		return results;
 	}	
+	
+	@DMProperty
+	public String getFacebook() {
+		for (AccountClaim ac : user.getAccountClaims()) {
+			Resource r = ac.getResource();
+			if (r instanceof FacebookResource)
+				return ((FacebookResource)r).getFacebookUserId();
+		}
+		
+		return null;
+	}
 	
 	@DMProperty
 	@DMFilter("viewer.canSeePrivate(this)")

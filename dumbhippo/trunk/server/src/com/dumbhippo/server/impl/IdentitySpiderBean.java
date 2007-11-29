@@ -408,7 +408,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "aim");
 		else if (res instanceof XmppResource)
 			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "xmpp");
-		// TODO: is there a list of property names anywhere that needs to be updated?
 		else if (res instanceof FacebookResource)
 			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "facebook");
 		
