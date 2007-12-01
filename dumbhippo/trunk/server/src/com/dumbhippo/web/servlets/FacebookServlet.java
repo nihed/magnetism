@@ -31,7 +31,7 @@ import com.facebook.api.FacebookSignatureUtil;
 public class FacebookServlet extends AbstractServlet {
 
 	@SuppressWarnings("unused")
-	private static final Logger logger = GlobalSetup.getLogger(FacebookAddServlet.class);
+	private static final Logger logger = GlobalSetup.getLogger(FacebookServlet.class);
 	
 	static final long serialVersionUID = 1;
 	
@@ -43,7 +43,7 @@ public class FacebookServlet extends AbstractServlet {
 	}	
 	
 	@Override
-	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws IOException, HumanVisibleException, HttpException, ServletException, RetryException {
+	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws IOException, HumanVisibleException, HttpException, ServletException, RetryException {
 		logger.debug("full request is: {}", request.toString());
 		logger.debug("context params are:");
         for (Object o : request.getParameterMap().entrySet()) {
