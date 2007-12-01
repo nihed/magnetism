@@ -123,6 +123,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return lookupUserByResource(viewpoint, res);
 	}
 
+	public User lookupUserByFacebookUserId(Viewpoint viewpoint, String facebookUserId) throws NotFoundException {
+		FacebookResource res = lookupFacebook(facebookUserId);
+		if (res == null)
+			return null;
+		return lookupUserByResource(viewpoint, res);
+	}
+	
 	public User lookupUserByResource(Viewpoint viewpoint, Resource resource) {
 		return getUser(resource);
 	}
@@ -203,8 +210,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			public AimResource call() {
 				Query q;
 
-				q = em
-						.createQuery("from AimResource a where a.screenName = :name");
+				q = em.createQuery("from AimResource a where a.screenName = :name");
 				q.setParameter("name", screenName);
 
 				AimResource res;
@@ -249,7 +255,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			}
 		});
 	}
-
+	
 	private <T extends Resource> T lookupResourceByName(Class<T> klass,	String identifier, String name) throws NotFoundException {
 		Query q;
 		String className = klass.getName();
@@ -289,11 +295,20 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		try {
 			jid = XmppResource.canonicalize(jid);
 		} catch (ValidationException e) {
-			throw new NotFoundException("Not a valid AIM address", e);
+			throw new NotFoundException("Not a valid XMPP address", e);
 		}
 		return lookupResourceByName(XmppResource.class, "jid", jid);
 	}
 
+	public FacebookResource lookupFacebook(String facebookUserId) throws NotFoundException {
+		try {
+			facebookUserId = FacebookResource.canonicalize(facebookUserId);
+		} catch (ValidationException e) {
+			throw new NotFoundException("Not a valid Facebook user id", e);
+		}
+		return lookupResourceByName(FacebookResource.class, "facebookUserId", facebookUserId);
+	}
+	
 	public LinkResource lookupLink(final URL url) throws NotFoundException {
 		return lookupResourceByName(LinkResource.class, "url", url.toExternalForm());
 	}

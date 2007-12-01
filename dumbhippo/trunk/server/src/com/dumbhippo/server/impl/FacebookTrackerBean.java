@@ -118,7 +118,12 @@ public class FacebookTrackerBean implements FacebookTracker {
 		
 		FacebookAccount facebookAccount;
 		if (externalAccount.getExtra() == null) {
-			FacebookResource res = getFacebookResource(facebookUserId);
+			FacebookResource res = null;
+			try {
+			    res = identitySpider.lookupFacebook(facebookUserId);
+			} catch (NotFoundException e) {
+				// nothing to do
+			}
 			facebookAccount = getFacebookAccount(facebookUserId);
 			if (res == null && facebookAccount == null) {
 				res = new FacebookResource(facebookUserId);
@@ -154,10 +159,10 @@ public class FacebookTrackerBean implements FacebookTracker {
 			}
 		    Query resourceQuery = em.createQuery("from FacebookResource f where f.facebookUserId = :facebookUserId");
 			resourceQuery.setParameter("facebookUserId", facebookUserId);
-			FacebookResource res = getFacebookResource(facebookUserId);
-			if (res != null) {
+			try {
+				FacebookResource res = identitySpider.lookupFacebook(facebookUserId);
 				assert(res.getAccountClaim().equals(viewpoint.getViewer()));
-			} else {
+			} catch (NotFoundException e) {
 				throw new RuntimeException("No FacebookResource found for " + facebookUserId + ", while there exists a corresponding FacebookAccount");
 			}			
 		}
@@ -181,16 +186,6 @@ public class FacebookTrackerBean implements FacebookTracker {
 			    	updateFbmlForUser(user);
 			    }
 		    });
-		}
-	}
-	
-	private FacebookResource getFacebookResource(String facebookUserId) {
-	    Query resourceQuery = em.createQuery("from FacebookResource f where f.facebookUserId = :facebookUserId");
-		resourceQuery.setParameter("facebookUserId", facebookUserId);
-		try {
-			return (FacebookResource)resourceQuery.getSingleResult();
-		} catch (NoResultException e) {
-			return null;
 		}
 	}
 	
