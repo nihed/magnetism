@@ -14,6 +14,7 @@ import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactStatus;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.FacebookResource;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
@@ -101,6 +102,15 @@ public interface IdentitySpider {
 	 * @throws RetryException 
 	 */
 	public XmppResource getXmpp(String screenName) throws ValidationException, RetryException;
+
+	/**
+	 * Returns the FacebookResource for a given Facebook user id, or null if there is none.
+	 * Does not create a new FacebookResource if it's not there already.
+	 * 
+	 * @param facebookUserId
+	 * @return FacebookResource object
+	 */
+	public FacebookResource lookupFacebook(String facebookUserId) throws NotFoundException;
 	
 	/**
 	 * Returns the XmppResource for a given screen name, or null if there is none.
@@ -144,6 +154,8 @@ public interface IdentitySpider {
 
 	public User lookupUserByAim(Viewpoint viewpoint, String aim) throws NotFoundException;
 
+	public User lookupUserByFacebookUserId(Viewpoint viewpoint, String facebookUserId) throws NotFoundException;
+	
 	/**
 	 * Finds the unique person which owns a resource
 	 * according to our system. i.e. this person has proved

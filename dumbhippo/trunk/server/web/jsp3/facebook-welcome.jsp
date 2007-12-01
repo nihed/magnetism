@@ -12,7 +12,7 @@
 	<dht3:stylesheet name="site" iefixes="true"/>			
 	<dht:faviconIncludes/>
 </head>
-<dht3:page currentPageLink="facebook-add">
+<dht3:page currentPageLink="facebook-welcome">
     <dht3:shinyBox color="grey">
         <div class="dh-page-shinybox-title-large">Thank you for trying out Mugshot application for Facebook!</div>
         <c:choose>
