@@ -1,4 +1,5 @@
 import logging, os, subprocess, urlparse
+from distutils.version import LooseVersion as Version
 
 import gobject, gtk, pango
 import gconf
@@ -18,6 +19,8 @@ import bigboard.google
 import portfoliomanager
 
 _logger = logging.getLogger('bigboard.stocks.SelfStock')
+
+COMPATIBLE_PROTOCOL_VERSION = "0"
 
 GCONF_PREFIX = '/apps/bigboard/'
 
@@ -325,6 +328,14 @@ class SelfStock(AbstractMugshotStock):
             self.emit('info-loaded')
 
     def __on_ready(self):
+        if Version(self._model.global_resource.ddmProtocolVersion) > Version(COMPATIBLE_PROTOCOL_VERSION):
+            text = hippo.CanvasText(text="Upgrade required", font='14px Bold', border=1, border_color=0xFF0000FF)
+            self._box.append(text)        
+            errorbox = CanvasVBox()
+            errorbox.append(hippo.CanvasText(text='Upgrade required'))
+            self._box.set_child_visible(self._signin, False)
+            return
+        
         self._box.set_child_visible(self._signin, self._model.self_resource == None)
         self._box.set_child_visible(self._whereim_box, self._model.self_resource != None)
 
