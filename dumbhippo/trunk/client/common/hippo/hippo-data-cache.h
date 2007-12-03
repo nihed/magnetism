@@ -19,6 +19,7 @@ typedef struct
     char *minimum;
     char *current;
     char *download;
+    char *ddm_protocol_version;
 } HippoClientInfo;
 
 #define HIPPO_TYPE_DATA_CACHE              (hippo_data_cache_get_type ())

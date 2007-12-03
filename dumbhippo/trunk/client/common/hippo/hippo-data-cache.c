@@ -1135,11 +1135,13 @@ hippo_data_cache_set_client_info(HippoDataCache        *cache,
     zero_str(&cache->client_info.current);
     zero_str(&cache->client_info.minimum);
     zero_str(&cache->client_info.download);
+    zero_str(&cache->client_info.ddm_protocol_verson);    
 
     if (info) {
         cache->client_info.current = g_strdup(info->current);
         cache->client_info.minimum = g_strdup(info->minimum);
         cache->client_info.download = g_strdup(info->download);
+        cache->client_info.ddm_protocol_verson = g_strdup(info->ddm_protocol_verson);        
     }
 }
 
