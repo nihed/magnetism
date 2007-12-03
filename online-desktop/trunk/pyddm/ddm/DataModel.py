@@ -108,7 +108,7 @@ class DataModel(AbstractModel):
 
         _logger.debug("Doing initial query")
 
-        query = self.query_resource("online-desktop:/o/global", "self +;webBaseUrl;online")
+        query = self.query_resource("online-desktop:/o/global", "self +;webBaseUrl;online;ddmProtocolVersion")
         query.add_handler(self.__on_initial_query_success)
         query.add_error_handler(self.__on_initial_query_error)
         query.execute()
