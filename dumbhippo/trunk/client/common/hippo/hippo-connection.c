@@ -1558,7 +1558,7 @@ on_client_info_reply(LmMessageHandler *handler,
     HippoConnection *connection = HIPPO_CONNECTION(data);
     LmMessageNode *child;
     HippoClientInfo info;
-    const char *ddm_protocol_verson = NULL;
+    const char *ddm_protocol_version = NULL;
     const char *minimum;
     const char *current;
     const char *download;
