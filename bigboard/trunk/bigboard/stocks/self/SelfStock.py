@@ -328,7 +328,11 @@ class SelfStock(AbstractMugshotStock):
             self.emit('info-loaded')
 
     def __on_ready(self):
-        if Version(self._model.global_resource.ddmProtocolVersion) > Version(COMPATIBLE_PROTOCOL_VERSION):
+        try:
+            protocol_version = self._model.global_resource.ddmProtocolVersion
+        except AttributeError, e:
+            protocol_version = "0"
+        if Version(protocol_version) > Version(COMPATIBLE_PROTOCOL_VERSION):
             text = hippo.CanvasText(text="Upgrade required", font='14px Bold', border=1, border_color=0xFF0000FF)
             self._box.append(text)        
             errorbox = CanvasVBox()
