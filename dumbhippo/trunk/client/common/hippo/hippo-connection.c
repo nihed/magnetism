@@ -1558,6 +1558,7 @@ on_client_info_reply(LmMessageHandler *handler,
     HippoConnection *connection = HIPPO_CONNECTION(data);
     LmMessageNode *child;
     HippoClientInfo info;
+    const char *ddm_protocol_verson = NULL;
     const char *minimum;
     const char *current;
     const char *download;
@@ -1570,18 +1571,21 @@ on_client_info_reply(LmMessageHandler *handler,
     child = message->node->children;
 
     if (!hippo_xml_split(connection->cache, child, NULL,
+    		             "ddmProtocolVersion", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &ddm_protocol_version,
                          "minimum", HIPPO_SPLIT_STRING, &minimum,
                          "current", HIPPO_SPLIT_STRING, &current,
                          "download", HIPPO_SPLIT_STRING, &download,
                          NULL))
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 
-    g_debug("Got clientInfo response: minimum=%s, current=%s, download=%s", minimum, current, download);
+    g_debug("Got clientInfo response: protocol=%s, minimum=%s, current=%s, download=%s", 
+    		ddm_protocol_version ? ddm_protocol_version : "(null)", minimum, current, download);
     
     /* cast off the const */
     info.minimum = (char*)minimum;
     info.current = (char*)current;
     info.download = (char*)download;
+    info.ddm_protocol_version = (char*)ddm_protocol_version;
     hippo_data_cache_set_client_info(connection->cache, &info);
     
     /* FIXME right now this is only on Linux because it's too close to release to 

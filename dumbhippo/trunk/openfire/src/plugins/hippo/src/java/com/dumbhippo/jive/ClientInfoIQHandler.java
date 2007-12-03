@@ -12,6 +12,7 @@ import com.dumbhippo.jive.annotations.IQHandler;
 import com.dumbhippo.jive.annotations.IQMethod;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.downloads.Download;
 import com.dumbhippo.server.downloads.DownloadConfiguration;
@@ -88,6 +89,8 @@ public class ClientInfoIQHandler extends AnnotatedIQHandler {
 		
         Document document = DocumentFactory.getInstance().createDocument();
 		Element childElement = document.addElement("clientInfo", CLIENT_INFO_NAMESPACE);
+		childElement.addAttribute("ddmProtocolVersion", config.getPropertyFatalIfUnset(HippoProperty.DDM_PROTOCOL_VERSION));
+		
 		childElement.addAttribute("minimum", platform.getMinimum());
 		childElement.addAttribute("current", platform.getVersion());
 

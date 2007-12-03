@@ -135,6 +135,16 @@ model_set_initial_properties(HippoModel *hippo_model)
                                       DDM_DATA_CARDINALITY_1,
                                       FALSE, NULL,
                                       &value);
+    
+    value.type = DDM_DATA_STRING;
+    value.u.string = hippo_data_cache_get_client_info(hippo_model->data_cache)->ddm_protocol_version;
+    
+    ddm_data_resource_update_property(global_resource,
+                                      ddm_qname_get(DDM_GLOBAL_RESOURCE_CLASS, "ddmProtocolVersion"),
+                                      DDM_DATA_UPDATE_REPLACE,
+                                      DDM_DATA_CARDINALITY_1,
+                                      FALSE, NULL,
+                                      &value);    
 }
 
 static void
