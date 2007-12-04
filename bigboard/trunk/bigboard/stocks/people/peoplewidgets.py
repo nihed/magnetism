@@ -16,7 +16,9 @@ from ddm import DataModel
 STATUS_MUSIC = 0
 
 def _open_aim(aim):
-    os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'aim:GoIM?screenname=' + cgi.escape(aim))
+    ## purple-remote only allows lowercase "goim" here, unfortunately I'm guessing 
+    ## some other gnome-open handlers only allow "GoIM" ...
+    os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'aim:goim?screenname=' + cgi.escape(aim))
 
 def _open_xmpp(xmpp):
     # FIXME
