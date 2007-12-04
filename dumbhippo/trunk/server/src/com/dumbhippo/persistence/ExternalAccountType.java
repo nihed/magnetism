@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 
+import com.dumbhippo.ExternalAccountInfoSource;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.SortUtils;
 import com.dumbhippo.StringUtils;
@@ -79,6 +80,11 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null && extra != null;
 		}
+		
+		@Override
+		public String getSupportType() {
+			return "post to your MySpace blog";
+		}
 	},
 	FLICKR("Flickr") { // 1
 		@Override
@@ -128,6 +134,18 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}
+		
+		// while handle has the user id we care about, extra has user's e-mail
+		// they can recognize
+		@Override
+		public ExternalAccountInfoSource getInfoSource() {
+			return ExternalAccountInfoSource.EXTRA;
+		}
+		
+		@Override
+		public String getSupportType() {
+			return "upload new photos and photo sets";
+		}
 	},
 	LINKED_IN("LinkedIn")  { // 2
 		@Override
@@ -167,6 +185,11 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}		
+		
+		@Override
+		public String getSupportType() {
+			return "";
+		}
 	},
 	WEBSITE("Website")  { // 3
 		@Override
@@ -210,6 +233,11 @@ public enum ExternalAccountType {
 		@Override
 		public boolean isSupported() {
 			return false;
+		}
+
+		@Override
+		public String getSupportType() {
+			return "";
 		}
 	},
 	FACEBOOK("Facebook")  { // 4
@@ -257,6 +285,16 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return extra != null;
 		}
+		
+		@Override
+		public ExternalAccountInfoSource getInfoSource() {
+			return ExternalAccountInfoSource.CUSTOM;
+		}
+		
+		@Override
+		public String getSupportType() {
+			return " get new messages, wall messages, pokes or when you are tagged in new photos (some updates are only for you to see)";
+		}
 	},
 	ORKUT("Orkut")  { // 5
 		@Override
@@ -276,6 +314,11 @@ public enum ExternalAccountType {
 		@Override
 		public boolean isSupported() {
 			return false;
+		}
+		
+		@Override
+		public String getSupportType() {
+			return "";
 		}
 	},
 	YOUTUBE("YouTube")  { // 6
@@ -330,6 +373,11 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}
+		
+		@Override
+		public String getSupportType() {
+			return "upload new videos";
+		}
 	},
 	XANGA("Xanga")  { // 7
 		@Override
@@ -350,6 +398,11 @@ public enum ExternalAccountType {
 		public boolean isSupported() {
 			return false;
 		}
+		
+		@Override
+		public String getSupportType() {
+			return "";
+		}		
 	},
 	BLOG("Blog") { // 8
 		@Override
@@ -393,6 +446,11 @@ public enum ExternalAccountType {
 		@Override
 		public boolean isSupported() {
 			return false;
+		}
+		
+		@Override
+		public String getSupportType() {
+			return "write new blog entries";
 		}
 	},
 	RHAPSODY("Rhapsody") { // 9
@@ -443,6 +501,16 @@ public enum ExternalAccountType {
 		@Override
 		public boolean isAffectedByMusicSharing() {
 			return true;
+		}
+		
+		@Override
+		public ExternalAccountInfoSource getInfoSource() {
+			return ExternalAccountInfoSource.FEED;
+		}
+		
+		@Override
+		public String getSupportType() {
+			return "play new tracks";
 		}
 	},
 	LASTFM("Last.fm")  { // 10
@@ -505,6 +573,11 @@ public enum ExternalAccountType {
 		public boolean isAffectedByMusicSharing() {
 			return true;
 		}
+		
+		@Override
+		public String getSupportType() {
+			return "are listening to music";
+		}
 	}, 
 	DELICIOUS("del.icio.us") { // 11
 		
@@ -557,7 +630,12 @@ public enum ExternalAccountType {
 		@Override
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
-		}		
+		}
+		
+		@Override
+		public String getSupportType() {
+			return "add public bookmarks";
+		}
 	},
 	TWITTER("Twitter") { // 12
 		@Override
@@ -602,6 +680,11 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}		
+		
+		@Override
+		public String getSupportType() {
+			return "change your status";
+		}
 	},
 	DIGG("Digg") { // 13
 		@Override
@@ -653,6 +736,11 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}
+		
+		@Override
+		public String getSupportType() {
+			return "digg new articles";
+		}
 	},
 	REDDIT("Reddit") { // 14
 		@Override
@@ -699,6 +787,11 @@ public enum ExternalAccountType {
 		@Override
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
+		}
+		
+		@Override
+		public String getSupportType() {
+			return "like, dislike, comment on, or submit articles";
 		}
 	}, 
 	NETFLIX("Netflix") { // 15
@@ -748,6 +841,16 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}	
+		
+		@Override
+		public ExternalAccountInfoSource getInfoSource() {
+			return ExternalAccountInfoSource.FEED;
+		}
+		
+		@Override
+		public String getSupportType() {
+			return "are sent new movies";
+		}
 	},
 	GOOGLE_READER("Google Reader") { // 16
 		@Override
@@ -808,6 +911,16 @@ public enum ExternalAccountType {
 		@Override 
 		public boolean isNew() {
 			return true;
+		}
+		
+		@Override
+		public ExternalAccountInfoSource getInfoSource() {
+			return ExternalAccountInfoSource.LINK;
+		}
+		
+		@Override
+		public String getSupportType() {
+			return "create shared items";
 		}
 	},
 	PICASA("Picasa") { // 17
@@ -876,6 +989,11 @@ public enum ExternalAccountType {
 		public boolean isNew() {
 			return true;
 		}
+		
+		@Override
+		public String getSupportType() {
+			return "add new albums";
+		}
 	},
 	AMAZON("Amazon") { // 18
 		@Override
@@ -934,6 +1052,16 @@ public enum ExternalAccountType {
 		public boolean isNew() {
 			return true;
 		}
+		
+		@Override
+		public ExternalAccountInfoSource getInfoSource() {
+			return ExternalAccountInfoSource.LINK;
+		}
+		
+		@Override
+		public String getSupportType() {
+			return "write reviews or add things to your public wish lists";
+		}
 	};
 	
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountType.class);	
@@ -960,6 +1088,19 @@ public enum ExternalAccountType {
 	abstract public String getLink(String handle, String extra);
 	
 	abstract public String getLinkText(String handle, String extra);
+	
+	/**
+	 * @return the String that should work well in sentences like
+	 * "Your friends get updates when you ..." or
+	 * "Your activity will be updated when you ..."
+	 * This method is abstract, so that it is implemented whenever possible.
+	 * But you should check if the return String for a particular type is not empty
+	 * before using it. Note, there are some sites, like LinkedIn, for which the 
+	 * supported flag is true, but there is nothing that we do based on the information.
+	 * In such cases, it's possible to say something like
+	 * "The link will show up in the list of your accounts."
+	 */
+	abstract public String getSupportType();
 	
 	public String getSiteLink() {
 	    return "";	
@@ -1042,5 +1183,9 @@ public enum ExternalAccountType {
 	public String getDomNodeIdName() {
 		// this usually works as a default, though it's a bit of a hack
 		return getSiteName();
+	}
+	
+	public ExternalAccountInfoSource getInfoSource() {
+		return ExternalAccountInfoSource.HANDLE;
 	}
 }
