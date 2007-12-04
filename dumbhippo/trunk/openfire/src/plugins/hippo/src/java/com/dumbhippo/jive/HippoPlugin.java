@@ -38,6 +38,8 @@ public class HippoPlugin implements Plugin {
 	private List<Module> internalModules = new ArrayList<Module>();
 	
 	private void addIQHandler(IQHandler handler) {
+		Log.debug("Adding IQ handler " + handler.getClass().getName() + " " + handler.getInfo().getNamespace());
+		
 		internalModules.add(handler);
 		handler.start();
 		
