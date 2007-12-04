@@ -697,7 +697,7 @@ dh.account.disableFacebookSession = function() {
 
 dh.account.createMyspaceEntry = function() {
     dh.account.myspaceEntry = new dh.lovehate.Entry('dhMySpace', 'Myspace username', dh.account.initialMyspaceName,
-							'I despise Tom and his space', dh.account.initialMyspaceHateQuip, 'Your friends get updates when you post to your MySpace blog (and more to come).');
+							'I despise Tom and his space', dh.account.initialMyspaceHateQuip, 'Your friends get updates when you post to your MySpace blog.');
 	dh.account.myspaceEntry.onLoveSaved = dh.account.onMyspaceLoveSaved;
 	dh.account.myspaceEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.myspaceEntry, 'MYSPACE');
 	dh.account.myspaceEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.myspaceEntry, 'MYSPACE');
@@ -780,7 +780,7 @@ dh.account.createRedditEntry = function() {
 
 dh.account.createNetflixEntry = function() {	
 	dh.account.netflixEntry = new dh.lovehate.Entry('dhNetflix', 'Netflix \u201CMovies At Home\u201D RSS feed URL', dh.account.initialNetflixUrl,
-					'Movie rental stores are my daily respite', dh.account.initialNetflixHateQuip, 'Your friends get updates when you get new movies.',
+					'Movie rental stores are my daily respite', dh.account.initialNetflixHateQuip, 'Your friends get updates when you are sent new movies.',
 					'http://www.netflix.com/RSSFeeds');
 	dh.account.netflixEntry.setSpecialLoveValue("My Movies At Home");	
 	dh.account.netflixEntry.onLoveSaved = dh.account.onNetflixLoveSaved;

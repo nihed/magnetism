@@ -241,6 +241,24 @@ public class ExternalAccount extends DBUnique {
 	}
 	
 	@Transient
+	public String getAccountInfo() {
+		switch (accountType.getInfoSource()) {
+		case HANDLE:
+			return getHandle();
+		case EXTRA:
+			return getExtra();
+		case LINK:
+			return getLink();
+		case FEED:
+			return getFeed().getLink().getUrl();		
+		case CUSTOM:
+			return "Your Account";
+		default:
+			throw new RuntimeException("Unexpected info source in ExternalAccount::getAccountInfo()");
+		}
+	}
+	
+	@Transient
 	public boolean isLovedAndEnabled() {
 		return hasLovedAndEnabledType(accountType);
 	}
