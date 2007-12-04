@@ -1,6 +1,7 @@
 import cgi
 import os
 import time
+import logging
 
 import gobject
 import gtk
@@ -12,6 +13,8 @@ from bigboard.big_widgets import ActionLink, CanvasMugshotURLImage, CanvasMugsho
 import bigboard.libbig as libbig
 
 from ddm import DataModel
+
+_logger = logging.getLogger("bigboard.stocks.PeopleStock")
 
 STATUS_MUSIC = 0
 
@@ -81,7 +84,6 @@ class PersonItem(PhotoContentItem):
 
             if user:
                 query = model.query_resource(user, "currentTrack +;currentTrackPlayTime")
-                query.add_handler(self.__update_current_track)
                 query.execute()
 
                 user.connect(self.__update_current_track, 'currentTrack')
@@ -161,16 +163,18 @@ class PersonItem(PhotoContentItem):
 
     def __timeout_track(self):
         self.__current_track_timeout = None
-        self.__update_current_track(self.person.resource)
+        self.__update_current_track(self.person.resource.user)
         return False
 
-    def __update_current_track(self, person):
+    def __update_current_track(self, user):
         try:
-            current_track = self.person.resource.currentTrack
-            current_track_play_time = self.person.resource.currentTrackPlayTime / 1000.
+            current_track = user.currentTrack
+            current_track_play_time = user.currentTrackPlayTime / 1000.
         except AttributeError:
             current_track = None
             current_track_play_time = -1
+
+        _logger.debug("current track %s" % str(current_track))
 
         # current_track_play_time < 0, current_track != None might indicate stale
         # current_track data
@@ -185,7 +189,7 @@ class PersonItem(PhotoContentItem):
                 endTime = current_track_play_time + current_track.duration / 1000. # msec => sec
 
             if now >= endTime:
-                current_track = None
+               current_track = None
 
         if current_track != self.__current_track:
             self.__current_track = current_track
@@ -630,7 +634,7 @@ class ProfileItem(hippo.CanvasBox):
 
     def __on_activate_web(self, canvas_item):
         self.emit("close")
-        libbig.show_url(self.person.resource.homeUrl)
+        libbig.show_url(self.person.resource.user.homeUrl)
 
     def __on_activate_email(self, canvas_item):
         self.emit("close")

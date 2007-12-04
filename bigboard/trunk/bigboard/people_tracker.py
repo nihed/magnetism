@@ -40,6 +40,8 @@ class Person(gobject.GObject):
         self.resource = resource
         self.is_contact = self.resource.class_id == "http://online.gnome.org/p/o/contact"
 
+        # self._debug_rank = -100
+
         if self.is_contact:
             self.resource.connect(self.__contact_name_changed, "name")
             self.resource.connect(self.__contact_aims_changed, "aims")
@@ -498,6 +500,21 @@ def __get_buddy_rank(buddy):
     else:
         return RANK_BUDDY_OFFLINE
 
+# import libbig.gutil
+# rank_changed_list = []
+# def rank_changed_idle():
+#     global rank_changed_list
+#     for person in rank_changed_list:
+#         person.emit("display-name-changed")
+#     rank_changed_list = []
+
+# def debug_change_rank(person, rank):
+#     global rank_changed_list
+#     if rank != person._debug_rank:
+#         person._debug_rank = rank
+#         rank_changed_list.append(person)
+#         libbig.gutil.call_idle_once(rank_changed_idle)
+
 def sort_people(a, b):
 
     rankA = 0
@@ -512,6 +529,9 @@ def sort_people(a, b):
         rankB = __get_contact_rank(b)
     else:
         rankB = __get_buddy_rank(b)
+
+    #debug_change_rank(a, rankA)
+    #debug_change_rank(b, rankB)
 
     if rankA != rankB:
         return rankB - rankA
