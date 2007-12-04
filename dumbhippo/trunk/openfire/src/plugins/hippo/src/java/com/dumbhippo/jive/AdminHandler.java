@@ -69,7 +69,7 @@ public class AdminHandler implements RoutableChannelHandler{
 			IQ reply = IQ.createResultIQ(iq);
 			reply.setError(new PacketError(PacketError.Condition.service_unavailable,
 						   				   PacketError.Type.modify,
-										   "No handler found for IQ"));
+										   "No handler found for IQ namespace " + (namespace != null ? namespace : "none")));
 			
 			XMPPServer.getInstance().getPacketRouter().route(reply);
 		} else if (packet instanceof Presence) {

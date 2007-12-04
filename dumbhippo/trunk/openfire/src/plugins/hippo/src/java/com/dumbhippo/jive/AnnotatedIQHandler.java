@@ -141,11 +141,11 @@ public class AnnotatedIQHandler extends org.jivesoftware.openfire.handler.IQHand
 			
 			Element child = request.getChildElement();
 			if (child == null)
-				throw IQException.createBadRequest("No child element");
+				throw IQException.createBadRequest("No child element in IQ");
 			
 			AnnotatedIQMethod iqMethod = methods.get(child.getName());
 			if (iqMethod == null)
-				throw IQException.createBadRequest("Unknown IQ");
+				throw IQException.createBadRequest("Unknown IQ " + child.getName());
 			
 			iqMethod.runIQ(request);
 
