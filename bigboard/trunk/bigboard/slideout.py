@@ -27,6 +27,15 @@ class Slideout(hippo.CanvasWindow):
         self.slideout_from(coords[0] + item.get_allocation()[0] + 4, coords[1])
     
     def slideout_from(self, x, y):
+        screen_w = gtk.gdk.screen_width()
+        screen_h = gtk.gdk.screen_height()
+        (ignorex, ignorey, w, h) = self.get_allocation()
+        offscreen_right = x + w - screen_w
+        offscreen_bottom = y + h - screen_h
+        if offscreen_right > 0:
+            x = x - offscreen_right
+        if offscreen_bottom > 0:
+            y = y - offscreen_bottom
         self.move(x, y)
         self.present_with_time(gtk.get_current_event_time())
     
