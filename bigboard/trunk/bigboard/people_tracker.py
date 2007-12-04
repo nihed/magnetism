@@ -363,14 +363,14 @@ class PeopleTracker(Singleton):
         # When we disconnect from the server we freeze existing content, then on reconnect
         # we clear everything and start over.
 
-        contact_props = '[+;name;user [+;photoUrl;mugshotLocalBuddy];aims;aimBuddies +;mugshotLocalBuddies +;xmpps;xmppBuddies +;emails;status]'
+        contact_props = '[+;name;user [+;photoUrl;mugshotLocalBuddy];aims;aimBuddies [+;icon];mugshotLocalBuddies [+;icon];xmpps;xmppBuddies [+;icon];emails;status]'
 
         query = self.__model.query_resource(self.__model.self_resource, "contacts %s" % contact_props)
         query.add_handler(self.__on_got_self)
         query.execute()
         
         query = self.__model.query_resource(self.__model.global_resource,
-                                            "aimBuddies [+;contact %s]; xmppBuddies [+;contact %s]; mugshotLocalBuddies [+;contact %s]" % (contact_props, contact_props, contact_props))
+                                            "aimBuddies [+;icon;contact %s]; xmppBuddies [+;icon;contact %s]; mugshotLocalBuddies [+;icon;contact %s]" % (contact_props, contact_props, contact_props))
 
         query.add_handler(self.__on_got_global)
         query.execute()
