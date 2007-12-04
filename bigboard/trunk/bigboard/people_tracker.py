@@ -418,30 +418,103 @@ class PeopleTracker(Singleton):
     def __on_xmpp_buddies_changed(self, global_resource):
         self.xmpp_people._update(global_resource.xmppBuddies)
 
-def sort_people(a,b):
-    if a.is_contact:
+## status on a contact is:
+## 0 - not a contact
+## 1 - blocked
+## 2 - cold (never in sidebar)
+## 3 - medium (auto-choose sidebar)
+## 4 - hot (always in sidebar)
+
+STATUS_NOT_A_CONTACT = 0
+STATUS_BLOCKED = 1
+STATUS_COLD = 2
+STATUS_MEDIUM = 3
+STATUS_HOT = 4
+
+## for sorting, we classify with the following 
+## ranks (higher is higher in the sidebar).
+## The ranks have a gap since not being a user counts 
+## as -1 for contacts
+RANK_NO_DISPLAY = -2
+RANK_COLD = 0
+RANK_BUDDY_OFFLINE = 2
+RANK_MEDIUM_OFFLINE = 4
+RANK_BUDDY_ONLINE = 6
+RANK_MEDIUM_ONLINE = 8
+RANK_HOT_OFFLINE = 10
+RANK_HOT_ONLINE = 12
+
+def __get_raw_contact_rank(contact):
+    try:
+        status = contact.resource.status
+    except AttributeError:
+        status = STATUS_NOT_A_CONTACT
+
+    if status == STATUS_NOT_A_CONTACT:
+        return RANK_COLD
+    elif status == STATUS_BLOCKED:
+        return RANK_NO_DISPLAY
+
+    isOnline = False
+
+    try:
+        isOnline = contact.resource.aim_buddy.isOnline
+    except AttributeError:
+        pass
+
+    if not isOnline:
         try:
-            statusA = a.resource.user.status
+            isOnline = contact.resource.xmpp_buddy.isOnline
         except AttributeError:
-            statusA = 0
+            pass
+
+    if isOnline:
+        if status == STATUS_MEDIUM:
+            return RANK_MEDIUM_ONLINE
+        elif status == STATUS_HOT:
+            return RANK_HOT_ONLINE
     else:
-        statusA = 0
+        if status == STATUS_MEDIUM:
+            return RANK_MEDIUM_OFFLINE
+        elif status == STATUS_HOT:
+            return RANK_HOT_OFFLINE
+
+    ## I believe this is not reached
+    return RANK_COLD
+
+def __get_contact_rank(contact):
+    ## subtract 1 if not a user
+    rank = __get_raw_contact_rank(contact)
+    try:
+        user = contact.resource.user
+    except AttributeError:
+        rank = rank - 1
+
+    return rank
+        
+def __get_buddy_rank(buddy):
+    if buddy.resource.isOnline:
+        return RANK_BUDDY_ONLINE
+    else:
+        return RANK_BUDDY_OFFLINE
+
+def sort_people(a, b):
+
+    rankA = 0
+    rankB = 0
+
+    if a.is_contact:
+        rankA = __get_contact_rank(a)
+    else:
+        rankA = __get_buddy_rank(a)
 
     if b.is_contact:
-        try:
-            statusB = b.resource.user.status
-        except AttributeError:
-            statusB = 0
+        rankB = __get_contact_rank(b)
     else:
-        statusB = 0
+        rankB = __get_buddy_rank(b)
 
-    if statusA == 0:
-        statusA = 3
-    if statusB == 0:
-        statusB = 3
-
-    if statusA != statusB:
-        return statusB - statusA
+    if rankA != rankB:
+        return rankB - rankA
 
     return bignative.utf8_collate(a.display_name, b.display_name)
 
