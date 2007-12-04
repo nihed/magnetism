@@ -22,10 +22,10 @@ def on_ready():
     
     
     query = model.query_resource(model.self_resource.resource_id,
-                                 "+;contacts [+;aimBuddies];userContacts +;contacters +;lovedAccounts +;topApplications+;pinnedApplications+;email;aim")
+                                 "+;contacts [+;aimBuddies [+;icon]];userContacts +;contacters +;lovedAccounts +;topApplications+;pinnedApplications+;email;aim")
     query.execute()
 
-    query = model.query_resource("online-desktop:/o/global", "aimBuddies [+;icon]")
+    query = model.query_resource("online-desktop:/o/global", "+;aimBuddies [+;icon]")
     query.execute()
 
 def image_from_data_url(url):
