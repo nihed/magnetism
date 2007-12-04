@@ -319,6 +319,9 @@ class Exchange(hippo.CanvasBox):
     def on_delisted(self):
         _logger.debug("on_delisted exchange %s" % (str(self)))
         self.__unrender_pymodule()
+
+    def on_popped_out_changed(self, popped_out):
+        self.__pymodule.on_popped_out_changed(popped_out)
     
     def __toggle_expanded(self):
         self.__expanded = not self.__expanded
@@ -566,6 +569,10 @@ class BigBoardPanel(dbus.service.Object):
     ## the sidebar is currently popped out. If visible=True, the sidebar
     ## is always popped out, i.e. self.__popped_out should be True always.
 
+    def __notify_stocks_of_popped_out(self):
+        for e in self._exchanges.values():
+            e.on_popped_out_changed(self.__popped_out)
+
     ## Shows the sidebar
     def __enter_popped_out_state(self):
         if not self.__popped_out:
@@ -576,6 +583,9 @@ class BigBoardPanel(dbus.service.Object):
             #self._dw.deiconify()
             self.__queue_strut()
             self.__popped_out = True
+
+            self.__notify_stocks_of_popped_out()
+
             self.EmitPoppedOutChanged()
 
     ## Hides the sidebar, possibly after a delay, only if visible mode is False
@@ -603,6 +613,9 @@ class BigBoardPanel(dbus.service.Object):
         #self._dw.iconify()
         self._dw.hide()
         self.__queue_strut()
+
+        self.__notify_stocks_of_popped_out()        
+
         self.EmitPoppedOutChanged()
 
     ## syncs our current state to a change in the gconf setting for visible mode

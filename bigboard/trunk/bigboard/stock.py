@@ -67,6 +67,10 @@ class Stock(gobject.GObject):
     def _on_delisted(self):
         """The most-derived concrete stock object can override this instead of on_delisted, then not chain up"""
         pass
+
+    def on_popped_out_changed(self, popped_out):
+        """Called when the sidebar is shown or hidden"""
+        pass
         
     def get_id(self):
         return self._id

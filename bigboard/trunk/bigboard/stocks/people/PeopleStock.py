@@ -165,6 +165,9 @@ class PeopleStock(AbstractMugshotStock):
         else:
             self.__people_browser.present()
 
+    def on_popped_out_changed(self, popped_out):
+        if not popped_out:
+            self.__close_slideout()
 
 class PeopleSearchResult(search.SearchResult):
     def __init__(self, provider, person):
