@@ -565,7 +565,7 @@ on_query_success (GSList  *results,
     
     dbus_message_iter_close_container(&iter, &array_iter);
 
-    dbus_connection_send(closure->client->connection, reply, NULL);
+    dbus_connection_send(closure->connection, reply, NULL);
     dbus_message_unref(reply);
     
     data_client_query_closure_destroy(closure);
@@ -588,7 +588,7 @@ on_query_error (DDMDataError    error,
     dbus_message_iter_init_append(reply, &iter);
     dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &code);
     
-    dbus_connection_send(closure->client->connection, reply, NULL);
+    dbus_connection_send(closure->connection, reply, NULL);
     dbus_message_unref(reply);
     
     data_client_query_closure_destroy(closure);
