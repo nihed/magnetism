@@ -81,7 +81,8 @@ model_set_initial_properties(HippoModel *hippo_model)
     DDMDataValue value;
     char *web_server;
     char *web_base_url;
-
+    char *fallback_user_photo_url;
+    
     global_resource = ddm_data_model_ensure_local_resource(hippo_model->ddm_model,
                                                            DDM_GLOBAL_RESOURCE, DDM_GLOBAL_RESOURCE_CLASS);
     ddm_data_model_set_global_resource(hippo_model->ddm_model, global_resource);
@@ -112,6 +113,8 @@ model_set_initial_properties(HippoModel *hippo_model)
      * starting with '/' and so you want to be able to do baseurl + relativeurl
      */
     web_base_url = g_strdup_printf("http://%s", web_server);
+
+    fallback_user_photo_url = g_strdup_printf("%s/images2/user_pix1/nophoto.png", web_base_url);
     
     value.type = DDM_DATA_STRING;
     value.u.string = web_base_url;
@@ -123,6 +126,21 @@ model_set_initial_properties(HippoModel *hippo_model)
                                       FALSE, NULL,
                                       &value);
 
+    /* This should eventually come from the server, but right now the server has no
+     * global object so it would be a pain; putting a hack here to create the property
+     * seems cleaner than hardcoding the no photo url all over BigBoard etc.
+     */
+    value.type = DDM_DATA_URL;
+    value.u.string = fallback_user_photo_url;
+
+    ddm_data_resource_update_property(global_resource,
+                                      ddm_qname_get(DDM_GLOBAL_RESOURCE_CLASS, "fallbackUserPhotoUrl"),
+                                      DDM_DATA_UPDATE_REPLACE,
+                                      DDM_DATA_CARDINALITY_1,
+                                      FALSE, NULL,
+                                      &value);
+
+    g_free(fallback_user_photo_url);
     g_free(web_server);
     g_free(web_base_url);
 
