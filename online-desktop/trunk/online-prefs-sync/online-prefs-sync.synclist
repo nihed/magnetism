@@ -36,4 +36,6 @@
   <key name="/desktop/gnome/background/*" scope="saved-per-user" priority="lowest"/>,
   <key name="/desktop/gnome/interface/*" scope="saved-per-user" priority="lowest"/>,
   <key name="/desktop/gnome/url-handlers/*" scope="saved-per-user" priority="lowest"/>        
+  <!-- for testing syncing a string list and per-machine -->
+  <key name="/apps/deskbar/enabled_handlers" scope="saved-per-user" priority="lowest"/>        
 </online_sync>

@@ -178,7 +178,7 @@ class Resource:
             raise AttributeError(name)
         
         if isinstance(property_id,list):
-            raise Exception("%s is ambiguous. Possibilities are %s" % (name, property_id))
+            raise Exception("%s is ambiguous on class %s resource %s. Possibilities are %s" % (name, self.class_id, self.resource_id, property_id))
 
         return self._get_by_id(property_id)
         
