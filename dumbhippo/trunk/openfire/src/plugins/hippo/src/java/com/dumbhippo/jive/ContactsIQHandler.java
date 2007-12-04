@@ -151,32 +151,27 @@ public class ContactsIQHandler extends AnnotatedIQHandler {
 	
 	@IQMethod(name="createContact", type=IQ.Type.set)
 	@IQParams({ "addressType", "address" })
-	public ContactDMO createContact(UserViewpoint viewpoint, String addressType, String address) throws IQException, RetryException {
+	public void createContact(UserViewpoint viewpoint, String addressType, String address) throws IQException, RetryException {
 		IdentitySpider identitySpider = EJBUtil.defaultLookup(IdentitySpider.class);
 		
 		AddressType a = parseAddressType(addressType);
 		Resource resource = getResourceFromAddress(identitySpider, a, address);
 		
 		Contact contact = identitySpider.createContact(viewpoint.getViewer(), resource);
+		// FIXME we aren't allowed to return a value, but it will be hard for the caller to figure out 
+		// what contact was created
 		
-		DataModel model = DataService.getModel();
-		DMSession session = model.currentSessionRO();
-
-		return session.findUnchecked(ContactDMO.class, contact.getGuid());
 	}
 	
 	@IQMethod(name="createUserContact", type=IQ.Type.set)
 	@IQParams({ "user" })
-	public ContactDMO createUserContact(UserViewpoint viewpoint, UserDMO userDMO) throws IQException, RetryException {
+	public void createUserContact(UserViewpoint viewpoint, UserDMO userDMO) throws IQException, RetryException {
 		IdentitySpider identitySpider = EJBUtil.defaultLookup(IdentitySpider.class);
 		
 		User user = identitySpider.lookupUser(userDMO.getKey());
 		Contact contact = identitySpider.createContact(viewpoint.getViewer(), user.getAccount());
-		
-		DataModel model = DataService.getModel();
-		DMSession session = model.currentSessionRO();
-
-		return session.findUnchecked(ContactDMO.class, contact.getGuid());		
+		// FIXME we aren't allowed to return a value, but it will be hard for the caller to figure out 
+		// what contact was created
 	}
 	
 	@IQMethod(name="deleteContact", type=IQ.Type.set)
