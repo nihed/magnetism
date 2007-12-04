@@ -42,6 +42,8 @@ class Person(gobject.GObject):
 
         # self._debug_rank = -100
 
+        self.icon_url = None
+
         if self.is_contact:
             self.resource.connect(self.__contact_name_changed, "name")
             self.resource.connect(self.__contact_aims_changed, "aims")
@@ -52,7 +54,6 @@ class Person(gobject.GObject):
             self.resource.connect(self.__contact_user_changed, "user")
 
             self.local_buddy = None
-            self.icon_url = None
 
             self.__contact_user_changed(resource)
             self.__contact_name_changed(resource)
@@ -190,6 +191,19 @@ class Person(gobject.GObject):
             self.local_buddy = new_buddy
             self.emit("local-buddy-changed")
 
+    def __set_icon_url(self, new_icon_url):
+        if not new_icon_url:
+            try:
+                new_icon_url = self.resource.model.global_resource.fallbackUserPhotoUrl
+            except AttributeError:
+                pass
+
+        _logger.debug("photo url now %s" % str(new_icon_url))
+
+        if new_icon_url != self.icon_url:
+            self.icon_url = new_icon_url
+            self.emit("icon-url-changed")
+
     def __user_photo_url_changed(self, user_resource):
         new_icon_url = None
         if user_resource:
@@ -197,12 +211,8 @@ class Person(gobject.GObject):
                 new_icon_url = user_resource.photoUrl
             except AttributeError:
                 pass
-            
-        _logger.debug("user photo url now %s" % str(new_icon_url))
 
-        if new_icon_url != self.icon_url:
-            self.icon_url = new_icon_url
-            self.emit("icon-url-changed")
+        self.__set_icon_url(new_icon_url)
 
     def __buddy_alias_changed(self, resource):
         try:
@@ -216,11 +226,13 @@ class Person(gobject.GObject):
         self.emit("display-name-changed")
 
     def __buddy_icon_changed(self, resource):
+        new_icon_url = None
         try:
-            self.icon_url = resource.icon
+            new_icon_url = resource.icon
         except AttributeError:
-            self.icon_url = None
-        self.emit("icon-url-changed")
+            pass
+
+        self.__set_icon_url(new_icon_url)
 
     def __hash__(self):
         return hash(self.resource)
