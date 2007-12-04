@@ -739,6 +739,16 @@ class HTTPSConnectionWithTimeout(httplib.HTTPSConnection):
         self.sock = httplib.FakeSocket(sock, ssl)
 
 
+def data_from_data_url(url):
+    ## data:image/png;base64,BASE64DATA
+
+    i = url.find('base64,')
+    if i < 0:
+        return None
+
+    decoded = base64.b64decode(url[i+len('base64,'):])
+
+    return decoded
 
 class Http(object):
     """An HTTP client that handles:
@@ -935,6 +945,7 @@ The return value is a tuple of (response, content), the first
 being and instance of the 'Response' class, the second being 
 a string that contains the response entity body.
         """
+
         try:
             if headers is None:
                 headers = {}
@@ -943,6 +954,15 @@ a string that contains the response entity body.
 
             if not headers.has_key('user-agent'):
                 headers['user-agent'] = "Python-httplib2/%s" % __version__
+
+            ## special-case data: urls
+            if uri.startswith("data:"):
+                info = { 'status' : '200' }
+                content = data_from_data_url(uri)
+                if not content:
+                    raise Exception("Failed to parse data url")
+                response = Response(info)
+                return (response, content)
 
             uri = iri2uri(uri)
 
@@ -1103,7 +1123,7 @@ class Response(dict):
 
     def __init__(self, info):
         # info is either an email.Message or 
-        # an httplib.HTTPResponse object.
+        # an httplib.HTTPResponse object or just a dict
         if isinstance(info, httplib.HTTPResponse):
             for key, value in info.getheaders(): 
                 self[key] = value 
