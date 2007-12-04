@@ -421,7 +421,7 @@ class PeopleTracker(Singleton):
 def sort_people(a,b):
     if a.is_contact:
         try:
-            statusA = a.resource.status
+            statusA = a.resource.user.status
         except AttributeError:
             statusA = 0
     else:
@@ -429,7 +429,7 @@ def sort_people(a,b):
 
     if b.is_contact:
         try:
-            statusB = b.resource.status
+            statusB = b.resource.user.status
         except AttributeError:
             statusB = 0
     else:

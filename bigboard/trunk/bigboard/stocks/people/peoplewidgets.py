@@ -21,8 +21,8 @@ def _open_aim(aim):
     os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'aim:goim?screenname=' + cgi.escape(aim))
 
 def _open_xmpp(xmpp):
-    # FIXME
-    pass
+    # FIXME, is there some less hardcoded way to do this?
+    os.spawnlp(os.P_NOWAIT, 'purple-remote', 'purple-remote', 'jabber:goim?screenname=' + cgi.escape(xmpp))
 
 def _open_webdav(url):
     # We pass around WebDAV URL's using the standard http:// scheme, but nautilus wants dav://
@@ -56,7 +56,7 @@ class PersonItem(PhotoContentItem):
                                       size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self.__details_box.append(self.__name)
 
-        self.__presence_box = CanvasHBox()
+        self.__presence_box = CanvasHBox(spacing=4)
         self.__details_box.append(self.__presence_box)
         
         self.__statuses = []
@@ -68,6 +68,7 @@ class PersonItem(PhotoContentItem):
         self.__pressed = False
 
         self.__aim_icon = None
+        self.__xmpp_icon = None
 
         self.__current_track = None
         self.__current_track_timeout = None
@@ -91,9 +92,11 @@ class PersonItem(PhotoContentItem):
         self.person.connect('icon-url-changed', self.__update)
         
         self.person.connect('aim-buddy-changed', self.__update_aim_buddy)
+        self.person.connect('xmpp-buddy-changed', self.__update_xmpp_buddy)
         
         self.__update(self.person)
         self.__update_aim_buddy(self.person)
+        self.__update_xmpp_buddy(self.person)
 
     def __update_color(self):
         if self.__pressed:
@@ -145,6 +148,16 @@ class PersonItem(PhotoContentItem):
             if self.__aim_icon:
                 self.__aim_icon.destroy()
                 self.__aim_icon = None
+
+    def __update_xmpp_buddy(self, person):
+        if person.xmpp_buddy:
+            if not self.__xmpp_icon:
+                self.__xmpp_icon = XMPPIcon(person.xmpp_buddy)
+                self.__presence_box.append(self.__xmpp_icon)
+        else:
+            if self.__xmpp_icon:
+                self.__xmpp_icon.destroy()
+                self.__xmpp_icon = None
 
     def __timeout_track(self):
         self.__current_track_timeout = None
@@ -241,28 +254,57 @@ class ExternalAccountIcon(CanvasHBox):
     def __launch_browser(self):
         libbig.show_url(self.__acct.link)
 
-class AimIcon(hippo.CanvasText, DataBoundItem):
+class IMIcon(hippo.CanvasLink, DataBoundItem):
     def __init__(self, buddy):
-        hippo.CanvasText.__init__(self)
+        hippo.CanvasLink.__init__(self)
         DataBoundItem.__init__(self, buddy)
         
-        self.connect("activated", self.__open_aim)
-        self.set_clickable(True)
+        self.connect("activated", self.__on_activated)
 
         self.connect_resource(self.__update)
         self.__update(self.resource)
-        
+
+    def _get_protocol_name(self):
+        raise Exception("implement me")
+
+    def _start_conversation(self):
+        raise Exception("implement me")
+
     def __update(self, buddy):
-        if buddy.status == "Available":
-            markup = "<b>AIM</b> "
-        else:
-            markup = "AIM "
-        self.set_property("markup", markup)
+        text = "%s (%s)" % (self._get_protocol_name(), buddy.status)
+        self.set_property("text", text)
         self.set_property("tooltip", "Chat with %s (%s)" % (buddy.name, buddy.status,))
+        self.set_clickable(buddy.isOnline)
+
+    def __on_activated(self, object):
+        self._start_conversation()
+
+
+class AimIcon(IMIcon):
+    def __init__(self, buddy):
+        IMIcon.__init__(self, buddy)        
         
-    def __open_aim(self, object):
+    def _get_protocol_name(self):
+        return "AIM"
+
+    def _start_conversation(self):
         _open_aim(self.resource.name)
         return True
+
+class XMPPIcon(IMIcon):
+    def __init__(self, buddy):
+        IMIcon.__init__(self, buddy)        
+        
+    def _get_protocol_name(self):
+        if 'gmail.com' in self.resource.name:
+            return "GTalk"
+        else:
+            return "XMPP"
+
+    def _start_conversation(self):
+        _open_xmpp(self.resource.name)
+        return True
+
 
 #
 # The CanvasText item thinks that you always want the full text as the tooltip when
@@ -275,7 +317,7 @@ class NoTooltipText(hippo.CanvasText, hippo.CanvasItem):
     def do_get_tooltip(self,x,y,for_area):
         return ""
 
-gobject.type_register(NoTooltipText)    
+gobject.type_register(NoTooltipText)
     
 class TrackItem(hippo.CanvasBox, DataBoundItem):
     __gsignals__ = {
