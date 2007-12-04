@@ -117,7 +117,7 @@ public class FacebookServlet extends AbstractServlet {
 		    for (ExternalAccountView externalAccount : getSupportedAccounts(user)) {
 			    xml.openElement("fb:editor-custom", "label", externalAccount.getSiteName());
 			    
-			    if (externalAccount.getExternalAccount().isLovedAndEnabled()) {
+			    if (externalAccount.getExternalAccount() != null && externalAccount.getExternalAccount().isLovedAndEnabled()) {
 			        xml.appendEmptyNode("input", "name", externalAccount.getDomNodeIdName(), "value", externalAccount.getExternalAccount().getAccountInfo());
 			    } else {
 			    	xml.appendEmptyNode("input", "name", externalAccount.getDomNodeIdName());
@@ -127,13 +127,13 @@ public class FacebookServlet extends AbstractServlet {
 			    if (externalAccount.isInfoTypeProvidedBySite()) {
 			        xml.append("Enter your ");
 			        xml.appendTextNode("a", externalAccount.getSiteName(), 
-			        		           "href", externalAccount.getExternalAccount().getSiteLink(), 
+			        		           "href", externalAccount.getExternalAccountType().getSiteLink(), 
 			        		           "target", "_blank");
 			        xml.append(" " + externalAccount.getSiteUserInfoType() + ".");
 			    } else {
 			        xml.append("Enter your " + externalAccount.getSiteUserInfoType() + " ");
 			        xml.appendTextNode("a", externalAccount.getSiteName(), 
-			        		           "href", externalAccount.getExternalAccount().getSiteLink(), 
+			        		           "href", externalAccount.getExternalAccountType().getSiteLink(), 
 			        		           "target", "_blank");
 			        xml.append(" account.");			    	
 			    }
