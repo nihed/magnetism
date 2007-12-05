@@ -357,7 +357,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 				throw new RuntimeException("@DMFilter annotation must be on a @DMProperty");
 			}
 			if (viewerDependent != null) {
-				throw new RuntimeException("@DMFilter annotation must be on a @DMProperty");
+				throw new RuntimeException("@Viewpoint annotation must be on a @DMProperty");
 			}
 		
 			return null;
