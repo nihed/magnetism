@@ -148,6 +148,8 @@ class Person(gobject.GObject):
         else:
             self.aim_buddy = None
 
+        self.__refresh_icon_url() # in case we were using the AIM buddy icon
+
         self.emit("aim-buddy-changed")
 
     def __contact_xmpp_buddies_changed(self, resource):
@@ -161,6 +163,8 @@ class Person(gobject.GObject):
             self.xmpp_buddy = self.xmpp_buddies[0]
         else:
             self.xmpp_buddy = None
+
+        self.__refresh_icon_url() # in case we were using the XMPP buddy icon
 
         self.emit("xmpp-buddy-changed")
 
@@ -204,15 +208,39 @@ class Person(gobject.GObject):
             self.icon_url = new_icon_url
             self.emit("icon-url-changed")
 
-    def __user_photo_url_changed(self, user_resource):
+    def __refresh_icon_url(self):
         new_icon_url = None
-        if user_resource:
+        if self.is_contact:
             try:
-                new_icon_url = user_resource.photoUrl
+                new_icon_url = self.resource.user.photoUrl
+            except AttributeError:
+                pass
+
+            ## see if we can get an icon from one of our buddies 
+            no_photo_url = self.resource.model.global_resource.fallbackUserPhotoUrl
+
+            if not new_icon_url or new_icon_url == no_photo_url:
+                try:
+                    new_icon_url = self.xmpp_buddy.icon
+                except AttributeError:
+                    pass
+
+            if not new_icon_url or new_icon_url == no_photo_url:
+                try:
+                    new_icon_url = self.aim_buddy.icon
+                except AttributeError:
+                    pass
+
+        else:
+            try:
+                new_icon_url = self.resource.icon
             except AttributeError:
                 pass
 
         self.__set_icon_url(new_icon_url)
+            
+    def __user_photo_url_changed(self, user_resource):
+        self.__refresh_icon_url()
 
     def __buddy_alias_changed(self, resource):
         try:
@@ -226,13 +254,7 @@ class Person(gobject.GObject):
         self.emit("display-name-changed")
 
     def __buddy_icon_changed(self, resource):
-        new_icon_url = None
-        try:
-            new_icon_url = resource.icon
-        except AttributeError:
-            pass
-
-        self.__set_icon_url(new_icon_url)
+        self.__refresh_icon_url()
 
     def __hash__(self):
         return hash(self.resource)
