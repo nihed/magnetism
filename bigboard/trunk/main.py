@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import os, sys, threading, getopt, logging, StringIO, stat, signal
-import xml.dom.minidom, urllib2, urlparse, subprocess
+import xml.dom.minidom, urllib2, urlparse, subprocess, weakref
 
 import gobject, gtk, pango
 import gnome.ui, gconf
@@ -222,7 +222,7 @@ class StockManager(gobject.GObject):
             pymodule = self.__load_builtin(module, **kwargs)
             if not pymodule: 
                 return None
-        return Exchange(module, self.__widget_environ, pymodule=pymodule, is_notitle=(module.srcurl in self.__hardcoded_urls))
+        return Exchange(module, self.__widget_environ, pymodule=pymodule, is_notitle=(module.srcurl in self.__hardcoded_urls), panel=kwargs['panel'])
         
     def render_url(self, url, **kwargs):
         return self.render(self.load_metainfo(url), **kwargs)
@@ -272,12 +272,12 @@ class GoogleGadgetContainer(hippo.CanvasWidget):
         from pyonlinedesktop import ggadget        
         self.widget = ggadget.Gadget(metainfo, env)
         self.widget.show_all() 
-        self.set_property('widget', self.widget)   
+        self.set_property('widget', self.widget)
          
 class Exchange(hippo.CanvasBox):
     """A renderer for stocks."""
     
-    def __init__(self, metainfo, env, pymodule=None, is_notitle=False):
+    def __init__(self, metainfo, env, pymodule=None, is_notitle=False, panel=None):
         hippo.CanvasBox.__init__(self,  
                                  orientation=hippo.ORIENTATION_VERTICAL,
                                  spacing=4)      
@@ -285,6 +285,9 @@ class Exchange(hippo.CanvasBox):
         self.__metainfo = metainfo
         self.__env = env
         self.__pymodule = pymodule
+        self.__panel = panel
+        self.__themehandler = self.__sync_theme 
+        self.__panel.add_theme_listener(self.__themehandler)
         self.__ticker_text = None
         self.__ticker_container = None
         self.__mini_more_button = None
@@ -310,11 +313,16 @@ class Exchange(hippo.CanvasBox):
             self.append(self.__ticker_container)
         self.__stockbox = hippo.CanvasBox()
         self.append(self.__stockbox)
+        self.__sync_theme()
         if pymodule:
             pymodule.connect('visible', self.__render_pymodule)
             self.__render_pymodule()
         else:
             self.__render_google_gadget()    
+
+    def __sync_theme(self, *args):
+        theme = self.__panel.get_theme()
+        self.set_property('background-color', theme.background)
 
     def on_delisted(self):
         _logger.debug("on_delisted exchange %s" % (str(self)))
@@ -393,7 +401,6 @@ class BigBoardPanel(dbus.service.Object):
 
         self._canvas = hippo.Canvas()
         self._dw.get_content().add(self._canvas)
-        self._canvas.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))
                 
         self._main_box = hippo.CanvasBox(border_right=1, border_color=0x999999FF, padding_bottom=4)
         self._canvas.set_root(self._main_box)
@@ -417,6 +424,10 @@ class BigBoardPanel(dbus.service.Object):
         self._stocks_box = hippo.CanvasBox(spacing=4)
         
         self._main_box.append(self._stocks_box)
+        
+        gconf_client.notify_add(GCONF_PREFIX + 'theme', self.__sync_theme)
+        self.__theme_listeners = []
+        self.__sync_theme()    
   
         gconf_client.notify_add(GCONF_PREFIX + 'expand', self._sync_size)
         self._sync_size()
@@ -545,6 +556,29 @@ class BigBoardPanel(dbus.service.Object):
         _logger.debug("queuing strut")
         self.__queue_strut()
         _logger.debug("queuing strut complete")
+        
+    def __sync_theme(self, *args):
+        _logger.debug("doing theme sync")
+        themename = gconf.client_get_default().get_string(GCONF_PREFIX + 'theme')
+        if themename == 'fedora':
+            from bigboard.themes.fedora import FedoraTheme
+            self.__theme = FedoraTheme.getInstance()
+        else:
+            from bigboard.themes.default import DefaultTheme
+            self.__theme = DefaultTheme.getInstance()
+                  
+        self._canvas.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#%6X" % (self.__theme.background >> 8,)))            
+        for ref in self.__theme_listeners:
+            listener = ref()
+            if listener:
+                listener()
+                
+    # We have manual signals here because we can't subclass GObject
+    def add_theme_listener(self, listener):
+        self.__theme_listeners.append(weakref.ref(listener))
+        
+    def get_theme(self):
+        return self.__theme
 
     @log_except()
     def __idle_do_strut(self):
