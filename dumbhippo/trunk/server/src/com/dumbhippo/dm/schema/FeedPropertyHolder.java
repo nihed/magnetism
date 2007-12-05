@@ -2,8 +2,6 @@ package com.dumbhippo.dm.schema;
 
 import java.util.Iterator;
 
-import javassist.CtMethod;
-
 import com.dumbhippo.dm.Cardinality;
 import com.dumbhippo.dm.DMClient;
 import com.dumbhippo.dm.DMFeed;
@@ -12,10 +10,7 @@ import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.dm.DataModel;
-import com.dumbhippo.dm.annotations.DMFilter;
-import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.PropertyType;
-import com.dumbhippo.dm.annotations.ViewerDependent;
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.filter.AndFilter;
@@ -28,8 +23,8 @@ import com.dumbhippo.dm.store.StoreKey;
 public class FeedPropertyHolder<K, T extends DMObject<K>, KI, TI extends DMObject<KI>> extends ResourcePropertyHolder<K,T,KI,TI> {
 	private CompiledItemFilter<K,T,KI,TI> itemFilter;
 
-	public FeedPropertyHolder(DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, DMClassInfo<KI,TI> classInfo, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
-		super(declaringClassHolder, ctMethod, classInfo, annotation, filter, viewerDependent);
+	public FeedPropertyHolder(ResourcePropertyInfo<K,T,KI,TI> propertyInfo) {
+		super(propertyInfo);
 	}
 	
 	@Override
@@ -46,9 +41,9 @@ public class FeedPropertyHolder<K, T extends DMObject<K>, KI, TI extends DMObjec
 			else
 				toCompile = propertyFilter;
 			
-			itemFilter = FilterCompiler.compileItemFilter(declaringClassHolder.getModel(), 
-													 	  declaringClassHolder.getKeyClass(), 
-														  keyType, toCompile);
+			itemFilter = FilterCompiler.compileItemFilter(getModel(), 
+													 	  propertyInfo.getKeyType(), 
+														  itemKeyType, toCompile);
 		}
 	}
 

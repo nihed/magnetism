@@ -2,15 +2,10 @@ package com.dumbhippo.dm.schema;
 
 import java.util.Collection;
 
-import javassist.CtMethod;
-
 import com.dumbhippo.dm.DMKey;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
-import com.dumbhippo.dm.annotations.DMFilter;
-import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.PropertyType;
-import com.dumbhippo.dm.annotations.ViewerDependent;
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchNode;
 import com.dumbhippo.dm.fetch.FetchVisitor;
@@ -20,14 +15,14 @@ import com.dumbhippo.identity20.Guid;
 
 public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI extends DMObject<KI>> extends DMPropertyHolder<K,T,TI> {
 	private DMClassHolder<KI,TI> resourceClassHolder;
-	protected Class<TI> objectType;
-	protected Class<KI> keyType;
+	protected Class<TI> itemObjectType;
+	protected Class<KI> itemKeyType;
 	private Fetch<KI,TI> defaultChildren;
 
-	public ResourcePropertyHolder(DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, DMClassInfo<KI,TI> classInfo, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
-		super(declaringClassHolder, ctMethod, classInfo.getObjectClass(), annotation, filter, viewerDependent);
-		objectType = classInfo.getObjectClass();
-		keyType = classInfo.getKeyClass();
+	public ResourcePropertyHolder(ResourcePropertyInfo<K,T,KI,TI> propertyInfo) {
+		super(propertyInfo);
+		itemObjectType = propertyInfo.getItemType();
+		itemKeyType = propertyInfo.getItemKeyType();
 		
 		if (annotation.type() != PropertyType.AUTO && annotation.type() != PropertyType.RESOURCE) {
 			throw new RuntimeException("type=PropertyType." + annotation.type() + " found for a property with a resource return type"); 
@@ -41,7 +36,7 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 
 		super.complete();
 		
-		resourceClassHolder = declaringClassHolder.getModel().getClassHolder(keyType, getResourceType());
+		resourceClassHolder = getModel().getClassHolder(itemKeyType, getResourceType());
 
 		if (!"".equals(annotation.defaultChildren())) {
 			defaultInclude = true;
@@ -85,7 +80,7 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 			return resourceClassHolder;
 		else {
 			@SuppressWarnings("unchecked")
-			DMClassHolder<KI,TI> classHolder = declaringClassHolder.getModel().getClassHolder(keyType, getResourceType()); 
+			DMClassHolder<KI,TI> classHolder = getModel().getClassHolder(itemKeyType, getResourceType()); 
 			return classHolder;
 		}
 	}
@@ -103,7 +98,7 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 	public TI rehydrateDMO(Object value, DMSession session) {
 		@SuppressWarnings("unchecked")
 		KI key = (KI)value;
-		return session.findUnchecked(objectType, key);
+		return session.findUnchecked(itemObjectType, key);
 	}
 	
 	protected void visitChild(DMSession session, Fetch<KI,TI> children, TI value, FetchVisitor visitor) {

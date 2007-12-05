@@ -27,6 +27,7 @@ import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.dm.DataModel;
 import com.dumbhippo.dm.annotations.DMFilter;
+import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.dm.annotations.ViewerDependent;
@@ -35,17 +36,20 @@ import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.filter.Filter;
 import com.dumbhippo.dm.parser.FilterParser;
 import com.dumbhippo.dm.parser.ParseException;
+import com.dumbhippo.dm.schema.PropertyInfo.ContainerType;
 
 public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements Comparable<DMPropertyHolder<?,?,?>> {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(DMPropertyHolder.class);
+
+	protected PropertyInfo<K,T,TI> propertyInfo;
 	
-	protected DMClassHolder<K,T> declaringClassHolder;
+	protected Class<TI> elementType;
 	protected DMProperty annotation;
+	
 	protected boolean defaultInclude;
 	private String typeString;
 	protected String propertyId;
-	protected Class<TI> elementType;
 	protected Filter propertyFilter;
 	protected boolean completed;
 	
@@ -56,15 +60,18 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	private String namespace;
 	private long ordering;
 
-	public DMPropertyHolder (DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, Class<TI> elementType, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
+	public DMPropertyHolder (PropertyInfo<K,T,TI> propertyInfo) {
+		this.propertyInfo = propertyInfo;
+		
+		elementType = propertyInfo.getItemType();
+		annotation = propertyInfo.getAnnotation();
+		
+		CtMethod ctMethod = propertyInfo.getCtMethod();
+		
 		boolean booleanOnly = false;
 		
-		this.annotation = annotation;
-		this.declaringClassHolder = declaringClassHolder;
-		this.elementType = elementType;
-		
 		try {
-			method = declaringClassHolder.getBaseClass().getMethod(ctMethod.getName(), new Class[] {});
+			method = propertyInfo.getDeclaringType().getMethod(ctMethod.getName(), new Class[] {});
 		} catch (NoSuchMethodException e) {
 			throw new RuntimeException("Can't find Java class object for method return type", e);
 		}
@@ -97,8 +104,10 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 			throw new RuntimeException("Can't find bytecode for method return or parameters", e);
 		}
 		
+		DMO classAnnotation = propertyInfo.getDeclaringType().getAnnotation(DMO.class);
+		
 		if (annotation.propertyId().equals(""))
-			propertyId = declaringClassHolder.getClassId() + "#" + name;
+			propertyId = classAnnotation.classId() + "#" + name;
 		else
 			propertyId = annotation.propertyId();
 		
@@ -121,9 +130,9 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		
 		computeOrdering();
 		
-		if (filter != null) {
+		if (propertyInfo.getFilter() != null) {
 			try {
-				propertyFilter = FilterParser.parse(filter.value());
+				propertyFilter = FilterParser.parse(propertyInfo.getFilter().value());
 			} catch (ParseException e) {
 				throw new RuntimeException(propertyId + ": Error parsing filter", e);
 			}
@@ -243,7 +252,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	}
 	
 	public DataModel getModel() {
-		return declaringClassHolder.getModel();
+		return propertyInfo.getModel();
 	}
 	
 
@@ -316,14 +325,20 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////
 	
-	enum ContainerType {
-		SINGLE,
-		LIST,
-		SET,
-		FEED
-	};
-	
-	public static <K,T extends DMObject<K>> DMPropertyHolder<K,T,?> getForMethod(DMClassHolder<K,T> classHolder, CtMethod ctMethod) {
+	private static <K, T extends DMObject<K>, TI> PropertyInfo<K,T,TI> createPropertyInfo(Class<T> declaringType, Class<K> keyType, Class<TI> elementType) {
+		return new PropertyInfo<K,T,TI>(declaringType, keyType, elementType);			
+	}
+
+	// The purpose of this is that Java (at least over the set of compilers we support) can't keep track
+	// of the relationship between the parameters of DMClassInfo<>, and know that they are appropriate
+	// to pass when creating ResourcePropertyInfo, so we have to do the construction unchecked.
+	//
+	@SuppressWarnings("unchecked")
+	public static <K, T extends DMObject<K>> ResourcePropertyInfo<K,T,?,?> createResourcePropertyInfo(Class<T> declaringType, Class<K> keyType, DMClassInfo<?,?> elementClassInfo) {
+		return new ResourcePropertyInfo(declaringType, keyType, elementClassInfo.getObjectClass(), elementClassInfo.getKeyClass());			
+	}
+
+	public static <K,T extends DMObject<K>> DMPropertyHolder<K,T,?> getForMethod(DataModel model, Class<T> declaringType, Class<K> keyType, CtMethod ctMethod) {
 		DMProperty property = null;
 		DMFilter filter = null;
 		ViewerDependent viewerDependent = null;
@@ -350,7 +365,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 
 		Method method;
 		try {
-			method = classHolder.getBaseClass().getMethod(ctMethod.getName(), new Class[] {});
+			method = declaringType.getMethod(ctMethod.getName(), new Class[] {});
 		} catch (NoSuchMethodException e) {
 			throw new RuntimeException("Can't find Java class object for method return type", e);
 		}
@@ -386,121 +401,25 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		else
 			throw new RuntimeException("Unexpected non-class type");
 		
-		DMClassInfo<?,? extends DMObject<?>> classInfo = DMClassInfo.getForClass(elementType);
+		DMClassInfo<?,? extends DMObject<?>> elementClassInfo = DMClassInfo.getForClass(elementType);
+		
+		PropertyInfo<K,T,?> propertyInfo;
 
-		if (classInfo != null) {
-			return createResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent, containerType);
-		} else if (elementType.isPrimitive() || (genericElementType == String.class) || (genericElementType == Date.class)) { 
-			return createPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent, containerType);
+		if (elementClassInfo != null) {
+			propertyInfo = createResourcePropertyInfo(declaringType, keyType, elementClassInfo);
+		} else if (elementType.isPrimitive() || (genericElementType == String.class) || (genericElementType == Date.class)) {
+			propertyInfo = createPropertyInfo(declaringType, keyType, elementType);
 		} else {
 			throw new RuntimeException("Property type must be DMObject, primitive, Date, or String");
 		}
-	}
-	
-	// this is somewhat silly, the unchecked is to avoid having type params on the constructor; eclipse 
-	// will let you put them on there in the way we do with most other cases like this (see below for the plain holders for example),
-	// but javac gets confused by that
-	@SuppressWarnings("unchecked")
-	private static <K, T extends DMObject<K>> ListResourcePropertyHolder<K,T,?,?>
-		newListResourcePropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, DMClassInfo<?,? extends DMObject<?>> classInfo,
-			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
-		return new ListResourcePropertyHolder(classHolder, ctMethod, classInfo,
-				property, filter, viewerDependent);
-	}
 
-	// this is somewhat silly, the unchecked is to avoid having type params on the constructor; eclipse 
-	// will let you put them on there in the way we do with most other cases like this (see below for the plain holders for example),
-	// but javac gets confused by that
-	@SuppressWarnings("unchecked")
-	private static <K, T extends DMObject<K>> SetResourcePropertyHolder<K,T,?,?>
-		newSetResourcePropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, DMClassInfo<?,? extends DMObject<?>> classInfo,
-			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
-		return new SetResourcePropertyHolder(classHolder, ctMethod, classInfo,
-				property, filter, viewerDependent);
-	}
-	
-	// this is somewhat silly, the unchecked is to avoid having type params on the constructor; eclipse 
-	// will let you put them on there in the way we do with most other cases like this (see below for the plain holders for example),
-	// but javac gets confused by that
-	@SuppressWarnings("unchecked")
-	private static <K, T extends DMObject<K>> FeedPropertyHolder<K,T,?,?>
-		newFeedPropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, DMClassInfo<?,? extends DMObject<?>> classInfo,
-			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
-		return new FeedPropertyHolder(classHolder, ctMethod, classInfo,
-				property, filter, viewerDependent);
-	}
-	
-	// this is somewhat silly, the unchecked is to avoid having type params on the constructor; eclipse 
-	// will let you put them on there in the way we do with most other cases like this (see below for the plain holders for example),
-	// but javac gets confused by that
-	@SuppressWarnings("unchecked")
-	private static <K, T extends DMObject<K>> SingleResourcePropertyHolder<K,T,?,?>
-		newSingleResourcePropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, DMClassInfo<?,? extends DMObject<?>> classInfo,
-			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
-		return new SingleResourcePropertyHolder(classHolder, ctMethod, classInfo,
-				property, filter, viewerDependent);
-	}
-	
-	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createResourcePropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod,
-			DMClassInfo<?,? extends DMObject<?>> classInfo, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, ContainerType containerType) {
+		propertyInfo.setModel(model);
+		propertyInfo.setCtMethod(ctMethod);
+		propertyInfo.setAnnotation(property);
+		propertyInfo.setFilter(filter);
+		propertyInfo.setViewerDependent(viewerDependent);
+		propertyInfo.setContainerType(containerType);
 		
-		switch (containerType) {
-		case SINGLE:
-			return newSingleResourcePropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
-		case LIST:
-			return newListResourcePropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
-		case SET:
-			return newSetResourcePropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
-		case FEED:
-			return newFeedPropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
-		}
-		
-		throw new RuntimeException("Unexpected container type");
-	}
-
-	// this gives us a "TI" to tack on to the constructor for the property holder, by 
-	// just casting the elementType to give it a TI	
-	@SuppressWarnings("unchecked")
-	private static <K, T extends DMObject<K>, TI> ListPlainPropertyHolder<K,T,TI>
-		newListPlainPropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, Class<?> elementType,
-			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
-		return new ListPlainPropertyHolder<K,T,TI>(classHolder, ctMethod, (Class<TI>) elementType,
-				property, filter, viewerDependent);
-	}	
-	
-	// this gives us a "TI" to tack on to the constructor for the property holder, by 
-	// just casting the elementType to give it a TI	
-	@SuppressWarnings("unchecked")
-	private static <K, T extends DMObject<K>, TI> SetPlainPropertyHolder<K,T,TI>
-		newSetPlainPropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, Class<?> elementType,
-			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
-		return new SetPlainPropertyHolder<K,T,TI>(classHolder, ctMethod, (Class<TI>) elementType,
-				property, filter, viewerDependent);
-	}	
-	
-	// this gives us a "TI" to tack on to the constructor for the property holder, by 
-	// just casting the elementType to give it a TI	
-	@SuppressWarnings("unchecked")
-	private static <K, T extends DMObject<K>, TI> SinglePlainPropertyHolder<K,T,TI>
-		newSinglePlainPropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, Class<?> elementType,
-			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
-		return new SinglePlainPropertyHolder<K,T,TI>(classHolder, ctMethod, (Class<TI>) elementType,
-				property, filter, viewerDependent);
-	}	
-	 
-	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createPlainPropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod,
-			Class<?> elementType, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, ContainerType containerType) {
-		switch (containerType) {
-		case SINGLE:
-			return newSinglePlainPropertyHolderHack(classHolder, ctMethod, elementType, property, filter, viewerDependent);
-		case LIST:
-			return newListPlainPropertyHolderHack(classHolder, ctMethod, elementType, property, filter, viewerDependent);
-		case SET:
-			return newSetPlainPropertyHolderHack(classHolder, ctMethod, elementType, property, filter, viewerDependent);
-		case FEED:
-			throw new RuntimeException("Feed properties must be resource-valued");
-		}
-		
-		throw new RuntimeException("Unexpected container type");
+		return propertyInfo.createPropertyHolder();
 	}
 }

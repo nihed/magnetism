@@ -371,7 +371,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		Map<String, Integer> nameCount = new HashMap<String, Integer>();
 		
 		for (CtMethod method : baseCtClass.getMethods()) {
-			DMPropertyHolder<K,T,?> property = DMPropertyHolder.getForMethod(this, method);
+			DMPropertyHolder<K,T,?> property = DMPropertyHolder.getForMethod(model, baseClass, keyClass, method);
 			if (property != null) {
 				foundProperties.add(property);
 				if (!nameCount.containsKey(property.getName()))

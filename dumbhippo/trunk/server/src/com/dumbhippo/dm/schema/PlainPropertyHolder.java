@@ -2,15 +2,10 @@ package com.dumbhippo.dm.schema;
 
 import java.util.Collection;
 
-import javassist.CtMethod;
-
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
-import com.dumbhippo.dm.annotations.DMFilter;
-import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.PropertyType;
-import com.dumbhippo.dm.annotations.ViewerDependent;
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.filter.CompiledItemFilter;
@@ -20,12 +15,12 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 	protected CompiledItemFilter<K,T,Object,DMObject<Object>> itemFilter;
 	private PropertyType propertyType;
 	
-	public PlainPropertyHolder(DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, Class<TI> elementType, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
-		super(declaringClassHolder, ctMethod, elementType, annotation, filter, viewerDependent);
+	public PlainPropertyHolder(PropertyInfo<K,T,TI> propertyInfo) {
+		super(propertyInfo);
 
 		if (propertyFilter != null)
-			itemFilter = FilterCompiler.compileItemFilter(declaringClassHolder.getModel(), 
-			 										      declaringClassHolder.getKeyClass(), 
+			itemFilter = FilterCompiler.compileItemFilter(getModel(), 
+			 										      propertyInfo.getKeyType(), 
 													      Object.class, propertyFilter);
 		
 		PropertyType derivedType;
@@ -70,6 +65,8 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 					throw new RuntimeException("PropertyType.URL for non-string property");
 				break;
 			case RESOURCE:
+				throw new RuntimeException("PropertyType.RESOURCE for non-resource property");
+			case FEED:
 				throw new RuntimeException("PropertyType.RESOURCE for non-resource property");
 			}
 			

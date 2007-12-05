@@ -5,15 +5,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import javassist.CtMethod;
-
 import com.dumbhippo.dm.Cardinality;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
-import com.dumbhippo.dm.annotations.DMFilter;
-import com.dumbhippo.dm.annotations.DMProperty;
-import com.dumbhippo.dm.annotations.ViewerDependent;
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.filter.AndFilter;
@@ -24,8 +19,8 @@ import com.dumbhippo.dm.filter.FilterCompiler;
 public class SetResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends DMObject<KI>> extends ResourcePropertyHolder<K,T,KI,TI> {
 	private CompiledSetFilter<K,T,KI,TI> setFilter;
 
-	public SetResourcePropertyHolder(DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, DMClassInfo<KI,TI> classInfo, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
-		super(declaringClassHolder, ctMethod, classInfo, annotation, filter, viewerDependent);
+	public SetResourcePropertyHolder(ResourcePropertyInfo<K,T,KI,TI> propertyInfo) {
+		super(propertyInfo);
 	}
 	
 	@Override
@@ -42,9 +37,9 @@ public class SetResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends 
 			else
 				toCompile = propertyFilter;
 			
-			setFilter = FilterCompiler.compileSetFilter(declaringClassHolder.getModel(), 
-														declaringClassHolder.getKeyClass(), 
-														keyType, toCompile);
+			setFilter = FilterCompiler.compileSetFilter(getModel(), 
+														propertyInfo.getKeyType(), 
+														itemKeyType, toCompile);
 		}
 	}
 

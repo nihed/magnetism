@@ -3,20 +3,15 @@ package com.dumbhippo.dm.schema;
 import java.util.Collections;
 import java.util.Set;
 
-import javassist.CtMethod;
-
 import com.dumbhippo.dm.Cardinality;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
-import com.dumbhippo.dm.annotations.DMFilter;
-import com.dumbhippo.dm.annotations.DMProperty;
-import com.dumbhippo.dm.annotations.ViewerDependent;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 
 public class SetPlainPropertyHolder<K, T extends DMObject<K>, TI>  extends PlainPropertyHolder<K,T,TI> {
-	public SetPlainPropertyHolder(DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, Class<TI> elementType, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
-		super(declaringClassHolder, ctMethod, elementType, annotation, filter, viewerDependent);
+	public SetPlainPropertyHolder(PropertyInfo<K,T,TI> propertyInfo) {
+		super(propertyInfo);
 	}
 
 	@Override
