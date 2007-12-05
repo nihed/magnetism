@@ -205,13 +205,18 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	}
 	
 	public void processInjections(DMSession session, T t) {
-		for (Field field : baseClass.getDeclaredFields()) {
-			if (field.isAnnotationPresent(Inject.class)) {
-				injectField(session, t, field);
-			} else if (field.isAnnotationPresent(EJB.class)) {
-				Object bean = EJBUtil.defaultLookup(field.getType());
-				setField(t, field, bean);			
+		Class<?> clazz = baseClass;
+		while (clazz != null) {
+			for (Field field : clazz.getDeclaredFields()) {
+				if (field.isAnnotationPresent(Inject.class)) {
+					injectField(session, t, field);
+				} else if (field.isAnnotationPresent(EJB.class)) {
+					Object bean = EJBUtil.defaultLookup(field.getType());
+					setField(t, field, bean);			
+				}
 			}
+			
+			clazz = clazz.getSuperclass();
 		}
 	}
 	
@@ -370,7 +375,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		List<DMPropertyHolder<K,T,?>> foundProperties = new ArrayList<DMPropertyHolder<K,T,?>>();
 		Map<String, Integer> nameCount = new HashMap<String, Integer>();
 		
-		for (CtMethod method : baseCtClass.getMethods()) {
+		for (CtMethod method : baseCtClass.getDeclaredMethods()) {
 			DMPropertyHolder<K,T,?> property = DMPropertyHolder.getForMethod(model, baseClass, keyClass, method);
 			if (property != null) {
 				foundProperties.add(property);
@@ -379,6 +384,27 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 				else
 					nameCount.put(property.getName(), 1 + nameCount.get(property.getName()));
 			}
+		}
+		
+		Class<?> parentClass = baseClass.getSuperclass();
+		while (parentClass != null) {
+			DMO parentAnnotation = parentClass.getAnnotation(DMO.class);
+			if (parentAnnotation != null) {
+				DMClassHolder<?,?> parentClassHolder = model.getClassHolder(parentClass);
+				
+				for (int i = 0; i < parentClassHolder.getPropertyCount(); i++) {
+					@SuppressWarnings("unchecked")
+					DMPropertyHolder<K,T,?> property = (DMPropertyHolder<K,T,?>)parentClassHolder.getProperty(i);
+					
+					foundProperties.add(property);
+					if (!nameCount.containsKey(property.getName()))
+						nameCount.put(property.getName(), 1);
+					else
+						nameCount.put(property.getName(), 1 + nameCount.get(property.getName()));
+				}
+			}
+			
+			parentClass = parentClass.getSuperclass();
 		}
 		
 		// Sort the properties based on the ordering we impose on DMPropertyHolder 

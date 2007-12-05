@@ -13,6 +13,7 @@ import org.hibernate.ejb.HibernateEntityManagerFactory;
 import com.dumbhippo.dm.dm.TestBlogEntryDMO;
 import com.dumbhippo.dm.dm.TestGroupDMO;
 import com.dumbhippo.dm.dm.TestGroupMemberDMO;
+import com.dumbhippo.dm.dm.TestSuperUserDMO;
 import com.dumbhippo.dm.dm.TestUserDMO;
 
 public class TestSupport {
@@ -39,6 +40,7 @@ public class TestSupport {
 							  TestViewpoint.class,
 							  new TestViewpoint(null));
 		model.addDMClass(TestUserDMO.class);
+		model.addDMClass(TestSuperUserDMO.class);
 		model.addDMClass(TestGroupDMO.class);
 		model.addDMClass(TestGroupMemberDMO.class);
 		model.addDMClass(TestBlogEntryDMO.class);
