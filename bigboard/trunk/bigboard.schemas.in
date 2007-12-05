@@ -2,6 +2,16 @@
 <gconfschemafile>
   <schemalist>
     <schema>
+      <key>/schemas/apps/bigboard/theme</key>
+      <applyto>/apps/bigboard/theme</applyto>
+      <owner>bigboard</owner>
+      <type>string</type>
+      <default>fedora</default>
+      <locale name="C">
+        <short>Graphical theme used for display</short>
+      </locale>
+    </schema>  
+    <schema>
       <key>/schemas/apps/bigboard/focus_key</key>
       <applyto>/apps/bigboard/focus_key</applyto>
       <owner>bigboard</owner>
