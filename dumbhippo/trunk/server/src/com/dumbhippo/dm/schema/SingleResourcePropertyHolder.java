@@ -1,14 +1,9 @@
 package com.dumbhippo.dm.schema;
 
-import javassist.CtMethod;
-
 import com.dumbhippo.dm.Cardinality;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
-import com.dumbhippo.dm.annotations.DMFilter;
-import com.dumbhippo.dm.annotations.DMProperty;
-import com.dumbhippo.dm.annotations.ViewerDependent;
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.filter.AndFilter;
@@ -19,8 +14,8 @@ import com.dumbhippo.dm.filter.FilterCompiler;
 public class SingleResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends DMObject<KI>> extends ResourcePropertyHolder<K,T,KI,TI> {
 	private CompiledItemFilter<K,T,KI,TI> itemFilter;
 
-	public SingleResourcePropertyHolder(DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, DMClassInfo<KI,TI> classInfo, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
-		super(declaringClassHolder, ctMethod, classInfo, annotation, filter, viewerDependent);
+	public SingleResourcePropertyHolder(ResourcePropertyInfo<K,T,KI,TI> propertyInfo) {
+		super(propertyInfo);
 	}
 
 	@Override
@@ -40,9 +35,9 @@ public class SingleResourcePropertyHolder<K, T extends DMObject<K>, KI, TI exten
 			else
 				toCompile = propertyFilter;
 			
-			itemFilter = FilterCompiler.compileItemFilter(declaringClassHolder.getModel(), 
-														  declaringClassHolder.getKeyClass(), 
-														  keyType, toCompile);
+			itemFilter = FilterCompiler.compileItemFilter(getModel(), 
+														  propertyInfo.getKeyType(), 
+														  itemKeyType, toCompile);
 		}
 	}
 

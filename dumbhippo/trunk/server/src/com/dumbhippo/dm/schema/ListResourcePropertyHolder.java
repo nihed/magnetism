@@ -5,15 +5,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import javassist.CtMethod;
-
 import com.dumbhippo.dm.Cardinality;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
-import com.dumbhippo.dm.annotations.DMFilter;
-import com.dumbhippo.dm.annotations.DMProperty;
-import com.dumbhippo.dm.annotations.ViewerDependent;
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.filter.AndFilter;
@@ -24,8 +19,8 @@ import com.dumbhippo.dm.filter.FilterCompiler;
 public class ListResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends DMObject<KI>> extends ResourcePropertyHolder<K,T,KI,TI> {
 	private CompiledListFilter<K,T,KI,TI> listFilter;
 
-	public ListResourcePropertyHolder(DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, DMClassInfo<KI,TI> classInfo, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
-		super(declaringClassHolder, ctMethod, classInfo, annotation, filter, viewerDependent);
+	public ListResourcePropertyHolder(ResourcePropertyInfo<K,T,KI,TI> propertyInfo) {
+		super(propertyInfo);
 	}
 	
 	@Override
@@ -42,9 +37,9 @@ public class ListResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends
 			else
 				toCompile = propertyFilter;
 			
-			listFilter = FilterCompiler.compileListFilter(declaringClassHolder.getModel(), 
-														  declaringClassHolder.getKeyClass(), 
-														  keyType, toCompile);
+			listFilter = FilterCompiler.compileListFilter(getModel(), 
+														  propertyInfo.getKeyType(), 
+														  itemKeyType, toCompile);
 		}
 	}
 
