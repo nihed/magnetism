@@ -540,6 +540,11 @@ public enum ExternalAccountType {
 		public ExternalAccountCategory getCategory() {
 			return ExternalAccountCategory.MUSIC;
 		}
+		
+		@Override
+		public String getHelpUrl() {
+			return "http://www.rhapsody.com/myrhapsody/rss.html";
+		}
 	},
 	LASTFM("Last.fm")  { // 10
 		@Override
@@ -909,6 +914,11 @@ public enum ExternalAccountType {
 		public ExternalAccountCategory getCategory() {
 			return ExternalAccountCategory.CONSUMER;
 		}
+		
+		@Override
+		public String getHelpUrl() {
+			return "http://www.netflix.com/RSSFeeds";
+		}
 	},
 	GOOGLE_READER("Google Reader") { // 16
 		@Override
@@ -984,6 +994,11 @@ public enum ExternalAccountType {
 		@Override
 		public ExternalAccountCategory getCategory() {
 			return ExternalAccountCategory.LINK_SHARING;
+		}
+		
+		@Override
+		public String getHelpUrl() {
+			return "http://www.google.com/reader/view";
 		}
 	},
 	PICASA("Picasa") { // 17
@@ -1134,6 +1149,11 @@ public enum ExternalAccountType {
 		@Override
 		public ExternalAccountCategory getCategory() {
 			return ExternalAccountCategory.CONSUMER;
+		}
+		
+		@Override
+		public String getHelpUrl() {
+			return "http://www.amazon.com/gp/pdp/profile/";
 		}
 	};
 	
@@ -1289,5 +1309,9 @@ public enum ExternalAccountType {
 	// this method allows us to call Method.invoke to get the category in SortUtils
 	public ExternalAccountCategory getCategoryOuter() {
 		return getCategory();
+	}
+	
+	public String getHelpUrl() {
+		return "";
 	}
 }
