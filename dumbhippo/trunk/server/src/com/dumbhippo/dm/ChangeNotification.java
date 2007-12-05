@@ -12,6 +12,10 @@ import com.dumbhippo.dm.schema.FeedPropertyHolder;
 /**
  * ChangeNotification represents pending notifications for a single resource.
  * 
+ * Note that this class must be serializable, because we send it over JMS when
+ * broadcasting changes. That's why we store Class<T> rather than DMClassHolder<K,T>,
+ * even though it means we have to look up the DMClassHolder each time.
+ * 
  * @param <K>
  * @param <T>
  */
@@ -20,20 +24,20 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 
 	private static Logger logger = GlobalSetup.getLogger(ChangeNotification.class);
 
-	private DMClassHolder<K, T> classHolder;
+	private Class<T> clazz;
 	private K key;
 	private long propertyMask; // bitset
 	private ClientMatcher matcher;
+	
+	private long[] feedTimestamps;
 
-	private long feedTimestamps[];
-
-	public ChangeNotification(DMClassHolder<K,T> classHolder, K key) {
-		this.classHolder = classHolder;
+	public ChangeNotification(Class<T> clazz, K key) {
+		this.clazz = clazz;
 		this.key = key;
 	}
 	
-	public ChangeNotification(DMClassHolder<K,T> classHolder, K key, ClientMatcher matcher) {
-		this.classHolder = classHolder;
+	public ChangeNotification(Class<T> clazz, K key, ClientMatcher matcher) {
+		this.clazz = clazz;
 		this.key = key;
 		this.matcher = matcher;
 	}
@@ -42,7 +46,10 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 		this.propertyMask |= 1 << propertyIndex;
 	}
 	
-	public void addProperty(String propertyName) {
+	public void addProperty(DataModel model, String propertyName) {
+		@SuppressWarnings("unchecked")
+		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
+
 		int propertyIndex = classHolder.getPropertyIndex(propertyName);
 		if (propertyIndex < 0)
 			throw new RuntimeException("Class " + classHolder.getBaseClass().getName() + " has no property " + propertyName);
@@ -54,7 +61,10 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 		addProperty(propertyIndex);
 	}
 	
-	public void addFeedProperty(String propertyName, long itemTimestamp) {
+	public void addFeedProperty(DataModel model, String propertyName, long itemTimestamp) {
+		@SuppressWarnings("unchecked")
+		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
+
 		int propertyIndex = classHolder.getPropertyIndex(propertyName);
 		if (propertyIndex < 0)
 			throw new RuntimeException("Class " + classHolder.getBaseClass().getName() + " has no property " + propertyName);
@@ -78,6 +88,9 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 	}
 	
 	public void invalidate(DataModel model, long timestamp) {
+		@SuppressWarnings("unchecked")
+		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
+		
 		long v = propertyMask;
 		int propertyIndex = 0;
 		while (v != 0) {
@@ -102,6 +115,9 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 	}
 
 	public void resolveNotifications(DataModel model, ClientNotificationSet result) {
+		@SuppressWarnings("unchecked")
+		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
+
 		model.getStore().resolveNotifications(classHolder, key, propertyMask, result, matcher);
 	}
 	
@@ -112,16 +128,16 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 		
 		ChangeNotification<?,?> other = (ChangeNotification<?,?>)o;
 		
-		return classHolder == other.classHolder && key.equals(other.key);
+		return clazz == other.clazz && key.equals(other.key);
 	}
 	
 	@Override
 	public int hashCode() {
-		return 11 * classHolder.hashCode() + 17 * key.hashCode();
+		return 11 * clazz.hashCode() + 17 * key.hashCode();
 	}
 	
 	@Override
 	public String toString() {
-		return classHolder.getBaseClass().getSimpleName() + "#" + key.toString();
+		return clazz.getSimpleName() + "#" + key.toString();
 	}
 }
