@@ -161,6 +161,19 @@ public abstract class DMSession {
 	 * @throws NotCachedException
 	 */
 	public abstract <K, T extends DMObject<K>> Object storeAndFilter(StoreKey<K,T> key, int propertyIndex, Object value);
+	
+	/**
+	 * Internal API: Create a feed wrapper that handles filtering and caching for for the raw feed object. 
+	 * 
+	 * @param <K>
+	 * @param <T>
+	 * @param <TI>
+	 * @param key
+	 * @param propertyIndex
+	 * @param rawFeed
+	 * @return
+	 */
+	public abstract <K, T extends DMObject<K>> DMFeed<?> createFeedWrapper(StoreKey<K,T> key, int propertyIndex, DMFeed<T> rawFeed);
 
 	/**
 	 * Finds the "raw" value for a particular object property. Raw values differ from the normally

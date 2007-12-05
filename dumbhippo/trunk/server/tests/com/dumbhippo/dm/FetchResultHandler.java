@@ -161,18 +161,25 @@ public class FetchResultHandler extends DefaultHandler {
 
 	private void startPropertyElement(String uri, String localName, Attributes attributes) throws SAXParseException {
 		String resourceId = null;
+		long timestamp = -1;
 		
 		for (int i = 0; i < attributes.getLength(); i++) {
 			if (MUGSHOT_SYSTEM_NS.equals(attributes.getURI(i))) {
 				String name = attributes.getLocalName(i);
 				if ("resourceId".equals(name))
 					resourceId = resolveResourceId(attributes.getValue(i));
+				else if ("ts".equals(name))
+					timestamp = Long.parseLong(attributes.getValue(i));
+				
 			} 
 		}
 		
-		if (resourceId != null)
-			currentProperty = FetchResultProperty.createResource(localName, uri, resourceId);
-		else {
+		if (resourceId != null) {
+			if (timestamp >= 0)
+				currentProperty = FetchResultProperty.createFeed(localName, uri, resourceId, timestamp);
+			else
+				currentProperty = FetchResultProperty.createResource(localName, uri, resourceId);
+		} else {
 			currentProperty = FetchResultProperty.createSimple(localName, uri);
 			currentChars = new StringBuilder();
 		}

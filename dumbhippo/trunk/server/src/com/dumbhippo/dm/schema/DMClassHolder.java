@@ -60,6 +60,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	private DMPropertyHolder<K,T,?>[] properties;
 	private boolean[] mustQualify;
 	private Map<String, Integer> propertiesMap = new HashMap<String, Integer>();
+	private Map<String, Integer> feedPropertiesMap = new HashMap<String, Integer>();
 	private DMO annotation;
 
 	private Filter filter;
@@ -156,6 +157,26 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 			return -1;
 		
 		return index;
+	}
+	
+	/**
+	 * Get the index of the property with the specified name among feed-valued
+	 * properties of the class. Can be used along with getFeedPropertiesCount()
+	 * to store feed-specific data for a instance of this class in an array.
+	 */
+	public int getFeedPropertyIndex(String name) {
+		Integer index = feedPropertiesMap.get(name);
+		if (index == null)
+			return -1;
+		
+		return index;
+	}
+	
+	/**
+	 * see getFeedPropertyIndex(). 
+	 */
+	public int getFeedPropertiesCount() {
+		return feedPropertiesMap.size();
 	}
 	
 	public int getPropertyCount() {
@@ -370,10 +391,13 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		properties = tmpProperties;
 		mustQualify = new boolean[foundProperties.size()];
 
+		int feedPropertiesCount = 0;
 		for (int i = 0; i < properties.length; i++) {
 			DMPropertyHolder<?,?,?> property = properties[i];
 			
 			propertiesMap.put(property.getName(), i);
+			if (property instanceof FeedPropertyHolder)
+				feedPropertiesMap.put(property.getName(), feedPropertiesCount++);
 			mustQualify[i] = nameCount.get(property.getName()) > 1;
 		}
 	}
@@ -489,11 +513,33 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		
 		wrapperCtClass.addMethod(method);
 	}
+
+	private void addFeedWrapperGetter(CtClass wrapperCtClass, DMPropertyHolder<?,?,?> property, int propertyIndex) throws CannotCompileException {
+		CtMethod wrapperMethod = new CtMethod(property.getCtClass(), property.getMethodName(), new CtClass[] {}, wrapperCtClass);
+
+		if (property.getGroup() >= 0)
+			throw new RuntimeException("Feed property '" + property.getName() + "' cannot be grouped.");
+		
+		Template body = new Template(
+				"{" +
+				"    if (!_dm_%propertyName%Initialized) {" +
+				"        _dm_init();" +
+				"        _dm_%propertyName% = _dm_session.createFeedWrapper(getStoreKey(), %propertyIndex%, super.%methodName%());" +
+				"        _dm_%propertyName%Initialized = true;" +
+				"    }" +
+				"    return _dm_%propertyName%;" +
+				"}");
+
+		body.setParameter("methodName", property.getMethodName());
+		body.setParameter("propertyName", property.getName());
+		body.setParameter("propertyIndex", Integer.toString(propertyIndex));
+		wrapperMethod.setBody(body.toString());
+		
+		wrapperCtClass.addMethod(wrapperMethod);
+	}
 	
 	private void addWrapperGetter(CtClass wrapperCtClass, DMPropertyHolder<?,?,?> property, int propertyIndex) throws CannotCompileException, NotFoundException {
 		CtMethod wrapperMethod = new CtMethod(property.getCtClass(), property.getMethodName(), new CtClass[] {}, wrapperCtClass);
-		
-		// TODO: Deal with primitive types, where we need to box/unbox
 		
 		String storeCommands;
 		int group = property.getGroup();
@@ -553,7 +599,10 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		for (int i = 0; i < properties.length; i++) {
 			DMPropertyHolder<?,?,?> property = properties[i];
 			
-			addWrapperGetter(wrapperCtClass, property, i);
+			if (property instanceof FeedPropertyHolder)
+				addFeedWrapperGetter(wrapperCtClass, property, i);
+			else
+				addWrapperGetter(wrapperCtClass, property, i);
 		}
 	}
 	

@@ -100,7 +100,7 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 	}
 
 	@SuppressWarnings("unchecked")
-	protected TI rehydrateDMO(Object value, DMSession session) {
+	public TI rehydrateDMO(Object value, DMSession session) {
 		@SuppressWarnings("unchecked")
 		KI key = (KI)value;
 		return session.findUnchecked(objectType, key);

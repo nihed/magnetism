@@ -21,9 +21,11 @@ import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.dm.Cardinality;
+import com.dumbhippo.dm.DMFeed;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
+import com.dumbhippo.dm.DataModel;
 import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.PropertyType;
@@ -219,6 +221,10 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		return annotation.group();
 	}
 	
+	public int getDefaultMaxFetch() {
+		return annotation.defaultMaxFetch();
+	}
+	
 	abstract public Object dehydrate(Object value);
 	abstract public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session, boolean filter);
 	abstract public Object filter(DMViewpoint viewpoint, K key, Object value);
@@ -273,6 +279,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		
 		boolean listValued = false;
 		boolean setValued = false;
+		boolean feedValued = false;
 		Class<?> elementType;
 		
 		if (genericType instanceof ParameterizedType) {
@@ -282,8 +289,10 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 				listValued = true;
 			else if (rawType == Set.class)
 				setValued = true;
+			else if (rawType == DMFeed.class)
+				feedValued = true;
 			else
-				throw new RuntimeException("List<?> and Set<?> are the only currently supported parameterized types");
+				throw new RuntimeException("List<?>, Set<?>, DMFeed<?> are the only currently supported parameterized types");
 				
 			if (paramType.getActualTypeArguments().length != 1)
 				throw new RuntimeException("Couldn't understand type arguments to parameterized return type");
@@ -301,12 +310,19 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		DMClassInfo<?,? extends DMObject<?>> classInfo = DMClassInfo.getForClass(elementType);
 
 		if (classInfo != null) {
-			return createResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent, listValued, setValued);
+			return createResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent, listValued, setValued, feedValued);
 		} else if (elementType.isPrimitive() || (genericElementType == String.class) || (genericElementType == Date.class)) { 
+			if (feedValued)
+				throw new RuntimeException("Feed properties must be resource-valued");
+			
 			return createPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent, listValued, setValued);
 		} else {
 			throw new RuntimeException("Property type must be DMObject, primitive, Date, or String");
 		}
+	}
+	
+	public DataModel getModel() {
+		return declaringClassHolder.getModel();
 	}
 	
 	// this is somewhat silly, the unchecked is to avoid having type params on the constructor; eclipse 
@@ -335,6 +351,17 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	// will let you put them on there in the way we do with most other cases like this (see below for the plain holders for example),
 	// but javac gets confused by that
 	@SuppressWarnings("unchecked")
+	private static <K, T extends DMObject<K>> FeedPropertyHolder<K,T,?,?>
+		newFeedPropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, DMClassInfo<?,? extends DMObject<?>> classInfo,
+			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
+		return new FeedPropertyHolder(classHolder, ctMethod, classInfo,
+				property, filter, viewerDependent);
+	}
+	
+	// this is somewhat silly, the unchecked is to avoid having type params on the constructor; eclipse 
+	// will let you put them on there in the way we do with most other cases like this (see below for the plain holders for example),
+	// but javac gets confused by that
+	@SuppressWarnings("unchecked")
 	private static <K, T extends DMObject<K>> SingleResourcePropertyHolder<K,T,?,?>
 		newSingleResourcePropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, DMClassInfo<?,? extends DMObject<?>> classInfo,
 			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
@@ -343,11 +370,13 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	}
 	
 	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createResourcePropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod,
-			DMClassInfo<?,? extends DMObject<?>> classInfo, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean listValued, boolean setValued) {
+			DMClassInfo<?,? extends DMObject<?>> classInfo, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean listValued, boolean setValued, boolean feedValued) {
 		if (listValued)
 			return newListResourcePropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
 		else if (setValued)
 			return newSetResourcePropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
+		else if (feedValued)
+			return newFeedPropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
 		else
 			return newSingleResourcePropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
 	}
@@ -434,6 +463,17 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	}
 	
 	public abstract void visitChildren(DMSession session, Fetch<?,?> children, T object, FetchVisitor visitor);
+	
+	/**
+	 * 
+	 * @param session
+	 * @param object
+	 * @param visitor
+	 * @param forceEmpty if True, call FetchVisitor.emptyProperty() on a missing property even if we
+	 *    would normally omit it. This is used for a single-valued resource property, where we normally
+	 *    don't emit any fetch result for missing properties, but must do so if we are notifying
+	 *    that the property has gone away.
+	 */
 	public abstract void visitProperty(DMSession session, T object, FetchVisitor visitor, boolean forceEmpty);
 
 	public abstract Fetch<?,?> getDefaultChildren();

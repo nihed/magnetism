@@ -29,6 +29,7 @@ public class XmppFetchVisitor implements FetchVisitor {
 	private static final QName RESOURCE_ID_QNAME = QName.get("resourceId", SYSTEM_NAMESPACE);
 	private static final QName FETCH_QNAME = QName.get("fetch", SYSTEM_NAMESPACE);
 	private static final QName INDIRECT_QNAME = QName.get("indirect", SYSTEM_NAMESPACE);
+	private static final QName TS_QNAME = QName.get("ts", SYSTEM_NAMESPACE);
 	private static final QName TYPE_QNAME = QName.get("type", SYSTEM_NAMESPACE);
 	private static final QName DEFAULT_CHILDREN_QNAME = QName.get("defaultChildren", SYSTEM_NAMESPACE);
 	private static final QName UPDATE_QNAME = QName.get("update", SYSTEM_NAMESPACE);
@@ -78,10 +79,10 @@ public class XmppFetchVisitor implements FetchVisitor {
 		seenProperties.clear();
 	}
 	
-	private Element addPropertyElement(DMPropertyHolder propertyHolder) {
+	private Element addPropertyElement(DMPropertyHolder propertyHolder, boolean incremental) {
 		Element element = currentResourceElement.addElement(createQName(propertyHolder.getName(), propertyHolder.getNameSpace()));
 		
-		if (seenProperties.contains(propertyHolder)) {
+		if (incremental || seenProperties.contains(propertyHolder)) {
 			element.addAttribute(UPDATE_QNAME, "add");
 		} else {
 			element.addAttribute(TYPE_QNAME, propertyHolder.getTypeString());
@@ -98,18 +99,27 @@ public class XmppFetchVisitor implements FetchVisitor {
 	}
 
 	public void plainProperty(PlainPropertyHolder propertyHolder, Object value) {
-		Element element = addPropertyElement(propertyHolder);
+		Element element = addPropertyElement(propertyHolder, false);
 			
 		element.addText(value.toString());
 	}
 
 	public <KP, TP extends DMObject<KP>> void resourceProperty(ResourcePropertyHolder<?, ?, KP, TP> propertyHolder, KP key) {
-		Element element = addPropertyElement(propertyHolder);
+		Element element = addPropertyElement(propertyHolder, false);
 
 		DMClassHolder<KP,TP> classHolder = propertyHolder.getResourceClassHolder();
 		element.addAttribute(RESOURCE_ID_QNAME, classHolder.makeRelativeId(key));
 	}
 
+
+	public <KP, TP extends DMObject<KP>> void feedProperty(ResourcePropertyHolder<?, ?, KP, TP> propertyHolder, KP key, long timestamp, boolean incremental) {
+		Element element = addPropertyElement(propertyHolder, incremental);
+
+		DMClassHolder<KP,TP> classHolder = propertyHolder.getResourceClassHolder();
+		element.addAttribute(RESOURCE_ID_QNAME, classHolder.makeRelativeId(key));
+		element.addAttribute(TS_QNAME, Long.toString(timestamp));
+	}
+	
 	public void emptyProperty(DMPropertyHolder propertyHolder) {
 		Element element = currentResourceElement.addElement(createQName(propertyHolder.getName(), propertyHolder.getNameSpace()));
 		

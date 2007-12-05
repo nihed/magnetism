@@ -1,144 +1,23 @@
 package com.dumbhippo.dm;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import javax.persistence.EntityManager;
 
 import org.slf4j.Logger;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.dm.dm.TestGroupDMO;
-import com.dumbhippo.dm.fetch.Fetch;
-import com.dumbhippo.dm.fetch.FetchNode;
-import com.dumbhippo.dm.parser.FetchParser;
-import com.dumbhippo.dm.parser.ParseException;
 import com.dumbhippo.dm.persistence.TestGroup;
 import com.dumbhippo.dm.persistence.TestGroupMember;
 import com.dumbhippo.dm.persistence.TestUser;
-import com.dumbhippo.dm.schema.DMClassHolder;
-import com.dumbhippo.dm.schema.DMClassInfo;
 import com.dumbhippo.identity20.Guid;
 
-public class FetchTests extends AbstractSupportedTests {
+public class FetchTests extends AbstractFetchTests {
 	static private final Logger logger = GlobalSetup.getLogger(BasicTests.class);
-	private Map<String, FetchResult> expectedResults;
 	
-	@Override
-	protected void setUp() {
-		super.setUp();
-		
-		if (expectedResults == null) {
-			expectedResults = new HashMap<String, FetchResult>();
-			
-			URL resource = this.getClass().getResource("/fetch-tests.xml");
-			if (resource == null)
-				throw new RuntimeException("Cannot find fetch-tests.xml");
-			
-			try {
-				InputStream input = resource.openStream();
-				for (FetchResult result : FetchResultHandler.parse(input)) {
-					expectedResults.put(result.getId(), result);
-				}
-				input.close();
-			} catch (IOException e) {
-				throw new RuntimeException("Error reading fetch-tests.xml", e);
-			} catch (SAXException e) {
-				if (e instanceof SAXParseException) {
-					SAXParseException pe = (SAXParseException)e;
-					logger.error("fetch-tests.xml:{}:{}: {}",
-							     new Object[] { pe.getLineNumber(), pe.getColumnNumber(), pe.getMessage() });
-					throw new RuntimeException("Cannot parse fetch-tests.xml", e);
-				}
-				
-				throw new RuntimeException("Error parsing fetch-tests.xml", e);
-			}
-		}
+	public FetchTests() {
+		super("fetch-tests.xml");
 	}
 	
-	// Basic test of the test infrastructure; load all the fetch results, test
-	// that they can be converted to XML and back and that the result of the
-	// round-trip validates as the same thing as the original.
-	public void testRoundTrip() {
-		for (FetchResult result : expectedResults.values()) {
-			XmlBuilder builder = new XmlBuilder();
-			builder.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-			builder.openElement("fetchResults");
-			result.writeToXmlBuilder(builder);
-			builder.closeElement();
-			
-			String asString = builder.toString();
-			
-			FetchResult roundTripped;
-			try {
-				InputStream input = new ByteArrayInputStream(asString.getBytes("UTF-8"));
-				List<FetchResult> results = FetchResultHandler.parse(input);
-				if (results.size() != 1)
-					throw new RuntimeException("Round-trip of " + result.getId() + " to FetchResult gave " + results.size() + " results!");
-				roundTripped = results.get(0);
-				input.close();
-				
-			} catch (IOException e) {
-				throw new RuntimeException("Error parsing recoverted " + result.getId(), e);
-			} catch (SAXException e) {
-				if (e instanceof SAXParseException) {
-					SAXParseException pe = (SAXParseException)e;
-					logger.error("fetch-tests.xml:{}:{}: {}",
-							     new Object[] { pe.getLineNumber(), pe.getColumnNumber(), pe.getMessage() });
-					throw new RuntimeException("Cannot parse recoverted " + result.getId(), e);
-				}
-				
-				throw new RuntimeException("Error parsing recoverted " + result.getId(), e);
-			}
-			
-			try {
-				roundTripped.validateAgainst(result);
-			} catch (FetchValidationException e) {
-				throw new RuntimeException("Round-trip of " + result.getId() + " didn't validate " + e, e);
-			}
-		}
-	}
-	
-	public FetchResult getExpected(String resultId, String... parameters) {
-		Map<String, String> parametersMap = new HashMap<String, String>();
-		for (int i = 0; i  < parameters.length; i += 2)
-			parametersMap.put(parameters[i], parameters[i + 1]);
-		
-		FetchResult raw = expectedResults.get(resultId);
-		if (raw == null)
-			throw new RuntimeException("No expected result set with id='" + resultId + "'");
-		
-		return raw.substitute(parametersMap);
-	}
-	
-	// Hack to work around generic system
-	public <K,T extends DMObject<K>> Fetch<?,?> bindToClass(FetchNode fetchNode, DMClassInfo<K,T> classInfo) {
-		@SuppressWarnings("unchecked")
-		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>) support.getModel().getClassHolder(classInfo.getObjectClass());
-		return fetchNode.bind(classHolder);
-	}
-	
-	public <K,T extends DMObject<K>> void doTest(Class<K> keyClass, Class<T> objectClass, T object, String fetchString, String resultId, String... parameters) throws ParseException, FetchValidationException {
-		FetchNode fetchNode = FetchParser.parse(fetchString);
-		Fetch<K,T> fetch = fetchNode.bind(support.getModel().getClassHolder(keyClass, objectClass));
-		
-		FetchResultVisitor visitor = new FetchResultVisitor();
-		support.currentSessionRO().visitFetch(object, fetch, visitor);
-		
-		FetchResult expected = getExpected(resultId, parameters);
-		
-		logger.debug("Result for {} is {}", resultId, visitor.getResult());
-		visitor.getResult().validateAgainst(expected);
-	}
-
 	private void createData(Guid bobId, Guid janeId, Guid groupId) {
 		EntityManager em;
 		
@@ -191,7 +70,7 @@ public class FetchTests extends AbstractSupportedTests {
 		em = support.beginSessionRO(viewpoint);
 		
 		TestGroupDMO groupDMO = support.currentSessionRO().find(TestGroupDMO.class, groupId);
-		doTest(Guid.class, TestGroupDMO.class, groupDMO, "name;members member name", "bobAndJane",
+		doFetchTest(Guid.class, TestGroupDMO.class, groupDMO, "name;members member name", "bobAndJane",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
@@ -218,7 +97,7 @@ public class FetchTests extends AbstractSupportedTests {
 		em = support.beginSessionRO(viewpoint);
 		
 		TestGroupDMO groupDMO = support.currentSessionRO().find(TestGroupDMO.class, groupId);
-		doTest(Guid.class, TestGroupDMO.class, groupDMO, "+;members +", "bobAndJane",
+		doFetchTest(Guid.class, TestGroupDMO.class, groupDMO, "+;members +", "bobAndJane",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
@@ -246,17 +125,17 @@ public class FetchTests extends AbstractSupportedTests {
 		em = support.beginSessionRO(client);
 		
 		TestGroupDMO groupDMO = support.currentSessionRO().find(TestGroupDMO.class, groupId);
-		doTest(Guid.class, TestGroupDMO.class, groupDMO, "name", "bobAndJaneSmall",
+		doFetchTest(Guid.class, TestGroupDMO.class, groupDMO, "name", "bobAndJaneSmall",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
 		
-		doTest(Guid.class, TestGroupDMO.class, groupDMO, "+;members +", "bobAndJaneRemaining",
+		doFetchTest(Guid.class, TestGroupDMO.class, groupDMO, "+;members +", "bobAndJaneRemaining",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
 
-		doTest(Guid.class, TestGroupDMO.class, groupDMO, "members group", "bobAndJaneAddOn",
+		doFetchTest(Guid.class, TestGroupDMO.class, groupDMO, "members group", "bobAndJaneAddOn",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
@@ -284,7 +163,7 @@ public class FetchTests extends AbstractSupportedTests {
 		em = support.beginSessionRO(client);
 		
 		TestGroupDMO groupDMO = support.currentSessionRO().find(TestGroupDMO.class, groupId);
-		doTest(Guid.class, TestGroupDMO.class, groupDMO, "+;members group +", "bobAndJaneLoop",
+		doFetchTest(Guid.class, TestGroupDMO.class, groupDMO, "+;members group +", "bobAndJaneLoop",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
@@ -313,7 +192,7 @@ public class FetchTests extends AbstractSupportedTests {
 		em = support.beginSessionRO(client);
 		
 		TestGroupDMO groupDMO = support.currentSessionRO().find(TestGroupDMO.class, groupId);
-		doTest(Guid.class, TestGroupDMO.class, groupDMO, "name;members member name", "bobAndJane",
+		doFetchTest(Guid.class, TestGroupDMO.class, groupDMO, "name;members member name", "bobAndJane",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());

@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.schema.DMPropertyHolder;
+import com.dumbhippo.dm.schema.FeedPropertyHolder;
 import com.dumbhippo.dm.store.StoreKey;
 
 /**
@@ -51,7 +52,16 @@ public class ReadOnlySession extends CachedSession {
 		else
 			return property.filter(getViewpoint(), key.getKey(), value);
 	}
-	
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <K, T extends DMObject<K>> DMFeed<?> createFeedWrapper(StoreKey<K, T> key, int propertyIndex, DMFeed<T> rawFeed) {
+		FeedPropertyHolder<K, T, ?, ?> feedProperty = (FeedPropertyHolder<K, T, ?, ?>)key.getClassHolder().getProperty(propertyIndex);
+		
+		CachedFeed cached = model.getStore().getOrCreateCachedFeed(key, propertyIndex, txTimestamp);
+		return new FeedWrapper(feedProperty, key.getKey(), rawFeed, cached);
+	}
+
 	@Override
 	public void afterCompletion(int status) {
 	}

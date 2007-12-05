@@ -7,6 +7,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.CachedFeed;
 import com.dumbhippo.dm.ClientMatcher;
 import com.dumbhippo.dm.ClientNotificationSet;
 import com.dumbhippo.dm.DMClient;
@@ -103,6 +104,17 @@ public class DMStore {
 		// It's not a problem if the node is evicted; the data just won't be stored this time around
 		node.store(propertyIndex, value, timestamp);
 	}
+	
+	/**
+	 * Get a CachedFeed object for the specified property. If one doesn't already exist in the cache,
+	 * it will be created and stored there. However, if the passed-in-timestamp is older than
+	 * the invalidation timestamp for the property, null is returned. 
+	 */
+	public <K, T extends DMObject<K>> CachedFeed<?> getOrCreateCachedFeed(StoreKey<K,T> key, int propertyIndex, long timestamp) {
+		StoreNode<K,T> node = ensureNode(key);
+		
+		return node.getOrCreateCachedFeed(propertyIndex, timestamp);
+	}
 
 	public <K, T extends DMObject<K>> void invalidate(DMClassHolder<K,T> classHolder, K key, int propertyIndex, long timestamp) {
 		// We need to make sure that we store the timestamp to deal with in-flight 
@@ -129,6 +141,25 @@ public class DMStore {
 		} while (node.isEvicted());
 	}
 
+	/**
+	 * Invalidate the cache when a feed-valued property is changed. In addition to the normal actions
+	 * of clearing cached values and updating the stored invalidation timestamp, we also maintain
+	 * a log of the changed item timestamps by txTimestamp so we can tell which items must be resent
+	 * in the resulting notification. 
+	 * 
+	 * @param txTimestamp transaction timestamp *after* the read-write transaction that modified the feed
+	 * @param itemTimestamp minimum new feed-item timestamp for all the items modified in the feed; a value
+	 *   of -1 should be used if the change involved deleting items. 
+	 */
+	public <K, T extends DMObject<K>> void invalidateFeed(DMClassHolder<K,T> classHolder, K key, int propertyIndex, long txTimestamp, long itemTimestamp) {
+		// See comment above
+		StoreNode<K,T> node;
+		do {
+			node = ensureNode(classHolder, key);
+			node.invalidateFeed(propertyIndex, txTimestamp, itemTimestamp);
+		} while (node.isEvicted());
+	}
+	
 	public <K, T extends DMObject<K>>  void resolveNotifications(DMClassHolder<K,T> classHolder, K key, long propertyMask, ClientNotificationSet result, ClientMatcher matcher) {
 		StoreNode<K,T> node = getNode(classHolder, key);
 		if (node == null)
@@ -162,6 +193,18 @@ public class DMStore {
 			node.removeRegistration(registration);
 		
 		return oldFetch;
+	}
+	
+	public <K, T extends DMObject<K>> long updateFeedTimestamp(StoreKey<K, T> storeKey, int feedPropertyIndex, StoreClient client, long newTimestamp) {
+		StoreNode<K,T> node;
+		Registration<K,T> registration;
+		
+		do {
+			node = ensureNode(storeKey);
+			registration = node.createRegistration(client);
+		} while (registration == null);
+		
+		return registration.updateFeedTimestamp(feedPropertyIndex, newTimestamp);
 	}
 	
 	public <K, T extends DMObject<K>> void removeRegistration(DMClassHolder<K,T> classHolder, K key, StoreClient client) {

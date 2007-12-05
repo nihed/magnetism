@@ -41,7 +41,7 @@ public class PropertyFetchNode {
 		return null;
 	}
 
-	public <K,T extends DMObject<K>> void bindResourceProperty(ResourcePropertyHolder<?,?,K,T> resourceHolder, List<PropertyFetch> resultList, boolean maybeSkip, boolean notify) {
+	public <K,T extends DMObject<K>> void bindResourceProperty(ResourcePropertyHolder<?,?,K,T> resourceHolder, List<PropertyFetch> resultList, boolean maybeSkip, boolean notify, int max) {
 		Fetch<K,T> defaultChildren = resourceHolder.getDefaultChildren();
 		Fetch<K,T> boundChildren = null;
 		
@@ -59,12 +59,12 @@ public class PropertyFetchNode {
 				return;
 		}
 		
-		resultList.add(new PropertyFetch(resourceHolder, boundChildren, notify));
+		resultList.add(new PropertyFetch(resourceHolder, boundChildren, notify, max));
 	}
 
-	public void bindPlainProperty(DMPropertyHolder<?,?,?> propertyHolder, List<PropertyFetch> resultList, boolean maybeSkip, boolean notify) {
+	public void bindPlainProperty(DMPropertyHolder<?,?,?> propertyHolder, List<PropertyFetch> resultList, boolean maybeSkip, boolean notify, int max) {
 		if (!maybeSkip)
-			resultList.add(new PropertyFetch(propertyHolder, null, notify));
+			resultList.add(new PropertyFetch(propertyHolder, null, notify, max));
 	}
 
 	/**
@@ -79,9 +79,18 @@ public class PropertyFetchNode {
 	 * @param resultList list to append the results to 
 	 */
 	public void bind(DMClassHolder<?,?> classHolder, boolean skipDefault, List<PropertyFetch> resultList) {
+		int max = -1;
 		boolean notify = true;
 		for (FetchAttributeNode attribute : attributes) {
 			switch (attribute.getType()) {
+			case MAX:
+				// FIXME: We probably should make bind() throw an exception and make this fatal
+				if (!(attribute.getValue() instanceof Integer)) {
+					logger.warn("Ignoring non-integer max attribute");
+					continue;
+				}
+				max = ((Integer)(attribute.getValue()));
+				break;
 			case NOTIFY:
 				// FIXME: We probably should make bind() throw an exception and make this fatal
 				if (!(attribute.getValue() instanceof Boolean)) {
@@ -99,9 +108,9 @@ public class PropertyFetchNode {
 			boolean maybeSkip = skipDefault && propertyHolder.getDefaultInclude(); 
 			
 			if (propertyHolder instanceof ResourcePropertyHolder) {
-				bindResourceProperty(propertyHolder.asResourcePropertyHolder(propertyHolder.getKeyClass()), resultList, maybeSkip, notify);
+				bindResourceProperty(propertyHolder.asResourcePropertyHolder(propertyHolder.getKeyClass()), resultList, maybeSkip, notify, max);
 			} else {
-				bindPlainProperty(propertyHolder, resultList, maybeSkip, notify);
+				bindPlainProperty(propertyHolder, resultList, maybeSkip, notify, max);
 			}
 		}
 	}

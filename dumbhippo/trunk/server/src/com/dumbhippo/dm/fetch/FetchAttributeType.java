@@ -1,6 +1,7 @@
 package com.dumbhippo.dm.fetch;
 
 public enum FetchAttributeType {
+	MAX("max"),
 	NOTIFY("notify");
 	
 	private String lowerName;

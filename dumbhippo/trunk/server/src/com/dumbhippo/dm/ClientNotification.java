@@ -5,7 +5,9 @@ import java.util.List;
 
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
+import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.dm.schema.DMPropertyHolder;
+import com.dumbhippo.dm.schema.FeedPropertyHolder;
 import com.dumbhippo.dm.store.StoreClient;
 import com.dumbhippo.dm.store.StoreKey;
 
@@ -31,8 +33,8 @@ public class ClientNotification {
 		this.client = client;
 	}
 	
-	public <K, T extends DMObject<K>>void addObjectProperties(StoreKey<K,T> key, Fetch<K,? super T> fetch, long propertyMask, Fetch<?,?>[] childFetches) {
-		notifications.add(new ObjectNotification<K,T>(key, fetch, propertyMask, childFetches));
+	public <K, T extends DMObject<K>>void addObjectProperties(StoreKey<K,T> key, Fetch<K,? super T> fetch, long propertyMask, Fetch<?,?>[] childFetches, int[] maxes) {
+		notifications.add(new ObjectNotification<K,T>(key, fetch, propertyMask, childFetches, maxes));
 	}
 	
 	public StoreClient getClient() {
@@ -54,17 +56,32 @@ public class ClientNotification {
 		private Fetch<K, ? super T> fetch;
 		private long propertyMask;
 		private Fetch<?,?>[] childFetches;
+		private int[] maxes;
 
-		public ObjectNotification(StoreKey<K,T> key, Fetch<K, ? super T> fetch, long propertiesMask, Fetch<?,?>[] childFetches) {
+		public ObjectNotification(StoreKey<K,T> key, Fetch<K, ? super T> fetch, long propertiesMask, Fetch<?,?>[] childFetches, int[] maxes) {
 			this.key = key;
 			this.fetch = fetch;
 			this.propertyMask = propertiesMask;
 			this.childFetches = childFetches;
+			this.maxes = maxes;
+		}
+		
+		private int getMax(FeedPropertyHolder<K,T,?,?> property, int propertyIndex) {
+			int max = -1;
+			if (maxes != null)
+				max = maxes[propertyIndex];
+			
+			if (max < property.getDefaultMaxFetch())
+				max = property.getDefaultMaxFetch();
+			
+			return max;
 		}
 		
 		public void visitNotification(DMSession session, FetchVisitor visitor) {
 			T object = session.findUnchecked(key);
-			DMPropertyHolder<K,T,?>[] classProperties = key.getClassHolder().getProperties();
+			DMClassHolder<K,T> classHolder = key.getClassHolder();
+			DMPropertyHolder<K,T,?>[] classProperties = classHolder.getProperties();
+			long feedMinTimestamps[] = null;
 
 			long v;
 			int propertyIndex;
@@ -74,7 +91,21 @@ public class ClientNotification {
 				propertyIndex = 0;
 				while (v != 0) {
 					if ((v & 1) != 0 && childFetches[propertyIndex] != null) {
-						classProperties[propertyIndex].visitChildren(session, childFetches[propertyIndex], object, visitor);
+						if (classProperties[propertyIndex] instanceof FeedPropertyHolder) {
+							@SuppressWarnings("unchecked")
+							FeedPropertyHolder<K,T,?,?> property = (FeedPropertyHolder<K,T,?,?>)classProperties[propertyIndex];
+							
+							if (feedMinTimestamps == null) {
+								feedMinTimestamps = new long[key.getClassHolder().getFeedPropertiesCount()];
+								for (int i = 0; i < feedMinTimestamps.length; i++)
+									feedMinTimestamps[i] = -1;
+							}
+							
+							int feedPropertyIndex = classHolder.getFeedPropertyIndex(property.getName());
+							feedMinTimestamps[feedPropertyIndex] = property.visitFeedChildren(session, childFetches[propertyIndex], 0, getMax(property, propertyIndex), object, visitor, false);
+						} else {
+							classProperties[propertyIndex].visitChildren(session, childFetches[propertyIndex], object, visitor);
+						}
 					}
 
 					v >>= 1;
@@ -82,13 +113,27 @@ public class ClientNotification {
 				}
 			}
 			
-			visitor.beginResource(key.getClassHolder(), key.getKey(), fetch.getFetchString(key.getClassHolder()), false);
+			visitor.beginResource(key.getClassHolder(), key.getKey(), fetch.getFetchString(classHolder), false);
 			
 			v = propertyMask;
 			propertyIndex = 0;
 			while (v != 0) {
-				if ((v & 1) != 0)
-					classProperties[propertyIndex].visitProperty(session, object, visitor, true);
+				if ((v & 1) != 0) {
+					if (classProperties[propertyIndex] instanceof FeedPropertyHolder) {
+						@SuppressWarnings("unchecked")
+						FeedPropertyHolder<K,T,?,?> property = (FeedPropertyHolder<K,T,?,?>)classProperties[propertyIndex];
+
+						long minTimestamp = -1;
+						if (feedMinTimestamps != null) {
+							int feedPropertyIndex = classHolder.getFeedPropertyIndex(property.getName());
+							minTimestamp = feedMinTimestamps[feedPropertyIndex];
+						}
+
+						property.visitFeedProperty(session, 0, getMax(property, propertyIndex), object, visitor, minTimestamp);
+					} else {
+						classProperties[propertyIndex].visitProperty(session, object, visitor, true);
+					}
+				}
 
 				v >>= 1;
 				propertyIndex++;
