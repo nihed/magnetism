@@ -6,6 +6,7 @@ bus_name = 'org.freedesktop.od.Engine'
 server_name = None
 _do_autolaunch_raw = True
 do_autolaunch = True
+__the_data_model = None
 
 def _escape_byte(m):
     return "_%02X" % ord(m.group(0))
@@ -29,20 +30,35 @@ def _make_bus_name(server_name):
 
     return "com.dumbhippo.Client." + _escape_server_name(server_name)
 
+def on_data_model_ready():
+    global __the_data_model
+
+    query = __the_data_model.query_resource(__the_data_model.global_resource,
+                                            "fallbackUserPhotoUrl")
+    query.execute()
+
 ## the DataModel code already returns a singleton; the purpose of
-## this is just to save typing "DataModel(bigboard.globals.server_name)"
-## everywhere.
+## this is to save typing "DataModel(bigboard.globals.server_name)"
+## everywhere, and to install our on_ready handler
 def get_data_model():
-    return DataModel(server_name)
+    global __the_data_model
+    if not __the_data_model:
+        __the_data_model = DataModel(server_name)
+        __the_data_model.add_ready_handler(on_data_model_ready)
+    return __the_data_model
 
 def set_server_name(value=None):
     global server_name
     global bus_name
     global do_autolaunch
     global _do_autolaunch_raw
-    server_name = value
-    bus_name = _make_bus_name(value)
-    do_autolaunch = _do_autolaunch_raw and server_name == None
+    global __the_data_model
+    if server_name != value:
+        if __the_data_model:
+            raise Exception("We already used the data model before setting server name")
+        server_name = value
+        bus_name = _make_bus_name(value)
+        do_autolaunch = _do_autolaunch_raw and server_name == None
 
 def set_do_autolaunch(value):
     global do_autolaunch
