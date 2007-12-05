@@ -108,11 +108,9 @@ class DataModel(AbstractModel):
 
         _logger.debug("Doing initial query")
         
-        ## FIXME it's kind of random and broken to have this list of properties here... 
-        ## surely the only defensible list to have in a generic data model library 
-        ## would be "+" - i.e. why have a list of defaults here, and also have 
-        ## the concept of server-side defaults with "+"
-        query = self.query_resource("online-desktop:/o/global", "self +;webBaseUrl;online;ddmProtocolVersion;fallbackUserPhotoUrl")
+        # don't add global object properties you need here unless pyddm needs them - 
+        # instead, put another query in your app
+        query = self.query_resource("online-desktop:/o/global", "self +;webBaseUrl;online;ddmProtocolVersion")
         query.add_handler(self.__on_initial_query_success)
         query.add_error_handler(self.__on_initial_query_error)
         query.execute()
