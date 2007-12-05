@@ -242,6 +242,87 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		}
 	}
 	
+	public DataModel getModel() {
+		return declaringClassHolder.getModel();
+	}
+	
+
+	// Having a quick global ordering for all properties allows us to easily
+	// compute the intersection/difference of two sorted lists of properties,
+	// something we need to do when fetching.
+	//
+	// We could do this by:
+	//
+	// a) Using java.lang.Object.hashCode(), but that's not 64-bit safe (though
+	//    the chances of problems are miniscule.
+	// b) Using the ordering of the propertyId string, but that's slow,
+	//    especially since all propertyIds share a long common prefix.
+	// c) Do a post-pass once all properties are registered to assign
+	//    integer ordering. This would be very annoying since we use the 
+	//    ordering when building DMClassHolder.
+	//
+	// Instead do:
+	//
+	// d) Compute 64-bits of a hash of the property ID and store it for later use
+	//   
+	// The main disadvantage of this compared to b) or c) is that the ordering
+	// isn't predictable in advance or meaningful, though it should be stable
+	// across server restart and even between different server instances.
+	//
+	private void computeOrdering() {
+		MessageDigest messageDigest = Digest.newDigestMD5();
+		byte[] bytes = messageDigest.digest(StringUtils.getBytes(propertyId));
+		long result = 0;
+		for (int i = 0; i < 8; i++) {
+			result = (result << 8) + bytes[i];
+		}
+		
+		ordering = result;
+	}
+
+	public long getOrdering() {
+		return ordering;
+	}
+	
+	public int compareTo(DMPropertyHolder<?,?,?> other) {
+		return ordering < other.ordering ? -1 : (ordering == other.ordering ? 0 : 1);
+	}
+	
+	public abstract void visitChildren(DMSession session, Fetch<?,?> children, T object, FetchVisitor visitor);
+	
+	/**
+	 * 
+	 * @param session
+	 * @param object
+	 * @param visitor
+	 * @param forceEmpty if True, call FetchVisitor.emptyProperty() on a missing property even if we
+	 *    would normally omit it. This is used for a single-valued resource property, where we normally
+	 *    don't emit any fetch result for missing properties, but must do so if we are notifying
+	 *    that the property has gone away.
+	 */
+	public abstract void visitProperty(DMSession session, T object, FetchVisitor visitor, boolean forceEmpty);
+
+	public abstract Fetch<?,?> getDefaultChildren();
+	public abstract String getDefaultChildrenString();
+	
+	public Class<?> getKeyClass() {
+		throw new UnsupportedOperationException();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <KI2,TI2 extends DMObject<KI2>> ResourcePropertyHolder<K,T,KI2,TI2> asResourcePropertyHolder(Class<KI2> keyClass) {
+		return (ResourcePropertyHolder<K,T,KI2,TI2>)this;
+	}
+	
+	///////////////////////////////////////////////////////////////////////////////////////////////
+	
+	enum ContainerType {
+		SINGLE,
+		LIST,
+		SET,
+		FEED
+	};
+	
 	public static <K,T extends DMObject<K>> DMPropertyHolder<K,T,?> getForMethod(DMClassHolder<K,T> classHolder, CtMethod ctMethod) {
 		DMProperty property = null;
 		DMFilter filter = null;
@@ -315,17 +396,6 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 			throw new RuntimeException("Property type must be DMObject, primitive, Date, or String");
 		}
 	}
-	
-	public DataModel getModel() {
-		return declaringClassHolder.getModel();
-	}
-	
-	enum ContainerType {
-		SINGLE,
-		LIST,
-		SET,
-		FEED
-	};
 	
 	// this is somewhat silly, the unchecked is to avoid having type params on the constructor; eclipse 
 	// will let you put them on there in the way we do with most other cases like this (see below for the plain holders for example),
@@ -432,72 +502,5 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		}
 		
 		throw new RuntimeException("Unexpected container type");
-	}
-
-	// Having a quick global ordering for all properties allows us to easily
-	// compute the intersection/difference of two sorted lists of properties,
-	// something we need to do when fetching.
-	//
-	// We could do this by:
-	//
-	// a) Using java.lang.Object.hashCode(), but that's not 64-bit safe (though
-	//    the chances of problems are miniscule.
-	// b) Using the ordering of the propertyId string, but that's slow,
-	//    especially since all propertyIds share a long common prefix.
-	// c) Do a post-pass once all properties are registered to assign
-	//    integer ordering. This would be very annoying since we use the 
-	//    ordering when building DMClassHolder.
-	//
-	// Instead do:
-	//
-	// d) Compute 64-bits of a hash of the property ID and store it for later use
-	//   
-	// The main disadvantage of this compared to b) or c) is that the ordering
-	// isn't predictable in advance or meaningful, though it should be stable
-	// across server restart and even between different server instances.
-	//
-	private void computeOrdering() {
-		MessageDigest messageDigest = Digest.newDigestMD5();
-		byte[] bytes = messageDigest.digest(StringUtils.getBytes(propertyId));
-		long result = 0;
-		for (int i = 0; i < 8; i++) {
-			result = (result << 8) + bytes[i];
-		}
-		
-		ordering = result;
-	}
-
-	public long getOrdering() {
-		return ordering;
-	}
-	
-	public int compareTo(DMPropertyHolder<?,?,?> other) {
-		return ordering < other.ordering ? -1 : (ordering == other.ordering ? 0 : 1);
-	}
-	
-	public abstract void visitChildren(DMSession session, Fetch<?,?> children, T object, FetchVisitor visitor);
-	
-	/**
-	 * 
-	 * @param session
-	 * @param object
-	 * @param visitor
-	 * @param forceEmpty if True, call FetchVisitor.emptyProperty() on a missing property even if we
-	 *    would normally omit it. This is used for a single-valued resource property, where we normally
-	 *    don't emit any fetch result for missing properties, but must do so if we are notifying
-	 *    that the property has gone away.
-	 */
-	public abstract void visitProperty(DMSession session, T object, FetchVisitor visitor, boolean forceEmpty);
-
-	public abstract Fetch<?,?> getDefaultChildren();
-	public abstract String getDefaultChildrenString();
-	
-	public Class<?> getKeyClass() {
-		throw new UnsupportedOperationException();
-	}
-	
-	@SuppressWarnings("unchecked")
-	public <KI2,TI2 extends DMObject<KI2>> ResourcePropertyHolder<K,T,KI2,TI2> asResourcePropertyHolder(Class<KI2> keyClass) {
-		return (ResourcePropertyHolder<K,T,KI2,TI2>)this;
 	}
 }
