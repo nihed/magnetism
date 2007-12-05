@@ -2,14 +2,17 @@ package com.dumbhippo.persistence;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 
+import com.dumbhippo.ExternalAccountCategory;
 import com.dumbhippo.ExternalAccountInfoSource;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.SortUtils;
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.services.FlickrUser;
 import com.dumbhippo.services.LastFmWebServices;
 import com.dumbhippo.services.YouTubeWebServices;
@@ -85,6 +88,11 @@ public enum ExternalAccountType {
 		public String getSupportType() {
 			return "post to your MySpace blog";
 		}
+
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.BLOGGING;
+		}	
 	},
 	FLICKR("Flickr") { // 1
 		@Override
@@ -145,6 +153,11 @@ public enum ExternalAccountType {
 		@Override
 		public String getSupportType() {
 			return "upload new photos and photo sets";
+		}
+		
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.MEDIA;
 		}
 	},
 	LINKED_IN("LinkedIn")  { // 2
@@ -378,6 +391,11 @@ public enum ExternalAccountType {
 		public String getSupportType() {
 			return "upload new videos";
 		}
+		
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.MEDIA;
+		}
 	},
 	XANGA("Xanga")  { // 7
 		@Override
@@ -452,6 +470,11 @@ public enum ExternalAccountType {
 		public String getSupportType() {
 			return "write new blog entries";
 		}
+		
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.BLOGGING;
+		}
 	},
 	RHAPSODY("Rhapsody") { // 9
 		@Override
@@ -511,6 +534,11 @@ public enum ExternalAccountType {
 		@Override
 		public String getSupportType() {
 			return "play new tracks";
+		}
+		
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.MUSIC;
 		}
 	},
 	LASTFM("Last.fm")  { // 10
@@ -578,6 +606,11 @@ public enum ExternalAccountType {
 		public String getSupportType() {
 			return "are listening to music";
 		}
+		
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.MUSIC;
+		}
 	}, 
 	DELICIOUS("del.icio.us") { // 11
 		
@@ -636,6 +669,11 @@ public enum ExternalAccountType {
 		public String getSupportType() {
 			return "add public bookmarks";
 		}
+		
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.LINK_SHARING;
+		}
 	},
 	TWITTER("Twitter") { // 12
 		@Override
@@ -684,6 +722,11 @@ public enum ExternalAccountType {
 		@Override
 		public String getSupportType() {
 			return "change your status";
+		}
+		
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.BLOGGING;
 		}
 	},
 	DIGG("Digg") { // 13
@@ -741,6 +784,11 @@ public enum ExternalAccountType {
 		public String getSupportType() {
 			return "digg new articles";
 		}
+		
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.LINK_SHARING;
+		}
 	},
 	REDDIT("Reddit") { // 14
 		@Override
@@ -792,6 +840,11 @@ public enum ExternalAccountType {
 		@Override
 		public String getSupportType() {
 			return "like, dislike, comment on, or submit articles";
+		}
+		
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.LINK_SHARING;
 		}
 	}, 
 	NETFLIX("Netflix") { // 15
@@ -850,6 +903,11 @@ public enum ExternalAccountType {
 		@Override
 		public String getSupportType() {
 			return "are sent new movies";
+		}
+		
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.CONSUMER;
 		}
 	},
 	GOOGLE_READER("Google Reader") { // 16
@@ -921,6 +979,11 @@ public enum ExternalAccountType {
 		@Override
 		public String getSupportType() {
 			return "create shared items";
+		}
+		
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.LINK_SHARING;
 		}
 	},
 	PICASA("Picasa") { // 17
@@ -994,6 +1057,11 @@ public enum ExternalAccountType {
 		public String getSupportType() {
 			return "add new albums";
 		}
+		
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.MEDIA;
+		}
 	},
 	AMAZON("Amazon") { // 18
 		@Override
@@ -1061,6 +1129,11 @@ public enum ExternalAccountType {
 		@Override
 		public String getSupportType() {
 			return "write reviews or add things to your public wish lists";
+		}
+		
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.CONSUMER;
 		}
 	};
 	
@@ -1171,10 +1244,27 @@ public enum ExternalAccountType {
     	return false;
     }
     
-    public static List <ExternalAccountType> alphabetizedValues() {
+    public static List<ExternalAccountType> alphabetizedValues() {
     	return SortUtils.sortCollection(ExternalAccountType.values(), "getSiteName");
     }
 
+    public static List<ExternalAccountType> alphabetizedValuesByCategory() {
+        List<ExternalAccountType> types = SortUtils.sortCollection(ExternalAccountType.values(), "getCategoryOuter");
+        List<ExternalAccountType> currentCategoryList = new ArrayList<ExternalAccountType>();
+        List<ExternalAccountType> resultingList = new ArrayList<ExternalAccountType>();       
+        for (ExternalAccountType type : types) {
+        	if (currentCategoryList.size() == 0 || type.getCategory().equals(currentCategoryList.get(0).getCategory())) {
+        		currentCategoryList.add(type);
+        	} else {
+         		resultingList.addAll(TypeUtils.castList(ExternalAccountType.class, SortUtils.sortCollection(currentCategoryList.toArray(), "getSiteName")));
+        		currentCategoryList.clear();
+        		currentCategoryList.add(type);      		
+        	}
+        }
+        resultingList.addAll(currentCategoryList);
+        return resultingList;
+    }
+    
     /** 
      * return a name usable in a DOM id name, usually looks like "FooBar" if the 
      * * site is "Foo Bar" for example
@@ -1187,5 +1277,17 @@ public enum ExternalAccountType {
 	
 	public ExternalAccountInfoSource getInfoSource() {
 		return ExternalAccountInfoSource.HANDLE;
+	}
+
+	public ExternalAccountCategory getCategory() {
+		return ExternalAccountCategory.NOT_CATEGORIZED;
+	}
+	
+	// this is a work around for this bug
+	// "Method.invoke access control does not understand inner class scoping"
+	// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4071957
+	// this method allows us to call Method.invoke to get the category in SortUtils
+	public ExternalAccountCategory getCategoryOuter() {
+		return getCategory();
 	}
 }
