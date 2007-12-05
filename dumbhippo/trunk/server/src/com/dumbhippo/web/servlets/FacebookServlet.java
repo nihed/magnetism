@@ -58,6 +58,7 @@ public class FacebookServlet extends AbstractServlet {
             Map.Entry<String, String[]> mapEntry = (Map.Entry<String, String[]>)o;
             logger.debug("{} = {}", mapEntry.getKey(), mapEntry.getValue()[0]);
         }
+        logRequest(request, "POST");
       
         @SuppressWarnings("unchecked")
         Map<String, CharSequence> facebookParams = FacebookSignatureUtil.extractFacebookParamsFromArray(request.getParameterMap());
@@ -115,12 +116,12 @@ public class FacebookServlet extends AbstractServlet {
 				               "http://dogfood.mugshot.org/person?who=" + user.getId(), "target", "_blank");
 		    xml.append(".");
 		    ExternalAccountCategory currentCategory = null;
-		    xml.openElement("fb:editor", "action", "http://apps.facebook.com/mugshot-test");
+		    xml.openElement("fb:editor", "action", "", "width", "300", "labelwidth", "120");
 		    for (ExternalAccountView externalAccount : getSupportedAccounts(user)) {
 		    	if (currentCategory == null || !currentCategory.equals(externalAccount.getExternalAccountType().getCategory())) {
 				    currentCategory = externalAccount.getExternalAccountType().getCategory();
 		    		xml.openElement("fb:editor-custom");
-				    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", "margin-left:-85px;" );		    	
+				    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", "margin-left:-185px;" );		    	
 				    xml.closeElement();
 		    	}
 			    xml.openElement("fb:editor-custom", "label", externalAccount.getSiteName());
@@ -137,7 +138,15 @@ public class FacebookServlet extends AbstractServlet {
 			        xml.appendTextNode("a", externalAccount.getSiteName(), 
 			        		           "href", externalAccount.getExternalAccountType().getSiteLink(), 
 			        		           "target", "_blank");
-			        xml.append(" " + externalAccount.getSiteUserInfoType() + ".");
+			        xml.append(" " + externalAccount.getSiteUserInfoType());
+				    if (externalAccount.getExternalAccountType().getHelpUrl().trim().length() > 0) {
+				    	xml.append(" (");
+				        xml.appendTextNode("a", "help me find it", 
+		        		           "href", externalAccount.getExternalAccountType().getHelpUrl().trim(), 
+		        		           "target", "_blank");			    	
+				        xml.append(")");
+				    }
+				    xml.append(".");
 			    } else {
 			        xml.append("Enter your " + externalAccount.getSiteUserInfoType() + " ");
 			        xml.appendTextNode("a", externalAccount.getSiteName(), 
