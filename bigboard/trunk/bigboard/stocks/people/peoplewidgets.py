@@ -11,6 +11,7 @@ import bigboard
 from bigboard.databound import DataBoundItem
 from bigboard.big_widgets import ActionLink, CanvasMugshotURLImage, CanvasMugshotURLImageButton, PhotoContentItem, CanvasHBox, CanvasVBox
 import bigboard.libbig as libbig
+import bigboard.globals as globals
 
 from ddm import DataModel
 
@@ -496,6 +497,13 @@ class ProfileItem(hippo.CanvasBox):
         self.__contact_status_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL,
                                                     spacing=4, border=4)
         self.append(self.__contact_status_box)
+
+        if person.is_contact:
+            self.__remove_link = ActionLink()
+            self.__remove_link.connect('activated', self.__remove_from_network_clicked)
+            self.append(self.__remove_link)
+        else:
+            self.__remove_link = None
         
 #        self.__online = hippo.CanvasText(text='Offline')
 #        self.append(self.__online)
@@ -552,7 +560,7 @@ class ProfileItem(hippo.CanvasBox):
             link = hippo.CanvasText(text=text)
         else:
             def set_new_status(object):
-                model = DataModel(bigboard.globals.server_name)
+                model = globals.get_data_model()
                 query = model.update(("http://mugshot.org/p/contacts", "setContactStatus"),
                                      contact=self.person.resource,
                                      status=new_status)
@@ -562,7 +570,34 @@ class ProfileItem(hippo.CanvasBox):
             link.connect("activated", set_new_status)
         
         self.__contact_status_box.append(link)
+
+    def __remove_from_network_clicked(self, link):
+
+        dialog = gtk.MessageDialog(type=gtk.MESSAGE_QUESTION)
+        dialog.set_markup("<b>Remove %s from your network?</b>" % (self.person.display_name))
+        dialog.format_secondary_text("This will delete %s's contact information and remove %s from your sidebar" % (self.person.display_name, self.person.display_name))
+        dialog.add_buttons("Cancel", gtk.RESPONSE_CANCEL, "Remove", gtk.RESPONSE_ACCEPT)
+
+        def remove_from_network_response(dialog, response_id, person):
+            dialog.destroy()
+
+            if response_id == gtk.RESPONSE_ACCEPT:
+                _logger.debug("removing from network")
+
+                model = globals.get_data_model()
+                query = model.update(("http://mugshot.org/p/contacts", "deleteContact"),
+                                     contact=person.resource)
+                query.execute()
+
+            else:
+                _logger.debug("not removing from network")
+
+        dialog.connect("response", lambda dialog, response_id: remove_from_network_response(dialog, response_id, self.person))
         
+        self.emit("close")
+
+        dialog.show()
+
     def __update_contact_status(self, person):
         self.__contact_status_box.remove_all()
         try:
@@ -575,9 +610,9 @@ class ProfileItem(hippo.CanvasBox):
 
         self.__contact_status_box.append(hippo.CanvasText(text="In sidebar: "))
         
-        self.__add_status_link("Always", status, 4)
-        self.__add_status_link("Auto", status, 3)
-        self.__add_status_link("Never", status, 2)
+        self.__add_status_link("Top", status, 4)
+        self.__add_status_link("Middle", status, 3)
+        self.__add_status_link("Bottom", status, 2)
 
     def __update_loved_accounts(self, person):
         try:
@@ -609,6 +644,10 @@ class ProfileItem(hippo.CanvasBox):
         self.__photo.set_url(self.person.icon_url)
 
         self.__address_box.remove_all()
+
+        if self.__remove_link:
+            self.__remove_link.set_property('text', 
+                                            "Remove %s from network" % self.person.display_name)
 
         emails = None
         if person.is_contact:

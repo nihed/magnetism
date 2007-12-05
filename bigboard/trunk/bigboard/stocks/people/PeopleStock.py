@@ -145,6 +145,7 @@ class PeopleStock(AbstractMugshotStock):
 
         self.__slideout = bigboard.slideout.Slideout()
         self.__slideout_item = item
+
         coords = item.get_screen_coords()
         self.__slideout.slideout_from(coords[0] + item.get_allocation()[0] + 4, coords[1])
 
