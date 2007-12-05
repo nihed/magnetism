@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 
+import com.dumbhippo.ExternalAccountCategory;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Site;
 import com.dumbhippo.XmlBuilder;
@@ -108,13 +109,21 @@ public class FacebookServlet extends AbstractServlet {
         xml.appendTextNode("div", "Mugshot allows you and your friends to see your activity from lots of other sites on the internet and automatically puts that in your profile and news feed.",
                            "style", "margin-left:45px; margin-bottom:10px;");
 		if (user != null && errorMessage == null) {
-			xml.append("Updates to the information below will be reflected in ");
+			xml.appendTextNode("div", "Updates to the information below will be reflected in ",
+					           "style", "margin-left:15px;");
 		    xml.appendTextNode("a", "your Mugshot account", "href",
 				               "http://dogfood.mugshot.org/person?who=" + user.getId(), "target", "_blank");
 		    xml.append(".");
-		    xml.appendTextNode("h3", "Photos and Video", "style", "margin-top:10px");
+		    xml.appendTextNode("h3", "Photos and Video", "style", "margin-left:15px;");
+		    ExternalAccountCategory currentCategory = null;
 		    xml.openElement("fb:editor", "action", "http://apps.facebook.com/mugshot-test");
 		    for (ExternalAccountView externalAccount : getSupportedAccounts(user)) {
+		    	if (currentCategory == null || !currentCategory.equals(externalAccount.getExternalAccountType().getCategory())) {
+				    currentCategory = externalAccount.getExternalAccountType().getCategory();
+		    		xml.openElement("fb:editor-custom");
+				    xml.appendTextNode("h3", currentCategory.getCategoryName());		    	
+				    xml.closeElement();
+		    	}
 			    xml.openElement("fb:editor-custom", "label", externalAccount.getSiteName());
 			    
 			    if (externalAccount.getExternalAccount() != null && externalAccount.getExternalAccount().isLovedAndEnabled()) {
@@ -139,9 +148,9 @@ public class FacebookServlet extends AbstractServlet {
 			    }
 			    
 			    if (externalAccount.getExternalAccountType().getSupportType().trim().length() > 0) {
-			    	xml.append("Your activity will be updated when you " + externalAccount.getExternalAccountType().getSupportType() + ".");
+			    	xml.append(" Your activity will be updated when you " + externalAccount.getExternalAccountType().getSupportType() + ".");
 			    } else {
-			    	xml.append("A link to this account will be included in your profile.");
+			    	xml.append(" A link to this account will be included in your profile.");
 			    }
 			    
 			    xml.closeElement(); // fb:editor-custom	
@@ -175,8 +184,9 @@ public class FacebookServlet extends AbstractServlet {
 	private List<ExternalAccountView> getSupportedAccounts(User user) {
 		List<ExternalAccountView> supportedAccounts = new ArrayList<ExternalAccountView>(); 
 		ExternalAccountSystem externalAccounts = WebEJBUtil.defaultLookup(ExternalAccountSystem.class);
-		for (ExternalAccountType type : ExternalAccountType.alphabetizedValues()) {
-			if (type.isSupported()) {
+		for (ExternalAccountType type : ExternalAccountType.alphabetizedValuesByCategory()) {
+			if ((type.isSupported() || type.equals(ExternalAccountType.BLOG)) && 
+			    !type.getCategory().equals(ExternalAccountCategory.NOT_CATEGORIZED)) {
 				if (user != null) {
 					try {
 					    ExternalAccount externalAccount = 

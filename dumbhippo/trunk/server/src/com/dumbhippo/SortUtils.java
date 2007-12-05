@@ -8,20 +8,26 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.slf4j.Logger;
+
 public class SortUtils {
+	
+	@SuppressWarnings("unused")
+	private static final Logger logger = GlobalSetup.getLogger(SortUtils.class);
+	
 	/**
 	 * Sorts an array of objects based on the property returned by the
 	 * specified method invoked on those objects. If the returned property 
-	 * is a String, the sort is not case sensitive.
+	 * is a String, the sort is not case sensitive. The returned property has
+	 * to be a Comparable<U> object.
 	 * 
-	 * @param <T>
+	 * @param <T, U>
 	 * @param objects an array of objects of type T
 	 * @param methodName name of the method to invoke
 	 * @return a sorted list
 	 */
-	public static <T> List<T> sortCollection(T[] objects, String methodName) {
+	public static <T, U> List<T> sortCollection(T[] objects, String methodName) {
 		List<T> list = Arrays.asList(objects);
-
 		if (list.isEmpty())
 			return list;
 		
@@ -35,7 +41,9 @@ public class SortUtils {
 					        return collator.compare(((String)sortByProperty.invoke(t1)).toLowerCase(), 
 					        		                ((String)sortByProperty.invoke(t2)).toLowerCase());
 						} else {
-							return collator.compare(sortByProperty.invoke(t1), sortByProperty.invoke(t2));
+							@SuppressWarnings("unchecked")
+							int result = ((Comparable<U>)sortByProperty.invoke(t1)).compareTo((U)sortByProperty.invoke(t2));
+							return result;
 						}
 					} catch (IllegalAccessException e) {
 						throw new RuntimeException("method " + sortByProperty + "can't be accessed", e);
