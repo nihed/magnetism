@@ -109,19 +109,18 @@ public class FacebookServlet extends AbstractServlet {
         xml.appendTextNode("div", "Mugshot allows you and your friends to see your activity from lots of other sites on the internet and automatically puts that in your profile and news feed.",
                            "style", "margin-left:45px; margin-bottom:10px;");
 		if (user != null && errorMessage == null) {
-			xml.appendTextNode("div", "Updates to the information below will be reflected in ",
+			xml.appendTextNode("span", "Updates to the information below will be reflected in ",
 					           "style", "margin-left:15px;");
 		    xml.appendTextNode("a", "your Mugshot account", "href",
 				               "http://dogfood.mugshot.org/person?who=" + user.getId(), "target", "_blank");
 		    xml.append(".");
-		    xml.appendTextNode("h3", "Photos and Video", "style", "margin-left:15px;");
 		    ExternalAccountCategory currentCategory = null;
 		    xml.openElement("fb:editor", "action", "http://apps.facebook.com/mugshot-test");
 		    for (ExternalAccountView externalAccount : getSupportedAccounts(user)) {
 		    	if (currentCategory == null || !currentCategory.equals(externalAccount.getExternalAccountType().getCategory())) {
 				    currentCategory = externalAccount.getExternalAccountType().getCategory();
 		    		xml.openElement("fb:editor-custom");
-				    xml.appendTextNode("h3", currentCategory.getCategoryName());		    	
+				    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", "margin-left:-85px;" );		    	
 				    xml.closeElement();
 		    	}
 			    xml.openElement("fb:editor-custom", "label", externalAccount.getSiteName());
