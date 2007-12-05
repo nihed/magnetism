@@ -276,21 +276,19 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		
 		Type genericType = method.getGenericReturnType();
 		Type genericElementType = genericType;
-		
-		boolean listValued = false;
-		boolean setValued = false;
-		boolean feedValued = false;
+
+		ContainerType containerType = ContainerType.SINGLE;
 		Class<?> elementType;
 		
 		if (genericType instanceof ParameterizedType) {
 			ParameterizedType paramType = (ParameterizedType)genericType;
 			Class<?> rawType = (Class<?>)paramType.getRawType();
 			if (rawType == List.class)
-				listValued = true;
+				containerType = ContainerType.LIST;
 			else if (rawType == Set.class)
-				setValued = true;
+				containerType = ContainerType.SET;
 			else if (rawType == DMFeed.class)
-				feedValued = true;
+				containerType = ContainerType.FEED;
 			else
 				throw new RuntimeException("List<?>, Set<?>, DMFeed<?> are the only currently supported parameterized types");
 				
@@ -310,12 +308,9 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		DMClassInfo<?,? extends DMObject<?>> classInfo = DMClassInfo.getForClass(elementType);
 
 		if (classInfo != null) {
-			return createResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent, listValued, setValued, feedValued);
+			return createResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent, containerType);
 		} else if (elementType.isPrimitive() || (genericElementType == String.class) || (genericElementType == Date.class)) { 
-			if (feedValued)
-				throw new RuntimeException("Feed properties must be resource-valued");
-			
-			return createPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent, listValued, setValued);
+			return createPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent, containerType);
 		} else {
 			throw new RuntimeException("Property type must be DMObject, primitive, Date, or String");
 		}
@@ -324,6 +319,13 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	public DataModel getModel() {
 		return declaringClassHolder.getModel();
 	}
+	
+	enum ContainerType {
+		SINGLE,
+		LIST,
+		SET,
+		FEED
+	};
 	
 	// this is somewhat silly, the unchecked is to avoid having type params on the constructor; eclipse 
 	// will let you put them on there in the way we do with most other cases like this (see below for the plain holders for example),
@@ -370,15 +372,20 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	}
 	
 	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createResourcePropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod,
-			DMClassInfo<?,? extends DMObject<?>> classInfo, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean listValued, boolean setValued, boolean feedValued) {
-		if (listValued)
-			return newListResourcePropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
-		else if (setValued)
-			return newSetResourcePropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
-		else if (feedValued)
-			return newFeedPropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
-		else
+			DMClassInfo<?,? extends DMObject<?>> classInfo, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, ContainerType containerType) {
+		
+		switch (containerType) {
+		case SINGLE:
 			return newSingleResourcePropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
+		case LIST:
+			return newListResourcePropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
+		case SET:
+			return newSetResourcePropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
+		case FEED:
+			return newFeedPropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
+		}
+		
+		throw new RuntimeException("Unexpected container type");
 	}
 
 	// this gives us a "TI" to tack on to the constructor for the property holder, by 
@@ -412,13 +419,19 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	}	
 	 
 	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createPlainPropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod,
-			Class<?> elementType, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean listValued, boolean setValued) {
-		if (listValued)
-			return newListPlainPropertyHolderHack(classHolder, ctMethod, elementType, property, filter, viewerDependent);
-		else if (setValued)
-			return newSetPlainPropertyHolderHack(classHolder, ctMethod, elementType, property, filter, viewerDependent);
-		else
+			Class<?> elementType, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, ContainerType containerType) {
+		switch (containerType) {
+		case SINGLE:
 			return newSinglePlainPropertyHolderHack(classHolder, ctMethod, elementType, property, filter, viewerDependent);
+		case LIST:
+			return newListPlainPropertyHolderHack(classHolder, ctMethod, elementType, property, filter, viewerDependent);
+		case SET:
+			return newSetPlainPropertyHolderHack(classHolder, ctMethod, elementType, property, filter, viewerDependent);
+		case FEED:
+			throw new RuntimeException("Feed properties must be resource-valued");
+		}
+		
+		throw new RuntimeException("Unexpected container type");
 	}
 
 	// Having a quick global ordering for all properties allows us to easily
