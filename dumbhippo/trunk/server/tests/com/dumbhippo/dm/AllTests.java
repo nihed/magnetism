@@ -24,6 +24,7 @@ public class AllTests {
         suite.addTest(new TestSuite(FilterTests.class));
         
         suite.addTest(new TestSuite(FeedTests.class));
+        suite.addTest(new TestSuite(InheritanceTests.class));
 
         return suite;
     }

@@ -105,6 +105,9 @@ public class DataModel {
 	public <K, T extends DMObject<K>> void addDMClass(Class<T> clazz) {
 		if (completed)
 			throw new IllegalStateException("completeDMClasses has already been callled");
+
+		if (classes.get(clazz) != null) // Already added
+			return;
 		
 		DMClassHolder<?,?> classHolder = DMClassHolder.createForClass(this, clazz);
 		classes.put(clazz, classHolder);
@@ -140,7 +143,7 @@ public class DataModel {
 		
 		return classHolder;
 	}
-
+	
 	public DMClassHolder<?, ?> getClassHolder(String relativeBase) {
 		return classesByBase.get(relativeBase);
 	}
