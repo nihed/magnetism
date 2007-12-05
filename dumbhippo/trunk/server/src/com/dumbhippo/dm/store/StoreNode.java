@@ -8,11 +8,13 @@ import java.util.List;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.CachedFeed;
 import com.dumbhippo.dm.ClientMatcher;
 import com.dumbhippo.dm.ClientNotificationSet;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.NotCachedException;
 import com.dumbhippo.dm.schema.DMClassHolder;
+import com.dumbhippo.dm.schema.DMPropertyHolder;
 
 public class StoreNode<K,T extends DMObject<K>> extends StoreKey<K,T> {
 	@SuppressWarnings("unused")
@@ -23,6 +25,7 @@ public class StoreNode<K,T extends DMObject<K>> extends StoreKey<K,T> {
 	private long timestamp = -1;
 	private Object[] properties;
 	private List<Registration<K,T>> registrations;
+	private FeedLog[] feedLogs;
 	private boolean evicted;
 
 	StoreNode(DMClassHolder<K,T> classHolder, K key) {
@@ -46,9 +49,36 @@ public class StoreNode<K,T extends DMObject<K>> extends StoreKey<K,T> {
 		properties[propertyIndex] = value != null ? value : nil;
 	}
 	
+	public synchronized CachedFeed<?> getOrCreateCachedFeed(int propertyIndex, long timestamp) {
+		if (this.timestamp > timestamp)
+			return null;
+		
+		if (properties[propertyIndex] == null) {
+			// Actual key type is irrelevant
+			properties[propertyIndex] = new CachedFeed<Object>();
+		}
+		
+		return (CachedFeed<?>)properties[propertyIndex];
+	}
+
 	public synchronized void invalidate(int propertyIndex, long timestamp) {
 		this.timestamp = timestamp;
 		properties[propertyIndex] = null;
+	}
+	
+	public synchronized void invalidateFeed(int propertyIndex, long txTimestamp, long itemTimestamp) {
+		invalidate(propertyIndex, timestamp);
+		
+		DMPropertyHolder<K, T, ?> property = classHolder.getProperty(propertyIndex);
+		int feedPropertyIndex = classHolder.getFeedPropertyIndex(property.getName());
+		
+		if (feedLogs == null)
+			feedLogs = new FeedLog[classHolder.getFeedPropertiesCount()];
+		
+		if (feedLogs[feedPropertyIndex] == null)
+			feedLogs[feedPropertyIndex] = new FeedLog();
+		
+		feedLogs[feedPropertyIndex].addEntry(txTimestamp, itemTimestamp);
 	}
 	
 	public synchronized Collection<Registration<K,T>> markEvicted() {
@@ -117,5 +147,12 @@ public class StoreNode<K,T extends DMObject<K>> extends StoreKey<K,T> {
 			
 			registration.getFetch().resolveNotifications(registration.getClient(), this, properties, result);
 		}
+	}
+
+	public FeedLog getFeedLog(int feedPropertyIndex) {
+		if (feedLogs == null)
+			return null;
+		else
+			return feedLogs[feedPropertyIndex];
 	}
 }

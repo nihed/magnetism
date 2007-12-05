@@ -33,13 +33,7 @@ public class ChangeNotificationSet implements Serializable {
 	public ChangeNotificationSet(DataModel model) {
 	}
 
-	public <K, T extends DMObject<K>> void changed(DataModel model, Class<T> clazz, K key, String propertyName, ClientMatcher matcher) {
-		@SuppressWarnings("unchecked")
-		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
-		int propertyIndex = classHolder.getPropertyIndex(propertyName);
-		if (propertyIndex < 0)
-			throw new RuntimeException("Class " + clazz.getName() + " has no property " + propertyName);
-		
+	private <K, T extends DMObject<K>> ChangeNotification<K,T> getNotification(DMClassHolder<K,T> classHolder, K key, ClientMatcher matcher) {
 		if (key instanceof DMKey) {
 			@SuppressWarnings("unchecked")
 			K clonedKey = (K)((DMKey)key).clone(); 
@@ -50,25 +44,41 @@ public class ChangeNotificationSet implements Serializable {
 			if (matchedNotifications == null)
 				matchedNotifications = new ArrayList<ChangeNotification<?,?>>();
 			
-			ChangeNotification<?,?> notification = new ChangeNotification<K,T>(clazz, key, matcher);
-			notification.addProperty(propertyIndex);;
+			ChangeNotification<K,T> notification = new ChangeNotification<K,T>(classHolder, key, matcher);
 			matchedNotifications.add(notification);
+			return notification;
 		} else {
 			if (notifications == null)
 				notifications = new HashMap<ChangeNotification<?,?>, ChangeNotification<?,?>>();
 	
-			ChangeNotification<?,?> notification = new ChangeNotification<K,T>(clazz, key);
-			ChangeNotification<?,?> oldNotification = notifications.get(notification);
+			ChangeNotification<K,T> notification = new ChangeNotification<K,T>(classHolder, key);
+			@SuppressWarnings("unchecked")
+			ChangeNotification<K,T> oldNotification = (ChangeNotification<K,T>)notifications.get(notification);
 			if (oldNotification != null) {
-				oldNotification.addProperty(propertyIndex);
+				return oldNotification;
 			} else {
-				notification = new ChangeNotification<K,T>(clazz, key);
 				notifications.put(notification, notification);
-				notification.addProperty(propertyIndex);
+				return notification;
 			}
 		}
+		
 	}
-	
+
+	public <K, T extends DMObject<K>> void changed(DataModel model, Class<T> clazz, K key, String propertyName, ClientMatcher matcher) {
+		@SuppressWarnings("unchecked")
+		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
+
+		ChangeNotification<K,T> notification = getNotification(classHolder, key, matcher);
+		notification.addProperty(propertyName);
+	}
+
+	public <K, T extends DMObject<K>> void feedChanged(DataModel model, Class<T> clazz, K key, String propertyName, long itemTimestamp) {
+		@SuppressWarnings("unchecked")
+		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
+		
+		ChangeNotification<K,T> notification = getNotification(classHolder, key, null);
+		notification.addFeedProperty(propertyName, itemTimestamp);
+	}
 
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;

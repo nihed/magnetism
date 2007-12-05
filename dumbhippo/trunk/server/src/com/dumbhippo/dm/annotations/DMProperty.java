@@ -34,6 +34,17 @@ public @interface DMProperty {
 	 * be specified for resource-typed properties, forces defaultInclude on) 
 	 */
 	String defaultChildren() default "";
+	
+	/**
+	 * For feed properties, the maximum number of feed entries to fetch
+	 * if no limit or a smaller limit is specified. (It might be more
+	 * appropriately called the minMaxFetch. There's no fundamental reason
+	 * we couldn't support a caller reducing the maxFetch from this value,
+	 * but it makes bookkeeping tricky, since the correct merge of two
+	 * fetch strings 'prop' and 'prop(max=30)' then depends on knowing what
+	 * the defaultMaxFetch for 'prop')
+	 */
+	int defaultMaxFetch() default 20;
 
 	/**
 	 * Whether the property should be cached or not. The main reason to avoid

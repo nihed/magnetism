@@ -10,6 +10,7 @@ import org.hibernate.context.ThreadLocalSessionContext;
 import org.hibernate.ejb.HibernateEntityManager;
 import org.hibernate.ejb.HibernateEntityManagerFactory;
 
+import com.dumbhippo.dm.dm.TestBlogEntryDMO;
 import com.dumbhippo.dm.dm.TestGroupDMO;
 import com.dumbhippo.dm.dm.TestGroupMemberDMO;
 import com.dumbhippo.dm.dm.TestUserDMO;
@@ -40,6 +41,7 @@ public class TestSupport {
 		model.addDMClass(TestUserDMO.class);
 		model.addDMClass(TestGroupDMO.class);
 		model.addDMClass(TestGroupMemberDMO.class);
+		model.addDMClass(TestBlogEntryDMO.class);
 		model.completeDMClasses();
 	}
 	

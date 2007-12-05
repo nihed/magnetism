@@ -7,11 +7,13 @@ public final class PropertyFetch implements Comparable<PropertyFetch> {
 	private DMPropertyHolder<?,?,?> property;
 	private Fetch<?,?> children;
 	private boolean notify;
+	private int max;
 	
-	public PropertyFetch(DMPropertyHolder<?,?,?> property, Fetch<?,?> children, boolean notify) {
+	public PropertyFetch(DMPropertyHolder<?,?,?> property, Fetch<?,?> children, boolean notify, int max) {
 		this.property = property;
 		this.children = children;
 		this.notify = notify;
+		this.max = max;
 	}
 
 	public Fetch<?,?> getChildren() {
@@ -22,8 +24,32 @@ public final class PropertyFetch implements Comparable<PropertyFetch> {
 		return property;
 	}
 	
+	public int getMax() {
+		return max;
+	}
+	
 	public boolean getNotify() {
 		return notify;
+	}
+	
+
+	public PropertyFetch merge(PropertyFetch other) {
+		if (equals(other))
+			return this;
+		
+		Fetch<?, ?> newChildren;
+		
+		if (children == null)
+			newChildren = other.children;
+		else if (other.children == null)
+			newChildren = children;
+		else
+			newChildren = children.merge(other.children);
+			
+		boolean newNotify = notify || other.notify;
+		int newMax = Math.max(max, other.max);
+			
+		return new PropertyFetch(property, newChildren, newNotify, newMax);
 	}
 	
 	public int compareTo(PropertyFetch other) {
@@ -40,6 +66,9 @@ public final class PropertyFetch implements Comparable<PropertyFetch> {
 			return false;
 		
 		if (notify != other.notify)
+			return false;
+		
+		if (max != other.max)
 			return false;
 		
 		if ((children == null && other.children != null) ||
@@ -65,8 +94,19 @@ public final class PropertyFetch implements Comparable<PropertyFetch> {
 		
 		b.append(property.getPropertyId());
 		
+		if (max >= 0 || !notify)
+			b.append('(');
+		
+		if (max >= 0) {
+			b.append("max=");
+			b.append(max);
+			if (!notify)
+				b.append(",");
+		}
 		if (!notify)
-			b.append("(notify=false)");
+			b.append("notify=false");
+		if (max >= 0 || !notify)
+			b.append(')');
 		
 		if (children != null) {
 			b.append(' ');

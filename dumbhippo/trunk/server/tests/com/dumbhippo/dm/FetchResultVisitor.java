@@ -41,6 +41,14 @@ public class FetchResultVisitor implements FetchVisitor {
 		currentResource.addProperty(property);
 	}
 	
+	public <KP, TP extends DMObject<KP>> void feedProperty(ResourcePropertyHolder<?, ?, KP, TP> propertyHolder, KP key, long timestamp, boolean incremental) {
+		DMClassHolder<KP,TP> classHolder = propertyHolder.getResourceClassHolder();
+		String resourceId = classHolder.makeResourceId(key);
+		
+		FetchResultProperty property = FetchResultProperty.createFeed(propertyHolder.getName(), propertyHolder.getNameSpace(), resourceId, timestamp);
+		currentResource.addProperty(property);
+	}
+	
 	public FetchResult getResult() {
 		return result;
 	}

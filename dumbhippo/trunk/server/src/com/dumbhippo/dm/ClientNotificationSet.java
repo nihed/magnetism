@@ -25,7 +25,7 @@ public class ClientNotificationSet {
 	
 	private Map<StoreClient, ClientNotification> notifications;
 	
-	public <K, T extends DMObject<K>> void addNotification(StoreClient client, StoreKey<K,T> key, Fetch<K,? super T> fetch, long propertyMask, Fetch<?,?>[] childFetches) {
+	public <K, T extends DMObject<K>> void addNotification(StoreClient client, StoreKey<K,T> key, Fetch<K,? super T> fetch, long propertyMask, Fetch<?,?>[] childFetches, int[] maxes) {
 		ClientNotification notification = null;
 		
 		if (notifications == null)
@@ -38,7 +38,7 @@ public class ClientNotificationSet {
 			notifications.put(client, notification);
 		}
 		
-		notification.addObjectProperties(key, fetch, propertyMask, childFetches);
+		notification.addObjectProperties(key, fetch, propertyMask, childFetches, maxes);
 	}
 	
 	public Collection<ClientNotification> getNotifications() {

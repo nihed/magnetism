@@ -113,7 +113,8 @@ attribute returns [FetchAttributeNode a]
 	;
 	
 attributeType returns [FetchAttributeType t]
-	:  "notify" { t = FetchAttributeType.NOTIFY; }
+	:  "max" { t = FetchAttributeType.MAX; }
+	 | "notify" { t = FetchAttributeType.NOTIFY; }
 	;	
 	
 positiveInteger returns [Integer i]
@@ -140,5 +141,5 @@ PLUS : "+" ;
 SEMICOLON : ";" ;
 STAR : "*" ;
 NAME : ('a' .. 'z' | 'A' .. 'Z' | '_') ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')* ;
-INTEGER : ('0' .. '9')+ ;
+DIGITS : ('0' .. '9')+ ;
 WS : ( ' ' | '\t' | '\r' | '\n' | '\f' ) { $setType(Token.SKIP); } ;

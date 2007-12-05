@@ -23,6 +23,8 @@ public class AllTests {
         suite.addTest(new TestSuite(ThreadingTests.class));
         suite.addTest(new TestSuite(FilterTests.class));
         
+        suite.addTest(new TestSuite(FeedTests.class));
+
         return suite;
     }
 }

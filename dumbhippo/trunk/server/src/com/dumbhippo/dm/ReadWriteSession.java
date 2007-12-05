@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.schema.DMPropertyHolder;
+import com.dumbhippo.dm.schema.FeedPropertyHolder;
 import com.dumbhippo.dm.store.StoreKey;
 
 /**
@@ -40,11 +41,18 @@ public class ReadWriteSession extends CachedSession {
 		return property.filter(getViewpoint(), key.getKey(), value);
 	}
 
+	@Override
+	@SuppressWarnings("unchecked")
+	public <K, T extends DMObject<K>> DMFeed<?> createFeedWrapper(StoreKey<K, T> key, int propertyIndex, DMFeed<T> rawFeed) {
+		FeedPropertyHolder<K, T, ?, ?> feedProperty = (FeedPropertyHolder<K, T, ?, ?>)key.getClassHolder().getProperty(propertyIndex); 
+		return new FeedWrapper(feedProperty, key.getKey(), rawFeed, null);
+	}
+
 	/**
 	 * Indicate that a resource property has changed; this invalidates any cached value for the
 	 * property and also triggers sending notifications to any clients that have registered
 	 * for notification on the property. Notifications will only be sent after the current
-	 * transaction commits succesfully.
+	 * transaction commits succesfully. For changes to feed-valued properties, see feedChanged().
 	 * 
 	 * @param <K>
 	 * @param <T>
@@ -54,6 +62,22 @@ public class ReadWriteSession extends CachedSession {
 	 */
 	public <K, T extends DMObject<K>> void changed(Class<T> clazz, K key, String propertyName) {
 		changed(clazz, key, propertyName, null);
+	}
+	
+	/**
+	 * Indicate that a feed-valued resource property has changed; This differs from changed()
+	 * in that the timestamp of the provided item is also provided.
+	 * 
+	 * @param <K>
+	 * @param <T>
+	 * @param clazz the class of the resource where the property changed
+	 * @param key the key of the resource  where the property changed
+	 * @param propertyName the name of the property that changed
+	 * @param itemTimestamp new timestamp of the item that was inserted or restacked, or -1 to indicate
+	 *    that an item was deleted.
+	 */
+	public <K, T extends DMObject<K>> void feedChanged(Class<T> clazz, K key, String propertyName, long itemTimestamp) {
+		notificationSet.feedChanged(model, clazz, key, propertyName, itemTimestamp);
 	}
 	
 	/**

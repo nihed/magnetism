@@ -3,9 +3,11 @@
 package com.dumbhippo.dm.parser;
 
 import java.io.StringReader;
+import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import com.dumbhippo.dm.fetch.*;
+import com.dumbhippo.dm.parser.ParseException;
 import com.dumbhippo.GlobalSetup;
 import org.slf4j.Logger;
 
@@ -49,9 +51,10 @@ public FetchLexer(LexerSharedInputState state) {
 	caseSensitiveLiterals = true;
 	setCaseSensitive(true);
 	literals = new Hashtable();
-	literals.put(new ANTLRHashString("true", this), new Integer(16));
-	literals.put(new ANTLRHashString("false", this), new Integer(17));
-	literals.put(new ANTLRHashString("notify", this), new Integer(14));
+	literals.put(new ANTLRHashString("true", this), new Integer(17));
+	literals.put(new ANTLRHashString("max", this), new Integer(14));
+	literals.put(new ANTLRHashString("false", this), new Integer(18));
+	literals.put(new ANTLRHashString("notify", this), new Integer(15));
 }
 
 public Token nextToken() throws TokenStreamException {
@@ -135,7 +138,7 @@ tryAgain:
 				case '4':  case '5':  case '6':  case '7':
 				case '8':  case '9':
 				{
-					mINTEGER(true);
+					mDIGITS(true);
 					theRetToken=_returnToken;
 					break;
 				}
@@ -318,7 +321,7 @@ tryAgain:
 		}
 		}
 		{
-		_loop378:
+		_loop33:
 		do {
 			switch ( LA(1)) {
 			case 'a':  case 'b':  case 'c':  case 'd':
@@ -357,7 +360,7 @@ tryAgain:
 			}
 			default:
 			{
-				break _loop378;
+				break _loop33;
 			}
 			}
 		} while (true);
@@ -369,23 +372,23 @@ tryAgain:
 		_returnToken = _token;
 	}
 	
-	public final void mINTEGER(boolean _createToken) throws RecognitionException, CharStreamException, TokenStreamException {
+	public final void mDIGITS(boolean _createToken) throws RecognitionException, CharStreamException, TokenStreamException {
 		int _ttype; Token _token=null; int _begin=text.length();
-		_ttype = INTEGER;
+		_ttype = DIGITS;
 		int _saveIndex;
 		
 		{
-		int _cnt381=0;
-		_loop381:
+		int _cnt36=0;
+		_loop36:
 		do {
 			if (((LA(1) >= '0' && LA(1) <= '9'))) {
 				matchRange('0','9');
 			}
 			else {
-				if ( _cnt381>=1 ) { break _loop381; } else {throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());}
+				if ( _cnt36>=1 ) { break _loop36; } else {throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());}
 			}
 			
-			_cnt381++;
+			_cnt36++;
 		} while (true);
 		}
 		if ( _createToken && _token==null && _ttype!=Token.SKIP ) {

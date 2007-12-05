@@ -111,7 +111,7 @@ public FetchParser(ParserSharedInputState state) {
 			p=propertyFetch();
 			props.add(p);
 			{
-			_loop83:
+			_loop5:
 			do {
 				if ((LA(1)==SEMICOLON)) {
 					match(SEMICOLON);
@@ -119,7 +119,7 @@ public FetchParser(ParserSharedInputState state) {
 					props.add(p);
 				}
 				else {
-					break _loop83;
+					break _loop5;
 				}
 				
 			} while (true);
@@ -266,12 +266,13 @@ public FetchParser(ParserSharedInputState state) {
 		match(LPAREN);
 		{
 		switch ( LA(1)) {
+		case LITERAL_max:
 		case LITERAL_notify:
 		{
 			a=attribute();
 			attrs.add(a);
 			{
-			_loop92:
+			_loop14:
 			do {
 				if ((LA(1)==COMMA)) {
 					match(COMMA);
@@ -279,7 +280,7 @@ public FetchParser(ParserSharedInputState state) {
 					attrs.add(a);
 				}
 				else {
-					break _loop92;
+					break _loop14;
 				}
 				
 			} while (true);
@@ -361,8 +362,24 @@ public FetchParser(ParserSharedInputState state) {
 		FetchAttributeType t;
 		
 		
-		match(LITERAL_notify);
-		t = FetchAttributeType.NOTIFY;
+		switch ( LA(1)) {
+		case LITERAL_max:
+		{
+			match(LITERAL_max);
+			t = FetchAttributeType.MAX;
+			break;
+		}
+		case LITERAL_notify:
+		{
+			match(LITERAL_notify);
+			t = FetchAttributeType.NOTIFY;
+			break;
+		}
+		default:
+		{
+			throw new NoViableAltException(LT(1), getFilename());
+		}
+		}
 		return t;
 	}
 	
@@ -418,11 +435,11 @@ public FetchParser(ParserSharedInputState state) {
 		"PLUS",
 		"STAR",
 		"EQUALS",
+		"\"max\"",
 		"\"notify\"",
 		"DIGITS",
 		"\"true\"",
 		"\"false\"",
-		"INTEGER",
 		"WS"
 	};
 	
