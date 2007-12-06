@@ -169,7 +169,7 @@ class Resource:
         try:
             return self.__properties[property_id]
         except KeyError:
-            raise AttributeError(property)
+            raise AttributeError(property_id)
         
     def __getattr__(self, name):
         try:
