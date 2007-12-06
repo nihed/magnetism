@@ -42,6 +42,6 @@ public class StoreKey<K,T extends DMObject<K>> {
 	
 	@Override
 	public String toString() {
-		return classHolder.getBaseClass().getSimpleName() + "#" + key.toString();
+		return classHolder.getDMOClass().getSimpleName() + "#" + key.toString();
 	}
 }

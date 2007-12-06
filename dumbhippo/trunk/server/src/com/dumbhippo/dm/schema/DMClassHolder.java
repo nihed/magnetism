@@ -54,7 +54,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	static private final Logger logger = GlobalSetup.getLogger(DMClassHolder.class);
 	
 	private DataModel model;
-	private Class<T> baseClass;
+	private Class<T> dmoClass;
 	private Class<K> keyClass;
 	private Constructor<K> keyStringConstructor;
 	private Constructor<? extends T> wrapperConstructor;
@@ -73,46 +73,46 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 
 	public DMClassHolder(DataModel model, DMClassInfo<K,T> classInfo) {
 		this.model = model;
-		baseClass = classInfo.getObjectClass();
+		dmoClass = classInfo.getObjectClass();
 		keyClass = classInfo.getKeyClass();
 		
 		if (keyClass != Guid.class && keyClass != String.class && keyClass != Long.class) {
 			try {
 				keyStringConstructor = keyClass.getConstructor(String.class);
 			} catch (NoSuchMethodException e) {
-				throw new RuntimeException(baseClass.getName() + ": Can't find constructor for key class from a string");
+				throw new RuntimeException(dmoClass.getName() + ": Can't find constructor for key class from a string");
 			}
 			
 			for (Class<?> exceptionClass : keyStringConstructor.getExceptionTypes()) {
 				if (!(RuntimeException.class.isAssignableFrom(exceptionClass) ||
 					  BadIdException.class.isAssignableFrom(exceptionClass)))
-					throw new RuntimeException(baseClass.getName() + ": String key constructor can only throw BadIdException");
+					throw new RuntimeException(dmoClass.getName() + ": String key constructor can only throw BadIdException");
 			}
 		}
 		
-		annotation = baseClass.getAnnotation(DMO.class);
+		annotation = dmoClass.getAnnotation(DMO.class);
 		if (annotation == null)
-			throw new RuntimeException("DMObject class " + baseClass.getName() + " doesn't have a @DMO annotation");
+			throw new RuntimeException("DMObject class " + dmoClass.getName() + " doesn't have a @DMO annotation");
 		
 		// Validate the classId as an URI
 		try {
 			URI uri = new URI(annotation.classId());
 			if (uri.getFragment() != null)
-				throw new RuntimeException(baseClass.getName() + ": classId '" + annotation.classId() + "' can't have a fragment identifier");
+				throw new RuntimeException(dmoClass.getName() + ": classId '" + annotation.classId() + "' can't have a fragment identifier");
 
 		} catch (URISyntaxException e1) {
-			throw new RuntimeException(baseClass.getName() + ": classId '" + annotation.classId() + "' is not a valid URI");
+			throw new RuntimeException(dmoClass.getName() + ": classId '" + annotation.classId() + "' is not a valid URI");
 		}
 		
 
 		buildWrapperClass();
 		
-		DMFilter filterAnnotation = baseClass.getAnnotation(DMFilter.class);
+		DMFilter filterAnnotation = dmoClass.getAnnotation(DMFilter.class);
 		if (filterAnnotation != null) {
 			try {
 				filter = FilterParser.parse(filterAnnotation.value());
 			} catch (com.dumbhippo.dm.parser.ParseException e) {
-				throw new RuntimeException(baseClass.getName() + ": Error parsing filter", e);
+				throw new RuntimeException(dmoClass.getName() + ": Error parsing filter", e);
 			}
 			
 			itemFilter = filter.asItemFilter();
@@ -148,8 +148,8 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		return keyClass;
 	}
 	
-	public Class<T> getBaseClass() {
-		return baseClass;
+	public Class<T> getDMOClass() {
+		return dmoClass;
 	}
 	
 	public int getPropertyIndex(String name) {
@@ -201,7 +201,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 			T result = wrapperConstructor.newInstance(key, session);
 			return result;
 		} catch (Exception e) {
-			throw new RuntimeException("Error creating instance of class " + baseClass.getName(), e);
+			throw new RuntimeException("Error creating instance of class " + dmoClass.getName(), e);
 		}
 	}
 	
@@ -290,7 +290,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	public void processInjections(DMSession session, T t) {
 		DMInjectionLookup injectionLookup = model.getInjectionLookup();
 		
-		Class<?> clazz = baseClass;
+		Class<?> clazz = dmoClass;
 		while (clazz != null) {
 			for (Field field : clazz.getDeclaredFields()) {
 				Object injection = null;
@@ -392,7 +392,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		Map<String, Integer> nameCount = new HashMap<String, Integer>();
 		
 		for (CtMethod method : baseCtClass.getDeclaredMethods()) {
-			DMPropertyHolder<K,T,?> property = DMPropertyHolder.getForMethod(model, baseClass, keyClass, method);
+			DMPropertyHolder<K,T,?> property = DMPropertyHolder.getForMethod(model, dmoClass, keyClass, method);
 			if (property != null) {
 				foundProperties.add(property);
 				if (!nameCount.containsKey(property.getName()))
@@ -402,7 +402,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 			}
 		}
 		
-		Class<?> parentClass = baseClass.getSuperclass();
+		Class<?> parentClass = dmoClass.getSuperclass();
 		while (parentClass != null) {
 			DMO parentAnnotation = parentClass.getAnnotation(DMO.class);
 			if (parentAnnotation != null) {
@@ -664,9 +664,9 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	}
 	
 	private void buildWrapperClass() {
-		String className = baseClass.getName();
+		String className = dmoClass.getName();
 		ClassPool classPool = model.getClassPool();
-		CtClass baseCtClass = ctClassForClass(baseClass);
+		CtClass baseCtClass = ctClassForClass(dmoClass);
 		
 		collateProperties(baseCtClass);
 		

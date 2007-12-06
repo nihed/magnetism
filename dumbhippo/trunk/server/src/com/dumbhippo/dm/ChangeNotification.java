@@ -52,7 +52,7 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 
 		int propertyIndex = classHolder.getPropertyIndex(propertyName);
 		if (propertyIndex < 0)
-			throw new RuntimeException("Class " + classHolder.getBaseClass().getName() + " has no property " + propertyName);
+			throw new RuntimeException("Class " + classHolder.getDMOClass().getName() + " has no property " + propertyName);
 		
 		DMPropertyHolder<K,T,?> property = classHolder.getProperty(propertyIndex);
 		if (property instanceof FeedPropertyHolder)
@@ -67,7 +67,7 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 
 		int propertyIndex = classHolder.getPropertyIndex(propertyName);
 		if (propertyIndex < 0)
-			throw new RuntimeException("Class " + classHolder.getBaseClass().getName() + " has no property " + propertyName);
+			throw new RuntimeException("Class " + classHolder.getDMOClass().getName() + " has no property " + propertyName);
 		
 		addProperty(propertyIndex);
 		
@@ -104,7 +104,7 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 					model.getStore().invalidate(classHolder, key, propertyIndex, timestamp);
 				
 				logger.debug("Invalidated {}#{}.{}", new Object[] { 
-						classHolder.getBaseClass().getSimpleName(),
+						classHolder.getDMOClass().getSimpleName(),
 						key, 
 						property.getName() });
 			}
