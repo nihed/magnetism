@@ -1,5 +1,8 @@
 package com.dumbhippo.server.dm;
 
+import java.lang.annotation.Annotation;
+
+import javax.ejb.EJB;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.ObjectMessage;
@@ -13,6 +16,8 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Site;
 import com.dumbhippo.dm.ChangeNotificationSet;
 import com.dumbhippo.dm.ChangeNotifier;
+import com.dumbhippo.dm.DMInjectionLookup;
+import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMSessionMapJTA;
 import com.dumbhippo.dm.DataModel;
 import com.dumbhippo.dm.JBossInjectableEntityManagerFactory;
@@ -26,6 +31,8 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.services.caches.CacheFactory;
+import com.dumbhippo.services.caches.WebServiceCache;
 
 public class DataService extends ServiceMBeanSupport implements DataServiceMBean, ChangeNotifier {
 	static public final String TOPIC_NAME = "topic/DataModelTopic";
@@ -38,6 +45,25 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 	private Thread topicConsumerThread;
 	
 	private static DataService instance;
+
+	private class InjectionLookup implements DMInjectionLookup {
+		public Object getInjectionByAnnotations(Class<?> valueType, Annotation[] annotations, DMSession session) {
+			for (Annotation annotation : annotations) {
+				if (annotation instanceof EJB)
+					return EJBUtil.defaultLookup(valueType);
+				else if (annotation instanceof WebServiceCache) {
+					CacheFactory cacheFactory = EJBUtil.defaultLookup(CacheFactory.class);
+					return cacheFactory.lookup(valueType);
+				}
+			}
+			
+			return null;
+		}
+
+		public Object getInjectionByType(Class<?> valueType, DMSession session) {
+			return null;
+		}
+	}
 	
 	// This service is started before HippoService, which sets up the tree cache and updates db schemas.
 	// Thus, don't try to use the database in here.

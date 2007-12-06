@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.BadIdException;
+import com.dumbhippo.dm.DMInjectionLookup;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
@@ -204,22 +205,6 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		}
 	}
 	
-	public void processInjections(DMSession session, T t) {
-		Class<?> clazz = baseClass;
-		while (clazz != null) {
-			for (Field field : clazz.getDeclaredFields()) {
-				if (field.isAnnotationPresent(Inject.class)) {
-					injectField(session, t, field);
-				} else if (field.isAnnotationPresent(EJB.class)) {
-					Object bean = EJBUtil.defaultLookup(field.getType());
-					setField(t, field, bean);			
-				}
-			}
-			
-			clazz = clazz.getSuperclass();
-		}
-	}
-	
 	public Filter getUncompiledFilter() {
 		return filter;
 	}
@@ -302,19 +287,50 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		}
 	}
 
-	private void injectField(DMSession session, T t, Field field) {
-		if (field.getType() == EntityManager.class) {
-			setField(t, field, session.getInjectableEntityManager());
-		} else if (field.getType() == DMSession.class) {
-			setField(t, field, session);
-		} else if (DMViewpoint.class.isAssignableFrom(field.getType())) {
+	public void processInjections(DMSession session, T t) {
+		DMInjectionLookup injectionLookup = model.getInjectionLookup();
+		
+		Class<?> clazz = baseClass;
+		while (clazz != null) {
+			for (Field field : clazz.getDeclaredFields()) {
+				Object injection = null;
+				
+				if (injectionLookup != null)
+					injection = injectionLookup.getInjectionByAnnotations(field.getType(), field.getAnnotations(), session);
+
+				if (injection == null && field.isAnnotationPresent(Inject.class)) {
+					if (injectionLookup != null)
+						injection = injectionLookup.getInjectionByType(field.getType(), session);
+					if (injection == null)
+						injection = getInjectionByType(field.getType(), session);
+				}
+				
+				if (injection != null)
+					setField(t, field, injection);			
+				
+				if (field.isAnnotationPresent(EJB.class)) {
+					Object bean = EJBUtil.defaultLookup(field.getType());
+					setField(t, field, bean);			
+				}
+			}
+			
+			clazz = clazz.getSuperclass();
+		}
+	}
+	
+	private Object getInjectionByType(Class<?> type, DMSession session) {
+		if (type == EntityManager.class) {
+			return session.getInjectableEntityManager();
+		} else if (type == DMSession.class) {
+			return session;
+		} else if (DMViewpoint.class.isAssignableFrom(type)) {
 			// We use a isAssignableFrom check here to allow people to @Inject fields
 			// that are subclasses of DMViewpoint. If the type of the @Inject field
 			// is a subtype of DMViewpoint not compatible with the the viewpoint of
 			// the DMSession, then this we'll get a ClassCastException here
-			setField(t, field, session.getViewpoint());
+			return session.getViewpoint();
 		} else { 
-			throw new RuntimeException("@Inject annotation found field of unknown type " + field.getType().getName());
+			throw new RuntimeException("@Inject annotation found field of unknown type " + type.getName());
 		}
 	}
 
@@ -396,11 +412,15 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 					@SuppressWarnings("unchecked")
 					DMPropertyHolder<K,T,?> property = (DMPropertyHolder<K,T,?>)parentClassHolder.getProperty(i);
 					
-					foundProperties.add(property);
-					if (!nameCount.containsKey(property.getName()))
-						nameCount.put(property.getName(), 1);
-					else
-						nameCount.put(property.getName(), 1 + nameCount.get(property.getName()));
+					// Only get properties declared in the parent class, we'll pick up inherited
+					// properties as we walk further up the inheritance chain
+					if (property.getPropertyInfo().getDeclaringType() == parentClass) {
+						foundProperties.add(property);
+						if (!nameCount.containsKey(property.getName()))
+							nameCount.put(property.getName(), 1);
+						else
+							nameCount.put(property.getName(), 1 + nameCount.get(property.getName()));
+					}
 				}
 			}
 			
