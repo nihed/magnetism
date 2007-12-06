@@ -234,6 +234,10 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		return annotation.defaultMaxFetch();
 	}
 	
+	protected PropertyInfo getPropertyInfo() {
+		return propertyInfo;
+	}
+	
 	abstract public Object dehydrate(Object value);
 	abstract public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session, boolean filter);
 	abstract public Object filter(DMViewpoint viewpoint, K key, Object value);

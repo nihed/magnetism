@@ -36,6 +36,7 @@ public class DataModel {
 	private String baseUrl;
 	private DMSessionMap sessionMap = new DMSessionMapJTA();
 	private EntityManagerFactory emf = null;
+	private DMInjectionLookup injectionLookup;
 	private ChangeNotifier notifier;
 	private Map<Class<?>, DMClassHolder<?,?>> classes = new HashMap<Class<?>, DMClassHolder<?,?>>();
 	private Map<String, DMClassHolder<?,?>> classesByBase = new HashMap<String, DMClassHolder<?,?>>();
@@ -64,6 +65,7 @@ public class DataModel {
 	public DataModel(String                       baseUrl,
 			         DMSessionMap                 sessionMap,
 			         EntityManagerFactory         emf,
+			         DMInjectionLookup            injectionLookup,
 			         ChangeNotifier               notifier,
 			         Class<? extends DMViewpoint> viewpointClass,
 			         DMViewpoint                  systemViewpoint) {
@@ -81,6 +83,7 @@ public class DataModel {
 		
 		this.sessionMap = sessionMap;
 		this.emf = emf;
+		this.injectionLookup = injectionLookup;
 		this.notifier = notifier;
 		this.viewpointClass = viewpointClass;
 		this.systemViewpoint = systemViewpoint;
@@ -133,6 +136,10 @@ public class DataModel {
 	 */
 	public EntityManager createInjectableEntityManager() {
 		return emf.createEntityManager();
+	}
+	
+	public DMInjectionLookup getInjectionLookup() {
+		return injectionLookup;
 	}
 	
 	public DMClassHolder<?, ? extends DMObject<?>> getClassHolder(Class<?> tClass) {
@@ -231,7 +238,7 @@ public class DataModel {
 	public DMStore getStore() {
 		return store;
 	}
-
+	
 	public long getTimestamp() {
 		// FIXME: This doesn't fully work in a clustered configuration; we should use
 		// timestamps/serials from the invalidation protocol instead.
