@@ -23,40 +23,26 @@ class PeopleStock(AbstractMugshotStock):
 
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
         
-        self.__local_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
-        self.__box.append(self.__local_box)
+        self.__person_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
+        self.__box.append(self.__person_box)
 
-        self.__separator = hippo.CanvasBox(box_height=1, xalign=hippo.ALIGNMENT_FILL, background_color=0xccccccff)
-        self.__box.append(self.__separator)
-        
-        self.__contact_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
-        self.__box.append(self.__contact_box)
-
-        self.__local_items = {}
-        self.__contact_items = {}
+        self.__person_items = {}
 
         self.__slideout = None
         self.__slideout_item = None
 
         self.__people_browser = None
         self._add_more_button(self.__on_more_button)        
-
-        self.__update_separators()
         
         self.__tracker = PeopleTracker()
-        self.__tracker.contacts.connect("added", self.__on_contact_added)
-        self.__tracker.contacts.connect("removed", self.__on_contact_removed)
-        self.__tracker.local_people.connect("added", self.__on_local_person_added)
-        self.__tracker.local_people.connect("removed", self.__on_local_person_removed)
+        self.__tracker.people.connect("added", self.__on_person_added)
+        self.__tracker.people.connect("removed", self.__on_person_removed)
 
         self.__model = DataModel(bigboard.globals.server_name)
 
-        for person in self.__tracker.contacts:
-            self.__on_contact_added(self.__tracker.contacts, person)
+        for person in self.__tracker.people:
+            self.__on_person_added(self.__tracker.people, person)
             
-        for person in self.__tracker.local_people:
-            self.__on_local_person_added(self.__tracker.local_people, person)
-
         ## add a new search provider (FIXME never gets disabled)
         search.enable_search_provider('people',
                                       lambda: PeopleSearchProvider(self.__tracker))
@@ -74,14 +60,8 @@ class PeopleStock(AbstractMugshotStock):
 
     def set_size(self, size):
         super(PeopleStock, self).set_size(size)
-        for i in self.__local_items.values():
+        for i in self.__person_items.values():
             self.__set_item_size(i, size)
-        for i in self.__contact_items.values():
-            self.__set_item_size(i, size)
-
-    def __update_separators(self):
-        show_separator = len(self.__local_items) != 0 and len(self.__contact_items) != 0
-        self.__box.set_child_visible(self.__separator, show_separator)
 
     def __add_person(self, person, box, map):
         self._logger.debug("person added to people stock %s" % (person.display_name))
@@ -103,8 +83,6 @@ class PeopleStock(AbstractMugshotStock):
         self.__set_item_size(item, self.get_size())
         item.connect('activated', self.__handle_item_pressed)
 
-        self.__update_separators()
-
     def __remove_person(self, person, box, map):
         try:
             item = map[person]
@@ -112,24 +90,13 @@ class PeopleStock(AbstractMugshotStock):
             return
         
         item.destroy()
-        del map[person]
-        
-        self.__update_separators()
+        del map[person]    
 
-    def __on_contact_added(self, list, contact):
-        self.__add_person(contact, self.__contact_box, self.__contact_items)
+    def __on_person_added(self, list, person):
+        self.__add_person(person, self.__person_box, self.__person_items)
         
-    def __on_contact_removed(self, list, contact):
-        self.__remove_person(contact, self.__contact_box, self.__contact_items)
-        
-    def __on_local_person_added(self, list, person):
-        if person == self.__model.self_resource:
-            return
-        
-        self.__add_person(person, self.__local_box, self.__local_items)
-        
-    def __on_local_person_removed(self, list, person):
-        self.__remove_person(person, self.__local_box, self.__local_items)
+    def __on_person_removed(self, list, person):
+        self.__remove_person(person, self.__person_box, self.__person_items)        
         
     def __close_slideout(self, *args):
         if self.__slideout:
@@ -204,8 +171,8 @@ class PeopleSearchProvider(search.SearchProvider):
     def perform_search(self, query, consumer):
         results = []
         
-        for p in self.__tracker.contacts:
-            #_logger.debug("contact: " + str(p))
+        for p in self.__tracker.people:
+            #_logger.debug("person: " + str(p))
 
             matched = False
             if query in p.display_name:
@@ -228,13 +195,6 @@ class PeopleSearchProvider(search.SearchProvider):
                     
             if matched:
                 results.append(PeopleSearchResult(self, p))
-                
-        for p in self.__tracker.aim_people:
-            #_logger.debug("aim: " + str(p))
-            pass ## FIXME
-        for p in self.__tracker.local_people:
-            #_logger.debug("local: " + str(p))
-            pass ## FIXME            
 
         if len(results) > 0:
             consumer.add_results(results)
