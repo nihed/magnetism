@@ -89,7 +89,7 @@ public class XmppFetchVisitor implements FetchVisitor {
 			if (propertyHolder.getDefaultInclude()) {
 				String defaultChildren = propertyHolder.getDefaultChildrenString();
 				if (defaultChildren != null)
-					element.addAttribute(DEFAULT_CHILDREN_QNAME, propertyHolder.getTypeString());
+					element.addAttribute(DEFAULT_CHILDREN_QNAME, defaultChildren);
 			}
 				
 			seenProperties.add(propertyHolder);
