@@ -1493,7 +1493,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feedSystem.removeGroupFeed(viewpoint.getViewer(), group, feed);		
 	}
 
-	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException, RetryException {
+	public void doSetRhapsodyAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException, RetryException {
 		String urlOrId = urlOrIdStr.trim();
 
 		String rhapUserId = StringUtils.findParamValueInUrl(urlOrId, "rhapUserId");		
@@ -1527,7 +1527,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feed.getAccounts().add(external);
 	}
 	
-	public void doSetNetflixFeedUrl(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException, RetryException {
+	public void doSetNetflixAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException, RetryException {
 		String urlOrId = urlOrIdStr.trim();
 
 		String netflixUserId = StringUtils.findParamValueInUrl(urlOrId, "id");		
@@ -1632,7 +1632,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
 	
-	public void doSetMySpaceName(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException, RetryException {
+	public void doSetMySpaceAccount(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException, RetryException {
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.MYSPACE);		
 		String friendId;		
 		boolean isPrivate;
@@ -1672,7 +1672,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}	
 	}
 
-	public void doSetYouTubeName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+	public void doSetYouTubeAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
 		// Try to pull youtube name out of either a youtube profile url ("http://www.youtube.com/user/$username" || "http://www.youtube.com/profile?user=$username") or 
 		// just try using the thing as a username directly
 		String name = urlOrName.trim();
@@ -1699,7 +1699,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 	
-	public void doSetLastFmName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+	public void doSetLastFmAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
 		String name = urlOrName.trim();
 		String found = StringUtils.findPathElementAfter(name, "/user/");
 		if (found != null)
@@ -1726,7 +1726,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}	
 	
-	public void doSetDeliciousName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
+	public void doSetDeliciousAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 		// del.icio.us urls are just "http://del.icio.us/myusername"
 		
@@ -1759,7 +1759,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 	
-	public void doSetTwitterName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
+	public void doSetTwitterAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 		
 		// Twitter urls are just "http://twitter.com/myusername"
@@ -1809,7 +1809,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	    }
 	}
 
-	public void doSetDiggName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
+	public void doSetDiggAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 		
 		// Digg urls are "http://digg.com/users/myusername/stuff"
@@ -1843,7 +1843,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 
-	public void doSetRedditName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
+	public void doSetRedditAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 
 		// Reddit urls are "http://reddit.com/user/myusername"
@@ -1909,7 +1909,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	    }
 	}
 	
-	public void doSetLinkedInProfile(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+	public void doSetLinkedInAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
 		// Try to pull linked in name out of either a linked in profile url ("http://www.linkedin.com/in/username") or 
 		// just try using the thing as a username directly
 		String name = urlOrName.trim();
@@ -1933,7 +1933,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 
-	public void doSetPicasaName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
+	public void doSetPicasaAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 		
 		// Picasa public urls are http://picasaweb.google.com/username
@@ -1971,7 +1971,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 	
-	public void doSetAmazonUrl(XmlBuilder xml, UserViewpoint viewpoint, String urlOrUserIdStr) throws XmlMethodException {		
+	public void doSetAmazonAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrUserIdStr) throws XmlMethodException {		
 		String urlOrUserId = urlOrUserIdStr.trim();
 
 		String amazonUserId = StringUtils.findPathElementAfter(urlOrUserId, "/profile/");
@@ -2022,7 +2022,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.closeElement();
 	}
 	
-	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException {
+	public void doSetWebsiteAccount(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException {
 		// DO NOT cut and paste this block into similar external account methods. It's only here because
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
 		// for the plain entries assumes this works.
@@ -2050,7 +2050,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
 
-	public void doSetBlog(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException, RetryException {
+	public void doSetBlogAccount(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException, RetryException {
 		
 		// DO NOT cut and paste this block into similar external account methods. It's only here because
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
@@ -2084,7 +2084,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feed.getAccounts().add(external);
 	}
 	
-	public void doSetGoogleReaderUrl(XmlBuilder xml, UserViewpoint viewpoint, String feedOrPageUrl) throws XmlMethodException, RetryException {
+	public void doSetGoogleReaderAccount(XmlBuilder xml, UserViewpoint viewpoint, String feedOrPageUrl) throws XmlMethodException, RetryException {
 		feedOrPageUrl = feedOrPageUrl.trim();
 		
 		if (feedOrPageUrl.startsWith("https://"))

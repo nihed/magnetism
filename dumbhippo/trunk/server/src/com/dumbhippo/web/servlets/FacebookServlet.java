@@ -1,15 +1,26 @@
 package com.dumbhippo.web.servlets;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 import org.slf4j.Logger;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 import com.dumbhippo.ExternalAccountCategory;
 import com.dumbhippo.GlobalSetup;
@@ -17,15 +28,18 @@ import com.dumbhippo.Site;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystemException;
 import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.HttpMethods;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.SystemViewpoint;
@@ -73,6 +87,7 @@ public class FacebookServlet extends AbstractServlet {
 		
 		String errorMessage = null;
 		User user = null;
+		UserViewpoint userViewpoint = null;
 		if (secret == null) {
 			errorMessage = "We could not verify Facebook information due to a missing secret key we should share with Facebook.";   
 			logger.warn("Facebook secret is not set, can't verify requests from Facebook.");
@@ -89,15 +104,19 @@ public class FacebookServlet extends AbstractServlet {
 	        	    user = identitySpider.lookupUserByFacebookUserId(SystemViewpoint.getInstance(), facebookUserId);
 			        if (user != null) {
 	    	            try {
-	    	            FacebookTracker facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
-	    	        	// TODO: can change this into updateExistingFacebookAccount
-	    	            facebookTracker.updateOrCreateFacebookAccount(new UserViewpoint(user, Site.MUGSHOT), sessionKey, facebookUserId, true);
+		    	            FacebookTracker facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
+		    	            userViewpoint = new UserViewpoint(user, Site.MUGSHOT);
+		    	        	// TODO: can change this into updateExistingFacebookAccount
+		    	            facebookTracker.updateOrCreateFacebookAccount(userViewpoint, sessionKey, facebookUserId, true);		    	            
 	    	            } catch (FacebookSystemException e) {
 	                        errorMessage = e.getMessage();		
 	    	            }
+			        } else {
+			        	// TODO: create FacebookResource based on the facebookUserId and a user that is claiming this resource
 			        }
 		        } catch (NotFoundException e) {
-		        	//nothing to do
+		        	// nothing to do
+		        	// TODO: check in which case NotFoundException is thrown as opposed to the user being null
 		        }
 	        }
 		}
@@ -110,6 +129,77 @@ public class FacebookServlet extends AbstractServlet {
         xml.appendTextNode("div", "Mugshot allows you and your friends to see your activity from lots of other sites on the internet and automatically puts that in your profile and news feed.",
                            "style", "margin-left:45px; margin-bottom:10px;");
 		if (user != null && errorMessage == null) {
+			// check if there are mugshot params, process them, and display an appropriate message
+	        @SuppressWarnings("unchecked")
+	        Map<ExternalAccountType, CharSequence> mugshotParams = extractMugshotParamsFromArray(request.getParameterMap());
+	        ExternalAccountSystem externalAccounts = WebEJBUtil.defaultLookup(ExternalAccountSystem.class);
+	        HttpMethods httpMethods =  WebEJBUtil.defaultLookup(HttpMethods.class);
+    		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    		factory.setNamespaceAware(true);
+	        for (Map.Entry<ExternalAccountType, CharSequence> entry : mugshotParams.entrySet()) {          
+	        	String entryValue = entry.getValue().toString().trim(); 
+			    if (entryValue.length() > 0) {
+			    	try {
+			    		// we could check if the account already exists that has the same info set and is loved,
+			    		// but since we might be updating certain things when the user resets the info (like looking up
+			    		// all Amazon wish lists again), let's just reset all the accounts		
+			    		// if it seems too slow for a user who has a lot of accounts and is just changing one, 
+			    		// we can change this
+				    	if (entry.getKey().equals(ExternalAccountType.FLICKR)) {
+				    		XmlBuilder xmlForFlickr = new XmlBuilder();
+				    		httpMethods.doFindFlickrAccount(xmlForFlickr, userViewpoint, entryValue);
+				    		Document doc = factory.newDocumentBuilder().parse(xmlForFlickr.toString());
+				    		XPath xpath = XPathFactory.newInstance().newXPath();
+				    		String nsid = xpath.evaluate("/flickrUser/nsid", doc, XPathConstants.NODE).toString();
+				    		logger.debug("Got nsid {} when setting Flickr account", nsid);
+				    		httpMethods.doSetFlickrAccount(new XmlBuilder(), userViewpoint, nsid, entryValue);
+				    	} else {
+				    		Method setAccount = httpMethods.getClass().getMethod("doSet" + entry.getKey().getDomNodeIdName() + "Account");	
+				    		XmlBuilder resultXml = new XmlBuilder();
+				    		setAccount.invoke(resultXml, userViewpoint, entryValue);
+				    		// we have messages telling the user about certain limitations of their account
+				    		// for MySpace, Twitter, Reddit, and Amazon
+				    		try {
+				    		    Document doc = factory.newDocumentBuilder().parse(resultXml.toString());
+				    		    XPath xpath = XPathFactory.newInstance().newXPath();
+				    		    String message = xpath.evaluate("/message", doc, XPathConstants.NODE).toString();
+				    		    if (message.trim().length() > 0) {
+				    		    	// TODO: display it as a message
+				    		    }
+				    		} catch (XPathExpressionException e) {
+					        	// that's fine, means there was no message
+					        }
+				    	}
+			    	} catch (XmlMethodException e) {
+			    		// TODO: create a return error message with all the exceptions			    		
+			    	} catch (ParserConfigurationException e) {
+				        // TODO: same as above
+			        } catch (SAXException e) {
+			        	// TODO: same as above
+			        } catch (XPathExpressionException e) {
+			        	// TODO: same as above
+			        } catch (NoSuchMethodException e) {
+			        	// TODO: same as above
+			        } catch (InvocationTargetException e) {
+			        	// TODO: same as above
+			        } catch (IllegalAccessException e) {
+			        	// TODO: same as above
+			        }
+			    } else {
+			    	try {
+			    	    // do not unset "hate" because we don't have that concept on Facebook application page
+			    		// interface, so "hated" accounts are not populated with values to begin with; only unset "love"
+			    	    ExternalAccount externalAccount = externalAccounts.lookupExternalAccount(userViewpoint, user, entry.getKey());
+			    	    if (externalAccount.getSentiment().equals(Sentiment.LOVE)) {
+			    	    	externalAccounts.setSentiment(externalAccount, Sentiment.INDIFFERENT);
+			    	    }
+			    	} catch (NotFoundException e) {
+			    		// this account did not exist, nothing to do
+			    	}
+			    }
+		    	
+		    }
+						
 			xml.appendTextNode("span", "Updates to the information below will be reflected in ",
 					           "style", "margin-left:15px;");
 		    xml.appendTextNode("a", "your Mugshot account", "href",
@@ -121,15 +211,15 @@ public class FacebookServlet extends AbstractServlet {
 		    	if (currentCategory == null || !currentCategory.equals(externalAccount.getExternalAccountType().getCategory())) {
 				    currentCategory = externalAccount.getExternalAccountType().getCategory();
 		    		xml.openElement("fb:editor-custom");
-				    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", "margin-left:-185px;" );		    	
+				    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", "margin-left:-225px;" );		    	
 				    xml.closeElement();
 		    	}
 			    xml.openElement("fb:editor-custom", "label", externalAccount.getSiteName());
 			    
 			    if (externalAccount.getExternalAccount() != null && externalAccount.getExternalAccount().isLovedAndEnabled()) {
-			        xml.appendEmptyNode("input", "name", externalAccount.getDomNodeIdName(), "value", externalAccount.getExternalAccount().getAccountInfo());
+			        xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name(), "value", externalAccount.getExternalAccount().getAccountInfo());
 			    } else {
-			    	xml.appendEmptyNode("input", "name", externalAccount.getDomNodeIdName());
+			    	xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name());
 			    }
 			    xml.appendEmptyNode("br");
 			    
@@ -225,4 +315,20 @@ public class FacebookServlet extends AbstractServlet {
 	protected boolean requiresTransaction(HttpServletRequest request) {
 		return true;
 	}
+	
+	private static Map<ExternalAccountType, CharSequence> extractMugshotParamsFromArray(Map<CharSequence, CharSequence[]> reqParams) {
+	    if (null == reqParams)
+	        return null;
+	    String mugshotParamPart = "mugshot_";
+	    Map<ExternalAccountType, CharSequence> result = new HashMap<ExternalAccountType, CharSequence>(reqParams.size());
+	    for (Map.Entry<CharSequence, CharSequence[]> entry : reqParams.entrySet()) {
+	        String key = entry.getKey().toString();
+	        if (key.startsWith(mugshotParamPart)) {
+	          // we want to preserve the parameter even if entry.getValue()[0] is empty, because that might mean we want to
+	          // unset the external account information
+	          result.put(ExternalAccountType.valueOf(key.substring(mugshotParamPart.length())), entry.getValue()[0]);
+	        }  
+	    }
+	    return result;
+	}    
 }
