@@ -1,4 +1,7 @@
-import re,logging
+import re
+import logging
+import traceback
+import sys
 
 import dbus
 import dbus.service
@@ -168,7 +171,7 @@ class DataModel(AbstractModel):
             except KeyError:
                 raise Exception("Resource-valued element points to a resource we don't know about: " + str(value))
         elif type_byte == ord('s') or type_byte == ord('u'):
-            value = value.__str__()
+            value = unicode(value)
         elif type_byte == ord('b'):
             value = bool(value)
             
@@ -212,7 +215,7 @@ class _DBusCallback(dbus.service.Object):
             try:
                 self.__model._update_resource_from_dbus(resource_struct, notifications=notifications)
             except Exception, e:
-                _logger.error("Failed to update resource from a Notify", e)
+                _logger.error("Failed to update resource from a Notify", exc_info=True)
 
         notifications.send()
     
@@ -233,7 +236,7 @@ class _DBusQuery(Query):
                 if resource != None and not indirect:
                     result.append(resource)
             except Exception, e:
-                _logger.error("Failed to update resource from a query reply: " + e.message)
+                _logger.error("Failed to update resource from a query reply", exc_info=True)
 
         notifications.send()
         self._on_success(result)
