@@ -190,69 +190,69 @@ dh.account.setFlickrAccount = function(nsid, email, loadFunc, errorFunc) {
 				     	loadFunc, errorFunc);
 }
 dh.account.setLinkedInProfile = function(name, loadFunc, errorFunc) {
-   	dh.server.doXmlMethod("setlinkedinprofile",
+   	dh.server.doXmlMethod("setlinkedinaccount",
 				     { "urlOrName" : name },
 						loadFunc, errorFunc);
 }
 dh.account.setMyspaceName = function(name, loadFunc, errorFunc) {
-   	dh.server.doXmlMethod("setmyspacename",
+   	dh.server.doXmlMethod("setmyspaceaccount",
 				     { "name" : name },
 						loadFunc, errorFunc);
 }
 dh.account.setYouTubeName = function(name, loadFunc, errorFunc) {
-   	dh.server.doXmlMethod("setyoutubename",
+   	dh.server.doXmlMethod("setyoutubeaccount",
 				     { "urlOrName" : name },
 						loadFunc, errorFunc);
 }
 dh.account.setLastFmName = function(name, loadFunc, errorFunc) {
-   	dh.server.doXmlMethod("setlastfmname",
+   	dh.server.doXmlMethod("setlastfmaccount",
 				     { "urlOrName" : name },
 						loadFunc, errorFunc);
 }
 dh.account.setDeliciousName = function(name, loadFunc, errorFunc) {
-   	dh.server.doXmlMethod("setdeliciousname",
+   	dh.server.doXmlMethod("setdeliciousaccount",
 				     { "urlOrName" : name },
 						loadFunc, errorFunc);
 }
 dh.account.setTwitterName = function(name, loadFunc, errorFunc) {
-   	dh.server.doXmlMethod("settwittername",
+   	dh.server.doXmlMethod("settwitteraccount",
 				     { "urlOrName" : name },
 						loadFunc, errorFunc);
 }
 dh.account.setDiggName = function(name, loadFunc, errorFunc) {
-   	dh.server.doXmlMethod("setdiggname",
+   	dh.server.doXmlMethod("setdiggaccount",
 				     { "urlOrName" : name },
 						loadFunc, errorFunc);
 }
 dh.account.setRedditName = function(name, loadFunc, errorFunc) {
-   	dh.server.doXmlMethod("setredditname",
+   	dh.server.doXmlMethod("setredditaccount",
 				     { "urlOrName" : name },
 						loadFunc, errorFunc);
 }
 dh.account.setRhapsodyUrl = function(name, loadFunc, errorFunc) {
-   	dh.server.doXmlMethod("setrhapsodyhistoryfeed",
+   	dh.server.doXmlMethod("setrhapsodyaccount",
    	                      { "url" : name },
    	                      loadFunc, errorFunc);
 }
 dh.account.setNetflixUrl = function(name, loadFunc, errorFunc) {
-   	dh.server.doXmlMethod("setnetflixfeedurl",
+   	dh.server.doXmlMethod("setnetflixaccount",
    	                      { "url" : name },
    	                      loadFunc, errorFunc);
 }
  
 dh.account.setGoogleReaderUrl = function(name, loadFunc, errorFunc) {
-   	dh.server.doXmlMethod("setGoogleReaderUrl",
+   	dh.server.doXmlMethod("setgooglereaderaccount",
    	                      { "url" : name },
    	                      loadFunc, errorFunc);
 }
 dh.account.setPicasaName = function(name, loadFunc, errorFunc) {
-   	dh.server.doXmlMethod("setPicasaName",
+   	dh.server.doXmlMethod("setpicasaaccount",
 				     { "urlOrName" : name },
 						loadFunc, errorFunc);
 }
 
 dh.account.setAmazonUrl = function(name, loadFunc, errorFunc) {
-   	dh.server.doXmlMethod("setAmazonUrl",
+   	dh.server.doXmlMethod("setamazonaccount",
 				          { "urlOrUserId" : name },
 						  loadFunc, errorFunc);
 }
@@ -712,7 +712,7 @@ dh.account.createYouTubeEntry = function() {
 }
 
 dh.account.createLastFmEntry = function() {	
-	dh.account.lastFmEntry = new dh.lovehate.Entry('dhLastfm', 'Last.fm username', dh.account.initialLastFmName,
+	dh.account.lastFmEntry = new dh.lovehate.Entry('dhLastFm', 'Last.fm username', dh.account.initialLastFmName,
 					'Uhh...what\'s Last.fm?', dh.account.initialLastFmHateQuip, 'Your friends see what music you\'re listening to.');
 	dh.account.lastFmEntry.onLoveSaved = dh.account.onLastFmLoveSaved;
 	dh.account.lastFmEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.lastFmEntry, 'LASTFM');
@@ -838,13 +838,13 @@ dhAccountInit = function() {
 	if (exists('dhWebsiteEntry')) {
 		var websiteEntry = new dh.formtable.ExpandableTextInput('dhWebsiteEntry', 'Your website URL');
 		websiteEntry.setDescription("Your website will be linked from your Mugshot page.");
-		websiteEntry.setChangedXmlMethod('setwebsite', 'url');
+		websiteEntry.setChangedXmlMethod('setwebsiteaccount', 'url');
 	}
 	
 	if (exists('dhBlogEntry')) {
 		var blogEntry = new dh.formtable.ExpandableTextInput('dhBlogEntry', 'Your blog URL');
 		blogEntry.setDescription("Your friends will get updates when you post to your blog.")
-		blogEntry.setChangedXmlMethod('setblog', 'url');
+		blogEntry.setChangedXmlMethod('setblogaccount', 'url');
 	}
 	
 	// add some event handlers on the file input

@@ -549,7 +549,7 @@ public enum ExternalAccountType {
 	LASTFM("Last.fm")  { // 10
 		@Override
 		public String getDomNodeIdName() {
-			return "Lastfm";
+			return "LastFm";
 		}
 		
 		@Override
@@ -1001,12 +1001,7 @@ public enum ExternalAccountType {
 			return "http://www.google.com/reader/view";
 		}
 	},
-	PICASA("Picasa") { // 17
-		@Override
-		public String getDomNodeIdName() {
-			return "Picasa";
-		}
-		
+	PICASA("Picasa") { // 17		
 		@Override
 		public String getIconName() {
 			return "favicon_picasa.png";
@@ -1078,12 +1073,7 @@ public enum ExternalAccountType {
 			return ExternalAccountCategory.MEDIA;
 		}
 	},
-	AMAZON("Amazon") { // 18
-		@Override
-		public String getDomNodeIdName() {
-			return "Amazon";
-		}
-		
+	AMAZON("Amazon") { // 18	
 		@Override
 		public String getIconName() {
 			return "favicon_amazon.png";

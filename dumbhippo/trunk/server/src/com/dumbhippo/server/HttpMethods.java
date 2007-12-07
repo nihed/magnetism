@@ -345,63 +345,63 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "name" })
-	public void doSetMySpaceName(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException, RetryException;	
+	public void doSetMySpaceAccount(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException, RetryException;	
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })
-	public void doSetLinkedInProfile(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;
+	public void doSetLinkedInAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })
-	public void doSetYouTubeName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;
+	public void doSetYouTubeAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })	
-	public void doSetLastFmName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;	
+	public void doSetLastFmAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;	
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })	
-	public void doSetDeliciousName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;	
+	public void doSetDeliciousAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;	
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })	
-	public void doSetTwitterName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;	
+	public void doSetTwitterAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;	
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })	
-	public void doSetDiggName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;
+	public void doSetDiggAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })	
-	public void doSetRedditName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;
+	public void doSetRedditAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
-	public void doSetNetflixFeedUrl(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException, RetryException;
+	public void doSetNetflixAccount(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException, RetryException;
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
-	public void doSetGoogleReaderUrl(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException, RetryException;	
+	public void doSetGoogleReaderAccount(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException, RetryException;	
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })
-	public void doSetPicasaName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;
+	public void doSetPicasaAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrUserId" })
-	public void doSetAmazonUrl(XmlBuilder xml, UserViewpoint viewpoint, String urlOrUserId) throws XmlMethodException;
+	public void doSetAmazonAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrUserId) throws XmlMethodException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
-	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException;
+	public void doSetWebsiteAccount(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
-	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException, RetryException;
+	public void doSetRhapsodyAccount(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException, RetryException;
     
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
-	public void doSetBlog(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException, RetryException;	
+	public void doSetBlogAccount(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException, RetryException;	
 	
  	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "filename" })
