@@ -138,6 +138,7 @@ EQUALS : "=" ;
 LPAREN : "(" ;
 RPAREN : ")" ;
 PLUS : "+" ;
+COMMA : "," ;
 SEMICOLON : ";" ;
 STAR : "*" ;
 NAME : ('a' .. 'z' | 'A' .. 'Z' | '_') ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')* ;
