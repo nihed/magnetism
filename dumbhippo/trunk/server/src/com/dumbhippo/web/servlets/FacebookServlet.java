@@ -138,6 +138,10 @@ public class FacebookServlet extends AbstractServlet {
 	        HttpMethods httpMethods =  WebEJBUtil.defaultLookup(HttpMethods.class);
     		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     		factory.setNamespaceAware(true);
+    		List<ExternalAccountType> accountsSetSuccessful = new ArrayList<ExternalAccountType>();
+    		List<ExternalAccountType> accountsRemoved = new ArrayList<ExternalAccountType>();
+    		Map<ExternalAccountType, String> accountsWithNotes = new HashMap<ExternalAccountType, String>();
+    		Map<ExternalAccountType, String> accountsSetFailed = new HashMap<ExternalAccountType, String>();    		
 	        for (Map.Entry<ExternalAccountType, CharSequence> entry : mugshotParams.entrySet()) {          
 	        	String entryValue = entry.getValue().toString().trim(); 
 			    if (entryValue.length() > 0) {
@@ -156,45 +160,47 @@ public class FacebookServlet extends AbstractServlet {
 				    		String nsid = ((Node)xpath.evaluate("/flickrUser/nsid", doc, XPathConstants.NODE)).getTextContent();
 				    		logger.debug("Got nsid {} when setting Flickr account", nsid);
 				    		httpMethods.doSetFlickrAccount(new XmlBuilder(), userViewpoint, nsid, entryValue);
+				    		accountsSetSuccessful.add(ExternalAccountType.FLICKR);
 				    	} else {
-				    		Method setAccount = httpMethods.getClass().getMethod("doSet" + entry.getKey().getDomNodeIdName() + "Account");	
+				    		Method setAccount = httpMethods.getClass().getMethod("doSet" + entry.getKey().getDomNodeIdName() + "Account",
+				    				                                             new Class[] {XmlBuilder.class, UserViewpoint.class, String.class});	
 				    		XmlBuilder resultXml = new XmlBuilder();
-				    		setAccount.invoke(resultXml, userViewpoint, entryValue);
+				    		setAccount.invoke(httpMethods, new Object[] {resultXml, userViewpoint, entryValue});
 				    		// we have messages telling the user about certain limitations of their account
 				    		// for MySpace, Twitter, Reddit, and Amazon
+				    		accountsSetSuccessful.add(entry.getKey());
 				    		try {
 				    		    Document doc = factory.newDocumentBuilder().parse(new ByteArrayInputStream(resultXml.getBytes()));
 				    		    XPath xpath = XPathFactory.newInstance().newXPath();
 				    		    String message = ((Node)xpath.evaluate("/message", doc, XPathConstants.NODE)).getTextContent();
 				    		    if (message.trim().length() > 0) {
-				    		    	// TODO: display it as a message
+				    		    	accountsWithNotes.put(entry.getKey(), message);
 				    		    }
 				    		} catch (XPathExpressionException e) {
-				    			logger.error("Error getting a message about an external account", e);
 					        	// that's fine, means there was no message
 					        }
 				    	}
 			    	} catch (XmlMethodException e) {
 			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			    		// TODO: create a return error message with all the exceptions			    		
+			    		accountsSetFailed.put(entry.getKey(), e.getMessage());		    		
 			    	} catch (ParserConfigurationException e) {
 			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			    		// TODO: same as above
+			    		accountsSetFailed.put(entry.getKey(), e.getMessage());
 			        } catch (SAXException e) {
 			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			        	// TODO: same as above
+			    		accountsSetFailed.put(entry.getKey(), e.getMessage());
 			        } catch (XPathExpressionException e) {
 			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			        	// TODO: same as above
+			    		accountsSetFailed.put(entry.getKey(), e.getMessage());
 			        } catch (NoSuchMethodException e) {
 			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			        	// TODO: same as above
+			    		accountsSetFailed.put(entry.getKey(), e.getMessage());
 			        } catch (InvocationTargetException e) {
 			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			        	// TODO: same as above
+			    		accountsSetFailed.put(entry.getKey(), e.getMessage());
 			        } catch (IllegalAccessException e) {
 		    		    logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			        	// TODO: same as above
+			    		accountsSetFailed.put(entry.getKey(), e.getMessage());
 			        }
 			    } else {
 			    	try {
@@ -203,6 +209,7 @@ public class FacebookServlet extends AbstractServlet {
 			    	    ExternalAccount externalAccount = externalAccounts.lookupExternalAccount(userViewpoint, user, entry.getKey());
 			    	    if (externalAccount.getSentiment().equals(Sentiment.LOVE)) {
 			    	    	externalAccounts.setSentiment(externalAccount, Sentiment.INDIFFERENT);
+			    	    	accountsRemoved.add(entry.getKey());
 			    	    }
 			    	} catch (NotFoundException e) {
 			    		// this account did not exist, nothing to do
@@ -210,7 +217,66 @@ public class FacebookServlet extends AbstractServlet {
 			    }
 		    	
 		    }
-						
+	        
+			if (accountsSetSuccessful.size() > 0 || accountsRemoved.size() > 0) {
+				StringBuilder accountsSetSuccessfulBuilder = new StringBuilder();
+				StringBuilder accountsRemovedBuilder = new StringBuilder();
+				String singularOrPlural = "";
+				xml.openElement("fb:success");
+				xml.appendTextNode("fb:message", "Success");
+				xml.openElement("ul");
+				for (ExternalAccountType accountType : accountsSetSuccessful) {
+					accountsSetSuccessfulBuilder.append(accountType.getName() + ", ");
+				}				
+				if (accountsSetSuccessfulBuilder.length() > 2) {
+					if (accountsSetSuccessful.size() > 1)
+						singularOrPlural = " accounts were";
+					else 
+						singularOrPlural = " account was";	
+							
+		    	    xml.appendTextNode("li", accountsSetSuccessfulBuilder.substring(0, accountsSetSuccessfulBuilder.length()-2) + singularOrPlural + " set successfully.");		
+				}
+				
+				for (ExternalAccountType accountType : accountsRemoved) {
+					accountsRemovedBuilder.append(accountType.getName() + ", ");
+				}				
+				if (accountsRemovedBuilder.length() > 2) {
+					if (accountsRemoved.size() > 1)
+						singularOrPlural = " accounts were";
+					else 
+						singularOrPlural = " account was";	
+		    	    xml.appendTextNode("li", accountsRemovedBuilder.substring(0, accountsRemovedBuilder.length()-2) + singularOrPlural + " accounts were removed successfully.");		
+				}				
+		    	xml.closeElement();
+		    	xml.closeElement();
+			}
+			
+			if (accountsWithNotes.size() > 0) {
+				xml.openElement("fb:success");
+				xml.appendTextNode("fb:message", "Please Note");
+				xml.openElement("ul");
+				for (Map.Entry<ExternalAccountType, String> entry : accountsWithNotes.entrySet()) {
+				    xml.appendTextNode("li", entry.getValue());
+				}
+				xml.closeElement();
+				xml.closeElement();
+			}
+
+			if (accountsSetFailed.size() > 0) {
+				String singularOrPlural = " Account Was";
+				if (accountsSetFailed.size() > 1)
+					singularOrPlural = " Accounts Were";
+				
+				xml.openElement("fb:error");
+				xml.appendTextNode("fb:message", "There Following" + singularOrPlural + " Not Set");
+				xml.openElement("ul");
+				for (Map.Entry<ExternalAccountType, String> entry : accountsSetFailed.entrySet()) {
+				    xml.appendTextNode("li", entry.getKey().getName() + ": " + entry.getValue());
+				}
+				xml.closeElement();
+				xml.closeElement();
+			}
+			
 			xml.appendTextNode("span", "Updates to the information below will be reflected in ",
 					           "style", "margin-left:15px;");
 		    xml.appendTextNode("a", "your Mugshot account", "href",
