@@ -1,5 +1,6 @@
 package com.dumbhippo.web.servlets;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -148,7 +149,7 @@ public class FacebookServlet extends AbstractServlet {
 				    	if (entry.getKey().equals(ExternalAccountType.FLICKR)) {
 				    		XmlBuilder xmlForFlickr = new XmlBuilder();
 				    		httpMethods.doFindFlickrAccount(xmlForFlickr, userViewpoint, entryValue);
-				    		Document doc = factory.newDocumentBuilder().parse(xmlForFlickr.toString());
+				    		Document doc = factory.newDocumentBuilder().parse(new ByteArrayInputStream(xmlForFlickr.getBytes()));
 				    		XPath xpath = XPathFactory.newInstance().newXPath();
 				    		String nsid = xpath.evaluate("/flickrUser/nsid", doc, XPathConstants.NODE).toString();
 				    		logger.debug("Got nsid {} when setting Flickr account", nsid);
@@ -160,7 +161,7 @@ public class FacebookServlet extends AbstractServlet {
 				    		// we have messages telling the user about certain limitations of their account
 				    		// for MySpace, Twitter, Reddit, and Amazon
 				    		try {
-				    		    Document doc = factory.newDocumentBuilder().parse(resultXml.toString());
+				    		    Document doc = factory.newDocumentBuilder().parse(new ByteArrayInputStream(resultXml.getBytes()));
 				    		    XPath xpath = XPathFactory.newInstance().newXPath();
 				    		    String message = xpath.evaluate("/message", doc, XPathConstants.NODE).toString();
 				    		    if (message.trim().length() > 0) {
