@@ -21,6 +21,7 @@ import javax.xml.xpath.XPathFactory;
 
 import org.slf4j.Logger;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.ExternalAccountCategory;
@@ -140,6 +141,7 @@ public class FacebookServlet extends AbstractServlet {
 	        for (Map.Entry<ExternalAccountType, CharSequence> entry : mugshotParams.entrySet()) {          
 	        	String entryValue = entry.getValue().toString().trim(); 
 			    if (entryValue.length() > 0) {
+			    	logger.debug("processing entry {} for {}", entryValue, entry.getKey());
 			    	try {
 			    		// we could check if the account already exists that has the same info set and is loved,
 			    		// but since we might be updating certain things when the user resets the info (like looking up
@@ -151,7 +153,7 @@ public class FacebookServlet extends AbstractServlet {
 				    		httpMethods.doFindFlickrAccount(xmlForFlickr, userViewpoint, entryValue);
 				    		Document doc = factory.newDocumentBuilder().parse(new ByteArrayInputStream(xmlForFlickr.getBytes()));
 				    		XPath xpath = XPathFactory.newInstance().newXPath();
-				    		String nsid = xpath.evaluate("/flickrUser/nsid", doc, XPathConstants.NODE).toString();
+				    		String nsid = ((Node)xpath.evaluate("/flickrUser/nsid", doc, XPathConstants.NODE)).getTextContent();
 				    		logger.debug("Got nsid {} when setting Flickr account", nsid);
 				    		httpMethods.doSetFlickrAccount(new XmlBuilder(), userViewpoint, nsid, entryValue);
 				    	} else {
@@ -163,27 +165,35 @@ public class FacebookServlet extends AbstractServlet {
 				    		try {
 				    		    Document doc = factory.newDocumentBuilder().parse(new ByteArrayInputStream(resultXml.getBytes()));
 				    		    XPath xpath = XPathFactory.newInstance().newXPath();
-				    		    String message = xpath.evaluate("/message", doc, XPathConstants.NODE).toString();
+				    		    String message = ((Node)xpath.evaluate("/message", doc, XPathConstants.NODE)).getTextContent();
 				    		    if (message.trim().length() > 0) {
 				    		    	// TODO: display it as a message
 				    		    }
 				    		} catch (XPathExpressionException e) {
+				    			logger.error("Error getting a message about an external account", e);
 					        	// that's fine, means there was no message
 					        }
 				    	}
 			    	} catch (XmlMethodException e) {
+			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
 			    		// TODO: create a return error message with all the exceptions			    		
 			    	} catch (ParserConfigurationException e) {
-				        // TODO: same as above
+			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
+			    		// TODO: same as above
 			        } catch (SAXException e) {
+			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
 			        	// TODO: same as above
 			        } catch (XPathExpressionException e) {
+			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
 			        	// TODO: same as above
 			        } catch (NoSuchMethodException e) {
+			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
 			        	// TODO: same as above
 			        } catch (InvocationTargetException e) {
+			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
 			        	// TODO: same as above
 			        } catch (IllegalAccessException e) {
+		    		    logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
 			        	// TODO: same as above
 			        }
 			    } else {
@@ -212,7 +222,7 @@ public class FacebookServlet extends AbstractServlet {
 		    	if (currentCategory == null || !currentCategory.equals(externalAccount.getExternalAccountType().getCategory())) {
 				    currentCategory = externalAccount.getExternalAccountType().getCategory();
 		    		xml.openElement("fb:editor-custom");
-				    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", "margin-left:-225px;" );		    	
+				    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", "margin-left:-230px;" );		    	
 				    xml.closeElement();
 		    	}
 			    xml.openElement("fb:editor-custom", "label", externalAccount.getSiteName());
