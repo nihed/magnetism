@@ -81,7 +81,7 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 		// will whine about it once in the logs so we don't forget.
 		String baseUrl = config.getBaseUrl(Site.NONE);
 		
-		model = new DataModel(baseUrl, new DMSessionMapJTA(), emf, this, Viewpoint.class, SystemViewpoint.getInstance());
+		model = new DataModel(baseUrl, new DMSessionMapJTA(), emf, new InjectionLookup(), this, Viewpoint.class, SystemViewpoint.getInstance());
 		
 		model.addDMClass(ApplicationDMO.class);
 		model.addDMClass(DesktopSettingDMO.class);
