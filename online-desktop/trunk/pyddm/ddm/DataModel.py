@@ -1,7 +1,5 @@
 import re
 import logging
-import traceback
-import sys
 
 import dbus
 import dbus.service
