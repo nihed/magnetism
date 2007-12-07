@@ -103,6 +103,12 @@ tryAgain:
 					theRetToken=_returnToken;
 					break;
 				}
+				case ',':
+				{
+					mCOMMA(true);
+					theRetToken=_returnToken;
+					break;
+				}
 				case ';':
 				{
 					mSEMICOLON(true);
@@ -254,6 +260,19 @@ tryAgain:
 		_returnToken = _token;
 	}
 	
+	public final void mCOMMA(boolean _createToken) throws RecognitionException, CharStreamException, TokenStreamException {
+		int _ttype; Token _token=null; int _begin=text.length();
+		_ttype = COMMA;
+		int _saveIndex;
+		
+		match(",");
+		if ( _createToken && _token==null && _ttype!=Token.SKIP ) {
+			_token = makeToken(_ttype);
+			_token.setText(new String(text.getBuffer(), _begin, text.length()-_begin));
+		}
+		_returnToken = _token;
+	}
+	
 	public final void mSEMICOLON(boolean _createToken) throws RecognitionException, CharStreamException, TokenStreamException {
 		int _ttype; Token _token=null; int _begin=text.length();
 		_ttype = SEMICOLON;
@@ -321,7 +340,7 @@ tryAgain:
 		}
 		}
 		{
-		_loop33:
+		_loop112:
 		do {
 			switch ( LA(1)) {
 			case 'a':  case 'b':  case 'c':  case 'd':
@@ -360,7 +379,7 @@ tryAgain:
 			}
 			default:
 			{
-				break _loop33;
+				break _loop112;
 			}
 			}
 		} while (true);
@@ -378,17 +397,17 @@ tryAgain:
 		int _saveIndex;
 		
 		{
-		int _cnt36=0;
-		_loop36:
+		int _cnt115=0;
+		_loop115:
 		do {
 			if (((LA(1) >= '0' && LA(1) <= '9'))) {
 				matchRange('0','9');
 			}
 			else {
-				if ( _cnt36>=1 ) { break _loop36; } else {throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());}
+				if ( _cnt115>=1 ) { break _loop115; } else {throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());}
 			}
 			
-			_cnt36++;
+			_cnt115++;
 		} while (true);
 		}
 		if ( _createToken && _token==null && _ttype!=Token.SKIP ) {
