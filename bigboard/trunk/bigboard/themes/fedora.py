@@ -5,9 +5,11 @@ from bigboard.themes.default import DefaultTheme
 
 class FedoraTheme(DefaultTheme):
     def __init__(self):
-        super(DefaultTheme, self).__init__()
+        super(FedoraTheme, self).__init__()
         self.background = 0x345B75FF
         self.foreground = 0xFFFFFFFF
+        self.header_start = 0x436A85FF
+        self.header_end = 0x59809CFF
         
     def draw_header(self, cr, area):
         cr.set_source_rgb(1.0, 1.0, 1.0)
