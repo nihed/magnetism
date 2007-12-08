@@ -13,7 +13,8 @@ import bigboard.slideout
 import bigboard.libbig as libbig
 from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock, AbstractMugshotStock
-from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, IconLink, Separator
+from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox
+from bigboard.big_widgets import ActionLink, IconLink, Separator, ThemedText
 import bigboard.google
 
 import portfoliomanager
@@ -257,7 +258,7 @@ class SelfStock(AbstractMugshotStock):
         self._namephoto_box.set_photo(self._photo)
         
         self._namephoto_box_child = CanvasHBox()
-        self._name = hippo.CanvasText(text="Nobody", size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        self._name = ThemedText(text="Nobody", size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self._name.set_property("font", "14px Bold")
         self._namephoto_box_child.append(self._name)  
 

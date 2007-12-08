@@ -1,4 +1,4 @@
-import os, code, sys, traceback, logging, StringIO, threading, urlparse
+import os, code, sys, traceback, logging, StringIO, threading, urlparse, weakref
 
 import cairo
 import pango
@@ -11,7 +11,11 @@ import hippo
 from libgimmie import DockWindow
 from libbig.imagecache import URLImageCache
 import libbig, stock, globals, bigboard
+from bigboard.libbig.signalobject import SignalObject
+from bigboard.libbig.singletonmixin import Singleton
 from table_layout import TableLayout
+
+_logger = logging.getLogger("bigboard.BigWidgets")
 
 class CanvasVBox(hippo.CanvasBox):
     def __init__(self, **kwargs):
@@ -28,6 +32,74 @@ class CanvasSpinner(hippo.CanvasWidget):
         super(CanvasSpinner, self).__init__()
         self.spinner = gtk.SpinButton()
         self.set_property('widget', self.spinner)
+
+class ThemeManager(gobject.GObject):
+    __gsignals__ = {
+                    'theme-changed' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+                   }
+    def __init__(self):
+        super(ThemeManager, self).__init__()
+        self.__class__.instance = weakref.ref(self)
+        self.__theme = None
+        gconf.client_get_default().notify_add('/apps/bigboard/theme', self.__sync_theme)
+        self.__sync_theme()
+        
+    @staticmethod
+    def getInstance():
+        needinst = False
+        if not hasattr(ThemeManager, 'instance'):
+            instvalue = None
+        else:
+            instref = getattr(ThemeManager, 'instance')
+            instvalue = instref()
+            needinst = instvalue is None
+        if instvalue is None:
+            inst = ThemeManager()
+        else:
+            inst = instvalue
+        return inst
+        
+    def get_theme(self):
+        return self.__theme
+        
+    def __sync_theme(self, *args):
+        _logger.debug("doing theme sync")
+        themename = gconf.client_get_default().get_string('/apps/bigboard/theme')
+        if themename == 'fedora':
+            from bigboard.themes.fedora import FedoraTheme
+            self.__theme = FedoraTheme.getInstance()
+        else:
+            from bigboard.themes.default import DefaultTheme
+            self.__theme = DefaultTheme.getInstance()        
+        self.emit('theme-changed')            
+         
+class ThemedWidgetMixin(object):
+    def __init__(self):
+        super(ThemedWidgetMixin, self).__init__()
+        mgr = ThemeManager.getInstance()
+        self.__boundprops = {}
+        mgr.connect('theme-changed', self.__sync_theme)
+        
+    def get_theme(self):
+        return ThemeManager.getInstance().get_theme()
+
+    def _theme_bind(self, bindings):
+        self.__boundprops.update(bindings)
+        self._on_theme_change(ThemeManager.getInstance())
+        
+    def _on_theme_change(self, tm):
+        print "tc, bindings: %s" % (self.__boundprops)
+        for binding,func in self.__boundprops.iteritems():
+            self.set_property(binding, func(tm.get_theme()))
+        
+    def __sync_theme(self, tm):
+        self._on_theme_change(tm)       
+        
+class ThemedText(hippo.CanvasText, ThemedWidgetMixin):
+    def __init__(self, **kwargs):
+        super(ThemedText, self).__init__(**kwargs)
+        ThemedWidgetMixin.__init__(self)
+        self._theme_bind({'color': lambda t: t.foreground})
 
 class CanvasCheckbox(hippo.CanvasWidget):
     def __init__(self, label):
@@ -52,7 +124,7 @@ class CanvasTable(hippo.CanvasBox):
         self.__layout.set_row_expand(row, expand)        
         
 
-class GradientHeader(hippo.CanvasGradient):
+class GradientHeader(hippo.CanvasGradient, ThemedWidgetMixin):
     def __init__(self, **kwargs):
         hippo.CanvasGradient.__init__(self, 
                                       orientation=hippo.ORIENTATION_HORIZONTAL,

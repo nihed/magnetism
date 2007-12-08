@@ -6,6 +6,8 @@ class DefaultTheme(Singleton):
         super(DefaultTheme, self).__init__()
         self.background = 0xFFFFFFFF
         self.foreground = 0x000000FF
+        self.header_start = 0xF4F4F4FF
+        self.header_end = 0xC7C7C7FF
         
     def draw_header(self, cr, area):
         cr.set_source_rgb(1.0, 1.0, 1.0)
