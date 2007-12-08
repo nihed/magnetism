@@ -172,12 +172,16 @@ public class FacebookServlet extends AbstractServlet {
 				    		try {
 				    		    Document doc = factory.newDocumentBuilder().parse(new ByteArrayInputStream(resultXml.getBytes()));
 				    		    XPath xpath = XPathFactory.newInstance().newXPath();
-				    		    String message = ((Node)xpath.evaluate("/message", doc, XPathConstants.NODE)).getTextContent();
-				    		    if (message.trim().length() > 0) {
-				    		    	accountsWithNotes.put(entry.getKey(), message);
+				    		    Node node = (Node)xpath.evaluate("/message", doc, XPathConstants.NODE);
+				    		    if (node != null) {
+				    		        String message = node.getTextContent();
+				    		        if (message.trim().length() > 0) {
+				    		    	    accountsWithNotes.put(entry.getKey(), message);
+				    		        }
 				    		    }
 				    		} catch (XPathExpressionException e) {
-					        	// that's fine, means there was no message
+				    			logger.error("Error getting a message about an external account for " + entry.getKey() + " with value " + entryValue, e);
+					        	// let's not bother the user with this, since the account must have been set succesfully
 					        }
 				    	}
 			    	} catch (XmlMethodException e) {
