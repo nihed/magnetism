@@ -152,6 +152,9 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		
 		DMFilter filterAnnotation = dmoClass.getAnnotation(DMFilter.class);
 		if (filterAnnotation != null) {
+			if (baseClassHolder != null) 
+				throw new RuntimeException(dmoClass.getName() + ": @DMFilter annotation must be specified on the base class");
+			
 			try {
 				filter = FilterParser.parse(filterAnnotation.value());
 			} catch (com.dumbhippo.dm.parser.ParseException e) {
