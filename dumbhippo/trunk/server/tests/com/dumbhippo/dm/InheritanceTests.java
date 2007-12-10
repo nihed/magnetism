@@ -39,7 +39,7 @@ public class InheritanceTests  extends AbstractSupportedTests {
 		superUserDMO = session.find(TestSuperUserDMO.class, guid);
 		assertTrue(superUserDMO != null);
 		assertEquals(guid.toString(), superUserDMO.getKey().toString());
-		assertEquals("http://mugshot.org/o/test/superUser/" + guid, superUserDMO.getResourceId());
+		assertEquals("http://mugshot.org/o/test/user/" + guid, superUserDMO.getResourceId());
 		assertEquals("*The Nose*", superUserDMO.getName());
 		assertEquals("The ability to tell if leftovers have gone bad", superUserDMO.getSuperPower());
 
