@@ -86,9 +86,14 @@ class ThemedWidgetMixin(object):
     
     def get_theme_hints(self):
         return self.__theme_hints
+    
+    def _on_theme_changed(self, theme):
+        pass
 
     def __sync_theme(self, tm):
-        tm.get_theme().set_properties(self)             
+        theme = tm.get_theme()
+        theme.set_properties(self)
+        self._on_theme_changed(theme)             
         
 class ThemedText(hippo.CanvasText, ThemedWidgetMixin):
     def __init__(self, theme_hints=[], **kwargs):
@@ -275,13 +280,14 @@ class Separator(hippo.CanvasBox):
     def __init__(self):
         hippo.CanvasBox.__init__(self, border_top=1, border_color=0x999999FF, padding_left=6, padding_right=6)
 
-class PrelightingCanvasBox(hippo.CanvasBox):
+class PrelightingCanvasBox(hippo.CanvasBox, ThemedWidgetMixin):
     """A box with a background that changes color on mouse hover."""
     def __init__(self, **kwargs):
-        hippo.CanvasBox.__init__(self, **kwargs)
         self.__hovered = False
         self.__force_prelight = False
-        self._prelighted = False
+        self._prelighted = False        
+        hippo.CanvasBox.__init__(self, **kwargs)
+        ThemedWidgetMixin.__init__(self)
         self.connect('motion-notify-event', lambda self, event: self.__handle_motion(event))
         
     def __handle_motion(self, event):
@@ -296,13 +302,16 @@ class PrelightingCanvasBox(hippo.CanvasBox):
         self.__force_prelight = force
         self.sync_prelight_color()
         
+    def _on_theme_changed(self, theme):
+        self.sync_prelight_color()
+
     # protected
     def sync_prelight_color(self): 
         if self.__force_prelight or (self.__hovered and self.do_prelight()):
-            self.set_property('background-color', 0xE2E2E2FF)
+            self.set_property('background-color', self.get_theme().prelight)
             self._prelighted = True
         else:
-            self.set_property('background-color', 0x00000000)           
+            self.set_property('background-color', self.get_theme().background)
             self._prelighted = False
             
     # protected
@@ -316,14 +325,15 @@ class PhotoContentItem(PrelightingCanvasBox):
     def __init__(self, **kwargs):
         if 'spacing' not in kwargs:
             kwargs['spacing'] = 4
-        PrelightingCanvasBox.__init__(self,
-                                      orientation=hippo.ORIENTATION_HORIZONTAL,
-                                      **kwargs)
         self.__photo = None
         self.__photo_native_width = None
         self.__photo_native_height = None
         self.__child = None
-        self.__cb = None
+        self.__cb = None            
+        PrelightingCanvasBox.__init__(self,
+                                      orientation=hippo.ORIENTATION_HORIZONTAL,
+                                      **kwargs)
+
         
     def set_photo(self, photo):
         assert(self.__photo is None)

@@ -306,7 +306,7 @@ class Exchange(hippo.CanvasBox, ThemedWidgetMixin):
         self.__expanded = True
         if not is_notitle:
             self.__ticker_container = ThemedGradient()
-            self.__ticker_text = ThemedText(text=metainfo.title, font="14px", xalign=hippo.ALIGNMENT_START)
+            self.__ticker_text = ThemedText(text=metainfo.title, font="14px Bold", xalign=hippo.ALIGNMENT_START, padding_left=8)
             self.__ticker_text.connect("button-press-event", lambda text, event: self.__toggle_expanded())  
             self.__ticker_container.append(self.__ticker_text, hippo.PACK_EXPAND)
             
@@ -423,7 +423,7 @@ class BigBoardPanel(dbus.service.Object):
         self.__unpopout_button.connect("activated", lambda button: self.__do_unpopout())
         self._header_box.append(self.__unpopout_button, hippo.PACK_END)
      
-        self._title = ThemedText(text="My Desktop", font="Bold 14px", xalign=hippo.ALIGNMENT_START)
+        self._title = ThemedText(text="My Desktop", font="Bold 14px", xalign=hippo.ALIGNMENT_START, padding_left=8)
      
         self._header_box.append(self._title, hippo.PACK_EXPAND)
         
