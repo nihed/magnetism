@@ -25,7 +25,7 @@ public class SingleQueryIQMethod extends QueryIQMethod {
 		DMClassHolder classHolder = resultObject.getClassHolder(); 
 		BoundFetch fetch = fetchNode.bind(classHolder);
 		
-		fetch.visit(session, classHolder, resultObject, visitor);
+		fetch.visit(session, resultObject, visitor);
 	}
 	
 	@Override
