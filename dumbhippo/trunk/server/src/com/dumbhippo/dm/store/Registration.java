@@ -1,12 +1,12 @@
 package com.dumbhippo.dm.store;
 
 import com.dumbhippo.dm.DMObject;
-import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.BoundFetch;
 
 public class Registration<K, T extends DMObject<K>> {
 	private StoreClient client;
 	private StoreNode<K,T> node;
-	private Fetch<K,? super T> fetch;
+	private BoundFetch<K,? super T> fetch;
 	private long[] feedTxTimestamps;
 	
 	public Registration(StoreNode<K,T> node, StoreClient client) {
@@ -22,12 +22,12 @@ public class Registration<K, T extends DMObject<K>> {
 		return client;
 	}
 
-	public synchronized Fetch<K,? super T> addFetch(Fetch<K,? super T> newFetch) {
-		Fetch<K,? super T> oldFetch = fetch;
+	public synchronized BoundFetch<K,? super T> addFetch(BoundFetch<K,? super T> newFetch) {
+		BoundFetch<K,? super T> oldFetch = fetch;
 		
 		if (oldFetch != null) {
 			@SuppressWarnings("unchecked")
-			Fetch<K, ? super T> mergedFetch = (Fetch<K, ? super T>)oldFetch.merge(newFetch);
+			BoundFetch<K, ? super T> mergedFetch = (BoundFetch<K, ? super T>)oldFetch.merge(newFetch);
 			fetch = mergedFetch;
 		} else
 			fetch = newFetch;
@@ -39,7 +39,7 @@ public class Registration<K, T extends DMObject<K>> {
 		node.removeRegistration(this);
 	}
 
-	public synchronized Fetch<K,? super T> getFetch() {
+	public synchronized BoundFetch<K,? super T> getFetch() {
 		return fetch;
 	}
 

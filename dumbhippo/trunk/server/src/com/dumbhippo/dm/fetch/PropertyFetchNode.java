@@ -42,8 +42,8 @@ public class PropertyFetchNode {
 	}
 
 	public <K,T extends DMObject<K>> void bindResourceProperty(ResourcePropertyHolder<?,?,K,T> resourceHolder, List<PropertyFetch> resultList, boolean maybeSkip, boolean notify, int max) {
-		Fetch<K,T> defaultChildren = resourceHolder.getDefaultChildren();
-		Fetch<K,T> boundChildren = null;
+		BoundFetch<K,T> defaultChildren = resourceHolder.getDefaultChildren();
+		BoundFetch<K,T> boundChildren = null;
 		
 		if (maybeSkip && children == null && defaultChildren == null) {
 			return;

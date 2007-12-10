@@ -6,7 +6,7 @@ import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.dm.annotations.PropertyType;
-import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.BoundFetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.filter.CompiledItemFilter;
 import com.dumbhippo.dm.filter.FilterCompiler;
@@ -99,7 +99,7 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 	}
 
 	@Override
-	public Fetch<?,?> getDefaultChildren() {
+	public BoundFetch<?,?> getDefaultChildren() {
 		return null;
 	}
 	
@@ -109,7 +109,7 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 	}
 
 	@Override
-	public void visitChildren(DMSession session, Fetch<?, ?> children, T object, FetchVisitor visitor) {
+	public void visitChildren(DMSession session, BoundFetch<?, ?> children, T object, FetchVisitor visitor) {
 	}
 	
 	protected void visitPlainValues(DMSession session, Collection<TI> values, FetchVisitor visitor) {

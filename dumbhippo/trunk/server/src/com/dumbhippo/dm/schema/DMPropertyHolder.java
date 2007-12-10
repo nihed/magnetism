@@ -31,7 +31,7 @@ import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.dm.annotations.ViewerDependent;
-import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.BoundFetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.filter.Filter;
 import com.dumbhippo.dm.parser.FilterParser;
@@ -301,7 +301,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		return ordering < other.ordering ? -1 : (ordering == other.ordering ? 0 : 1);
 	}
 	
-	public abstract void visitChildren(DMSession session, Fetch<?,?> children, T object, FetchVisitor visitor);
+	public abstract void visitChildren(DMSession session, BoundFetch<?,?> children, T object, FetchVisitor visitor);
 	
 	/**
 	 * 
@@ -315,7 +315,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	 */
 	public abstract void visitProperty(DMSession session, T object, FetchVisitor visitor, boolean forceEmpty);
 
-	public abstract Fetch<?,?> getDefaultChildren();
+	public abstract BoundFetch<?,?> getDefaultChildren();
 	public abstract String getDefaultChildrenString();
 	
 	public Class<?> getKeyClass() {

@@ -2,7 +2,7 @@ package com.dumbhippo.dm;
 
 import javax.persistence.EntityManager;
 
-import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.BoundFetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.dm.store.StoreKey;
@@ -83,7 +83,7 @@ public abstract class DMSession {
 		return find(classHolder, resourceId.substring(lastSlash + 1));
 	}
 	
-	public <K,T extends DMObject<K>> void visitFetch(T object, Fetch<K,? super T> fetch, FetchVisitor visitor) {
+	public <K,T extends DMObject<K>> void visitFetch(T object, BoundFetch<K,? super T> fetch, FetchVisitor visitor) {
 		DMClassHolder<K,T> classHolder = object.getClassHolder();
 		fetch.visit(this, classHolder, object, visitor);
 	}

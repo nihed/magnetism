@@ -9,7 +9,7 @@ import com.dumbhippo.dm.Cardinality;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
-import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.BoundFetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.filter.AndFilter;
 import com.dumbhippo.dm.filter.CompiledListFilter;
@@ -95,8 +95,8 @@ public class ListResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void visitChildren(DMSession session, Fetch<?,?> children, T object, FetchVisitor visitor) {
-		Fetch<KI,TI> typedChildren = (Fetch<KI,TI>)children;
+	public void visitChildren(DMSession session, BoundFetch<?,?> children, T object, FetchVisitor visitor) {
+		BoundFetch<KI,TI> typedChildren = (BoundFetch<KI,TI>)children;
 		for (TI value : (List<TI>)getRawPropertyValue(object)) {
 			visitChild(session, typedChildren, value, visitor);
 		}

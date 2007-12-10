@@ -7,7 +7,7 @@ import org.xmpp.packet.IQ;
 
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
-import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.BoundFetch;
 import com.dumbhippo.dm.fetch.FetchNode;
 import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.jive.annotations.IQMethod;
@@ -23,7 +23,7 @@ public class SingleQueryIQMethod extends QueryIQMethod {
 	@SuppressWarnings("unchecked")
 	private static void fetchAndVisit(DMSession session, DMObject<?> resultObject, FetchNode fetchNode, XmppFetchVisitor visitor) {
 		DMClassHolder classHolder = resultObject.getClassHolder(); 
-		Fetch fetch = fetchNode.bind(classHolder);
+		BoundFetch fetch = fetchNode.bind(classHolder);
 		
 		fetch.visit(session, classHolder, resultObject, visitor);
 	}

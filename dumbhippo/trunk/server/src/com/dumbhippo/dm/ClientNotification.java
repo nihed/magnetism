@@ -3,7 +3,7 @@ package com.dumbhippo.dm;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.BoundFetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.dm.schema.DMPropertyHolder;
@@ -33,7 +33,7 @@ public class ClientNotification {
 		this.client = client;
 	}
 	
-	public <K, T extends DMObject<K>>void addObjectProperties(StoreKey<K,T> key, Fetch<K,? super T> fetch, long propertyMask, Fetch<?,?>[] childFetches, int[] maxes) {
+	public <K, T extends DMObject<K>>void addObjectProperties(StoreKey<K,T> key, BoundFetch<K,? super T> fetch, long propertyMask, BoundFetch<?,?>[] childFetches, int[] maxes) {
 		notifications.add(new ObjectNotification<K,T>(key, fetch, propertyMask, childFetches, maxes));
 	}
 	
@@ -53,12 +53,12 @@ public class ClientNotification {
 
 	private static class ObjectNotification<K,T extends DMObject<K>> {
 		private StoreKey<K,T> key;
-		private Fetch<K, ? super T> fetch;
+		private BoundFetch<K, ? super T> fetch;
 		private long propertyMask;
-		private Fetch<?,?>[] childFetches;
+		private BoundFetch<?,?>[] childFetches;
 		private int[] maxes;
 
-		public ObjectNotification(StoreKey<K,T> key, Fetch<K, ? super T> fetch, long propertiesMask, Fetch<?,?>[] childFetches, int[] maxes) {
+		public ObjectNotification(StoreKey<K,T> key, BoundFetch<K, ? super T> fetch, long propertiesMask, BoundFetch<?,?>[] childFetches, int[] maxes) {
 			this.key = key;
 			this.fetch = fetch;
 			this.propertyMask = propertiesMask;

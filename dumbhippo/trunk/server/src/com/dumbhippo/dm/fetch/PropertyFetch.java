@@ -5,18 +5,18 @@ import com.dumbhippo.dm.schema.DMPropertyHolder;
 
 public final class PropertyFetch implements Comparable<PropertyFetch> {
 	private DMPropertyHolder<?,?,?> property;
-	private Fetch<?,?> children;
+	private BoundFetch<?,?> children;
 	private boolean notify;
 	private int max;
 	
-	public PropertyFetch(DMPropertyHolder<?,?,?> property, Fetch<?,?> children, boolean notify, int max) {
+	public PropertyFetch(DMPropertyHolder<?,?,?> property, BoundFetch<?,?> children, boolean notify, int max) {
 		this.property = property;
 		this.children = children;
 		this.notify = notify;
 		this.max = max;
 	}
 
-	public Fetch<?,?> getChildren() {
+	public BoundFetch<?,?> getChildren() {
 		return children;
 	}
 
@@ -37,7 +37,7 @@ public final class PropertyFetch implements Comparable<PropertyFetch> {
 		if (equals(other))
 			return this;
 		
-		Fetch<?, ?> newChildren;
+		BoundFetch<?, ?> newChildren;
 		
 		if (children == null)
 			newChildren = other.children;
