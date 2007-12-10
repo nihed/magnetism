@@ -2,6 +2,9 @@ package com.dumbhippo.dm;
 
 import javax.persistence.EntityManager;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.fetch.BoundFetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.schema.DMClassHolder;
@@ -9,6 +12,9 @@ import com.dumbhippo.dm.store.StoreKey;
 import com.dumbhippo.server.NotFoundException;
 
 public abstract class DMSession {
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(DMSession.class);
+	
 	protected DataModel model;
 	private EntityManager injectableEntityManager;
 	
@@ -56,13 +62,12 @@ public abstract class DMSession {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private DMObject find(DMClassHolder classHolder, String keyString) throws NotFoundException {
+	private DMObject<?> find(DMClassHolder classHolder, String keyString) throws NotFoundException {
 		if (classHolder == null)
 			throw new NotFoundException("Unknown type of resource");
 		
 		try {
-			StoreKey storeKey = classHolder.makeStoreKey(keyString);
-			return find(storeKey);
+			return find(classHolder.makeStoreKey(keyString));
 		} catch (BadIdException e) {
 			throw new NotFoundException("Bad ID in resourceId: " + e.getMessage(), e);
 		}
@@ -82,7 +87,7 @@ public abstract class DMSession {
 		
 		return find(classHolder, resourceId.substring(lastSlash + 1));
 	}
-	
+
 	public <K,T extends DMObject<K>> void visitFetch(T object, BoundFetch<K,? super T> fetch, FetchVisitor visitor) {
 		fetch.visit(this, object, visitor);
 	}
@@ -102,17 +107,13 @@ public abstract class DMSession {
 		}
 	}
 	
-	// This "casts" two classes K and T to be related, note we need a K and a T in order to construct
-	// StoreKey without a warning about a bare type
+	// This should return a StoreKey<K, ? extends T>, like classHolder.makeStoreKey(), but
+	// that confuses javac (Java 5) in ways I can't figure out. Practically speaking, it 
+	// doesn't end up mattering
 	@SuppressWarnings("unchecked")
-	private static <K, T extends DMObject<K>> StoreKey<K,T> newStoreKeyHack(DMClassHolder<?,? extends DMObject<?>> classHolder,
-			K key) {
-		return new StoreKey<K,T>((DMClassHolder<K,T>) classHolder, key);
-	}
-	
 	protected <K, T extends DMObject<K>> StoreKey<K,T> makeStoreKey(Class<T> clazz, K key) {
-		DMClassHolder<?,? extends DMObject<?>> classHolder = model.getClassHolder(clazz); 
-		return newStoreKeyHack(classHolder, key);
+		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
+		return (StoreKey<K, T>) classHolder.makeStoreKey(key);
 	}
 	
 	private <K, T extends DMObject<K>> void doInit(T t) throws NotFoundException {
