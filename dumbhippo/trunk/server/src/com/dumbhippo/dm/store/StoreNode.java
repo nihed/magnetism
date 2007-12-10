@@ -11,6 +11,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.CachedFeed;
 import com.dumbhippo.dm.ClientMatcher;
 import com.dumbhippo.dm.ClientNotificationSet;
+import com.dumbhippo.dm.DMKey;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.NotCachedException;
 import com.dumbhippo.dm.schema.DMClassHolder;
@@ -155,4 +156,18 @@ public class StoreNode<K,T extends DMObject<K>> extends StoreKey<K,T> {
 		else
 			return feedLogs[feedPropertyIndex];
 	}
+	
+	// Returning a StoreKey rather than a StoreNode is perhaps a little dubious, but we want cloning 
+	// a StoreKey to give us something we can store in the cache (for properties of type StoreKey)
+	@Override
+	public StoreKey<K,T> clone() {
+		if (key instanceof DMKey) {
+			@SuppressWarnings("unchecked")
+			K clonedKey = (K)((DMKey)key).clone();
+			return new StoreKey<K,T>(classHolder, clonedKey);
+		} else {
+			return new StoreKey<K,T>(classHolder, key);
+		}
+	}
+	
 }

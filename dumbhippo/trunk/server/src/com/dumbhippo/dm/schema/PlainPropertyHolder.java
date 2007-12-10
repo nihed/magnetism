@@ -10,6 +10,7 @@ import com.dumbhippo.dm.fetch.BoundFetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.filter.CompiledItemFilter;
 import com.dumbhippo.dm.filter.FilterCompiler;
+import com.dumbhippo.dm.store.StoreKey;
 
 public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends DMPropertyHolder<K,T,TI> {
 	protected CompiledItemFilter<K,T,Object,DMObject<Object>> itemFilter;
@@ -42,6 +43,8 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 		} else {
 			if (elementType == String.class)
 				derivedType = PropertyType.STRING;
+			else if (elementType == StoreKey.class)
+				derivedType = PropertyType.STORE_KEY;
 			else
 				throw new RuntimeException("Unexpected type" + elementType);
 		}
@@ -64,6 +67,10 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 				if (derivedType != PropertyType.STRING)
 					throw new RuntimeException("PropertyType.URL for non-string property");
 				break;
+			case STORE_KEY:
+				if (derivedType != PropertyType.STORE_KEY)
+					throw new RuntimeException("PropertyType.STORE_KEY for non-store-key property");
+				break;
 			case RESOURCE:
 				throw new RuntimeException("PropertyType.RESOURCE for non-resource property");
 			case FEED:
@@ -85,7 +92,10 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 	
 	@Override
 	public Object dehydrate(Object value) {
-		return value;
+		if (propertyType == PropertyType.STORE_KEY)
+			return ((StoreKey)value).clone();
+		else
+			return value;
 	}
 	
 	@Override

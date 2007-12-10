@@ -37,6 +37,7 @@ import com.dumbhippo.dm.filter.Filter;
 import com.dumbhippo.dm.parser.FilterParser;
 import com.dumbhippo.dm.parser.ParseException;
 import com.dumbhippo.dm.schema.PropertyInfo.ContainerType;
+import com.dumbhippo.dm.store.StoreKey;
 
 public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements Comparable<DMPropertyHolder<?,?,?>> {
 	@SuppressWarnings("unused")
@@ -380,7 +381,8 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		ContainerType containerType = ContainerType.SINGLE;
 		Class<?> elementType;
 		
-		if (genericType instanceof ParameterizedType) {
+		// We handle StoreKey as a PlainType
+		if (genericType instanceof ParameterizedType && method.getReturnType() != StoreKey.class) {
 			ParameterizedType paramType = (ParameterizedType)genericType;
 			Class<?> rawType = (Class<?>)paramType.getRawType();
 			if (rawType == List.class)
@@ -411,10 +413,10 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 
 		if (elementClassInfo != null) {
 			propertyInfo = createResourcePropertyInfo(declaringType, keyType, elementClassInfo);
-		} else if (elementType.isPrimitive() || (genericElementType == String.class) || (genericElementType == Date.class)) {
+		} else if (elementType.isPrimitive() || (elementType == String.class) || (elementType == StoreKey.class) || (elementType == Date.class)) {
 			propertyInfo = createPropertyInfo(declaringType, keyType, elementType);
 		} else {
-			throw new RuntimeException("Property type must be DMObject, primitive, Date, or String");
+			throw new RuntimeException("Property type must be DMObject, primitive, Date, String, or StoreKey");
 		}
 
 		propertyInfo.setModel(model);

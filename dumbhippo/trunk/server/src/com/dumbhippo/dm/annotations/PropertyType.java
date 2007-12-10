@@ -9,7 +9,8 @@ public enum PropertyType {
 	STRING('s'),
 	RESOURCE('r'),
 	FEED('f'),
-	URL('u');
+	URL('u'),
+	STORE_KEY('s'); // This one would not normally be sent over the wire; it's useful internally
 	
 	private char typeChar;
 
