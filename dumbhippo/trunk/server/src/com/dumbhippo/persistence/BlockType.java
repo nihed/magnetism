@@ -14,6 +14,11 @@ package com.dumbhippo.persistence;
 public enum BlockType {
 	POST { // 0
 		@Override
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.DELEGATE;
+		}
+		
+		@Override
 		public boolean getClickedCountUseful() { 
 			return true;
 		}
@@ -36,6 +41,11 @@ public enum BlockType {
 	}, 
 	GROUP_MEMBER { // 1 
 		@Override
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.DELEGATE;
+		}
+		
+		@Override
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.INDIRECT_DATA2;
 		}
@@ -47,6 +57,11 @@ public enum BlockType {
 	},
 	GROUP_CHAT { // 2
 		@Override
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.DELEGATE;
+		}
+		
+		@Override
 		public boolean isChatGroupParticipation() {
 			return true;
 		}
@@ -57,6 +72,11 @@ public enum BlockType {
 		}
 	},
 	MUSIC_PERSON { // 3
+		@Override
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.DELEGATE;
+		}
+		
 		@Override
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.DIRECT_DATA1;
@@ -72,6 +92,11 @@ public enum BlockType {
 	 */
 	OBSOLETE_EXTERNAL_ACCOUNT_UPDATE { // 4
 		@Override
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.NOBODY;
+		}
+		
+		@Override
 		public boolean isDirectlyChattable() {
 			return false;
 		}
@@ -80,6 +105,11 @@ public enum BlockType {
 	 * reused to avoid database confusion.
 	 */
 	OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF { // 5
+		@Override
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.NOBODY;
+		}
+		
 		@Override
 		public boolean isDirectlyChattable() {
 			return false;
@@ -90,8 +120,8 @@ public enum BlockType {
 	 */
 	OBSOLETE_BLOG_PERSON { // 6
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.NOBODY;
 		}
 		
 		@Override
@@ -105,6 +135,11 @@ public enum BlockType {
 		}
 	},
 	FACEBOOK_PERSON { // 7
+		@Override
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.NOBODY;
+		}
+		
 		@Override
 		public StackInclusion getDefaultStackInclusion() {
 			return null;
@@ -121,6 +156,11 @@ public enum BlockType {
 		}
 	},
 	FACEBOOK_EVENT { // 8
+		@Override
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.OWNER;
+		}
+		
 		@Override
 		public StackInclusion getDefaultStackInclusion() {
 			return null;
@@ -139,8 +179,8 @@ public enum BlockType {
 	FLICKR_PERSON { // 9
 		// Right now we only get completely public Flickr photos
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}
 		
 		@Override
@@ -156,8 +196,8 @@ public enum BlockType {
 	FLICKR_PHOTOSET { // 10
 		// Right now we only get completely public Flickr photosets
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}	
 		
 		@Override
@@ -172,8 +212,8 @@ public enum BlockType {
 	},
 	YOUTUBE_PERSON { // 11
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}
 		
 		@Override
@@ -188,8 +228,8 @@ public enum BlockType {
 	},
 	MYSPACE_PERSON { // 12
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}
 		
 		@Override
@@ -204,8 +244,8 @@ public enum BlockType {
 	},
 	MUSIC_CHAT { // 13
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}
 		
 		@Override
@@ -220,8 +260,8 @@ public enum BlockType {
 	},
 	BLOG_ENTRY { // 14
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}
 		
 		@Override
@@ -236,8 +276,8 @@ public enum BlockType {
 	},
 	DELICIOUS_PUBLIC_BOOKMARK { // 15
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}
 		
 		@Override
@@ -252,8 +292,8 @@ public enum BlockType {
 	},
 	TWITTER_PERSON { // 16
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}
 		
 		@Override
@@ -269,8 +309,8 @@ public enum BlockType {
 	// an item from the Digg "stuff you Dugg" feed
 	DIGG_DUGG_ENTRY { // 17
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}
 		
 		@Override
@@ -286,8 +326,8 @@ public enum BlockType {
 	// an item from the Reddit Overview feed, which is your comments and submissions both
 	REDDIT_ACTIVITY_ENTRY { // 18
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}
 		
 		@Override
@@ -303,6 +343,11 @@ public enum BlockType {
 	// a revision to a group's attributes
 	GROUP_REVISION { // 19		
 		@Override
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.DELEGATE;
+		}
+		
+		@Override
 		public boolean isDirectlyChattable() {
 			return true;
 		}
@@ -310,8 +355,8 @@ public enum BlockType {
 	// a Netflix movie
 	NETFLIX_MOVIE { // 20
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}
 		
 		// We show this one even though the user did originate
@@ -330,6 +375,11 @@ public enum BlockType {
 	// a question to the user about account options
 	ACCOUNT_QUESTION { // 21
 		@Override
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.OWNER;
+		}
+		
+		@Override
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.INDIRECT_DATA1;
 		}	
@@ -346,8 +396,8 @@ public enum BlockType {
 	},
 	GOOGLE_READER_SHARED_ITEM { // 22
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}
 		
 		@Override
@@ -362,8 +412,8 @@ public enum BlockType {
 	},
 	PICASA_PERSON { // 23
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}
 		
 		@Override
@@ -378,8 +428,8 @@ public enum BlockType {
 	},
 	AMAZON_REVIEW { // 24
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}
 		
 		@Override
@@ -394,8 +444,8 @@ public enum BlockType {
 	}, 
 	AMAZON_WISH_LIST_ITEM { // 25
 		@Override
-		public boolean isAlwaysPublic() {
-			return true;
+		public BlockVisibility getBlockVisibility() {
+			return BlockVisibility.PUBLIC;
 		}
 		
 		@Override
@@ -427,16 +477,21 @@ public enum BlockType {
 		DIRECT_DATA2
 	}
 	
+	// Who can see the block
+	public enum BlockVisibility {
+		PUBLIC,   // Everybody
+		OWNER,    // Just the owner
+		DELEGATE, // The block can be seen by people who can see some other object
+		          // (See BlockDMO.getVisibilityDelegate())
+		NOBODY,   // Obsolete block types, safety fallback
+	}
+	
 	public BlockOwnership getBlockOwnership() { 
 		return BlockOwnership.NONE;
 	}
 	
-	// returns true if all blocks of this type are always public,
-	// regardless of their content/specifics
-    public boolean isAlwaysPublic() {
-    	return false;
-    }
-    
+	abstract public BlockVisibility getBlockVisibility();
+	
     // returns null if stack inclusion must be specified 
     // when the Block is constructed, which is typical
     // for any block type that is duplicated with different

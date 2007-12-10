@@ -13,6 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.BlockType.BlockVisibility;
 
 /**
  * A Block is a block to be displayed in the Stacker, can also be thought of 
@@ -56,7 +57,7 @@ public class Block extends EmbeddedGuidPersistable {
 	public Block(BlockKey key) {
 		this();
 		this.blockType = key.getBlockType();
-		this.publicBlock = this.blockType.isAlwaysPublic();
+		this.publicBlock = this.blockType.getBlockVisibility() == BlockVisibility.PUBLIC;
 		this.data1 = key.getData1();
 		this.data2 = key.getData2();
 		this.data3 = key.getData3();
