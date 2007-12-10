@@ -3,6 +3,7 @@ package com.dumbhippo.dm.schema;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ import com.dumbhippo.dm.DataModel;
 import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.Inject;
+import com.dumbhippo.dm.annotations.MetaConstruct;
 import com.dumbhippo.dm.filter.CompiledFilter;
 import com.dumbhippo.dm.filter.CompiledItemFilter;
 import com.dumbhippo.dm.filter.CompiledListFilter;
@@ -55,8 +57,11 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	
 	private DataModel model;
 	private Class<T> dmoClass;
+	DMClassHolder<K,? extends DMObject<K>> baseClassHolder;
+	private boolean subclassed = false;
 	private Class<K> keyClass;
 	private Constructor<K> keyStringConstructor;
+	private Method metaConstructor;
 	private Constructor<? extends T> wrapperConstructor;
 	private DMPropertyHolder<K,T,?>[] properties;
 	private boolean[] mustQualify;
@@ -104,6 +109,44 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 			throw new RuntimeException(dmoClass.getName() + ": classId '" + annotation.classId() + "' is not a valid URI");
 		}
 		
+		Class<?> parentClass = dmoClass.getSuperclass();
+		while (parentClass != null) {
+			if (parentClass.isAnnotationPresent(DMO.class)) {
+				DMClassHolder<?,?> classHolder = model.getClassHolder(parentClass);
+				if (classHolder.getKeyClass() != keyClass) {
+					throw new RuntimeException(dmoClass.getName() + ": parent class " + parentClass.getName() + " has a different key type");
+				}
+				@SuppressWarnings("unchecked")
+				DMClassHolder<K,T> tmpHolder = (DMClassHolder<K,T>)classHolder;
+				baseClassHolder = tmpHolder;
+				baseClassHolder.subclassed = true;
+			}
+			
+			parentClass = parentClass.getSuperclass();
+		}
+		
+		if ("".equals(annotation.resourceBase())) {
+			if (baseClassHolder == null)
+				throw new RuntimeException(dmoClass.getName() + ": resourceBase must be specified for base class in DMO inheritance heirarchy");
+		} else {
+			if (baseClassHolder != null)
+				throw new RuntimeException(dmoClass.getName() + ": resourceBase must not be specified for derived DMO class");
+		}
+		
+		for (Method method : dmoClass.getDeclaredMethods()) {
+			if (method.isAnnotationPresent(MetaConstruct.class)) {
+				if (metaConstructor != null)
+					throw new RuntimeException(dmoClass.getName() + ": Two @MetaConstruct method");
+				if (!(Class.class.isAssignableFrom(method.getReturnType())))
+					throw new RuntimeException(dmoClass.getName() + ": @MetaConstruct method must return a class");
+				if (method.getParameterTypes().length != 1)
+					throw new RuntimeException(dmoClass.getName() + ": @MetaConstruct method must take a single parameter");
+				if (!method.getParameterTypes()[0].isAssignableFrom(keyClass))
+					throw new RuntimeException(dmoClass.getName() + ": @MetaConstruct method parameter must match key type");
+				
+				metaConstructor = method;
+			}
+		}
 
 		buildWrapperClass();
 		
@@ -137,7 +180,10 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	}
 	
 	public String getResourceBase() {
-		return annotation.resourceBase();
+		if (baseClassHolder != null)
+			return baseClassHolder.getResourceBase();
+		else
+			return annotation.resourceBase();
 	}
 	
 	public String getClassId() {
@@ -195,11 +241,10 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	public boolean mustQualifyProperty(int propertyIndex) {
 		return mustQualify[propertyIndex];
 	}
-
-	public T createInstance(Object key, DMSession session) {
+	
+	public T createInstance(K key, DMSession session) {
 		try {
-			T result = wrapperConstructor.newInstance(key, session);
-			return result;
+			return wrapperConstructor.newInstance(key, session);
 		} catch (Exception e) {
 			throw new RuntimeException("Error creating instance of class " + dmoClass.getName(), e);
 		}
@@ -233,20 +278,41 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	}
 
 	public String makeResourceId(K key) {
-		return model.getBaseUrl() + annotation.resourceBase() + "/" + key.toString();
+		return model.getBaseUrl() + getResourceBase() + "/" + key.toString();
 	}
 	
 	public String makeRelativeId(K key) {
-		return annotation.resourceBase() + "/" + key.toString();
+		return getResourceBase() + "/" + key.toString();
 	}
 
-	public StoreKey<K,T> makeStoreKey(String string) throws BadIdException {
+	@SuppressWarnings("unchecked")
+	private DMClassHolder<K,? extends T> getClassHolderForKey(K key) {
+		if (metaConstructor != null) {
+			try {
+				Class<?> clazz = (Class<?>)metaConstructor.invoke(null, new Object[] { key });
+				return (DMClassHolder<K,? extends T>)model.getClassHolder(clazz);
+			} catch (Exception e) {
+				throw new RuntimeException("Error calling metaconstructor of class " + dmoClass.getName(), e);
+			}
+		} else {
+			return this;
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public StoreKey<K,? extends T> makeStoreKey(K key) {
+		DMClassHolder subClassHolder = getClassHolderForKey(key);
+		return new StoreKey(subClassHolder, key);
+	}
+	
+	public StoreKey<K,? extends T> makeStoreKey(String string) throws BadIdException {
+		
 		if (keyClass == Guid.class) {
 			try {
 				Guid guid = new Guid(string);
 				
 				@SuppressWarnings("unchecked")
-				StoreKey<K,T> key = new StoreKey(this, guid);
+				StoreKey<K,? extends T> key = makeStoreKey((K)guid);
 				return key;
 			} catch (ParseException e) {
 				throw new BadIdException("Invalid GUID in resourceId");
@@ -254,25 +320,23 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 			
 		} else if (keyClass == String.class) {
 			@SuppressWarnings("unchecked")
-			StoreKey<K,T> key = new StoreKey(this, string);
+			StoreKey<K,? extends T> key = makeStoreKey((K)string);
 			return key;
 		} else if (keyClass == Long.class) {
 			try {
 				Long l = Long.parseLong(string);
 				
 				@SuppressWarnings("unchecked")
-				StoreKey<K,T> key = new StoreKey(this, l);
+				StoreKey<K,? extends T> key = makeStoreKey((K)l);
 				return key;
 			} catch (NumberFormatException e) {
 				throw new BadIdException("Invalid long in resourceId");
 			}
 		} else {
 			try {
-				Object keyObject = keyStringConstructor.newInstance(string);
+				K keyObject = keyStringConstructor.newInstance(string);
 				
-				@SuppressWarnings("unchecked")
-				StoreKey<K,T> key = new StoreKey(this, keyObject);
-				return key;
+				return makeStoreKey(keyObject);
 			} catch (InstantiationException e) {
 				throw new RuntimeException("Error creating key object from string", e);
 			} catch (IllegalAccessException e) {

@@ -9,5 +9,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface DMO {
 	String classId();
-	String resourceBase();
+	String resourceBase() default "";
 }
