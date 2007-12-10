@@ -18,7 +18,7 @@ import pyonlinedesktop.widget
 
 import bigboard
 import bigboard.big_widgets
-from bigboard.big_widgets import Sidebar, CanvasHBox, CanvasVBox, ActionLink
+from bigboard.big_widgets import Sidebar, CanvasHBox, CanvasVBox, ActionLink, ThemedText
 from bigboard.big_widgets import Button, GradientHeader, ThemedWidgetMixin, ThemeManager
 from bigboard.stock import Stock
 import bigboard.libbig
@@ -277,8 +277,9 @@ class GoogleGadgetContainer(hippo.CanvasWidget):
         
 class ThemedGradient(hippo.CanvasGradient, ThemedWidgetMixin):
     def __init__(self):
-        super(ThemedGradient, self).__init__()
+        super(ThemedGradient, self).__init__(orientation=hippo.ORIENTATION_HORIZONTAL)
         self._on_theme_change()
+
     def _on_theme_change(self, *args):
         theme = self.get_theme()
         _logger.debug("changing gradient %s %s", theme.header_start, theme.header_end)
@@ -305,7 +306,7 @@ class Exchange(hippo.CanvasBox, ThemedWidgetMixin):
         self.__expanded = True
         if not is_notitle:
             self.__ticker_container = ThemedGradient()
-            self.__ticker_text = hippo.CanvasText(text=metainfo.title, font="14px", xalign=hippo.ALIGNMENT_START)
+            self.__ticker_text = ThemedText(text=metainfo.title, font="14px", xalign=hippo.ALIGNMENT_START)
             self.__ticker_text.connect("button-press-event", lambda text, event: self.__toggle_expanded())  
             self.__ticker_container.append(self.__ticker_text, hippo.PACK_EXPAND)
             
@@ -414,7 +415,7 @@ class BigBoardPanel(dbus.service.Object):
         self._main_box = hippo.CanvasBox(border_right=1, border_color=0x999999FF, padding_bottom=4)
         self._canvas.set_root(self._main_box)
      
-        self._header_box = GradientHeader()
+        self._header_box = ThemedGradient()
         self._header_box.connect("button-press-event", self.__on_header_buttonpress)             
 
         self.__unpopout_button = Button(label='Hide', label_ypadding=-2)
@@ -422,7 +423,7 @@ class BigBoardPanel(dbus.service.Object):
         self.__unpopout_button.connect("activated", lambda button: self.__do_unpopout())
         self._header_box.append(self.__unpopout_button, hippo.PACK_END)
      
-        self._title = hippo.CanvasText(text="My Desktop", font="Bold 14px", xalign=hippo.ALIGNMENT_START)
+        self._title = ThemedText(text="My Desktop", font="Bold 14px", xalign=hippo.ALIGNMENT_START)
      
         self._header_box.append(self._title, hippo.PACK_EXPAND)
         
