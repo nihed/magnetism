@@ -8,6 +8,7 @@ class FedoraTheme(DefaultTheme):
         super(FedoraTheme, self).__init__()
         self.background = 0x345B75FF
         self.foreground = 0xFFFFFFFF
+        self.subforeground = 0x95A9B6FF        
         self.header_start = 0x436A85FF
         self.header_end = 0x59809CFF
         

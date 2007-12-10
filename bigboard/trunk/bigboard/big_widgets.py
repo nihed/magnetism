@@ -74,27 +74,31 @@ class ThemeManager(gobject.GObject):
         self.emit('theme-changed')            
          
 class ThemedWidgetMixin(object):
-    def __init__(self):
+    def __init__(self, theme_hints=[]):
         super(ThemedWidgetMixin, self).__init__()
         mgr = ThemeManager.getInstance()
         mgr.connect('theme-changed', self.__sync_theme)
+        self.__theme_hints = theme_hints        
         self.__sync_theme(mgr)
         
     def get_theme(self):
         return ThemeManager.getInstance().get_theme()
+    
+    def get_theme_hints(self):
+        return self.__theme_hints
 
     def __sync_theme(self, tm):
         tm.get_theme().set_properties(self)             
         
 class ThemedText(hippo.CanvasText, ThemedWidgetMixin):
-    def __init__(self, **kwargs):
+    def __init__(self, theme_hints=[], **kwargs):
         super(ThemedText, self).__init__(**kwargs)
-        ThemedWidgetMixin.__init__(self)
+        ThemedWidgetMixin.__init__(self, theme_hints=theme_hints)
         
 class ThemedLink(hippo.CanvasLink, ThemedWidgetMixin):
-    def __init__(self, **kwargs):
+    def __init__(self, theme_hints=[], **kwargs):
         super(ThemedLink, self).__init__(**kwargs)
-        ThemedWidgetMixin.__init__(self)    
+        ThemedWidgetMixin.__init__(self, theme_hints=theme_hints)    
 
 class CanvasCheckbox(hippo.CanvasWidget):
     def __init__(self, label):

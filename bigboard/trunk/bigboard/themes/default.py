@@ -9,6 +9,7 @@ class DefaultTheme(Singleton):
         super(DefaultTheme, self).__init__()
         self.background = 0xFFFFFFFF
         self.foreground = 0x000000FF
+        self.subforeground = 0x666666FF
         self.header_start = 0xF4F4F4FF
         self.header_end = 0xC7C7C7FF
         
@@ -20,7 +21,11 @@ class DefaultTheme(Singleton):
     def set_properties(self, widget):
         if isinstance(widget, hippo.CanvasText) or \
             isinstance(widget, hippo.CanvasLink):
-            widget.set_properties(color=self.foreground)
+            hints = widget.get_theme_hints()
+            if 'subforeground' in hints:
+                widget.set_properties(color=self.subforeground)
+            else:
+                widget.set_properties(color=self.foreground)
         
 def getInstance():
     return DefaultTheme.getInstance()
