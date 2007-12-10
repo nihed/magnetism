@@ -66,12 +66,24 @@ public class PropertyFetchNode {
 		if (!maybeSkip)
 			resultList.add(new PropertyFetch(propertyHolder, null, notify, max));
 	}
+	
+	public void bindToClass(DMClassHolder<?,?> classHolder, boolean skipDefault, List<PropertyFetch> resultList, int max, boolean notify) {
+		int propertyIndex = classHolder.getPropertyIndex(property);
+		if (propertyIndex >= 0) {
+			DMPropertyHolder<?,?,?> propertyHolder = classHolder.getProperty(propertyIndex);
+			boolean maybeSkip = skipDefault && propertyHolder.getDefaultInclude(); 
+			
+			if (propertyHolder instanceof ResourcePropertyHolder) {
+				bindResourceProperty(propertyHolder.asResourcePropertyHolder(propertyHolder.getKeyClass()), resultList, maybeSkip, notify, max);
+			} else {
+				bindPlainProperty(propertyHolder, resultList, maybeSkip, notify, max);
+			}
+		}
+	}
 
 	/**
 	 * Finds all properties in the given class and in *subclasses* of the given class
 	 * that match this node, bind them and return the result.
-	 * 
-	 * TODO: Implement the subclass part
 	 * 
 	 * @param classHolder
 	 * @param whether to skip properties that are marked as defaultInclude 
@@ -102,17 +114,9 @@ public class PropertyFetchNode {
 			}
 		}
 		
-		int propertyIndex = classHolder.getPropertyIndex(property);
-		if (propertyIndex >= 0) {
-			DMPropertyHolder<?,?,?> propertyHolder = classHolder.getProperty(propertyIndex);
-			boolean maybeSkip = skipDefault && propertyHolder.getDefaultInclude(); 
-			
-			if (propertyHolder instanceof ResourcePropertyHolder) {
-				bindResourceProperty(propertyHolder.asResourcePropertyHolder(propertyHolder.getKeyClass()), resultList, maybeSkip, notify, max);
-			} else {
-				bindPlainProperty(propertyHolder, resultList, maybeSkip, notify, max);
-			}
-		}
+		bindToClass(classHolder, skipDefault, resultList, max, notify);
+		for (DMClassHolder<?,?> subclassHolder : classHolder.getDerivedClasses())
+			bindToClass(subclassHolder, skipDefault, resultList, max, notify);
 	}
 	
 	@Override

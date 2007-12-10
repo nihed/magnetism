@@ -58,7 +58,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	private DataModel model;
 	private Class<T> dmoClass;
 	DMClassHolder<K,? extends DMObject<K>> baseClassHolder;
-	private boolean subclassed = false;
+	private List<DMClassHolder<?, ?>> derivedClasses = new ArrayList<DMClassHolder<?,?>>();
 	private Class<K> keyClass;
 	private Constructor<K> keyStringConstructor;
 	private Method metaConstructor;
@@ -118,8 +118,8 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 				}
 				@SuppressWarnings("unchecked")
 				DMClassHolder<K,T> tmpHolder = (DMClassHolder<K,T>)classHolder;
+				tmpHolder.derivedClasses.add(this);
 				baseClassHolder = tmpHolder;
-				baseClassHolder.subclassed = true;
 			}
 			
 			parentClass = parentClass.getSuperclass();
@@ -196,6 +196,14 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	
 	public Class<T> getDMOClass() {
 		return dmoClass;
+	}
+	
+	/**
+	 * @return a list of classholders for all DMO classes derived directly or indirectly
+	 *   from this DMO class. 
+	 */
+	public List<DMClassHolder<?,?>> getDerivedClasses() {
+		return derivedClasses;
 	}
 	
 	public int getPropertyIndex(String name) {
