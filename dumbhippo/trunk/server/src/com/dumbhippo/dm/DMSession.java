@@ -84,8 +84,7 @@ public abstract class DMSession {
 	}
 	
 	public <K,T extends DMObject<K>> void visitFetch(T object, BoundFetch<K,? super T> fetch, FetchVisitor visitor) {
-		DMClassHolder<K,T> classHolder = object.getClassHolder();
-		fetch.visit(this, classHolder, object, visitor);
+		fetch.visit(this, object, visitor);
 	}
 
 	/**

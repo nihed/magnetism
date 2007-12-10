@@ -102,7 +102,7 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 	}
 	
 	protected void visitChild(DMSession session, BoundFetch<KI,TI> children, TI value, FetchVisitor visitor) {
-		children.visit(session, resourceClassHolder, value, visitor, true);
+		children.visit(session, value, visitor, true);
 	}
 
 	protected void visitResourceValue(DMSession session, TI value, FetchVisitor visitor) {

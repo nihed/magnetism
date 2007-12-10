@@ -53,7 +53,8 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 		return feedMinTimestamps;
 	}
 	
-	public <U extends T> void visit(DMSession session, DMClassHolder<K,U> classHolder, U object, FetchVisitor visitor, boolean indirect) {
+	public <U extends T> void visit(DMSession session, U object, FetchVisitor visitor, boolean indirect) {
+		DMClassHolder<K,U> classHolder = object.getClassHolder();
 		DMPropertyHolder<K,U,?>[] classProperties = classHolder.getProperties();
 		BoundFetch<K,? super U> oldFetch;
 		long[] feedMinTimestamps = null;
@@ -255,8 +256,8 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 		visitor.endResource();
 	}
 	
-	public <U extends T>  void visit(DMSession session, DMClassHolder<K,U> classHolder, U object, FetchVisitor visitor) {
-		visit(session, classHolder, object, visitor, false);
+	public <U extends T>  void visit(DMSession session, U object, FetchVisitor visitor) {
+		visit(session, object, visitor, false);
 	}
 	
 	private void appendToFetchString(StringBuilder sb, DMPropertyHolder<?,?,?> propertyHolder, boolean qualify) {
