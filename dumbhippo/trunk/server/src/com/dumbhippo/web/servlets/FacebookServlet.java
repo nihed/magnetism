@@ -185,8 +185,9 @@ public class FacebookServlet extends AbstractServlet {
 					        }
 				    	}
 			    	} catch (XmlMethodException e) {
-			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-                        logger.debug("e.getMessage is {}", e.getMessage());
+			    		// in all cases except for the Flickr one, if the XmlMethodException will be thrown, it will be
+			    		// wrapped inside an InvokationTargetException below because of our use of reflection
+			    		logger.warn("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
 			    		accountsSetFailed.put(entry.getKey(), e.getMessage());		    		
 			    	} catch (ParserConfigurationException e) {
 			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
@@ -201,8 +202,11 @@ public class FacebookServlet extends AbstractServlet {
 			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
 			    		accountsSetFailed.put(entry.getKey(), e.getMessage());
 			        } catch (InvocationTargetException e) {
-			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			    		accountsSetFailed.put(entry.getKey(), e.getMessage());
+			    		logger.warn("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
+			    		if (e.getCause() != null)
+			    		    accountsSetFailed.put(entry.getKey(), e.getCause().getMessage());
+			    		else 
+			    			accountsSetFailed.put(entry.getKey(), e.getMessage());
 			        } catch (IllegalAccessException e) {
 		    		    logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
 			    		accountsSetFailed.put(entry.getKey(), e.getMessage());
@@ -243,7 +247,7 @@ public class FacebookServlet extends AbstractServlet {
 				}
 				
 				for (ExternalAccountType accountType : accountsRemoved) {
-					accountsRemovedBuilder.append(accountType.getName() + ", ");
+					accountsRemovedBuilder.append(accountType.getSiteName() + ", ");
 				}				
 				if (accountsRemovedBuilder.length() > 2) {
 					if (accountsRemoved.size() > 1)
