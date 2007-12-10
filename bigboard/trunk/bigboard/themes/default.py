@@ -8,6 +8,7 @@ class DefaultTheme(Singleton):
     def __init__(self):
         super(DefaultTheme, self).__init__()
         self.background = 0xFFFFFFFF
+        self.prelight = 0xE2E2E2FF
         self.foreground = 0x000000FF
         self.subforeground = 0x666666FF
         self.header_start = 0xF4F4F4FF
