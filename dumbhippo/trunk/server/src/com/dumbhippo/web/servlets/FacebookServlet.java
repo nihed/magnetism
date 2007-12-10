@@ -186,6 +186,7 @@ public class FacebookServlet extends AbstractServlet {
 				    	}
 			    	} catch (XmlMethodException e) {
 			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
+                        logger.debug("e.getMessage is {}", e.getMessage());
 			    		accountsSetFailed.put(entry.getKey(), e.getMessage());		    		
 			    	} catch (ParserConfigurationException e) {
 			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
@@ -249,7 +250,7 @@ public class FacebookServlet extends AbstractServlet {
 						singularOrPlural = " accounts were";
 					else 
 						singularOrPlural = " account was";	
-		    	    xml.appendTextNode("li", accountsRemovedBuilder.substring(0, accountsRemovedBuilder.length()-2) + singularOrPlural + " accounts were removed successfully.");		
+		    	    xml.appendTextNode("li", accountsRemovedBuilder.substring(0, accountsRemovedBuilder.length()-2) + singularOrPlural + " removed successfully.");		
 				}				
 		    	xml.closeElement();
 		    	xml.closeElement();
@@ -272,10 +273,11 @@ public class FacebookServlet extends AbstractServlet {
 					singularOrPlural = " Accounts Were";
 				
 				xml.openElement("fb:error");
-				xml.appendTextNode("fb:message", "There Following" + singularOrPlural + " Not Set");
-				xml.openElement("ul");
+				xml.appendTextNode("fb:message", "The Following" + singularOrPlural + " Not Set");
+				xml.openElement("ul");				
 				for (Map.Entry<ExternalAccountType, String> entry : accountsSetFailed.entrySet()) {
-				    xml.appendTextNode("li", entry.getKey().getName() + ": " + entry.getValue());
+					logger.debug("key {} value {}", entry.getKey().getSiteName(), entry.getValue());
+				    xml.appendTextNode("li", entry.getKey().getSiteName() + ": " + entry.getValue());
 				}
 				xml.closeElement();
 				xml.closeElement();

@@ -1512,8 +1512,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
-				
-		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		Feed feed;		
 		try {
@@ -1525,6 +1523,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		external.setFeed(feed);
 		feed.getAccounts().add(external);
+		
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
 	
 	public void doSetNetflixAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException, RetryException {
@@ -1546,8 +1546,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
-				
-		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		Feed feed;		
 		try {
@@ -1559,6 +1557,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		external.setFeed(feed);
 		feed.getAccounts().add(external);			
+		
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
 	
 	private ExternalAccountType parseExternalAccountType(String type) throws XmlMethodException {
@@ -1743,7 +1743,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
-		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		Feed feed;
 		try {
@@ -1755,6 +1754,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		external.setFeed(feed);
 		feed.getAccounts().add(external);
+		
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		xml.appendTextNode("username", external.getHandle());
 	}
@@ -1827,18 +1828,20 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
-		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		Feed feed;
 		try {
 			feed = feedSystem.scrapeFeedFromUrl(new URL("http://digg.com/users/" + StringUtils.urlEncode(external.getHandle()) + "/history/diggs.rss"));
 		} catch (MalformedURLException e) {
+			logger.debug("Error message when retreaving Digg feed {}", e.getMessage());
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
 		}
 		EJBUtil.forceInitialization(feed.getAccounts());
 		
 		external.setFeed(feed);
 		feed.getAccounts().add(external);
+		
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		xml.appendTextNode("username", external.getHandle());
 	}
@@ -1865,7 +1868,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
-		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		external.setFeeds(new HashSet<Feed>());
 		
@@ -1894,6 +1896,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		EJBUtil.forceInitialization(dislikedFeed.getAccounts());
 		external.addFeed(dislikedFeed);
 		dislikedFeed.getAccounts().add(external);				
+		
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		xml.appendTextNode("username", external.getHandle());
 		
@@ -1951,7 +1955,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
-		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		try {
 			@SuppressWarnings("unused") Feed feed = feedSystem.scrapeFeedFromUrl(new URL("http://picasaweb.google.com/" + StringUtils.urlEncode(external.getHandle())));
@@ -1967,6 +1970,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		external.setFeed(feed);
 		feed.getAccounts().add(external);
 		*/
+		
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		xml.appendTextNode("username", external.getHandle());
 	}
@@ -1991,13 +1996,16 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
-				
-		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		// check how many reviews they have and warn them there will be no updates if there are too many
 		AmazonWebServices ws = new AmazonWebServices(REQUEST_TIMEOUT, config);		
 		int reviewCount = ws.getReviewsCount(amazonUserId);		
 		int reviewCountWeCanGet = AmazonWebServices.MAX_AMAZON_REVIEW_PAGES_RETURNED * AmazonWebServices.AMAZON_REVIEWS_PER_PAGE;
+		
+		// TODO: Set this only if Amazon web services request confirmed that the account exists.
+		// Right now, we just provide links to a non-existing account and review pages if the id entered conforms 
+		// to the expected format of an Amazon user id.
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		if (reviewCount >= reviewCountWeCanGet) { 
 		    xml.appendTextNode("message", "You currently have " + reviewCount + " reviews on Amazon. " +
@@ -2118,8 +2126,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
 		
-		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
-		
 		Feed feed;
 		try {
 		    feed = feedSystem.scrapeFeedFromUrl(new URL("http://www.google.com/reader/public/atom/user/" +
@@ -2131,6 +2137,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		external.setFeed(feed);
 		feed.getAccounts().add(external);
+		
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
 	
 	private StatisticsService getStatisticsService() throws XmlMethodException {
