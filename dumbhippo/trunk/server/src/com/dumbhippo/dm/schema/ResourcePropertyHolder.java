@@ -6,7 +6,7 @@ import com.dumbhippo.dm.DMKey;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.annotations.PropertyType;
-import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.BoundFetch;
 import com.dumbhippo.dm.fetch.FetchNode;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.parser.FetchParser;
@@ -17,7 +17,7 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 	private DMClassHolder<KI,TI> resourceClassHolder;
 	protected Class<TI> itemObjectType;
 	protected Class<KI> itemKeyType;
-	private Fetch<KI,TI> defaultChildren;
+	private BoundFetch<KI,TI> defaultChildren;
 
 	public ResourcePropertyHolder(ResourcePropertyInfo<K,T,KI,TI> propertyInfo) {
 		super(propertyInfo);
@@ -58,7 +58,7 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 	}
 
 	@Override
-	public Fetch<KI,TI> getDefaultChildren() {
+	public BoundFetch<KI,TI> getDefaultChildren() {
 		return defaultChildren;
 	}
 	
@@ -101,7 +101,7 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 		return session.findUnchecked(itemObjectType, key);
 	}
 	
-	protected void visitChild(DMSession session, Fetch<KI,TI> children, TI value, FetchVisitor visitor) {
+	protected void visitChild(DMSession session, BoundFetch<KI,TI> children, TI value, FetchVisitor visitor) {
 		children.visit(session, resourceClassHolder, value, visitor, true);
 	}
 

@@ -14,7 +14,7 @@ import org.xml.sax.SAXParseException;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
-import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.BoundFetch;
 import com.dumbhippo.dm.fetch.FetchNode;
 import com.dumbhippo.dm.parser.FetchParser;
 import com.dumbhippo.dm.parser.ParseException;
@@ -121,7 +121,7 @@ public class AbstractFetchTests extends AbstractSupportedTests {
 	
 	protected <K,T extends DMObject<K>> void doFetchTest(Class<K> keyClass, Class<T> objectClass, T object, String fetchString, String resultId, String... parameters) throws ParseException, FetchValidationException {
 		FetchNode fetchNode = FetchParser.parse(fetchString);
-		Fetch<K,T> fetch = fetchNode.bind(support.getModel().getClassHolder(keyClass, objectClass));
+		BoundFetch<K,T> fetch = fetchNode.bind(support.getModel().getClassHolder(keyClass, objectClass));
 		
 		FetchResultVisitor visitor = new FetchResultVisitor();
 		support.currentSessionRO().visitFetch(object, fetch, visitor);

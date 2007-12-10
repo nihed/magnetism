@@ -23,7 +23,7 @@ public class FetchNode {
 		return properties;
 	}
 	
-	public <K,T extends DMObject<K>> Fetch<K,T> bind(DMClassHolder<K,T> classHolder) {
+	public <K,T extends DMObject<K>> BoundFetch<K,T> bind(DMClassHolder<K,T> classHolder) {
 		boolean includeDefault = false;
 		
 		List<PropertyFetch> boundProperties = new ArrayList<PropertyFetch>(properties.length);
@@ -45,7 +45,7 @@ public class FetchNode {
 
 		Collections.sort(boundProperties);
 		
-		return new Fetch<K,T>(boundProperties.toArray(new PropertyFetch[boundProperties.size()]), includeDefault);
+		return new BoundFetch<K,T>(boundProperties.toArray(new PropertyFetch[boundProperties.size()]), includeDefault);
 	}
 	
 	@Override

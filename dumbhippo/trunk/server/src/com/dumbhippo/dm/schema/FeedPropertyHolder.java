@@ -11,7 +11,7 @@ import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.dm.DataModel;
 import com.dumbhippo.dm.annotations.PropertyType;
-import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.BoundFetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.filter.AndFilter;
 import com.dumbhippo.dm.filter.CompiledItemFilter;
@@ -109,12 +109,12 @@ public class FeedPropertyHolder<K, T extends DMObject<K>, KI, TI extends DMObjec
 	 *    indicating that we have already returned the current contents of the feed to the client
 	 */
 	@SuppressWarnings("unchecked")
-	public long visitFeedChildren(DMSession session, Fetch<?,?> children, int start, int max, T object, FetchVisitor visitor, boolean forceAll) {
+	public long visitFeedChildren(DMSession session, BoundFetch<?,?> children, int start, int max, T object, FetchVisitor visitor, boolean forceAll) {
 		long minTimestamp = updateFeedTimestamp(session, object);
 		if (forceAll)
 			minTimestamp = 0;
 		
-		Fetch<KI,TI> typedChildren = (Fetch<KI,TI>)children;
+		BoundFetch<KI,TI> typedChildren = (BoundFetch<KI,TI>)children;
 		
 		Iterator<DMFeedItem<TI>> iter = ((DMFeed<TI>)getRawPropertyValue(object)).iterator(start, max, minTimestamp);
 		while (iter.hasNext()) {
@@ -162,7 +162,7 @@ public class FeedPropertyHolder<K, T extends DMObject<K>, KI, TI extends DMObjec
 	
 
 	@Override
-	public void visitChildren(DMSession session, Fetch<?, ?> children, T object, FetchVisitor visitor) {
+	public void visitChildren(DMSession session, BoundFetch<?, ?> children, T object, FetchVisitor visitor) {
 		throw new UnsupportedOperationException("Must use visitFeedChildren");
 	}
 

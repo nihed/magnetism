@@ -12,7 +12,7 @@ import org.xmpp.packet.IQ;
 
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
-import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.BoundFetch;
 import com.dumbhippo.dm.fetch.FetchNode;
 import com.dumbhippo.dm.parser.FetchParser;
 import com.dumbhippo.dm.parser.ParseException;
@@ -52,7 +52,7 @@ public class MultiQueryIQMethod<K, T extends DMObject<K>> extends QueryIQMethod 
 			throw IQException.createBadRequest("Error in fetch attribute: " + e.getMessage());
 		} 
 		
-		Fetch<K,T> fetch = fetchNode.bind(classHolder);
+		BoundFetch<K,T> fetch = fetchNode.bind(classHolder);
 		
 		XmppFetchVisitor visitor = new XmppFetchVisitor(root, session.getModel());
 		

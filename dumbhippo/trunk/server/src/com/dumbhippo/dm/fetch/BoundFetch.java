@@ -16,14 +16,14 @@ import com.dumbhippo.dm.schema.FeedPropertyHolder;
 import com.dumbhippo.dm.store.StoreClient;
 import com.dumbhippo.dm.store.StoreKey;
 
-public final class Fetch<K,T extends DMObject<K>> {
+public final class BoundFetch<K,T extends DMObject<K>> {
 	@SuppressWarnings("unused")
-	static private final Logger logger = GlobalSetup.getLogger(Fetch.class);
+	static private final Logger logger = GlobalSetup.getLogger(BoundFetch.class);
 	
 	private PropertyFetch[] properties;
 	private boolean includeDefault;
 	
-	public Fetch(PropertyFetch[] properties, boolean includeDefault) {
+	public BoundFetch(PropertyFetch[] properties, boolean includeDefault) {
 		this.properties = properties;
 		this.includeDefault = includeDefault;
 	}
@@ -55,7 +55,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 	
 	public <U extends T> void visit(DMSession session, DMClassHolder<K,U> classHolder, U object, FetchVisitor visitor, boolean indirect) {
 		DMPropertyHolder<K,U,?>[] classProperties = classHolder.getProperties();
-		Fetch<K,? super U> oldFetch;
+		BoundFetch<K,? super U> oldFetch;
 		long[] feedMinTimestamps = null;
 		
 		StoreClient storeClient;
@@ -88,7 +88,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 				newOrdering = propertyOrdering(++newIndex);
 
 			boolean oldFetched = false;
-			Fetch<?,?> oldChildren = null;
+			BoundFetch<?,?> oldChildren = null;
 			if (oldOrdering == classOrdering) {
 				oldFetched = true; 
 				oldChildren = oldFetch.properties[oldIndex].getChildren();
@@ -98,7 +98,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 			}
 			
 			boolean newFetched = false;
-			Fetch<?,?> newChildren = null;
+			BoundFetch<?,?> newChildren = null;
 			if (newOrdering == classOrdering) {
 				newFetched = true;
 				newChildren = properties[newIndex].getChildren();
@@ -138,7 +138,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 				}
 				
 				if (newMax > oldMax && (newChildren != null || oldChildren != null)) {
-					Fetch<?,?> children;
+					BoundFetch<?,?> children;
 					
 					if (newChildren == null)
 						children = oldChildren;
@@ -270,10 +270,10 @@ public final class Fetch<K,T extends DMObject<K>> {
 
 	@Override
 	public boolean equals(Object o) {
-		if (!(o instanceof Fetch))
+		if (!(o instanceof BoundFetch))
 			return false;
 		
-		Fetch<?,?> other = (Fetch<?,?>)o;
+		BoundFetch<?,?> other = (BoundFetch<?,?>)o;
 		
 		if (includeDefault != other.includeDefault)
 			return false;
@@ -324,7 +324,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 		return b.toString();
 	}
 
-	public Fetch<?,?> merge(Fetch<?,?> other) {
+	public BoundFetch<?,?> merge(BoundFetch<?,?> other) {
 		int newCount = this.properties.length;
 		boolean changedProperties = false;
 
@@ -378,14 +378,14 @@ public final class Fetch<K,T extends DMObject<K>> {
 		}
 		
 		@SuppressWarnings("unchecked")
-		Fetch<?, ?> newFetch = new Fetch(newProperties, this.includeDefault || other.includeDefault);
+		BoundFetch<?, ?> newFetch = new BoundFetch(newProperties, this.includeDefault || other.includeDefault);
 		
 		return newFetch;
 	}
 
 	public void resolveNotifications(StoreClient client, StoreKey<K,? extends T> key, long propertyMask, ClientNotificationSet result) {
 		DMPropertyHolder<K,? extends T,?>[] classProperties = key.getClassHolder().getProperties();
-		Fetch<?,?>[] childFetches = null;
+		BoundFetch<?,?>[] childFetches = null;
 		int[] maxes = null;
 		long notifiedMask = 0;
 		
@@ -401,7 +401,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 					propertyOrdering = propertyOrdering(++propertyIndex);
 	
 				boolean notified = false;
-				Fetch<?,?> childFetch = null;
+				BoundFetch<?,?> childFetch = null;
 				int max = -1;
 
 				if (propertyOrdering == classOrdering) {
@@ -420,7 +420,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 				
 				if (childFetch != null) {
 					if (childFetches == null)
-						childFetches = new Fetch[classProperties.length];
+						childFetches = new BoundFetch[classProperties.length];
 					childFetches[classIndex] = childFetch;
 				}
 				

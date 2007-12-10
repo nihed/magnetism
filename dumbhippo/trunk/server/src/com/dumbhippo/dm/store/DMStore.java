@@ -14,7 +14,7 @@ import com.dumbhippo.dm.DMClient;
 import com.dumbhippo.dm.DMKey;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.NotCachedException;
-import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.BoundFetch;
 import com.dumbhippo.dm.schema.DMClassHolder;
 
 public class DMStore {
@@ -172,7 +172,7 @@ public class DMStore {
 		return new StoreClient(client);
 	}
 	
-	public <K, T extends DMObject<K>> Fetch<K,? super T> addRegistration(DMClassHolder<K,T> classHolder, K key, StoreClient client, Fetch<K,? super T> fetch) {
+	public <K, T extends DMObject<K>> BoundFetch<K,? super T> addRegistration(DMClassHolder<K,T> classHolder, K key, StoreClient client, BoundFetch<K,? super T> fetch) {
 		StoreNode<K,T> node;
 		Registration<K,T> registration;
 		
@@ -185,7 +185,7 @@ public class DMStore {
 			registration = node.createRegistration(client);
 		} while (registration == null);
 		
-		Fetch<K,? super T> oldFetch = registration.addFetch(fetch);
+		BoundFetch<K,? super T> oldFetch = registration.addFetch(fetch);
 		
 		// If the client is already closed, then we need to remove the registration we added,
 		// since it won't be cleaned up when the client is closed.

@@ -8,7 +8,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.BoundFetch;
 import com.dumbhippo.dm.store.StoreClient;
 import com.dumbhippo.dm.store.StoreKey;
 
@@ -25,7 +25,7 @@ public class ClientNotificationSet {
 	
 	private Map<StoreClient, ClientNotification> notifications;
 	
-	public <K, T extends DMObject<K>> void addNotification(StoreClient client, StoreKey<K,T> key, Fetch<K,? super T> fetch, long propertyMask, Fetch<?,?>[] childFetches, int[] maxes) {
+	public <K, T extends DMObject<K>> void addNotification(StoreClient client, StoreKey<K,T> key, BoundFetch<K,? super T> fetch, long propertyMask, BoundFetch<?,?>[] childFetches, int[] maxes) {
 		ClientNotification notification = null;
 		
 		if (notifications == null)
