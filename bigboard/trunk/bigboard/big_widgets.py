@@ -77,29 +77,24 @@ class ThemedWidgetMixin(object):
     def __init__(self):
         super(ThemedWidgetMixin, self).__init__()
         mgr = ThemeManager.getInstance()
-        self.__boundprops = {}
         mgr.connect('theme-changed', self.__sync_theme)
+        self.__sync_theme(mgr)
         
     def get_theme(self):
         return ThemeManager.getInstance().get_theme()
 
-    def _theme_bind(self, bindings):
-        self.__boundprops.update(bindings)
-        self._on_theme_change(ThemeManager.getInstance())
-        
-    def _on_theme_change(self, tm):
-        print "tc, bindings: %s" % (self.__boundprops)
-        for binding,func in self.__boundprops.iteritems():
-            self.set_property(binding, func(tm.get_theme()))
-        
     def __sync_theme(self, tm):
-        self._on_theme_change(tm)       
+        tm.get_theme().set_properties(self)             
         
 class ThemedText(hippo.CanvasText, ThemedWidgetMixin):
     def __init__(self, **kwargs):
         super(ThemedText, self).__init__(**kwargs)
         ThemedWidgetMixin.__init__(self)
-        self._theme_bind({'color': lambda t: t.foreground})
+        
+class ThemedLink(hippo.CanvasLink, ThemedWidgetMixin):
+    def __init__(self, **kwargs):
+        super(ThemedLink, self).__init__(**kwargs)
+        ThemedWidgetMixin.__init__(self)    
 
 class CanvasCheckbox(hippo.CanvasWidget):
     def __init__(self, label):
@@ -133,11 +128,12 @@ class GradientHeader(hippo.CanvasGradient, ThemedWidgetMixin):
                                       padding_left=4,
                                       color=0x333333FF, **kwargs)        
         
-class ActionLink(hippo.CanvasLink):
+class ActionLink(hippo.CanvasLink, ThemedWidgetMixin):
     def __init__(self, underline=pango.UNDERLINE_NONE, **kwargs):
         if not kwargs.has_key('color'):
             kwargs['color'] = 0x0066DDFF 
         hippo.CanvasLink.__init__(self, **kwargs)
+        ThemedWidgetMixin.__init__(self)
         self.set_underline(underline)   
 
     def set_underline(self, underline):
