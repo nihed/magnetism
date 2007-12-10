@@ -104,25 +104,26 @@ public class FacebookServlet extends AbstractServlet {
 	        	IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 	        	try {
 	        	    user = identitySpider.lookupUserByFacebookUserId(SystemViewpoint.getInstance(), facebookUserId);
-			        if (user != null) {
-	    	            try {
-		    	            FacebookTracker facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
+    	            FacebookTracker facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
+    	            try {
+    	                if (user != null) {
 		    	            userViewpoint = new UserViewpoint(user, Site.MUGSHOT);
 		    	        	// TODO: can change this into updateExistingFacebookAccount
 		    	            facebookTracker.updateOrCreateFacebookAccount(userViewpoint, sessionKey, facebookUserId, true);		    	            
-	    	            } catch (FacebookSystemException e) {
-	                        errorMessage = e.getMessage();		
-	    	            }
-			        } else {
-			        	// TODO: create FacebookResource based on the facebookUserId and a user that is claiming this resource
-			        }
+			            } else {
+		    			    // need to create a new user based on the Facebook user id
+			        	    user = facebookTracker.createNewUserWithFacebookAccount(sessionKey, facebookUserId, true);
+			            }
+    	            } catch (FacebookSystemException e) {
+                        errorMessage = e.getMessage();		
+    	            }
 		        } catch (NotFoundException e) {
 		        	// nothing to do
 		        	// TODO: check in which case NotFoundException is thrown as opposed to the user being null
 		        }
 	        }
 		}
-
+		
 		// this returns some code in FBML we'll return for our app page on Facebook
 		// it intentionally points to my test server for now
 		XmlBuilder xml = new XmlBuilder();		
@@ -235,7 +236,7 @@ public class FacebookServlet extends AbstractServlet {
 				xml.appendTextNode("fb:message", "Success");
 				xml.openElement("ul");
 				for (ExternalAccountType accountType : accountsSetSuccessful) {
-					accountsSetSuccessfulBuilder.append(accountType.getName() + ", ");
+					accountsSetSuccessfulBuilder.append(accountType.getSiteName() + ", ");
 				}				
 				if (accountsSetSuccessfulBuilder.length() > 2) {
 					if (accountsSetSuccessful.size() > 1)

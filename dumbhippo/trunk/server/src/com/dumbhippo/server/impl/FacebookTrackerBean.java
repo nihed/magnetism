@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.Site;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
@@ -34,6 +35,7 @@ import com.dumbhippo.persistence.FacebookPhotoDataStatus;
 import com.dumbhippo.persistence.FacebookResource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystem;
@@ -96,6 +98,9 @@ public class FacebookTrackerBean implements FacebookTracker {
 	@EJB
 	private IdentitySpider identitySpider;
 	
+	@EJB
+	private AccountSystem accounts;
+	
 	@PostConstruct
 	public void init() {
 		cacheFactory.injectCaches(this);
@@ -147,8 +152,22 @@ public class FacebookTrackerBean implements FacebookTracker {
 					identitySpider.addVerifiedOwnershipClaim(viewpoint.getViewer(), res);					
 				    externalAccount.setExtra(Long.toString(facebookAccount.getId()));	
 				}
+			} else if (res != null && facebookAccount == null) {
+				// this can only happen if we are creating a new User and already had to set their FacebookResource
+				AccountClaim ac = res.getAccountClaim();
+				if (ac != null) {
+					if (!ac.getOwner().equals(viewpoint.getViewer())) {
+						throw new FacebookSystemException("Facebook account " + facebookUserId + " is claimed by someone else: " + ac.getOwner());
+					}
+				} else {
+					logger.warn("Had a FacebookResource for " + facebookUserId + " with no account claim and no corresponding FacebookAccount");
+					identitySpider.addVerifiedOwnershipClaim(viewpoint.getViewer(), res);	
+				}
+			    facebookAccount = new FacebookAccount(externalAccount, facebookUserId);
+			    em.persist(facebookAccount);
+			    externalAccount.setExtra(Long.toString(facebookAccount.getId()));					
 			} else {
-				throw new RuntimeException("Facebook resource was " + res + ", while Facebook account was " + facebookAccount + ". If one of them exists, the other one should not be null.");				
+				throw new RuntimeException("Facebook resource was " + res + ", while Facebook account was " + facebookAccount + ". Every FacebookAccount should have a corresponding FacebookResource.");				
 			}
 		} else {
 			facebookAccount = em.find(FacebookAccount.class, Long.parseLong(externalAccount.getExtra()));
@@ -187,6 +206,15 @@ public class FacebookTrackerBean implements FacebookTracker {
 			    }
 		    });
 		}
+	}
+	
+	public User createNewUserWithFacebookAccount(String sessionKey, String facebookUserId, boolean applicationEnabled) throws FacebookSystemException {
+		FacebookResource res = new FacebookResource(facebookUserId);
+		em.persist(res);
+		Account account = accounts.createAccountFromResource(res);
+		User user = account.getOwner();
+		updateOrCreateFacebookAccount(new UserViewpoint(user, Site.MUGSHOT), sessionKey, facebookUserId, applicationEnabled);
+		return user;
 	}
 	
 	private FacebookAccount getFacebookAccount(String facebookUserId) {
