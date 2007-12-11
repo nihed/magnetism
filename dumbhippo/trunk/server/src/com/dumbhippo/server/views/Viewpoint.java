@@ -4,6 +4,7 @@ import com.dumbhippo.Site;
 import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.dm.BlockDMOKey;
 
 /**
  * The Viewpoint class represents the concept of "current user". 
@@ -46,6 +47,8 @@ public abstract class Viewpoint implements DMViewpoint {
 	public abstract boolean canSeeFriendsOnly(Guid userId);
 	public abstract boolean canSeePrivate(Guid userId);
 	public abstract boolean canSeeContact(Guid contactId);
+	public abstract boolean canSeeBlock(BlockDMOKey blockKey);
+	public abstract boolean canSeePost(Guid postId);
 	
 	public abstract Site getSite();
 	

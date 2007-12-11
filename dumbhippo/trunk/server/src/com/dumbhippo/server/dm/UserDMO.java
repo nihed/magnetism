@@ -4,14 +4,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.Site;
+import com.dumbhippo.dm.DMFeed;
+import com.dumbhippo.dm.DMFeedItem;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.annotations.DMFilter;
@@ -30,12 +36,14 @@ import com.dumbhippo.persistence.FacebookResource;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.DesktopSettings;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.OnlineDesktopSystem;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.applications.ApplicationSystem;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -43,6 +51,9 @@ import com.dumbhippo.server.views.Viewpoint;
 
 @DMO(classId="http://mugshot.org/p/o/user", resourceBase="/o/user")
 public abstract class UserDMO extends DMObject<Guid> {
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(UserDMO.class);
+	
 	private User user;
 //	private String email;
 //	private String aim;
@@ -87,6 +98,9 @@ public abstract class UserDMO extends DMObject<Guid> {
 	@EJB
 	private OnlineDesktopSystem onlineDesktopSystem;
 	
+	@EJB
+	private Stacker stacker;
+
 	protected UserDMO(Guid key) {
 		super(key);
 	}
@@ -457,5 +471,29 @@ public abstract class UserDMO extends DMObject<Guid> {
 			return currentTrack.getLastUpdated().getTime();
 		else
 			return -1;
+	}
+
+	@DMProperty
+	public DMFeed<BlockDMO> getStack() {
+		return new BlockFeed();
+	}
+	
+	private class BlockFeed implements DMFeed<BlockDMO> {
+		public Iterator<DMFeedItem<BlockDMO>> iterator(int start, int max, long minTimestamp) {
+			List<UserBlockData> blocks = stacker.getStackBlocks(user, start, max, minTimestamp);
+			
+			List<DMFeedItem<BlockDMO>> items = new ArrayList<DMFeedItem<BlockDMO>>(); 
+			for (UserBlockData ubd : blocks) {
+				Class<? extends BlockDMO> dmoClass = BlockDMO.getDMOClass(ubd.getBlock().getBlockType());
+				if (dmoClass != null) {
+					logger.debug("dmoClass for {} is {}", ubd.getBlock().getBlockType(), dmoClass.getName());
+					
+					BlockDMO blockDMO = session.findUnchecked(dmoClass, new BlockDMOKey(ubd.getBlock()));
+					items.add(new DMFeedItem<BlockDMO>(blockDMO, ubd.getStackTimestampAsLong()));
+				}
+			}
+			
+			return items.iterator();
+		}
 	}
 }

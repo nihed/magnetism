@@ -4,6 +4,7 @@ import com.dumbhippo.Site;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.dm.BlockDMOKey;
 
 /**
  * SystemViewpoint represents the systems view of the database.
@@ -62,6 +63,16 @@ public class SystemViewpoint extends Viewpoint {
 	public boolean canSeeContact(Guid contactId) {
 		return true;
 	}	
+	
+	@Override
+	public boolean canSeeBlock(BlockDMOKey blockKey) {
+		return true;
+	}
+	
+	@Override
+	public boolean canSeePost(Guid postId) {
+		return true;
+	}
 	
 	// the SystemViewpoint is never relative to Site.GNOME or Site.MUGSHOT
 	@Override
