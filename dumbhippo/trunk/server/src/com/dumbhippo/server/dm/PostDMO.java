@@ -53,12 +53,12 @@ public abstract class PostDMO extends DMObject<Guid> {
 	}
 	
 	@DMProperty(defaultInclude=true)
-	String getTitle() {
+	public String getTitle() {
 		return post.getTitle();
 	}
 
 	@DMProperty(defaultInclude=true)
-	String getText() {
+	public String getText() {
 		return post.getText();
 	}
 	
