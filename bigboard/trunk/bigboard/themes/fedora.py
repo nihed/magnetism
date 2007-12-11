@@ -1,3 +1,4 @@
+import os,sys
 
 import gtk
 
@@ -8,15 +9,12 @@ class FedoraTheme(DefaultTheme):
         super(FedoraTheme, self).__init__()
         self.background = 0x345B75FF  
         self.foreground = 0xFFFFFFFF
-        self.subforeground = 0x95A9B6FF        
-        self.header_start = 0x436A85FF
-        self.header_end = 0x59809CFF
-        self.prelight = self.header_end        
-        
-    def draw_header(self, cr, area):
-        cr.set_source_rgb(1.0, 1.0, 1.0)
-        cr.rectangle(area.x, area.y, area.width, area.height)
-        cr.fill()
+        self.subforeground = 0x95A9B6FF
+        self.header_top    = self._rgba_to_cairo(0xCBD5DCFF)        
+        self.header_start  = self._rgb_to_cairo(0x436A85)
+        self.header_end    = self._rgb_to_cairo(0x59809C)
+        self.header_bottom = self._rgba_to_cairo(0x244155FF)
+        self.prelight = 0x59809CFF     
         
 def getInstance():
     return FedoraTheme.getInstance()

@@ -88,7 +88,7 @@ class ThemedWidgetMixin(object):
         return self.__theme_hints
     
     def _on_theme_changed(self, theme):
-        pass
+        self.emit_paint_needed(0,0,-1,-1)
 
     def __sync_theme(self, tm):
         theme = tm.get_theme()

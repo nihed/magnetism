@@ -275,16 +275,15 @@ class GoogleGadgetContainer(hippo.CanvasWidget):
         self.widget.show_all() 
         self.set_property('widget', self.widget)
         
-class ThemedGradient(hippo.CanvasGradient, ThemedWidgetMixin):
+class ThemedGradient(hippo.CanvasBox, ThemedWidgetMixin):
     def __init__(self):
-        super(ThemedGradient, self).__init__(orientation=hippo.ORIENTATION_HORIZONTAL)
-        self._on_theme_change()
+        super(ThemedGradient, self).__init__(orientation=hippo.ORIENTATION_HORIZONTAL,
+                                             background_color=0xFF0000FF)
 
-    def _on_theme_change(self, *args):
-        theme = self.get_theme()
-        _logger.debug("changing gradient %s %s", theme.header_start, theme.header_end)
-        self.set_property('start-color', theme.header_start)
-        self.set_property('end-color', theme.header_end)
+    def do_paint_below_children(self, cr, dmgbox):
+        area = self.get_background_area()
+        self.get_theme().draw_header(cr, area)
+gobject.type_register(ThemedGradient)
          
 class Exchange(hippo.CanvasBox, ThemedWidgetMixin):
     """A renderer for stocks."""
@@ -570,6 +569,7 @@ class BigBoardPanel(dbus.service.Object):
     def __sync_theme(self, *args):
         theme = self.__theme_mgr.get_theme()
         self._canvas.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#%6X" % (theme.background >> 8,)))
+        self._canvas.queue_draw_area(0,0,-1,-1)
         
     def get_theme(self):
         return self.__theme
