@@ -100,13 +100,20 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 				if (property instanceof FeedPropertyHolder) {
 					int feedPropertyIndex = classHolder.getFeedPropertyIndex(property.getName());
 					model.getStore().invalidateFeed(classHolder, key, propertyIndex, timestamp, feedTimestamps[feedPropertyIndex]);
-				} else
+					
+					logger.debug("Invalidated {}#{}.{}, feedTimestamp={}", new Object[] { 
+							classHolder.getDMOClass().getSimpleName(),
+							key, 
+							property.getName(),
+							feedTimestamps[feedPropertyIndex]});
+				} else {
 					model.getStore().invalidate(classHolder, key, propertyIndex, timestamp);
 				
-				logger.debug("Invalidated {}#{}.{}", new Object[] { 
-						classHolder.getDMOClass().getSimpleName(),
-						key, 
-						property.getName() });
+					logger.debug("Invalidated {}#{}.{}", new Object[] { 
+							classHolder.getDMOClass().getSimpleName(),
+							key, 
+							property.getName() });
+				}
 			}
 				
 			propertyIndex++;
