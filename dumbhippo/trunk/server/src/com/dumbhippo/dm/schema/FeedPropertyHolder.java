@@ -49,7 +49,7 @@ public class FeedPropertyHolder<K, T extends DMObject<K>, KI, TI extends DMObjec
 
 	@Override
 	protected PropertyType getType() {
-		return PropertyType.RESOURCE;
+		return PropertyType.FEED;
 	}
 
 	@Override
