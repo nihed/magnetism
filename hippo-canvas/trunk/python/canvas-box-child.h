@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #ifndef __CANVAS_BOX_CHILD_H__
 #define __CANVAS_BOX_CHILD_H__
 

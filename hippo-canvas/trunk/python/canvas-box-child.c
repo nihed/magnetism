@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "canvas-box-child.h"
 
 typedef struct {
@@ -113,8 +114,19 @@ _wrap_hippo_canvas_box_child__get_item(PyObject *self, void *closure)
     return pygobject_new((GObject *)ret);
 }
 
+static PyObject *
+_wrap_hippo_canvas_box_child__get_visible(PyObject *self, void *closure)
+{
+    gboolean ret;
+    
+    ret = HIPPO_CANVAS_BOX_CHILD(pygobject_get(self))->item;
+
+    return PyBool_FromLong(ret);
+}
+
 static const PyGetSetDef hippo_canvas_box_child_getsets[] = {
-    { "item", (getter)_wrap_hippo_canvas_box_child__get_item, (setter)0 },
+    { "item",    (getter)_wrap_hippo_canvas_box_child__get_item, (setter)0 },
+    { "visible", (getter)_wrap_hippo_canvas_box_child__get_visible, (setter)0 },    
     { NULL, (getter)0, (setter)0 },
 };
 
