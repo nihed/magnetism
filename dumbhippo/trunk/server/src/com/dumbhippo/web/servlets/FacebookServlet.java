@@ -294,14 +294,20 @@ public class FacebookServlet extends AbstractServlet {
 				xml.closeElement();
 				xml.closeElement();
 			}
-			
-			xml.appendTextNode("span", "Updates to the information below will be reflected in ",
-					           "style", "margin-left:15px;");
-		    xml.appendTextNode("a", "your Mugshot account", "href",
-				               "http://dogfood.mugshot.org/person?who=" + user.getId(), "target", "_blank");
-		    xml.append(".");
+
+			if (user.getAccount().getHasAcceptedTerms()) {
+			    xml.appendTextNode("span", "Updates to the information below will be reflected in ",
+				    	           "style", "margin-left:15px;");
+		        xml.appendTextNode("a", "your Mugshot account", "href",
+				                   "http://dogfood.mugshot.org/person?who=" + user.getId(), "target", "_blank");
+		        xml.append(".");
+		    } else {
+			    xml.appendTextNode("span", "Fill in information for the accounts you have and want to display updates from, then press 'Submit Info!'",
+		    	                   "style", "margin-left:15px;");		    	
+		    }
 		    ExternalAccountCategory currentCategory = null;
-		    xml.openElement("fb:editor", "action", "", "width", "300", "labelwidth", "120");
+		    xml.openElement("div", "style", "position:relative;width:250px;float:left;");
+		    xml.openElement("fb:editor", "action", "", "width", "250", "labelwidth", "90");
 		    for (ExternalAccountView externalAccount : getSupportedAccounts(user)) {
 		    	if (currentCategory == null || !currentCategory.equals(externalAccount.getExternalAccountType().getCategory())) {
 				    currentCategory = externalAccount.getExternalAccountType().getCategory();
@@ -353,16 +359,30 @@ public class FacebookServlet extends AbstractServlet {
 		    xml.appendEmptyNode("fb:editor-cancel");
 		    xml.closeElement(); // fb:editor-buttonset
 		    xml.closeElement(); // fb:editor 		    
+		    xml.closeElement(); // div with the form
+		    
+		    if (!user.getAccount().getHasAcceptedTerms()) {
+		    	xml.openElement("div", "style", "position:relative;width:100px;float:right;color:#666666;font-weight:bold;");
+			    xml.append("Do you already have a Mugshot account? Don't fill in this stuff, just verify" +
+			    		   " your Mugshot account by following this link.");
+			    xml.openElement("form", "action", "http://dogfood.mugshot.org/facebook-add", "target", "_blank", "method", "GET");
+			    xml.appendEmptyNode("input", "type", "submit", "value", "Verify My Mugshot Account", "style", "margin-bottom:30px;");
+			    xml.closeElement();		
+			    xml.append("Want to create a Mugshot account? It's free and easy and helps you see all your friends' activities in one place, share links, and read feeds in a social setting.");
+	            xml.openElement("form", "action", "http://dogfood.mugshot.org/facebook-signin", "target", "_blank", "method", "GET");
+	            xml.appendEmptyNode("input", "type", "submit", "value", "Create My Mugshot Account", "style", "margin-bottom:30px;");
+	            xml.closeElement();	
+		    	xml.closeElement();
+		    }
 		} else {
-		    xml.append("You need to be ");
-		    xml.appendTextNode("a", "logged in to Mugshot", "href",
-				    "http://dogfood.mugshot.org/account", "target", "_blank");
-	    	xml.append(" to be able to verify your Mugshot account.");
-		    xml.openElement("form", "action", "http://dogfood.mugshot.org/facebook-add", "target", "_blank", "method", "GET");
-		    xml.appendEmptyNode("input", "type", "submit", "value", "Verify My Mugshot Account");
-		    xml.closeElement();
-		}
-		
+			if (errorMessage == null)
+				errorMessage = "We could not get an existing or create a new user.";
+			logger.error("Displaying a really bad error message on Facebook: {}", errorMessage);
+			xml.openElement("fb:error");
+			xml.appendTextNode("fb:message", "Getting Mugshot Information Failed");			
+			xml.append(errorMessage);
+			xml.closeElement();
+		}		
 		response.setContentType("text/html");
 		response.getOutputStream().write(xml.getBytes());
 		

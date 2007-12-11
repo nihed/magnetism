@@ -269,20 +269,30 @@
       <url-pattern>/facebook-verify-from-home</url-pattern>
    </servlet-mapping>
 
-    <servlet>
+   <servlet>
       <servlet-name>FacebookAddServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.servlets.FacebookAddServlet</servlet-class>
-    </servlet> 
+   </servlet> 
    
    <servlet-mapping>
       <servlet-name>FacebookAddServlet</servlet-name>
       <url-pattern>/facebook-add</url-pattern>
    </servlet-mapping>   
 
-    <servlet>
+   <servlet>
+      <servlet-name>FacebookSigninServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.FacebookSigninServlet</servlet-class>
+   </servlet> 
+   
+   <servlet-mapping>
+      <servlet-name>FacebookSigninServlet</servlet-name>
+      <url-pattern>/facebook-signin</url-pattern>
+   </servlet-mapping>   
+
+   <servlet>
       <servlet-name>FacebookServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.servlets.FacebookServlet</servlet-class>
-    </servlet> 
+   </servlet> 
    
    <servlet-mapping>
       <servlet-name>FacebookServlet</servlet-name>

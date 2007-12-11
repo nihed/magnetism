@@ -468,6 +468,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 					DataService.currentSessionRW().changed(UserDMO.class, owner.getGuid(), "aim");
 				else if (res instanceof XmppResource)
 					DataService.currentSessionRW().changed(UserDMO.class, owner.getGuid(), "xmpp");
+				else if (res instanceof FacebookResource)
+					DataService.currentSessionRW().changed(UserDMO.class, owner.getGuid(), "facebook");
 				
 				// People may have listed resource as a contact
 				if (!oldContacters.isEmpty()) {
