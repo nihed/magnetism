@@ -78,8 +78,19 @@ public class Block extends EmbeddedGuidPersistable {
 		return new Date(timestamp);
 	}
 
+	// The database only stores timestamps at second-resolution. Things become more reliable
+	// if we round here, rather than rounding when storing into the database. (If we switch
+	// to a database with high-resolution timestamps, this should be removed.)
+	private long roundTimestamp(long timestamp) {
+		// any thing < 0 is just a flag value
+		if (timestamp < 0)
+			return -1000;
+		else
+			return (timestamp / 1000) * 1000;
+	}
+	
 	public void setTimestamp(Date timestamp) {
-		this.timestamp = timestamp.getTime();
+		this.timestamp = roundTimestamp(timestamp.getTime());
 	}	
 	
 	@Transient
@@ -88,7 +99,7 @@ public class Block extends EmbeddedGuidPersistable {
 	}
 	
 	public void setTimestampAsLong(long timestamp) {
-		this.timestamp = timestamp;
+		this.timestamp = roundTimestamp(timestamp);
 	}
 	
 	@Transient
