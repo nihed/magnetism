@@ -11,6 +11,7 @@ import bigboard.slideout
 import bigboard.profile
 import bigboard.search as search
 import bigboard.libbig as libbig
+import bigboard.scroll_ribbon as scroll_ribbon
 
 import peoplebrowser
 from peoplewidgets import PersonItem, ProfileItem
@@ -23,8 +24,12 @@ class PeopleStock(AbstractMugshotStock):
 
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
         
+        self.__scroll_box = scroll_ribbon.VerticalScrollArea()
+        self.__scroll_box.set_increment(50)
+        self.__box.append(self.__scroll_box, hippo.PACK_EXPAND)
+
         self.__person_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
-        self.__box.append(self.__person_box)
+        self.__scroll_box.add(self.__person_box)
 
         self.__person_items = {}
 
