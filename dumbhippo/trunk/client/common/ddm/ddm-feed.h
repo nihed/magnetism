@@ -32,6 +32,8 @@ typedef struct _DDMFeedIter  DDMFeedIter;
 struct _DDMFeedIter {
     gpointer data1;
     gpointer data2;
+    gpointer data3;
+    gint data4;
 };
 
 #define DDM_TYPE_FEED              (ddm_feed_get_type ())
@@ -54,11 +56,13 @@ void ddm_feed_remove_item (DDMFeed         *feed,
                            DDMDataResource *resource);
 void ddm_feed_clear       (DDMFeed         *feed);
 
-void     ddm_feed_iter_init (DDMFeedIter      *iter,
-                             DDMFeed          *feed);
-gboolean ddm_feed_iter_next (DDMFeedIter      *iter,
-                             DDMDataResource **resource,
-                             gint64           *timestamp);
+void     ddm_feed_iter_init   (DDMFeedIter      *iter,
+                               DDMFeed          *feed);
+gboolean ddm_feed_iter_next   (DDMFeedIter      *iter,
+                               DDMDataResource **resource,
+                               gint64           *timestamp);
+/* Remove the last item retrieved by ddm_feed_iter_next() */
+void     ddm_feed_iter_remove (DDMFeedIter      *iter);
 
 G_END_DECLS
 

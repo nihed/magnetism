@@ -164,7 +164,6 @@ ddm_feed_add_item (DDMFeed         *feed,
         
         g_hash_table_insert(feed->nodes_by_resource, resource, node);
         feed_insert_sorted(feed, node, timestamp);
-        
         g_signal_emit(feed, signals[ITEM_ADDED], 0, resource, timestamp);
     }
 }
@@ -185,11 +184,11 @@ ddm_feed_remove_item (DDMFeed         *feed,
         return;
     }
 
-    feed->items = g_list_remove_link(feed->items, node);
-    g_hash_table_remove(feed->nodes_by_resource, resource);
-    
     item = node->data;
 
+    feed->items = g_list_delete_link(feed->items, node);
+    g_hash_table_remove(feed->nodes_by_resource, resource);
+    
     g_signal_emit(feed, signals[ITEM_REMOVED], 0, item->resource);
     ddm_data_resource_unref(item->resource);
     g_slice_free(DDMFeedItem, item);
@@ -252,10 +251,45 @@ ddm_feed_iter_next (DDMFeedIter      *iter,
         return FALSE;
 
     item = real->node->data;
-    *resource = item->resource;
-    *timestamp = item->timestamp;
+    if (resource != NULL)
+        *resource = item->resource;
+    if (timestamp != NULL)
+        *timestamp = item->timestamp;
 
     real->node = real->node->next;
 
     return TRUE;
+}
+
+void
+ddm_feed_iter_remove (DDMFeedIter *iter)
+{
+    DDMFeedIterReal *real = (DDMFeedIterReal *)iter;
+    DDMFeedItem *item;
+    GList *node;
+
+    if (real->node) {
+        if (real->node->prev == NULL) {
+            g_warning("ddm_feed_iter_remove() called before fetching any items");
+            return;
+        }
+
+        node = real->node->prev;
+    } else {
+        if (real->feed->items == NULL) {
+            g_warning("ddm_feed_iter_remove() on an empty liste");
+            return;
+        }
+
+        node = g_list_last(real->feed->items);
+    }
+
+    item = node->data;
+
+    g_hash_table_remove(real->feed->nodes_by_resource, item->resource);
+    real->feed->items = g_list_delete_link(real->feed->items, node);
+    
+    g_signal_emit(real->feed, signals[ITEM_REMOVED], 0, item->resource);
+    ddm_data_resource_unref(item->resource);
+    g_slice_free(DDMFeedItem, item);
 }
