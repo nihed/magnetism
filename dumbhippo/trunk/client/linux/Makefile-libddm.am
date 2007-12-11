@@ -15,17 +15,17 @@ libddm_1_la_LIBADD = 			\
 
 libddm_1_la_LDFLAGS= -export-symbols-regex "^[^_].*" -version-info $(DDM_LT_CURRENT):$(DDM_LT_REVISION):$(DDM_LT_AGE) -no-undefined
 
-#COMMON_MARSHAL_LIST=$(COMMONSRCDIR)/ddm/ddm-common-marshal.list
-#COMMON_MARSHAL_HEADER=$(MARSHAL_DIR)/ddm-common-marshal.h
-#COMMON_MARSHAL_BODY=$(MARSHAL_DIR)/ddm-common-marshal.c
+DDM_MARSHAL_LIST=$(COMMONSRCDIR)/ddm/ddm-marshal.list
+DDM_MARSHAL_HEADER=$(MARSHAL_DIR)/ddm-marshal.h
+DDM_MARSHAL_BODY=$(MARSHAL_DIR)/ddm-marshal.c
 
-#$(COMMON_MARSHAL_HEADER): $(COMMON_MARSHAL_LIST)
-#	mkdir $(MARSHAL_DIR) || true
-#	$(GLIB_GENMARSHAL) --prefix=ddm_common_marshal $(COMMON_MARSHAL_LIST) --header > $(COMMON_MARSHAL_HEADER)
+$(DDM_MARSHAL_HEADER): $(DDM_MARSHAL_LIST)
+	mkdir $(MARSHAL_DIR) 2>/dev/null || true
+	$(GLIB_GENMARSHAL) --prefix=ddm_marshal $(DDM_MARSHAL_LIST) --header > $(DDM_MARSHAL_HEADER)
 
-#$(COMMON_MARSHAL_BODY): $(COMMON_MARSHAL_LIST)
-#	mkdir $(MARSHAL_DIR) || true
-#	(echo "#include \"ddm-common-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=ddm_common_marshal $(COMMON_MARSHAL_LIST) --body) > $(COMMON_MARSHAL_BODY)
+$(DDM_MARSHAL_BODY): $(DDM_MARSHAL_LIST)
+	mkdir $(MARSHAL_DIR) 2>/dev/null || true
+	(echo "#include \"ddm-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=ddm_marshal $(DDM_MARSHAL_LIST) --body) > $(DDM_MARSHAL_BODY)
 
 libddmincludedir = $(includedir)/ddm-1/ddm
 nodist_libddminclude_HEADERS=				\
@@ -38,6 +38,7 @@ nodist_libddminclude_HEADERS=				\
 	$(COMMONSRCDIR)/ddm/ddm-data-model-dbus.h	\
 	$(COMMONSRCDIR)/ddm/ddm-data-resource.h		\
 	$(COMMONSRCDIR)/ddm/ddm-data-query.h		\
+	$(COMMONSRCDIR)/ddm/ddm-feed.h			\
 	$(COMMONSRCDIR)/ddm/ddm-notification-set.h	\
 	$(COMMONSRCDIR)/ddm/ddm-qname.h
 
@@ -55,6 +56,7 @@ LIBDDM_SOURCEFILES =						\
 	$(COMMONSRCDIR)/ddm/ddm-data-resource-internal.h	\
 	$(COMMONSRCDIR)/ddm/ddm-data-query.c			\
 	$(COMMONSRCDIR)/ddm/ddm-data-query-internal.h		\
+	$(COMMONSRCDIR)/ddm/ddm-feed.c				\
 	$(COMMONSRCDIR)/ddm/ddm-local-client.c			\
 	$(COMMONSRCDIR)/ddm/ddm-local-client.h			\
 	$(COMMONSRCDIR)/ddm/ddm-notification-set.c		\
@@ -67,9 +69,9 @@ LIBDDM_SOURCEFILES =						\
 	$(COMMONSRCDIR)/ddm/hippo-dbus-helper.h			\
 	$(COMMONSRCDIR)/ddm/hippo-dbus-helper-rename.h
 
-LIBDDM_BUILT_SOURCEFILES =			\
-	$(COMMON_MARSHAL_HEADER)		\
-	$(COMMON_MARSHAL_BODY)
+LIBDDM_BUILT_SOURCEFILES =		\
+	$(DDM_MARSHAL_HEADER)		\
+	$(DDM_MARSHAL_BODY)
 
 MAINTAINERCLEANFILES +=	$(LIBDDM_BUILT_SOURCEFILES)
 BUILT_SOURCES += $(LIBDDM_BUILT_SOURCEFILES)
@@ -103,6 +105,7 @@ nodist_libddm_test_la_SOURCES =				\
 ddm_tests =					\
 	test-condition-parser			\
 	test-condition-reduce			\
+	test-feed-object			\
 	test-multipart-fetch			\
 	test-notification			\
 	test-rules				\
@@ -128,6 +131,11 @@ test_condition_reduce_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATI
 test_condition_reduce_LDADD=libddm-1.la libddm-test.la
 
 nodist_test_condition_reduce_SOURCES=$(COMMONSRCDIR)/ddm/test-condition-reduce.c
+
+test_feed_object_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
+test_feed_object_LDADD=libddm-1.la libddm-test.la
+
+nodist_test_feed_object_SOURCES=$(COMMONSRCDIR)/ddm/test-feed-object.c
 
 test_ddm_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS)
 test_ddm_LDADD=libddm-1.la
@@ -168,5 +176,6 @@ libddm-dist-hook:
 	-mkdir $(distdir)/common-dist
 	-mkdir $(distdir)/common-dist/ddm
 	cp $(LIBDDM_SOURCEFILES) $(nodist_libddminclude_HEADERS) $(nodist_test_ddm_SOURCES) $(distdir)/common-dist/ddm
-#	mkdir $(distdir)/common-dist/ddm/generated
-#	cp $(COMMONSRCDIR)/ddm/ddm-common-marshal.list $(distdir)/common-dist/ddm
+	mkdir $(distdir)/common-dist/ddm/generated
+	cp $(COMMONSRCDIR)/ddm/ddm-marshal.list $(distdir)/common-dist/ddm
+
