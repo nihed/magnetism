@@ -17,7 +17,6 @@ class ScrollRibbonLayout(gobject.GObject,hippo.CanvasLayout):
         gobject.GObject.__init__(self)
         self.__box = None
 
-        self.__content_height = 0
         self.__offset = 0
 
         self.viewport = gtk.gdk.Rectangle(0, 0, 0, 0)
@@ -27,10 +26,10 @@ class ScrollRibbonLayout(gobject.GObject,hippo.CanvasLayout):
         self.__box.emit_request_changed()
 
     def __on_up_clicked(self, button):
-        self.scroll_by(self.__box.increment)
+        self.scroll_by(max(self.viewport.height - 5, self.__box.increment))
 
     def __on_down_clicked(self, button):
-        self.scroll_by(0 - self.__box.increment)
+        self.scroll_by(0 - max(self.viewport.height - 5, self.__box.increment))
 
     def add(self, child):
         if self.__box == None:
@@ -101,7 +100,7 @@ class ScrollRibbonLayout(gobject.GObject,hippo.CanvasLayout):
 
         MIN_CONTENT_HEIGHT = 5
 
-        self.__content_height = 0
+        content_height = 0
         for box_child in self.__box.get_layout_children():
 
             #_logger.debug("Height requesting child " + str(box_child))
@@ -110,9 +109,9 @@ class ScrollRibbonLayout(gobject.GObject,hippo.CanvasLayout):
                 continue
 
             (child_min, child_natural) = box_child.get_height_request(for_width)
-            self.__content_height = self.__content_height + child_natural
+            content_height = content_height + child_natural
 
-        return (up_min + down_min + MIN_CONTENT_HEIGHT, up_natural + down_natural + max(child_natural,MIN_CONTENT_HEIGHT))
+        return (up_min + down_min + MIN_CONTENT_HEIGHT, up_natural + down_natural + max(content_height,MIN_CONTENT_HEIGHT))
 
     def do_allocate(self, x, y, width, height, requested_width, requested_height, origin_changed):
         (up_min, up_natural) = self.__get_height_request(self.__up_button, width)
