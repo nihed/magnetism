@@ -26,6 +26,7 @@ import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.FacebookResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -87,6 +88,8 @@ public class PersonViewerBean implements PersonViewer {
 					resources.add(r);
 				else if (r instanceof XmppResource)
 					resources.add(r);
+				else if (r instanceof FacebookResource)
+					resources.add(r);
 				// we filter out any non-"primary" resources for now
 			}
 		} else if (person instanceof Contact) {
@@ -98,6 +101,8 @@ public class PersonViewerBean implements PersonViewer {
 					resources.add(r);
 				else if (r instanceof XmppResource)
 					resources.add(r);
+				else if (r instanceof FacebookResource)
+					resources.add(r);				
 				// we filter out any non-"primary" resources for now
 			}
 		} else {

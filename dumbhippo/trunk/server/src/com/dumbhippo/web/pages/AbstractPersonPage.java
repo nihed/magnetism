@@ -135,13 +135,14 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		this.viewedUser = user;
 		this.viewedUserId = user.getId();
 		
-		if (identitySpider.getAccountDisabled(user)) {
-				this.disabled = true;
-                                if (!getSignin().getViewpoint().isOfUser(user)) {
-                                    this.viewedUser = null;
-                                    this.viewedUserId = null;
-                                }
-		}
+		if (identitySpider.getAccountDisabled(user))
+			this.disabled = true;
+		
+		if ((identitySpider.getAccountDisabled(user) || !user.getAccount().getHasAcceptedTerms()) &&
+		    !getSignin().getViewpoint().isOfUser(user)) {
+                this.viewedUser = null;
+                this.viewedUserId = null;
+        }
 		
 		logger.debug("viewing person: {} disabled = {}", this.viewedUser, disabled);
 	}
