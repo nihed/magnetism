@@ -81,6 +81,17 @@ public class UserBlockData extends DBUnique {
 		this.block = block;
 	}	
 	
+	// The database only stores timestamps at second-resolution. Things become more reliable
+	// if we round here, rather than rounding when storing into the database. (If we switch
+	// to a database with high-resolution timestamps, this should be removed.)
+	private long roundTimestamp(long timestamp) {
+		// any thing < 0 is just a flag value
+		if (timestamp < 0)
+			return -1000;
+		else
+			return (timestamp / 1000) * 1000;
+	}
+	
 	@Column(nullable=true)
 	public Date getClickedTimestamp() {
 		return clickedTimestamp >= 0 ? new Date(clickedTimestamp) : null;
@@ -92,11 +103,11 @@ public class UserBlockData extends DBUnique {
 	}
 	
 	public void setClickedTimestamp(Date clickedTimestamp) {
-		this.clickedTimestamp = clickedTimestamp != null ? clickedTimestamp.getTime() : -1;
+		this.clickedTimestamp = roundTimestamp(clickedTimestamp != null ? clickedTimestamp.getTime() : -1);
 	}
 	
 	public void setClickedTimestampAsLong(long clickedTimestamp) {
-		this.clickedTimestamp = clickedTimestamp;
+		this.clickedTimestamp = roundTimestamp(clickedTimestamp);
 	}
 	
 	@Transient
@@ -124,11 +135,11 @@ public class UserBlockData extends DBUnique {
 	}
 	
 	public void setIgnoredTimestamp(Date ignoredTimestamp) {
-		this.ignoredTimestamp = ignoredTimestamp != null ? ignoredTimestamp.getTime() : -1;
+		this.ignoredTimestamp = roundTimestamp(ignoredTimestamp != null ? ignoredTimestamp.getTime() : -1);
 	}
 	
 	public void setIgnoredTimestampAsLong(long ignoredTimestamp) {
-		this.ignoredTimestamp = ignoredTimestamp;
+		this.ignoredTimestamp = roundTimestamp(ignoredTimestamp);
 	}	
 
 	@Column(nullable=false)
@@ -151,11 +162,11 @@ public class UserBlockData extends DBUnique {
 	}
 	
 	public void setParticipatedTimestamp(Date participatedTimestamp) {
-		this.participatedTimestamp = participatedTimestamp != null ? participatedTimestamp.getTime() : -1;
+		this.participatedTimestamp = roundTimestamp(participatedTimestamp != null ? participatedTimestamp.getTime() : -1);
 	}
 	
 	public void setParticipatedTimestampAsLong(long participatedTimestamp) {
-		this.participatedTimestamp = participatedTimestamp;
+		this.participatedTimestamp = roundTimestamp(participatedTimestamp);
 	}
 	
 	@Transient
@@ -174,11 +185,11 @@ public class UserBlockData extends DBUnique {
 	}
 	
 	public void setStackTimestamp(Date stackTimestamp) {
-		this.stackTimestamp = stackTimestamp.getTime();
+		this.stackTimestamp = roundTimestamp(stackTimestamp.getTime());
 	}
 	
 	public void setStackTimestampAsLong(long stackTimestamp) {
-		this.stackTimestamp = stackTimestamp;
+		this.stackTimestamp = roundTimestamp(stackTimestamp);
 	}
 
 	@Column(nullable = false)
