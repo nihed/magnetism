@@ -168,6 +168,17 @@ _wrap_HippoCanvasItem__do_get_height_request(PyObject *cls, PyObject *args, PyOb
     return Py_BuildValue("(ii)", min_height, natural_height);
 }
 %%
+override hippo_canvas_box_get_background_area noargs
+static PyObject *
+_wrap_hippo_canvas_box_get_background_area(PyGObject *self)
+{
+    HippoRectangle *rect = g_new(HippoRectangle, 1);
+    
+    hippo_canvas_box_get_background_area(HIPPO_CANVAS_BOX(self->obj), rect);
+
+    return pyg_boxed_new(HIPPO_TYPE_RECTANGLE, rect, TRUE, TRUE);
+}
+%%
 override hippo_canvas_box_insert_sorted kwargs
 static int
 marshal_canvas_box_insert_sorted(HippoCanvasItem *a, HippoCanvasItem *b, void *data)
