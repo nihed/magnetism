@@ -147,8 +147,8 @@ public interface IdentitySpider {
 	 * they own it.
 	 * 
 	 * @param email the possibly-owned email address
-	 * @return the owning person, or null if none
-	 * @throws NotFoundException 
+	 * @return the owning person, or null if no one owns the resource
+	 * @throws NotFoundException if the resource is not found
 	 */
 	public User lookupUserByEmail(Viewpoint viewpoint, String email) throws NotFoundException;
 

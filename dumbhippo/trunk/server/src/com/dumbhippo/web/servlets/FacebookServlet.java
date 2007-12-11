@@ -102,24 +102,31 @@ public class FacebookServlet extends AbstractServlet {
 	            String sessionKey = facebookParams.get(FacebookParam.SESSION_KEY.toString()).toString();
 	            String facebookUserId = facebookParams.get(FacebookParam.USER.toString()).toString(); 
 	        	IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-	        	try {
+	            FacebookTracker facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
+
+	            try {
 	        	    user = identitySpider.lookupUserByFacebookUserId(SystemViewpoint.getInstance(), facebookUserId);
-    	            FacebookTracker facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
     	            try {
     	                if (user != null) {
 		    	            userViewpoint = new UserViewpoint(user, Site.MUGSHOT);
 		    	        	// TODO: can change this into updateExistingFacebookAccount
 		    	            facebookTracker.updateOrCreateFacebookAccount(userViewpoint, sessionKey, facebookUserId, true);		    	            
-			            } else {
-		    			    // need to create a new user based on the Facebook user id
-			        	    user = facebookTracker.createNewUserWithFacebookAccount(sessionKey, facebookUserId, true);
 			            }
     	            } catch (FacebookSystemException e) {
                         errorMessage = e.getMessage();		
     	            }
 		        } catch (NotFoundException e) {
-		        	// nothing to do
-		        	// TODO: check in which case NotFoundException is thrown as opposed to the user being null
+		        	// this means we did not have a resource for this Facebook user id in the system
+		        	// nothing to do here, but we will try to create a user with this resource below     	
+		        }
+		        
+		        if (user == null) {
+		        	try {
+		                // need to create a new user based on the Facebook user id
+        	            user = facebookTracker.createNewUserWithFacebookAccount(sessionKey, facebookUserId, true);
+		        	} catch (FacebookSystemException e) {
+                        errorMessage = e.getMessage();		
+    	            }
 		        }
 	        }
 		}

@@ -111,22 +111,24 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	public User lookupUserByEmail(Viewpoint viewpoint, String email) throws NotFoundException {
 		EmailResource res = lookupEmail(email);
+		// lookupEmail will normally throw a NotFoundException if the resource is not found, 
+		// so it's not clear in what situation res will be null
 		if (res == null)
-			return null;
+			throw new NotFoundException("Resource was null");
 		return lookupUserByResource(viewpoint, res);
 	}
 
 	public User lookupUserByAim(Viewpoint viewpoint, String aim) throws NotFoundException {
 		AimResource res = lookupAim(aim);
 		if (res == null)
-			return null;
+			throw new NotFoundException("Resource was null");
 		return lookupUserByResource(viewpoint, res);
 	}
 
 	public User lookupUserByFacebookUserId(Viewpoint viewpoint, String facebookUserId) throws NotFoundException {
 		FacebookResource res = lookupFacebook(facebookUserId);
 		if (res == null)
-			return null;
+			throw new NotFoundException("Resource was null");
 		return lookupUserByResource(viewpoint, res);
 	}
 	
