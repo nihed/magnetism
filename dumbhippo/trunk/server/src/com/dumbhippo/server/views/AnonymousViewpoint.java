@@ -7,6 +7,11 @@ import com.dumbhippo.Site;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.BlockType.BlockVisibility;
+import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.dm.BlockDMOKey;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.PostDMO;
 
 /**
  * AnonymousViewpoint represents a anonymous public view onto
@@ -68,8 +73,24 @@ public class AnonymousViewpoint extends Viewpoint {
 		return false;
 	}	
 	
+
+	@Override
+	public boolean canSeeBlock(BlockDMOKey blockKey) {
+		return blockKey.getType().getBlockVisibility() == BlockVisibility.PUBLIC;
+	}
+	
 	@Override
 	public Site getSite() {
 		return site;
+	}
+
+	@Override
+	public boolean canSeePost(Guid postId) {
+		try {
+			DMSession session = DataService.getModel().currentSession();
+			return (Boolean)session.getRawProperty(PostDMO.class, postId, "public");
+		} catch (NotFoundException e) {
+			return false;
+		}
 	}
 }

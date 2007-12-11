@@ -4,11 +4,15 @@ import java.util.Set;
 
 import com.dumbhippo.Site;
 import com.dumbhippo.dm.DMSession;
+import com.dumbhippo.dm.store.StoreKey;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.dm.BlockDMO;
+import com.dumbhippo.server.dm.BlockDMOKey;
 import com.dumbhippo.server.dm.ContactDMO;
+import com.dumbhippo.server.dm.PostDMO;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -122,5 +126,53 @@ public class UserViewpoint extends Viewpoint {
 		} catch (NotFoundException e) {
 			return false;
 		}	
+	}
+	
+	@Override
+	public boolean canSeeBlock(BlockDMOKey blockKey) {
+		try {
+			switch (blockKey.getType().getBlockVisibility()) {
+			case PUBLIC:
+				return true;
+			case OWNER:
+				Guid ownerGuid = (Guid)session.getRawProperty(BlockDMO.class, blockKey, "owner");
+				return viewerId.equals(ownerGuid);
+			case DELEGATE:
+				StoreKey<?,?> delegateKey = (StoreKey<?,?>)session.getRawProperty(BlockDMO.class, blockKey, "visibilityDelegate");
+				return delegateKey.isVisible(this);
+			case NOBODY:
+				return false;
+			}
+		} catch (NotFoundException e) {
+			return false;
+		}
+		
+		return false;
+	}
+
+	@Override
+	public boolean canSeePost(Guid postId) {
+		try {
+			boolean isPublic = (Boolean)session.getRawProperty(PostDMO.class, postId, "public");
+			if (isPublic)
+				return true;
+			//  This check is a little too restrictive, in that it doesn't handle
+			//
+			// A) posts sent to private groups before the viewer joined the group
+			// B) posts sent to a resource when someone later claims the resource, since we don't
+			//    invalidate the cached expandedRecipients, which are users, resource
+			//
+			// B) is especially problematical, but is probably best handled by adding the
+			// invalidation, rather than trying to cache resources (that is, find all posts
+			// where the newly claimed resource is an expandedRecipient, and then invalidate
+			// their expandedRecipients)
+			
+			@SuppressWarnings("unchecked")
+			Set<Guid> expandedRecipients = (Set<Guid>)session.getRawProperty(PostDMO.class, postId, "expandedRecipients");
+			return expandedRecipients.contains(viewerId);
+			
+		} catch (NotFoundException e) {
+			return false;
+		}
 	}
 }

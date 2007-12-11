@@ -32,6 +32,7 @@ import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.ThreadUtils.DaemonRunnable;
+import com.dumbhippo.dm.ReadWriteSession;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.BlockEvent;
 import com.dumbhippo.live.LiveEventListener;
@@ -88,6 +89,8 @@ import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.blocks.RedditBlockHandler;
 import com.dumbhippo.server.blocks.TwitterPersonBlockHandler;
 import com.dumbhippo.server.blocks.YouTubeBlockHandler;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.GroupMugshotView;
 import com.dumbhippo.server.views.GroupView;
@@ -421,12 +424,16 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 					UserBlockData data = new UserBlockData(participant, block, true, reason);
 					em.persist(data);
 				}
+				
+				DataService.currentSessionRW().feedChanged(UserDMO.class, participantId, "stack", block.getTimestampAsLong());
 			}
 		});
 	}
 	
 	// Don't call directly, RetryException is added in the wrapper for readability
 	private void updateUserBlockDatasInternal(Block block, Set<User> desiredUsers, Guid participantId, StackReason reason) {
+		ReadWriteSession session = DataService.getModel().currentSessionRW();
+
 		int addCount;
 		int removeCount;
 		
@@ -473,6 +480,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				em.persist(data);
 				addCount += 1;
 			}
+			
+			session.feedChanged(UserDMO.class, u.getGuid(), "stack", block.getTimestampAsLong());
 		}
 		// the rest of "existing" is users who no longer are in the desired set
 		for (User u : existing.keySet()) {
@@ -723,6 +732,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// after commit, so we can do retries when demand-creating {User,Group}BlockData.
 		TxUtils.runInTransactionOnCommit(new TxRunnable() {
 			public void run() throws RetryException {
+				DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
+				
 				Block attached = em.find(Block.class, block.getId());
 				if (updateAllUserBlockDatas) {
 				    updateUserBlockDatas(attached, (participant != null ? participant.getGuid() : null), reason);
@@ -988,18 +999,27 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			}
 			sb.append(")");
 		}
-		
-		/* Inclusion clause */
-		sb.append(" AND (block.inclusion = ");
-		sb.append(StackInclusion.IN_ALL_STACKS.ordinal());
-		
-		if (viewpoint instanceof UserViewpoint) {
-			sb.append(" OR (block.data1 = :viewpointGuid AND block.inclusion = " + StackInclusion.ONLY_WHEN_VIEWING_SELF.ordinal() + ")");
-			sb.append(" OR (block.data1 != :viewpointGuid AND block.inclusion = " + StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS.ordinal() + ")");
-		} else {
-			sb.append(" OR block.inclusion = " + StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS.ordinal());
+
+		// It's not absolutely clear what SystemViewpoint should return, since the system
+		// is neither "the user themself" or "someone else". We don't currently use
+		// StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS and 
+		// StackInclusion.ONLY_WHEN_VIEWED_BY_SELF is just an optimization of the visibility
+		// rules, so we make SystemViewpoint return everything. If we used
+		// StackInclusion.ONLY_WHEN_VIEWED_BY_SELF, then this could cause duplicate blocks
+		//
+		if (!(viewpoint instanceof SystemViewpoint)) {
+			/* Inclusion clause */
+			sb.append(" AND (block.inclusion = ");
+			sb.append(StackInclusion.IN_ALL_STACKS.ordinal());
+			
+			if (viewpoint instanceof UserViewpoint) {
+				sb.append(" OR (block.data1 = :viewpointGuid AND block.inclusion = " + StackInclusion.ONLY_WHEN_VIEWING_SELF.ordinal() + ")");
+				sb.append(" OR (block.data1 != :viewpointGuid AND block.inclusion = " + StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS.ordinal() + ")");
+			} else {
+				sb.append(" OR block.inclusion = " + StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS.ordinal());
+			}
+			sb.append(")");
 		}
-		sb.append(")");
 		
 		/* Ordering clause */
 		
@@ -1029,6 +1049,11 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return TypeUtils.castList(UserBlockData.class, q.getResultList());		
 	}
 
+	// Note the off-by-one difference betweeb minTimestamp and lastTimestamp
+	public List<UserBlockData> getStackBlocks(User user, int start, int count, long minTimestamp) {
+		return getBlocks(SystemViewpoint.getInstance(), user, minTimestamp - 1, start, count, null, false);
+	}
+	
 	private interface BlockSource<T> {
 		List<Pair<Block, T>> get(int start, int count);
 		BlockView prepareView(Viewpoint viewpoint, Block block, T t) throws BlockNotVisibleException;
@@ -2025,7 +2050,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			// facebook external accounts, because not including the user was only implemented them, 
 			// but not music or blog updates)
 			UserBlockData ubd = new UserBlockData(user, block, block.getTimestamp().getTime());
-			em.persist(ubd);						
+			em.persist(ubd);
 		}
 	}
 	

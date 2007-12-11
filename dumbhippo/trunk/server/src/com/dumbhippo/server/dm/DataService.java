@@ -82,13 +82,28 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 		String baseUrl = config.getBaseUrl(Site.NONE);
 		
 		model = new DataModel(baseUrl, new DMSessionMapJTA(), emf, new InjectionLookup(), this, Viewpoint.class, SystemViewpoint.getInstance());
-		
+
+		// Keep this list ALPHABETIZED at each level of of the inheritance hierarchy
+		// (It respects the inheritance hierarchy because base classes must be added
+		// before subclasses)
 		model.addDMClass(ApplicationDMO.class);
+		
+		model.addDMClass(BlockDMO.class);
+		model.addDMClass(ThumbnailsBlockDMO.class);
+		model.addDMClass(PicasaPersonBlockDMO.class);
+		model.addDMClass(PostBlockDMO.class);
+		
+		model.addDMClass(ContactDMO.class);
 		model.addDMClass(DesktopSettingDMO.class);
 		model.addDMClass(ExternalAccountDMO.class);
+		model.addDMClass(PostDMO.class);
+		
+		model.addDMClass(ThumbnailDMO.class);
+		model.addDMClass(PicasaAlbumThumbnailDMO.class);
+		model.addDMClass(YouTubeThumbnailDMO.class);
+		
 		model.addDMClass(TrackDMO.class);
 		model.addDMClass(UserDMO.class);
-		model.addDMClass(ContactDMO.class);
 		
 		model.completeDMClasses();
 		

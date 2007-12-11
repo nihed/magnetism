@@ -81,6 +81,7 @@ public interface Stacker {
 	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, boolean participantOnly);
 
 	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, long lastTimestamp, boolean participantOnly);
+	public List<UserBlockData> getStackBlocks(User user, int start, int max, long minTimestamp);
 	
 	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, long lastTimestamp, 
 			              String filter, boolean participantOnly);	
