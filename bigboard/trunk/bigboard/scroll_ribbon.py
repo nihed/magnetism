@@ -26,10 +26,10 @@ class ScrollRibbonLayout(gobject.GObject,hippo.CanvasLayout):
         self.__box.emit_request_changed()
 
     def __on_up_clicked(self, button):
-        self.scroll_by(5)
+        self.scroll_by(self.__box.increment)
 
     def __on_down_clicked(self, button):
-        self.scroll_by(-5)
+        self.scroll_by(0 - self.__box.increment)
 
     def add(self, child):
         if self.__box == None:
@@ -44,8 +44,18 @@ class ScrollRibbonLayout(gobject.GObject,hippo.CanvasLayout):
     def do_set_box(self, box):
         self.__box = box
 
-        self.__up_button = hippo.CanvasButton(text="Up")
-        self.__down_button = hippo.CanvasButton(text="Down")
+        self.__up_button = hippo.CanvasButton()
+        self.__down_button = hippo.CanvasButton()
+
+        up_widget = self.__up_button.get_property('widget')
+        up_widget.add(gtk.Arrow(gtk.ARROW_UP, gtk.SHADOW_NONE))
+        up_widget.get_child().show()
+        up_widget.set_relief(gtk.RELIEF_NONE)
+
+        down_widget = self.__down_button.get_property('widget')
+        down_widget.add(gtk.Arrow(gtk.ARROW_DOWN, gtk.SHADOW_NONE))
+        down_widget.get_child().show()
+        down_widget.set_relief(gtk.RELIEF_NONE)
 
         self.__box.append(self.__up_button)
         self.__box.append(self.__down_button, flags=hippo.PACK_END)
@@ -131,9 +141,10 @@ class ScrollRibbonLayout(gobject.GObject,hippo.CanvasLayout):
         self.viewport.width = width
         self.viewport.height = height - down_natural - up_natural
 
-        # min offset has bottom of child aligned with bottom of viewport, 
-        # but if there's too much space for child, child is always top-aligned
-        min_offset = self.viewport.height - child_natural
+        # min offset has bottom of child aligned with bottom of
+        # viewport, excluding the bottom button, but if there's too
+        # much space for child, child is always top-aligned
+        min_offset = self.viewport.height - child_natural + down_natural
         if min_offset > 0:
             min_offset = 0
             
@@ -151,6 +162,11 @@ class ScrollRibbonLayout(gobject.GObject,hippo.CanvasLayout):
             self.viewport.height = self.viewport.height + up_natural
             self.viewport.y = self.viewport.y - up_natural
             up_natural = 0
+
+        ## nuke the bottom button if needed
+        if self.__offset == min_offset:
+            self.viewport.height = self.viewport.height + down_natural
+            down_natural = 0
 
         ## now allocate
         box_child = self.__box.find_box_child(self.__up_button)
@@ -186,8 +202,13 @@ class VerticalScrollArea(hippo.CanvasBox):
         self.__layout = ScrollRibbonLayout()
         self.set_layout(self.__layout)
 
+        self.increment = 5
+
     def add(self, child):
         self.__layout.add(child)
+
+    def set_increment(self, increment):
+        self.increment = increment
 
     def do_paint_children(self, cr, damaged_box):
         for box_child in self.get_layout_children():
