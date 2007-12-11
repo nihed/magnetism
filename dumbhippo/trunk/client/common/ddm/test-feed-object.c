@@ -153,6 +153,21 @@ main(int argc, char **argv)
 
     ddm_feed_iter_init(&iter, feed);
     g_assert(!ddm_feed_iter_next(&iter, &resource, &timestamp));
+
+    /* Removing items with an iter */
+    
+    ddm_feed_add_item(feed, user1, TS1);
+    ddm_feed_add_item(feed, user2, TS2);
+    
+    ddm_feed_iter_init(&iter, feed);
+    g_assert(ddm_feed_iter_next(&iter, &resource, &timestamp));
+    ddm_feed_iter_remove(&iter);
+    g_assert(ddm_feed_iter_next(&iter, &resource, &timestamp));
+    ddm_feed_iter_remove(&iter);
+    g_assert(!ddm_feed_iter_next(&iter, &resource, &timestamp));
+
+    ddm_feed_iter_init(&iter, feed);
+    g_assert(!ddm_feed_iter_next(&iter, &resource, &timestamp));
     
     return 0;
 }
