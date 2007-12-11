@@ -107,21 +107,24 @@ static const PyMethodDef _PyHippoCanvasBoxChild_methods[] = {
 static PyObject *
 _wrap_hippo_canvas_box_child__get_item(PyObject *self, void *closure)
 {
-    HippoCanvasItem *ret;
+    PyHippoCanvasBoxChild *py_child;
 
-    ret = HIPPO_CANVAS_BOX_CHILD(pygobject_get(self))->item;
+    py_child = (PyHippoCanvasBoxChild*) self;
+    g_assert(py_child->child);
+    
     /* pygobject_new handles NULL checking */
-    return pygobject_new((GObject *)ret);
+    return pygobject_new((GObject*) py_child->child->item);
 }
 
 static PyObject *
 _wrap_hippo_canvas_box_child__get_visible(PyObject *self, void *closure)
 {
-    gboolean ret;
-    
-    ret = HIPPO_CANVAS_BOX_CHILD(pygobject_get(self))->item;
+   PyHippoCanvasBoxChild *py_child;
 
-    return PyBool_FromLong(ret);
+    py_child = (PyHippoCanvasBoxChild*) self;
+    g_assert(py_child->child);
+ 
+    return PyBool_FromLong(py_child->child->visible);
 }
 
 static const PyGetSetDef hippo_canvas_box_child_getsets[] = {
@@ -191,7 +194,7 @@ PyObject *
 py_hippo_canvas_box_child_new(HippoCanvasBoxChild *child)
 {
     PyHippoCanvasBoxChild *obj = hippo_canvas_box_child_get_qdata(child, pyhippo_proxy_quark());
-    if (obj  == NULL) {
+    if (obj == NULL) {
 	obj = PyObject_NEW(PyHippoCanvasBoxChild, &PyHippoCanvasBoxChild_Type);
 
 	obj->child = child;
