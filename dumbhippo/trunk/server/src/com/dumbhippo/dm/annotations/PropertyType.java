@@ -8,7 +8,7 @@ public enum PropertyType {
 	FLOAT('f'),
 	STRING('s'),
 	RESOURCE('r'),
-	FEED('f'),
+	FEED('F'),
 	URL('u'),
 	STORE_KEY('s'); // This one would not normally be sent over the wire; it's useful internally
 	
