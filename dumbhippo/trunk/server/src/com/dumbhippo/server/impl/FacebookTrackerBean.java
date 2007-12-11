@@ -209,8 +209,15 @@ public class FacebookTrackerBean implements FacebookTracker {
 	}
 	
 	public User createNewUserWithFacebookAccount(String sessionKey, String facebookUserId, boolean applicationEnabled) throws FacebookSystemException {
-		FacebookResource res = new FacebookResource(facebookUserId);
-		em.persist(res);
+		// the resource might have already existed, but not claimed by anyone
+		FacebookResource res;
+		try {
+		    res = identitySpider.lookupFacebook(facebookUserId);
+		    assert(res.getAccountClaim() == null);
+		} catch (NotFoundException e) {
+			res = new FacebookResource(facebookUserId);
+			em.persist(res);
+		}
 		Account account = accounts.createAccountFromResource(res);
 		User user = account.getOwner();
 		updateOrCreateFacebookAccount(new UserViewpoint(user, Site.MUGSHOT), sessionKey, facebookUserId, applicationEnabled);
