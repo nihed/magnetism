@@ -2,6 +2,7 @@ import copy
 import logging
 
 import gobject
+import gtk
 import hippo
 import layout_utils
 
@@ -111,7 +112,7 @@ class ScrollRibbonLayout(gobject.GObject,hippo.CanvasLayout):
             (child_min, child_natural) = box_child.get_height_request(for_width)
             self.__content_height = self.__content_height + child_natural
 
-        return (up_min + down_min + MIN_CONTENT_HEIGHT, up_natural + down_natural + MIN_CONTENT_HEIGHT)
+        return (up_min + down_min + MIN_CONTENT_HEIGHT, up_natural + down_natural + max(child_natural,MIN_CONTENT_HEIGHT))
 
     def do_allocate(self, x, y, width, height, requested_width, requested_height, origin_changed):
         (up_min, up_natural) = self.__get_height_request(self.__up_button, width)
@@ -207,8 +208,8 @@ class VerticalScrollArea(hippo.CanvasBox):
     def add(self, child):
         self.__layout.add(child)
 
-    def set_increment(self, increment):
-        self.increment = increment
+    def set_increment(self, inc):
+        self.increment = inc
 
     def do_paint_children(self, cr, damaged_box):
         for box_child in self.get_layout_children():
