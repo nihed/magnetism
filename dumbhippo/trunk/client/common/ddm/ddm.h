@@ -20,6 +20,7 @@ G_BEGIN_DECLS
 #include <ddm/ddm-data-model-backend.h>
 #include <ddm/ddm-data-query.h>
 #include <ddm/ddm-data-resource.h>
+#include <ddm/ddm-feed.h>
 #include <ddm/ddm-notification-set.h>
 #include <ddm/ddm-qname.h>
 
