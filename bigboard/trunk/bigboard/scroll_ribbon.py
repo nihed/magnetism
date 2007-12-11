@@ -26,10 +26,10 @@ class ScrollRibbonLayout(gobject.GObject,hippo.CanvasLayout):
         self.__box.emit_request_changed()
 
     def __on_up_clicked(self, button):
-        self.scroll_by(-5)
+        self.scroll_by(5)
 
     def __on_down_clicked(self, button):
-        self.scroll_by(5)
+        self.scroll_by(-5)
 
     def add(self, child):
         if self.__box == None:
@@ -107,6 +107,52 @@ class ScrollRibbonLayout(gobject.GObject,hippo.CanvasLayout):
         (up_min, up_natural) = self.__get_height_request(self.__up_button, width)
         (down_min, down_natural) = self.__get_height_request(self.__down_button, width)
 
+        (child_min, child_natural) = (0, 0)
+
+        contents_child = None
+        ## this only works with a single child right now, despite the loop.
+        ## add a box, put stuff in the box, if you want two children.
+        for box_child in self.__box.get_layout_children():
+
+            #_logger.debug("Allocating child " + str(box_child))
+            
+            if box_child.is_contents:
+                (child_min, child_natural) = box_child.get_height_request(width)
+                contents_child = box_child
+
+        ## decide if we need any buttons
+        if child_natural <= height:
+            # no buttons
+            up_natural = 0
+            down_natural = 0
+
+        self.viewport.x = 0
+        self.viewport.y = up_natural
+        self.viewport.width = width
+        self.viewport.height = height - down_natural - up_natural
+
+        # min offset has bottom of child aligned with bottom of viewport, 
+        # but if there's too much space for child, child is always top-aligned
+        min_offset = self.viewport.height - child_natural
+        if min_offset > 0:
+            min_offset = 0
+            
+        # max offset has top of child aligned with top of viewport
+        max_offset = 0
+            
+        offset = max(self.__offset, min_offset)
+        offset = min(offset, max_offset)
+
+        ## save this new offset
+        self.__offset = offset
+
+        ## nuke the top button if needed
+        if self.__offset == 0:
+            self.viewport.height = self.viewport.height + up_natural
+            self.viewport.y = self.viewport.y - up_natural
+            up_natural = 0
+
+        ## now allocate
         box_child = self.__box.find_box_child(self.__up_button)
         box_child.x = 0
         box_child.y = 0
@@ -117,41 +163,13 @@ class ScrollRibbonLayout(gobject.GObject,hippo.CanvasLayout):
         box_child.y = height - down_natural
         box_child.allocate(box_child.x, box_child.y, width, down_natural, origin_changed)
 
-        self.viewport.x = 0
-        self.viewport.y = up_natural
-        self.viewport.width = width
-        self.viewport.height = height - down_natural - up_natural
-
-        ## this only works with a single child right now, despite the loop.
-        ## add a box, put stuff in the box, if you want two children.
-        for box_child in self.__box.get_layout_children():
-
-            #_logger.debug("Allocating child " + str(box_child))
-            
-            if box_child.is_contents:
-                (child_min, child_natural) = box_child.get_height_request(width)
-                
-                # min offset has bottom of child aligned with bottom of viewport, 
-                # but if there's too much space for child, child is always top-aligned
-                min_offset = self.viewport.height - child_natural
-                if min_offset > 0:
-                    min_offset = 0
-
-                # max offset has top of child aligned with top of viewport
-                max_offset = 0
-
-                offset = max(self.__offset, min_offset)
-                offset = min(offset, max_offset)
-
-                ## save this new offset
-                self.__offset = offset
-
-                # we always allocate the child its full height; then we 
-                # don't draw the parts outside the viewport
-                box_child.x = 0
-                box_child.y = self.viewport.y + self.__offset
-                box_child.allocate(box_child.x, box_child.y, width,
-                                   child_natural, origin_changed)
+        if contents_child:
+            # we always allocate the child its full height; then we 
+            # don't draw the parts outside the viewport
+            contents_child.x = 0
+            contents_child.y = self.viewport.y + self.__offset
+            contents_child.allocate(contents_child.x, contents_child.y, width,
+                                    child_natural, origin_changed)
 
 
 gobject.type_register(ScrollRibbonLayout)
