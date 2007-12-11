@@ -181,6 +181,8 @@ condition_value_reduce(DDMConditionValue *value,
  * 4) Missing values are treated like scalar false
  * 5) Comparing a scalar boolean value with a list coerces the list to a
  *    boolean value of "is the list empty"
+ * 6) a resource is considered equal to a string if the string is equal
+ *    to the resource's resource_id
  *
  * In tabular form:
  *
@@ -193,7 +195,9 @@ condition_value_reduce(DDMConditionValue *value,
  *  [...]                                                (3)
  *
  * (1) A scalar is equal to another scalar, iff they have equal values
+ *     and see (6) above
  * (2) A scalar is equal to a list iff it is present in the list
+ *     and see (6) above
  * (3) False with a warning
  */
     
@@ -221,14 +225,23 @@ compare_properties_1_1(DDMDataValue *left,
         else
             return FALSE;
     case DDM_DATA_STRING:
+        if (right->type == DDM_DATA_STRING || right->type == DDM_DATA_URL)
+            return strcmp(left->u.string, right->u.string) == 0;
+        else if (right->type == DDM_DATA_RESOURCE)
+            return strcmp(left->u.string, ddm_data_resource_get_resource_id(right->u.resource)) == 0;
+        else
+            return FALSE;
     case DDM_DATA_URL:
-        if (right->type != DDM_DATA_STRING)
+        if (right->type != DDM_DATA_STRING && right->type != DDM_DATA_URL)
             return FALSE;
         return strcmp(left->u.string, right->u.string) == 0;
     case DDM_DATA_RESOURCE:
-        if (right->type != DDM_DATA_STRING)
+        if (right->type == DDM_DATA_RESOURCE)
+            return left->u.resource == right->u.resource;
+        else if (right->type == DDM_DATA_STRING || right->type == DDM_DATA_URL)
+            return strcmp(ddm_data_resource_get_resource_id(left->u.resource), right->u.string) == 0;
+        else
             return FALSE;
-        return left->u.resource == right->u.resource;
     case DDM_DATA_FLOAT:
     case DDM_DATA_NONE:
     case DDM_DATA_LIST:
@@ -342,13 +355,19 @@ compare_property_literal_1_1(DDMDataValue      *property,
         return property->u.long_ == literal->u.integer;
     case DDM_DATA_STRING:
     case DDM_DATA_URL:
-        if (literal->type != DDM_CONDITION_VALUE_STRING)
+        if (literal->type == DDM_CONDITION_VALUE_STRING)
+            return strcmp(property->u.string, literal->u.string) == 0;
+        else if (literal->type == DDM_CONDITION_VALUE_RESOURCE)
+            return strcmp(property->u.string, ddm_data_resource_get_resource_id(literal->u.resource)) == 0;
+        else
             return FALSE;
-        return strcmp(property->u.string, literal->u.string) == 0;
     case DDM_DATA_RESOURCE:
-        if (literal->type != DDM_CONDITION_VALUE_RESOURCE)
+        if (literal->type == DDM_CONDITION_VALUE_RESOURCE)
+            return property->u.resource == literal->u.resource;
+        else if (literal->type == DDM_CONDITION_VALUE_STRING)
+            return strcmp(ddm_data_resource_get_resource_id(property->u.resource), literal->u.string) == 0;
+        else
             return FALSE;
-        return property->u.resource == literal->u.resource; 
     case DDM_DATA_FLOAT:
         return FALSE;
     case DDM_DATA_NONE:
@@ -431,13 +450,19 @@ compare_literals(DDMConditionValue *left,
             return FALSE;
         return left->u.integer == right->u.integer;
     case DDM_CONDITION_VALUE_STRING:
-        if (right->type != DDM_CONDITION_VALUE_STRING)
+        if (right->type == DDM_CONDITION_VALUE_STRING)
+            return strcmp(left->u.string, right->u.string) == 0;
+        else if (right->type == DDM_CONDITION_VALUE_RESOURCE)
+            return strcmp(left->u.string, ddm_data_resource_get_resource_id(right->u.resource)) == 0;
+        else
             return FALSE;
-        return strcmp(left->u.string, right->u.string) == 0;
     case DDM_CONDITION_VALUE_RESOURCE:
-        if (right->type != DDM_CONDITION_VALUE_RESOURCE)
+        if (right->type == DDM_CONDITION_VALUE_RESOURCE)
+            return left->u.resource == right->u.resource;
+        else if (right->type == DDM_CONDITION_VALUE_STRING)
+            return strcmp(ddm_data_resource_get_resource_id(left->u.resource), right->u.string) == 0;
+        else
             return FALSE;
-        return left->u.resource == right->u.resource;
     case DDM_CONDITION_VALUE_SOURCE:
     case DDM_CONDITION_VALUE_TARGET:
     case DDM_CONDITION_VALUE_SOURCE_PROPERTY:
