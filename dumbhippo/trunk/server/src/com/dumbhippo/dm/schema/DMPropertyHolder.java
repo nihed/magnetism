@@ -235,7 +235,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		return annotation.defaultMaxFetch();
 	}
 	
-	protected PropertyInfo getPropertyInfo() {
+	protected PropertyInfo<K,T,TI> getPropertyInfo() {
 		return propertyInfo;
 	}
 	
