@@ -25,7 +25,6 @@ G_BEGIN_DECLS
  * most recent item.
  */
 
-typedef struct _DDMFeed      DDMFeed;
 typedef struct _DDMFeedClass DDMFeedClass;
 typedef struct _DDMFeedIter  DDMFeedIter;
 

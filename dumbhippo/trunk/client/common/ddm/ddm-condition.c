@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+#include "ddm-feed.h"
 #include "ddm-rule.h"
 
 static DDMCondition true_condition = {
@@ -244,6 +245,7 @@ compare_properties_1_1(DDMDataValue *left,
             return FALSE;
     case DDM_DATA_FLOAT:
     case DDM_DATA_NONE:
+    case DDM_DATA_FEED:
     case DDM_DATA_LIST:
         break;
     }
@@ -259,15 +261,33 @@ compare_properties_n_1(DDMDataValue *list_value,
     GSList *l;
     gboolean empty;
 
-    g_return_val_if_fail(list_value->type == DDM_DATA_NONE || DDM_DATA_IS_LIST(list_value->type), FALSE);
-    
-    empty = list_value->type == DDM_DATA_NONE || list_value->u.list == NULL;
+    if (DDM_DATA_IS_LIST(list_value->type))
+        empty = list_value->u.list == NULL;
+    else if (list_value->type == DDM_DATA_FEED)
+        empty = list_value->u.feed == NULL || ddm_feed_is_empty(list_value->u.feed);
+    else if (list_value->type == DDM_DATA_NONE)
+        empty = TRUE;
+    else {
+        g_assert_not_reached();
+        empty = TRUE;
+    }
 
     if (scalar_value->type == DDM_DATA_BOOLEAN)
         return !empty == !!scalar_value->type;
     else if (empty)
         return FALSE;
-    else {
+    else if (list_value->type == DDM_DATA_FEED) {
+        DDMFeedIter iter;
+        DDMDataValue element;
+
+        element.type = DDM_DATA_RESOURCE;
+
+        ddm_feed_iter_init(&iter, list_value->u.feed);
+        while (ddm_feed_iter_next(&iter, &element.u.resource, NULL)) {
+            if (compare_properties_1_1(&element, scalar_value))
+                return TRUE;
+        }
+    } else {
         for (l = list_value->u.list; l; l = l->next) {
             DDMDataValue element;
             
@@ -322,7 +342,7 @@ compare_properties(DDMDataProperty *left,
         g_warning("Refusing to compare properties of type float");
         return FALSE;
     }
-    
+
     if (left_cardinality == DDM_DATA_CARDINALITY_N &&
         right_cardinality == DDM_DATA_CARDINALITY_N) {
         g_warning("Don't know how compare two list-valued properties");
@@ -370,8 +390,8 @@ compare_property_literal_1_1(DDMDataValue      *property,
             return FALSE;
     case DDM_DATA_FLOAT:
         return FALSE;
+    case DDM_DATA_FEED:
     case DDM_DATA_NONE:
-        break;
     case DDM_DATA_LIST:
         break;
     }
@@ -387,14 +407,32 @@ compare_property_literal_n_1(DDMDataValue      *list_value,
     GSList *l;
     gboolean empty;
 
-    g_return_val_if_fail(list_value->type == DDM_DATA_NONE || DDM_DATA_IS_LIST(list_value->type), FALSE);
+    if (DDM_DATA_IS_LIST(list_value->type))
+        empty = list_value->u.list == NULL;
+    else if (list_value->type == DDM_DATA_FEED)
+        empty = list_value->u.feed == NULL || ddm_feed_is_empty(list_value->u.feed);
+    else if (list_value->type == DDM_DATA_NONE)
+        empty = TRUE;
+    else {
+        g_assert_not_reached();
+        empty = TRUE;
+    }
 
-    empty = list_value->type == DDM_DATA_NONE || list_value->u.list == NULL;
-    
     if (literal->type == DDM_CONDITION_VALUE_BOOLEAN) {
         return !empty == !!literal->u.boolean;
     } else if (empty) {
         return FALSE;
+    } else if (list_value->type == DDM_DATA_FEED) {
+        DDMFeedIter iter;
+        DDMDataValue element;
+
+        element.type = DDM_DATA_RESOURCE;
+
+        ddm_feed_iter_init(&iter, list_value->u.feed);
+        while (ddm_feed_iter_next(&iter, &element.u.resource, NULL)) {
+            if (compare_property_literal_1_1(&element, literal))
+                return TRUE;
+        }
     } else {
         for (l = list_value->u.list; l; l = l->next) {
             DDMDataValue element;

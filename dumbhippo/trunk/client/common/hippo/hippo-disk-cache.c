@@ -21,7 +21,7 @@
 
 /* Database schema version, used to know when to run upgrade steps
  */
-#define SCHEMA_VERSION 0
+#define SCHEMA_VERSION 1
 
 static void      hippo_disk_cache_init                (HippoDiskCache       *model);
 static void      hippo_disk_cache_class_init          (HippoDiskCacheClass  *klass);
@@ -349,6 +349,23 @@ close_database(HippoDiskCache *cache)
     }
 }
 
+static gboolean
+run_migration_0_1(HippoDiskCache *cache)
+{
+    int i;
+    
+    static const char *statements[] = {
+        "ALTER TABLE Property ADD COLUMN itemTimestamp INTEGER DEFAULT -1"
+    };
+    
+    for (i = 0; statements[i]; i++) {
+        if (!execute_sql(cache, statements[i], NULL))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 static void
 open_database(HippoDiskCache *cache)
 {
@@ -366,7 +383,7 @@ open_database(HippoDiskCache *cache)
         "   DELETE FROM QueryResult WHERE query = old.id; "
         "  END ",
         "CREATE TABLE IF NOT EXISTS QueryResult (query INTEGER, resourceId TEXT)",
-        "CREATE TABLE IF NOT EXISTS Property (session INTEGER, timestamp INTEGER, resourceId TEXT, propertyId TEXT, type TEXT, defaultChildren TEXT, value)",
+        "CREATE TABLE IF NOT EXISTS Property (session INTEGER, timestamp INTEGER, resourceId TEXT, propertyId TEXT, type TEXT, defaultChildren TEXT, value, itemTimestamp INTEGER DEFAULT -1)",
         NULL
     };
 
@@ -404,13 +421,9 @@ open_database(HippoDiskCache *cache)
             g_warning("Database version %d newer than we understand", old_version);
             goto error;
         } else if (old_version < SCHEMA_VERSION) {
-            /* Migration steps go here
-             * 
-             * if (old_version < 1)
-             *     run_migration_01(cache);
-             * if (old_version < 2)
-             *     run_migration_12(cache);
-              */
+            if (old_version < 1)
+                if (!run_migration_0_1(cache))
+                    goto error;
         }
     }
 
@@ -508,6 +521,9 @@ make_type_string(DDMDataProperty *property)
         break;
     case DDM_DATA_URL:
         *(p++) = 'u';
+        break;
+    case DDM_DATA_FEED:
+        *(p++) = 'F';
         break;
     case DDM_DATA_NONE:
         *(p++) = 's'; /* Used only for empty lists, tpye doesn't matter */
@@ -618,6 +634,7 @@ save_property_value_to_disk(HippoDiskCache    *cache,
         value_string = value->u.string;
         break;
     case DDM_DATA_LIST:
+    case DDM_DATA_FEED:
     case DDM_DATA_NONE:
         g_assert_not_reached();
         break;
@@ -661,12 +678,39 @@ save_property_value_to_disk(HippoDiskCache    *cache,
                     NULL);
 }
 
+static void
+save_feed_property_value_to_disk(HippoDiskCache    *cache,
+                                 const char        *resource_id,
+                                 const char        *property_id,
+                                 DDMDataProperty   *property,
+                                 DDMDataResource   *resource,
+                                 gint64             item_timestamp,
+                                 const char        *type,
+                                 const char        *default_children,
+                                 gint64             timestamp)
+{
+    execute_sql(cache,
+                "INSERT INTO Property (session, timestamp, resourceId, propertyId, type, defaultChildren,  value, itemTimestamp)"
+                " VALUES (:session, :timestamp, :resourceId, :propertyId, :type, :defaultChildren, :value, :itemTimestamp)",
+                "l:session", cache->db_session,
+                "l:timestamp", timestamp,
+                "s:resourceId", resource_id,
+                "s:propertyId", property_id,
+                "s:type", type,
+                "s:defaultChildren", default_children,
+                "s:value", ddm_data_resource_get_resource_id(resource),
+                "l:itemTimestamp", item_timestamp,
+                NULL);
+}
+
 typedef struct {
     DDMDataResource *resource;
     DDMQName *property_qname;
     DDMDataCardinality cardinality;
     gboolean default_include;
     char *default_children;
+    gboolean is_feed;
+    gint64 item_timestamp;
 } QueuedResourceProperty;
 
 typedef struct {
@@ -684,8 +728,10 @@ static QueuedResourceProperty *
 queued_resource_property_new(DDMDataResource   *resource,
                              DDMQName          *property_qname,
                              DDMDataCardinality cardinality,
-                             gboolean             default_include,
-                             const char          *default_children)
+                             gboolean           default_include,
+                             const char        *default_children,
+                             gboolean           is_feed,
+                             gint64             item_timestamp)
 {
     QueuedResourceProperty *queued_property = g_new0(QueuedResourceProperty, 1);
 
@@ -694,6 +740,8 @@ queued_resource_property_new(DDMDataResource   *resource,
     queued_property->cardinality = cardinality;
     queued_property->default_include = default_include;
     queued_property->default_children = g_strdup(default_children);
+    queued_property->is_feed = is_feed;
+    queued_property->item_timestamp = item_timestamp;
 
     return queued_property;
 }
@@ -783,7 +831,7 @@ load_resource_from_db(HippoDiskCache   *cache,
     DDMQName *class_id_qname = ddm_qname_get("http://mugshot.org/p/system", "classId");
 
     stmt  = prepare_sql(cache,
-                        "SELECT propertyId, type,defaultChildren, value FROM Property WHERE resourceId = :resourceId",
+                        "SELECT propertyId, type ,defaultChildren, value, itemTimestamp FROM Property WHERE resourceId = :resourceId",
                         "s:resourceId", resource_id,
                         NULL);
     
@@ -810,6 +858,8 @@ load_resource_from_db(HippoDiskCache   *cache,
         gint64 value_long = 0;
         gboolean is_string = FALSE;
         char *value_string = NULL;
+
+        gint64 item_timestamp;
 
         int sql_result;
 
@@ -843,6 +893,7 @@ load_resource_from_db(HippoDiskCache   *cache,
             break;
         case DDM_DATA_STRING:
         case DDM_DATA_RESOURCE:
+        case DDM_DATA_FEED:
         case DDM_DATA_URL:
             is_string = TRUE;
             break;
@@ -863,36 +914,53 @@ load_resource_from_db(HippoDiskCache   *cache,
             g_assert_not_reached();
         }
 
+        item_timestamp = sqlite3_column_int64(stmt, 4);
+
         if (cardinality == DDM_DATA_CARDINALITY_N) {
             if (g_hash_table_lookup(seen_properties, property_qname) == NULL) {
                 g_hash_table_insert(seen_properties, property_qname, property_qname);
-                
-                ddm_data_resource_update_property(resource, property_qname,
-                                                     DDM_DATA_UPDATE_CLEAR,
-                                                     cardinality,
-                                                     default_include, default_children,
-                                                     NULL);
+
+                if (type == DDM_DATA_FEED)
+                    ddm_data_resource_update_feed_property(resource, property_qname,
+                                                           DDM_DATA_UPDATE_CLEAR,
+                                                           default_include, default_children,
+                                                           NULL, -1);
+                else
+                    ddm_data_resource_update_property(resource, property_qname,
+                                                      DDM_DATA_UPDATE_CLEAR,
+                                                      cardinality,
+                                                      default_include, default_children,
+                                                      NULL);
             }
         }
 
-        if (type == DDM_DATA_RESOURCE) {
+        if (type == DDM_DATA_RESOURCE || type == DDM_DATA_FEED) {
             DDMDataResource *referenced_resource;
             referenced_resource = resource_tracking_lookup_resource(tracking, value_string);
             if (referenced_resource) {
-                DDMDataValue value;
-
-                value.type = type;
-                value.u.resource = referenced_resource;
-                
-                ddm_data_resource_update_property(resource, property_qname,
-                                                     (cardinality == DDM_DATA_CARDINALITY_N) ? DDM_DATA_UPDATE_ADD : DDM_DATA_UPDATE_REPLACE,
-                                                     cardinality,
-                                                     default_include, default_children,
-                                                     &value);
+                if (type == DDM_DATA_FEED) {
+                    ddm_data_resource_update_feed_property(resource, property_qname,
+                                                           (cardinality == DDM_DATA_CARDINALITY_N) ? DDM_DATA_UPDATE_ADD : DDM_DATA_UPDATE_REPLACE,
+                                                           default_include, default_children,
+                                                           referenced_resource, item_timestamp);
+                } else {
+                    DDMDataValue value;
+                    
+                    value.type = type;
+                    value.u.resource = referenced_resource;
+                    
+                    ddm_data_resource_update_property(resource, property_qname,
+                                                      (cardinality == DDM_DATA_CARDINALITY_N) ? DDM_DATA_UPDATE_ADD : DDM_DATA_UPDATE_REPLACE,
+                                                      cardinality,
+                                                      default_include, default_children,
+                                                      &value);
+                }
             } else {
                 QueuedResourceProperty *property = queued_resource_property_new(resource, property_qname,
                                                                                 cardinality,
-                                                                                default_include, default_children);
+                                                                                default_include, default_children,
+                                                                                type == DDM_DATA_FEED,
+                                                                                item_timestamp);
                 resource_tracking_queue_resource(tracking, value_string, property);
             }
         } else {
@@ -919,6 +987,7 @@ load_resource_from_db(HippoDiskCache   *cache,
                 break;
             case DDM_DATA_RESOURCE:
             case DDM_DATA_LIST:
+            case DDM_DATA_FEED:
             case DDM_DATA_NONE:
                 g_assert_not_reached();
                 break;
@@ -1001,16 +1070,25 @@ resource_tracking_resolve(ResourceTracking *tracking,
 
                 for (properties = queued->properties; properties; properties = properties->next) {
                     QueuedResourceProperty *queued_property = properties->data;
-                    DDMDataValue value;
-                    
-                    value.type = DDM_DATA_RESOURCE;
-                    value.u.resource = resource;
 
-                    ddm_data_resource_update_property(queued_property->resource, queued_property->property_qname,
-                                                         (queued_property->cardinality == DDM_DATA_CARDINALITY_N) ? DDM_DATA_UPDATE_ADD : DDM_DATA_UPDATE_REPLACE,
-                                                         queued_property->cardinality,
-                                                         queued_property->default_include, queued_property->default_children,
-                                                         &value);
+                    if (queued_property->is_feed) {
+                        ddm_data_resource_update_feed_property(queued_property->resource, queued_property->property_qname,
+                                                               DDM_DATA_UPDATE_ADD,
+                                                               queued_property->default_include, queued_property->default_children,
+                                                               resource, queued_property->item_timestamp);
+                        
+                    } else {
+                        DDMDataValue value;
+                        
+                        value.type = DDM_DATA_RESOURCE;
+                        value.u.resource = resource;
+                        
+                        ddm_data_resource_update_property(queued_property->resource, queued_property->property_qname,
+                                                          (queued_property->cardinality == DDM_DATA_CARDINALITY_N) ? DDM_DATA_UPDATE_ADD : DDM_DATA_UPDATE_REPLACE,
+                                                          queued_property->cardinality,
+                                                          queued_property->default_include, queued_property->default_children,
+                                                          &value);
+                    }
                 }
                     
                 g_hash_table_insert(tracking->fetched_resources, g_strdup(queued->resource_id), resource);
@@ -1215,8 +1293,22 @@ _hippo_disk_cache_save_properties_to_disk(HippoDiskCache    *cache,
             char *default_children = make_default_children_string(property);
 
             ddm_data_property_get_value(property, &value);
-            
-            if (ddm_data_property_get_cardinality(property) == DDM_DATA_CARDINALITY_N) {
+
+            if (value.type == DDM_DATA_FEED) {
+                if (value.u.feed != NULL) {
+                    DDMFeedIter iter;
+                    DDMDataResource *item_resource;
+                    gint64 item_timestamp;
+
+                    ddm_feed_iter_init(&iter, value.u.feed);
+                    while (ddm_feed_iter_next(&iter, &item_resource, &item_timestamp)) {
+                        save_feed_property_value_to_disk(cache, resource_id, property_id,
+                                                         property,
+                                                         item_resource, item_timestamp,
+                                                         type, default_children, timestamp);
+                    }
+                }
+            } else if (DDM_DATA_IS_LIST(value.type)) {
                 GSList *ll;
 
                 for (ll = value.u.list; ll; ll = ll->next) {
@@ -1227,7 +1319,7 @@ _hippo_disk_cache_save_properties_to_disk(HippoDiskCache    *cache,
                     save_property_value_to_disk(cache, resource_id, property_id,
                                                 property, &element, type, default_children, timestamp);
                 }
-            } else {
+            } else if (value.type != DDM_DATA_NONE) {
                 save_property_value_to_disk(cache, resource_id, property_id,
                                             property, &value, type, default_children, timestamp);
             }

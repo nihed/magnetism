@@ -179,6 +179,7 @@ add_property_value_to_message(DBusMessageIter    *property_array_iter,
         value_signature = "s";
         break;
     case DDM_DATA_LIST:
+    case DDM_DATA_FEED:
         break;
     }
 
@@ -240,8 +241,62 @@ add_property_value_to_message(DBusMessageIter    *property_array_iter,
         }
         break;
     case DDM_DATA_LIST:
+    case DDM_DATA_FEED:
         break;
     }
+    
+    dbus_message_iter_close_container(&property_iter, &value_iter);
+    dbus_message_iter_close_container(property_array_iter, &property_iter);
+}
+
+static void
+add_feed_property_value_to_message(DBusMessageIter    *property_array_iter,
+                                   DDMQName           *property_qname,
+                                   DDMDataUpdate       update,
+                                   DDMDataResource    *item_resource,
+                                   gint64              item_timestamp)
+{
+    DBusMessageIter property_iter;
+    DBusMessageIter value_iter;
+    DBusMessageIter item_struct_iter;
+    char update_byte;
+    char type_byte;
+    char cardinality_byte;
+    const char *value_signature = NULL;
+    const char *item_resource_id = ddm_data_resource_get_resource_id(item_resource);
+    
+    switch (update) {
+    case DDM_DATA_UPDATE_ADD:
+        update_byte = 'a';
+        break;
+    case DDM_DATA_UPDATE_REPLACE:
+        update_byte = 'r';
+        break;
+    case DDM_DATA_UPDATE_DELETE:
+        update_byte = 'd';
+        break;
+    case DDM_DATA_UPDATE_CLEAR:
+        update_byte = 'c';
+        break;
+    }
+
+    type_byte = 'F';
+    value_signature = "(sx)";
+    cardinality_byte = '*';
+    
+    dbus_message_iter_open_container(property_array_iter, DBUS_TYPE_STRUCT, NULL, &property_iter);
+    dbus_message_iter_append_basic(&property_iter, DBUS_TYPE_STRING, &property_qname->uri);
+    dbus_message_iter_append_basic(&property_iter, DBUS_TYPE_STRING, &property_qname->name);
+    dbus_message_iter_append_basic(&property_iter, DBUS_TYPE_BYTE, &update_byte);
+    dbus_message_iter_append_basic(&property_iter, DBUS_TYPE_BYTE, &type_byte);
+    dbus_message_iter_append_basic(&property_iter, DBUS_TYPE_BYTE, &cardinality_byte);
+
+    dbus_message_iter_open_container(&property_iter, DBUS_TYPE_VARIANT, value_signature, &value_iter);
+    
+    dbus_message_iter_open_container(&value_iter, DBUS_TYPE_STRUCT, NULL, &item_struct_iter);
+    dbus_message_iter_append_basic(&item_struct_iter, DBUS_TYPE_STRING, &item_resource_id);
+    dbus_message_iter_append_basic(&item_struct_iter, DBUS_TYPE_INT64, &item_timestamp);
+    dbus_message_iter_close_container(&value_iter, &item_struct_iter);
     
     dbus_message_iter_close_container(&property_iter, &value_iter);
     dbus_message_iter_close_container(property_array_iter, &property_iter);
@@ -263,11 +318,19 @@ add_property_children_to_message(HippoDBusModelClient *client,
         GSList *l;
         for (l = value.u.list; l; l = l->next)
             add_resource_to_message(client, resource_array_iter, l->data, children, TRUE, FALSE, NULL);
+    } else if (value.type == DDM_DATA_FEED && value.u.feed != NULL) {
+        DDMFeedIter feed_iter;
+        DDMDataResource *item_resource;
+
+        ddm_feed_iter_init(&feed_iter, value.u.feed);
+        while (ddm_feed_iter_next(&feed_iter, &item_resource, NULL)) {
+            add_resource_to_message(client, resource_array_iter, item_resource, children, TRUE, FALSE, NULL);
+        }
     }
 }
 
 static void
-add_property_to_message(DBusMessageIter   *property_array_iter,
+add_property_to_message(DBusMessageIter *property_array_iter,
                         DDMDataProperty *property)
 {
     DDMDataCardinality cardinality;
@@ -292,6 +355,22 @@ add_property_to_message(DBusMessageIter   *property_array_iter,
             add_property_value_to_message(property_array_iter, property_qname,
                                           l == value.u.list ? DDM_DATA_UPDATE_REPLACE : DDM_DATA_UPDATE_ADD,
                                           &element, cardinality);
+        }
+    } else if (value.type == DDM_DATA_FEED) {
+        if (value.u.feed != NULL) {
+            DDMFeedIter feed_iter;
+            DDMDataResource *item_resource;
+            gint64 item_timestamp;
+            gboolean first;
+
+            ddm_feed_iter_init(&feed_iter, value.u.feed);
+            first = TRUE;
+            while (ddm_feed_iter_next(&feed_iter, &item_resource, &item_timestamp)) {
+                add_feed_property_value_to_message(property_array_iter, property_qname,
+                                                   first ? DDM_DATA_UPDATE_REPLACE : DDM_DATA_UPDATE_ADD,
+                                                   item_resource, item_timestamp);
+                first = FALSE;
+            }
         }
     } else {
         add_property_value_to_message(property_array_iter, property_qname,
