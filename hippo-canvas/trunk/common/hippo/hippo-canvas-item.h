@@ -80,6 +80,8 @@ struct _HippoCanvasItemIface {
     HippoCanvasPointer     (* get_pointer)          (HippoCanvasItem *canvas_item,
                                                      int              x,
                                                      int              y);
+    gboolean               (* scroll_event)         (HippoCanvasItem *canvas_item,
+                                                     HippoEvent      *event);    
 };
 
 GType                 hippo_canvas_item_get_type           (void) G_GNUC_CONST;
@@ -141,6 +143,10 @@ gboolean hippo_canvas_item_emit_key_press_event      (HippoCanvasItem  *canvas_i
                                                       HippoKey          key,
                                                       gunichar          character,
                                                       guint             modifiers);
+gboolean hippo_canvas_item_emit_scroll_event         (HippoCanvasItem     *canvas_item,
+                                                      int                  x,
+                                                      int                  y,
+                                                      HippoScrollDirection direction);
 void     hippo_canvas_item_emit_activated            (HippoCanvasItem *canvas_item);
 void     hippo_canvas_item_emit_paint_needed         (HippoCanvasItem *canvas_item,
                                                       int              x,

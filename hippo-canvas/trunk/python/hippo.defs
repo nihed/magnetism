@@ -221,6 +221,7 @@
     '("button-release" "HIPPO_EVENT_BUTTON_RELEASE")
     '("motion-notify" "HIPPO_EVENT_MOTION_NOTIFY")
     '("key-press" "HIPPO_EVENT_KEY_PRESS")
+    '("scroll" "HIPPO_EVENT_SCROLL")
   )
 )
 
@@ -232,6 +233,18 @@
     '("enter" "HIPPO_MOTION_DETAIL_ENTER")
     '("leave" "HIPPO_MOTION_DETAIL_LEAVE")
     '("within" "HIPPO_MOTION_DETAIL_WITHIN")
+  )
+)
+
+(define-enum ScrollDirection
+  (in-module "Hippo")
+  (c-name "HippoScrollDirection")
+  (gtype-id "HIPPO_TYPE_SCROLL_DIRECTION")
+  (values
+    '("up" "HIPPO_SCROLL_UP")
+    '("down" "HIPPO_SCROLL_DOWN")
+    '("left" "HIPPO_SCROLL_LEFT")
+    '("right" "HIPPO_SCROLL_RIGHT")
   )
 )
 
@@ -1156,6 +1169,22 @@
 )
 
 (define-virtual button_release_event
+  (of-object "HippoCanvasItem")
+  (return-type "gboolean")
+  (parameters
+    '("HippoEvent*" "event")
+  )
+)
+
+(define-virtual scroll_event
+  (of-object "HippoCanvasItem")
+  (return-type "gboolean")
+  (parameters
+    '("HippoEvent*" "event")
+  )
+)
+
+(define-virtual motion_notify_event
   (of-object "HippoCanvasItem")
   (return-type "gboolean")
   (parameters

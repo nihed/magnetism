@@ -40,6 +40,9 @@ static gboolean  hippo_canvas_leave_notify        (GtkWidget         *widget,
             	       	                           GdkEventCrossing  *event);
 static gboolean  hippo_canvas_motion_notify       (GtkWidget         *widget,
             	       	                           GdkEventMotion    *event);
+static gboolean  hippo_canvas_scroll              (GtkWidget         *widget,
+            	       	                           GdkEventScroll    *event);
+
 
 static void  hippo_canvas_realize           (GtkWidget    *widget);
 static void  hippo_canvas_unmap             (GtkWidget    *widget);
@@ -109,6 +112,7 @@ hippo_canvas_class_init(HippoCanvasClass *klass)
     widget_class->motion_notify_event = hippo_canvas_motion_notify;
     widget_class->enter_notify_event = hippo_canvas_enter_notify;
     widget_class->leave_notify_event = hippo_canvas_leave_notify;
+    widget_class->scroll_event = hippo_canvas_scroll;    
 
     widget_class->realize = hippo_canvas_realize;
     widget_class->unmap = hippo_canvas_unmap;
@@ -315,6 +319,21 @@ hippo_canvas_motion_notify(GtkWidget         *widget,
     
     if (event->window == widget->window)
         return hippo_canvas_helper_motion_notify(canvas->helper, event);
+    else
+        return FALSE;
+}
+
+static gboolean
+hippo_canvas_scroll(GtkWidget         *widget,
+                    GdkEventScroll    *event)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(widget);
+
+    if (canvas->helper == NULL)
+        return FALSE; /* we've already been destroyed */
+    
+    if (event->window == widget->window)
+        return hippo_canvas_helper_scroll(canvas->helper, event);
     else
         return FALSE;
 }
