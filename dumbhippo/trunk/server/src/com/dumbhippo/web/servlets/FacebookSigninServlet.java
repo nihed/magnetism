@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.AccountClaim;
+import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.FacebookResource;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
@@ -76,10 +77,11 @@ public class FacebookSigninServlet extends AbstractServlet {
 			        FacebookResource res = identitySpider.lookupFacebook(facebookUserId);
 			        AccountClaim ac = res.getAccountClaim();
 			        if (ac != null) {
-			        	accounts.authorizeNewClient(ac.getOwner().getAccount(), SigninBean.computeClientIdentifier(request));
+			        	Client client = accounts.authorizeNewClient(ac.getOwner().getAccount(), SigninBean.computeClientIdentifier(request));
 			    		HttpSession sess = request.getSession(false);
 			    		if (sess != null)
 			    			sess.invalidate();
+			    		SigninBean.initializeAuthentication(request, response, client);
 			    		return redirectToNextPage(request, response, "/account", null);
 			        } else {
 		            	errorMessage = "FacebookResource for " + facebookUserId + " was not claimed by any user.";   	            	

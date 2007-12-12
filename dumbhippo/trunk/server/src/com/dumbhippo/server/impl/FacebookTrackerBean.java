@@ -141,7 +141,27 @@ public class FacebookTrackerBean implements FacebookTracker {
 				AccountClaim ac = res.getAccountClaim();
 				if (ac != null) {
 					if (!ac.getOwner().equals(viewpoint.getViewer())) {
-						throw new FacebookSystemException("Facebook account " + facebookUserId + " is claimed by someone else: " + ac.getOwner());
+						if (!ac.getOwner().getAccount().getHasAcceptedTerms()) {
+							// The only way this could happen is if we created a temporary Facebook account based on the Facebook user id,
+							// and now a user is verifying their Mugshot account from Facebook.
+							// We need to remove sentiment 'love' for the Facebook external account from it, disable it, and remove
+							// the claim of ownership on the Facebook resource, then we can add that Facebook information to the other 
+							// person's account.
+							// TODO: consider checking if the temporary account had any additional external accounts set that can be
+							// added or moved to the account that is being verified.
+							try {
+							    ExternalAccount ea = externalAccounts.lookupExternalAccount(new UserViewpoint(ac.getOwner(), Site.MUGSHOT), ac.getOwner(), ExternalAccountType.FACEBOOK);
+							    externalAccounts.setSentiment(ea, Sentiment.INDIFFERENT);
+							    ac.getOwner().getAccount().setDisabled(true);
+							    em.remove(ac);
+							    identitySpider.addVerifiedOwnershipClaim(viewpoint.getViewer(), res);
+							    externalAccount.setExtra(Long.toString(facebookAccount.getId()));		
+							} catch (NotFoundException e) {
+								throw new RuntimeException("We expected to find a Facebook external account for user " + ac.getOwner() + ", but we didn't!");
+							}
+						} else {
+						    throw new FacebookSystemException("Facebook account " + facebookUserId + " is claimed by someone else: " + ac.getOwner());
+						}
 					} else {
 						throw new RuntimeException("Facebook account " + facebookUserId + " is claimed by the user " + viewpoint.getViewer() + " whose ExternalAccount for Facebook doesn't reflect the claim");
 					}

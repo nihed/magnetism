@@ -231,7 +231,7 @@ public class PersonViewerBean implements PersonViewer {
 						"Problem in database: contact has no resources: {}",
 						contact);
 
-			// this returns only email/aim resources
+			// this returns email, AIM, XMPP, and Facebook resources
 			contactResources = getResourcesForPerson(contact);
 
 			// logger.debug("Contact has owner {} viewpoint is {}",
