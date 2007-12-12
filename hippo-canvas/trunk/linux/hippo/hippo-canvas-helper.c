@@ -625,6 +625,29 @@ hippo_canvas_helper_motion_notify(HippoCanvasHelper *helper,
     return FALSE;
 }
 
+gboolean
+hippo_canvas_helper_scroll (HippoCanvasHelper *helper,
+                            GdkEventScroll    *event)
+{
+    int window_x, window_y;    
+    
+    if (helper->root == NULL)
+        return FALSE;
+
+    get_root_item_window_coords(helper, &window_x, &window_y);
+    
+    g_assert(GDK_SCROLL_UP == HIPPO_SCROLL_UP);
+    g_assert(GDK_SCROLL_DOWN == HIPPO_SCROLL_DOWN);
+    g_assert(GDK_SCROLL_LEFT == HIPPO_SCROLL_LEFT);
+    g_assert(GDK_SCROLL_RIGHT == HIPPO_SCROLL_RIGHT);
+    
+    hippo_canvas_item_emit_scroll_event(helper->root,
+                                        event->x - window_x, event->y - window_y,
+                                        event->direction);
+    
+    return FALSE;
+}
+
 void
 hippo_canvas_helper_realize(HippoCanvasHelper *helper)
 {

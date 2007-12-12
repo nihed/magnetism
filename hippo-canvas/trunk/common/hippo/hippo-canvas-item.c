@@ -16,6 +16,7 @@ enum {
     BUTTON_PRESS_EVENT,
     BUTTON_RELEASE_EVENT,
     MOTION_NOTIFY_EVENT,
+    SCROLL_EVENT,
     KEY_PRESS_EVENT,
     ACTIVATED,
     TOOLTIP_CHANGED,
@@ -155,6 +156,21 @@ hippo_canvas_item_base_init(void *klass)
                           g_signal_accumulator_true_handled, NULL,
                           hippo_canvas_marshal_BOOLEAN__BOXED,
                           G_TYPE_BOOLEAN, 1, HIPPO_TYPE_EVENT);
+
+        /**
+         * HippoCanvasItem::scroll-event
+         *
+         * Signal emitted when the mouse wheel or other mechanism requests scrolling.
+         */                
+        signals[SCROLL_EVENT] =
+            g_signal_new ("scroll-event",
+                          HIPPO_TYPE_CANVAS_ITEM,
+                          G_SIGNAL_RUN_LAST,
+                          G_STRUCT_OFFSET(HippoCanvasItemIface, scroll_event),
+                          g_signal_accumulator_true_handled, NULL,
+                          hippo_canvas_marshal_BOOLEAN__BOXED,
+                          G_TYPE_BOOLEAN, 1, HIPPO_TYPE_EVENT);
+        
         /**
          * HippoCanvasItem::key-press-event
          *
@@ -481,6 +497,26 @@ hippo_canvas_item_emit_motion_notify_event (HippoCanvasItem  *canvas_item,
     return result;
 }
 
+gboolean
+hippo_canvas_item_emit_scroll_event (HippoCanvasItem     *canvas_item,
+                                     int                  x,
+                                     int                  y,
+                                     HippoScrollDirection direction)
+{
+    HippoEvent event;
+    gboolean result;
+    
+    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), FALSE);
+
+    event.type = HIPPO_EVENT_SCROLL;
+    event.x = x;
+    event.y = y;    
+    event.u.scroll.direction = direction;
+    
+    result = hippo_canvas_item_process_event(canvas_item, &event, 0, 0);
+
+    return result;
+}
 
 gboolean
 hippo_canvas_item_emit_key_press_event (HippoCanvasItem  *canvas_item,
@@ -596,6 +632,9 @@ hippo_canvas_item_process_event(HippoCanvasItem *canvas_item,
         break;
     case HIPPO_EVENT_KEY_PRESS:
         g_signal_emit(canvas_item, signals[KEY_PRESS_EVENT], 0, &translated, &handled);
+        break;
+    case HIPPO_EVENT_SCROLL:
+        g_signal_emit(canvas_item, signals[SCROLL_EVENT], 0, &translated, &handled);
         break;
         /* don't add a default, you'll break the compiler warnings */
     }

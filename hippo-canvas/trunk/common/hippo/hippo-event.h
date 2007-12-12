@@ -15,6 +15,7 @@ typedef enum {
     HIPPO_EVENT_BUTTON_RELEASE,
     HIPPO_EVENT_MOTION_NOTIFY,
     HIPPO_EVENT_KEY_PRESS,
+    HIPPO_EVENT_SCROLL
 } HippoEventType;
 
 typedef enum {
@@ -22,6 +23,13 @@ typedef enum {
     HIPPO_MOTION_DETAIL_LEAVE,
     HIPPO_MOTION_DETAIL_WITHIN
 } HippoMotionDetail;
+
+typedef enum {
+    HIPPO_SCROLL_UP,
+    HIPPO_SCROLL_DOWN,
+    HIPPO_SCROLL_LEFT,
+    HIPPO_SCROLL_RIGHT
+} HippoScrollDirection;
 
 typedef struct _HippoEvent HippoEvent;
 
@@ -62,6 +70,9 @@ struct _HippoEvent {
             gunichar character; /* 0 if no translation */
             guint modifiers;
         } key;
+        struct {
+            HippoScrollDirection direction;
+        } scroll;
     } u;
 };
 

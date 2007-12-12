@@ -696,7 +696,13 @@ _wrap_hippo_event_tp_getattr(PyObject *self, char *attr)
             return pyg_enum_from_gtype(HIPPO_TYPE_KEY, event->u.key.key);
         else if (!strcmp(attr, "character"))
             return PyInt_FromLong(event->u.key.character); /* FIXME this should probably return a string? */
-        break;        
+        break;
+    case HIPPO_EVENT_SCROLL:
+        if (!strcmp(attr, "__members__"))
+            return Py_BuildValue("[ssss]", "type", "x", "y", "direction");
+        else if (!strcmp(attr, "direction"))
+            return pyg_enum_from_gtype(HIPPO_TYPE_SCROLL_DIRECTION, event->u.scroll.direction);
+        break;
         /* No default, hides compiler warnings */
     }
     Py_INCREF(Py_None);

@@ -100,6 +100,8 @@ static gboolean           hippo_canvas_box_button_release_event(HippoCanvasItem 
                                                                 HippoEvent         *event);
 static gboolean           hippo_canvas_box_motion_notify_event (HippoCanvasItem    *item,
                                                                 HippoEvent         *event);
+static gboolean           hippo_canvas_box_scroll_event        (HippoCanvasItem    *item,
+                                                                HippoEvent         *event);
 static void               hippo_canvas_box_request_changed     (HippoCanvasItem    *item);
 static gboolean           hippo_canvas_box_get_needs_request   (HippoCanvasItem    *canvas_item);
 static char*              hippo_canvas_box_get_tooltip         (HippoCanvasItem    *item,
@@ -223,6 +225,7 @@ hippo_canvas_box_iface_init(HippoCanvasItemIface *klass)
     klass->button_press_event = hippo_canvas_box_button_press_event;
     klass->button_release_event = hippo_canvas_box_button_release_event;
     klass->motion_notify_event = hippo_canvas_box_motion_notify_event;
+    klass->scroll_event = hippo_canvas_box_scroll_event;
     klass->request_changed = hippo_canvas_box_request_changed;
     klass->get_needs_request = hippo_canvas_box_get_needs_request;
     klass->get_tooltip = hippo_canvas_box_get_tooltip;
@@ -3346,6 +3349,14 @@ forward_event(HippoCanvasBox *box,
         } else {
             return FALSE;
         }
+    } else if (event->type == HIPPO_EVENT_SCROLL) {
+        child = find_child_at_point(box, event->x, event->y);
+        if (child != NULL) {
+            return hippo_canvas_item_process_event(child->public.item,
+                                                   event, child->x, child->y);
+        } else {
+            return FALSE;
+        }
     } else {
         return FALSE;
     } 
@@ -3423,6 +3434,18 @@ hippo_canvas_box_motion_notify_event (HippoCanvasItem *item,
     if (was_hovering != box->hovering) {
         g_signal_emit(G_OBJECT(box), signals[HOVERING_CHANGED], 0, box->hovering);
     }
+
+    return handled;
+}
+
+static gboolean
+hippo_canvas_box_scroll_event (HippoCanvasItem    *item,
+                               HippoEvent         *event)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+    gboolean handled;
+    
+    handled = forward_event (box, event);
 
     return handled;
 }

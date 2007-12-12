@@ -14,7 +14,7 @@ G_BEGIN_DECLS
 
 #define HIPPO_CANVAS_EVENT_MASK (GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | \
                                  GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK |          \
-                                 GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK)
+                                 GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_SCROLL_MASK)
 
 typedef struct _HippoCanvasHelper      HippoCanvasHelper;
 typedef struct _HippoCanvasHelperClass HippoCanvasHelperClass;
@@ -58,6 +58,9 @@ gboolean  hippo_canvas_helper_leave_notify        (HippoCanvasHelper *widget,
             	       	                           GdkEventCrossing  *event);
 gboolean  hippo_canvas_helper_motion_notify       (HippoCanvasHelper *widget,
             	       	                           GdkEventMotion    *event);
+gboolean  hippo_canvas_helper_scroll              (HippoCanvasHelper *widget,
+            	       	                           GdkEventScroll    *event);
+
 
 void  hippo_canvas_helper_realize           (HippoCanvasHelper    *widget);
 /* Caller should chain up to GtkContainer::unmap after calling */

@@ -32,6 +32,9 @@ static gboolean  hippo_canvas_window_leave_notify        (GtkWidget         *wid
                                                           GdkEventCrossing  *event);
 static gboolean  hippo_canvas_window_motion_notify       (GtkWidget         *widget,
                                                           GdkEventMotion    *event);
+static gboolean  hippo_canvas_window_scroll              (GtkWidget         *widget,
+                                                          GdkEventScroll    *event);
+
 
 struct _HippoCanvasWindow {
     GtkWindow parent;
@@ -73,6 +76,7 @@ hippo_canvas_window_class_init(HippoCanvasWindowClass *klass)
     widget_class->motion_notify_event = hippo_canvas_window_motion_notify;
     widget_class->enter_notify_event = hippo_canvas_window_enter_notify;
     widget_class->leave_notify_event = hippo_canvas_window_leave_notify;
+    widget_class->scroll_event = hippo_canvas_window_scroll;
 }
 
 static void
@@ -231,6 +235,21 @@ hippo_canvas_window_motion_notify(GtkWidget         *widget,
     
     if (event->window == widget->window)
         return hippo_canvas_helper_motion_notify(canvas_window->helper, event);
+    else
+        return FALSE;
+}
+
+static gboolean
+hippo_canvas_window_scroll(GtkWidget         *widget,
+                           GdkEventScroll    *event)
+{
+    HippoCanvasWindow *canvas_window = HIPPO_CANVAS_WINDOW(widget);
+
+    if (canvas_window->helper == NULL)
+        return FALSE; /* we've already been destroyed */
+    
+    if (event->window == widget->window)
+        return hippo_canvas_helper_scroll(canvas_window->helper, event);
     else
         return FALSE;
 }
