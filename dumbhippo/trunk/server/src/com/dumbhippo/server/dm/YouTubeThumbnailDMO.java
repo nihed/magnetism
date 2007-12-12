@@ -68,6 +68,6 @@ public abstract class YouTubeThumbnailDMO extends ThumbnailDMO {
 	}
 	
 	public static ThumbnailKey getKey(User user, YouTubeVideo video) {
-		return new ThumbnailKey(user.getGuid(), extractExtra(video.getThumbnailHref()), video); 
+		return new ThumbnailKey(user.getGuid(), ThumbnailType.YOUTUBE, extractExtra(video.getThumbnailHref()), video); 
 	}
 }

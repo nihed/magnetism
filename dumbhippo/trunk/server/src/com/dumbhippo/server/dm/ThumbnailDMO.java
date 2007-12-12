@@ -4,6 +4,7 @@ import com.dumbhippo.Thumbnail;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
+import com.dumbhippo.dm.annotations.MetaConstruct;
 import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.server.NotFoundException;
 
@@ -13,6 +14,18 @@ public abstract class ThumbnailDMO extends DMObject<ThumbnailKey> {
 	
 	protected ThumbnailDMO(ThumbnailKey key) {
 		super(key);
+	}
+	
+	@MetaConstruct
+	public static Class<? extends ThumbnailDMO> getDMOClass(ThumbnailKey key) {
+		switch (key.getType()) {
+		case PICASA_ALBUM:
+			return PicasaAlbumThumbnailDMO.class;
+		case YOUTUBE:
+			return YouTubeThumbnailDMO.class;
+		}
+		
+		return null;
 	}
 
 	@Override
