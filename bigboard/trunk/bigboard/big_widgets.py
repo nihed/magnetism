@@ -128,7 +128,7 @@ class CanvasTable(hippo.CanvasBox):
         self.__layout.set_row_expand(row, expand)        
         
 
-class GradientHeader(hippo.CanvasGradient, ThemedWidgetMixin):
+class GradientHeader(hippo.CanvasGradient):
     def __init__(self, **kwargs):
         hippo.CanvasGradient.__init__(self, 
                                       orientation=hippo.ORIENTATION_HORIZONTAL,
@@ -137,12 +137,11 @@ class GradientHeader(hippo.CanvasGradient, ThemedWidgetMixin):
                                       padding_left=4,
                                       color=0x333333FF, **kwargs)        
         
-class ActionLink(hippo.CanvasLink, ThemedWidgetMixin):
+class ActionLink(hippo.CanvasLink):
     def __init__(self, underline=pango.UNDERLINE_NONE, **kwargs):
         if not kwargs.has_key('color'):
             kwargs['color'] = 0x0066DDFF 
         hippo.CanvasLink.__init__(self, **kwargs)
-        ThemedWidgetMixin.__init__(self)
         self.set_underline(underline)   
 
     def set_underline(self, underline):
@@ -154,7 +153,12 @@ class ActionLink(hippo.CanvasLink, ThemedWidgetMixin):
         attrs = self.get_property("attributes") and self.get_property("attributes") or pango.AttrList()
         attrs.insert(pango.AttrUnderline(underline, end_index=len(self.get_property('text'))))
         if len(attrs.get_iterator().get_attrs()) == 1: 
-            self.set_property("attributes", attrs)   
+            self.set_property("attributes", attrs)
+            
+class ThemedLink(ActionLink, ThemedWidgetMixin):
+    def __init__(self, **kwargs):
+        ActionLink.__init__(self, **kwargs)
+        ThemedWidgetMixin.__init__(self)
     
 class ButtonLabel(gtk.Label):
     def __init__(self, ypadding=0):
@@ -282,10 +286,11 @@ class Separator(hippo.CanvasBox):
 
 class PrelightingCanvasBox(hippo.CanvasBox, ThemedWidgetMixin):
     """A box with a background that changes color on mouse hover."""
-    def __init__(self, **kwargs):
+    def __init__(self, enable_theme=False, **kwargs):
         self.__hovered = False
         self.__force_prelight = False
-        self._prelighted = False        
+        self._prelighted = False
+        self.__enable_theme = enable_theme
         hippo.CanvasBox.__init__(self, **kwargs)
         ThemedWidgetMixin.__init__(self)
         self.connect('motion-notify-event', lambda self, event: self.__handle_motion(event))
@@ -298,20 +303,29 @@ class PrelightingCanvasBox(hippo.CanvasBox, ThemedWidgetMixin):
 
         self.sync_prelight_color()
 
+    def set_themed(self):
+        self.__enable_theme = True
+        self._on_theme_changed(self.get_theme())
+
     def set_force_prelight(self, force):
         self.__force_prelight = force
         self.sync_prelight_color()
         
     def _on_theme_changed(self, theme):
+        if self.__enable_theme:
+            self.__prelight = theme.prelight
+        else:
+            self.__prelight = 0xE2E2E2FF
+        self.__background = 0x00000000
         self.sync_prelight_color()
 
     # protected
     def sync_prelight_color(self): 
         if self.__force_prelight or (self.__hovered and self.do_prelight()):
-            self.set_property('background-color', self.get_theme().prelight)
+            self.set_property('background-color', self.__prelight)
             self._prelighted = True
         else:
-            self.set_property('background-color', self.get_theme().background)
+            self.set_property('background-color', self.__background)
             self._prelighted = False
             
     # protected
@@ -373,15 +387,25 @@ class PhotoContentItem(PrelightingCanvasBox):
             self.__cb(self._prelighted) 
 
 class IconLink(PrelightingCanvasBox):
-    def __init__(self, text="", prelight=True, img_scale_width=20, img_scale_height=20, spacing=4, underline=pango.UNDERLINE_NONE, **kwargs):
+    def __init__(self, text="", prelight=True, img_scale_width=20, img_scale_height=20, spacing=4, underline=pango.UNDERLINE_NONE, 
+                        themed=False,
+                        **kwargs):
         PrelightingCanvasBox.__init__(self,
                                       orientation=hippo.ORIENTATION_HORIZONTAL,
                                       spacing=spacing, **kwargs)
         self.img = hippo.CanvasImage(scale_width=img_scale_width, scale_height=img_scale_height, xalign=hippo.ALIGNMENT_CENTER, yalign=hippo.ALIGNMENT_CENTER)
         self.append(self.img)
-        self.link = ActionLink(text=text, underline=underline, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END,)
+        link_kwargs = {'text': text,
+                       'underline': underline,
+                       'size_mode': hippo.CANVAS_SIZE_ELLIPSIZE_END}
+        if themed:
+            self.link = ThemedLink(**link_kwargs)
+        else:
+            self.link = ActionLink(**link_kwargs)
         self.append(self.link)
         self.__prelight = prelight
+        if themed:
+            self.set_themed()
 
     # override
     def do_prelight(self):

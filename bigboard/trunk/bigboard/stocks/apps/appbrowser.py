@@ -1,4 +1,4 @@
-import logging, time, urlparse, urllib, time
+import logging, time, urlparse, urllib, time, sys
 
 import gobject, pango, gtk
 import hippo, gconf
@@ -429,7 +429,7 @@ class AppList(CanvasVBox):
                 appsource = cat_used_apps
             else:
                 appsource = categories[catname]
-            for app in appsource:
+            for app in appsource:             
                 overview = apps_widgets.AppDisplay(apps_widgets.AppLocation.APP_BROWSER, app)
                 overview.connect("button-press-event", self.__on_overview_click) 
                 self.__table.add_column_item(section_key, overview)

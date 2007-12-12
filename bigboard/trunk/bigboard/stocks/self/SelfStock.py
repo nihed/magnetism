@@ -14,7 +14,7 @@ import bigboard.libbig as libbig
 from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock, AbstractMugshotStock
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox
-from bigboard.big_widgets import ActionLink, IconLink, Separator, ThemedText
+from bigboard.big_widgets import ActionLink, IconLink, Separator, ThemedText, ThemedLink
 import bigboard.google
 
 import portfoliomanager
@@ -249,6 +249,7 @@ class SelfStock(AbstractMugshotStock):
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4, padding_top=2)
 
         self._namephoto_box = PhotoContentItem()
+        self._namephoto_box.set_themed()
         self._namephoto_box.set_clickable(True)
         self._namephoto_box.set_sync_prelight_callback(self.__on_sync_prelight)        
         self._namephoto_box.connect("button-press-event", lambda button, event: self.__on_activate())
@@ -275,7 +276,7 @@ class SelfStock(AbstractMugshotStock):
         
         self._box.append(self._whereim_box)
 
-        self._signin = ActionLink(text="Enable Online Desktop")
+        self._signin = ThemedLink(text="Enable Online Desktop")
         self._box.append(self._signin)
         self._signin.connect("button-press-event", lambda signin, event: self.__do_account())
 

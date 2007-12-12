@@ -3,6 +3,7 @@ import sys
 import hippo, cairo, pangocairo, pango
 
 from bigboard.libbig.singletonmixin import Singleton
+from bigboard.big_widgets import ThemedWidgetMixin
 
 class DefaultTheme(Singleton):
     def __init__(self):
@@ -71,8 +72,8 @@ class DefaultTheme(Singleton):
         ctx.show_layout(layout)
         
     def set_properties(self, widget):
-        if isinstance(widget, hippo.CanvasText) or \
-            isinstance(widget, hippo.CanvasLink):
+        if isinstance(widget, ThemedWidgetMixin) \
+           and isinstance(widget, hippo.CanvasText):
             hints = widget.get_theme_hints()
             if 'subforeground' in hints:
                 widget.set_properties(color=self.subforeground)

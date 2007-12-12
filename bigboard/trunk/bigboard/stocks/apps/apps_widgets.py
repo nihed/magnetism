@@ -1,11 +1,12 @@
-import logging, time
+import logging, time, sys, os
 
 import gmenu, gobject, pango, gnomedesktop
 import hippo
 import bigboard.globals as globals
 
 import bigboard.apps_directory as apps_directory
-from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox, ActionLink, ThemedText
+from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox
+from bigboard.big_widgets import CanvasVBox, ActionLink, ThemedText, ThemedLink
 
 class AppLocation:   
     (STOCK, APP_BROWSER, DESCRIPTION_HEADER) = range(3)
@@ -15,6 +16,8 @@ class AppDisplay(PhotoContentItem):
         "title-clicked" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }
     def __init__(self, app_location, app=None, **kwargs):
+        if app_location == AppLocation.STOCK:
+            kwargs['enable_theme'] = True
         PhotoContentItem.__init__(self, border_right=6, **kwargs)
         self.__app = None 
  
@@ -29,9 +32,24 @@ class AppDisplay(PhotoContentItem):
         if kwargs.has_key('color'): 
             sub_kwargs['color'] = kwargs['color']
 
-        self.__title = ActionLink(font="14px",xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END, **sub_kwargs)
+        title_kwargs = dict(sub_kwargs)
+        title_kwargs.update({'font': '14px',
+                             'xalign': hippo.ALIGNMENT_START, 
+                             'size-mode': hippo.CANVAS_SIZE_ELLIPSIZE_END
+                           })
+        if app_location == AppLocation.STOCK:
+            self.__title = ThemedLink(**title_kwargs)
+        else:
+            self.__title = ActionLink(**title_kwargs)
         self.__title.connect("activated", lambda t: self.emit("title-clicked"))
-        self.__subtitle = ThemedText(theme_hints=['subforeground'], font="10px",xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        subtitle_kwargs = {'font': '10px',
+                           'xalign': hippo.ALIGNMENT_START, 
+                           'size-mode': hippo.CANVAS_SIZE_ELLIPSIZE_END                           
+                           }
+        if app_location == AppLocation.STOCK:
+            self.__subtitle = ThemedText(theme_hints=['subforeground'], **subtitle_kwargs)
+        else:
+            self.__subtitle = hippo.CanvasText(**subtitle_kwargs)
       
         self.__box.append(self.__title)
         self.__box.append(self.__subtitle)        
