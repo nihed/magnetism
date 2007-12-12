@@ -100,19 +100,22 @@ main(int argc, char **argv)
 
     /* Add two items to it */
 
-    ddm_feed_add_item(feed, user1, TS1);
+    g_assert(ddm_feed_add_item(feed, user1, TS1));
     g_assert(last_op == ITEM_ADDED);
     g_assert(last_resource == user1);
     g_assert(last_timestamp == TS1);
     
-    ddm_feed_add_item(feed, user2, TS2);
+    g_assert(ddm_feed_add_item(feed, user2, TS2));
     g_assert(last_op == ITEM_ADDED);
     g_assert(last_resource == user2);
     g_assert(last_timestamp == TS2);
 
+    /* Adding an item again with the same timestamp should return FALSE */
+    g_assert(!ddm_feed_add_item(feed, user2, TS2));
+
     /* Restack the older one to the top */
 
-    ddm_feed_add_item(feed, user1, TS3);
+    g_assert(ddm_feed_add_item(feed, user1, TS3));
     g_assert(last_op == ITEM_CHANGED);
     g_assert(last_resource == user1);
     g_assert(last_timestamp == TS3);
@@ -133,7 +136,7 @@ main(int argc, char **argv)
 
     /* Remove an item */
 
-    ddm_feed_remove_item(feed, user2);
+    g_assert(ddm_feed_remove_item(feed, user2));
     g_assert(last_op == ITEM_REMOVED);
     g_assert(last_resource == user2);
 
@@ -144,6 +147,9 @@ main(int argc, char **argv)
     g_assert(timestamp == TS3);
     
     g_assert(!ddm_feed_iter_next(&iter, &resource, &timestamp));
+
+    /* Removing the same item again should return FALSE */
+    g_assert(!ddm_feed_remove_item(feed, user2));
 
     /* Remove all items */
 
