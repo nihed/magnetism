@@ -133,7 +133,7 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		
 		Set<ExternalAccountView> accountViews = new HashSet<ExternalAccountView>();
 		for (ExternalAccount account : accounts) {
-			if (account.getAccountType() == ExternalAccountType.FACEBOOK) {
+			if (account.getAccountType() == ExternalAccountType.FACEBOOK && account.isLovedAndEnabled()) {
 				accountViews.add(new ExternalAccountView(account, facebookSystem.getProfileLink(account)));
 			} else {
 				accountViews.add(new ExternalAccountView(account));
