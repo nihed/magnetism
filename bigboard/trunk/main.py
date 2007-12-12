@@ -275,15 +275,28 @@ class GoogleGadgetContainer(hippo.CanvasWidget):
         self.widget.show_all() 
         self.set_property('widget', self.widget)
         
-class ThemedGradient(hippo.CanvasBox, ThemedWidgetMixin):
+class Header(hippo.CanvasBox, ThemedWidgetMixin):
     def __init__(self):
-        super(ThemedGradient, self).__init__(orientation=hippo.ORIENTATION_HORIZONTAL,
-                                             background_color=0xFF0000FF)
+        super(Header, self).__init__(orientation=hippo.ORIENTATION_HORIZONTAL,
+                                     background_color=0xFF0000FF)
 
     def do_paint_below_children(self, cr, dmgbox):
         area = self.get_background_area()
         self.get_theme().draw_header(cr, area)
-gobject.type_register(ThemedGradient)
+gobject.type_register(Header)
+
+class HeaderButton(hippo.CanvasBox, ThemedWidgetMixin):
+    def __init__(self):
+        hippo.CanvasBox.__init__(self, box_width=40, xalign=hippo.ALIGNMENT_END,
+                                 background_color=0x00000001)
+        self.set_clickable(True)
+        ThemedWidgetMixin.__init__(self, theme_hints=['header-text'])
+        self.append(hippo.CanvasText(text=" "))
+
+    def do_paint_below_children(self, cr, dmgbox):
+        area = self.get_background_area()
+        self.get_theme().draw_more_button(cr, area)
+gobject.type_register(HeaderButton)
          
 class Exchange(hippo.CanvasBox, ThemedWidgetMixin):
     """A renderer for stocks."""
@@ -304,20 +317,15 @@ class Exchange(hippo.CanvasBox, ThemedWidgetMixin):
         self.append(self.__sep)
         self.__expanded = True
         if not is_notitle:
-            self.__ticker_container = ThemedGradient()
+            self.__ticker_container = Header()
             self.__ticker_text = ThemedText(text=metainfo.title, font="14px Bold", xalign=hippo.ALIGNMENT_START, padding_left=8)
             self.__ticker_text.connect("button-press-event", lambda text, event: self.__toggle_expanded())  
             self.__ticker_container.append(self.__ticker_text, hippo.PACK_EXPAND)
             
             if pymodule and pymodule.has_more_button():
-                more_button = Button(label='More', label_ypadding=-2)
-                more_button.set_property('yalign', hippo.ALIGNMENT_CENTER)
+                more_button = HeaderButton()
                 more_button.connect("activated", lambda l: pymodule.on_more_clicked())
                 self.__ticker_container.append(more_button)
-                self.__mini_more_button = Button(label='More', label_ypadding=-1)
-                self.__mini_more_button.set_property('yalign', hippo.ALIGNMENT_CENTER)                   
-                self.__mini_more_button.connect("activated", lambda l: pymodule.on_more_clicked())
-                self.append(self.__mini_more_button)
             
             self.append(self.__ticker_container)
         self.__stockbox = hippo.CanvasBox()
@@ -414,7 +422,7 @@ class BigBoardPanel(dbus.service.Object):
         self._main_box = hippo.CanvasBox(border_right=1, border_color=0x999999FF, padding_bottom=4)
         self._canvas.set_root(self._main_box)
      
-        self._header_box = ThemedGradient()
+        self._header_box = Header()
         self._header_box.connect("button-press-event", self.__on_header_buttonpress)             
 
         self.__unpopout_button = Button(label='Hide', label_ypadding=-2)
