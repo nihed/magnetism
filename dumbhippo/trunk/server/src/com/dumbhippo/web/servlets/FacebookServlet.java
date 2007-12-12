@@ -307,7 +307,7 @@ public class FacebookServlet extends AbstractServlet {
 		    }
 		    ExternalAccountCategory currentCategory = null;
 		    xml.openElement("div", "style", "position:relative;width:400px;float:left;");
-		    xml.openElement("fb:editor", "action", "", "width", "400", "labelwidth", "120");
+		    xml.openElement("fb:editor", "action", "", "width", "280", "labelwidth", "120");
 		    for (ExternalAccountView externalAccount : getSupportedAccounts(user)) {
 		    	if (currentCategory == null || !currentCategory.equals(externalAccount.getExternalAccountType().getCategory())) {
 				    currentCategory = externalAccount.getExternalAccountType().getCategory();
@@ -362,15 +362,15 @@ public class FacebookServlet extends AbstractServlet {
 		    xml.closeElement(); // div with the form
 		    
 		    if (!user.getAccount().getHasAcceptedTerms()) {
-		    	xml.openElement("div", "style", "width:200px;float:left;color:#666666;font-weight:bold;margin-top:30px;");
+		    	xml.openElement("div", "style", "width:200px;float:left;color:#666666;font-weight:bold;margin-top:34px;margin-left:20px;");
 			    xml.append("Do you already have a Mugshot account? Don't fill in this stuff, just verify" +
 			    		   " your Mugshot account by following this link.");
 			    xml.openElement("form", "action", "http://dogfood.mugshot.org/facebook-add", "target", "_blank", "method", "GET");
-			    xml.appendEmptyNode("input", "type", "submit", "value", "Verify My Mugshot Account", "style", "margin-bottom:30px;");
+			    xml.appendEmptyNode("input", "type", "submit", "value", "Verify My Mugshot Account", "style", "margin-top:20px;margin-bottom:40px;");
 			    xml.closeElement();		
 			    xml.append("Want to create a Mugshot account? It's free and easy and helps you see all your friends' activities in one place, share links, and read feeds in a social setting.");
 	            xml.openElement("form", "action", "http://dogfood.mugshot.org/facebook-signin", "target", "_blank", "method", "GET");
-	            xml.appendEmptyNode("input", "type", "submit", "value", "Create My Mugshot Account", "style", "margin-bottom:30px;");
+	            xml.appendEmptyNode("input", "type", "submit", "value", "Create My Mugshot Account", "style", "margin-top:20px;margin-bottom:30px;");
 	            xml.closeElement();	
 		    	xml.closeElement();
 		    }

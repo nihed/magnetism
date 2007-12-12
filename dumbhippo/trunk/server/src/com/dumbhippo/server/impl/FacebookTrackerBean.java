@@ -154,6 +154,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 							    externalAccounts.setSentiment(ea, Sentiment.INDIFFERENT);
 							    ac.getOwner().getAccount().setDisabled(true);
 							    em.remove(ac);
+							    em.flush();
 							    identitySpider.addVerifiedOwnershipClaim(viewpoint.getViewer(), res);
 							    externalAccount.setExtra(Long.toString(facebookAccount.getId()));		
 							} catch (NotFoundException e) {

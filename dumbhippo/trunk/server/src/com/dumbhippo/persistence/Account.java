@@ -469,7 +469,14 @@ public class Account extends Resource {
 	
 	@Transient
 	public boolean isActive() {
-		return !(isDisabled() || isAdminDisabled()) && hasAcceptedTerms;
+		// This used to also check hasAcceptedTerms, but since
+		// the only way we'd have any information for someone who
+		// did not accept terms is if they entered it on Facebook,
+		// we shouldn't check it here, but instead let this function 
+		// return True in that case.
+		// Alternatively, we can create a separate variable 
+		// isFacebookOnly.
+		return !(isDisabled() || isAdminDisabled());
 	}
 
 	@Column(nullable=true)
