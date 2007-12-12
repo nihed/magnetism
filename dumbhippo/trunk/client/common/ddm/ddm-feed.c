@@ -131,7 +131,7 @@ feed_insert_sorted (DDMFeed *feed,
     }
 }
 
-void
+gboolean
 ddm_feed_add_item (DDMFeed         *feed,
                    DDMDataResource *resource,
                    gint64           timestamp)
@@ -139,14 +139,14 @@ ddm_feed_add_item (DDMFeed         *feed,
     GList *node;
     DDMFeedItem *item;
 
-    g_return_if_fail(DDM_IS_FEED(feed));
+    g_return_val_if_fail(DDM_IS_FEED(feed), FALSE);
         
     node = g_hash_table_lookup(feed->nodes_by_resource, resource);
     if (node != NULL) {
         item = node->data;
 
         if (item->timestamp == timestamp)
-            return;
+            return FALSE;
         
         item->timestamp = timestamp;
 
@@ -166,22 +166,22 @@ ddm_feed_add_item (DDMFeed         *feed,
         feed_insert_sorted(feed, node, timestamp);
         g_signal_emit(feed, signals[ITEM_ADDED], 0, resource, timestamp);
     }
+
+    return TRUE;
 }
 
-void
+gboolean
 ddm_feed_remove_item (DDMFeed         *feed,
                       DDMDataResource *resource)
 {
     GList *node;
     DDMFeedItem *item;
     
-    g_return_if_fail(DDM_IS_FEED(feed));
+    g_return_val_if_fail(DDM_IS_FEED(feed), FALSE);
 
     node = g_hash_table_lookup(feed->nodes_by_resource, resource);
     if (node == NULL) {
-        g_warning("ddm_feed_remove_item(): resource %s not in feed",
-                  ddm_data_resource_get_resource_id(resource));
-        return;
+        return FALSE;
     }
 
     item = node->data;
@@ -192,6 +192,8 @@ ddm_feed_remove_item (DDMFeed         *feed,
     g_signal_emit(feed, signals[ITEM_REMOVED], 0, item->resource);
     ddm_data_resource_unref(item->resource);
     g_slice_free(DDMFeedItem, item);
+
+    return TRUE;
 }
 
 static void
@@ -225,6 +227,14 @@ ddm_feed_clear (DDMFeed *feed)
     g_return_if_fail(DDM_IS_FEED(feed));
 
     ddm_feed_clear_internal(feed, TRUE);
+}
+
+gboolean
+ddm_feed_is_empty (DDMFeed *feed)
+{
+    g_return_val_if_fail(DDM_IS_FEED(feed), TRUE);
+
+    return feed->items == NULL;
 }
 
 void

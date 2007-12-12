@@ -48,13 +48,16 @@ GType            ddm_feed_get_type               (void) G_GNUC_CONST;
 DDMFeed *ddm_feed_new      (void);
 
 /* If an item for this resource is already in the feed, will update the
- * item's timestamp and reorder it as necessary */
-void ddm_feed_add_item    (DDMFeed         *feed,
-                           DDMDataResource *resource,
-                           gint64           timestamp);
-void ddm_feed_remove_item (DDMFeed         *feed,
-                           DDMDataResource *resource);
-void ddm_feed_clear       (DDMFeed         *feed);
+ * item's timestamp and reorder it as necessary; return value is whether
+ * anything changed at all */
+gboolean ddm_feed_add_item    (DDMFeed         *feed,
+                               DDMDataResource *resource,
+                               gint64           timestamp);
+/* return value is whether the item was found and removed */
+gboolean ddm_feed_remove_item (DDMFeed         *feed,
+                               DDMDataResource *resource);
+void     ddm_feed_clear       (DDMFeed         *feed);
+gboolean ddm_feed_is_empty    (DDMFeed          *feed);
 
 void     ddm_feed_iter_init   (DDMFeedIter      *iter,
                                DDMFeed          *feed);
