@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "ddm-data-fetch.h"
+#include "ddm-feed.h"
 #include "ddm-data-model-internal.h"
 #include "ddm-data-resource-internal.h"
 #include "ddm-rule.h"
@@ -120,6 +121,7 @@ ddm_data_value_get_element(DDMDataValue *value,
         element->u.string  = (char *)node->data;
         return;
     case DDM_DATA_NONE:
+    case DDM_DATA_FEED:
     case DDM_DATA_LIST:
         break;
     }
@@ -144,6 +146,7 @@ ddm_data_value_free_element(DDMDataValue *value,
         return;
     case DDM_DATA_RESOURCE:
     case DDM_DATA_NONE:
+    case DDM_DATA_FEED:
     case DDM_DATA_LIST:
         return;
     }
@@ -298,22 +301,36 @@ reset_property_foreach(gpointer    data,
 {
     DDMDataProperty *property = data;
 
-    if (DDM_DATA_BASE(property->value.type) != DDM_DATA_RESOURCE)
-        return FALSE;
+    if (DDM_DATA_BASE(property->value.type) == DDM_DATA_RESOURCE) {
+        property->rule_sources = slist_foreach_remove(property->rule_sources, reset_resource_rule_source_foreach, property);
 
-    property->rule_sources = slist_foreach_remove(property->rule_sources, reset_resource_rule_source_foreach, property);
-
-    if (DDM_DATA_IS_LIST(property->value.type)) {
-        property->value.u.list = slist_foreach_remove(property->value.u.list, reset_resource_value_foreach, NULL);
-        reset_resource_value_foreach(data, user_data);
+        if (DDM_DATA_IS_LIST(property->value.type)) {
+            property->value.u.list = slist_foreach_remove(property->value.u.list, reset_resource_value_foreach, NULL);
+            reset_resource_value_foreach(data, user_data);
+            return FALSE;
+        } else {
+            if (!property->value.u.resource->local) {
+                ddm_data_property_free(property);
+                return TRUE;
+            } else {
+                return FALSE;
+            }
+        }
+    } else if (property->value.type == DDM_DATA_FEED) {
+        if (property->value.u.feed) {
+            DDMFeedIter iter;
+            DDMDataResource *resource;
+            
+            ddm_feed_iter_init(&iter, property->value.u.feed);
+            while (ddm_feed_iter_next(&iter, &resource, NULL)) {
+                if (!resource->local)
+                    ddm_feed_iter_remove(&iter);
+            }
+        }
+            
         return FALSE;
     } else {
-        if (!property->value.u.resource->local) {
-            ddm_data_property_free(property);
-            return TRUE;
-        } else {
-            return FALSE;
-        }
+        return FALSE;
     }
 }
 
@@ -451,12 +468,16 @@ ddm_data_resource_is_local (DDMDataResource *resource)
 static void
 set_value(DDMDataType   type,
           DDMDataValue *value,
-          void           *location)
+          void         *location)
 {
     if (DDM_DATA_IS_LIST(type)) {
         *((GSList **)location) = value->u.list;
+    } else if (type == DDM_DATA_FEED) {
+        *((DDMFeed **)location) = value->u.feed;
     } else {
         switch (DDM_DATA_BASE(type)) {
+        case DDM_DATA_LIST:
+        case DDM_DATA_FEED:
         case DDM_DATA_NONE:
             break;
         case DDM_DATA_BOOLEAN:
@@ -491,6 +512,8 @@ set_default_value(DDMDataType  type,
 {
     if (DDM_DATA_IS_LIST(type)) {
         *((GSList **)location) = NULL;
+    } else if (type == DDM_DATA_FEED) {
+        *((DDMFeed **)location) = NULL;
     } else {
         switch (type) {
         case DDM_DATA_BOOLEAN:
@@ -515,6 +538,7 @@ set_default_value(DDMDataType  type,
             *((const char **)location) = NULL;
             break;
         case DDM_DATA_LIST:
+        case DDM_DATA_FEED:
         case DDM_DATA_NONE:
             break;
         }
@@ -550,6 +574,9 @@ type_to_string(DDMDataType type)
         break;
     case DDM_DATA_URL:
         result = "list:url";
+        break;
+    case DDM_DATA_FEED:
+        result = "xxxx:feed";
         break;
     default:
         result = "list:<unknown>";
@@ -829,10 +856,16 @@ ddm_data_value_clear(DDMDataValue *value)
         case DDM_DATA_RESOURCE:
         case DDM_DATA_NONE:
         case DDM_DATA_LIST:
+        case DDM_DATA_FEED:
             break;
         }
 
         g_slist_free(value->u.list);
+    } else if (value->type == DDM_DATA_FEED) {
+        if (value->u.feed) {
+            ddm_feed_clear(value->u.feed);
+            g_object_unref(value->u.feed);
+        }
     } else {
         switch (value->type) {
         case DDM_DATA_NONE:
@@ -842,6 +875,7 @@ ddm_data_value_clear(DDMDataValue *value)
         case DDM_DATA_FLOAT:
         case DDM_DATA_RESOURCE:
         case DDM_DATA_LIST:
+        case DDM_DATA_FEED:
             break;
         case DDM_DATA_STRING:
         case DDM_DATA_URL:
@@ -899,6 +933,7 @@ data_value_matches(DDMDataValue      *value_a,
     case DDM_DATA_URL:
         return strcmp(value_a->u.string, value_b->u.string) == 0;
     case DDM_DATA_LIST:
+    case DDM_DATA_FEED:
         break;
     }
 
@@ -915,6 +950,11 @@ data_property_set(DDMDataProperty *property,
 
     if (DDM_DATA_IS_LIST(property->value.type)) {
         g_warning("data_property_set() called with a list type");
+        return FALSE;
+    }
+    
+    if (property->value.type == DDM_DATA_FEED) {
+        g_warning("data_property_set() called with a feed type");
         return FALSE;
     }
 
@@ -971,6 +1011,7 @@ data_property_append_value(DDMDataProperty *property,
         property->value.u.list = g_slist_prepend(property->value.u.list, g_strdup(value->u.string));
         return;
     case DDM_DATA_NONE:
+    case DDM_DATA_FEED:
     case DDM_DATA_LIST:
         break;
     }
@@ -1063,12 +1104,23 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
     GSList *l;
     gboolean changed;
 
+    if (value != NULL) {
+        if (DDM_DATA_IS_LIST(value->type)) {
+            g_critical("ddm_data_resource_update_property called with a list value");
+            return FALSE;
+        }
+        if (value->type == DDM_DATA_FEED) {
+            g_critical("ddm_data_resource_update_property called with a feed value");
+            return FALSE;
+        }
+    }
+
 #if 0
     g_debug("updating resource '%s' property %s update %d new value %s",
             resource->resource_id, property_id->name, update,
             value ? ddm_data_value_to_string(value) : "NULL" ); /* leak! FIXME remove from production */
-#endif       
-    
+#endif
+
     /* it's important to only ever set this to TRUE,
      * never assign it a value that could be FALSE,
      * or you could unset an earlier TRUE. If making
@@ -1209,6 +1261,139 @@ ddm_data_resource_update_property(DDMDataResource    *resource,
     return changed;
 }
 
+/* We make things a bit more difficult for ourselves, by representing
+ * an empty feed property with:
+ *
+ *  - NULL, before anything is ever added to the feed
+ *  - a DDMFeed, after that
+ *
+ * The initial NULL is important because a feed that starts empty and stays
+ * empty is a common case and shouldn't require creating a DDMFeed object
+ * (think of recent messages on a block in the Mugshot stacker)
+ *
+ * Keeping the DMFeed around after that makes things a little easier for
+ * someone who wants to connect to signals on the DDFeed (though patterns
+ * to deal with the initially-NULL state probably handle transitions back
+ * to NULL OK as well.)
+ */
+static DDMDataProperty *
+add_feed_property(DDMDataResource *resource,
+                  DDMQName        *property_id)
+{
+    DDMDataProperty *property = add_property(resource, property_id, DDM_DATA_CARDINALITY_N);
+    
+    property->value.type = DDM_DATA_FEED;
+    property->value.u.feed = NULL;
+
+    return property;
+}
+
+static gboolean
+add_feed_property_item(DDMDataProperty *property,
+                       DDMDataResource *item_resource,
+                       gint64           item_timestamp)
+{
+    if (property->value.u.feed == NULL)
+        property->value.u.feed = ddm_feed_new();
+
+    return ddm_feed_add_item(property->value.u.feed, item_resource, item_timestamp);
+}
+
+static void
+clear_feed_property(DDMDataProperty *property)
+{
+    if (property->value.u.feed != NULL)
+        ddm_feed_clear(property->value.u.feed);
+}
+
+/* return value is whether something changed (we need to emit notification) */
+gboolean
+ddm_data_resource_update_feed_property(DDMDataResource    *resource,
+                                       DDMQName           *property_id,
+                                       DDMDataUpdate       update,
+                                       gboolean            default_include,
+                                       const char         *default_children,
+                                       DDMDataResource    *item_resource,
+                                       gint64              item_timestamp)
+{
+    DDMDataProperty *property = NULL;
+    GSList *l;
+    gboolean changed;
+
+#if 0
+    g_debug("updating feed resource '%s' property %s update %d new value %s timestamp " G_GINT64_FORMAT,
+            resource->resource_id, property_id->name, update,
+            item_resource ? item_resource->resource_id : "NULL",
+            item_timestamp);
+#endif       
+    
+    changed = FALSE;
+    
+    for (l = resource->properties; l; l = l->next) {
+        if (((DDMDataProperty *)l->data)->qname == property_id) {
+            property = l->data;
+            break;
+        }
+    }
+
+    if (update == DDM_DATA_UPDATE_DELETE && property == NULL) {
+        g_warning("Remove of a property we don't have %s#%s", property_id->uri, property_id->name);
+        return FALSE;
+    }
+
+    if (property != NULL && DDM_DATA_BASE(property->value.type) != DDM_DATA_FEED) {
+        g_warning("Previous cardinality of not compatible with new property, discarding old values %s#%s", property_id->uri, property_id->name);
+        remove_property(resource, property);
+        changed = TRUE;
+    }
+
+    switch (update) {
+    case DDM_DATA_UPDATE_ADD:
+        if (property == NULL) {
+            property = add_feed_property(resource, property_id);
+        }
+        changed = changed || add_feed_property_item(property, item_resource, item_timestamp);
+        break;
+    case DDM_DATA_UPDATE_REPLACE:
+        if (property != NULL) {
+            clear_feed_property(property);
+        } else {
+            property = add_feed_property(resource, property_id);
+        }
+        add_feed_property_item(property, item_resource, item_timestamp);
+        changed = TRUE;
+        break;
+    case DDM_DATA_UPDATE_DELETE:
+        if (property != NULL && property->value.u.feed != NULL &&
+            ddm_feed_remove_item(property->value.u.feed, item_resource))
+        {
+            changed = TRUE;
+        } else {
+            g_warning("remove of a property value not there %s#%s", property_id->uri, property_id->name);
+        }
+        break;
+    case DDM_DATA_UPDATE_CLEAR:
+        if (property != NULL) {
+            clear_feed_property(property);
+        } else {
+            property = add_feed_property(resource, property_id);
+        }
+        changed = TRUE;
+        break;
+    }
+
+    if (property != NULL) {
+        property->default_include = default_include;
+        if (default_children && !property->default_children)
+            property->default_children = ddm_data_fetch_from_string(default_children);
+    }
+
+    if (changed)
+        mark_property_changed(resource, property);
+
+    return changed;
+}
+
 void
 _ddm_data_resource_send_local_notifications (DDMDataResource *resource,
                                              GSList          *changed_properties)
@@ -1325,6 +1510,9 @@ ddm_data_parse_type(const char           *type_string,
     case 'u':
         *type = DDM_DATA_URL;
         break;
+    case 'F':
+        *type = DDM_DATA_FEED;
+        break;
     default:
         g_warning("Can't understand type string '%s'", type_string);
         return FALSE;
@@ -1384,6 +1572,32 @@ ddm_data_value_to_string(DDMDataValue *value)
 
         return g_string_free(str, FALSE);
     }
+
+    if (value->type == DDM_DATA_FEED) {
+        GString *str = g_string_new(NULL);
+        DDMFeedIter iter;
+        DDMDataResource *resource;
+        gint64 timestamp;
+
+        g_string_append(str, "[");
+        if (value->u.feed) {
+            ddm_feed_iter_init(&iter, value->u.feed);
+
+            while (ddm_feed_iter_next(&iter, &resource, &timestamp)) {
+                if (str->len > 1)
+                    g_string_append(str, ", ");
+                g_string_append(str, "(");
+                g_string_append(str, resource->resource_id);
+                g_string_append(str, ", ");
+                g_string_append_printf(str, "%" G_GINT64_FORMAT, timestamp);
+                g_string_append(str, ")");
+            }
+        
+            g_string_append(str, "]");
+        }
+
+        return g_string_free(str, FALSE);
+    }
     
     switch (value->type) {
     case DDM_DATA_NONE:
@@ -1393,7 +1607,7 @@ ddm_data_value_to_string(DDMDataValue *value)
     case DDM_DATA_INTEGER:
         return g_strdup_printf("%d", value->u.integer);
     case DDM_DATA_LONG:
-        return g_strdup_printf("%" G_GINT64_FORMAT "\n", value->u.long_);
+        return g_strdup_printf("%" G_GINT64_FORMAT, value->u.long_);
     case DDM_DATA_FLOAT:
         return g_strdup_printf("%f", value->u.float_);
     case DDM_DATA_STRING:
@@ -1454,7 +1668,7 @@ ddm_data_value_from_string (DDMDataValue *value,
         {
             char *end;
             long v = strtol(str_stripped, &end, 10);
-            if (*str == '\0' || *end != '\0') {
+            if (*str_stripped == '\0' || *end != '\0') {
                 g_set_error(error,
                             DDM_DATA_ERROR,
                             DDM_DATA_ERROR_BAD_REPLY,
@@ -1468,7 +1682,7 @@ ddm_data_value_from_string (DDMDataValue *value,
         {
             char *end;
             value->u.long_ = g_ascii_strtoll(str_stripped, &end, 10);
-            if (*str == '\0' || *end != '\0') {
+            if (*str_stripped == '\0' || *end != '\0') {
                 g_set_error(error,
                             DDM_DATA_ERROR,
                             DDM_DATA_ERROR_BAD_REPLY,
@@ -1481,7 +1695,7 @@ ddm_data_value_from_string (DDMDataValue *value,
         {
             char *end;
             value->u.float_ = g_ascii_strtod(str_stripped, &end);
-            if (*str == '\0' || *end != '\0') {
+            if (*str_stripped == '\0' || *end != '\0') {
                 g_set_error(error,
                             DDM_DATA_ERROR,
                             DDM_DATA_ERROR_BAD_REPLY,
@@ -1498,14 +1712,17 @@ ddm_data_value_from_string (DDMDataValue *value,
         if (value->u.string == NULL)
             goto error;
         goto success;
+    case DDM_DATA_FEED:
+        g_critical("Data type DDM_DATA_FEED invalid in ddm_data_value_from_string()");
+        goto error;
     case DDM_DATA_RESOURCE:
         g_critical("Data type DDM_DATA_RESOURCE invalid in ddm_data_value_from_string()");
         goto error;
     case DDM_DATA_NONE:
-        g_critical("Data type DDM_DATA_RESOURCE invalid in ddm_data_value_from_string()");
+        g_critical("Data type DDM_DATA_NONE invalid in ddm_data_value_from_string()");
         goto error;
     case DDM_DATA_LIST:
-        g_critical("Data type DDM_DATA_RESOURCE invalid in ddm_data_value_from_string()");
+        g_critical("Data type DDM_DATA_LIST invalid in ddm_data_value_from_string()");
         goto error;
     }
 

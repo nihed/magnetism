@@ -48,6 +48,7 @@ typedef enum {
     DDM_DATA_STRING     = 5,
     DDM_DATA_RESOURCE   = 6,
     DDM_DATA_URL        = 7,
+    DDM_DATA_FEED       = 8,
     DDM_DATA_LIST       = 0x10
 } DDMDataType;
 
@@ -66,6 +67,7 @@ typedef struct _DDMDataFetch         DDMDataFetch; /* Avoid circular include */
 typedef struct _DDMDataResource      DDMDataResource;
 
 typedef struct _DDMClient            DDMClient;    /* Avoid circular include */
+typedef struct _DDMFeed              DDMFeed;
 
 
 typedef void (*DDMDataFunction) (DDMDataResource *resource,
@@ -82,6 +84,7 @@ struct _DDMDataValue {
         double float_;
         char *string;
         DDMDataResource *resource;
+        DDMFeed *feed;
         GSList *list;
     } u;
 };
@@ -135,6 +138,14 @@ gboolean           ddm_data_resource_update_property       (DDMDataResource    *
                                                             gboolean            default_include,
                                                             const char         *default_children,
                                                             DDMDataValue       *value);
+gboolean           ddm_data_resource_update_feed_property  (DDMDataResource    *resource,
+                                                            DDMQName           *property_id,
+                                                            DDMDataUpdate       update,
+                                                            gboolean            default_include,
+                                                            const char         *default_children,
+                                                            DDMDataResource    *item_resource,
+                                                            gint64              item_timestamp);
+
 DDMDataProperty *  ddm_data_resource_get_property          (DDMDataResource    *resource,
                                                             const char         *name);
 DDMDataProperty *  ddm_data_resource_get_property_by_qname (DDMDataResource    *resource,

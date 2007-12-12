@@ -3,6 +3,7 @@
 #include "ddm-data-query-internal.h"
 #include "ddm-data-model-internal.h"
 #include "ddm-data-resource-internal.h"
+#include "ddm-feed.h"
 
 typedef enum {
     HANDLER_NONE,
@@ -275,6 +276,15 @@ mark_received_fetches(DDMDataResource *resource,
                     }
                 } else {
                     mark_received_fetches(value.u.resource, children, local);
+                }
+            } else if (value.type == DDM_DATA_FEED) {
+                if (value.u.feed != NULL) {
+                    DDMFeedIter feed_iter;
+                    DDMDataResource *item_resource;
+
+                    ddm_feed_iter_init(&feed_iter, value.u.feed);
+                    while (ddm_feed_iter_next(&feed_iter, &item_resource, NULL))
+                        mark_received_fetches(item_resource, children, local);
                 }
             }
         }

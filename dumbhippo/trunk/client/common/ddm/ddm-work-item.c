@@ -4,6 +4,7 @@
 #include "ddm-data-model-internal.h"
 #include "ddm-data-query-internal.h"
 #include "ddm-data-resource-internal.h"
+#include "ddm-feed.h"
 
 typedef struct {
     DDMDataResource *resource;
@@ -250,6 +251,17 @@ item_fetch_additional(DDMWorkItem     *item,
                 } else {
                     if (!item_fetch_additional(item, value.u.resource, children))
                         all_satisfied = FALSE;
+                }
+            } else if (value.type == DDM_DATA_FEED) {
+                if (value.u.feed != NULL) {
+                    DDMFeedIter feed_iter;
+                    DDMDataResource *item_resource;
+
+                    ddm_feed_iter_init(&feed_iter, value.u.feed);
+                    while (ddm_feed_iter_next(&feed_iter, &item_resource, NULL)) {
+                        if (!item_fetch_additional(item, item_resource, children))
+                            all_satisfied = FALSE;
+                    }
                 }
             }
         }

@@ -4744,6 +4744,31 @@ dm_context_get_type(DMContext            *context,
     return ddm_data_parse_type(type_attr, type, cardinality, default_include);
 }
 
+static gint64
+dm_context_get_ts(DMContext *context)
+{
+    const char *ts_attr = dm_context_get_system_attribute(context, "ts");
+    if (ts_attr == NULL) {
+        return -1;
+    } else {
+        char *str_stripped;
+        char *end;
+        gint64 result;
+        
+        str_stripped = g_strdup(ts_attr);
+        g_strstrip(str_stripped);
+        
+        result = g_ascii_strtoll(str_stripped, &end, 10);
+        if (*str_stripped == '\0' || *end != '\0') {
+            g_warning("Invalid m:ts attribute '%s'", ts_attr);
+            result = -1;
+        }
+
+        g_free(str_stripped);
+        return result;
+    }
+}
+
 static gboolean
 dm_context_get_value(DMContext       *context,
                      DDMDataType      type,
@@ -4835,19 +4860,37 @@ update_property(DMContext            *context,
         default_children = dm_context_get_system_attribute(context, "defaultChildren");
     else
         default_children = NULL;
-    
-    if (update == DDM_DATA_UPDATE_CLEAR) {
-        changed = ddm_data_resource_update_property(resource, property_qname, update, cardinality,
-                                                     default_include, default_children,
-                                                     NULL);
+
+    if (type == DDM_DATA_FEED) {
+        if (update == DDM_DATA_UPDATE_CLEAR) {
+            changed = ddm_data_resource_update_feed_property(resource, property_qname, update,
+                                                             default_include, default_children,
+                                                             NULL, -1);
+        } else {
+            DDMDataValue value;
+            gint64 ts = dm_context_get_ts(context);
+            
+            if (dm_context_get_value(context, DDM_DATA_RESOURCE, &value)) {
+                changed = ddm_data_resource_update_feed_property(resource, property_qname, update,
+                                                                 default_include, default_children,
+                                                                 value.u.resource, ts);
+                ddm_data_value_clear(&value);
+            }
+        }
     } else {
-        DDMDataValue value;
-        
-        if (dm_context_get_value(context, type, &value)) {
+        if (update == DDM_DATA_UPDATE_CLEAR) {
             changed = ddm_data_resource_update_property(resource, property_qname, update, cardinality,
                                                         default_include, default_children,
-                                                        &value);
-            ddm_data_value_clear(&value);
+                                                        NULL);
+        } else {
+            DDMDataValue value;
+            
+            if (dm_context_get_value(context, type, &value)) {
+                changed = ddm_data_resource_update_property(resource, property_qname, update, cardinality,
+                                                            default_include, default_children,
+                                                            &value);
+                ddm_data_value_clear(&value);
+            }
         }
     }
 
