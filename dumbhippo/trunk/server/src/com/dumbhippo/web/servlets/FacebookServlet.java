@@ -302,12 +302,12 @@ public class FacebookServlet extends AbstractServlet {
 				                   "http://dogfood.mugshot.org/person?who=" + user.getId(), "target", "_blank");
 		        xml.append(".");
 		    } else {
-			    xml.appendTextNode("span", "Fill in information for the accounts you have and want to display updates from, then press 'Submit Info!'",
+			    xml.appendTextNode("span", "Fill in the information for accounts you want to display updates from.",
 		    	                   "style", "margin-left:15px;");		    	
 		    }
 		    ExternalAccountCategory currentCategory = null;
-		    xml.openElement("div", "style", "position:relative;width:250px;float:left;");
-		    xml.openElement("fb:editor", "action", "", "width", "250", "labelwidth", "90");
+		    xml.openElement("div", "style", "position:relative;width:400px;float:left;");
+		    xml.openElement("fb:editor", "action", "", "width", "400", "labelwidth", "120");
 		    for (ExternalAccountView externalAccount : getSupportedAccounts(user)) {
 		    	if (currentCategory == null || !currentCategory.equals(externalAccount.getExternalAccountType().getCategory())) {
 				    currentCategory = externalAccount.getExternalAccountType().getCategory();
@@ -362,7 +362,7 @@ public class FacebookServlet extends AbstractServlet {
 		    xml.closeElement(); // div with the form
 		    
 		    if (!user.getAccount().getHasAcceptedTerms()) {
-		    	xml.openElement("div", "style", "position:relative;width:100px;float:right;color:#666666;font-weight:bold;");
+		    	xml.openElement("div", "style", "width:200px;float:left;color:#666666;font-weight:bold;margin-top:30px;");
 			    xml.append("Do you already have a Mugshot account? Don't fill in this stuff, just verify" +
 			    		   " your Mugshot account by following this link.");
 			    xml.openElement("form", "action", "http://dogfood.mugshot.org/facebook-add", "target", "_blank", "method", "GET");
