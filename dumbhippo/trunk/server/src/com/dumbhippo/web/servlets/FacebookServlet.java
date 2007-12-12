@@ -171,7 +171,8 @@ public class FacebookServlet extends AbstractServlet {
 		
 		// this returns some code in FBML we'll return for our app page on Facebook
 		// it intentionally points to my test server for now
-		XmlBuilder xml = new XmlBuilder();		
+		XmlBuilder xml = new XmlBuilder();	
+		String baseUrl = config.getBaseUrlMugshot().toExternalForm();
 
         xml.appendTextNode("fb:header", "Musgshot");
         xml.appendTextNode("div", "Mugshot allows you and your friends to see your activity from lots of other sites on the internet and automatically puts that in your profile and news feed.",
@@ -341,7 +342,7 @@ public class FacebookServlet extends AbstractServlet {
 			    xml.appendTextNode("span", "Updates to the information below will be reflected in ",
 				    	           "style", "margin-left:15px;");
 		        xml.appendTextNode("a", "your Mugshot account", "href",
-				                   "http://dogfood.mugshot.org/person?who=" + user.getId(), "target", "_blank");
+				                   baseUrl + "/person?who=" + user.getId(), "target", "_blank");
 		        xml.append(".");
 		    } else {
 			    xml.appendTextNode("span", "Fill in the information for accounts you want to display updates from.",
@@ -416,7 +417,7 @@ public class FacebookServlet extends AbstractServlet {
 		    	xml.openElement("div", "style", "width:200px;float:left;color:#666666;font-weight:bold;margin-top:34px;margin-left:10px;");
 			    xml.append("Do you already have a Mugshot account? Don't fill in this stuff, just verify" +
 			    		   " your Mugshot account by following this link.");
-			    xml.openElement("form", "action", "http://dogfood.mugshot.org/facebook-add", "target", "_blank", "method", "GET");
+			    xml.openElement("form", "action", baseUrl + "/facebook-add", "target", "_blank", "method", "GET");
 			    // there didn't seem to be a way to get buttons in fb:editor to open in a new window, which is what we want here, so we are using 
 			    // our own form and buttons 
 			    // original top and left border color on facebook is #D8DFEA, but it looks too light to me
@@ -424,7 +425,7 @@ public class FacebookServlet extends AbstractServlet {
 			    xml.appendEmptyNode("input", "type", "submit", "value", "Verify My Mugshot Account", "style", buttonStyle);
 			    xml.closeElement();		
 			    xml.append("Want to create a Mugshot account? It's free and easy and helps you see all your friends' activities in one place, share links, and read feeds in a social setting.");
-	            xml.openElement("form", "action", "http://dogfood.mugshot.org/facebook-signin", "target", "_blank", "method", "GET");
+	            xml.openElement("form", "action", baseUrl + "/facebook-signin", "target", "_blank", "method", "GET");
 	            xml.appendEmptyNode("input", "type", "submit", "value", "Create My Mugshot Account", "style", buttonStyle);
 	            xml.closeElement();	
 		    	xml.closeElement();
