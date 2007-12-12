@@ -8,6 +8,28 @@ import layout_utils
 
 _logger = logging.getLogger("bigboard.ScrollRibbon")
 
+gtk.rc_parse_string("""
+   style "less-padding-button-style"
+   {
+      GtkWidget::focus-line-width=0
+      GtkWidget::focus-padding=0
+      GtkButton::interior-focus=0
+   }
+
+    widget "*.scroll-ribbon-button" style "less-padding-button-style"
+""")
+
+class SmallerArrow(gtk.Arrow):
+    def __init__(self, direction, shadow):
+        gtk.Arrow.__init__(self, direction, shadow)
+
+    def do_size_request(self, req):
+        gtk.Arrow.do_size_request(self, req)
+        req.height -= 2
+        req.width -= 2
+
+gobject.type_register(SmallerArrow)        
+
 class ScrollRibbonLayout(gobject.GObject,hippo.CanvasLayout):
     """A Canvas Layout manager that creates a scrollable area with buttons
 
@@ -48,12 +70,14 @@ class ScrollRibbonLayout(gobject.GObject,hippo.CanvasLayout):
         self.__down_button = hippo.CanvasButton()
 
         up_widget = self.__up_button.get_property('widget')
-        up_widget.add(gtk.Arrow(gtk.ARROW_UP, gtk.SHADOW_NONE))
+        up_widget.set_name("scroll-ribbon-button")
+        up_widget.add(SmallerArrow(gtk.ARROW_UP, gtk.SHADOW_NONE))
         up_widget.get_child().show()
         up_widget.set_relief(gtk.RELIEF_NONE)
 
         down_widget = self.__down_button.get_property('widget')
-        down_widget.add(gtk.Arrow(gtk.ARROW_DOWN, gtk.SHADOW_NONE))
+        down_widget.set_name("scroll-ribbon-button")
+        down_widget.add(SmallerArrow(gtk.ARROW_DOWN, gtk.SHADOW_NONE))
         down_widget.get_child().show()
         down_widget.set_relief(gtk.RELIEF_NONE)
 
