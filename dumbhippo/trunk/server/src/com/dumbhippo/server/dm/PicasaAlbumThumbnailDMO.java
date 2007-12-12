@@ -66,11 +66,11 @@ public abstract class PicasaAlbumThumbnailDMO extends ThumbnailDMO {
 				}
 			}
 			
-			throw new NotFoundException("Can't find video");
+			throw new NotFoundException("Can't find album");
 		}
 	}
 	
 	public static ThumbnailKey getKey(User user, PicasaAlbum album) {
-		return new ThumbnailKey(user.getGuid(), extractExtra(album.getThumbnailHref()), album); 
+		return new ThumbnailKey(user.getGuid(), ThumbnailType.PICASA_ALBUM, extractExtra(album.getThumbnailHref()), album); 
 	}
 }

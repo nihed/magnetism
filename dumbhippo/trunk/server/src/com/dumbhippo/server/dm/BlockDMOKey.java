@@ -30,7 +30,7 @@ public class BlockDMOKey implements DMKey {
 			try {
 				type = BlockType.valueOf(keyString.substring(15));
 			} catch (IllegalArgumentException e) {
-				throw new BadIdException("Bad external account type in ID", e);
+				throw new BadIdException("Bad block type in ID", e);
 			}
 		} else {
 			throw new BadIdException("Bad external account resource ID");
