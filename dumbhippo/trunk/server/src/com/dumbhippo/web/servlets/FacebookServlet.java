@@ -295,6 +295,7 @@ public class FacebookServlet extends AbstractServlet {
 				xml.closeElement();
 			}
 
+			String floatStyle = "";
 			if (user.getAccount().getHasAcceptedTerms()) {
 			    xml.appendTextNode("span", "Updates to the information below will be reflected in ",
 				    	           "style", "margin-left:15px;");
@@ -303,22 +304,25 @@ public class FacebookServlet extends AbstractServlet {
 		        xml.append(".");
 		    } else {
 			    xml.appendTextNode("span", "Fill in the information for accounts you want to display updates from.",
-		    	                   "style", "margin-left:15px;");		    	
+		    	                   "style", "margin-left:15px;");		
+			    floatStyle="float:left;";
 		    }
 		    ExternalAccountCategory currentCategory = null;
-		    xml.openElement("div", "style", "position:relative;width:400px;float:left;");
-		    xml.openElement("fb:editor", "action", "", "width", "280", "labelwidth", "120");
+		    boolean hadInitialInfo = false;
+		    xml.openElement("div", "style", "position:relative;width:440px;" + floatStyle);
+		    xml.openElement("fb:editor", "action", "", "width", "320", "labelwidth", "120");
 		    for (ExternalAccountView externalAccount : getSupportedAccounts(user)) {
 		    	if (currentCategory == null || !currentCategory.equals(externalAccount.getExternalAccountType().getCategory())) {
 				    currentCategory = externalAccount.getExternalAccountType().getCategory();
 		    		xml.openElement("fb:editor-custom");
-				    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", "margin-left:-230px;" );		    	
+				    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", "margin-left:-120px;" );		    	
 				    xml.closeElement();
 		    	}
 			    xml.openElement("fb:editor-custom", "label", externalAccount.getSiteName());
 			    
 			    if (externalAccount.getExternalAccount() != null && externalAccount.getExternalAccount().isLovedAndEnabled()) {
 			        xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name(), "value", externalAccount.getExternalAccount().getAccountInfo());
+			        hadInitialInfo = true;
 			    } else {
 			    	xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name());
 			    }
@@ -355,7 +359,10 @@ public class FacebookServlet extends AbstractServlet {
 			    xml.closeElement(); // fb:editor-custom	
 		    }
 		    xml.openElement("fb:editor-buttonset");
-		    xml.appendEmptyNode("fb:editor-button", "value", "Update Info!");
+		    if (hadInitialInfo)
+		        xml.appendEmptyNode("fb:editor-button", "value", "Update Info!");
+		    else
+		    	xml.appendEmptyNode("fb:editor-button", "value", "Submit Info!");
 		    xml.appendEmptyNode("fb:editor-cancel");
 		    xml.closeElement(); // fb:editor-buttonset
 		    xml.closeElement(); // fb:editor 		    
@@ -366,11 +373,14 @@ public class FacebookServlet extends AbstractServlet {
 			    xml.append("Do you already have a Mugshot account? Don't fill in this stuff, just verify" +
 			    		   " your Mugshot account by following this link.");
 			    xml.openElement("form", "action", "http://dogfood.mugshot.org/facebook-add", "target", "_blank", "method", "GET");
-			    xml.appendEmptyNode("input", "type", "submit", "value", "Verify My Mugshot Account", "style", "margin-top:20px;margin-bottom:40px;");
+			    // class submit_button is a Facebook-defined class that makes the button pretty, there didn't seem to be
+			    // a way to get buttons in fb:editor to open in a new window, which is what we want here, so we are using 
+			    // our own form and buttons 
+			    xml.appendEmptyNode("input", "type", "submit", "value", "Verify My Mugshot Account", "class", "submit_button", "style", "margin-top:20px;margin-bottom:40px;");
 			    xml.closeElement();		
 			    xml.append("Want to create a Mugshot account? It's free and easy and helps you see all your friends' activities in one place, share links, and read feeds in a social setting.");
 	            xml.openElement("form", "action", "http://dogfood.mugshot.org/facebook-signin", "target", "_blank", "method", "GET");
-	            xml.appendEmptyNode("input", "type", "submit", "value", "Create My Mugshot Account", "style", "margin-top:20px;margin-bottom:30px;");
+	            xml.appendEmptyNode("input", "type", "submit", "value", "Create My Mugshot Account", "class", "submit_button", "style", "margin-top:20px;margin-bottom:30px;");
 	            xml.closeElement();	
 		    	xml.closeElement();
 		    }
