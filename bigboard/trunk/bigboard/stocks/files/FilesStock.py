@@ -77,8 +77,8 @@ class File(gobject.GObject):
     def get_source_key(self):
         return self._source_key
 
-    def create_icon_link(self):
-        link = IconLink(self.get_name())
+    def create_icon_link(self, themed=False):
+        link = IconLink(self.get_name(), themed=themed)
         link.img.set_property('image-name', self.get_image_name())
         link.link.connect("activated", lambda *args: self.emit('activated', link))
         link.link.set_property("tooltip", self.get_full_name())
@@ -454,7 +454,7 @@ class FilesStock(Stock, google_stock.GoogleStock):
         for a_file in self.__files:         
             if i >= self.__display_limit: break
             if a_file.is_valid():                          
-                link = a_file.create_icon_link()
+                link = a_file.create_icon_link(themed=True)
                 self._recentbox.append(link)
                 i += 1 
 
