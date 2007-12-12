@@ -218,6 +218,10 @@ gobject.type_register(ScrollRibbonLayout)
 class VerticalScrollArea(hippo.CanvasBox):
     """A box with scroll arrows on top and bottom."""
 
+    __gsignals__ = {
+        'scroll-event' : 'override',
+       }
+
     def __init__(self, **kwargs):
         hippo.CanvasBox.__init__(self, **kwargs)
 
@@ -233,6 +237,12 @@ class VerticalScrollArea(hippo.CanvasBox):
 
     def set_increment(self, inc):
         self.increment = inc
+
+    def do_scroll_event(self, event):
+        if event.direction == hippo.SCROLL_UP:
+            self.__layout.scroll_by(self.increment)
+        else:
+            self.__layout.scroll_by(0-self.increment)
 
     def do_paint_children(self, cr, damaged_box):
         for box_child in self.get_layout_children():
