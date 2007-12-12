@@ -179,7 +179,7 @@
 							</c:when>
 							<c:otherwise>
 								<a
-									href="http://api.facebook.com/login.php?api_key=${account.facebookApiKey}&v=1.0&next=/facebook-verify-from-account">Log in to receive updates</a>
+									href="http://api.facebook.com/login.php?api_key=${account.facebookApiKey}&v=1.0&next=?next=account">Log in to receive updates</a>
 							</c:otherwise>
 						</c:choose>
 					</c:when>

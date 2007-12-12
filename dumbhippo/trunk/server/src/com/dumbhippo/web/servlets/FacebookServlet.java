@@ -47,6 +47,8 @@ import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.web.SigninBean;
+import com.dumbhippo.web.UserSigninBean;
 import com.dumbhippo.web.WebEJBUtil;
 import com.facebook.api.FacebookParam;
 import com.facebook.api.FacebookSignatureUtil;
@@ -65,6 +67,42 @@ public class FacebookServlet extends AbstractServlet {
 		config = WebEJBUtil.defaultLookup(Configuration.class);
 	}	
 	
+	// we get a GET request when a user logs in to Facebook and we get a callback with the authentication token
+	@Override
+	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws IOException, HumanVisibleException, HttpException, ServletException, RetryException {
+		String facebookAuthToken = request.getParameter("auth_token");
+		if (facebookAuthToken != null)
+			facebookAuthToken = facebookAuthToken.trim();
+		
+		if (facebookAuthToken == null || facebookAuthToken.equals("")) 
+			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Facebook auth_token not provided");
+
+		String next = request.getParameter("next");
+		String redirectUrl = "/";
+		if (next != null && !next.equals("home"))
+			redirectUrl = redirectUrl + next;
+		
+		redirectUrl = redirectUrl + "?auth_token=" + facebookAuthToken;
+		FacebookTracker facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
+		SigninBean signin = SigninBean.getForRequest(request);
+		
+		if (!(signin instanceof UserSigninBean))
+			throw new RuntimeException("this operation requires checking signin.valid first to be sure a user is signed in");
+		
+    	try {
+    	    // request a session key for the signed in user and set it in the database 
+    	    facebookTracker.updateOrCreateFacebookAccount(((UserSigninBean)signin).getViewpoint(), facebookAuthToken);
+    	} catch (FacebookSystemException e) {
+            redirectUrl = redirectUrl + "&error_message=" + e.getMessage();		
+    	}
+		response.sendRedirect(redirectUrl);
+		return null;
+	}
+	
+	// we get a POST request when our application page is loaded on Facebook
+	// input values from the form on that page are passed in along with usuald Facebook parameters when the from has
+	// been submitted (the action for the form is to reload the application page on Facebook, but the submitted values
+	// are passed along with the request for page content from us)
 	@Override
 	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws IOException, HumanVisibleException, HttpException, ServletException, RetryException {
 		logger.debug("full request is: {}", request.toString());
@@ -297,7 +335,8 @@ public class FacebookServlet extends AbstractServlet {
 
 			String floatStyle = "";
 			String labelWidth = "180";
-			String leftSideWidth = "width:480px;";
+			String leftSideWidth = "width:490px;";
+			String categoryNameLeftMargin = "margin-left:-178px;";
 			if (user.getAccount().getHasAcceptedTerms()) {
 			    xml.appendTextNode("span", "Updates to the information below will be reflected in ",
 				    	           "style", "margin-left:15px;");
@@ -309,17 +348,18 @@ public class FacebookServlet extends AbstractServlet {
 		    	                   "style", "margin-left:15px;");		
 			    floatStyle="float:left;";
 			    labelWidth="120";
-			    leftSideWidth = "width:420px;";
+			    leftSideWidth = "width:430px;";
+			    categoryNameLeftMargin = "margin-left:-118px;";
 		    }
 		    ExternalAccountCategory currentCategory = null;
 		    boolean hadInitialInfo = false;
 		    xml.openElement("div", "style", "position:relative;" + leftSideWidth + floatStyle);
-		    xml.openElement("fb:editor", "action", "", "width", "300", "labelwidth", labelWidth);
+		    xml.openElement("fb:editor", "action", "", "width", "310", "labelwidth", labelWidth);
 		    for (ExternalAccountView externalAccount : getSupportedAccounts(user)) {
 		    	if (currentCategory == null || !currentCategory.equals(externalAccount.getExternalAccountType().getCategory())) {
 				    currentCategory = externalAccount.getExternalAccountType().getCategory();
 		    		xml.openElement("fb:editor-custom");
-				    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", "margin-left:-117px;" );		    	
+				    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", categoryNameLeftMargin);		    	
 				    xml.closeElement();
 		    	}
 			    xml.openElement("fb:editor-custom", "label", externalAccount.getSiteName());
@@ -373,13 +413,14 @@ public class FacebookServlet extends AbstractServlet {
 		    xml.closeElement(); // div with the form
 		    
 		    if (!user.getAccount().getHasAcceptedTerms()) {
-		    	xml.openElement("div", "style", "width:200px;float:left;color:#666666;font-weight:bold;margin-top:34px;margin-left:20px;");
+		    	xml.openElement("div", "style", "width:200px;float:left;color:#666666;font-weight:bold;margin-top:34px;margin-left:10px;");
 			    xml.append("Do you already have a Mugshot account? Don't fill in this stuff, just verify" +
 			    		   " your Mugshot account by following this link.");
 			    xml.openElement("form", "action", "http://dogfood.mugshot.org/facebook-add", "target", "_blank", "method", "GET");
 			    // there didn't seem to be a way to get buttons in fb:editor to open in a new window, which is what we want here, so we are using 
 			    // our own form and buttons 
-			    String buttonStyle = "background-color:#3B5998;color:#ffffff;border-width:1px;padding-top:2px;padding-bottom:2px;padding-right:6px;padding-left:6px;border-top-color:#D8DFEA;border-left-color:#D8DFEA;border-right-color:#0E1F5B;border-bottom-color:#0E1F5B;margin-top:20px;margin-bottom:30px;";
+			    // original top and left border color on facebook is #D8DFEA, but it looks too light to me
+			    String buttonStyle = "background-color:#3B5998;color:#ffffff;border-width:1px;padding-top:2px;padding-bottom:2px;padding-right:6px;padding-left:6px;border-top-color:#728199;border-left-color:#728199;border-right-color:#0E1F5B;border-bottom-color:#0E1F5B;margin-top:20px;margin-bottom:30px;";
 			    xml.appendEmptyNode("input", "type", "submit", "value", "Verify My Mugshot Account", "style", buttonStyle);
 			    xml.closeElement();		
 			    xml.append("Want to create a Mugshot account? It's free and easy and helps you see all your friends' activities in one place, share links, and read feeds in a social setting.");
