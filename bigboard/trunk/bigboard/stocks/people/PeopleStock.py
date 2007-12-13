@@ -82,6 +82,8 @@ class PeopleStock(AbstractMugshotStock):
 
         if person.is_contact:
             person.resource.connect(resort, 'status')
+
+        person.connect('online-changed', resort)
         person.connect('display-name-changed', resort)
         
         map[person] = item

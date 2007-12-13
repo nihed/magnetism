@@ -33,6 +33,7 @@ class Person(gobject.GObject):
         "xmpp-changed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "xmpp-buddy-changed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "local-buddy-changed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        "online-changed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }
     
     def __init__(self, resource):
@@ -40,9 +41,12 @@ class Person(gobject.GObject):
         self.resource = resource
         self.is_contact = self.resource.class_id == "http://online.gnome.org/p/o/contact"
 
-        # self._debug_rank = -100
+        #self._debug_rank = -100
 
         self.icon_url = None
+        self.online = False
+        self.aim_buddy = None
+        self.xmpp_buddy = None
 
         if self.is_contact:
             self.resource.connect(self.__contact_name_changed, "name")
@@ -95,9 +99,30 @@ class Person(gobject.GObject):
 
             self.resource.connect(self.__buddy_alias_changed, "alias")
             self.resource.connect(self.__buddy_icon_changed, "icon")
+            self.resource.connect(self.__buddy_online_changed, "isOnline")
 
             self.__buddy_alias_changed(resource)
             self.__buddy_icon_changed(resource)
+            self.__buddy_online_changed(resource)
+
+    def __contact_recompute_online(self):
+        isOnline = False
+        
+        try:
+            isOnline = self.aim_buddy.isOnline
+        except AttributeError:
+            pass
+
+        if not isOnline:
+            try:
+                isOnline = self.xmpp_buddy.isOnline
+            except AttributeError:
+                pass
+        
+        if isOnline != self.online:
+            self.online = isOnline
+            self.emit('online-changed')
+            _logger.debug('%s is now %d' % (self.display_name, self.online))
 
     def __contact_name_changed(self, resource):
         try:
@@ -121,6 +146,7 @@ class Person(gobject.GObject):
             self.aim = None
 
         self.emit("aim-changed")
+        self.__contact_recompute_online()
 
     def __contact_xmpps_changed(self, resource):
         try:
@@ -135,12 +161,18 @@ class Person(gobject.GObject):
             self.xmpp = None
 
         self.emit("xmpp-changed")
+        self.__contact_recompute_online()    
+
+    def __contact_buddy_online_changed(self, *args):
+        self.__contact_recompute_online()
 
     def __contact_aim_buddies_changed(self, resource):
         try:
             self.aim_buddies = resource.aimBuddies
         except AttributeError:
             self.aim_buddies = []
+
+        old_aim_buddy = self.aim_buddy
 
         ## FIXME don't just pick one arbitrarily
         if len(self.aim_buddies) > 0:
@@ -150,13 +182,21 @@ class Person(gobject.GObject):
 
         self.__refresh_icon_url() # in case we were using the AIM buddy icon
 
-        self.emit("aim-buddy-changed")
+        if old_aim_buddy != self.aim_buddy:
+            if old_aim_buddy:
+                old_aim_buddy.disconnect(self.__contact_buddy_online_changed)
+            if self.aim_buddy:
+                self.aim_buddy.connect(self.__contact_buddy_online_changed, 'isOnline')
+            self.emit("aim-buddy-changed")
+            self.__contact_recompute_online()
 
     def __contact_xmpp_buddies_changed(self, resource):
         try:
             self.xmpp_buddies = resource.xmppBuddies
         except AttributeError:
             self.xmpp_buddies = []
+
+        old_xmpp_buddy = self.xmpp_buddy
 
         ## FIXME don't just pick one arbitrarily
         if len(self.xmpp_buddies) > 0:
@@ -166,7 +206,13 @@ class Person(gobject.GObject):
 
         self.__refresh_icon_url() # in case we were using the XMPP buddy icon
 
-        self.emit("xmpp-buddy-changed")
+        if old_xmpp_buddy != self.xmpp_buddy:
+            if old_xmpp_buddy:
+                old_xmpp_buddy.disconnect(self.__contact_buddy_online_changed)
+            if self.xmpp_buddy:
+                self.xmpp_buddy.connect(self.__contact_buddy_online_changed, 'isOnline')
+            self.emit("xmpp-buddy-changed")
+            self.__contact_recompute_online()
 
     def __contact_user_changed(self, resource):
         try:
@@ -194,6 +240,7 @@ class Person(gobject.GObject):
         if new_buddy != self.local_buddy:
             self.local_buddy = new_buddy
             self.emit("local-buddy-changed")
+            self.__contact_recompute_online()
 
     def __set_icon_url(self, new_icon_url):
         if not new_icon_url:
@@ -202,7 +249,7 @@ class Person(gobject.GObject):
             except AttributeError:
                 pass
 
-        _logger.debug("photo url now %s" % str(new_icon_url))
+        #_logger.debug("photo url now %s" % str(new_icon_url))
 
         if new_icon_url != self.icon_url:
             self.icon_url = new_icon_url
@@ -255,6 +302,11 @@ class Person(gobject.GObject):
 
     def __buddy_icon_changed(self, resource):
         self.__refresh_icon_url()
+
+    def __buddy_online_changed(self, resource):
+        if resource.isOnline != self.online:
+            self.online = resource.isOnline
+            self.emit('online-changed')
 
     def __hash__(self):
         return hash(self.resource)
@@ -491,20 +543,7 @@ def __get_raw_contact_rank(contact):
     elif status == STATUS_BLOCKED:
         return RANK_NO_DISPLAY
 
-    isOnline = False
-
-    try:
-        isOnline = contact.resource.aim_buddy.isOnline
-    except AttributeError:
-        pass
-
-    if not isOnline:
-        try:
-            isOnline = contact.resource.xmpp_buddy.isOnline
-        except AttributeError:
-            pass
-
-    if isOnline:
+    if contact.online:
         if status == STATUS_MEDIUM:
             return RANK_MEDIUM_ONLINE
         elif status == STATUS_HOT:
@@ -529,7 +568,7 @@ def __get_contact_rank(contact):
     return rank
         
 def __get_buddy_rank(buddy):
-    if buddy.resource.isOnline:
+    if buddy.online:
         return RANK_BUDDY_ONLINE
     else:
         return RANK_BUDDY_OFFLINE
@@ -564,8 +603,8 @@ def sort_people(a, b):
     else:
         rankB = __get_buddy_rank(b)
 
-    #debug_change_rank(a, rankA)
-    #debug_change_rank(b, rankB)
+    #    debug_change_rank(a, rankA)
+    #    debug_change_rank(b, rankB)
 
     if rankA != rankB:
         return rankB - rankA
