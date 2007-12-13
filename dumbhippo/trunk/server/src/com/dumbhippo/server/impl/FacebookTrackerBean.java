@@ -587,6 +587,9 @@ public class FacebookTrackerBean implements FacebookTracker {
 	
 	private String createFbmlForUser(User user) {
 		StringBuilder fbmlSb = new StringBuilder("");
+		fbmlSb.append("<fb:visible-to-owner><fb:subtitle>" +
+		              "<a href='http://apps.facebook.com/mugshot'>Edit Accounts</a>" +
+		              "</fb:subtitle></fb:visible-to-owner>");
 		Pageable<BlockView> pageableMugshot = new Pageable<BlockView>("mugshot");
 		pageableMugshot.setPosition(0);
 		pageableMugshot.setInitialPerPage(INITIAL_BLOCKS_PER_PAGE);
@@ -602,8 +605,14 @@ public class FacebookTrackerBean implements FacebookTracker {
 		        ": <a target='_blank' href='" + getAbsoluteUrl(blockView.getSummaryLink()) + "'>" + blockView.getSummaryLinkText() + "</a>" +
 			    "</td></tr></table>");
 		}
-		fbmlSb.append("<a target='blank' style='font-size: 12px; font-weight: bold; margin-top: 10px;' href='" + getAbsoluteUrl("/person?who=" + user.getId().toString()) + "'>" +
-				      "Visit My Mugshot to See More</a>");
+		// display a note if there was no activity
+		if (pageableMugshot.getResults().size() == 0) {
+			fbmlSb.append("<div>Once there are new updates, they will show up here.</div>");
+		}
+		if (user.getAccount().getHasAcceptedTerms()) {
+		    fbmlSb.append("<a target='_blank' style='font-size: 12px; font-weight: bold; margin-top: 10px;' href='" + getAbsoluteUrl("/person?who=" + user.getId().toString()) + "'>" +
+				          "Visit my Mugshot Page</a>");
+		}
 		return fbmlSb.toString();
 	}
 	
