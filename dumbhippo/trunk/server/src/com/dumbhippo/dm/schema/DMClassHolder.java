@@ -30,12 +30,15 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.BadIdException;
+import com.dumbhippo.dm.ChangeNotification;
+import com.dumbhippo.dm.ClientMatcher;
 import com.dumbhippo.dm.DMInjectionLookup;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.dm.DataModel;
 import com.dumbhippo.dm.annotations.DMFilter;
+import com.dumbhippo.dm.annotations.DMInit;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.dm.annotations.MetaConstruct;
@@ -65,6 +68,15 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	private Constructor<? extends T> wrapperConstructor;
 	private DMPropertyHolder<K,T,?>[] properties;
 	private boolean[] mustQualify;
+
+	// Groups declared in this class (not parent classes)
+	private Map<Integer, PropertyGroup> groups = new HashMap<Integer, PropertyGroup>();
+	// Copies of parent groups (with the level set to the depth of the inheritance)
+	private List<PropertyGroup> parentGroups = new ArrayList<PropertyGroup>();
+	// Map from all properties relevant to this class (properties of this class and parent classes) 
+	// to the group for the property
+	private Map<DMPropertyHolder, PropertyGroup> groupsByProperty = new HashMap<DMPropertyHolder, PropertyGroup>();
+
 	private Map<String, Integer> propertiesMap = new HashMap<String, Integer>();
 	private Map<String, Integer> feedPropertiesMap = new HashMap<String, Integer>();
 	private DMO annotation;
@@ -316,6 +328,12 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		return new StoreKey(subClassHolder, key);
 	}
 	
+	@SuppressWarnings("unchecked")
+	public ChangeNotification<K,? extends T> makeChangeNotification(K key, ClientMatcher matcher) {
+		DMClassHolder subClassHolder = getClassHolderForKey(key);
+		return new ChangeNotification(subClassHolder.getDMOClass(), key, matcher);
+	}
+	
 	public StoreKey<K,? extends T> makeStoreKey(String string) throws BadIdException {
 		
 		if (keyClass == Guid.class) {
@@ -462,6 +480,16 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		}
 	}
 	
+	private PropertyGroup ensureGroup(int index) {
+		PropertyGroup group = groups.get(index);
+		if (!groups.containsKey(index)) {
+			group = new PropertyGroup(index);
+			groups.put(index, group);
+		}
+		
+		return group;
+	}
+	
 	private void collateProperties(CtClass baseCtClass) {
 		List<DMPropertyHolder<K,T,?>> foundProperties = new ArrayList<DMPropertyHolder<K,T,?>>();
 		Map<String, Integer> nameCount = new HashMap<String, Integer>();
@@ -474,10 +502,32 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 					nameCount.put(property.getName(), 1);
 				else
 					nameCount.put(property.getName(), 1 + nameCount.get(property.getName()));
+				
+				if (property.getGroup() >= 0) {
+					PropertyGroup group = ensureGroup(property.getGroup());
+					group.addProperty(property);
+					groupsByProperty.put(property, group);
+				}
+			} else {
+				Object[] annotations;
+				
+				try {
+					annotations = method.getAnnotations();
+				} catch (ClassNotFoundException e) {
+					throw new RuntimeException(dmoClass.getName() + ": Problem looking up annotations", e);
+				}
+				
+				for (Object annotation : annotations) {
+					if (annotation instanceof DMInit) {
+						DMInit init = (DMInit)annotation;
+						ensureGroup(init.group()).setInitMethod(method, init);
+					}
+				}
 			}
 		}
 		
 		Class<?> parentClass = dmoClass.getSuperclass();
+		int level = 1;
 		while (parentClass != null) {
 			DMO parentAnnotation = parentClass.getAnnotation(DMO.class);
 			if (parentAnnotation != null) {
@@ -497,9 +547,18 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 							nameCount.put(property.getName(), 1 + nameCount.get(property.getName()));
 					}
 				}
+				
+				for (Object o : parentClassHolder.groups.values()) {
+					PropertyGroup group = (PropertyGroup)o;
+					PropertyGroup groupCopy = new PropertyGroup(group, level); 
+					parentGroups.add(groupCopy);
+					for (DMPropertyHolder<K,T,?> property : group.getProperties())
+						groupsByProperty.put(property, groupCopy);
+				}
 			}
 			
 			parentClass = parentClass.getSuperclass();
+			level++;
 		}
 		
 		// Sort the properties based on the ordering we impose on DMPropertyHolder 
@@ -532,6 +591,10 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		field.setModifiers(Modifier.PRIVATE);
 		wrapperCtClass.addField(field);
 		
+		field = new CtField(CtClass.booleanType, "_dm_injected", wrapperCtClass);
+		field.setModifiers(Modifier.PRIVATE);
+		wrapperCtClass.addField(field);
+
 		field = new CtField(CtClass.booleanType, "_dm_initialized", wrapperCtClass);
 		field.setModifiers(Modifier.PRIVATE);
 		wrapperCtClass.addField(field);
@@ -552,9 +615,17 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		CtMethod method = new CtMethod(CtClass.voidType, "_dm_init", new CtClass[] {}, wrapperCtClass);
 		Template body = new Template(
 			"{" +
-			"    if (!_dm_initialized) {" +
-			"        _dm_session.internalInit($0);" +
-			"        _dm_initialized = true;" +
+			"  if (!_dm_initialized) {" +
+			"      if (!_dm_injected) {" +
+			"          _dm_classHolder.processInjections(_dm_session, this);" +
+			"          _dm_injected = true;" +
+			"      }" +
+			"      try {" +
+			"          init();" +
+			"      } catch (com.dumbhippo.server.NotFoundException e) {" +
+			"          throw new com.dumbhippo.dm.LazyInitializationException(e);" +
+			"      }" +
+			"      _dm_initialized = true;" +
 			"    }" +
 			"}");
 		method.setBody(body.toString());
@@ -568,14 +639,40 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		wrapperCtClass.addMethod(method);
 	}
 	
-	private void addGroupInitMethod(CtClass wrapperCtClass, int group, List<DMPropertyHolder<K,T,?>> properties) throws CannotCompileException {
-		CtMethod method = new CtMethod(CtClass.voidType, "_dm_initGroup" + group, new CtClass[] {}, wrapperCtClass);
+	private void addGroupInitMethod(CtClass wrapperCtClass, PropertyGroup group) throws CannotCompileException {
+		String groupSuffix = group.getLevel() + "_" + group.getIndex();
+		
+		CtField field = new CtField(CtClass.booleanType, "_dm_initializedGroup" + groupSuffix, wrapperCtClass);
+		field.setModifiers(Modifier.PRIVATE);
+		wrapperCtClass.addField(field);
+		
+		CtMethod method = new CtMethod(CtClass.voidType, "_dm_initGroup" + groupSuffix, new CtClass[] {}, wrapperCtClass);
 		StringBuilder body = new StringBuilder();
 		
 		body.append("{" +
-					"  _dm_init();");
+					"   if (_dm_initializedGroup" + groupSuffix + ")" +
+					"       return;");
 		
-		for (DMPropertyHolder<K,T,?> property : properties) {
+		if (group.getInitMain())
+			body.append(
+					"   _dm_init();");
+		else
+			body.append(
+					"  if (!_dm_injected) {" +
+					"     _dm_classHolder.processInjections(_dm_session, this);" +
+					"     _dm_injected = true;" +
+					"  }");
+			
+		if (group.getInitMethod() != null) {
+			body.append(
+					"  try {" +
+					"     " + group.getInitMethod() + "();" +
+					"  } catch (com.dumbhippo.server.NotFoundException e) {" +
+					"      throw new com.dumbhippo.dm.LazyInitializationException(e);" +
+					"  }");
+		}
+		
+		for (DMPropertyHolder<K,T,?> property : group.getProperties()) {
 			Template propertyInit = new Template(
 					"  _dm_%propertyName% = %unboxPre%_dm_session.storeAndFilter(getStoreKey(), %propertyIndex%, %boxPre%super.%methodName%()%boxPost%)%unboxPost%;" +
 					"  _dm_%propertyName%Initialized = true;");
@@ -586,37 +683,25 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 			propertyInit.setParameter("unboxPre", property.getUnboxPrefix());
 			propertyInit.setParameter("unboxPost", property.getUnboxSuffix());
 			propertyInit.setParameter("propertyIndex", Integer.toString(getPropertyIndex(property.getName())));
-			propertyInit.setParameter("group", Integer.toString(group));
 			propertyInit.setParameter("methodName", property.getMethodName());
 
 			body.append(propertyInit.toString());
 		}
 		
-		body.append("}");
+		body.append(
+				"   _dm_initializedGroup" + groupSuffix + " = true;" +
+				"}");
 		
 		method.setBody(body.toString());
 		wrapperCtClass.addMethod(method);
 	}
 	
 	private void addGroupInitMethods(CtClass wrapperCtClass) throws CannotCompileException {
-		Map<Integer, List<DMPropertyHolder<K,T,?>>> map = new HashMap<Integer, List<DMPropertyHolder<K,T,?>>>();
+		for  (PropertyGroup group : groups.values()) 
+			addGroupInitMethod(wrapperCtClass, group);
 		
-		for (DMPropertyHolder<K,T,?> property : properties) {
-			int group = property.getGroup();
-			if (group >= 0) {
-				List<DMPropertyHolder<K,T,?>> l = map.get(group);
-				if (l == null) {
-					l = new ArrayList<DMPropertyHolder<K,T,?>>();
-					map.put(group, l);
-				}
-				
-				l.add(property);
-			}
-		}
-
-		for (int group : map.keySet()) {
-			addGroupInitMethod(wrapperCtClass, group, map.get(group));
-		}
+		for  (PropertyGroup group : parentGroups) 
+			addGroupInitMethod(wrapperCtClass, group);
 	}
 
 	private void addGetClassHolderMethod(CtClass wrapperCtClass) throws CannotCompileException {
@@ -663,15 +748,16 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		CtMethod wrapperMethod = new CtMethod(property.getCtClass(), property.getMethodName(), new CtClass[] {}, wrapperCtClass);
 		
 		String storeCommands;
-		int group = property.getGroup();
-		if (group < 0) {
+		PropertyGroup group = groupsByProperty.get(property); 
+		
+		if (group == null) {
 			storeCommands =
 				"_dm_init();" +
 				"_dm_%propertyName% = %unboxPre%_dm_session.storeAndFilter(getStoreKey(), %propertyIndex%, %boxPre%super.%methodName%()%boxPost%)%unboxPost%;" +
 				"_dm_%propertyName%Initialized = true;";
 		} else {
 			storeCommands = 
-				"_dm_initGroup%group%();";
+				"_dm_initGroup%groupSuffix%();";
 		}
 		
 		Template body = new Template(
@@ -693,7 +779,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		body.setParameter("unboxPre", property.getUnboxPrefix());
 		body.setParameter("unboxPost", property.getUnboxSuffix());
 		body.setParameter("propertyIndex", Integer.toString(propertyIndex));
-		body.setParameter("group", Integer.toString(group));
+		body.setParameter("groupSuffix", group != null ? (group.getLevel() + "_" + group.getIndex()) : "~~~");
 		body.setParameter("methodName", property.getMethodName());
 		wrapperMethod.setBody(body.toString());
 		
@@ -748,12 +834,12 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		CtClass wrapperCtClass = classPool.makeClass(className + "_DMWrapper", baseCtClass);
 		
 		try {
+			addGetClassHolderMethod(wrapperCtClass);
 			addCommonFields(wrapperCtClass);
 			addPropertyFields(wrapperCtClass);
 			addConstructor(wrapperCtClass);
 			addInitMethod(baseCtClass, wrapperCtClass);
 			addGroupInitMethods(wrapperCtClass);
-			addGetClassHolderMethod(wrapperCtClass);
 			addWrapperGetters(wrapperCtClass);
 			
 			Class<?> wrapperClass  = wrapperCtClass.toClass();
@@ -777,5 +863,66 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	
 	public static DMClassHolder<?, ? extends DMObject<?>> createForClass(DataModel model, Class<?> clazz) {
 		return newClassHolderHack(model, DMClassInfo.getForClass(clazz));
+	}
+	
+	private class PropertyGroup {
+		public List<DMPropertyHolder<K,T,?>> properties = new ArrayList<DMPropertyHolder<K,T,?>>();
+		public boolean initMain = true;
+		public String initMethod = null;
+		int index;
+		int level;
+		
+		public PropertyGroup(int index) {
+			this.index = index;
+			this.level = 0;
+		}
+		
+		/* This is used to make a copy of a group in a parent class */
+		public PropertyGroup(PropertyGroup other, int level) {
+			this.properties = other.properties;
+			this.initMain = other.initMain;
+			this.initMethod = other.initMethod;
+			this.index = other.index;
+			this.level = level;
+		}
+		
+		public void addProperty(DMPropertyHolder<K,T,?> property) {
+			properties.add(property);
+		}
+		
+		public void setInitMethod(CtMethod method, DMInit annotation) {
+			try {
+				if (method.getParameterTypes().length != 0)
+					throw new RuntimeException(dmoClass.getName() + ": @DMInit method cannot have parameters");
+			} catch (NotFoundException e) {
+				throw new RuntimeException(dmoClass.getName() + ": Problem looking up parameters for @DMInit method", e);
+			}
+			
+			if (initMethod != null)
+				throw new RuntimeException(dmoClass.getName() + ": Cannot add DMInit method " + method.getName() + " for group " + index + " already have method " + initMethod);
+			
+			initMethod = method.getName();
+			initMain = annotation.initMain();
+		}
+
+		public int getIndex() {
+			return index;
+		}
+		
+		public int getLevel() {
+			return level;
+		}
+
+		public boolean getInitMain() {
+			return initMain;
+		}
+
+		public String getInitMethod() {
+			return initMethod;
+		}
+
+		public List<DMPropertyHolder<K, T, ?>> getProperties() {
+			return properties;
+		}
 	}
 }

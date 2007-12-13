@@ -8,6 +8,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.annotations.DMFilter;
+import com.dumbhippo.dm.annotations.DMInit;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
@@ -15,21 +16,31 @@ import com.dumbhippo.dm.annotations.MetaConstruct;
 import com.dumbhippo.dm.store.StoreKey;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.persistence.BlockType.BlockVisibility;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.blocks.TitleBlockView;
 import com.dumbhippo.server.blocks.TitleDescriptionBlockView;
 import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @DMO(classId="http://mugshot.org/p/o/block", resourceBase="/o/block")
 @DMFilter("viewer.canSeeBlock(this)")
 public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 	@SuppressWarnings("unused")
 	private static Logger logger = GlobalSetup.getLogger(BlockDMO.class);
+	
+	static final int USER_BLOCK_DATA_GROUP = 1;
 
 	protected BlockView blockView;
+	private UserBlockData userBlockData;
 
+	@Inject
+	Viewpoint viewpoint;
+	
 	@Inject
 	DMSession session;
 	
@@ -113,6 +124,36 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 			return ((TitleDescriptionBlockView)blockView).getDescription();
 		else
 			return null;
+	}
+	
+	@DMProperty(defaultInclude=true)
+	public boolean isPublic() {
+		return blockView.getBlockType().getBlockVisibility() == BlockVisibility.PUBLIC;
+	}
+	
+	//////////////////////////////////////////////////////////////////////
+	
+	@DMInit(group=USER_BLOCK_DATA_GROUP, initMain=false) 
+	public void initUserBlockData() {
+		if (viewpoint instanceof UserViewpoint) {
+			try {
+				userBlockData = stacker.lookupUserBlockData((UserViewpoint)viewpoint, getKey().getBlockId());
+			} catch (NotFoundException e) {
+			}
+		}
+	}
+	
+	@DMProperty(defaultInclude=true, group=USER_BLOCK_DATA_GROUP, cached=false)
+	public long getClickedTimestamp() {
+		return userBlockData.getClickedTimestampAsLong();
+	}
+
+	@DMProperty(defaultInclude=true, group=USER_BLOCK_DATA_GROUP, cached=false)
+	public long getIgnoredTimestamp() {
+		if (userBlockData.isIgnored())
+			return userBlockData.getIgnoredTimestampAsLong();
+		else
+			return -1;
 	}
 	
 	//////////////////////////////////////////////////////////////////////

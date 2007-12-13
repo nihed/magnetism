@@ -21,6 +21,7 @@ import com.dumbhippo.dm.DMFeedItem;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.annotations.DMFilter;
+import com.dumbhippo.dm.annotations.DMInit;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
@@ -63,7 +64,6 @@ public abstract class UserDMO extends DMObject<Guid> {
 	private static final int CURRENT_TRACK_GROUP = 2; 
 	
 	private TrackHistory currentTrack;
-	private boolean currentTrackFetched;
 
 	// people who have any opinion of this UserDMO except blocked
 	private Set<UserDMO> contacters; /* Includes hot/medium/cold contacters */
@@ -161,37 +161,36 @@ public abstract class UserDMO extends DMObject<Guid> {
 		return result;
 	}
 	
-	private void ensureContacters() {
-		if (contacters == null) {
-			blockingContacters = new HashSet<UserDMO>();
-			contacters = new HashSet<UserDMO>();
-			coldContacters = new HashSet<UserDMO>();
-			hotContacters = new HashSet<UserDMO>();
+	@DMInit(group=CONTACTERS_GROUP, initMain=false)
+	public void initContacters() {
+		blockingContacters = new HashSet<UserDMO>();
+		contacters = new HashSet<UserDMO>();
+		coldContacters = new HashSet<UserDMO>();
+		hotContacters = new HashSet<UserDMO>();
 
-			for (Pair<Guid,ContactStatus> pair : identitySpider.computeContactersWithStatus(user.getGuid())) {
-				Guid guid = pair.getFirst();
-				ContactStatus status = pair.getSecond();
-				
-				UserDMO contacter = session.findUnchecked(UserDMO.class, guid);
+		for (Pair<Guid,ContactStatus> pair : identitySpider.computeContactersWithStatus(getKey())) {
+			Guid guid = pair.getFirst();
+			ContactStatus status = pair.getSecond();
 			
-				switch (status) {
-				case NONCONTACT:
-					break;
-				case BLOCKED:
-					blockingContacters.add(contacter);
-					break;
-				case COLD:
-					coldContacters.add(contacter);
-					contacters.add(contacter);
-					break;
-				case MEDIUM:
-					contacters.add(contacter);
-					break;
-				case HOT:
-					hotContacters.add(contacter);
-					contacters.add(contacter);
-					break;
-				}
+			UserDMO contacter = session.findUnchecked(UserDMO.class, guid);
+		
+			switch (status) {
+			case NONCONTACT:
+				break;
+			case BLOCKED:
+				blockingContacters.add(contacter);
+				break;
+			case COLD:
+				coldContacters.add(contacter);
+				contacters.add(contacter);
+				break;
+			case MEDIUM:
+				contacters.add(contacter);
+				break;
+			case HOT:
+				hotContacters.add(contacter);
+				contacters.add(contacter);
+				break;
 			}
 		}
 	}
@@ -199,8 +198,6 @@ public abstract class UserDMO extends DMObject<Guid> {
 	@DMProperty(group=CONTACTERS_GROUP)
 	@DMFilter("viewer.canSeePrivate(this)")
 	public Set<UserDMO> getContacters() {
-		ensureContacters();
-		
 		return contacters;
 	}
 	
@@ -212,24 +209,18 @@ public abstract class UserDMO extends DMObject<Guid> {
 	@DMProperty(group=CONTACTERS_GROUP)
 	@DMFilter("false")
 	public Set<UserDMO> getBlockingContacters() {
-		ensureContacters();
-		
 		return blockingContacters;
 	}
 	
 	@DMProperty(group=CONTACTERS_GROUP)
 	@DMFilter("false")
 	public Set<UserDMO> getColdContacters() {
-		ensureContacters();
-		
 		return coldContacters;
 	}
 
 	@DMProperty(group=CONTACTERS_GROUP)
 	@DMFilter("false")
 	public Set<UserDMO> getHotContacters() {
-		ensureContacters();
-		
 		return hotContacters;
 	}
 	
@@ -429,34 +420,30 @@ public abstract class UserDMO extends DMObject<Guid> {
 		return result;
 	}
 	
-	private void ensureCurrentTrack() {
-		if (!currentTrackFetched) {
-			try {
-				currentTrack = musicSystem.getCurrentTrack(AnonymousViewpoint.getInstance(Site.NONE), user);
-				int duration = currentTrack.getTrack().getDuration();
-				
-				// A negative duration means "unknown". We also treat durations of over an hour as suspect,
-				// and substitute a default duration for determining if the track is still playing
-				if (duration <= 0 || duration > 60 * 60) {
-					duration = 30 * 60;
-				}
-				
-				// While we don't try to notify when tracks stop playing, we want to omit past tracks
-				// to avoid doing web-services work to get the details of "current" tracks that were
-				// played months ago.
-				if (currentTrack.getLastUpdated().getTime() + duration * 1000L <  System.currentTimeMillis())
-					currentTrack = null;
-
-			} catch (NotFoundException e) {
+	@DMInit(group=CURRENT_TRACK_GROUP)
+	public void initCurrentTrack() {
+		try {
+			currentTrack = musicSystem.getCurrentTrack(AnonymousViewpoint.getInstance(Site.NONE), user);
+			int duration = currentTrack.getTrack().getDuration();
+			
+			// A negative duration means "unknown". We also treat durations of over an hour as suspect,
+			// and substitute a default duration for determining if the track is still playing
+			if (duration <= 0 || duration > 60 * 60) {
+				duration = 30 * 60;
 			}
-			currentTrackFetched = true;
+			
+			// While we don't try to notify when tracks stop playing, we want to omit past tracks
+			// to avoid doing web-services work to get the details of "current" tracks that were
+			// played months ago.
+			if (currentTrack.getLastUpdated().getTime() + duration * 1000L <  System.currentTimeMillis())
+				currentTrack = null;
+
+		} catch (NotFoundException e) {
 		}
 	}
 	
 	@DMProperty(group=CURRENT_TRACK_GROUP)
 	public TrackDMO getCurrentTrack() {
-		ensureCurrentTrack();
-		
 		if (currentTrack != null)
 			return session.findUnchecked(TrackDMO.class, currentTrack.getTrack().getId());
 		else
@@ -465,8 +452,6 @@ public abstract class UserDMO extends DMObject<Guid> {
 	
 	@DMProperty(group=CURRENT_TRACK_GROUP)
 	public long getCurrentTrackPlayTime() {
-		ensureCurrentTrack();
-		
 		if (currentTrack != null)
 			return currentTrack.getLastUpdated().getTime();
 		else

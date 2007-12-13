@@ -13,6 +13,7 @@ import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
+import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Post;
@@ -22,6 +23,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @DMO(classId="http://mugshot.org/p/o/post", resourceBase="/o/post")
 @DMFilter("viewer.canSeePost(this)")
@@ -31,6 +33,9 @@ public abstract class PostDMO extends DMObject<Guid> {
 	
 	@Inject
 	DMSession session;
+
+	@Inject
+	Viewpoint viewpoint;
 
 	private Post post;
 	
@@ -62,6 +67,16 @@ public abstract class PostDMO extends DMObject<Guid> {
 		return post.getText();
 	}
 	
+	@DMProperty(defaultInclude=true, type=PropertyType.URL)
+	public String getLink() {
+		return post.getUrl().toString();
+	}
+	
+	@DMProperty(defaultInclude=true)
+	public long getDate() {
+		return post.getPostDate().getTime();
+	}
+
 	@DMProperty(defaultInclude=true)
 	@DMFilter("viewer.canSeePrivate(any)")
 	public List<UserDMO> getUserRecipients() {

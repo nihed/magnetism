@@ -58,7 +58,7 @@ public class BasicTests  extends AbstractSupportedTests {
 		assertTrue(groupDMO != null);
 		assertTrue(groupDMO.getKey().equals(guid));
 		assertTrue(groupDMO.getName().equals("Hippos"));
-
+		
 		em.getTransaction().commit();
 		
 		//////////////////////////////////////////////////
@@ -132,6 +132,38 @@ public class BasicTests  extends AbstractSupportedTests {
 		// back from the global cache
 		logger.debug("===== Checking the group again in a different new transaction ====\n");
 		checkGroupValidity(groupId, bobId, janeId);
+
+		em.getTransaction().commit();
+	}
+	
+	// Test grouping
+	public void testGrouping() throws Exception {
+		EntityManager em;
+
+		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
+		
+		/////////////////////////////////////////////////
+		// Setup
+
+		em = support.beginSessionRW(viewpoint);
+
+		TestUser bob = new TestUser("Bob");
+		Guid bobId = bob.getGuid();
+		em.persist(bob);
+		
+
+		em.getTransaction().commit();
+
+		/////////////////////////////////////////////////
+
+		em = support.beginSessionRO(viewpoint);
+
+		ReadOnlySession session = support.currentSessionRO();
+
+		TestUserDMO bobDMO = session.find(TestUserDMO.class, bobId);
+		
+		assertEquals("initializedA", bobDMO.getGroupedA());
+		assertEquals("initializedB", bobDMO.getGroupedB());
 
 		em.getTransaction().commit();
 	}

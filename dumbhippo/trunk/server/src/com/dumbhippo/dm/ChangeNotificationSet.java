@@ -32,7 +32,7 @@ public class ChangeNotificationSet implements Serializable {
 	public ChangeNotificationSet(DataModel model) {
 	}
 
-	private <K, T extends DMObject<K>> ChangeNotification<K,T> getNotification(Class<T> clazz, K key, ClientMatcher matcher) {
+	private <K, T extends DMObject<K>> ChangeNotification<K,T> getNotification(DataModel model, Class<T> clazz, K key, ClientMatcher matcher) {
 		if (key instanceof DMKey) {
 			@SuppressWarnings("unchecked")
 			K clonedKey = (K)((DMKey)key).clone(); 
@@ -43,14 +43,14 @@ public class ChangeNotificationSet implements Serializable {
 			if (matchedNotifications == null)
 				matchedNotifications = new ArrayList<ChangeNotification<?,?>>();
 			
-			ChangeNotification<K,T> notification = new ChangeNotification<K,T>(clazz, key, matcher);
+			ChangeNotification<K,T> notification = model.makeChangeNotification(clazz, key, null);
 			matchedNotifications.add(notification);
 			return notification;
 		} else {
 			if (notifications == null)
 				notifications = new HashMap<ChangeNotification<?,?>, ChangeNotification<?,?>>();
 	
-			ChangeNotification<K,T> notification = new ChangeNotification<K,T>(clazz, key);
+			ChangeNotification<K,T> notification = model.makeChangeNotification(clazz, key, matcher);
 			@SuppressWarnings("unchecked")
 			ChangeNotification<K,T> oldNotification = (ChangeNotification<K,T>)notifications.get(notification);
 			if (oldNotification != null) {
@@ -64,12 +64,12 @@ public class ChangeNotificationSet implements Serializable {
 	}
 
 	public <K, T extends DMObject<K>> void changed(DataModel model, Class<T> clazz, K key, String propertyName, ClientMatcher matcher) {
-		ChangeNotification<K,T> notification = getNotification(clazz, key, matcher);
+		ChangeNotification<K,T> notification = getNotification(model, clazz, key, matcher);
 		notification.addProperty(model, propertyName);
 	}
 
 	public <K, T extends DMObject<K>> void feedChanged(DataModel model, Class<T> clazz, K key, String propertyName, long itemTimestamp) {
-		ChangeNotification<K,T> notification = getNotification(clazz, key, null);
+		ChangeNotification<K,T> notification = getNotification(model, clazz, key, null);
 		notification.addFeedProperty(model, propertyName, itemTimestamp);
 	}
 

@@ -43,6 +43,10 @@ public class InheritanceTests  extends AbstractSupportedTests {
 		assertEquals("*The Nose*", superUserDMO.getName());
 		assertEquals("The ability to tell if leftovers have gone bad", superUserDMO.getSuperPower());
 
+		/// Test that groups in base classes are handled in inherited classes
+		assertEquals("initializedA", superUserDMO.getGroupedA());
+		assertEquals("initializedB", superUserDMO.getGroupedB());
+
 		em.getTransaction().commit();
 	}
 }
