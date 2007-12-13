@@ -8,7 +8,7 @@
 	dh.account.active = ${signin.active};
 	dh.password.active = ${signin.active};
 	dh.formtable.currentValues = {
-		'dhUsernameEntry' : <dh:jsString value="${signin.user.nickname}"/>,
+		'dhUsernameEntry' : <dh:jsString value="${signin.viewedUserFromSystem.name}"/>,
 		'dhBioEntry' : <dh:jsString value="${signin.user.account.bio}"/>,
 		'dhMusicBioEntry' : <dh:jsString value="${signin.user.account.musicBio}"/>,
 		'dhWebsiteEntry' : <dh:jsString value="${account.websiteUrl}"/>,
