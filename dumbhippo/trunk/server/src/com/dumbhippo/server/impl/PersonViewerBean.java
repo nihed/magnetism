@@ -301,7 +301,8 @@ public class PersonViewerBean implements PersonViewer {
 			addPersonViewExtra(viewpoint, pv, resources, e);
 		}
 
-		if (pv.getUser() != null && (pv.getUser().getNickname() == null || pv.getUser().getNickname().length() == 0)) {
+		if (pv.getUser() != null && (pv.getUser().getNickname() == null || pv.getUser().getNickname().length() == 0
+				                     || pv.getUser().getNickname().contains("Facebook user"))) {
             // we need to get the user's name from Facebook if Facebook is the only resource available for 
 			// the user that can provide us with a name
 			FacebookResource fr = null;
@@ -317,8 +318,11 @@ public class PersonViewerBean implements PersonViewer {
 			if (fr != null) {			
 				FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
 				FacebookAccount facebookAccount = facebookTracker.getFacebookAccount(fr.getFacebookUserId());
-				String name = ws.getName(facebookAccount);
-				pv.setFallbackName(name);
+				if (facebookAccount != null) {
+				    String name = ws.getName(facebookAccount);
+				    if (name.trim().length() > 0)
+				        pv.setPreferredName(name);
+				}
 			}
 		}
 		

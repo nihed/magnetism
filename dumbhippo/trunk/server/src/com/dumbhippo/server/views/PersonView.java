@@ -55,6 +55,7 @@ public class PersonView extends EntityView {
 	private Set<Resource> resources;
 	private EnumSet<PersonViewExtra> extras;
 	private boolean invited; 
+	private String preferredName;
 	private String fallbackName;
 	private Guid fallbackIdentifyingGuid;
 	private String bioAsHtmlCached;
@@ -156,9 +157,9 @@ public class PersonView extends EntityView {
 	}
 	
 	private String getNickname() {
-		String name = null;
+		String name = preferredName;
 		
-		if (user != null)
+		if ((name == null || name.length() == 0) && user != null)
 			name = user.getNickname();
 		
 		// Contacts just should not have a nickname field, unless/until 
@@ -874,6 +875,21 @@ public class PersonView extends EntityView {
 	 */
 	public void setFallbackIdentifyingGuid(Guid guid) {
 		fallbackIdentifyingGuid = guid;
+	}
+	
+	/**
+	 * Sometimes the dafault name we can store for the user is not 
+	 * that great (e.g. "Facebook user 123456"), and we can only
+	 * get the preferred name on the fly.
+	 * 
+	 * @return the preferred name or null
+	 */
+	public String getPreferredName() {
+		return preferredName;
+	}
+
+	public void setPreferredName(String preferredName) {
+		this.preferredName = preferredName;
 	}
 	
 	/**
