@@ -71,6 +71,7 @@ import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RecommenderSystem;
 import com.dumbhippo.server.blocks.PostBlockHandler;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.GuidNotFoundException;
 import com.dumbhippo.server.views.AnonymousViewpoint;
@@ -752,6 +753,8 @@ public class PostingBoardBean implements PostingBoard {
 		// to write our own code for asynchronous execution
 		TxUtils.runInTransactionOnCommit(new TxRunnable() {
 			public void run() throws RetryException {
+				DataService.getModel().initializeReadWriteSession(new UserViewpoint(viewpoint.getViewerId(), viewpoint.getSite()));
+				
 				Post attachedPost = em.find(Post.class, post.getId());
 				User attachedUser = em.find(User.class, viewpoint.getViewer().getId());
 

@@ -31,11 +31,10 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 	
 	private long[] feedTimestamps;
 
-	public ChangeNotification(Class<T> clazz, K key) {
-		this.clazz = clazz;
-		this.key = key;
-	}
-	
+	/**
+	 * DO NOT USE THIS CONSTRUCTOR DIRECTLY. Instead use model.makeChangeNotification(),
+	 * which properly handles subclassing. 
+	 */
 	public ChangeNotification(Class<T> clazz, K key, ClientMatcher matcher) {
 		this.clazz = clazz;
 		this.key = key;
@@ -145,6 +144,9 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 	
 	@Override
 	public String toString() {
-		return clazz.getSimpleName() + "#" + key.toString();
+		if (matcher != null)
+			return clazz.getSimpleName() + "#" + key.toString() + "; matcher=" + matcher;
+		else
+			return clazz.getSimpleName() + "#" + key.toString();
 	}
 }

@@ -24,6 +24,11 @@ public class LazyInitializationException extends RuntimeException {
 			throw new RuntimeException("Cause must be specified");
 	}
 	
+	public LazyInitializationException(NotFoundException cause) {
+		this("NotFoundException when lazily initializing DMO; improper use of findUnchecked() or deleted object?", cause);
+	}
+	
+
 	@Override
 	public NotFoundException getCause() {
 		return (NotFoundException)super.getCause();

@@ -18,6 +18,7 @@ import com.dumbhippo.dm.DMFeedItem;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.annotations.DMFilter;
+import com.dumbhippo.dm.annotations.DMInit;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
@@ -75,6 +76,29 @@ public abstract class TestUserDMO extends DMObject<Guid> {
 	public DMFeed<TestBlogEntryDMO> getBlogEntries() {
 		return new BlogEntryFeed();
 	}
+	
+	//////////////////////////////////////////
+	
+	// Very basic test of grouping
+	
+	private String group1Value;
+	
+	@DMInit(group=1, initMain=false)
+	public void initGroup1() {
+		group1Value = "initialized";
+	}
+	
+	@DMProperty(group=1)
+	public String getGroupedA() {
+		return group1Value + "A";
+	}
+	
+	@DMProperty(group=1)
+	public String getGroupedB() {
+		return group1Value + "B";
+	}
+
+	//////////////////////////////////////////
 	
 	private class BlogEntryFeed implements DMFeed<TestBlogEntryDMO> {
 		public Iterator<DMFeedItem<TestBlogEntryDMO>> iterator(int start, int max, long minTimestamp) {

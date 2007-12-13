@@ -89,7 +89,10 @@ import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.blocks.RedditBlockHandler;
 import com.dumbhippo.server.blocks.TwitterPersonBlockHandler;
 import com.dumbhippo.server.blocks.YouTubeBlockHandler;
+import com.dumbhippo.server.dm.BlockDMO;
+import com.dumbhippo.server.dm.BlockDMOKey;
 import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.UserClientMatcher;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.GroupMugshotView;
@@ -321,34 +324,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	private UserBlockData queryUserBlockData(User user, BlockKey key) throws NotFoundException {
-		Guid data1 = key.getData1();
-		Guid data2 = key.getData2();
-		long data3 = key.getData3();
-		StackInclusion inclusion = key.getInclusion();
-
-		Query q;
-		if (data1 != null && data2 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=:data2 AND block.data3=:data3 " +
-					"AND block.inclusion = :inclusion");
-			q.setParameter("data1", data1.toString());
-			q.setParameter("data2", data2.toString());
-		} else if (data1 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2='' AND block.data3=:data3 " +
-					"AND block.inclusion = :inclusion");
-			q.setParameter("data1", data1.toString());
-		} else if (data2 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data2=:data2 AND block.data1='' AND block.data3=:data3 " +
-					"AND block.inclusion = :inclusion");
-			q.setParameter("data2", data2);
-		} else {
-			throw new IllegalArgumentException("must provide either data1 or data2 in query for block  " + key);
-		}
-		q.setParameter("data3", data3);
+		Query q = em.createQuery(
+				"SELECT ubd FROM UserBlockData ubd, Block block" +
+				" WHERE ubd.block = block" +
+				"   AND ubd.user = :user " +
+				"   AND " + getBlockClause(key));
+		setBlockParameters(key, q);
 		q.setParameter("user", user);
-		q.setParameter("type", key.getBlockType());
-		if (inclusion == null)
-			throw new IllegalArgumentException("missing inclusion in key " + key);
-		q.setParameter("inclusion", inclusion);
 		try {
 			return (UserBlockData) q.getSingleResult();
 		} catch (NoResultException e) {
@@ -794,6 +776,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		blockClicked(ubd, clickedTime);
 	}
 		
+	private void invalidateUserBlockDataProperty(UserBlockData ubd, String propertyName) {
+		DataService.currentSessionRW().changed(BlockDMO.class,
+				   new BlockDMOKey(ubd.getBlock()),
+				   propertyName,
+				   new UserClientMatcher(ubd.getUser().getGuid()));
+	}
+	
 	public void blockClicked(UserBlockData ubd, long clickedTime) {
 		// if we weren't previously clicked on, then increment the count.
 		// (FIXME this is not a reliable way of incrementing a count, since two transactions
@@ -801,18 +790,20 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (!ubd.isClicked())
 			ubd.getBlock().setClickedCount(ubd.getBlock().getClickedCount() + 1);
 		
-		if (ubd.getClickedTimestampAsLong() < clickedTime)
+		if (ubd.getClickedTimestampAsLong() < clickedTime) {
 			ubd.setClickedTimestampAsLong(clickedTime);
+			invalidateUserBlockDataProperty(ubd, "clickedTimestamp");
+		}
 		
 		// we automatically unignore anything you click on
 		if (ubd.isIgnored())
 			setBlockHushed(ubd, false);
 		
-		logger.debug("due to click, restacking block {} with new time {}",
-				ubd.getBlock(), clickedTime);
-		
 		if (!BlockView.clickedCountIsSignificant(ubd.getBlock().getClickedCount()))
 			return;
+		
+		logger.debug("due to click, restacking block {} with new time {}",
+				ubd.getBlock(), clickedTime);
 		
 		// now update the timestamp in the block (if it's newer)
 		// and update user caches for all users
@@ -1632,10 +1623,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	public void setBlockHushed(UserBlockData userBlockData, boolean hushed) {
  		if (hushed != userBlockData.isIgnored()) {
 	 		userBlockData.setIgnored(hushed);
-	 		if (hushed)
+	 		if (hushed) {
 	 			userBlockData.setIgnoredTimestampAsLong(userBlockData.getBlock().getTimestampAsLong());
-	 		else
+	 		} else
 	 			userBlockData.setStackTimestampAsLong(userBlockData.getBlock().getTimestampAsLong());
+	 		
+			invalidateUserBlockDataProperty(userBlockData, "ignoredTimestamp");
  		}
 	}
 

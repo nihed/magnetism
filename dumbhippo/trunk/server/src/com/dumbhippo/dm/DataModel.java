@@ -20,6 +20,7 @@ import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.dm.store.DMStore;
 import com.dumbhippo.dm.store.StoreClient;
+import com.dumbhippo.dm.store.StoreKey;
 
 /**
  * A DataModel is a central object holding information about entire data model; this 
@@ -246,6 +247,15 @@ public class DataModel {
 		return Timestamper.next();
 	}
 	
+	// This should return a ChangeNotiifcation<K, ? extends T>, like classHolder.makeChangeNotification(), but
+	// that confuses javac (Java 5) in ways I can't figure out. Practically speaking, it 
+	// doesn't end up mattering
+	@SuppressWarnings("unchecked")
+	protected <K, T extends DMObject<K>> ChangeNotification<K,T> makeChangeNotification(Class<T> clazz, K key, ClientMatcher matcher) {
+		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)getClassHolder(clazz);
+		return (ChangeNotification<K, T>) classHolder.makeChangeNotification(key, matcher);
+	}
+
 	private void sendNotifications(ChangeNotificationSet notifications) {
 		logger.debug("Sending notifications for {}", notifications);
 		ClientNotificationSet clientNotifications = notifications.resolveNotifications(this);

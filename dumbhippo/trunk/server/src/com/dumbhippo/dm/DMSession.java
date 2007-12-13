@@ -92,21 +92,6 @@ public abstract class DMSession {
 		fetch.visit(this, object, visitor);
 	}
 
-	/**
-	 * For use in generated code; this isn't part of the public interface 
-	 * 
-	 * @param <T>
-	 * @param clazz
-	 * @param t
-	 */
-	public <K, T extends DMObject<K>> void internalInit(T t) {
-		try {
-			doInit(t);
-		} catch (NotFoundException e) {
-			throw new LazyInitializationException("NotFoundException when lazily initializing DMO; improper use of findUnchecked() or deleted object?", e);
-		}
-	}
-	
 	// This should return a StoreKey<K, ? extends T>, like classHolder.makeStoreKey(), but
 	// that confuses javac (Java 5) in ways I can't figure out. Practically speaking, it 
 	// doesn't end up mattering
