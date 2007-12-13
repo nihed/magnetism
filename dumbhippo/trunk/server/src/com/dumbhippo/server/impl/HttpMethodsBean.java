@@ -55,6 +55,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveGroup;
 import com.dumbhippo.live.LiveState;
+import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Application;
 import com.dumbhippo.persistence.ApplicationCategory;
@@ -63,6 +64,7 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
+import com.dumbhippo.persistence.FacebookResource;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
@@ -136,6 +138,7 @@ import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.AmazonWebServices;
+import com.dumbhippo.services.FacebookWebServices;
 import com.dumbhippo.services.FlickrUser;
 import com.dumbhippo.services.FlickrWebServices;
 import com.dumbhippo.services.LastFmWebServices;
@@ -1230,6 +1233,22 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	public void doAcceptTerms(UserViewpoint viewpoint) {
 		viewpoint.getViewer().getAccount().setHasAcceptedTerms(true);
+		// set a better name for a Facebook user, since now the user can edit it, and
+		// we won't be needing to get it from Facebook again
+		if (viewpoint.getViewer().getNickname().contains("Facebook user")) {
+			for (AccountClaim ac : viewpoint.getViewer().getAccountClaims()) {
+				if (ac.getResource() instanceof FacebookResource) {
+				    FacebookResource fr = (FacebookResource)ac.getResource();					
+                    FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
+                    FacebookAccount facebookAccount = facebookTracker.getFacebookAccount(fr.getFacebookUserId());                    
+                    if (facebookAccount != null) {
+                        String name = ws.getName(facebookAccount);
+                        if (name.trim().length() > 0)
+                            doRenamePerson(viewpoint, name);  
+                    }
+				}
+			}
+		}
 	}
 	
 	public void doSetNeedsDownload(UserViewpoint viewpoint, boolean needsDownload) {

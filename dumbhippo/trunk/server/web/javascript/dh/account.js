@@ -823,8 +823,8 @@ dhAccountInit = function() {
 	}
 
 	if (!dh.account.active) {
+	    // we want to disable editing, but still display all the data we have
 		dh.dom.disableChildren(document.getElementById("dhAccountContents"));
-		return;
 	}
 	var usernameEntry = new dh.formtable.ExpandableTextInput('dhUsernameEntry', "J. Doe");
 	usernameEntry.setDescription("The name you appear to others as.");
