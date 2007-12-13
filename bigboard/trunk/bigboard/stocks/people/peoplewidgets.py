@@ -139,7 +139,7 @@ class PersonItem(PhotoContentItem):
             self.__photo.set_property('yalign', hippo.ALIGNMENT_CENTER)
 
     def __update(self, person):
-        self.__name.set_property("text", self.person.display_name)
+        self.__name.set_property("text", self.person.display_name) #+ " " + str(self.person._debug_rank))
         self.__photo.set_url(self.person.icon_url)
 
     def __update_aim_buddy(self, person):
@@ -499,11 +499,15 @@ class ProfileItem(hippo.CanvasBox):
         self.append(self.__contact_status_box)
 
         if person.is_contact:
+            self.__add_link = None
             self.__remove_link = ActionLink()
             self.__remove_link.connect('activated', self.__remove_from_network_clicked)
             self.append(self.__remove_link)
         else:
             self.__remove_link = None
+            self.__add_link = ActionLink(text=('Add %s to network' % self.person.display_name))
+            self.__add_link.connect('activated', self.__add_to_network_clicked)
+            self.append(self.__add_link)
         
 #        self.__online = hippo.CanvasText(text='Offline')
 #        self.append(self.__online)
@@ -597,6 +601,21 @@ class ProfileItem(hippo.CanvasBox):
         self.emit("close")
 
         dialog.show()
+
+    def __create_contact(self, addressType, address):
+        _logger.debug("creating contact %s %s" % (addressType, address))
+        
+        model = globals.get_data_model()
+        query = model.update(("http://mugshot.org/p/contacts", "createContact"),
+                             addressType=addressType,
+                             address=address)
+        query.execute()
+
+    def __add_to_network_clicked(self, link):
+        if self.person.aim:
+            self.__create_contact('aim', self.person.aim)
+        elif self.person.xmpp:
+            self.__create_contact('xmpp', self.person.xmpp)
 
     def __update_contact_status(self, person):
         self.__contact_status_box.remove_all()
