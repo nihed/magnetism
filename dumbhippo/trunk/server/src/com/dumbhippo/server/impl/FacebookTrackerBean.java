@@ -245,7 +245,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		return user;
 	}
 	
-	private FacebookAccount getFacebookAccount(String facebookUserId) {
+	public FacebookAccount getFacebookAccount(String facebookUserId) {
 		Query accountQuery = em.createQuery("from FacebookAccount f where f.facebookUserId = :facebookUserId");
 		accountQuery.setParameter("facebookUserId", facebookUserId);
 		try {

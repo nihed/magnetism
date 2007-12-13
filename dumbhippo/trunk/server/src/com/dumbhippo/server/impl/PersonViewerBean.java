@@ -26,6 +26,7 @@ import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
@@ -34,6 +35,7 @@ import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
+import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
@@ -47,6 +49,7 @@ import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.services.FacebookWebServices;
 
 /*
  * An implementation of the Identity Spider.  It sucks your blood.
@@ -56,6 +59,9 @@ import com.dumbhippo.server.views.Viewpoint;
 public class PersonViewerBean implements PersonViewer {
 	static private final Logger logger = GlobalSetup
 			.getLogger(PersonViewer.class);
+	
+	// how long to wait on the Facebook API call
+	static protected final int REQUEST_TIMEOUT = 1000 * 12;
 
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -76,6 +82,9 @@ public class PersonViewerBean implements PersonViewer {
 
 	@EJB
 	private AccountSystem accountSystem;
+	
+	@EJB
+	private FacebookTracker facebookTracker;
 	
 	private Set<Resource> getResourcesForPerson(Person person) {
 		Set<Resource> resources = new HashSet<Resource>();
@@ -292,6 +301,27 @@ public class PersonViewerBean implements PersonViewer {
 			addPersonViewExtra(viewpoint, pv, resources, e);
 		}
 
+		if (pv.getUser() != null && (pv.getUser().getNickname() == null || pv.getUser().getNickname().length() == 0)) {
+            // we need to get the user's name from Facebook if Facebook is the only resource available for 
+			// the user that can provide us with a name
+			FacebookResource fr = null;
+			for (Resource r : resources) {
+				if (r instanceof FacebookResource) {
+					fr = (FacebookResource)r;
+				} else if (r instanceof EmailResource || r instanceof AimResource) {
+					fr = null;
+					break;
+				}
+			}
+			
+			if (fr != null) {			
+				FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
+				FacebookAccount facebookAccount = facebookTracker.getFacebookAccount(fr.getFacebookUserId());
+				String name = ws.getName(facebookAccount);
+				pv.setFallbackName(name);
+			}
+		}
+		
 		if (pv.getAim() != null) {
 			pv.setAimPresenceKey(getAimPresenceKey());
 		}

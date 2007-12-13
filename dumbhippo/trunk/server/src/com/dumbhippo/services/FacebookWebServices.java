@@ -213,6 +213,25 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		}
 		return null;
 	}
+
+	public String getName(FacebookAccount facebookAccount) {
+		List<String> params = new ArrayList<String>();
+		String methodName = "facebook.users.getInfo";
+        params.add("method=" + methodName);
+		params.add("session_key=" + facebookAccount.getSessionKey());
+		params.add("uids=" + facebookAccount.getFacebookUserId());
+		params.add("fields=first_name,last_name");
+		
+		String wsUrl = generateFacebookRequest(params);
+
+		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
+
+		if (handleErrorCode(facebookAccount, handler, methodName)) {
+			return "";
+		}
+		
+		return handler.getFirstName() + " " + handler.getLastName();
+	}
 	
 	// if we already have results, returning null might mean that there was no change in the photo
 	// count, so we decided not to bother about checking for changes on the individual photos

@@ -27,8 +27,10 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		unread,
 		most_recent,
 		
-		// facebook.users.getInfo, we only get a wall_count field from it
+		// facebook.users.getInfo, we get wall_count, first_name, and last_name fields from it
 		wall_count,
+		first_name,
+		last_name,
 		
 		// general for facebook.photos.get and facebook.photos.getAlbums
 		created,
@@ -90,6 +92,8 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 	private int unreadMessageCount;
 	private int mostRecentMessageId;
 	private int wallMessageCount;
+	private String firstName;
+	private String lastName;
 	private int unseenPokeCount;
 	private int mostRecentPokeId;
 	private int errorCode;
@@ -110,6 +114,8 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		unreadMessageCount = -1;
 		mostRecentMessageId = -1;
 		wallMessageCount = -1;
+		firstName = "";
+		lastName = "";
 		unseenPokeCount = -1;
         mostRecentPokeId = -1;
 		errorCode = -1;
@@ -211,6 +217,10 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 			}
 		} else if (c == Element.wall_count) {
 			wallMessageCount = parseFacebookCount(c, currentContent); 
+		} else if (c == Element.first_name) {
+			firstName = currentContent;
+		} else if (c == Element.last_name) {
+			lastName = currentContent;
 		} else if (c == Element.link) {
 			if (gettingTaggedPhotos) {
 			    currentFacebookPhotoData().setLink(currentContent);
@@ -301,6 +311,14 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		return wallMessageCount;
 	}
 
+	public String getFirstName() {
+		return firstName;
+	}
+	
+	public String getLastName() {
+		return lastName;
+	}
+	
 	public int getUnseenPokeCount() {
 		return unseenPokeCount;
 	}

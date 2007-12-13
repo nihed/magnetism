@@ -18,6 +18,8 @@ public interface FacebookTracker {
 
 	public User createNewUserWithFacebookAccount(String sessionKey, String facebookUserId, boolean applicationEnabled) throws FacebookSystemException;
 
+	public FacebookAccount getFacebookAccount(String facebookUserId);
+	
 	public void updateFbmlForUser(User user);
 	
 	public void updateMessageCount(long facebookAccountId);

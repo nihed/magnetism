@@ -24,6 +24,7 @@ import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.FacebookResource;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
@@ -174,7 +175,8 @@ public class PersonView extends EntityView {
 		// PrimaryResource will not be included or will be null if the viewer should
 		// not see it
 		if (name == null || name.length() == 0) {
-			if (getPrimaryResource() == null) {
+			Resource primaryResource = getPrimaryResource();
+			if (primaryResource == null) {
 				// try fallback name then
 				if (fallbackName != null) {
 					name = fallbackName;
@@ -183,7 +185,10 @@ public class PersonView extends EntityView {
 					logger.warn("PersonView has no User, Resource, or fallback name; totally useless: " + this);
 				}
 			} else {
-                name = getPrimaryResource().getHumanReadableString();
+				if (primaryResource instanceof FacebookResource && fallbackName != null && fallbackName.trim().length() > 0)
+					name = fallbackName;
+				else
+                    name = primaryResource.getHumanReadableString();
 			}
 		}
 		
