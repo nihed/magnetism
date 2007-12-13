@@ -145,7 +145,11 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 	
 	@DMProperty(defaultInclude=true, group=USER_BLOCK_DATA_GROUP, cached=false)
 	public long getClickedTimestamp() {
-		return userBlockData.getClickedTimestampAsLong();
+		long clickedTimestamp = userBlockData.getClickedTimestampAsLong();
+		if (clickedTimestamp < 0) // Prettification, not to return -1000, which is what is stored in the DB
+			return -1;
+		else
+			return clickedTimestamp;
 	}
 
 	@DMProperty(defaultInclude=true, group=USER_BLOCK_DATA_GROUP, cached=false)
