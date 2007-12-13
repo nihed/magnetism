@@ -180,7 +180,7 @@ public abstract class SigninBean  {
 	public static String initializeAuthentication(HttpServletRequest request, HttpServletResponse response, Client client) {
 		Account account = client.getAccount();
 		User user = account.getOwner();
-		if (account.isActive()) {
+		if (account.isActive() && account.getHasAcceptedTerms()) {
 			setCookie(getSiteForRequest(request), response, user.getGuid(), client.getAuthKey());
 		} else {
 			SigninBean.storeGuid(request.getSession(), user.getGuid());
@@ -201,7 +201,7 @@ public abstract class SigninBean  {
 	public static void initializeAuthenticationNoCookie(HttpServletRequest request, Client client) {
 		Account account = client.getAccount();
 		User user = account.getOwner();
-		if (account.isActive()) {
+		if (account.isActive() && account.getHasAcceptedTerms()) {
 			;
 		} else {
 			SigninBean.storeGuid(request.getSession(), user.getGuid());
@@ -223,7 +223,7 @@ public abstract class SigninBean  {
 			try {
 				Client client = accountSystem.getExistingClient(userId, clientId);
 				Account account = client.getAccount();
-				if (account.isActive())
+				if (account.isActive() && account.getHasAcceptedTerms())
 					setCookie(getSiteForRequest(request), response, userId, client.getAuthKey());
 				else {
 					unsetCookie(response);
