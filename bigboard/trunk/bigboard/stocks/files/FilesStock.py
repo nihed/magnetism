@@ -14,7 +14,7 @@ from bigboard.libbig.logutil import log_except
 from bigboard.libbig.gutil import *
 from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock
-import bigboard.slideout
+from bigboard.slideout import Slideout
 import bigboard.google as google
 import bigboard.google_stock as google_stock  
 from bigboard.big_widgets import IconLink, CanvasHBox, CanvasVBox, Button, GradientHeader
@@ -129,9 +129,27 @@ class LocalFile(File):
         except:
             _logger.debug("Failed to get file info for target of '%s'", url, exc_info=True)
             gobject.idle_add(cb, results)
-            return        
+            return
+        image_name = "image-missing"
         try:
-            (image_name, flags) = gnome.ui.icon_lookup(itheme, thumbnails, url, file_info=vfsstat, mime_type=vfsstat.mime_type)
+            if thumbnails.can_thumbnail(url, vfsstat.mime_type, vfsstat.mtime):
+                existing_thumbnail = thumbnails.lookup(url, vfsstat.mtime)
+                if existing_thumbnail is None:
+                    _logger.debug("Trying to generate thumbnail for '%s' with mimetype '%s' and mtime %i", url, vfsstat.mime_type, vfsstat.mtime)
+                    thumb = thumbnails.generate_thumbnail(url, vfsstat.mime_type)
+                    if thumb is None:
+                        _logger.debug("Thumbnail generation for '%s' failed", self._url, exc_info=True)
+                    else:
+                        thumbnails.save_thumbnail(thumb, url, vfsstat.mtime)
+                        icon = thumbnails.lookup(url, vfsstat.mtime)
+                        if icon is None:
+                            _logger.debug("Failed to get generated thumbnail for '%s'", self._url, exc_info=True)
+                        else:
+                            image_name = icon
+                else:
+                    image_name = existing_thumbnail
+            else:
+                (image_name, _) = gnome.ui.icon_lookup(itheme, thumbnails, url, file_info=vfsstat, mime_type=vfsstat.mime_type)
         except gnomevfs.NotFoundError, e:
             _logger.debug("Failed to get icon info for '%s'", self._url, exc_info=True)
             gobject.idle_add(cb, results)
@@ -256,27 +274,24 @@ def get_menu_pixbuf(menuentry, size=48):
         return None
     return pixbuf
     
-class FileSlideout(CanvasVBox):
-    __gsignals__ = {
-        "close": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
-       }    
+class FileSlideout(Slideout):
     def __init__(self, fobj):
-        super(FileSlideout, self).__init__(border=1, border_color=0x0000000ff,
-                                           spacing=4, padding=4)
+        super(FileSlideout, self).__init__()
+        vbox = CanvasVBox(border=1, border_color=0x0000000ff, spacing=4, padding=4)
+        self.get_root().append(vbox)
         self.__header = GradientHeader()
         text = hippo.CanvasText(text=fobj.get_name(), font="14px", xalign=hippo.ALIGNMENT_START)
-        text.connect("button-press-event", lambda text, event: self.__toggle_expanded())  
         self.__header.append(text, hippo.PACK_EXPAND)        
-        self.append(self.__header)
+        vbox.append(self.__header)
         
         hbox = CanvasHBox(spacing=4)
         img = hippo.CanvasImage(scale_width=60, scale_height=60, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
         img.set_property('image-name', fobj.get_image_name())
         hbox.append(img)
-        self.append(hbox)
+        vbox.append(hbox)
         
-        vbox = CanvasVBox()
-        hbox.append(vbox)
+        detailvbox = CanvasVBox(spacing=3)
+        hbox.append(detailvbox)
         attrs = pango.AttrList()
         attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))  
         mime = fobj.get_mimetype()
@@ -284,13 +299,13 @@ class FileSlideout(CanvasVBox):
             mimename = gnomevfs.mime_get_description(mime)
             text = hippo.CanvasText(text=mimename, font='12px', xalign=hippo.ALIGNMENT_START)
             text.set_property("attributes", attrs)                   
-            vbox.append(text)
+            detailvbox.append(text)
         size = fobj.get_size()            
         if size is not None:
             sizestr = format_file_size(size)
             text = hippo.CanvasText(text=sizestr, font='12px', xalign=hippo.ALIGNMENT_START)
             text.set_property("attributes", attrs)               
-            vbox.append(text)
+            detailvbox.append(text)
         fname = os.path.dirname(fobj.get_full_name())
         if fname.startswith('file://'):
             fname = fname[7:]
@@ -300,31 +315,47 @@ class FileSlideout(CanvasVBox):
         fname = urllib.unquote(fname)            
         text = hippo.CanvasText(text=fname, font='12px', xalign=hippo.ALIGNMENT_START)
         text.set_property("attributes", attrs)           
-        vbox.append(text)
+        detailvbox.append(text)
         apps = gnomevfs.mime_get_all_applications(mime)
         if apps:
             text = hippo.CanvasText(text='Open With: ', font='14px')
-            vbox.append(text)
+            detailvbox.append(text)
             def on_app_clicked(button, app):
-                self.emit('close')
+                self.emit('close', True)
                 _logger.debug("launching app %s", app)
                 _launch_vfsmimeapp(app, fobj.get_url())      
             directory = apps_directory.get_app_directory()
             for app in apps:
                 _logger.debug("mime type: %s got app %s", mime, app)
-                button = Button(label=app[1])             
+                button = hippo.CanvasButton()
+                labelhbox = gtk.HBox()
+                labelhbox.set_border_width(1)
+                labelhbox.set_spacing(2)
+                
                 try:
                     menu = directory.lookup(app[0])
                 except KeyError, e:
                     _logger.debug("failed to find desktop file %s", app[0])
                     menu = None
+
+                img = gtk.Image()
+                    
                 if menu:
-                    pixbuf = get_menu_pixbuf(menu, size=24)        
-                    img = gtk.Image()
+                    pixbuf = get_menu_pixbuf(menu, size=16)
                     img.set_from_pixbuf(pixbuf)
-                    button.get_button().set_property('image', img)
-                button.get_button().connect('clicked', on_app_clicked, app)
-                vbox.append(button)
+                else:
+                    img.set_size_request(16, 16)
+
+                labelhbox.pack_start(img, False, False)
+                
+                textlabel = gtk.Label(app[1])
+                labelhbox.pack_start(textlabel, False)
+                labelhbox.show_all()
+
+                button.get_property('widget').add(labelhbox)
+                button.get_property('widget').connect('clicked', on_app_clicked, app)
+                button.get_property('widget').set_name('bigboard-nopad-button')
+                detailvbox.append(button)
 
 class FilesStock(Stock, google_stock.GoogleStock):
     """Shows recent files."""
@@ -387,17 +418,21 @@ class FilesStock(Stock, google_stock.GoogleStock):
             self.__slideout_target = None            
             return
         self.__slideout_target = fobj            
-        self.__slideout = bigboard.slideout.Slideout()                  
-        file_slideout = FileSlideout(fobj)
-        self.__slideout.get_root().append(file_slideout)            
-        def on_slideout_close(s):
-            self._panel.action_taken()
+        self.__slideout = FileSlideout(fobj)
+        def on_slideout_close(s, action_taken):
+            if action_taken:
+                self._panel.action_taken()
             s.destroy()
             self.__slideout = None
-        file_slideout.connect('close', on_slideout_close)
+            self.__slideout_target = None
+        self.__slideout.connect('close', on_slideout_close)
         item = lnk.link
         coords = item.get_context().translate_to_screen(item)
-        self.__slideout.slideout_from(204, coords[1])        
+        if not self.__slideout.slideout_from(204, coords[1]):
+            self.__slideout.destroy()
+            self.__slideout = None
+            self.__slideout_target = None
+            return
 
     def __on_documents_load(self, document_entries, gobj):
         self.__remove_files_for_key(gobj) 

@@ -1,13 +1,22 @@
+import logging
 import hippo
 import gtk
-
+import gobject
 from bigboard.big_widgets import ThemedWidgetMixin
 
+logger = logging.getLogger('bigboard.Slideout')
+
 class Slideout(hippo.CanvasWindow):
-    def __init__(self, widget=None):
-        super(Slideout, self).__init__(gtk.WINDOW_TOPLEVEL)
+    __gsignals__ = {
+    	"button-press-event": "override",
+    	"key-press-event": "override",
+    	"close": (gobject.SIGNAL_RUN_LAST, None, (bool,))
+       }
+    def __init__(self, widget=None, modal=True):
+        super(Slideout, self).__init__(gtk.WINDOW_POPUP)
 
         self.__widget = widget
+        self.__modal = modal
 
         self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
         self.set_resizable(False)
@@ -40,7 +49,48 @@ class Slideout(hippo.CanvasWindow):
             y = y - offscreen_bottom
         self.move(x, y)
         self.present_with_time(gtk.get_current_event_time())
+        if self.__modal:
+            if not self.__do_grabs():
+                _logger.debug("grab failed")
+                return False
+            self.set_modal(True)
+        return True
     
+    def __do_grabs(self):
+        # owner_events=True says "only grab events going to other applications"; treat
+        # events going to this application normally; We need that because we want
+        # events to subwindows of ourwindow to be passed appropriately
+        if gtk.gdk.pointer_grab(self.window,
+                                owner_events=True,
+                                event_mask=gtk.gdk.BUTTON_PRESS_MASK,
+                                time=gtk.get_current_event_time()) != gtk.gdk.GRAB_SUCCESS:
+            return False
+        # We don't need owner_events here since keyboard events are always delivered to the
+        # toplevel window anyways, and we aren't doing keyboard navigation in any case
+        if gtk.gdk.keyboard_grab(self.window,
+                                 owner_events=False,
+                                 time=gtk.get_current_event_time()) != gtk.gdk.GRAB_SUCCESS:
+            # Hiding the window removes the pointer grab
+            return False
+            
+        return True
+        
+    def do_button_press_event(self, event):
+        if event.window == self.window and event.x > 0  and event.x < self.allocation.width and event.y > 0 and event.y < self.allocation.height:
+            return hippo.CanvasWindow.do_button_press_event(self, event)
+        else:
+            self.popdown()
+            return True
+        
+    def do_key_press_event(self, event):
+        if event.keyval == gtk.keysyms.Escape:
+            self.popdown()
+            return True
+        return False
+            
+    def popdown(self):
+        self.emit('close', False)
+
 class ThemedSlideout(Slideout, ThemedWidgetMixin):
     def __init__(self, theme_hints=[], **kwargs):
         Slideout.__init__(self, **kwargs)
@@ -49,4 +99,3 @@ class ThemedSlideout(Slideout, ThemedWidgetMixin):
     def _on_theme_changed(self, theme):
         self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#%6X" % (theme.background >> 8,)))
         self.queue_draw_area(0,0,-1,-1)
-                
