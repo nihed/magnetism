@@ -268,9 +268,14 @@ public class FacebookTrackerBean implements FacebookTracker {
 					}
 				}	
 			});
+			Account account = TxUtils.runInTransaction(new Callable<Account>() {
+				public Account call() {
+					    return accounts.lookupAccountByUser(user);
+				}	
+			});
 		    if (facebookAccount != null && facebookAccount.isApplicationEnabled()) {
 		        FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
-			    ws.setProfileFbml(facebookAccount, createFbmlForUser(user));
+			    ws.setProfileFbml(facebookAccount, createFbmlForUser(account));
             }		    
 		} catch (Exception e) {
 			logger.error("Caught an exception when getting a FacebookAccount for {}: {}", user, e.getMessage());
@@ -585,7 +590,8 @@ public class FacebookTrackerBean implements FacebookTracker {
         		                        event);
 	}
 	
-	private String createFbmlForUser(User user) {
+	private String createFbmlForUser(Account account) {
+		User user = account.getOwner();
 		StringBuilder fbmlSb = new StringBuilder("");
 		fbmlSb.append("<fb:visible-to-owner><fb:subtitle>" +
 		              "<a href='http://apps.facebook.com/mugshot'>Edit Accounts</a>" +
@@ -609,7 +615,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		if (pageableMugshot.getResults().size() == 0) {
 			fbmlSb.append("<div>Once there are new updates, they will show up here.</div>");
 		}
-		if (user.getAccount().getHasAcceptedTerms()) {
+		if (account.getHasAcceptedTerms()) {
 		    fbmlSb.append("<a target='_blank' style='font-size: 12px; font-weight: bold; margin-top: 10px;' href='" + getAbsoluteUrl("/person?who=" + user.getId().toString()) + "'>" +
 				          "Visit my Mugshot Page</a>");
 		}
