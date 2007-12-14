@@ -9,7 +9,7 @@ import hippo
 
 from ddm import DataModel
 import bigboard.globals as globals
-import bigboard.slideout
+from bigboard.slideout import ThemedSlideout
 import bigboard.libbig as libbig
 from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock, AbstractMugshotStock
@@ -87,23 +87,24 @@ class LocalUserDisplay(CanvasVBox):
 
         self.displays = displays
 
-class SelfSlideout(CanvasVBox):
+class SelfSlideout(ThemedSlideout):
     __gsignals__ = {
         "account" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),                    
         "logout" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
         "sidebar-controls" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
-        "close" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
     }
     def __init__(self, stock, myself, fus=None, logger=None):
-        super(SelfSlideout, self).__init__(border=1, border_color=0x0000000ff,
-                                           spacing=4, padding=4)
+        super(SelfSlideout, self).__init__()
+    
+        vbox = CanvasVBox(border=1, border_color=0x0000000ff, spacing=4, padding=4)
+        self.get_root().append(vbox)
 
         self._logger = logger
         
         self.__stock = stock
 
         self.__personal_box = CanvasHBox(spacing=4)
-        self.append(self.__personal_box)
+        vbox.append(self.__personal_box)
        
         self.__photo = CanvasMugshotURLImage(scale_width=48, scale_height=48)
 
@@ -118,10 +119,10 @@ class SelfSlideout(CanvasVBox):
         
         self.__personal_box_right.append(self.__name)
 
-        self.append(Separator())
+        vbox.append(Separator())
 
         self.__personalization_box = CanvasVBox(spacing=2)
-        self.append(self.__personalization_box)
+        vbox.append(self.__personalization_box)
         self.__personalization_box.append(ThemedText(text='Personalization',
                                                      font='12px Bold',
                                                      xalign=hippo.ALIGNMENT_START))
@@ -140,7 +141,7 @@ class SelfSlideout(CanvasVBox):
         link.img.set_property('image-name', '/usr/share/icons/gnome/22x22/categories/preferences-desktop.png')
         self.__personalization_box.append(link)
 
-        self.append(Separator())
+        vbox.append(Separator())
 
         if fus:
             self.__fus = dbus.Interface(fus, 'org.gnome.FastUserSwitch')
@@ -149,7 +150,7 @@ class SelfSlideout(CanvasVBox):
             self.__fus.RecheckDisplays()
 
             self.__fus_box = CanvasVBox()
-            self.append(self.__fus_box)
+            vbox.append(self.__fus_box)
 
             self.__fus_users_box = CanvasVBox()
             self.__fus_box.append(self.__fus_users_box)
@@ -162,7 +163,7 @@ class SelfSlideout(CanvasVBox):
             self.__handle_fus_change()
             
         self.__logout_controls_box = CanvasVBox()
-        self.append(self.__logout_controls_box)
+        vbox.append(self.__logout_controls_box)
 
         link = IconLink(text='Logout or Shutdown...', img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START, themed=True)
         link.link.connect("activated", self.__on_logout)
@@ -186,19 +187,19 @@ class SelfSlideout(CanvasVBox):
         
     def __show_mugshot_link(self, l):
         self.emit('account')
-        self.emit('close')
+        self.emit('close', True)
 
     def __on_sidebar_controls(self, l): 
         self.emit('sidebar-controls')
-        self.emit('close')
+        self.emit('close', True)
 
     def __on_system_preferences(self, l):
         subprocess.Popen(['gnome-control-center'])
-        self.emit('close')
+        self.emit('close', True)
 
     def __on_logout(self, l):
         self.emit('logout')
-        self.emit('close')
+        self.emit('close', True)
 
     def __on_dbus_error(self, err):
         self._logger.exception("D-BUS error: %s", err)
@@ -236,7 +237,7 @@ class SelfSlideout(CanvasVBox):
     def __do_fus_login_other_user(self, l):
         self._logger.debug("Doing NewConsole")
         self.__fus.NewConsole()
-        self.emit('close')
+        self.emit('close', True)
 
 class SelfStock(AbstractMugshotStock):
     """Shows a user's Mugshot personal information."""
@@ -287,7 +288,6 @@ class SelfStock(AbstractMugshotStock):
         self.info_loaded = False
 
         self.__slideout = None
-        self.__slideout_display = None
         
         self.__portfolio_manager = None
 
@@ -360,17 +360,12 @@ class SelfStock(AbstractMugshotStock):
         self._box.set_child_visible(self._whereim_box, not not auth)
         self._box.set_child_visible(self._signin, not auth)
             
-    def __do_slideout(self, display, widget=None):
-        slideout = bigboard.slideout.ThemedSlideout()        
+    def __do_slideout(self, slideout, widget=None):
         widget_src = widget or self._box
         (box_x, box_y) = self._box.get_context().translate_to_screen(self._box)
         (src_x, src_y) = widget_src.get_context().translate_to_screen(widget_src)
         slideout.slideout_from(box_x + self._box.get_allocation()[0] + 4, src_y)
-        if hasattr(display, 'focus'):
-            display.focus()
-        slideout.get_root().append(display)
         slideout.set_size_request(200, -1)
-        return slideout
          
     def __do_logout(self):
         self._panel.action_taken()
@@ -399,12 +394,12 @@ class SelfStock(AbstractMugshotStock):
             return
 
         self.__create_fus_proxy()
-        self.__slideout_display = SelfSlideout(self, self.__myself, fus=self.__fus_service, logger=_logger)
-        self.__slideout_display.connect('account', lambda s: self.__do_account())        
-        self.__slideout_display.connect('sidebar-controls', lambda s: self.__do_sidebar_controls())
-        self.__slideout_display.connect('logout', lambda s: self.__do_logout())
-        self.__slideout_display.connect('close', lambda s: self.__on_activate())
-        self.__slideout = self.__do_slideout(self.__slideout_display)   
+        self.__slideout = SelfSlideout(self, self.__myself, fus=self.__fus_service, logger=_logger)
+        self.__slideout.connect('account', lambda s: self.__do_account())        
+        self.__slideout.connect('sidebar-controls', lambda s: self.__do_sidebar_controls())
+        self.__slideout.connect('logout', lambda s: self.__do_logout())
+        self.__slideout.connect('close', lambda s, a: self.__on_activate())
+        self.__do_slideout(self.__slideout)
         
     def get_authed_content(self, size):
         return self._box
@@ -428,5 +423,5 @@ class SelfStock(AbstractMugshotStock):
             _logger.debug("appending external account %s", acct.accountType)
             self._whereim_box.append(icon)
 
-        if self.__slideout_display != None:
-            self.__slideout_display.update_self(myself)
+        if self.__slideout != None:
+            self.__slideout.update_self(myself)
