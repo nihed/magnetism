@@ -271,14 +271,18 @@ public class FacebookTrackerBean implements FacebookTracker {
 					}
 				}	
 			});
-			Account account = TxUtils.runInTransaction(new Callable<Account>() {
-				public Account call() {
-					    return accounts.lookupAccountByUser(user);
+			Pair<Account, Set<ExternalAccountView>> accountsPair = TxUtils.runInTransaction(new Callable<Pair<Account, Set<ExternalAccountView>>>() {
+				public Pair<Account, Set<ExternalAccountView>> call() {
+					    UserViewpoint viewpoint = new UserViewpoint(user, Site.MUGSHOT);
+					    Account account = accounts.lookupAccountByUser(user);
+						Set<ExternalAccountView> allAccounts = externalAccounts.getExternalAccountViews(viewpoint, user);
+				        externalAccounts.loadThumbnails(viewpoint, allAccounts);
+				        return new Pair<Account, Set<ExternalAccountView>>(account, allAccounts);
 				}	
 			});
 		    if (facebookAccount != null && facebookAccount.isApplicationEnabled()) {
 		        FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
-			    ws.setProfileFbml(facebookAccount, createFbmlForUser(account));
+			    ws.setProfileFbml(facebookAccount, createFbmlForUser(accountsPair.getFirst(), accountsPair.getSecond()));
             }		    
 		} catch (Exception e) {
 			logger.error("Caught an exception when getting a FacebookAccount for {}: {}", user, e.getMessage());
@@ -593,17 +597,15 @@ public class FacebookTrackerBean implements FacebookTracker {
         		                        event);
 	}
 	
-	private String createFbmlForUser(Account account) {
+	private String createFbmlForUser(Account account, Set<ExternalAccountView> allAccounts) {
 		User user = account.getOwner();
-		UserViewpoint viewpoint = new UserViewpoint(user, Site.MUGSHOT);
+
 		StringBuilder fbmlSb = new StringBuilder("");
 		fbmlSb.append("<fb:visible-to-owner><fb:subtitle>" +
 		              "<a href='http://apps.facebook.com/mugshot'>Edit Accounts</a>" +
 		              "</fb:subtitle></fb:visible-to-owner>");
 		
 		// add the accounts ribbon
-		Set<ExternalAccountView> allAccounts = externalAccounts.getExternalAccountViews(viewpoint, user);
-        externalAccounts.loadThumbnails(viewpoint, allAccounts);
         List<ExternalAccountView> lovedAccounts = new ArrayList<ExternalAccountView>();
 		for (ExternalAccountView a : allAccounts) {
 			// This will include the Website account which there is no way to specify
@@ -627,8 +629,8 @@ public class FacebookTrackerBean implements FacebookTracker {
             	imageTitle = imageTitle + ": " + a.getExternalAccount().getLinkText();
           			
 			fbmlSb.append("<a target='_blank' href='" + a.getLink() + "'>" +
-					    "<img src='http://mugshot.org/images3/" + a.getIconName() + "' title='" + imageTitle + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
-					    "</a>");
+					      "<img src='http://mugshot.org/images3/" + a.getIconName() + "' title='" + imageTitle + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
+					      "</a>");
 		}		
 		fbmlSb.append("</div>");
 
