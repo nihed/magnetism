@@ -345,7 +345,7 @@ class SinglePersonSet(PersonSet):
 
         for resource in resources:
             if resource.class_id == "online-desktop:/p/o/buddy" and resource not in self.__resources:
-                    resource.connect(self.__buddy_user_changed, "user")
+                resource.connect(self.__buddy_user_changed, "user")
 
         self.__resources = resources
         self.__update_resolved()
@@ -373,13 +373,13 @@ class SinglePersonSet(PersonSet):
         old_resolved = self.__resolved
         self.__resolved = resolved
         
-        for resource in old_resolved:
-            if resource not in self.__resolved:
-                self.emit('removed', resource)
+        for person in old_resolved:
+            if person not in self.__resolved:
+                self.emit('removed', person)
                 
-        for resource in self.__resolved:
-            if resource not in old_resolved:
-                self.emit('added', resource)
+        for person in self.__resolved:
+            if person not in old_resolved:
+                self.emit('added', person)
 
     def __buddy_user_changed(self, resource):
         self.__update_resolved()
@@ -421,6 +421,99 @@ class UnionPersonSet(PersonSet):
     def __iter__(self):
         return self.__items.itervalues()
 
+## used to allow some resources in a person set to hide others
+class RemoveDuplicatesPersonSet(PersonSet):
+    def __init__(self, source):
+        PersonSet.__init__(self)
+        self.__source = source
+        self.__source.connect('added', self.__on_added)
+        self.__source.connect('removed', self.__on_removed)
+
+        self.__not_included = set()
+        self.__included = set()
+
+        for item in self.__source:
+            self.__on_added(self, self.__source, item)
+
+    def __on_added(self, source, item):
+        ## if we are hidden by anything included, then 
+        ## we are not included
+        is_hidden = False
+        for included in self.__included:
+            if self.__is_hidden_by(item, included):
+                is_hidden = True
+                break
+
+        if is_hidden:
+            self.__not_included.add(item)
+        else:
+            ## if we are not hidden, then see if we hide something 
+            ## else and add ourselves to the included set
+
+            items_we_hide = []
+            for included in self.__included:
+                if self.__is_hidden_by(included, item):
+                    items_we_hide.append(included)
+
+            self.__included.add(item)
+            self.emit('added', item)
+
+            ## remove stuff we hide
+            for hidden in items_we_hide:
+                self.__included.remove(hidden)
+                self.__not_included.add(hidden)
+                self.emit('removed', hidden)
+
+    def __on_removed(self, source, item):
+        ## if we weren't included anyhow, nothing to do
+        if item in self.__not_included:
+            self.__not_included.remove(item)
+            return
+
+        ## if we were included, we might have been hiding
+        ## something else, so we need to see if anything in 
+        ## not_included is now included
+        if item in self.__included:
+            self.__included.remove(item)
+            self.emit('removed', item)
+
+            maybe_now_included = []
+            for hidden in self.__not_included:
+                if self.__is_hidden_by(hidden, item):
+                    # this item was hidden by us, but 
+                    # may also be hidden by something else
+                    maybe_now_included.append(hidden)
+            
+            for maybe_included in maybe_now_included:
+                include = True
+                for may_hide in self.__included:
+                    if self.__is_hidden_by(maybe_included, may_hide):
+                        include = False
+                        break
+                if include:
+                    self.__not_included.remove(maybe_included)
+                    self.__included.add(maybe_included)
+                    self.emit('added', maybe_included)
+
+
+    def __is_hidden_by(self, hidden, hider):
+        ## the eventual idea is that contacts hide IM buddies they
+        ## correspond to (buddies are merged into contacts)
+
+        ## lame hack for testing, since buddies and contacts made from 
+        ## buddies have the same display name
+        if hidden.display_name == hider.display_name and hider.is_contact:
+            return True
+        else:
+            return False
+
+    def __str__(self):
+        return str(self.__included)
+
+    def __iter__(self):
+        return self.__included.__iter__()
+
+
 class PeopleTracker(Singleton):
     """Singleton object for tracking available users and contacts
 
@@ -441,7 +534,7 @@ class PeopleTracker(Singleton):
         self.xmpp_people = SinglePersonSet()
         self.local_people = SinglePersonSet()
         
-        self.people = UnionPersonSet(self.contacts, self.aim_people, self.xmpp_people, self.local_people)
+        self.people = RemoveDuplicatesPersonSet(UnionPersonSet(self.contacts, self.aim_people, self.xmpp_people, self.local_people))
 
         if self.__model.ready:
             self.__on_ready()
