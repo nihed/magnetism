@@ -534,14 +534,12 @@ class RemoveDuplicatesPersonSet(PersonSet):
                 self.emit('removed', person)
 
     def __is_hidden_by(self, hidden, hider):
-        ## the eventual idea is that contacts hide IM buddies they
-        ## correspond to (buddies are merged into contacts)
+        ## the idea is that contacts hide IM buddies they correspond
+        ## to (buddies are merged into contacts)
 
         if hidden == hider:
             return False
 
-        ## lame hack for testing, since buddies and contacts made from 
-        ## buddies have the same display name
         if hider.is_contact and \
                 (hidden.resource == hider.aim_buddy or hidden.resource == hider.xmpp_buddy):
             return True
