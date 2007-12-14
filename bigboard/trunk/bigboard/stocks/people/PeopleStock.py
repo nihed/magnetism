@@ -105,8 +105,10 @@ class PeopleStock(AbstractMugshotStock):
     def __on_person_removed(self, list, person):
         self.__remove_person(person, self.__person_box, self.__person_items)        
         
-    def __close_slideout(self, *args):
+    def __close_slideout(self, object=None, action_taken=False):
         if self.__slideout:
+            if action_taken:
+                self._panel.action_taken()
             self.__slideout.destroy()
             self.__slideout = None
             self.__slideout_item = None
@@ -121,7 +123,9 @@ class PeopleStock(AbstractMugshotStock):
         self.__slideout_item = item
 
         coords = item.get_screen_coords()
-        self.__slideout.slideout_from(coords[0] + item.get_allocation()[0] + 4, coords[1])
+        if not self.__slideout.slideout_from(coords[0] + item.get_allocation()[0] + 4, coords[1]):
+            self.__close_slideout()
+            return
 
         p = ProfileItem(item.get_person(),
                         border=1,
@@ -129,6 +133,7 @@ class PeopleStock(AbstractMugshotStock):
 
         self.__slideout.get_root().append(p)
         p.connect("close", self.__close_slideout)
+        self.__slideout.connect("close", self.__close_slideout)
 
         return True
 

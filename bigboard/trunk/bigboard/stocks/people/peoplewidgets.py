@@ -448,7 +448,7 @@ class LocalFilesLink(hippo.CanvasBox, DataBoundItem):
 
 class ProfileItem(hippo.CanvasBox):
     __gsignals__ = {
-        "close": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+        "close": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (bool,))
        }
         
     def __init__(self, person, **kwargs):
@@ -596,9 +596,10 @@ class ProfileItem(hippo.CanvasBox):
             else:
                 _logger.debug("not removing from network")
 
-        dialog.connect("response", lambda dialog, response_id: remove_from_network_response(dialog, response_id, self.person))
-        
-        self.emit("close")
+        dialog.connect("response", lambda dialog, response_id: remove_from_network_response(dialog, response_id, self.person))                
+
+        # action_taken = False to leave the stock open which seems nicer in this case
+        self.emit("close", False)
 
         dialog.show()
 
@@ -616,6 +617,9 @@ class ProfileItem(hippo.CanvasBox):
             self.__create_contact('aim', self.person.aim)
         elif self.person.xmpp:
             self.__create_contact('xmpp', self.person.xmpp)
+
+        # action_taken = False to leave the stock open which seems nicer in this case
+        self.emit("close", False)
 
     def __update_contact_status(self, person):
         self.__contact_status_box.remove_all()
@@ -691,18 +695,18 @@ class ProfileItem(hippo.CanvasBox):
             self.__address_box.append(xmpp)
 
     def __on_activate_web(self, canvas_item):
-        self.emit("close")
+        self.emit("close", True)
         libbig.show_url(self.person.resource.user.homeUrl)
 
     def __on_activate_email(self, canvas_item):
-        self.emit("close")
+        self.emit("close", True)
         # email should probably cgi.escape except it breaks if you escape the @
         os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'mailto:' + self.person.resource.email)
 
     def __on_activate_aim(self, canvas_item):
-        self.emit("close")
+        self.emit("close", True)
         _open_aim(self.person.aim)
         
     def __on_activate_xmpp(self, canvas_item):
-        self.emit("close")
+        self.emit("close", True)
         _open_xmpp(self.person.xmpp)
