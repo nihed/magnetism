@@ -71,7 +71,8 @@ public class FacebookTrackerBean implements FacebookTracker {
 	// how long to wait on the Facebook API call
 	static protected final int REQUEST_TIMEOUT = 1000 * 12;
 	
-	static private final int INITIAL_BLOCKS_PER_PAGE = 5;
+	// let's get 6, so that we know if there is more when displaying 5
+	static private final int INITIAL_BLOCKS_PER_PAGE = 6;
 	
 	@EJB
 	private ExternalAccountSystem externalAccounts;
@@ -622,7 +623,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 			}			
 		});
 		
-		fbmlSb.append("<div>");
+		fbmlSb.append("<div>My accounts: ");
 		for (ExternalAccountView a : lovedAccounts) {
             String imageTitle = a.getExternalAccount().getSiteName();
             if (a.getExternalAccount().getLinkText().length() >0 )
@@ -634,28 +635,39 @@ public class FacebookTrackerBean implements FacebookTracker {
 		}		
 		fbmlSb.append("</div>");
 
+		fbmlSb.append("<div style='margin-top:5px;margin-bottom:5px;'>Latest activity:</div>");
+		
 		Pageable<BlockView> pageableMugshot = new Pageable<BlockView>("mugshot");
 		pageableMugshot.setPosition(0);
 		pageableMugshot.setInitialPerPage(INITIAL_BLOCKS_PER_PAGE);
 		pageableMugshot.setFlexibleResultCount(true);
 		stacker.pageStack(AnonymousViewpoint.getInstance(Site.NONE), user, pageableMugshot, true);
+		int resultsCount = 0;
 		for (BlockView blockView : pageableMugshot.getResults()) {
+			if (resultsCount == INITIAL_BLOCKS_PER_PAGE - 1) {
+				resultsCount++;
+				break;
+			}
+			resultsCount++;
 			fbmlSb.append(
 			    "<table cellspacing='0' cellpadding='0'>" +
 			    "<tbody><tr><td>" +
-	            "<img src='http://mugshot.org" + blockView.getIcon() + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
+	            "<img src='http://mugshot.org" + blockView.getIcon() + "' title='" + blockView.getTypeTitle() + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
 			    "</td><td>" +
 			    blockView.getSummaryHeading() +
 		        ": <a target='_blank' href='" + getAbsoluteUrl(blockView.getSummaryLink()) + "'>" + blockView.getSummaryLinkText() + "</a>" +
-			    "</td></tr></table>");
+			    "</td></tr></table>");			
 		}
 		// display a note if there was no activity
-		if (pageableMugshot.getResults().size() == 0) {
-			fbmlSb.append("<div style='margin-bottom:10px;'>Once there are new updates, they will show up here.</div>");
+		if (resultsCount == 0) {
+			fbmlSb.append("<div>Once there are new updates, they will show up here.</div>");
 		}
 		if (account.getHasAcceptedTerms()) {
-		    fbmlSb.append("<a target='_blank' style='font-size: 12px; font-weight: bold; margin-top: 10px;' href='" + getAbsoluteUrl("/person?who=" + user.getId().toString()) + "'>" +
-				          "Visit my Mugshot Page</a>");
+			String visitMugshotText = "Visit my Mugshot Page"; 
+			if (resultsCount == INITIAL_BLOCKS_PER_PAGE);
+			    visitMugshotText = visitMugshotText + " To See More";
+		    fbmlSb.append("<a target='_blank' style='font-size:12px;font-weight:bold;margin-top:20px;' href='" + getAbsoluteUrl("/person?who=" + user.getId().toString()) + "'>" +
+				          visitMugshotText + "</a>");
 		}
 		return fbmlSb.toString();
 	}
