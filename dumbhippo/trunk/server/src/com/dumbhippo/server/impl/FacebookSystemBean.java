@@ -91,7 +91,7 @@ public class FacebookSystemBean implements FacebookSystem {
 	}
 	
 	public FacebookAccount lookupFacebookAccount(Viewpoint viewpoint, User user) throws NotFoundException {
-		if (!em.contains(user.getAccount()))
+		if (!em.contains(user))
 			user = EJBUtil.lookupGuid(em, User.class, user.getGuid());
 	
 		ExternalAccount externalAccount = externalAccounts.lookupExternalAccount(viewpoint, user, ExternalAccountType.FACEBOOK);
