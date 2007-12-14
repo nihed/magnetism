@@ -16,6 +16,7 @@ void     hippo_im_update_buddy      (const char *buddy_id,
                                      const char *alias,
                                      gboolean    is_online,
                                      const char *status,
+                                     const char *status_message,
                                      const char *webdav_url);
 void     hippo_im_update_buddy_icon (const char *buddy_id,
                                      const char *icon_hash,
