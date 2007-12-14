@@ -273,9 +273,9 @@ public class FacebookTrackerBean implements FacebookTracker {
 			});
 			Pair<Account, Set<ExternalAccountView>> accountsPair = TxUtils.runInTransaction(new Callable<Pair<Account, Set<ExternalAccountView>>>() {
 				public Pair<Account, Set<ExternalAccountView>> call() {
-					    UserViewpoint viewpoint = new UserViewpoint(user, Site.MUGSHOT);
 					    Account account = accounts.lookupAccountByUser(user);
-						Set<ExternalAccountView> allAccounts = externalAccounts.getExternalAccountViews(viewpoint, user);
+					    UserViewpoint viewpoint = new UserViewpoint(account.getOwner(), Site.MUGSHOT);
+						Set<ExternalAccountView> allAccounts = externalAccounts.getExternalAccountViews(viewpoint, account.getOwner());
 				        externalAccounts.loadThumbnails(viewpoint, allAccounts);
 				        return new Pair<Account, Set<ExternalAccountView>>(account, allAccounts);
 				}	
