@@ -273,4 +273,24 @@ public class ExternalAccount extends DBUnique {
 	public boolean hasAccountInfo() {
 		return accountType.getHasAccountInfo(handle, extra);
 	}
+	
+	public static int compare(ExternalAccount first, ExternalAccount second) {
+		// Equality should be impossible, someone should not have two of the same account.
+		// But we'll put it here in case the java sort algorithm somehow needs it (tough to imagine)
+		if (first.getAccountType() == second.getAccountType())
+			return 0;
+		
+		// We want "my website" first, "blog" second, then everything alphabetized by the human-readable name.
+		
+		if (first.getAccountType() == ExternalAccountType.WEBSITE)
+			return -1;
+		if (second.getAccountType() == ExternalAccountType.WEBSITE)
+			return 1;
+		if (first.getAccountType() == ExternalAccountType.BLOG)
+			return -1;
+		if (second.getAccountType() == ExternalAccountType.BLOG)
+			return 1;				
+		
+		return String.CASE_INSENSITIVE_ORDER.compare(first.getSiteName(), second.getSiteName());
+	}
 }

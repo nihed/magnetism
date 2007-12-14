@@ -23,7 +23,7 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.FacebookResource;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
@@ -338,27 +338,9 @@ public class PersonView extends EntityView {
 			}			
 		}
 		Collections.sort(list, new Comparator<ExternalAccountView>() {
-
 			public int compare(ExternalAccountView first, ExternalAccountView second) {
-				// Equality should be impossible, someone should not have two of the same account.
-				// But we'll put it here in case the java sort algorithm somehow needs it (tough to imagine)
-				if (first.getExternalAccount().getAccountType() == second.getExternalAccount().getAccountType())
-					return 0;
-				
-				// We want "my website" first, "blog" second, then everything alphabetized by the human-readable name.
-				
-				if (first.getExternalAccount().getAccountType() == ExternalAccountType.WEBSITE)
-					return -1;
-				if (second.getExternalAccount().getAccountType() == ExternalAccountType.WEBSITE)
-					return 1;
-				if (first.getExternalAccount().getAccountType() == ExternalAccountType.BLOG)
-					return -1;
-				if (second.getExternalAccount().getAccountType() == ExternalAccountType.BLOG)
-					return 1;				
-				
-				return String.CASE_INSENSITIVE_ORDER.compare(first.getExternalAccount().getSiteName(), second.getExternalAccount().getSiteName());
-			}
-			
+				return ExternalAccount.compare(first.getExternalAccount(), second.getExternalAccount());	
+			}			
 		});
 		return new ListBean<ExternalAccountView>(list);
 	}
