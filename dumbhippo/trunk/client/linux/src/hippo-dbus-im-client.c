@@ -136,6 +136,7 @@ notify_buddy(ImData             *id,
     const char *status = NULL;
     const char *webdav_url = NULL;
     const char *icon = NULL;    
+    const char *status_message = NULL;
     
     while (dbus_message_iter_get_arg_type(buddy_iter) != DBUS_TYPE_INVALID) {
         DBusMessageIter entry_iter, variant_iter;
@@ -162,6 +163,8 @@ notify_buddy(ImData             *id,
             read_basic_variant(&variant_iter, DBUS_TYPE_STRING, &alias);
         } else if (strcmp(field, "status") == 0) {
             read_basic_variant(&variant_iter, DBUS_TYPE_STRING, &status);
+        } else if (strcmp(field, "status-message") == 0) {
+            read_basic_variant(&variant_iter, DBUS_TYPE_STRING, &status_message);
         } else if (strcmp(field, "online") == 0) {
             read_basic_variant(&variant_iter, DBUS_TYPE_BOOLEAN, &is_online);
         } else if (strcmp(field, "webdav-url") == 0) {
@@ -185,6 +188,7 @@ notify_buddy(ImData             *id,
                           name, alias,
                           is_online,
                           status,
+                          status_message,
                           webdav_url);
 
     /* has_icon_hash() allows icon==NULL. It checks whether

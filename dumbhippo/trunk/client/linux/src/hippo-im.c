@@ -22,6 +22,7 @@ typedef struct {
     char *alias; /* Human visible name */
     gboolean is_online;
     char *status;
+    char *status_message;
     char *webdav_url;
     char *icon_hash;
     char *icon_data_url;
@@ -35,6 +36,7 @@ hippo_im_buddy_destroy(HippoImBuddy *buddy)
     g_free(buddy->name);
     g_free(buddy->alias);
     g_free(buddy->status);
+    g_free(buddy->status_message);
     g_free(buddy->webdav_url);
     g_free(buddy->icon_hash);
     g_free(buddy->icon_data_url);
@@ -279,6 +281,7 @@ hippo_im_update_buddy(const char           *buddy_id,
                       const char           *alias,
                       gboolean              is_online,
                       const char           *status,
+                      const char           *status_message,
                       const char           *webdav_url)
 {
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
@@ -425,6 +428,23 @@ hippo_im_update_buddy(const char           *buddy_id,
         buddy_changed = !new_buddy;
     }
 
+    if (new_buddy || !compare_strings(status_message, buddy->status_message)) {
+        g_free(buddy->status_message);
+        buddy->status_message = g_strdup(status_message);
+
+        value.type = DDM_DATA_STRING;
+        value.u.string = buddy->status_message;
+
+        ddm_data_resource_update_property(buddy_resource,
+                                          ddm_qname_get(BUDDY_CLASS, "statusMessage"),
+                                          buddy->status_message ? DDM_DATA_UPDATE_REPLACE : DDM_DATA_UPDATE_CLEAR,
+                                          DDM_DATA_CARDINALITY_01,
+                                          TRUE, NULL,
+                                          &value);
+        
+        buddy_changed = !new_buddy;
+    }
+    
     if (new_buddy || !compare_strings(webdav_url, buddy->webdav_url)) {
         g_free(buddy->webdav_url);
         buddy->webdav_url = g_strdup(webdav_url);

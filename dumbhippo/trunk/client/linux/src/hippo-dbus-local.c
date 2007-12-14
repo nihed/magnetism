@@ -192,7 +192,7 @@ update_im_buddy(const char           *session_id)
          */
         hippo_im_update_buddy(resource_id,
                               "mugshot-local", local_buddy->user_resource_id, NULL,
-                              TRUE, "Around", local_buddy->webdav_url);
+                              TRUE, "Around", NULL, local_buddy->webdav_url);
     }
     
     g_free(resource_id);

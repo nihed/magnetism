@@ -597,6 +597,7 @@ _ddm_data_model_mark_changed(DDMDataModel    *model,
         g_hash_table_insert(model->changed_resources, resource, ddm_data_resource_ref(resource));
     }
 
+    g_debug("Scheduling flush due to mark_changed");
     ddm_data_model_schedule_flush(model);
 }
 
@@ -674,6 +675,7 @@ _ddm_data_model_add_work_item (DDMDataModel    *model,
     }
     
 
+    g_debug("Scheduling flush due to work item");
     ddm_data_model_schedule_flush(model);
 }
 
