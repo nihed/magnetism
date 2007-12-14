@@ -895,6 +895,13 @@ def main():
     bus = dbus.SessionBus() 
     bus_name = dbus.service.BusName(BUS_NAME_STR, bus=bus)
 
+    if replace:
+        try:
+            bb = bus.get_object(BUS_NAME_STR, '/bigboard/panel')
+            bb.Kill()
+        except dbus.DBusException, e:
+            pass
+
     _logger.debug("Requesting D-BUS name")
     try:
         bigboard.libbig.dbusutil.take_name(BUS_NAME_STR, replace, on_name_lost)
