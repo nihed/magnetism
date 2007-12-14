@@ -8,6 +8,9 @@ from bigboard.big_widgets import ThemedWidgetMixin
 class DefaultTheme(Singleton):
     def __init__(self):
         super(DefaultTheme, self).__init__()
+        
+        self.opacity = 0.85
+        
         self.background = 0xFFFFFFFF
         self.prelight = 0xE2E2E2FF
         self.foreground = 0x000000FF

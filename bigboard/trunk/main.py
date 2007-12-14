@@ -3,7 +3,9 @@
 import os, sys, threading, getopt, logging, StringIO, stat, signal
 import xml.dom.minidom, urllib2, urlparse, subprocess, weakref
 
-import gobject, gtk, pango
+# This line makes jhbuild find the jhbuilt pygtk
+import pygtk; pygtk.require ('2.0')
+import gobject, gtk, pango, cairo
 import gnome.ui, gconf
 # We need to import this early before gnome_program_init() is called
 import gnomeapplet
@@ -19,7 +21,7 @@ import pyonlinedesktop.widget
 import bigboard
 import bigboard.big_widgets
 from bigboard.big_widgets import Sidebar, CanvasHBox, CanvasVBox, ActionLink, ThemedText
-from bigboard.big_widgets import Button, GradientHeader, ThemedWidgetMixin, ThemeManager
+from bigboard.big_widgets import Button, GradientHeader, ThemedWidgetMixin, ThemeManager, Header
 from bigboard.stock import Stock
 import bigboard.libbig
 try:
@@ -274,16 +276,6 @@ class GoogleGadgetContainer(hippo.CanvasWidget):
         self.widget = ggadget.Gadget(metainfo, env)
         self.widget.show_all() 
         self.set_property('widget', self.widget)
-        
-class Header(hippo.CanvasBox, ThemedWidgetMixin):
-    def __init__(self):
-        super(Header, self).__init__(orientation=hippo.ORIENTATION_HORIZONTAL,
-                                     background_color=0xFF0000FF)
-
-    def do_paint_below_children(self, cr, dmgbox):
-        area = self.get_background_area()
-        self.get_theme().draw_header(cr, area)
-gobject.type_register(Header)
 
 class HeaderButton(hippo.CanvasBox, ThemedWidgetMixin):
     def __init__(self):
@@ -416,9 +408,30 @@ class BigBoardPanel(dbus.service.Object):
         
         self._exchanges = {} ## metainfo.srcurl to Exchange
 
-        self._canvas = hippo.Canvas()
+        self._canvas = canvas = hippo.Canvas()
         self._dw.get_content().add(self._canvas)
-                
+        cwin = self._dw
+        self.__compositing = gtk.gdk.display_get_default().supports_composite()
+        _logger.debug("compositing: %s", self.__compositing)
+#            screen = cwin.get_screen()
+#            rgba = screen.get_rgba_colormap()
+#            cwin.set_colormap(rgba)
+#            cwin.set_app_paintable(True)
+#            def fitty_opacity(w, e):
+#                ctx = w.window.cairo_create()
+#                ctx.set_source_pixmap(canvas.window, canvas.allocation.x, canvas.allocation.y)
+#                region = gtk.gdk.region_rectangle(canvas.allocation)
+#                region.intersect(gtk.gdk.region_rectangle(e.area))
+#                print >>sys.stderr, "e: %s" % (region,)            
+#                ctx.region(region)
+#                ctx.clip()
+#            
+#                ctx.set_operator(cairo.OPERATOR_OVER)
+#                ctx.paint_with_alpha(0.5)
+#            cwin.connect_after('expose-event', fitty_opacity)
+#            cwin.realize()
+#            cwin.window.set_composited(True)
+        
         self._main_box = hippo.CanvasBox(border_right=1, border_color=0x999999FF, padding_bottom=4)
         self._canvas.set_root(self._main_box)
      
@@ -576,6 +589,9 @@ class BigBoardPanel(dbus.service.Object):
         
     def __sync_theme(self, *args):
         theme = self.__theme_mgr.get_theme()
+        if self.__compositing:
+            self._dw.realize()
+            self._dw.set_opacity(theme.opacity)        
         self._canvas.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#%6X" % (theme.background >> 8,)))
         self._canvas.queue_draw_area(0,0,-1,-1)
         
@@ -841,7 +857,7 @@ def main():
             usage()
             sys.exit()
 
-    signal.signal(signal.SIGINT, lambda i,frame: sys.stderr.write('Caught SIGINT, departing this dear world\n') or os._exit(0))
+    signal.signal(signal.SIGINT, lambda i,frame: sys.stderr.write('Caught SIGINT\n') or os._exit(0))
 
     if (not os.environ.has_key('OD_SESSION')):
         warn = gconf.client_get_default().get_without_default(GCONF_PREFIX + 'warn_outside_online_desktop')
@@ -893,7 +909,6 @@ def main():
     gtk.icon_theme_get_default().prepend_search_path(icon_datadir)
 
     bus = dbus.SessionBus() 
-    bus_name = dbus.service.BusName(BUS_NAME_STR, bus=bus)
 
     if replace:
         try:
@@ -901,7 +916,8 @@ def main():
             bb.Kill()
         except dbus.DBusException, e:
             pass
-
+        
+    bus_name = dbus.service.BusName(BUS_NAME_STR, bus=bus)
     _logger.debug("Requesting D-BUS name")
     try:
         bigboard.libbig.dbusutil.take_name(BUS_NAME_STR, replace, on_name_lost)

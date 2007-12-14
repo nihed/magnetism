@@ -14,10 +14,10 @@ from bigboard.libbig.logutil import log_except
 from bigboard.libbig.gutil import *
 from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock
-from bigboard.slideout import Slideout
+from bigboard.slideout import ThemedSlideout
 import bigboard.google as google
 import bigboard.google_stock as google_stock  
-from bigboard.big_widgets import IconLink, CanvasHBox, CanvasVBox, Button, GradientHeader
+from bigboard.big_widgets import IconLink, CanvasHBox, CanvasVBox, Button, Header, ThemedText
 from bigboard.libbig.xmlquery import query as xml_query, get_attrs as xml_get_attrs
 import bigboard.apps_directory as apps_directory
 import bigboard.search as search
@@ -274,12 +274,12 @@ def get_menu_pixbuf(menuentry, size=48):
         return None
     return pixbuf
     
-class FileSlideout(Slideout):
+class FileSlideout(ThemedSlideout):
     def __init__(self, fobj):
         super(FileSlideout, self).__init__()
         vbox = CanvasVBox(border=1, border_color=0x0000000ff, spacing=4, padding=4)
         self.get_root().append(vbox)
-        self.__header = GradientHeader()
+        self.__header = Header()
         text = hippo.CanvasText(text=fobj.get_name(), font="14px", xalign=hippo.ALIGNMENT_START)
         self.__header.append(text, hippo.PACK_EXPAND)        
         vbox.append(self.__header)
@@ -291,20 +291,16 @@ class FileSlideout(Slideout):
         vbox.append(hbox)
         
         detailvbox = CanvasVBox(spacing=3)
-        hbox.append(detailvbox)
-        attrs = pango.AttrList()
-        attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))  
+        hbox.append(detailvbox) 
         mime = fobj.get_mimetype()
         if mime:
             mimename = gnomevfs.mime_get_description(mime)
-            text = hippo.CanvasText(text=mimename, font='12px', xalign=hippo.ALIGNMENT_START)
-            text.set_property("attributes", attrs)                   
+            text = ThemedText(theme_hints=['subforeground'], text=mimename, font='12px', xalign=hippo.ALIGNMENT_START)                  
             detailvbox.append(text)
         size = fobj.get_size()            
         if size is not None:
             sizestr = format_file_size(size)
-            text = hippo.CanvasText(text=sizestr, font='12px', xalign=hippo.ALIGNMENT_START)
-            text.set_property("attributes", attrs)               
+            text = ThemedText(theme_hints=['subforeground'], text=sizestr, font='12px', xalign=hippo.ALIGNMENT_START)             
             detailvbox.append(text)
         fname = os.path.dirname(fobj.get_full_name())
         if fname.startswith('file://'):
@@ -313,12 +309,11 @@ class FileSlideout(Slideout):
         if fname.startswith(home):
             fname = fname[:len(home)]
         fname = urllib.unquote(fname)            
-        text = hippo.CanvasText(text=fname, font='12px', xalign=hippo.ALIGNMENT_START)
-        text.set_property("attributes", attrs)           
+        text = ThemedText(theme_hints=['subforeground'], text=fname, font='12px', xalign=hippo.ALIGNMENT_START)          
         detailvbox.append(text)
         apps = gnomevfs.mime_get_all_applications(mime)
         if apps:
-            text = hippo.CanvasText(text='Open With: ', font='14px')
+            text = ThemedText(text='Open With: ', font='14px')
             detailvbox.append(text)
             def on_app_clicked(button, app):
                 self.emit('close', True)

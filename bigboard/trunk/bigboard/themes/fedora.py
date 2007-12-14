@@ -7,6 +7,9 @@ from bigboard.themes.default import DefaultTheme
 class FedoraTheme(DefaultTheme):
     def __init__(self):
         super(FedoraTheme, self).__init__()
+        
+        self.opacity = 0.9
+        
         self.background = 0x345B75FF  
         self.foreground = 0xFFFFFFFF
         self.header_fg = self._rgba_to_cairo(self.foreground)
