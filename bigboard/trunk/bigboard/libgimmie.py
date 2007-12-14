@@ -35,16 +35,19 @@ class DockWindow(gtk.Window):
             self.content = gtk.HBox (False, 0)
         self.content.show()
 
+        self.content_window = gtk.EventBox()
         self.content_align = gtk.Alignment(xscale=1.0, yscale=1.0)
         self.content_align.add(self.content)
         self.content_align.show()
-        self.add(self.content_align)
+        self.content_window.add(self.content_align)
+        self.content_window.show()        
+        self.add(self.content_window)
 
     def get_content(self):
         return self.content
-
-    def get_content_alignment(self):
-        return self.content_align
+    
+    def get_content_window(self):
+        return self.content_window
 
     def get_edge_gravity(self):
         return self.edge_gravity
