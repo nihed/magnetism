@@ -187,6 +187,28 @@ append_buddy(PluginData             *pd,
             status = purple_status_get_name(pstatus);
         if (status)
             append_basic_entry(&dict_iter, "status", DBUS_TYPE_STRING, &status);
+
+        if (pstatus) {
+            const char *message;
+            message = purple_status_get_attr_string(pstatus, "message");
+            if (message) {
+                if (purple_status_is_available(pstatus) && strcmp(protocol, "aim") == 0) {
+                    /* according to oscar/oscar.c, the available message is plain text
+                     * instead of markup, while the away message is html.
+                     */
+                    append_basic_entry(&dict_iter, "status-message", DBUS_TYPE_STRING, &message);
+                } else {
+                    /* It looks like the aim away message and all xmpp messages are html (?)
+                     * For other protocols, who knows.
+                     */
+                    char *unescaped_message;
+                    unescaped_message = purple_markup_strip_html(message);
+                    if (unescaped_message)
+                        append_basic_entry(&dict_iter, "status-message", DBUS_TYPE_STRING, &unescaped_message);
+                    g_free(unescaped_message);
+                }
+            }
+        }
     }
     
     dbus_message_iter_close_container(append_iter, &dict_iter);
