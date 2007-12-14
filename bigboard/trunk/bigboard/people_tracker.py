@@ -8,6 +8,7 @@ from ddm.NotificationSet import NotificationSet
 import ddm.Resource
 import bigboard.globals
 from libbig.singletonmixin import Singleton
+import libbig.gutil as gutil
 
 try:
     import bigboard.bignative as bignative
@@ -435,7 +436,14 @@ class RemoveDuplicatesPersonSet(PersonSet):
         for item in self.__source:
             self.__on_added(self, self.__source, item)
 
+        self.__connections = gutil.DisconnectSet()
+
     def __on_added(self, source, item):
+
+        ## monitor properties that affect what hides what
+        self.__connections.add(item, item.connect('xmpp-buddy-changed', self.__on_changed))
+        self.__connections.add(item, item.connect('aim-buddy-changed', self.__on_changed))
+
         ## if we are hidden by anything included, then 
         ## we are not included
         is_hidden = False
@@ -458,51 +466,84 @@ class RemoveDuplicatesPersonSet(PersonSet):
             self.__included.add(item)
             self.emit('added', item)
 
-            ## remove stuff we hide
-            for hidden in items_we_hide:
-                self.__included.remove(hidden)
-                self.__not_included.add(hidden)
-                self.emit('removed', hidden)
+            self.__consider_including_items(items_we_hide)
 
     def __on_removed(self, source, item):
+
+        self.__connections.disconnect_object(item)
+
         ## if we weren't included anyhow, nothing to do
         if item in self.__not_included:
             self.__not_included.remove(item)
             return
 
-        ## if we were included, we might have been hiding
-        ## something else, so we need to see if anything in 
-        ## not_included is now included
         if item in self.__included:
             self.__included.remove(item)
             self.emit('removed', item)
-
-            maybe_now_included = []
-            for hidden in self.__not_included:
-                if self.__is_hidden_by(hidden, item):
-                    # this item was hidden by us, but 
-                    # may also be hidden by something else
-                    maybe_now_included.append(hidden)
             
-            for maybe_included in maybe_now_included:
-                include = True
-                for may_hide in self.__included:
-                    if self.__is_hidden_by(maybe_included, may_hide):
-                        include = False
-                        break
-                if include:
-                    self.__not_included.remove(maybe_included)
-                    self.__included.add(maybe_included)
-                    self.emit('added', maybe_included)
+            ## if we were included, we might have been hiding
+            ## something else, so we need to see if anything in 
+            ## not_included is now included
+            self.__consider_including_items(self.__not_included)
 
+    def __on_changed(self, item):
+        ## if we changed, we may no longer be hiding another item, 
+        ## or may no longer be hidden by another item, or we may 
+        ## now hide another item, or may now be hidden by another 
+        ## item
+
+        # this should result in un-hiding either other items or 
+        # the changed item, if appropriate
+        self.__consider_including_items(self.__not_included)
+        
+        # this should result in hiding either other items or 
+        # the changed item, if appropriate
+        self.__consider_including_items(self.__included)        
+
+    def __consider_including_items(self, maybe_now_included):
+        ## FIXME this is messed up since self.__included is
+        ## used to compute what should be in self.__included ...
+
+        # since maybe_now_included may be self.__included or self.__not_included, 
+        # we can't remove or add while iterating over it
+        to_add = set()
+        to_remove = set()
+
+        for maybe_included in maybe_now_included:
+            include = True
+            for may_hide in self.__included:
+                if self.__is_hidden_by(maybe_included, may_hide):
+                    include = False
+                    break
+
+            if include:
+                to_add.add(maybe_included)
+            else:
+                to_remove.add(maybe_included)
+
+        for person in to_add:
+            if person not in self.__included:
+                self.__not_included.remove(person)
+                self.__included.add(person)
+                self.emit('added', person)
+            
+        for person in to_remove:
+            if person in self.__included:
+                self.__included.remove(person)
+                self.__not_included.add(person)
+                self.emit('removed', person)
 
     def __is_hidden_by(self, hidden, hider):
         ## the eventual idea is that contacts hide IM buddies they
         ## correspond to (buddies are merged into contacts)
 
+        if hidden == hider:
+            return False
+
         ## lame hack for testing, since buddies and contacts made from 
         ## buddies have the same display name
-        if hidden.display_name == hider.display_name and hider.is_contact:
+        if hider.is_contact and \
+                (hidden.resource == hider.aim_buddy or hidden.resource == hider.xmpp_buddy):
             return True
         else:
             return False
