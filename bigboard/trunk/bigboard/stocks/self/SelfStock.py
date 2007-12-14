@@ -112,9 +112,9 @@ class SelfSlideout(CanvasVBox):
         self.__personal_box_right = CanvasVBox()
         self.__personal_box.append(self.__personal_box_right, hippo.PACK_EXPAND)
         
-        self.__name = hippo.CanvasText(font="14px Bold",
-                                       xalign=hippo.ALIGNMENT_START,
-                                       size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        self.__name = ThemedText(font="14px Bold",
+                                 xalign=hippo.ALIGNMENT_START,
+                                 size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         
         self.__personal_box_right.append(self.__name)
 
@@ -122,20 +122,20 @@ class SelfSlideout(CanvasVBox):
 
         self.__personalization_box = CanvasVBox(spacing=2)
         self.append(self.__personalization_box)
-        self.__personalization_box.append(hippo.CanvasText(text='Personalization',
-                                                           font='12px Bold',
-                                                           xalign=hippo.ALIGNMENT_START))
+        self.__personalization_box.append(ThemedText(text='Personalization',
+                                                     font='12px Bold',
+                                                     xalign=hippo.ALIGNMENT_START))
 
-        self.__mugshot_link = IconLink(img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START)
+        self.__mugshot_link = IconLink(img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START, themed=True)
         self.__mugshot_link.link.connect("activated", self.__show_mugshot_link)
         self.__mugshot_link.img.set_property('image-name', '/usr/share/icons/gnome/22x22/apps/web-browser.png')
         self.__personalization_box.append(self.__mugshot_link)
 
-        link = IconLink(text='Desktop Preferences...', img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START)
+        link = IconLink(text='Desktop Preferences...', img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START, themed=True)
         link.link.connect("activated", self.__on_system_preferences)
         link.img.set_property('image-name', '/usr/share/icons/gnome/22x22/categories/preferences-system.png')
         self.__personalization_box.append(link)    
-        link = IconLink(text='Sidebar Preferences...', img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START)
+        link = IconLink(text='Sidebar Preferences...', img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START, themed=True)
         link.link.connect("activated", self.__on_sidebar_controls)
         link.img.set_property('image-name', '/usr/share/icons/gnome/22x22/categories/preferences-desktop.png')
         self.__personalization_box.append(link)
@@ -154,7 +154,7 @@ class SelfSlideout(CanvasVBox):
             self.__fus_users_box = CanvasVBox()
             self.__fus_box.append(self.__fus_users_box)
             
-            link = IconLink(text='Log in as Another User...', img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START)
+            link = IconLink(text='Log in as Another User...', img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START, themed=True)
             link.link.connect("activated", self.__do_fus_login_other_user)
             link.img.set_property('image-name', '/usr/share/icons/gnome/22x22/apps/system-users.png')
             self.__fus_box.append(link)
@@ -164,7 +164,7 @@ class SelfSlideout(CanvasVBox):
         self.__logout_controls_box = CanvasVBox()
         self.append(self.__logout_controls_box)
 
-        link = IconLink(text='Logout or Shutdown...', img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START)
+        link = IconLink(text='Logout or Shutdown...', img_scale_width=22, img_scale_height=22, xalign=hippo.ALIGNMENT_START, themed=True)
         link.link.connect("activated", self.__on_logout)
         link.img.set_property('image-name', '/usr/share/icons/gnome/22x22/apps/gnome-shutdown.png')
         self.__logout_controls_box.append(link)
@@ -250,8 +250,7 @@ class SelfStock(AbstractMugshotStock):
 
         self._namephoto_box = PhotoContentItem()
         self._namephoto_box.set_themed()
-        self._namephoto_box.set_clickable(True)
-        self._namephoto_box.set_sync_prelight_callback(self.__on_sync_prelight)        
+        self._namephoto_box.set_clickable(True) 
         self._namephoto_box.connect("button-press-event", lambda button, event: self.__on_activate())
         
         self._photo = CanvasMugshotURLImage(scale_width=48, scale_height=48)
@@ -263,8 +262,8 @@ class SelfStock(AbstractMugshotStock):
         self._name.set_property("font", "14px Bold")
         self._namephoto_box_child.append(self._name)  
 
-        self._bulb = hippo.CanvasImage(scale_width=17, scale_height=22, xalign=hippo.ALIGNMENT_END, yalign=hippo.ALIGNMENT_CENTER)
-        self._bulb.set_property("image-name", 'bigboard-bulb-bw')
+        self._bulb = hippo.CanvasImage(xalign=hippo.ALIGNMENT_END, yalign=hippo.ALIGNMENT_CENTER)
+        self._bulb.set_property("image-name", 'bigboard-info')
         self._namephoto_box_child.append(self._bulb, hippo.PACK_EXPAND)
         
         self._namephoto_box.set_child(self._namephoto_box_child)      
@@ -299,12 +298,6 @@ class SelfStock(AbstractMugshotStock):
 
         if self._model.ready:
             self.__on_ready()
-            
-    def __on_sync_prelight(self, prelighted):
-        if prelighted:
-            self._bulb.set_property("image-name", 'bigboard-bulb')
-        else:
-            self._bulb.set_property("image-name", 'bigboard-bulb-bw')
 
     def __idle_first_time_signin_check(self):
         ws = dbus.SessionBus().get_object('org.freedesktop.od.Engine', '/org/gnome/web_services')
@@ -368,7 +361,7 @@ class SelfStock(AbstractMugshotStock):
         self._box.set_child_visible(self._signin, not auth)
             
     def __do_slideout(self, display, widget=None):
-        slideout = bigboard.slideout.Slideout()        
+        slideout = bigboard.slideout.ThemedSlideout()        
         widget_src = widget or self._box
         (box_x, box_y) = self._box.get_context().translate_to_screen(self._box)
         (src_x, src_y) = widget_src.get_context().translate_to_screen(widget_src)

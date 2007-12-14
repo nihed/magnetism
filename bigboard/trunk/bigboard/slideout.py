@@ -1,6 +1,8 @@
 import hippo
 import gtk
 
+from bigboard.big_widgets import ThemedWidgetMixin
+
 class Slideout(hippo.CanvasWindow):
     def __init__(self, widget=None):
         super(Slideout, self).__init__(gtk.WINDOW_TOPLEVEL)
@@ -39,3 +41,12 @@ class Slideout(hippo.CanvasWindow):
         self.move(x, y)
         self.present_with_time(gtk.get_current_event_time())
     
+class ThemedSlideout(Slideout, ThemedWidgetMixin):
+    def __init__(self, theme_hints=[], **kwargs):
+        Slideout.__init__(self, **kwargs)
+        ThemedWidgetMixin.__init__(self, theme_hints=theme_hints)
+        
+    def _on_theme_changed(self, theme):
+        self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#%6X" % (theme.background >> 8,)))
+        self.queue_draw_area(0,0,-1,-1)
+                
