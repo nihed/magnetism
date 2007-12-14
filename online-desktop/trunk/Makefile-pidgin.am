@@ -1,7 +1,9 @@
 libdbus_api_plugin_la_LDFLAGS = -avoid-version -module
 libdbus_api_plugin_la_LIBADD = $(PIDGIN_PLUGIN_LIBS)
 
-plugindir=$(libdir)/pidgin
+## pidgin installs its plugins to prefix/lib even if libdir is prefix/lib64, so we 
+## have to be broken in the same way to match.
+plugindir=$(prefix)/lib/pidgin
 plugin_LTLIBRARIES = libdbus-api-plugin.la
 
 libdbus_api_plugin_la_CPPFLAGS =		\
