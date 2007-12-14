@@ -1,6 +1,8 @@
 package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -49,6 +51,7 @@ import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.AnonymousViewpoint;
+import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.services.FacebookPhotoDataView;
@@ -592,10 +595,43 @@ public class FacebookTrackerBean implements FacebookTracker {
 	
 	private String createFbmlForUser(Account account) {
 		User user = account.getOwner();
+		UserViewpoint viewpoint = new UserViewpoint(user, Site.MUGSHOT);
 		StringBuilder fbmlSb = new StringBuilder("");
 		fbmlSb.append("<fb:visible-to-owner><fb:subtitle>" +
 		              "<a href='http://apps.facebook.com/mugshot'>Edit Accounts</a>" +
 		              "</fb:subtitle></fb:visible-to-owner>");
+		
+		// add the accounts ribbon
+		Set<ExternalAccountView> allAccounts = externalAccounts.getExternalAccountViews(viewpoint, user);
+        externalAccounts.loadThumbnails(viewpoint, allAccounts);
+        List<ExternalAccountView> lovedAccounts = new ArrayList<ExternalAccountView>();
+		for (ExternalAccountView a : allAccounts) {
+			// This will include the Website account which there is no way to specify
+			// on the Facebook application page, but that's ok.
+			// Let's exclude Facebook account itself, since it would take the user to the page
+			// they are already viewing!
+			if (a.getExternalAccount().isLovedAndEnabled() && !a.getExternalAccountType().equals(ExternalAccountType.FACEBOOK))
+				lovedAccounts.add(a);
+		}
+	
+		Collections.sort(lovedAccounts, new Comparator<ExternalAccountView>() {
+			public int compare(ExternalAccountView first, ExternalAccountView second) {
+				return ExternalAccount.compare(first.getExternalAccount(), second.getExternalAccount());	
+			}			
+		});
+		
+		fbmlSb.append("<div>");
+		for (ExternalAccountView a : lovedAccounts) {
+            String imageTitle = a.getExternalAccount().getSiteName();
+            if (a.getExternalAccount().getLinkText().length() >0 )
+            	imageTitle = imageTitle + ": " + a.getExternalAccount().getLinkText();
+          			
+			fbmlSb.append("<a target='_blank' href='" + a.getLink() + "'>" +
+					    "<img src='http://mugshot.org/images3/" + a.getIconName() + "' title='" + imageTitle + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
+					    "</a>");
+		}		
+		fbmlSb.append("</div>");
+
 		Pageable<BlockView> pageableMugshot = new Pageable<BlockView>("mugshot");
 		pageableMugshot.setPosition(0);
 		pageableMugshot.setInitialPerPage(INITIAL_BLOCKS_PER_PAGE);
@@ -613,7 +649,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		}
 		// display a note if there was no activity
 		if (pageableMugshot.getResults().size() == 0) {
-			fbmlSb.append("<div>Once there are new updates, they will show up here.</div>");
+			fbmlSb.append("<div style='margin-bottom:10px;'>Once there are new updates, they will show up here.</div>");
 		}
 		if (account.getHasAcceptedTerms()) {
 		    fbmlSb.append("<a target='_blank' style='font-size: 12px; font-weight: bold; margin-top: 10px;' href='" + getAbsoluteUrl("/person?who=" + user.getId().toString()) + "'>" +
