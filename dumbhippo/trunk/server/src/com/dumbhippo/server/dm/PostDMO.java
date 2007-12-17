@@ -77,7 +77,7 @@ public abstract class PostDMO extends DMObject<Guid> {
 		return post.getPostDate().getTime();
 	}
 
-	@DMProperty(defaultInclude=true)
+	@DMProperty(defaultInclude=true, defaultChildren="+")
 	@DMFilter("viewer.canSeePrivate(any)")
 	public List<UserDMO> getUserRecipients() {
 		List<UserDMO> result = new ArrayList<UserDMO>();

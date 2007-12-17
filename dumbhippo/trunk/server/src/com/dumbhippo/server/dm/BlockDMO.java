@@ -13,9 +13,11 @@ import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.dm.annotations.MetaConstruct;
+import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.dm.store.StoreKey;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.persistence.BlockType.BlockVisibility;
 import com.dumbhippo.server.NotFoundException;
@@ -110,10 +112,28 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 		blockView = view;
 	}
 	
+	@DMProperty(defaultInclude=true, type=PropertyType.URL)
+	public String getIcon() {
+		return blockView.getIcon();
+	}
+	
+	@DMProperty(defaultInclude=true)
+	public long getTimestamp() {
+		return blockView.getBlock().getTimestampAsLong();
+	}
+	
 	@DMProperty(defaultInclude=true)
 	public String getTitle() {
 		if (blockView instanceof TitleBlockView)
 			return ((TitleBlockView)blockView).getTitle();
+		else
+			return null;
+	}
+	
+	@DMProperty(defaultInclude=true)
+	public String getTitleLink() {
+		if (blockView instanceof TitleBlockView)
+			return ((TitleBlockView)blockView).getLink();
 		else
 			return null;
 	}
@@ -124,6 +144,11 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 			return ((TitleDescriptionBlockView)blockView).getDescription();
 		else
 			return null;
+	}
+	
+	@DMProperty(defaultInclude=true)
+	public String getChatId() {
+		return blockView.getChatId();
 	}
 	
 	@DMProperty(defaultInclude=true)
@@ -145,27 +170,57 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 	
 	@DMProperty(defaultInclude=true, group=USER_BLOCK_DATA_GROUP, cached=false)
 	public long getClickedTimestamp() {
-		long clickedTimestamp = userBlockData.getClickedTimestampAsLong();
-		if (clickedTimestamp < 0) // Prettification, not to return -1000, which is what is stored in the DB
+		if (userBlockData == null)
 			return -1;
-		else
-			return clickedTimestamp;
+		else {
+			long clickedTimestamp = userBlockData.getClickedTimestampAsLong();
+			if (clickedTimestamp < 0) // Prettification, not to return -1000, which is what is stored in the DB
+				return -1;
+			else
+				return clickedTimestamp;
+		}
 	}
 
 	@DMProperty(defaultInclude=true, group=USER_BLOCK_DATA_GROUP, cached=false)
 	public long getIgnoredTimestamp() {
-		if (userBlockData.isIgnored())
-			return userBlockData.getIgnoredTimestampAsLong();
-		else
+		if (userBlockData == null)
 			return -1;
+		else {
+			if (userBlockData.isIgnored())
+				return userBlockData.getIgnoredTimestampAsLong();
+			else
+				return -1;
+		}
+	}
+	
+	// This isn't 101% right ... the stack reason should be the stack reason of
+	// the block in the stack (and is thus stack dependent), not the stack reason 
+	// of the viewer. But for right now, the data model stack is only being used
+	// to view the user's own stack, for which the two things are the same.
+	//
+	// I'm not sure that the stack dependence of the stack reason is ever used,
+	// so it may be possible to move the reason from UserBlockData to Block to use
+	// the data model for the web, where we view blocks for which there is no
+	// UserBlockData for the viewer.
+	//
+	@DMProperty(defaultInclude=true, group=USER_BLOCK_DATA_GROUP, cached=false)
+	public String getStackReason() {
+		if (userBlockData == null || 
+			userBlockData.getStackReason() == StackReason.NEW_BLOCK)
+			return null;
+		else
+			return userBlockData.getStackReason().name();
 	}
 	
 	//////////////////////////////////////////////////////////////////////
 	
-	// These properties are here for the implementation of Viewpoint.canSeePrivateBlock(), 
+	// These properties are used for the implementation of Viewpoint.canSeePrivateBlock(), 
 	// Viewpoint.canSeeBlockDelegate()
 	
-	@DMProperty 
+	// This is also used to determine "isMine" by the client; since the owner is also
+	// always returned by some other property, the expense of this in the protocol
+	// over a boolean isn't big	
+	@DMProperty(defaultInclude=true, defaultChildren="+") 
 	public UserDMO getOwner() {
 		switch (blockView.getBlockType().getBlockOwnership()) {
 		case DIRECT_DATA1:
