@@ -66,8 +66,10 @@ class StatusMessage(hippo.CanvasText):
         except AttributeError:
             pass
         
-        if message and message != '':
-            self.set_property('text', message)
+        if message:
+            message = message.strip()
+            if message != '':
+                self.set_property('text', message)
 
 class PersonItem(PhotoContentItem):
     def __init__(self, person, **kwargs):
