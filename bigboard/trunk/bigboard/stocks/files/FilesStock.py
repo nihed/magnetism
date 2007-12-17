@@ -277,14 +277,14 @@ def get_menu_pixbuf(menuentry, size=48):
 class FileSlideout(ThemedSlideout):
     def __init__(self, fobj):
         super(FileSlideout, self).__init__()
-        vbox = CanvasVBox(border=1, border_color=0x0000000ff, spacing=4, padding=4)
+        vbox = CanvasVBox(border_color=0x0000000ff, spacing=4)
         self.get_root().append(vbox)
         self.__header = Header()
-        text = hippo.CanvasText(text=fobj.get_name(), font="14px", xalign=hippo.ALIGNMENT_START)
+        text = ThemedText(text=fobj.get_name(), font="14px Bold", xalign=hippo.ALIGNMENT_START)
         self.__header.append(text, hippo.PACK_EXPAND)        
         vbox.append(self.__header)
         
-        hbox = CanvasHBox(spacing=4)
+        hbox = CanvasHBox(spacing=4, padding=4)
         img = hippo.CanvasImage(scale_width=60, scale_height=60, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
         img.set_property('image-name', fobj.get_image_name())
         hbox.append(img)
