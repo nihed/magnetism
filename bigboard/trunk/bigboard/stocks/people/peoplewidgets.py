@@ -18,6 +18,7 @@ from ddm import DataModel
 _logger = logging.getLogger("bigboard.stocks.PeopleStock")
 
 STATUS_MUSIC = 0
+STATUS_IM = 1
 
 def _open_aim(aim):
     ## purple-remote only allows lowercase "goim" here, unfortunately I'm guessing 
@@ -36,6 +37,37 @@ def _open_webdav(url):
         url = "dav:" + url[5:]
     
     os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', url)
+
+class StatusMessage(hippo.CanvasText):
+    def __init__(self):
+        hippo.CanvasText.__init__(self, color=0x666666ff)
+        self.__buddies = []
+
+        self.connect('destroy', self.__on_destroy)
+
+    def __on_destroy(self, canvas_item):
+        for b in self.__buddies:
+            b.disconnect(self.__on_buddy_changed)        
+
+    def set_buddies(self, buddies):
+        for b in self.__buddies:
+            b.disconnect(self.__on_buddy_changed)
+
+        self.__buddies = buddies
+        
+        for b in self.__buddies:
+            b.connect(self.__on_buddy_changed, 'statusMessage')
+            self.__on_buddy_changed(b)
+
+    def __on_buddy_changed(self, buddy):
+        message = None
+        try:
+            message = buddy.statusMessage
+        except AttributeError:
+            pass
+        
+        if message and message != '':
+            self.set_property('text', message)
 
 class PersonItem(PhotoContentItem):
     def __init__(self, person, **kwargs):
@@ -142,6 +174,13 @@ class PersonItem(PhotoContentItem):
         self.__name.set_property("text", self.person.display_name) #+ " " + str(self.person._debug_rank))
         self.__photo.set_url(self.person.icon_url)
 
+    def __reset_im_status(self):
+        buddies = self.person.aim_buddies + self.person.xmpp_buddies
+        if len(buddies) > 0:
+            sm = StatusMessage()
+            sm.set_buddies(buddies)
+            self.__set_status(STATUS_IM, sm)
+
     def __update_aim_buddy(self, person):
         if person.aim_buddy:
             if not self.__aim_icon:
@@ -150,7 +189,9 @@ class PersonItem(PhotoContentItem):
         else:
             if self.__aim_icon:
                 self.__aim_icon.destroy()
-                self.__aim_icon = None
+                self.__aim_icon = None        
+
+        self.__reset_im_status()
 
     def __update_xmpp_buddy(self, person):
         if person.xmpp_buddy:
@@ -161,6 +202,8 @@ class PersonItem(PhotoContentItem):
             if self.__xmpp_icon:
                 self.__xmpp_icon.destroy()
                 self.__xmpp_icon = None
+
+        self.__reset_im_status()
 
     def __timeout_track(self):
         self.__current_track_timeout = None
