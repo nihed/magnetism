@@ -130,7 +130,7 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 			return null;
 	}
 	
-	@DMProperty(defaultInclude=true)
+	@DMProperty(defaultInclude=true, type=PropertyType.URL)
 	public String getTitleLink() {
 		if (blockView instanceof TitleBlockView)
 			return ((TitleBlockView)blockView).getLink();
