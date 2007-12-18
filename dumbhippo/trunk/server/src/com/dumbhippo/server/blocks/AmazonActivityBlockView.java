@@ -128,7 +128,7 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 	}
 	
 	@Override
-	public String getSummaryLink() {
+	public String getBlockSummaryLink() {
 		return getLink();
 	}
 
@@ -151,7 +151,7 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 	}
 
 	@Override
-	public String getSummaryHeading() {
+	public String getBlockSummaryHeading() {
 		switch (activityStatus.getActivityType()) {
 	        case REVIEWED :
 	            return "Reviewed";
@@ -160,7 +160,7 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 	      	// no default, it hides bugs 
         }
 	
-	    throw new RuntimeException("need to support activity type for " + activityStatus + " in getSummaryHeading()");		
+	    throw new RuntimeException("need to support activity type for " + activityStatus + " in getBlockSummaryHeading()");		
 	}
 	
 	public Date getSentDate() {

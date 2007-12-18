@@ -36,11 +36,11 @@ public class PicasaPersonBlockView extends ExternalThumbnailedPersonBlockView {
 		return "picasaPerson";
 	}
 
-	public @Override String getSummaryHeading() {
+	public @Override String getBlockSummaryHeading() {
 		return "Posted albums";
 	}
 
-	public @Override String getSummaryLink() {
+	public @Override String getBlockSummaryLink() {
 		return getMoreThumbnailsLink();
 	}
 

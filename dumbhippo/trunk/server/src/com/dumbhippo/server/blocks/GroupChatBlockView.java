@@ -83,11 +83,11 @@ public class GroupChatBlockView extends BlockView implements TitleBlockView {
 		return "Group Chat";
 	}
 
-	public @Override String getSummaryHeading() {
+	public @Override String getBlockSummaryHeading() {
 		return getTitle();
 	}
 
-	public @Override String getSummaryLink() {
+	public @Override String getBlockSummaryLink() {
 		return group.getHomeUrl();
 	}
 

@@ -32,7 +32,7 @@ public class GoogleReaderBlockView extends AbstractFeedEntryBlockView {
 		return "Google Reader share";
 	}
 
-	public @Override String getSummaryHeading() {
+	public @Override String getBlockSummaryHeading() {
 		return "Shared";
 	}
 
