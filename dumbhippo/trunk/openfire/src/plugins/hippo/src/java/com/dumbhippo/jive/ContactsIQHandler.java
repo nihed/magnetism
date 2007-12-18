@@ -2,8 +2,6 @@ package com.dumbhippo.jive;
 
 import org.xmpp.packet.IQ;
 
-import com.dumbhippo.dm.DMSession;
-import com.dumbhippo.dm.DataModel;
 import com.dumbhippo.jive.annotations.IQHandler;
 import com.dumbhippo.jive.annotations.IQMethod;
 import com.dumbhippo.persistence.Contact;
@@ -13,8 +11,8 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.PermissionDeniedException;
 import com.dumbhippo.server.dm.ContactDMO;
-import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -184,5 +182,21 @@ public class ContactsIQHandler extends AnnotatedIQHandler {
 			throw IQException.createBadRequest("Unknown contact " + contactDMO.getKey());
 	
 		identitySpider.deleteContact(viewpoint.getViewer(), contact);
+	}
+	
+	@IQMethod(name="setContactName", type=IQ.Type.set)
+	@IQParams({ "contact", "name" })
+	public void setContactName(UserViewpoint viewpoint, ContactDMO contactDMO, String name) throws IQException, RetryException {
+		IdentitySpider identitySpider = EJBUtil.defaultLookup(IdentitySpider.class);
+		
+		Contact contact = identitySpider.lookupContact(contactDMO.getKey());
+		if (contact == null)
+			throw IQException.createBadRequest("Unknown contact " + contactDMO.getKey());
+		
+		try {
+			identitySpider.setContactName(viewpoint, contact, name);
+		} catch (PermissionDeniedException e) {
+			throw IQException.createBadRequest("Permission denied to change contact");
+		}
 	}
 }

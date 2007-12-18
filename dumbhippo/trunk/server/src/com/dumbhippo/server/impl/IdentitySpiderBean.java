@@ -63,6 +63,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
+import com.dumbhippo.server.PermissionDeniedException;
 import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.dm.ContactDMO;
 import com.dumbhippo.server.dm.DataService;
@@ -740,6 +741,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			}
 		}
 	}	
+	
+	public void setContactName(UserViewpoint viewpoint, Contact contact, String name) throws PermissionDeniedException {
+		if (!contact.getAccount().getOwner().equals(viewpoint.getViewer())) {
+			throw new PermissionDeniedException("Can't change someone else's contact's name");
+		}
+		name = name.trim();
+		contact.setNickname(name);
+		DataService.currentSessionRW().changed(ContactDMO.class, contact.getGuid(), "name");
+	}
 	
 	// get all contacts, even if they have no user
 	public Set<Guid> computeContacts(Guid userId) {
