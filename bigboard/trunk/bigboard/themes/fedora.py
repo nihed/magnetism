@@ -19,6 +19,8 @@ class FedoraTheme(DefaultTheme):
         self.header_end    = self._rgb_to_cairo(0x59809C)
         self.header_bottom = self._rgba_to_cairo(0x244155FF)
         self.prelight = 0x59809CFF
+        self.slideout_border = (1, 0xA2AFB5FF)
+                
         self.more_1 = self._rgb_to_cairo(0x496D87)
         self.more_2 = self._rgba_to_cairo(0xA9BCCA99)
         self.more_start = self._rgb_to_cairo(0x66859C)

@@ -1,6 +1,6 @@
 import sys
 
-import hippo, cairo, pangocairo, pango
+import hippo, gtk, gobject, cairo, pangocairo, pango
 
 from bigboard.libbig.singletonmixin import Singleton
 from bigboard.big_widgets import ThemedWidgetMixin
@@ -9,12 +9,15 @@ class DefaultTheme(Singleton):
     def __init__(self):
         super(DefaultTheme, self).__init__()
         
+        self.__compositing = gtk.gdk.display_get_default().supports_composite()
+        
         self.opacity = 0.85
         
         self.background = 0xFFFFFFFF
         self.prelight = 0xE2E2E2FF
         self.foreground = 0x000000FF
         self.subforeground = 0x666666FF
+        self.slideout_border = (1, 0xFFFFFFFF)        
         
         self.header_fg = self._rgba_to_cairo(self.foreground)
         self.header_top = self._rgb_to_cairo(0x9EA3A5)
@@ -23,6 +26,9 @@ class DefaultTheme(Singleton):
         self.header_end = self._rgb_to_cairo(0xFFFFFF)
         self.more_1 = self._rgb_to_cairo(0xFFFFFF)
         self.more_2 = self._rgba_to_cairo(0xBBBFC299)
+        
+    def have_compositing(self):
+        return self.__compositing
     
     def _rgba_to_cairo(self, color):
         return map(lambda c: c/255.0,

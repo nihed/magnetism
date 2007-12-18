@@ -4,7 +4,7 @@ import gtk
 import gobject
 from bigboard.big_widgets import ThemedWidgetMixin
 
-logger = logging.getLogger('bigboard.Slideout')
+_logger = logging.getLogger('bigboard.Slideout')
 
 class Slideout(hippo.CanvasWindow):
     __gsignals__ = {
@@ -48,6 +48,7 @@ class Slideout(hippo.CanvasWindow):
         if offscreen_bottom > 0:
             y = y - offscreen_bottom
         self.move(x, y)
+        self._sync_preslideout_state()
         self.present_with_time(gtk.get_current_event_time())
         if self.__modal:
             if not self.__do_grabs():
@@ -55,6 +56,9 @@ class Slideout(hippo.CanvasWindow):
                 return False
             self.set_modal(True)
         return True
+    
+    def _sync_preslideout_state(self):
+        pass
     
     def __do_grabs(self):
         # owner_events=True says "only grab events going to other applications"; treat
@@ -94,8 +98,20 @@ class Slideout(hippo.CanvasWindow):
 class ThemedSlideout(Slideout, ThemedWidgetMixin):
     def __init__(self, theme_hints=[], **kwargs):
         Slideout.__init__(self, **kwargs)
-        ThemedWidgetMixin.__init__(self, theme_hints=theme_hints)
+        ThemedWidgetMixin.__init__(self, theme_hints=theme_hints)        
         
     def _on_theme_changed(self, theme):
+        (width, color) = theme.slideout_border
+        self._root.set_property('border', width)
+        self._root.set_property('border-color', color)
         self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#%6X" % (theme.background >> 8,)))
         self.queue_draw_area(0,0,-1,-1)
+
+    def _sync_preslideout_state(self):
+        theme = self.get_theme()
+        if theme.have_compositing():
+            self.realize()
+            self.set_opacity(theme.opacity)
+            _logger.debug("have compositing, set opacity to %s", theme.opacity)            
+            self.queue_draw_area(0,0,-1,-1)
+        
