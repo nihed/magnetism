@@ -504,9 +504,18 @@ class ProfileItem(hippo.CanvasBox):
         self.__header = hippo.CanvasGradient(orientation=hippo.ORIENTATION_HORIZONTAL,
                                              start_color=0xf2f2f2f2,
                                              end_color=0xc8c8c8ff)
+
         self.append(self.__header)
-        self.__name = hippo.CanvasText(font="22px", padding=6)
-        self.__header.append(self.__name)
+
+        name_vbox = hippo.CanvasBox(padding=6)
+        self.__name = hippo.CanvasText(font="22px")
+        name_vbox.append(self.__name)
+        rename_link = ActionLink(text='rename', font="10px", xalign=hippo.ALIGNMENT_END)
+        name_vbox.append(rename_link)
+
+        rename_link.connect('activated', self.__on_rename_activated)
+
+        self.__header.append(name_vbox)
 
         if person.is_contact:
             try:
@@ -642,6 +651,47 @@ class ProfileItem(hippo.CanvasBox):
                 _logger.debug("not removing from network")
 
         dialog.connect("response", lambda dialog, response_id: remove_from_network_response(dialog, response_id, self.person))                
+
+        # action_taken = False to leave the stock open which seems nicer in this case
+        self.emit("close", False)
+
+        dialog.show()
+
+    def __on_rename_activated(self, link):
+        dialog = gtk.Dialog(title="Rename a contact")
+        
+        entry = gtk.Entry()
+        entry.set_text(self.person.display_name)
+        entry.set_activates_default(True)
+
+        hbox = gtk.HBox(spacing=10)
+        hbox.pack_start(gtk.Label('Name:'), False, False)
+        hbox.pack_end(entry, True, True)
+        
+        hbox.show_all()
+
+        dialog.vbox.pack_start(hbox)
+
+        dialog.add_buttons("Cancel", gtk.RESPONSE_CANCEL, "Rename", gtk.RESPONSE_ACCEPT)
+        dialog.set_default_response(gtk.RESPONSE_ACCEPT)
+
+        def rename_response(dialog, response_id, person):
+            dialog.destroy()
+
+            if response_id == gtk.RESPONSE_ACCEPT:
+                _logger.debug("renaming this person")
+
+                name = entry.get_text()
+
+                model = globals.get_data_model()
+                query = model.update(("http://mugshot.org/p/contacts", "setContactName"),
+                                     contact=person.resource, name=name)
+                query.execute()
+
+            else:
+                _logger.debug("not renaming")
+
+        dialog.connect("response", lambda dialog, response_id: rename_response(dialog, response_id, self.person))                
 
         # action_taken = False to leave the stock open which seems nicer in this case
         self.emit("close", False)
