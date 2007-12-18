@@ -108,4 +108,9 @@ public class GroupChatBlockView extends BlockView implements TitleBlockView {
 	public String getChatKind() {
 		return "group";
 	}
+	
+	@Override
+	public String getHomeUrl() {
+		return group.getHomeUrl();
+	}
 }

@@ -312,17 +312,6 @@ public abstract class BlockView implements ObjectView {
 		return DateUtils.formatTimeAgo(block.getTimestamp());
 	}
 	
-	/** See writeSummaryToXmlBuilder(), this provides a short heading shown in the
-	 * flash badge which has short summary versions of blocks. The style is like 
-	 * "Dugg", "Posted", etc. see other existing examples.
-	 */
-	public abstract String getSummaryHeading();
-	
-	/** See writeSummaryToXmlBuilder(), this provides the href for the link shown in the
-	 * flash badge which has short summary versions of blocks.
-	 */
-	public abstract String getSummaryLink();
-	
 	/** See writeSummaryToXmlBuilder(), this provides the text for the link shown in the flash 
 	 * badge which has short summary versions of blocks.
 	 */
@@ -410,4 +399,44 @@ public abstract class BlockView implements ObjectView {
 		else
 			return 0;
 	}
+	
+	public String getSummaryHeading() {
+		if (getUserBlockData() != null && getUserBlockData().getParticipatedReason().equals(StackReason.CHAT_MESSAGE))
+			return "Chatted about";
+		else if (getStackReason().equals(StackReason.CHAT_MESSAGE))
+			return "Chat about"; 
+		
+		return getBlockSummaryHeading();
+	}
+
+	/** See writeSummaryToXmlBuilder(), this provides a short heading shown in the
+	 * flash badge which has short summary versions of blocks. The style is like 
+	 * "Dugg", "Posted", etc. see other existing examples.
+	 */
+	public abstract String getBlockSummaryHeading();
+	
+	// If a block was chatted about, we are better off linking to a
+	// page where the viewer can see both the chat messages and the link
+	// to the source of the block content, rather than link directly to the 
+	// source of the block content.
+	// If we are displaying information about someone who participated in
+	// a chat, we should link to that person's page, since if we are including
+	// it in some sort of a badge, the block is likely going to be on the 
+	// first page there. Otherwise, we provide a link to the person who was 
+	// the source of the original block.
+	public String getSummaryLink() {
+	    if (getUserBlockData() != null && getUserBlockData().getParticipatedReason().equals(StackReason.CHAT_MESSAGE))
+	    	return "/person?who=" + getUserBlockData().getUser().getId();
+	    else if (getStackReason().equals(StackReason.CHAT_MESSAGE))
+	    	return getHomeUrl();
+	    
+	    return getBlockSummaryLink();
+	}
+	
+	/** See writeSummaryToXmlBuilder(), this provides the href for the link shown in the
+	 * flash badge which has short summary versions of blocks.
+	 */
+	public abstract String getBlockSummaryLink();	
+	
+	public abstract String getHomeUrl();
 }

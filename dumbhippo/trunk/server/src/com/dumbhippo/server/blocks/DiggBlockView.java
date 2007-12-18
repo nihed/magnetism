@@ -29,10 +29,10 @@ public class DiggBlockView extends AbstractFeedEntryBlockView {
 
 	@Override
 	public String getTypeTitle() {
-		return "Dugg story";
+		return "Digg story";
 	}
 
-	public @Override String getSummaryHeading() {
+	public @Override String getBlockSummaryHeading() {
 		return "Dugg";
 	}
 

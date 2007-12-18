@@ -46,4 +46,9 @@ public abstract class AbstractPersonBlockView extends BlockView implements Perso
 			throw new IllegalStateException("BlockView not populated yet, can't get source");
 	    return userView;
 	}
+	
+	@Override
+	public String getHomeUrl() {
+		return getEntitySource().getHomeUrl();
+	}
 }

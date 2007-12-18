@@ -88,16 +88,16 @@ public class GroupRevisionBlockView extends BlockView implements PersonSourceBlo
 	@Override
 	public String getTypeTitle() {
 		// we don't display a type title for this kind of block, but if we did...
-		return "Group changed";
+		return "Group change";
 	}
 	
 	@Override
-	public String getSummaryHeading() {
-		return "Group changed";
+	public String getBlockSummaryHeading() {
+		return "Changed group";
 	}
 
 	@Override
-	public String getSummaryLink() {
+	public String getBlockSummaryLink() {
 		return group.getHomeUrl();
 	}
 
@@ -198,5 +198,10 @@ public class GroupRevisionBlockView extends BlockView implements PersonSourceBlo
 			return getBlock().getId();
 		else
 			return null;
+	}
+	
+	@Override
+	public String getHomeUrl() {
+		return group.getHomeUrl();
 	}
 }

@@ -98,7 +98,7 @@ public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView
 	}
 
 	@Override 
-	public String getSummaryLink() {
+	public String getBlockSummaryLink() {
 		return entry.getLink().getUrl();
 	}
 
