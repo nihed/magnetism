@@ -70,12 +70,17 @@ class DefaultTheme(Singleton):
         cr.rectangle(area.x+1, area.y, 1, area.height)
         cr.fill()
         cr.set_source_rgb(0.0, 0.0, 0.0)
-        cr.translate(4, 0)
         ctx = pangocairo.CairoContext(cr)
         layout = ctx.create_layout()
         layout.set_text('More')
-        desc = pango.FontDescription('Sans 12')
-        layout.set_font_description(desc)
+        desc = pango.FontDescription('Sans 10')
+        layout.set_font_description(desc)        
+        (more_w, more_h) = map(lambda x: x/pango.SCALE, layout.get_size())
+        more_xspace = area.width - more_w
+        if more_xspace < 0: more_xspace = 0
+        more_yspace = area.height - more_h
+        if more_yspace < 0: more_yspace = 0
+        cr.translate(more_xspace/2 + 1, more_yspace/2)
         cr.set_source_rgba(*self.header_fg)
         ctx.update_layout(layout)
         ctx.show_layout(layout)
@@ -84,6 +89,8 @@ class DefaultTheme(Singleton):
         if isinstance(widget, ThemedWidgetMixin) \
            and isinstance(widget, hippo.CanvasText):
             hints = widget.get_theme_hints()
+            if 'header' in hints:
+                widget.set_properties(padding_left=8, padding_top=4, padding_bottom=2)
             if 'subforeground' in hints:
                 widget.set_properties(color=self.subforeground)
             else:

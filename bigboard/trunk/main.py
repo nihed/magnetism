@@ -310,7 +310,7 @@ class Exchange(hippo.CanvasBox, ThemedWidgetMixin):
         self.__expanded = True
         if not is_notitle:
             self.__ticker_container = Header()
-            self.__ticker_text = ThemedText(text=metainfo.title, font="14px Bold", xalign=hippo.ALIGNMENT_START, padding_left=8)
+            self.__ticker_text = ThemedText(theme_hints=['header'], text=metainfo.title, font="14px Bold", xalign=hippo.ALIGNMENT_START)
             self.__ticker_text.connect("button-press-event", lambda text, event: self.__toggle_expanded())  
             self.__ticker_container.append(self.__ticker_text, hippo.PACK_EXPAND)
             
