@@ -280,7 +280,7 @@ class FileSlideout(ThemedSlideout):
         vbox = CanvasVBox(border_color=0x0000000ff, spacing=4)
         self.get_root().append(vbox)
         self.__header = Header()
-        text = ThemedText(text=fobj.get_name(), font="14px Bold", xalign=hippo.ALIGNMENT_START)
+        text = ThemedText(theme_hints=['header'], text=fobj.get_name(), font="14px Bold", xalign=hippo.ALIGNMENT_START)
         self.__header.append(text, hippo.PACK_EXPAND)        
         vbox.append(self.__header)
         
