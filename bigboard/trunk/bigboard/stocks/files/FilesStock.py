@@ -380,7 +380,10 @@ class FilesStock(Stock, google_stock.GoogleStock):
 
         search.enable_search_provider('files', constructor=self.__construct_search_provider)
         #### FIXME need to figure out when to call search.disable_search_provider
-
+        
+        self.__drag_window = None
+        self.__drag_start_pos = None
+        
     def _on_delisted(self):
         self._delist_google()
 
@@ -485,6 +488,9 @@ class FilesStock(Stock, google_stock.GoogleStock):
             if i >= self.__display_limit: break
             if a_file.is_valid():                          
                 link = a_file.create_icon_link(themed=True)
+                link.connect("button-press-event", self.on_button_press_event)
+                link.connect("button-release-event", self.on_button_release_event)
+                link.connect("motion-notify-event", self.on_motion_notify_event, a_file.get_url())
                 self._recentbox.append(link)
                 i += 1 
 
@@ -497,3 +503,44 @@ class FilesStock(Stock, google_stock.GoogleStock):
 
     def activate_file(self, fobj):
         subprocess.Popen(['gnome-open', fobj.get_url()])
+    
+    def on_button_press_event(self, widget, event):
+        if event.button == 1 :
+            self.__drag_start_pos = event.x, event.y
+            return True
+                        
+        return False
+    
+    def on_button_release_event(self, widget, hippo_event):
+        self.__drag_start_pos = None
+        return False
+        
+    def on_motion_notify_event(self, widget, hippo_event, url):
+        if self.__drag_start_pos != None and self.__drag_window == None:
+            start_x, start_y = self.__drag_start_pos
+            canvas_window = hippo.get_canvas_for_item(self._box)
+            if canvas_window.drag_check_threshold(int(start_x), int(start_y), int(hippo_event.x), int(hippo_event.y)):
+                self.__drag_window = gtk.Invisible()
+                self.__drag_window.connect("drag-data-get", self.on_drag_data_get, url)
+                self.__drag_window.connect("drag-end", self.on_drag_end)
+                
+                event = gtk.gdk.Event(gtk.gdk.MOTION_NOTIFY)
+                x, y, s = gtk.gdk.get_default_root_window().get_pointer()
+                event.x_root = float(x)
+                event.y_root = float(y)
+                event.state = s
+                event.window = gtk.gdk.get_default_root_window()
+                self.__drag_window.drag_begin(gtk.target_list_add_uri_targets(), gtk.gdk.ACTION_COPY, 1, event)
+                return True
+        return False
+
+    def on_drag_data_get(self, widget, context, selection_data, info, time, url):
+        selection_data.set_uris([url])
+        return True
+    
+    def on_drag_end(self, widget, drag_context):
+        self.__drag_window.destroy()
+        self.__drag_window = None
+        self.__drag_start_pos = None
+        return False
+    
