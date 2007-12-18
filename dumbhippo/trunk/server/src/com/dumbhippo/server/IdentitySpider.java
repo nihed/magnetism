@@ -266,6 +266,8 @@ public interface IdentitySpider {
 
 	public void setContactStatus(UserViewpoint viewpoint, Contact contact, ContactStatus status);
 	
+	public void setContactName(UserViewpoint viewpoint, Contact contact, String name) throws PermissionDeniedException;
+	
 	/** 
 	 * Get all Contact objects associated with a given user. "Get my address book entries."
 	 * Not all Contact in the list will have an associated User
