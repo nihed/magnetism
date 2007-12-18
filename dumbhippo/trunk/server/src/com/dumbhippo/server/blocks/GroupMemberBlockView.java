@@ -110,7 +110,7 @@ public class GroupMemberBlockView extends BlockView {
 		case FOLLOWER:
 			return "Started following";
 		case INVITED:
-			return "Invited";
+			return "Invited to";
 		case ACTIVE:
 			return "Joined";
 		}	

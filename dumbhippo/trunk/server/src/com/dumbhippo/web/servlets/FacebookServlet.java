@@ -176,7 +176,7 @@ public class FacebookServlet extends AbstractServlet {
 
         xml.appendTextNode("fb:header", "Musgshot");
         xml.appendTextNode("div", "Mugshot allows you and your friends to see your activity from lots of other sites on the internet in a single place in your profile.",
-                           "style", "margin-left:45px; margin-bottom:10px;font-weight:bold;");
+                           "style", "margin-bottom:10px;font-weight:bold;");
 		if (user != null && errorMessage == null) {
 			// check if there are mugshot params, process them, and display an appropriate message
 	        @SuppressWarnings("unchecked")
@@ -337,20 +337,20 @@ public class FacebookServlet extends AbstractServlet {
 			String floatStyle = "";
 			String labelWidth = "180";
 			String leftSideWidth = "width:490px;";
-			String categoryNameLeftMargin = "margin-left:-178px;";
+			String categoryNameLeftMargin = "margin-left:0px;";
 			if (user.getAccount().getHasAcceptedTerms()) {
 			    xml.appendTextNode("span", "Updates to the information below will be reflected in ",
-				    	           "style", "margin-left:15px;");
+				    	           "style", "color:#666666;margin-left:15px;");
 		        xml.appendTextNode("a", "your Mugshot account", "href",
 				                   baseUrl + "/person?who=" + user.getId(), "target", "_blank");
 		        xml.append(".");
 		    } else {
 			    xml.appendTextNode("span", "Fill in the information for accounts you want to display updates from.",
-		    	                   "style", "margin-left:15px;");		
+		    	                   "style", "color:#666666;margin-left:15px;");		
 			    floatStyle="float:left;";
 			    labelWidth="120";
 			    leftSideWidth = "width:430px;";
-			    categoryNameLeftMargin = "margin-left:-118px;";
+			    categoryNameLeftMargin = "margin-left:0px;";
 		    }
 		    ExternalAccountCategory currentCategory = null;
 		    boolean hadInitialInfo = false;
@@ -371,8 +371,8 @@ public class FacebookServlet extends AbstractServlet {
 			    } else {
 			    	xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name());
 			    }
-			    xml.appendEmptyNode("br");
 			    
+			    xml.openElement("div", "style", "color:#666666;");			    
 			    if (externalAccount.isInfoTypeProvidedBySite()) {
 			        xml.append("Enter your ");
 			        xml.appendTextNode("a", externalAccount.getSiteName(), 
@@ -400,6 +400,7 @@ public class FacebookServlet extends AbstractServlet {
 			    } else {
 			    	xml.append(" A link to this account will be included in your profile.");
 			    }
+			    xml.closeElement(); // div
 			    
 			    xml.closeElement(); // fb:editor-custom	
 		    }
@@ -414,8 +415,11 @@ public class FacebookServlet extends AbstractServlet {
 		    xml.closeElement(); // div with the form
 		    
 		    if (!user.getAccount().getHasAcceptedTerms()) {
-		    	xml.openElement("div", "style", "width:200px;float:left;color:#666666;font-weight:bold;margin-top:34px;margin-left:10px;");
-			    xml.append("Do you already have a Mugshot account? Don't fill in this stuff, just verify" +
+		    	xml.openElement("div", "style", "width:200px;float:left;color:#666666;background-color:#EDF2F3;border-width:1px;border-color:#C2D1D4;margin-top:34px;margin-left:10px;padding:8px;");
+		    	xml.openElement("span", "style", "font-weight:bold;");
+		    	xml.append("Do you already have a Mugshot account?");
+		    	xml.closeElement();
+			    xml.append(" Don't fill in this stuff, just verify" +
 			    		   " your Mugshot account by following this link.");
 			    xml.openElement("form", "action", baseUrl + "/facebook-add", "target", "_blank", "method", "GET");
 			    // there didn't seem to be a way to get buttons in fb:editor to open in a new window, which is what we want here, so we are using 
@@ -424,7 +428,10 @@ public class FacebookServlet extends AbstractServlet {
 			    String buttonStyle = "background-color:#3B5998;color:#ffffff;border-width:1px;padding-top:2px;padding-bottom:2px;padding-right:6px;padding-left:6px;border-top-color:#728199;border-left-color:#728199;border-right-color:#0E1F5B;border-bottom-color:#0E1F5B;margin-top:20px;margin-bottom:30px;";
 			    xml.appendEmptyNode("input", "type", "submit", "value", "Verify My Mugshot Account", "style", buttonStyle);
 			    xml.closeElement();		
-			    xml.append("Want to create a Mugshot account? It's free and easy and helps you see all your friends' activities in one place, share links, and read feeds in a social setting.");
+		    	xml.openElement("span", "style", "font-weight:bold;");
+		    	xml.append("Want to create a Mugshot account?");
+		    	xml.closeElement();
+			    xml.append(" It's free and easy and helps you see all your friends' activities in one place, share links, and read feeds in a social setting.");
 	            xml.openElement("form", "action", baseUrl + "/facebook-signin", "target", "_blank", "method", "GET");
 	            xml.appendEmptyNode("input", "type", "submit", "value", "Create My Mugshot Account", "style", buttonStyle);
 	            xml.closeElement();	
