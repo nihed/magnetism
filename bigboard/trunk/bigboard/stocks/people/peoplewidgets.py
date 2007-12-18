@@ -789,6 +789,10 @@ class ProfileItem(hippo.CanvasBox):
             xmpp.connect('activated', self.__on_activate_xmpp)
             self.__address_box.append(xmpp)
 
+        add = hippo.CanvasLink(text='add address', xalign=hippo.ALIGNMENT_END, font_scale=0.8)
+        add.connect('activated', self.__on_activate_add_address)
+        self.__address_box.append(add)
+
     def __on_activate_web(self, canvas_item):
         self.emit("close", True)
         libbig.show_url(self.person.resource.user.homeUrl)
@@ -805,3 +809,49 @@ class ProfileItem(hippo.CanvasBox):
     def __on_activate_xmpp(self, canvas_item):
         self.emit("close", True)
         _open_xmpp(self.person.xmpp)
+
+    def __on_activate_add_address(self, canvas_item):
+        dialog = gtk.Dialog(title=("Add an address for %s" % self.person.display_name))
+        
+        entry = gtk.Entry()
+        entry.set_activates_default(True)
+
+        hbox = gtk.HBox(spacing=10)
+        hbox.pack_start(gtk.Label('Address:'), False, False)
+        hbox.pack_end(entry, True, True)
+        
+        hbox.show_all()
+
+        dialog.vbox.pack_start(hbox)
+
+        dialog.add_buttons("Cancel", gtk.RESPONSE_CANCEL, "Add", gtk.RESPONSE_ACCEPT)
+        dialog.set_default_response(gtk.RESPONSE_ACCEPT)
+
+        def add_address_response(dialog, response_id, person):
+            dialog.destroy()
+
+            if response_id == gtk.RESPONSE_ACCEPT:
+                _logger.debug("adding address for this person")
+
+                address = entry.get_text()
+
+                ## FIXME have some UI for this
+                if '@' in address:
+                    addressType = 'email'
+                else:
+                    addressType = 'aim'
+
+                model = globals.get_data_model()
+                query = model.update(("http://mugshot.org/p/contacts", "addContactAddress"),
+                                     contact=person.resource, addressType=addressType, address=address)
+                query.execute()
+
+            else:
+                _logger.debug("not adding_address")
+
+        dialog.connect("response", lambda dialog, response_id: add_address_response(dialog, response_id, self.person))
+
+        # action_taken = False to leave the stock open which seems nicer in this case
+        self.emit("close", False)
+
+        dialog.show()
