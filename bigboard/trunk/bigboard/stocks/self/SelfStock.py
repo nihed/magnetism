@@ -96,7 +96,7 @@ class SelfSlideout(ThemedSlideout):
     def __init__(self, stock, myself, fus=None, logger=None):
         super(SelfSlideout, self).__init__()
     
-        vbox = CanvasVBox(border=1, border_color=0x0000000ff, spacing=4, padding=4)
+        vbox = CanvasVBox(spacing=4, padding=4)
         self.get_root().append(vbox)
 
         self._logger = logger
@@ -115,9 +115,10 @@ class SelfSlideout(ThemedSlideout):
         
         self.__name = ThemedText(font="14px Bold",
                                  xalign=hippo.ALIGNMENT_START,
+                                 yalign=hippo.ALIGNMENT_CENTER,
                                  size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         
-        self.__personal_box_right.append(self.__name)
+        self.__personal_box_right.append(self.__name, hippo.PACK_EXPAND)
 
         vbox.append(Separator())
 
