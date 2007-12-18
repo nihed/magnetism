@@ -176,7 +176,7 @@ public class FacebookServlet extends AbstractServlet {
 
         xml.appendTextNode("fb:header", "Musgshot");
         xml.appendTextNode("div", "Mugshot allows you and your friends to see your activity from lots of other sites on the internet in a single place in your profile.",
-                           "style", "margin-bottom:10px;font-weight:bold;");
+                           "style", "margin-left:15px;margin-bottom:10px;font-weight:bold;");
 		if (user != null && errorMessage == null) {
 			// check if there are mugshot params, process them, and display an appropriate message
 	        @SuppressWarnings("unchecked")
@@ -415,7 +415,7 @@ public class FacebookServlet extends AbstractServlet {
 		    xml.closeElement(); // div with the form
 		    
 		    if (!user.getAccount().getHasAcceptedTerms()) {
-		    	xml.openElement("div", "style", "width:200px;float:left;color:#666666;background-color:#EDF2F3;border-width:1px;border-color:#C2D1D4;margin-top:34px;margin-left:10px;padding:8px;");
+		    	xml.openElement("div", "style", "width:180px;float:left;color:#666666;background-color:#EDF2F3;border-style:solid;border-width:2px;border-color:#C2D1D4;margin-top:34px;margin-left:10px;padding:8px;");
 		    	xml.openElement("span", "style", "font-weight:bold;");
 		    	xml.append("Do you already have a Mugshot account?");
 		    	xml.closeElement();
@@ -425,10 +425,10 @@ public class FacebookServlet extends AbstractServlet {
 			    // there didn't seem to be a way to get buttons in fb:editor to open in a new window, which is what we want here, so we are using 
 			    // our own form and buttons 
 			    // original top and left border color on facebook is #D8DFEA, but it looks too light to me
-			    String buttonStyle = "background-color:#3B5998;color:#ffffff;border-width:1px;padding-top:2px;padding-bottom:2px;padding-right:6px;padding-left:6px;border-top-color:#728199;border-left-color:#728199;border-right-color:#0E1F5B;border-bottom-color:#0E1F5B;margin-top:20px;margin-bottom:30px;";
+			    String buttonStyle = "background-color:#3B5998;color:#ffffff;border-width:1px;padding-top:2px;padding-bottom:2px;padding-right:6px;padding-left:6px;border-top-color:#728199;border-left-color:#728199;border-right-color:#0E1F5B;border-bottom-color:#0E1F5B;";
 			    xml.appendEmptyNode("input", "type", "submit", "value", "Verify My Mugshot Account", "style", buttonStyle);
 			    xml.closeElement();		
-		    	xml.openElement("span", "style", "font-weight:bold;");
+		    	xml.openElement("span", "style", "font-weight:bold;margin-top:25px;");
 		    	xml.append("Want to create a Mugshot account?");
 		    	xml.closeElement();
 			    xml.append(" It's free and easy and helps you see all your friends' activities in one place, share links, and read feeds in a social setting.");

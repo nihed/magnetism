@@ -602,9 +602,9 @@ public class FacebookTrackerBean implements FacebookTracker {
 		User user = account.getOwner();
 
 		StringBuilder fbmlSb = new StringBuilder("");
-		fbmlSb.append("<fb:subtitle><fb:fbml version='1.1'><fb:visible-to-owner>" +
+		fbmlSb.append("<fb:fbml version='1.1'><fb:visible-to-owner><fb:subtitle>" +
 		              "<a href='http://apps.facebook.com/mugshot'>Edit Accounts</a>" +
-		              "</fb:visible-to-owner></fb:fbml></fb:subtitle>");
+		              "</fb:subtitle></fb:visible-to-owner></fb:fbml>");
 		
 		// add the accounts ribbon
         List<ExternalAccountView> lovedAccounts = new ArrayList<ExternalAccountView>();
@@ -623,11 +623,11 @@ public class FacebookTrackerBean implements FacebookTracker {
 			}			
 		});
 		
-		fbmlSb.append("<div style='background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_bottom.png\") bottom left repeat-x;'>");
+		fbmlSb.append("<div style='background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_bottom.gif\") bottom left repeat-x;'>");
 		
-		fbmlSb.append("<div style='float:left'>Find me online:</div>");
+		fbmlSb.append("<div style='float:left;'>Find me online:</div>");
 		
-		fbmlSb.append("<div style='float:left'>");
+		fbmlSb.append("<div style='float:left;clear:right;'>");
 		for (ExternalAccountView a : lovedAccounts) {
             String imageTitle = a.getExternalAccount().getSiteName();
             if (a.getExternalAccount().getLinkText().length() >0 )
@@ -652,10 +652,10 @@ public class FacebookTrackerBean implements FacebookTracker {
 				resultsCount++;
 				break;
 			}
-			backgroundColor = (resultsCount % 2 == 0 ? "#FFFFFF" : "#CCCCCC");
+			backgroundColor = (resultsCount % 2 == 0 ? "#FFFFFF" : "#EEEEEE");
 			resultsCount++;
 			fbmlSb.append(
-			    "<table cellspacing='0' cellpadding='0' style='background-color: " + backgroundColor + ";'>" +
+			    "<table cellspacing='0' cellpadding='0' style='background-color: " + backgroundColor + ";width:100%;'>" +
 			    "<tbody><tr><td>" +
 	            "<img src='http://mugshot.org" + blockView.getIcon() + "' title='" + blockView.getTypeTitle() + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
 			    "</td><td>" +
@@ -671,8 +671,8 @@ public class FacebookTrackerBean implements FacebookTracker {
 			String visitMugshotText = "Visit my Mugshot Page"; 
 			if (resultsCount == INITIAL_BLOCKS_PER_PAGE);
 			    visitMugshotText = visitMugshotText + " To See More";
-			fbmlSb.append("<div style='background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_top.png\") top left repeat-x;text-align: center;'>");    
-		    fbmlSb.append("<a target='_blank' style='font-size:12px;font-weight:bold;' href='" + getAbsoluteUrl("/person?who=" + user.getId().toString()) + "'>" +
+			fbmlSb.append("<div style='background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_top.gif\") top left repeat-x;text-align: center;'>");    
+		    fbmlSb.append("<a target='_blank' style='font-size:12px;' href='" + getAbsoluteUrl("/person?who=" + user.getId().toString()) + "'>" +
 				          visitMugshotText + "</a>");
 		    fbmlSb.append("</div>");
 		}
