@@ -824,8 +824,54 @@ class ProfileItem(hippo.CanvasBox):
 
         dialog.vbox.pack_start(hbox)
 
+        type_combo = gtk.combo_box_new_text()
+        type_combo.append_text('AIM')
+        type_combo.append_text('Email')
+        type_combo.append_text('GTalk/XMPP')
+        type_combo.set_active(0)
+
+        hbox = gtk.HBox(spacing=10)
+        hbox.pack_start(gtk.Label('Type:'), False, False)
+        hbox.pack_end(type_combo, True, True)
+        
+        hbox.show_all()
+
+        dialog.vbox.pack_start(hbox)
+
         dialog.add_buttons("Cancel", gtk.RESPONSE_CANCEL, "Add", gtk.RESPONSE_ACCEPT)
         dialog.set_default_response(gtk.RESPONSE_ACCEPT)
+
+
+        def combo_get_address_type(combo):
+            visible_type = type_combo.get_active_text()
+            addressType = None
+            if visible_type == 'Email':
+                addressType = 'email'
+            elif visible_type == 'AIM':
+                addressType = 'aim'
+            elif visible_type == 'GTalk/XMPP':
+                addressType = xmpp
+            else:
+                _logger.warn('Bug: unknown combox box text for address type')
+                if '@' in entry.get_text():
+                    addressType = 'email'
+                else:
+                    addressType = 'aim'
+
+            return addressType
+
+        def address_entry_changed(entry):
+            address = entry.get_text()
+            type = combo_get_address_type(type_combo)
+            
+            if '@' in address and type == 'aim':
+                type_combo.set_active(1) ## set to email if an @ is typed
+            elif '@' not in address and type == 'email':
+                type_combo.set_active(0) ## set to AIM if no @ is found
+
+            ## remember that @ can mean either email or xmpp
+
+        entry.connect('changed', address_entry_changed)
 
         def add_address_response(dialog, response_id, person):
             dialog.destroy()
@@ -834,12 +880,7 @@ class ProfileItem(hippo.CanvasBox):
                 _logger.debug("adding address for this person")
 
                 address = entry.get_text()
-
-                ## FIXME have some UI for this
-                if '@' in address:
-                    addressType = 'email'
-                else:
-                    addressType = 'aim'
+                addressType = combo_get_address_type(type_combo)
 
                 model = globals.get_data_model()
                 query = model.update(("http://mugshot.org/p/contacts", "addContactAddress"),
