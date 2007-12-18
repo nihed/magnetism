@@ -56,11 +56,11 @@ public class MusicPersonBlockView extends AbstractPersonBlockView implements Mus
 		return "Music Radar";
 	}
 
-	public @Override String getSummaryHeading() {
+	public @Override String getBlockSummaryHeading() {
 		return "Played";
 	}
 
-	public @Override String getSummaryLink() {
+	public @Override String getBlockSummaryLink() {
 		TrackView tv = getPersonSource().getCurrentTrack();
 		return tv.getArtistPageLink();
 	}

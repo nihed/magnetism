@@ -37,7 +37,7 @@ public class NetflixBlockView extends AbstractFeedEntryBlockView {
 		return "Netflix movie";
 	}
 
-	public @Override String getSummaryHeading() {
+	public @Override String getBlockSummaryHeading() {
 		return "Rented";
 	}
 

@@ -32,7 +32,7 @@ public class BlogBlockView extends AbstractFeedEntryBlockView {
 		return "Blog post";
 	}
 
-	public @Override String getSummaryHeading() {
+	public @Override String getBlockSummaryHeading() {
 		return "Blogged";
 	}
 
