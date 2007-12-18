@@ -3,6 +3,9 @@ package com.dumbhippo.server.blocks;
 import java.util.Collections;
 import java.util.List;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.GroupBlockData;
@@ -13,6 +16,9 @@ import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.Viewpoint;
 
 public class MusicChatBlockView extends AbstractPersonBlockView implements MusicBlockView {
+	
+	static private final Logger logger = GlobalSetup.getLogger(MusicChatBlockView.class);
+	
 	private TrackView trackView;
 	
 	public MusicChatBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
@@ -54,11 +60,16 @@ public class MusicChatBlockView extends AbstractPersonBlockView implements Music
 		return "Music Radar";
 	}
 
-	public @Override String getSummaryHeading() {
-		return "Quip";
+	// Since the stack reason for this type of block should alwayd be CHAT_MESSAGE, 
+	// the following two methods should not end up being called, but rather the
+	// corresponding methods in AbstractPersonBlockView should return the same values.
+	public @Override String getBlockSummaryHeading() {
+		logger.warn("in MusicChatBlockView::getBlockSummaryHeading() which is not expected, stack reason is {}", getStackReason());
+		return "Chat about";
 	}
 
-	public @Override String getSummaryLink() {
+	public @Override String getBlockSummaryLink() {
+		logger.warn("in MusicChatBlockView::getBlockSummaryLink() which is not expected, stack reason is {}", getStackReason());
 		return getPersonSource().getHomeUrl();
 	}
 

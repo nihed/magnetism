@@ -623,7 +623,6 @@ public class FacebookTrackerBean implements FacebookTracker {
 			}			
 		});
 		
-		fbmlSb.append("<div>My accounts: ");
 		for (ExternalAccountView a : lovedAccounts) {
             String imageTitle = a.getExternalAccount().getSiteName();
             if (a.getExternalAccount().getLinkText().length() >0 )
@@ -633,7 +632,6 @@ public class FacebookTrackerBean implements FacebookTracker {
 					      "<img src='http://mugshot.org/images3/" + a.getIconName() + "' title='" + imageTitle + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
 					      "</a>");
 		}		
-		fbmlSb.append("</div>");
 
 		fbmlSb.append("<div style='margin-top:5px;margin-bottom:5px;'>Latest activity:</div>");
 		
@@ -666,7 +664,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 			String visitMugshotText = "Visit my Mugshot Page"; 
 			if (resultsCount == INITIAL_BLOCKS_PER_PAGE);
 			    visitMugshotText = visitMugshotText + " To See More";
-		    fbmlSb.append("<a target='_blank' style='font-size:12px;font-weight:bold;margin-top:20px;' href='" + getAbsoluteUrl("/person?who=" + user.getId().toString()) + "'>" +
+		    fbmlSb.append("<a target='_blank' style='font-size:12px;font-weight:bold;padding-top:15px;' href='" + getAbsoluteUrl("/person?who=" + user.getId().toString()) + "'>" +
 				          visitMugshotText + "</a>");
 		}
 		return fbmlSb.toString();

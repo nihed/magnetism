@@ -34,11 +34,11 @@ public class MySpacePersonBlockView extends AbstractFeedEntryBlockView {
 
 	@Override
 	public String getTypeTitle() {
-		return "MySpace Blog";
+		return "MySpace blog post";
 	}
 
-	public @Override String getSummaryHeading() {
-		return "MySpace";
+	public @Override String getBlockSummaryHeading() {
+		return "Blogged";
 	}
 
 	public ExternalAccountType getAccountType() {

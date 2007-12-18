@@ -102,15 +102,35 @@ public class GroupMemberBlockView extends BlockView {
 		return "Group update";
 	}
 
-	public @Override String getSummaryHeading() {
-		return "Group membership changed";
+	public @Override String getBlockSummaryHeading() {
+		// same as in GroupMemberBlock.tag
+		switch (getStatus()) {
+		case INVITED_TO_FOLLOW: 
+			return "Invited to follow";
+		case FOLLOWER:
+			return "Started following";
+		case INVITED:
+			return "Invited";
+		case ACTIVE:
+			return "Joined";
+		}	
+		
+		if (isStoppedFollowing())
+			return "Stopped following";
+		
+		return "Left";
 	}
 
-	public @Override String getSummaryLink() {
+	public @Override String getBlockSummaryLink() {
 		return group.getHomeUrl();
 	}
 
 	public @Override String getSummaryLinkText() {
 		return group.getName();
+	}
+	
+	@Override
+	public String getHomeUrl() {
+		return group.getHomeUrl();
 	}
 }

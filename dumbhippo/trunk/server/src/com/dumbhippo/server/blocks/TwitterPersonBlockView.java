@@ -38,8 +38,8 @@ public class TwitterPersonBlockView extends AbstractFeedEntryBlockView {
 	}
 
 	@Override 
-	public String getSummaryHeading() {
-		return "Twitter";
+	public String getBlockSummaryHeading() {
+		return "Updated status";
 	}
 
 	public ExternalAccountType getAccountType() {

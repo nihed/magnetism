@@ -107,11 +107,11 @@ public class PostBlockView extends BlockView implements TitleBlockView, EntitySo
 		return "/visit?post=" + postView.getPost().getId();
 	}
 
-	public @Override String getSummaryHeading() {
-		return "Posted";
+	public @Override String getBlockSummaryHeading() {
+		return "Shared";
 	}
 
-	public @Override String getSummaryLink() {
+	public @Override String getBlockSummaryLink() {
 		return getLink();
 	}
 
@@ -135,5 +135,10 @@ public class PostBlockView extends BlockView implements TitleBlockView, EntitySo
 	
 	public String getDescriptionAsHtml() {
 		return postView.getTextAsHtml();
+	}
+	
+	@Override
+	public String getHomeUrl() {
+		return getEntitySource().getHomeUrl();
 	}
 }

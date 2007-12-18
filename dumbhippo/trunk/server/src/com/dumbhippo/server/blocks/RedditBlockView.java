@@ -9,7 +9,7 @@ import com.dumbhippo.server.views.Viewpoint;
 
 public class RedditBlockView extends AbstractFeedEntryBlockView {
 	
-	public static String DEFAULT_TYPE_TITLE = "Reddit comment or post";
+	public static String DEFAULT_TYPE_TITLE = "Reddit post or comment";
 	
 	private String typeTitle;
 	
@@ -45,8 +45,13 @@ public class RedditBlockView extends AbstractFeedEntryBlockView {
 		this.typeTitle = typeTitle;
 	}
 	
-	public @Override String getSummaryHeading() {
-		return "Reddit";
+	public @Override String getBlockSummaryHeading() {
+		if (getTypeTitle().contains("Disliked"))
+			return "Disliked";
+		else if (getTypeTitle().contains("Liked"))
+			return "Liked";
+		else
+			return "Posted or commented";
 	}
 
 	public ExternalAccountType getAccountType() {

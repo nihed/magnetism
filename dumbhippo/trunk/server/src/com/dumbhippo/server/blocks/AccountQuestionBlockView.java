@@ -40,12 +40,12 @@ public class AccountQuestionBlockView extends BlockView {
 	}
 
 	@Override
-	public String getSummaryHeading() {
+	public String getBlockSummaryHeading() {
 		return "New feature";
 	}
 
 	@Override
-	public String getSummaryLink() {
+	public String getBlockSummaryLink() {
 		return getQuestion().getMoreLink();
 	}
 
@@ -78,5 +78,10 @@ public class AccountQuestionBlockView extends BlockView {
 		}
 		
 		builder.closeElement();
+	}
+	
+	@Override
+	public String getHomeUrl() {
+		return "/person?who=" + getUserBlockData().getUser().getId();
 	}
 }

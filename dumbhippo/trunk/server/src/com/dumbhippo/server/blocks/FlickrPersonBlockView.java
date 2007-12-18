@@ -36,11 +36,11 @@ public class FlickrPersonBlockView extends ExternalThumbnailedPersonBlockView {
 		return "flickrPerson";
 	}
 
-	public @Override String getSummaryHeading() {
-		return getTitle();
+	public @Override String getBlockSummaryHeading() {
+		return "Posted photos";
 	}
 
-	public @Override String getSummaryLink() {
+	public @Override String getBlockSummaryLink() {
 		return getMoreThumbnailsLink();
 	}
 

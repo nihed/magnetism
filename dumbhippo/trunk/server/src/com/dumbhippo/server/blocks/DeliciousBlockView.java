@@ -32,8 +32,8 @@ public class DeliciousBlockView extends AbstractFeedEntryBlockView {
 		return "del.icio.us bookmark";
 	}
 
-	public @Override String getSummaryHeading() {
-		return "Shared";
+	public @Override String getBlockSummaryHeading() {
+		return "Bookmarked";
 	}
 
 	public ExternalAccountType getAccountType() {
