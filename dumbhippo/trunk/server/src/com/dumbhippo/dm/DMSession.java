@@ -92,6 +92,10 @@ public abstract class DMSession {
 		fetch.visit(this, object, visitor);
 	}
 
+	public <K,T extends DMObject<K>> void visitFetch(T object, BoundFetch<K,? super T> fetch, FetchVisitor visitor, boolean indirect) {
+		fetch.visit(this, object, visitor, indirect);
+	}
+
 	// This should return a StoreKey<K, ? extends T>, like classHolder.makeStoreKey(), but
 	// that confuses javac (Java 5) in ways I can't figure out. Practically speaking, it 
 	// doesn't end up mattering
