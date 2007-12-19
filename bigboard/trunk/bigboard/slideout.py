@@ -18,7 +18,8 @@ class Slideout(hippo.CanvasWindow):
         self.__widget = widget
         self.__modal = modal
 
-        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
+        # We're not really a dock window anymore since we grab the pointer
+        #self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
         self.set_resizable(False)
         self.set_keep_above(1)
         self.set_focus_on_map(0)
