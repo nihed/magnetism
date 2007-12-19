@@ -11,6 +11,7 @@ from ddm import DataModel
 import bigboard.globals as globals
 from bigboard.slideout import ThemedSlideout
 import bigboard.libbig as libbig
+from bigboard.libbig.logutil import log_except
 from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock, AbstractMugshotStock
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox
@@ -175,7 +176,7 @@ class SelfSlideout(ThemedSlideout):
 
     def update_self(self, myself):
         self.__myself = myself
-        if myself:
+        if myself and hasattr(myself, 'photoUrl'):
             if myself.photoUrl:
                 self.__photo.set_url(myself.photoUrl)
             if myself.name:
@@ -388,6 +389,7 @@ class SelfStock(AbstractMugshotStock):
             url = "/who-are-you"
         libbig.show_url(urlparse.urljoin(globals.get_baseurl(), url))
             
+    @log_except(_logger)
     def __on_activate(self):
         if self.__slideout:
             self.__slideout.destroy()
@@ -414,6 +416,9 @@ class SelfStock(AbstractMugshotStock):
     
     def __on_self_changed(self, myself):
         _logger.debug("self (%s) changed", myself.resource_id)
+        if not hasattr(myself, 'photoUrl'):
+            _logger.error("no photoUrl in self")
+            return
         _logger.debug("photoUrl: %s", myself.photoUrl)
         self._photo.set_url(myself.photoUrl)
         self._name.set_property("text", myself.name)
