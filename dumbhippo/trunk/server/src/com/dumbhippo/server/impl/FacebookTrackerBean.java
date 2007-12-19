@@ -623,9 +623,9 @@ public class FacebookTrackerBean implements FacebookTracker {
 			}			
 		});
 		
-		fbmlSb.append("<div style='background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_bottom.gif\") bottom left repeat-x;'>");
+		fbmlSb.append("<div style='background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_bottom.gif\") bottom left repeat-x;width:396px;margin-left:-8px;'>");
 
-		fbmlSb.append("<table><tr><td valign='top' style='padding-top:3px;white-space:nowrap;'>Find me online:</td>");
+		fbmlSb.append("<table cellspacing='0' cellpadding='0'><tr><td valign='top' style='padding-left:8px;padding-top:3px;padding-right:2px;white-space:nowrap;'>Find me online:</td>");
 		
 		fbmlSb.append("<td>");
 		for (ExternalAccountView a : lovedAccounts) {
@@ -655,8 +655,8 @@ public class FacebookTrackerBean implements FacebookTracker {
 			backgroundColor = (resultsCount % 2 == 0 ? "#FFFFFF" : "#EEEEEE");
 			resultsCount++;
 			fbmlSb.append(
-			    "<table cellspacing='0' cellpadding='0' style='background-color: " + backgroundColor + ";width:100%;margin-left:-10px;margin-right:-10px;padding-top:2px;padding-bottom:2px;'>" +
-			    "<tbody><tr><td style='padding-left:10px;'>" +
+			    "<table cellspacing='0' cellpadding='0' style='background-color: " + backgroundColor + ";width:396px;margin-left:-8px;padding-top:1px;padding-bottom:1px;'>" +
+			    "<tbody><tr><td style='width:26px;padding-left:8px;'>" +
 	            "<img src='http://mugshot.org" + blockView.getIcon() + "' title='" + blockView.getTypeTitle() + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
 			    "</td><td align='left'>" +
 			    blockView.getSummaryHeading() +
@@ -671,7 +671,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 			String visitMugshotText = "Visit my Mugshot Page"; 
 			if (resultsCount == INITIAL_BLOCKS_PER_PAGE);
 			    visitMugshotText = visitMugshotText + " To See More";
-			fbmlSb.append("<div style='background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_top.gif\") top left repeat-x;text-align: center;'>");    
+			fbmlSb.append("<div style='background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_top.gif\") top left repeat-x;text-align: center;width:396px;margin-left:-8px;padding-top:2px;'>");    
 		    fbmlSb.append("<a target='_blank' style='font-size:12px;' href='" + getAbsoluteUrl("/person?who=" + user.getId().toString()) + "'>" +
 				          visitMugshotText + "</a>");
 		    fbmlSb.append("</div>");
