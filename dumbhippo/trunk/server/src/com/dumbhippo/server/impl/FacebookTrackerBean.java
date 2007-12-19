@@ -623,9 +623,9 @@ public class FacebookTrackerBean implements FacebookTracker {
 			}			
 		});
 		
-		fbmlSb.append("<div style='background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_bottom.gif\") bottom left repeat-x;width:396px;margin-left:-8px;'>");
+		fbmlSb.append("<div style='background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_bottom.gif\") bottom left repeat-x;width:396px;margin-left:-8px;padding-bottom:3px;'>");
 
-		fbmlSb.append("<table cellspacing='0' cellpadding='0'><tr><td valign='top' style='padding-left:8px;padding-top:3px;padding-right:2px;white-space:nowrap;'>Find me online:</td>");
+		fbmlSb.append("<table cellspacing='0' cellpadding='0'><tr><td valign='top' style='padding-left:8px;padding-top:3px;padding-right:3px;white-space:nowrap;'>Find me online:</td>");
 		
 		fbmlSb.append("<td>");
 		for (ExternalAccountView a : lovedAccounts) {
@@ -655,13 +655,14 @@ public class FacebookTrackerBean implements FacebookTracker {
 			backgroundColor = (resultsCount % 2 == 0 ? "#FFFFFF" : "#EEEEEE");
 			resultsCount++;
 			fbmlSb.append(
-			    "<table cellspacing='0' cellpadding='0' style='background-color: " + backgroundColor + ";width:396px;margin-left:-8px;padding-top:1px;padding-bottom:1px;'>" +
-			    "<tbody><tr><td style='width:26px;padding-left:8px;'>" +
+				"<div style='background-color: " + backgroundColor + "width:396px;margin-left:-8px;padding-top:2px;padding-bottom:2px;'>" +
+			    "<table cellspacing='0' cellpadding='0'>" +
+			    "<tbody><tr><td style='width:18px;padding-left:8px;'>" +
 	            "<img src='http://mugshot.org" + blockView.getIcon() + "' title='" + blockView.getTypeTitle() + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
 			    "</td><td align='left'>" +
 			    blockView.getSummaryHeading() +
 		        ": <a target='_blank' href='" + getAbsoluteUrl(blockView.getSummaryLink()) + "'>" + blockView.getSummaryLinkText() + "</a>" +
-			    "</td></tr></table>");			
+			    "</td></tr></table></div>");			
 		}
 		// display a note if there was no activity
 		if (resultsCount == 0) {
