@@ -614,7 +614,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		fbmlSb.append("</fb:wide>");	
 		
 		fbmlSb.append("<fb:narrow>");	
-		for (int i=1; i<=15; i++ ) {
+		for (int i=1; i<=23; i++ ) {
 		    fbmlSb.append("&nbsp;");
 		}
 		fbmlSb.append("</fb:narrow>");
@@ -650,13 +650,13 @@ public class FacebookTrackerBean implements FacebookTracker {
             	imageTitle = imageTitle + ": " + a.getExternalAccount().getLinkText();
           			
             accountListingSb.append("<a target='_blank' href='" + a.getLink() + "'>" +
-					                 "<img src='http://mugshot.org/images3/" + a.getIconName() + "' title='" + imageTitle + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
+					                 "<img src='" + config.getBaseUrlMugshot().toExternalForm() + "/images3/" + a.getIconName() + "' title='" + imageTitle + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
 					                 "</a>");
 		}		
 
 		accountListingSb.append("</td></tr></table>");
 		
-		String headerStyle = "background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_bottom.gif\") bottom left repeat-x;margin-top:-4px;margin-bottom:2px;padding-bottom:3px;margin-left:-8px;"; 
+		String headerStyle = "background: url(\"" + config.getBaseUrlMugshot().toExternalForm() + "/images3/facebook_gradient_bottom.gif\") bottom left repeat-x;margin-top:-4px;margin-bottom:2px;padding-bottom:3px;margin-left:-8px;"; 
 		
 		fbmlSb.append("<fb:wide>");	
 		fbmlSb.append("<div style='" + headerStyle + "width:396px;'>");    
@@ -714,7 +714,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 			if (resultsCount == INITIAL_BLOCKS_PER_PAGE);
 			    visitMugshotText = visitMugshotText + " To See More";
 			    
-			String footerStyle="background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_top.gif\") top left repeat-x;text-align:center;padding-top:2px;margin-left:-8px;";    
+			String footerStyle="background: url(\"" + config.getBaseUrlMugshot().toExternalForm() + "/images3/facebook_gradient_top.gif\") top left repeat-x;text-align:center;padding-top:2px;margin-left:-8px;";    
 			
 			fbmlSb.append("<fb:wide>");	
 			fbmlSb.append("<div style='" + footerStyle + "width:396px;'>");    
