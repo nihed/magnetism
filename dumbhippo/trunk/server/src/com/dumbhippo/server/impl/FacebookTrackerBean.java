@@ -608,13 +608,13 @@ public class FacebookTrackerBean implements FacebookTracker {
 		// <fb:action> tag doesn't work inside <fb:visible-to-owner>,
 		// so we need to use the following barbaric methods to right align the 'Edit Account' action 
 		fbmlSb.append("<fb:wide>");	
-		for (int i=1; i<=65; i++ ) {
+		for (int i=1; i<=64; i++ ) {
 		    fbmlSb.append("&nbsp;");
 		}
 		fbmlSb.append("</fb:wide>");	
 		
 		fbmlSb.append("<fb:narrow>");	
-		for (int i=1; i<=13; i++ ) {
+		for (int i=1; i<=14; i++ ) {
 		    fbmlSb.append("&nbsp;");
 		}
 		fbmlSb.append("</fb:narrow>");
