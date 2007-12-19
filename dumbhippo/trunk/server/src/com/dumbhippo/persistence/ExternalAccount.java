@@ -250,7 +250,7 @@ public class ExternalAccount extends DBUnique {
 		case LINK:
 			return getLink();
 		case FEED:
-			return getFeed().getLink().getUrl();		
+			return getFeed().getSource().getUrl();		
 		case CUSTOM:
 			return "Your Account";
 		default:
