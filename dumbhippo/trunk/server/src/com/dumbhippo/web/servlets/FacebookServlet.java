@@ -216,20 +216,22 @@ public class FacebookServlet extends AbstractServlet {
 				    		// we have messages telling the user about certain limitations of their account
 				    		// for MySpace, Twitter, Reddit, and Amazon
 				    		accountsSetSuccessful.add(entry.getKey());
-				    		try {
-				    		    Document doc = factory.newDocumentBuilder().parse(new ByteArrayInputStream(resultXml.getBytes()));
-				    		    XPath xpath = XPathFactory.newInstance().newXPath();
-				    		    Node node = (Node)xpath.evaluate("/message", doc, XPathConstants.NODE);
-				    		    if (node != null) {
-				    		        String message = node.getTextContent();
-				    		        if (message.trim().length() > 0) {
-				    		    	    accountsWithNotes.put(entry.getKey(), message);
-				    		        }
-				    		    }
-				    		} catch (XPathExpressionException e) {
-				    			logger.error("Error getting a message about an external account for " + entry.getKey() + " with value " + entryValue, e);
-					        	// let's not bother the user with this, since the account must have been set succesfully
-					        }
+				    		if (resultXml.getBytes().length > 0) {
+					    		try {
+					    		    Document doc = factory.newDocumentBuilder().parse(new ByteArrayInputStream(resultXml.getBytes()));
+					    		    XPath xpath = XPathFactory.newInstance().newXPath();
+					    		    Node node = (Node)xpath.evaluate("/message", doc, XPathConstants.NODE);
+					    		    if (node != null) {
+					    		        String message = node.getTextContent();
+					    		        if (message.trim().length() > 0) {
+					    		    	    accountsWithNotes.put(entry.getKey(), message);
+					    		        }
+					    		    }
+					    		} catch (XPathExpressionException e) {
+					    			logger.error("Error getting a message about an external account for " + entry.getKey() + " with value " + entryValue, e);
+						        	// let's not bother the user with this, since the account must have been set succesfully
+						        }
+				    	    }
 				    	}
 			    	} catch (XmlMethodException e) {
 			    		// in all cases except for the Flickr one, if the XmlMethodException will be thrown, it will be
