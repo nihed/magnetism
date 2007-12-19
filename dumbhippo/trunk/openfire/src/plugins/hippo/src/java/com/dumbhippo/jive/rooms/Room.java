@@ -3,29 +3,33 @@ package com.dumbhippo.jive.rooms;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.XMPPServer;
-import org.xmpp.packet.IQ;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
-import org.xmpp.packet.PacketError.Condition;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import com.dumbhippo.Site;
+import com.dumbhippo.dm.DMObject;
+import com.dumbhippo.dm.ReadOnlySession;
+import com.dumbhippo.dm.fetch.BoundFetch;
+import com.dumbhippo.dm.fetch.FetchNode;
+import com.dumbhippo.dm.parser.FetchParser;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jive.MessageSender;
+import com.dumbhippo.jive.XmppClient;
+import com.dumbhippo.jive.XmppClientManager;
+import com.dumbhippo.jive.XmppFetchVisitor;
 import com.dumbhippo.live.PresenceListener;
 import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.persistence.ChatMessage;
@@ -37,6 +41,8 @@ import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.tx.RetryException;
@@ -68,6 +74,7 @@ public class Room implements PresenceListener {
 	 **/ 
 	
 	private static class UserInfo {
+		private Guid userId;
 		private String username;
 		private String name;
 		private String smallPhotoUrl;		
@@ -76,12 +83,17 @@ public class Room implements PresenceListener {
 		private RoomUserStatus globalStatus;
 		
 		public UserInfo(String username, String name, String smallPhotoUrl) {
+			this.userId = Guid.parseTrustedJabberId(username);
 			this.username = username;
 			this.name = name;
 			this.smallPhotoUrl = smallPhotoUrl;			
 			this.participantCount = 0;
 			this.presentCount = 0;
 			this.globalStatus = RoomUserStatus.NONMEMBER;
+		}
+		
+		public Guid getUserId() {
+			return userId;
 		}
 		
 		public String getUsername() {
@@ -134,6 +146,47 @@ public class Room implements PresenceListener {
 		}
 	}
 	
+	private static class ResourceInfo {
+		private JID jid;
+		private UserInfo user;
+		private boolean participant;
+		private int protocolVersion;
+		
+		ResourceInfo(JID jid, UserInfo user) {
+			this.jid = jid;
+			this.user = user;
+		}
+
+		public JID getJid() {
+			return jid;
+		}
+		
+		public boolean isParticipant() {
+			return participant;
+		}
+
+		public void setParticipant(boolean participant) {
+			this.participant = participant;
+		}
+
+		public int getProtocolVersion() {
+			return protocolVersion;
+		}
+
+		public void setProtocolVersion(int protocolVersion) {
+			this.protocolVersion = protocolVersion;
+		}
+
+		public UserInfo getUser() {
+			return user;
+		}
+		
+		public void initializeReadOnlySession() {
+			XmppClient client = XmppClientManager.getInstance().getClient(jid);
+			DataService.getModel().initializeReadOnlySession(client);
+		}
+	}
+	
 	private static class MessageInfo {
 		private UserInfo user;
 		private String text;
@@ -175,20 +228,13 @@ public class Room implements PresenceListener {
 	private String roomName;
 	private Guid roomGuid;
 	
-	private Map<String, UserInfo> userInfoCache;
-	private Map<JID, UserInfo> participantResources;
-	private Map<JID, UserInfo> presentResources;
-	private Map<String, UserInfo> presentUsers;
-	private List<MessageInfo> messages;
+	private Map<String, UserInfo> userInfoCache = new HashMap<String, UserInfo>();
+	private Map<JID, ResourceInfo> presentResources = new HashMap<JID, ResourceInfo>();
+	private Map<String, UserInfo> presentUsers = new HashMap<String, UserInfo>();
+	private List<MessageInfo> messages = new ArrayList<MessageInfo>();
 	private long maxMessageSerial = -1;
 	
 	private Room(ChatRoomInfo info) {
-		userInfoCache = new HashMap<String, UserInfo>();
-		participantResources = new HashMap<JID, UserInfo>();
-		presentResources = new HashMap<JID, UserInfo>();
-		presentUsers = new HashMap<String, UserInfo>();
-		messages = new ArrayList<MessageInfo>();
-		
 		roomGuid = info.getChatId();
 		roomName = roomGuid.toJabberId(null);	
 		kind = info.getKind();
@@ -200,16 +246,35 @@ public class Room implements PresenceListener {
 	}
 	
 	private void addMessages(List<? extends ChatMessage> toAdd, boolean notify) {
+		final int startIndex = messages.size();
+		
 		for (ChatMessage message : toAdd) {
 			UserInfo userInfo = lookupUserInfo(message.getFromUser().getGuid().toJabberId(null));
 			MessageInfo messageInfo = new MessageInfo(userInfo, message.getMessageText(), message.getSentiment(), message.getTimestamp(), message.getId());
 			messages.add(messageInfo);
 			if (messageInfo.getSerial() > maxMessageSerial)
 				maxMessageSerial = messageInfo.getSerial();
-			
-			if (notify) {
-				Message outgoing = makeMessage(messageInfo, false);
-				sendPacketToAll(outgoing);
+		}
+		
+		final int endIndex = messages.size();
+		
+		if (notify) {
+			Log.debug("Have new messages " + startIndex + " - " + (endIndex -1) + "; notifying");
+
+			for (final ResourceInfo destination : presentResources.values()) {
+				// We do these messages asynchronously on commit only because we already
+				// have a transaction here and getting rid of it is hard. Since we are always
+				// only appending to messages, using indexes here is safe. The message serials 
+				// prevent problems if we end up sending messages in the wrong order.
+				//
+				TxUtils.runInTransactionOnCommit(new Runnable() {
+					public void run() {
+						destination.initializeReadOnlySession();
+						
+						for (int i = startIndex; i < endIndex; i++)
+							sendMessage(messages.get(i), false, destination);
+					}
+				});
 			}
 		}
 	}
@@ -255,37 +320,12 @@ public class Room implements PresenceListener {
 	 * Send a packet to a particular resource
 	 * 
 	 * @param packet packet to send
-	 * @param to recipient resource
+	 * @param destination the recipient to send the packet to
 	 */
-	private void sendPacketToResource(Packet packet, JID to) {
-		MessageSender.getInstance().sendPacketToResource(to, packet);
+	private void sendPacketToResource(Packet packet, ResourceInfo destination) {
+		MessageSender.getInstance().sendPacketToResource(destination.getJid(), packet);
 	}
 
-	/**
-	 * Send a packet to everybody is in the chatroom.
-	 * 
-	 * For group chat, right now this would send to everyone in the group.
-	 * 
-	 * @param packet the packet to send
-	 */ 
-	private void sendPacketToAll(Packet packet) {
-		Set<Guid> targets = new HashSet<Guid>();
-		for (UserInfo userInfo : presentUsers.values()) {
-			targets.add(Guid.parseTrustedJabberId(userInfo.getUsername()));
-		}
-		
-		MessageSender.getInstance().sendPacketToUsers(targets, packet);
-	}
-	
-	/**
-	 * Send a packet to everybody currently in the chatroom. 
-	 * 
-	 * @param packet the packet to send
-	 */
-	private void sendPacketToPresent(Packet packet) {
-		MessageSender.getInstance().sendPacketToResources(presentResources.keySet(), packet);
-	}
-	
 	public static Room loadFromServer(String roomName) {
 		Log.debug("Querying server for information on chat room " + roomName);
 		ChatSystem chatSystem = EJBUtil.defaultLookup(ChatSystem.class);
@@ -332,7 +372,7 @@ public class Room implements PresenceListener {
 			roomInfo.addAttribute("title", title);
 	}
 	
-	private Presence makePresenceAvailable(UserInfo userInfo, RoomUserStatus oldStatus) {
+	private void sendPresenceAvailable(UserInfo userInfo, RoomUserStatus oldStatus, ResourceInfo destination) {
 		Presence presence = new Presence((Presence.Type)null);
 		presence.setFrom(new JID(roomName, getServiceDomain(), userInfo.getUsername()));
 		
@@ -343,44 +383,60 @@ public class Room implements PresenceListener {
 		// displaying it
 		Element child = presence.addChildElement("x", "http://jabber.org/protocol/muc#user");
 		Element info = child.addElement("userInfo", "http://dumbhippo.com/protocol/rooms");
-		info.addAttribute("name", userInfo.getName());
-		info.addAttribute("smallPhotoUrl", userInfo.getSmallPhotoUrl());
 		info.addAttribute("role", roleString(userInfo.getGlobalStatus()));
 		if (oldStatus != null) {
 			info.addAttribute("oldRole", roleString(oldStatus));
 		}
 
+		if (destination.getProtocolVersion() == 0) {
+			info.addAttribute("name", userInfo.getName());
+			info.addAttribute("smallPhotoUrl", userInfo.getSmallPhotoUrl());
+		} else {
+			info.addAttribute("user", addUserResource(info, userInfo));
+		}
+
 		addRoomInfo(presence, false, null);
 		
-		return presence;
+		sendPacketToResource(presence, destination);
 	}
 	
-	private Presence makePresenceUnavailable(UserInfo userInfo) {
+	private void sendPresenceUnavailable(UserInfo userInfo, ResourceInfo destination) {
 		Presence presence = new Presence(Presence.Type.unavailable);
 		presence.setFrom(new JID(roomName, getServiceDomain(), userInfo.getUsername()));
 		
+		Element child = presence.addChildElement("x", "http://jabber.org/protocol/muc#user");
+		Element info = child.addElement("userInfo", "http://dumbhippo.com/protocol/rooms");
+		if (destination.getProtocolVersion() > 0) {
+			info.addAttribute("user", addUserResource(info, userInfo));
+		}
+
 		addRoomInfo(presence, false, null);
 		
-		return presence;
+		sendPacketToResource(presence, destination);
 	}
 	
-	private void sendRoomDetails(JID to) {
-		// Send the list of current members
-		for (UserInfo memberInfo : presentUsers.values()) {
-			Presence presence = makePresenceAvailable(memberInfo, null);
-			sendPacketToResource(presence, to);
-		}
-		
-		// And a a history of recent messages
-		int count = messages.size();
-		if (count > MAX_HISTORY_COUNT)
-			count = MAX_HISTORY_COUNT;
-		
-		for (int i = messages.size() - count; i < messages.size(); i++) {
-			MessageInfo messageInfo = messages.get(i);
-			Message message = makeMessage(messageInfo, true);
-			sendPacketToResource(message, to);
-		}
+	private void sendRoomDetails(final JID to) {
+		TxUtils.runInTransaction(new Runnable() {
+			public void run() {
+				ResourceInfo destination = presentResources.get(to);
+				destination.initializeReadOnlySession();
+
+				// Send the list of current members
+				for (UserInfo memberInfo : presentUsers.values()) {
+					sendPresenceAvailable(memberInfo, null, destination);
+				}
+				
+				// And a a history of recent messages
+				int count = messages.size();
+				if (count > MAX_HISTORY_COUNT)
+					count = MAX_HISTORY_COUNT;
+				
+				for (int i = messages.size() - count; i < messages.size(); i++) {
+					MessageInfo messageInfo = messages.get(i);
+					sendMessage(messageInfo, true, destination);
+				}
+			}
+		});
 	}
 	
 	private void processPresenceAvailable(Presence packet) {
@@ -396,8 +452,10 @@ public class Room implements PresenceListener {
 		UserInfo userInfo = lookupUserInfo(username);
 		
 		// Look for our userInfo tag which will distinguish whether the
-		// user wants to join as a 'visitor' or a 'participant'
+		// user wants to join as a 'visitor' or a 'participant' and whether
+		// it wants the old data hand-roled protocol or the new data model protocol.
 		boolean participant = true;
+		int protocolVersion = 0;
 		Element xElement = packet.getChildElement("x", "http://jabber.org/protocol/muc");
 		if (xElement != null) {
 	        for (Iterator i = xElement.elementIterator("userInfo"); i.hasNext(); ) {
@@ -406,17 +464,40 @@ public class Room implements PresenceListener {
 	            	Attribute attr = element.attribute("role");
 	            	if (attr != null)
 	            		participant = attr.getText().equals("participant");
+	            	
+	            	attr = element.attribute("protocol");
+	            	if (attr != null) {
+	            		try {
+	            			protocolVersion = Integer.parseInt(attr.getText());
+	            		} catch (NumberFormatException e) {
+	            			Log.warn("Invalid protocol attribute: " + attr.getText());
+	            		}
+	            	}
 	            }
 	        }			
 		}
 		
-		boolean resourceWasPresent = (presentResources.get(jid) != null);
-		boolean resourceWasParticipant = (participantResources.get(jid) != null);
+		boolean resourceWasPresent;
+		boolean resourceWasParticipant;
 		
+		ResourceInfo resourceInfo = presentResources.get(jid);
+		if (resourceInfo != null) {
+			resourceWasPresent = true;
+			resourceWasParticipant = resourceInfo.isParticipant();
+		} else {
+			resourceWasPresent = false;
+			resourceWasParticipant = false;
+			
+			resourceInfo = new ResourceInfo(jid, userInfo);
+			presentResources.put(jid, resourceInfo);
+		}
+		
+		resourceInfo.setParticipant(participant);
+		resourceInfo.setProtocolVersion(protocolVersion);
+
 		boolean statusChanged = false;
 
 		if (!resourceWasPresent) {
-			presentResources.put(jid, userInfo);
 			userInfo.setPresentCount(userInfo.getPresentCount() + 1);
 		
 			// User is joining the channel for the first time
@@ -427,13 +508,11 @@ public class Room implements PresenceListener {
 
 		if (participant && !resourceWasParticipant) {
 			userInfo.setParticipantCount(userInfo.getParticipantCount() + 1);
-			participantResources.put(jid, userInfo);
 			if (userInfo.getParticipantCount() == 1) {
 				statusChanged = true;
 			}			
 		} else if (!participant && resourceWasParticipant) {
 			userInfo.setParticipantCount(userInfo.getParticipantCount() - 1);
-			participantResources.remove(jid);
 			if (userInfo.getParticipantCount() == 0) {
 				statusChanged = true;
 			}
@@ -458,8 +537,9 @@ public class Room implements PresenceListener {
 		// Send the list of current membmers and a complete history of past messages
 		// if the above caused a notification to be sent out then the user may get
 		// notified of themself twice - that's harmless
-		if (!resourceWasPresent)
+		if (!resourceWasPresent) {
 			sendRoomDetails(jid);
+		}
 	}
 	
 	private void processPresenceUnavailable(Presence packet) {
@@ -467,19 +547,22 @@ public class Room implements PresenceListener {
 		
 		Log.debug("Got unavailable presence from : " + jid);
 
-		UserInfo userInfo = presentResources.get(jid);
-		if (userInfo == null)
+		ResourceInfo resourceInfo = presentResources.get(jid);
+		if (resourceInfo == null)
 			return; // Not present, nothing to do
+		
+		presentResources.remove(jid);
 			
 		boolean statusChanged = false;
+		
+		UserInfo userInfo = resourceInfo.getUser();
 
 		presentResources.remove(jid);
 		userInfo.setPresentCount(userInfo.getPresentCount() - 1);
 		if (userInfo.getPresentCount() == 0)
 			statusChanged = true;
 		
-		if (participantResources.get(jid) != null) {
-			participantResources.remove(jid);
+		if (resourceInfo.isParticipant()) {
 			userInfo.setParticipantCount(userInfo.getParticipantCount() - 1);
 			if (userInfo.getParticipantCount() == 0)
 				statusChanged = true;
@@ -489,7 +572,37 @@ public class Room implements PresenceListener {
 			setLocalPresence(userInfo);
 	}
 	
-	private Message makeMessage(MessageInfo messageInfo, boolean isDelayed) {
+	private static final String USER_FETCH_STRING = "+";
+	private static final FetchNode USER_FETCH;
+	static {
+		try {
+			USER_FETCH = FetchParser.parse(USER_FETCH_STRING);
+		} catch (com.dumbhippo.dm.parser.ParseException e) {
+			throw new RuntimeException("Can't parse user fetch string", e);
+		}
+	}
+	
+	private String addUserResource(Element rootElement, UserInfo userInfo) {
+		Element resources = rootElement.addElement("resources");
+		XmppFetchVisitor visitor = new XmppFetchVisitor(resources, DataService.getModel());
+		
+		ReadOnlySession session = DataService.currentSessionRO();
+		UserDMO userDMO;
+		try {
+			userDMO = session.find(UserDMO.class, userInfo.getUserId());
+		} catch (NotFoundException e) {
+			throw new RuntimeException("Can't get UserDMO object", e);
+		}
+		BoundFetch<Guid,DMObject<Guid>> fetch = USER_FETCH.bind(userDMO.getClassHolder());
+		session.visitFetch(userDMO, fetch, visitor, true);
+		
+		if (resources.elements().size() == 0)
+			rootElement.remove(resources);
+		
+		return userDMO.getResourceId();
+	}
+	
+	private void sendMessage(MessageInfo messageInfo, boolean isDelayed, ResourceInfo destination) {
 		UserInfo userInfo = messageInfo.getUser(); 
 		
 		Message outgoing = new Message();
@@ -498,12 +611,17 @@ public class Room implements PresenceListener {
 		
 		Element messageElement = outgoing.getElement();
 		Element info = messageElement.addElement("messageInfo", "http://dumbhippo.com/protocol/rooms");
-		info.addAttribute("name", userInfo.getName());
-		info.addAttribute("smallPhotoUrl", userInfo.getSmallPhotoUrl());
 		info.addAttribute("timestamp", Long.toString(messageInfo.getTimestamp().getTime()));
 		if (messageInfo.getSentiment() != Sentiment.INDIFFERENT)
 			info.addAttribute("sentiment", messageInfo.getSentiment().name());
 		info.addAttribute("serial", Long.toString(messageInfo.getSerial()));
+
+		if (destination.getProtocolVersion() == 0) {
+			info.addAttribute("name", userInfo.getName());
+			info.addAttribute("smallPhotoUrl", userInfo.getSmallPhotoUrl());
+		} else {
+			info.addAttribute("user", addUserResource(info, userInfo));
+		}
 
 		if (isDelayed) {
 			Element delay = messageElement.addElement("x", "jabber:x:delay");
@@ -511,10 +629,10 @@ public class Room implements PresenceListener {
 			// This isn't in the Jabber format and we're too lazy to fix it 
 			// delay.addAttribute("stamp", info.attributeValue("timestamp"));
 		}
-		
+
 		addRoomInfo(outgoing, false, null);
 		
-		return outgoing;
+		sendPacketToResource(outgoing, destination);
 	}
 	
 	private Sentiment sentimentFromString(String sentimentString) {
@@ -561,48 +679,6 @@ public class Room implements PresenceListener {
 		});
 	}
 	
-	private void processIQPacket(IQ packet) {
-		JID fromJid = packet.getFrom();
-		
-		IQ reply = IQ.createResultIQ(packet);
-	
-		Element child = packet.getChildElement();
-		
-		if (child == null) {
-			reply.setError(Condition.bad_request);
-		} else if (packet.getType() == IQ.Type.get &&
-			child.getNamespaceURI().equals("http://dumbhippo.com/protocol/rooms") &&
-		    child.getName().equals("details")) {
-			
-			// This is somewhat of an abuse of the IQ system; the "details"
-			// IQ is a request for the full membership list and history of
-			// the room. Instead of packing that information as a child
-			// elements of the result IQ, which would require extending
-			// the XML schema and adding more parsing code on the client
-			// side, we simply send all that information as <presence/> and
-			// <message/> elements, *then* we send the result of the IQ
-			// to indicate that we are finished.
-			sendRoomDetails(fromJid);
-		
-			addRoomInfo(reply, true, fromJid.getNode());
-		} else {
-			reply.setError(Condition.feature_not_implemented);
-		}
-		
-		XMPPServer.getInstance().getPacketRouter().route(reply);
-	}
-
-	public synchronized void processUserChange(String username) {
-		// update UserInfo for username
-		UserInfo userInfo = lookupUserInfo(username, true);
-		
-		// To communicate the change in music, we send a new Presence message
-		// We send it only to users currently in the chatroom, not to everybody,
-		// to cut down on traffic.
-		Presence presence = makePresenceAvailable(userInfo, null);
-		sendPacketToPresent(presence);
-	}
-	
 	/**
 	 * Process a packet sent to the room; it has already been checked
 	 * that the user given by packet.getFrom().getNode() is a member
@@ -619,8 +695,6 @@ public class Room implements PresenceListener {
 				processPresenceUnavailable(presence);
 		} else if (packet instanceof Message) {
 			processMessagePacket((Message)packet);
-		} else if (packet instanceof IQ) {
-			processIQPacket((IQ)packet);
 		} else
 			throw new NotImplementedException();
 	}
@@ -699,20 +773,23 @@ public class Room implements PresenceListener {
 	
 	// Callback from PresenceService
 	public synchronized void presenceChanged(Guid guid) {
-		UserInfo userInfo = lookupUserInfo(guid.toJabberId(null));
+		final UserInfo userInfo = lookupUserInfo(guid.toJabberId(null));
 		
-		RoomUserStatus oldStatus = userInfo.getGlobalStatus();
+		final RoomUserStatus oldStatus = userInfo.getGlobalStatus();
 		
 		PresenceService presenceService = PresenceService.getInstance();
 		int newPresence = presenceService.getPresence(getPresenceLocation(), guid);
 
-		RoomUserStatus newStatus = RoomUserStatus.NONMEMBER;
+		final RoomUserStatus newStatus;
 		switch (newPresence) {
 		case 1:
 			newStatus = RoomUserStatus.VISITOR;
 			break;
 		case 2:
 			newStatus = RoomUserStatus.PARTICIPANT;
+			break;
+		default:
+			newStatus = RoomUserStatus.NONMEMBER;
 			break;
 		}
 		
@@ -726,12 +803,17 @@ public class Room implements PresenceListener {
 
 		userInfo.setGlobalStatus(newStatus);
 		
-		Presence presence;
-		if (newStatus == RoomUserStatus.NONMEMBER)
-			presence = makePresenceUnavailable(userInfo);
-		else
-			presence = makePresenceAvailable(userInfo, oldStatus);
-
-		sendPacketToAll(presence);
+		for (final ResourceInfo destination : presentResources.values()) {
+			TxUtils.runInTransaction(new Runnable() {
+				public void run() {
+					destination.initializeReadOnlySession();
+					if (newStatus == RoomUserStatus.NONMEMBER) {
+						sendPresenceUnavailable(userInfo, destination);
+					} else {
+						sendPresenceAvailable(userInfo, oldStatus, destination);
+					}
+				}
+			});
+		}
 	}
 }
