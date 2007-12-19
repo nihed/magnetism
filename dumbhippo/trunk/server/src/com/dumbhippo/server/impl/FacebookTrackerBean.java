@@ -602,9 +602,9 @@ public class FacebookTrackerBean implements FacebookTracker {
 		User user = account.getOwner();
 
 		StringBuilder fbmlSb = new StringBuilder("");
-		fbmlSb.append("<fb:fbml version='1.1'><fb:visible-to-owner><fb:subtitle>" +
-		              "<a href='http://apps.facebook.com/mugshot'>Edit Accounts</a>" +
-		              "</fb:subtitle></fb:visible-to-owner></fb:fbml>");
+		fbmlSb.append("<fb:subtitle>Displaying latest updates<fb:fbml version='1.1'><fb:visible-to-owner>" +
+		              "<a href='http://apps.facebook.com/mugshot' style='float:right;'>Edit Accounts</a>" +
+		              "</fb:visible-to-owner></fb:fbml></fb:subtitle>");
 		
 		// add the accounts ribbon
         List<ExternalAccountView> lovedAccounts = new ArrayList<ExternalAccountView>();
@@ -624,10 +624,10 @@ public class FacebookTrackerBean implements FacebookTracker {
 		});
 		
 		fbmlSb.append("<div style='background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_bottom.gif\") bottom left repeat-x;'>");
+
+		fbmlSb.append("<table><tr><td valign='top' style='padding-top:3px;white-space:nowrap;'>Find me online:</td>");
 		
-		fbmlSb.append("<div style='float:left;'>Find me online:</div>");
-		
-		fbmlSb.append("<div style='float:left;clear:right;'>");
+		fbmlSb.append("<td>");
 		for (ExternalAccountView a : lovedAccounts) {
             String imageTitle = a.getExternalAccount().getSiteName();
             if (a.getExternalAccount().getLinkText().length() >0 )
@@ -638,7 +638,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 					      "</a>");
 		}		
 
-		fbmlSb.append("</div></div>");
+		fbmlSb.append("</td></tr></table></div>");
 		
 		Pageable<BlockView> pageableMugshot = new Pageable<BlockView>("mugshot");
 		pageableMugshot.setPosition(0);
@@ -655,10 +655,10 @@ public class FacebookTrackerBean implements FacebookTracker {
 			backgroundColor = (resultsCount % 2 == 0 ? "#FFFFFF" : "#EEEEEE");
 			resultsCount++;
 			fbmlSb.append(
-			    "<table cellspacing='0' cellpadding='0' style='background-color: " + backgroundColor + ";width:100%;'>" +
-			    "<tbody><tr><td>" +
+			    "<table cellspacing='0' cellpadding='0' style='background-color: " + backgroundColor + ";width:100%;margin-left:-10px;margin-right:-10px;padding-top:2px;padding-bottom:2px;'>" +
+			    "<tbody><tr><td style='padding-left:10px;'>" +
 	            "<img src='http://mugshot.org" + blockView.getIcon() + "' title='" + blockView.getTypeTitle() + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
-			    "</td><td>" +
+			    "</td><td align='left'>" +
 			    blockView.getSummaryHeading() +
 		        ": <a target='_blank' href='" + getAbsoluteUrl(blockView.getSummaryLink()) + "'>" + blockView.getSummaryLinkText() + "</a>" +
 			    "</td></tr></table>");			
