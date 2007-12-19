@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.Log;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.IQ;
@@ -18,7 +18,6 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.ChatRoomEvent;
 import com.dumbhippo.live.LiveEventListener;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.live.UserChangedEvent;
 
 public class RoomHandler implements Component {
 	private JID address;
@@ -38,15 +37,6 @@ public class RoomHandler implements Component {
 		}
 	};
 	
-	private LiveEventListener<UserChangedEvent> userDetailEventListener = new LiveEventListener<UserChangedEvent>() {
-		public void onEvent(UserChangedEvent event) {
-			String username = event.getUserId().toJabberId(null);
-			for (Room room : getRoomsForUser(username)) {
-				room.processUserChange(username);
-			}
-		}
-	};	
-	
 	public String getDescription() {
 		return "Handler for DumbHippo chat rooms";
 	}
@@ -60,12 +50,10 @@ public class RoomHandler implements Component {
 	
 	public void start() {
 		LiveState.addEventListener(ChatRoomEvent.class, chatRoomEventListener);
-		LiveState.addEventListener(UserChangedEvent.class, userDetailEventListener);
 	}
 	
 	public void shutdown() {
 		LiveState.removeEventListener(ChatRoomEvent.class, chatRoomEventListener);
-		LiveState.removeEventListener(UserChangedEvent.class, userDetailEventListener);
 		
 		for (Room room : rooms.values())
 			room.shutdown();
@@ -104,7 +92,7 @@ public class RoomHandler implements Component {
 		
 		// We only allow DumbHippo users to join our chatrooms; this allows
 		// us to use the node name rather than the full JID as an identifier
-		if (!from.getDomain().equals(XMPPServer.getInstance().getServerInfo().getName())) {
+		if (!XMPPServer.getInstance().isLocal(from)) {
  			if (packet instanceof IQ) {
 				Log.warn("Attempt to join room from unknown user at '" + from.getDomain() + "'");
 				sendErrorIQReply(packet, PacketError.Condition.forbidden,
