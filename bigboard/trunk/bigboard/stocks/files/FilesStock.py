@@ -504,10 +504,10 @@ class FilesStock(Stock, google_stock.GoogleStock):
     def activate_file(self, fobj):
         subprocess.Popen(['gnome-open', fobj.get_url()])
     
+    @log_except(_logger)
     def on_button_press_event(self, widget, event):
         if event.button == 1 :
             self.__drag_start_pos = event.x, event.y
-            return True
                         
         return False
     
