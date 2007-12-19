@@ -176,7 +176,7 @@ public class FacebookServlet extends AbstractServlet {
 
         xml.appendTextNode("fb:header", "Musgshot");
         xml.appendTextNode("div", "Mugshot allows you and your friends to see your activity from lots of other sites on the internet in a single place in your profile.",
-                           "style", "margin-left:25px;margin-bottom:10px;font-weight:bold;");
+                           "style", "margin-left:23px;margin-bottom:10px;font-weight:bold;");
 		if (user != null && errorMessage == null) {
 			// check if there are mugshot params, process them, and display an appropriate message
 	        @SuppressWarnings("unchecked")
@@ -340,13 +340,13 @@ public class FacebookServlet extends AbstractServlet {
 			String categoryNameLeftMargin = "margin-left:0px;";
 			if (user.getAccount().getHasAcceptedTerms()) {
 			    xml.appendTextNode("span", "Updates to the information below will be reflected in ",
-				    	           "style", "color:#666666;margin-left:25px;");
+				    	           "style", "margin-left:23px;");
 		        xml.appendTextNode("a", "your Mugshot account", "href",
 				                   baseUrl + "/person?who=" + user.getId(), "target", "_blank");
 		        xml.append(".");
 		    } else {
 			    xml.appendTextNode("span", "Fill in the information for accounts you want to display updates from.",
-		    	                   "style", "color:#666666;margin-left:25px;");		
+		    	                   "style", "margin-left:23px;");		
 			    floatStyle="float:left;";
 			    labelWidth="120";
 			    leftSideWidth = "width:430px;";
@@ -415,7 +415,7 @@ public class FacebookServlet extends AbstractServlet {
 		    xml.closeElement(); // div with the form
 		    
 		    if (!user.getAccount().getHasAcceptedTerms()) {
-		    	xml.openElement("div", "style", "width:184px;float:left;background-color:#EDF2F3;border-style:solid;border-width:1px;border-color:#C2D1D4;margin-top:34px;margin-left:10px;padding:8px;");
+		    	xml.openElement("div", "style", "width:184px;float:left;color:#333333;background-color:#EDF2F3;border-style:solid;border-width:1px;border-color:#C2D1D4;margin-top:34px;margin-left:2px;padding:8px;");
 		    	xml.openElement("span", "style", "font-weight:bold;");
 		    	xml.append("Do you already have a Mugshot account?");
 		    	xml.closeElement();
