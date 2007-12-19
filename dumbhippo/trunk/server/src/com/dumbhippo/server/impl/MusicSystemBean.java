@@ -40,6 +40,7 @@ import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
@@ -1281,6 +1282,7 @@ public class MusicSystemBean implements MusicSystem {
 		TxUtils.runInTransactionOnCommit(new TxRunnable() {
 			public void run() throws RetryException {
 				User attached = em.find(User.class, userId);
+				DataService.getModel().initializeReadWriteSession(new UserViewpoint(attached, Site.NONE));
 				addTrackHistory(attached, getTrack(properties), new Date(virtualPlayTime), false);
 			}
 		});

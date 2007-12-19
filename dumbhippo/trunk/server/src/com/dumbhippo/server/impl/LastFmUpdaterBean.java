@@ -26,7 +26,9 @@ import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.LastFmUpdater;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.services.LastFmTrack;
 import com.dumbhippo.services.LastFmWebServices;
 import com.dumbhippo.services.TransientServiceException;
@@ -142,6 +144,12 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 
 		TxUtils.runInTransactionOnCommit(new TxRunnable() {
 			public void run() throws RetryException {
+				/* Using SystemViewpoint here is a little dubious, but there is no actual access
+				 * control involved and it saves us having to do deal with the fact that we are 
+				 * adding tracks for multiple users if multiple users have the same last.fm
+				 * username in their account.  
+				 */
+				DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
 				addNewTracks(username, tracks, previousHash);
 			}
 		});
