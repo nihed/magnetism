@@ -602,24 +602,24 @@ public class FacebookTrackerBean implements FacebookTracker {
 		User user = account.getOwner();
 
 		StringBuilder fbmlSb = new StringBuilder("");
-		fbmlSb.append("<fb:subtitle>Displaying latest updates.<fb:fbml version='1.1'><fb:visible-to-owner>");
+		fbmlSb.append("<fb:subtitle>Displaying latest updates.");
 		
 		// <fb:subtitle> tag doesn't allow for style property inside any of the tags inside of it,
 		// <fb:action> tag doesn't work inside <fb:visible-to-owner>,
 		// so we need to use the following barbaric methods to right align the 'Edit Account' action 
 		fbmlSb.append("<fb:wide>");	
-		for (int i=1; i<=100; i++ ) {
+		for (int i=1; i<=50; i++ ) {
 		    fbmlSb.append("&nbsp;");
 		}
 		fbmlSb.append("</fb:wide>");	
 		
 		fbmlSb.append("<fb:narrow>");	
-		for (int i=1; i<=12; i++ ) {
+		for (int i=1; i<=14; i++ ) {
 		    fbmlSb.append("&nbsp;");
 		}
 		fbmlSb.append("</fb:narrow>");
 		
-		fbmlSb.append("<a href='http://apps.facebook.com/mugshot' style='float:right;'>Edit Accounts</a>" +
+		fbmlSb.append("<fb:fbml version='1.1'><fb:visible-to-owner><a href='http://apps.facebook.com/mugshot' style='float:right;'>Edit Accounts</a>" +
 		              "</fb:visible-to-owner></fb:fbml></fb:subtitle>");
 
 		// add the accounts ribbon
@@ -656,16 +656,16 @@ public class FacebookTrackerBean implements FacebookTracker {
 
 		accountListingSb.append("</td></tr></table>");
 		
-		String headerStyle = "background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_bottom.gif\") bottom left repeat-x;margin-top:-4px;margin-bottom:2px;padding-bottom:3px"; 
+		String headerStyle = "background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_bottom.gif\") bottom left repeat-x;margin-top:-4px;margin-bottom:2px;padding-bottom:3px;margin-left:-8px;"; 
 		
 		fbmlSb.append("<fb:wide>");	
-		fbmlSb.append("<div style='" + headerStyle + "width:396px;margin-left:-8px;'>");    
+		fbmlSb.append("<div style='" + headerStyle + "width:396px;'>");    
 	    fbmlSb.append(accountListingSb);
 	    fbmlSb.append("</div>");
 		fbmlSb.append("</fb:wide>");	
 		
 		fbmlSb.append("<fb:narrow>");	
-		fbmlSb.append("<div style='" + headerStyle + "width:200px;margin-left:-10px;'>");    
+		fbmlSb.append("<div style='" + headerStyle + "width:198px;'>");    
 	    fbmlSb.append(accountListingSb);	   
 	    fbmlSb.append("</div>");
 		fbmlSb.append("</fb:narrow>");    
@@ -684,15 +684,26 @@ public class FacebookTrackerBean implements FacebookTracker {
 			}
 			backgroundColor = (resultsCount % 2 == 0 ? "#FFFFFF" : "#EEEEEE");
 			resultsCount++;
-			fbmlSb.append(
-				"<div style='background-color: " + backgroundColor + ";width:396px;margin-left:-8px;padding-top:2px;padding-bottom:2px;'>" +
-			    "<table cellspacing='0' cellpadding='0'>" +
-			    "<tbody><tr><td style='width:18px;padding-left:8px;'>" +
-	            "<img src='http://mugshot.org" + blockView.getIcon() + "' title='" + blockView.getTypeTitle() + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
-			    "</td><td align='left'>" +
-			    blockView.getSummaryHeading() +
-		        ": <a target='_blank' href='" + getAbsoluteUrl(blockView.getSummaryLink()) + "'>" + blockView.getSummaryLinkText() + "</a>" +
-			    "</td></tr></table></div>");			
+			String updateTable = "<table cellspacing='0' cellpadding='0'>" +
+		                         "<tbody><tr><td style='width:18px;padding-left:8px;'>" +
+                                 "<img src='http://mugshot.org" + blockView.getIcon() + "' title='" + blockView.getTypeTitle() + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
+		                         "</td><td align='left'>" +
+		                         blockView.getSummaryHeading() +
+	                             ": <a target='_blank' href='" + getAbsoluteUrl(blockView.getSummaryLink()) + "'>" + blockView.getSummaryLinkText() + "</a>" +
+		                         "</td></tr></table>";
+			String updateStyle = "background-color: " + backgroundColor + ";margin-left:-8px;padding-top:2px;padding-bottom:2px;";
+			
+			fbmlSb.append("<fb:wide>");	
+			fbmlSb.append("<div style='" + updateStyle + "width:396px;'>");    
+		    fbmlSb.append(updateTable);
+		    fbmlSb.append("</div>");
+			fbmlSb.append("</fb:wide>");	
+			
+			fbmlSb.append("<fb:narrow>");	
+			fbmlSb.append("<div style='" + updateStyle + "width:198px;'>");    
+		    fbmlSb.append(updateTable);	   
+		    fbmlSb.append("</div>");
+			fbmlSb.append("</fb:narrow>");  		
 		}
 		// display a note if there was no activity
 		if (resultsCount == 0) {
@@ -703,17 +714,17 @@ public class FacebookTrackerBean implements FacebookTracker {
 			if (resultsCount == INITIAL_BLOCKS_PER_PAGE);
 			    visitMugshotText = visitMugshotText + " To See More";
 			    
-			String footerStyle="background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_top.gif\") top left repeat-x;text-align:center;padding-top:2px;";    
+			String footerStyle="background: url(\"http://dogfood.mugshot.org/images3/facebook_gradient_top.gif\") top left repeat-x;text-align:center;padding-top:2px;margin-left:-8px;";    
 			
 			fbmlSb.append("<fb:wide>");	
-			fbmlSb.append("<div style='" + footerStyle + "width:396px;margin-left:-8px;'>");    
+			fbmlSb.append("<div style='" + footerStyle + "width:396px;'>");    
 		    fbmlSb.append("<a target='_blank' style='font-size:12px;' href='" + getAbsoluteUrl("/person?who=" + user.getId().toString()) + "'>" +
 				          visitMugshotText + "</a>");
 		    fbmlSb.append("</div>");
 			fbmlSb.append("</fb:wide>");	
 			
 			fbmlSb.append("<fb:narrow>");	
-			fbmlSb.append("<div style='" + footerStyle + "width:200px;margin-left:-10px;'>");    
+			fbmlSb.append("<div style='" + footerStyle + "width:198px;'>");    
 		    fbmlSb.append("<a target='_blank' style='font-size:12px;' href='" + getAbsoluteUrl("/person?who=" + user.getId().toString()) + "'>" +
 				          visitMugshotText + "</a>");
 		    fbmlSb.append("</div>");
