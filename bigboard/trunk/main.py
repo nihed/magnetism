@@ -520,7 +520,12 @@ class BigBoardPanel(dbus.service.Object):
     @log_except()
     def __on_focus(self):
         _logger.debug("got focus keypress")
-        self.toggle_popout(gtk.get_current_event_time())
+        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
+        ts = bigboard.keybinder.tomboy_keybinder_get_current_event_time()
+        if vis:
+            self.__do_focus_search(ts)
+        else:
+            self.toggle_popout(ts)
 
     def __append_metainfo(self, metainfo, **kwargs):
         try:
@@ -697,8 +702,11 @@ class BigBoardPanel(dbus.service.Object):
         if not self.__popped_out:
             _logger.debug("popout requested")
             self.__enter_popped_out_state()
-
+        self.__do_focus_search(xtimestamp)
+            
+    def __do_focus_search(self, xtimestamp):
         ## focus even if we were already shown
+        _logger.debug("presenting with ts %s", xtimestamp)
         self._dw.present_with_time(xtimestamp)
         self.__search_stock.focus()
 
