@@ -119,10 +119,10 @@ public class FacebookTrackerBean implements FacebookTracker {
 		if (sessionKey == null || facebookUserId == null)
 			return;
 		
-		updateOrCreateFacebookAccount(viewpoint, sessionKey, facebookUserId, false);
+		updateOrCreateFacebookAccount(viewpoint, sessionKey, facebookUserId, null);
 	}
 
-	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String sessionKey, String facebookUserId, boolean applicationEnabled) throws FacebookSystemException {
+	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String sessionKey, String facebookUserId, Boolean applicationEnabled) throws FacebookSystemException {
 		ExternalAccount externalAccount = externalAccounts.getOrCreateExternalAccount(viewpoint, ExternalAccountType.FACEBOOK);
 		
 		FacebookAccount facebookAccount;
@@ -214,7 +214,9 @@ public class FacebookTrackerBean implements FacebookTracker {
 	    facebookAccount.setSessionKey(sessionKey);
 	    if (sessionKey != null)
 		    facebookAccount.setSessionKeyValid(true);	
-	    facebookAccount.setApplicationEnabled(applicationEnabled);
+	    if (applicationEnabled != null)
+	        facebookAccount.setApplicationEnabled(applicationEnabled);
+	    
 		// make sure the sentiment is LOVE; there is currently no way to unset it from the user interface,
 		// but we should allow changing the sentiment to HATE or at least INDIFFERENT in the future
 		externalAccounts.setSentiment(externalAccount, Sentiment.LOVE);
@@ -223,7 +225,10 @@ public class FacebookTrackerBean implements FacebookTracker {
 		if (loginStatusEvent != null)  
 		    notifier.onFacebookEvent(facebookAccount.getExternalAccount().getAccount().getOwner(), loginStatusEvent);
 		
-		if (applicationEnabled) {
+		// even if applicationEnabled is null, which means the user logged in to Facebook on the Mugshot account
+		// or person page, we might as well update the FBML in case they added new accounts
+		// TODO: call updateFbmlForUser when new external accounts are added
+		if (facebookAccount.isApplicationEnabled()) {
 			final User user = viewpoint.getViewer();
 		    TxUtils.runOnCommit(new Runnable() {
 			    public void run() {
@@ -233,7 +238,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		}
 	}
 	
-	public User createNewUserWithFacebookAccount(String sessionKey, String facebookUserId, boolean applicationEnabled) throws FacebookSystemException {
+	public User createNewUserWithFacebookAccount(String sessionKey, String facebookUserId, Boolean applicationEnabled) throws FacebookSystemException {
 		// the resource might have already existed, but not claimed by anyone
 		FacebookResource res;
 		try {
@@ -614,11 +619,11 @@ public class FacebookTrackerBean implements FacebookTracker {
 		fbmlSb.append("</fb:wide>");	
 		
 		fbmlSb.append("<fb:narrow>");	
-		for (int i=1; i<=23; i++ ) {
+		for (int i=1; i<=25; i++ ) {
 		    fbmlSb.append("&nbsp;");
 		}
 		fbmlSb.append("</fb:narrow>");
-		
+	
 		fbmlSb.append("<fb:fbml version='1.1'><fb:visible-to-owner><a href='http://apps.facebook.com/mugshot' style='float:right;'>Edit Accounts</a>" +
 		              "</fb:visible-to-owner></fb:fbml></fb:subtitle>");
 

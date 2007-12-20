@@ -174,7 +174,7 @@ public class FacebookServlet extends AbstractServlet {
 		XmlBuilder xml = new XmlBuilder();	
 		String baseUrl = config.getBaseUrlMugshot().toExternalForm();
 
-        xml.appendTextNode("fb:header", "Musgshot");
+        xml.appendTextNode("fb:header", "Mugshot");
         xml.appendTextNode("div", "Mugshot allows you and your friends to see your activity from lots of other sites on the internet in a single place in your profile.",
                            "style", "margin-left:22px;margin-bottom:10px;font-weight:bold;");
 		if (user != null && errorMessage == null) {

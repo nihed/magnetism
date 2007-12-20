@@ -14,9 +14,9 @@ public interface FacebookTracker {
 
 	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String facebookAuthToken) throws FacebookSystemException;	
 	
-	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String sessionKey, String facebookUserId, boolean applicationEnabled) throws FacebookSystemException;
+	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String sessionKey, String facebookUserId, Boolean applicationEnabled) throws FacebookSystemException;
 
-	public User createNewUserWithFacebookAccount(String sessionKey, String facebookUserId, boolean applicationEnabled) throws FacebookSystemException;
+	public User createNewUserWithFacebookAccount(String sessionKey, String facebookUserId, Boolean applicationEnabled) throws FacebookSystemException;
 
 	public FacebookAccount getFacebookAccount(String facebookUserId);
 	
