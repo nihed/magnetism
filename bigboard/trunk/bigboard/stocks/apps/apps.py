@@ -232,8 +232,11 @@ class AppsHttpDownloader:
                                     child_nodes=reply_root.childNodes)
         self.__handler(apps)
 
-    def __on_error(self, *args):
-        _logger.error("failed to get http request %s: %s", self.__relative_url, args)
+    def __on_error(self, url, args):
+        if 'status' in args and args['status'] == '504':
+            _logger.debug("don't have local cache for %s", url)
+        else:
+            _logger.error("failed to get http request %s: %s", self.__relative_url, args)
         self.__handler([])
         
     def __do_download(self):
