@@ -10,6 +10,7 @@ import hippo
 
 from libgimmie import DockWindow
 from libbig.imagecache import URLImageCache
+from bigboard.libbig.logutil import log_except
 import libbig, stock, globals, bigboard
 from bigboard.libbig.signalobject import SignalObject
 from bigboard.libbig.singletonmixin import Singleton
@@ -62,10 +63,11 @@ class ThemeManager(gobject.GObject):
     def get_theme(self):
         return self.__theme
         
+    @log_except(_logger)
     def __sync_theme(self, *args):
         _logger.debug("doing theme sync")
         themename = gconf.client_get_default().get_string('/apps/bigboard/theme')
-        if themename == 'fedora':
+        if themename == 'Fedora':
             from bigboard.themes.fedora import FedoraTheme
             self.__theme = FedoraTheme.getInstance()
         else:
@@ -110,6 +112,12 @@ class CanvasCheckbox(hippo.CanvasWidget):
         super(CanvasCheckbox, self).__init__()
         self.checkbox = gtk.CheckButton(label)
         self.set_property('widget', self.checkbox)
+        
+class CanvasCombo(hippo.CanvasWidget):
+    def __init__(self, model):
+        super(CanvasCombo, self).__init__()
+        self.combo = gtk.ComboBox(model)
+        self.set_property('widget', self.combo)
 
 class CanvasTable(hippo.CanvasBox):
     def __init__(self, column_spacing=0, row_spacing=0, **kwargs):

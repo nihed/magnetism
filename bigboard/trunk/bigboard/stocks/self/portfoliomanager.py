@@ -8,7 +8,8 @@ from ddm import DataModel
 import bigboard.globals
 import bigboard.libbig as libbig
 from bigboard.libbig.logutil import log_except
-from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, ActionLink, PrelightingCanvasBox, Button, CanvasCheckbox, CanvasURLImage
+from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, CanvasCombo
+from bigboard.big_widgets import ActionLink, PrelightingCanvasBox, Button, CanvasCheckbox, CanvasURLImage
 from bigboard.overview_table import OverviewTable
 
 _logger = logging.getLogger("bigboard.PortfolioManager")
@@ -21,6 +22,7 @@ SECTIONS = {
 }
 
 GCONF_KEY_VISIBLE = '/apps/bigboard/visible'
+GCONF_KEY_THEME = '/apps/bigboard/theme'
 
 class StockPreview(CanvasVBox):
     __gsignals__ = {
@@ -227,6 +229,23 @@ class PortfolioManager(hippo.CanvasWindow):
         self.__on_minimize_key_changed()
         minimized_box.append(self.__minimized_check)
         self.__left_box.append(minimized_box)
+        
+        theme_box = CanvasHBox()
+        theme_box.append(hippo.CanvasText(text='Theme: ', font='12px'))
+        model = gtk.ListStore(gobject.TYPE_STRING)
+        model.append(['Milky'])
+        model.append(['Fedora'])
+        self.__theme_combo = CanvasCombo(model)
+        theme_box.append(self.__theme_combo, hippo.PACK_EXPAND)
+        textrender = gtk.CellRendererText()
+        self.__theme_combo.combo.pack_start(textrender, True)
+        self.__theme_combo.combo.add_attribute(textrender, 'text', 0)
+        self.__theme_combo.combo.connect('notify::active', self.__on_active_theme_changed)
+        gconf.client_get_default().notify_add(GCONF_KEY_THEME, self.__on_theme_key_changed)
+        self.__on_theme_key_changed()        
+        
+        self.__left_box.append(theme_box)        
+        
         gadget_box = CanvasHBox()
         gadget_box.append(hippo.CanvasText(text='Widget Link: ', font="12px"))
         self.__google_gadget_entry = hippo.CanvasEntry()
@@ -329,12 +348,49 @@ class PortfolioManager(hippo.CanvasWindow):
         _logger.debug("minimize toggled")        
         new_visible = not self.__minimized_check.checkbox.get_active()
         old_visible = gconf.client_get_default().get_bool(GCONF_KEY_VISIBLE)
+        if old_visible == new_visible:
+            return
+        gconf.client_get_default().set_bool(GCONF_KEY_VISIBLE, new_visible)
+            
+    def __findobj(self, model, obj, colidx=0):
+        iter = model.get_iter_first()
+        while iter:
+            val = model.get_value(iter, colidx)
+            if val == obj:
+                return iter
+            iter = model.iter_next(iter)            
+            
+    @log_except(_logger)
+    def __on_theme_key_changed(self, *args):
+        _logger.debug("theme key changed")
+        newtheme = gconf.client_get_default().get_string(GCONF_KEY_THEME)        
+        iter = self.__findobj(self.__theme_combo.combo.get_property('model'), newtheme)
+        if not iter:
+            return
+        self.__theme_combo.combo.set_active_iter(iter)
+        
+    def __on_active_theme_changed(self, *args):
+        iter = self.__theme_combo.combo.get_active_iter()
+        _logger.debug("theme iter changed to %r", iter)
+        prevtheme = gconf.client_get_default().get_string(GCONF_KEY_THEME)
+        if iter:
+            themename = self.__theme_combo.combo.get_property('model').get_value(iter, 0)
+        else:
+            themename = ''
+        if prevtheme == themename:
+            return
+        gconf.client_get_default().set_string(GCONF_KEY_THEME, themename)
+       
+    @log_except(_logger)
+    def __on_minimize_toggled(self, *args):
+        _logger.debug("minimize toggled")        
+        new_visible = not self.__minimized_check.checkbox.get_active()
+        old_visible = gconf.client_get_default().get_bool(GCONF_KEY_VISIBLE)
         if old_visible != new_visible:
-            gconf.client_get_default().set_bool(GCONF_KEY_VISIBLE, new_visible)
+            gconf.client_get_default().set_bool(GCONF_KEY_VISIBLE, new_visible)            
 
     @log_except(_logger)
     def __on_listings_change(self, *args):
         _logger.debug("got listings change")
         if self.__preview:
             self.__set_profile_stock(self.__preview.metainfo.srcurl)
-            

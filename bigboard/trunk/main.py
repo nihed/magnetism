@@ -322,16 +322,11 @@ class Exchange(hippo.CanvasBox, ThemedWidgetMixin):
             self.append(self.__ticker_container)
         self.__stockbox = hippo.CanvasBox()
         self.append(self.__stockbox)
-        self._on_theme_change()
         if pymodule:
             pymodule.connect('visible', self.__render_pymodule)
             self.__render_pymodule()
         else:
             self.__render_google_gadget()    
-
-    def _on_theme_change(self, *args):
-        theme = self.get_theme()
-        self.set_property('background-color', theme.background)
 
     def on_delisted(self):
         _logger.debug("on_delisted exchange %s" % (str(self)))
@@ -594,12 +589,14 @@ class BigBoardPanel(dbus.service.Object):
         
     def __sync_theme(self, *args):
         theme = self.__theme_mgr.get_theme()
+        _logger.debug("syncing with theme %r", theme)
         if self.__compositing:
             self._dw.realize()
+            self._dw.set_opacity(1.0)
             self._dw.set_opacity(theme.opacity)        
         self._canvas.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#%6X" % (theme.background >> 8,)))
-        self._canvas.queue_draw_area(0,0,-1,-1)
-        
+        self._dw.queue_draw_area(0,0,-1,-1)
+
     def get_theme(self):
         return self.__theme
 

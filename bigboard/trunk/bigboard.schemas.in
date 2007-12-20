@@ -6,7 +6,7 @@
       <applyto>/apps/bigboard/theme</applyto>
       <owner>bigboard</owner>
       <type>string</type>
-      <default>default</default>
+      <default>Milky</default>
       <locale name="C">
         <short>Graphical theme used for display</short>
       </locale>
