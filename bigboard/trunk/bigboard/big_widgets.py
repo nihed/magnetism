@@ -136,13 +136,14 @@ class CanvasTable(hippo.CanvasBox):
         self.__layout.set_row_expand(row, expand)        
 
 class Header(hippo.CanvasBox, ThemedWidgetMixin):
-    def __init__(self):
+    def __init__(self, topborder=True):
         super(Header, self).__init__(orientation=hippo.ORIENTATION_HORIZONTAL,
                                      background_color=0xFF0000FF)
+        self.__topborder = topborder
 
     def do_paint_below_children(self, cr, dmgbox):
         area = self.get_background_area()
-        self.get_theme().draw_header(cr, area)
+        self.get_theme().draw_header(cr, area, topborder=self.__topborder)
 gobject.type_register(Header)
 
 class GradientHeader(hippo.CanvasGradient):

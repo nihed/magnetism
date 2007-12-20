@@ -9,7 +9,8 @@ import hippo
 
 import bigboard
 from bigboard.databound import DataBoundItem
-from bigboard.big_widgets import ActionLink, CanvasMugshotURLImage, CanvasMugshotURLImageButton, PhotoContentItem, CanvasHBox, CanvasVBox
+from bigboard.big_widgets import ActionLink, CanvasMugshotURLImage, ThemedWidgetMixin, ThemedText, Header, ThemedLink
+from bigboard.big_widgets import CanvasMugshotURLImageButton, PhotoContentItem, CanvasHBox, CanvasVBox
 import bigboard.libbig as libbig
 import bigboard.globals as globals
 
@@ -38,16 +39,17 @@ def _open_webdav(url):
     
     os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', url)
 
-class StatusMessage(hippo.CanvasText):
-    def __init__(self):
+class StatusMessage(hippo.CanvasText, ThemedWidgetMixin):
+    def __init__(self, themed=False):
         hippo.CanvasText.__init__(self, color=0x666666ff)
+        ThemedWidgetMixin.__init__(self, theme_hints=(not themed and 'notheme' or []))
         self.__buddies = []
 
         self.connect('destroy', self.__on_destroy)
 
     def __on_destroy(self, canvas_item):
         for b in self.__buddies:
-            b.disconnect(self.__on_buddy_changed)        
+            b.disconnect(self.__on_buddy_changed)
 
     def set_buddies(self, buddies):
         for b in self.__buddies:
@@ -72,9 +74,13 @@ class StatusMessage(hippo.CanvasText):
                 self.set_property('text', message)
 
 class PersonItem(PhotoContentItem):
-    def __init__(self, person, **kwargs):
+    def __init__(self, person, themed=False, **kwargs):
         PhotoContentItem.__init__(self, **kwargs)
         self.person = person
+        
+        self.__themed = themed
+        if themed:
+            self.set_themed()
         
         model = DataModel(bigboard.globals.server_name)
 
@@ -90,8 +96,9 @@ class PersonItem(PhotoContentItem):
         self.__details_box = CanvasVBox()
         self.set_child(self.__details_box)
 
-        self.__name = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START,
-                                      size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        nameklass = themed and ThemedText or hippo.CanvasText
+        self.__name = nameklass(xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START,
+                                size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self.__details_box.append(self.__name)
 
         self.__presence_box = CanvasHBox(spacing=4)
@@ -179,14 +186,14 @@ class PersonItem(PhotoContentItem):
     def __reset_im_status(self):
         buddies = self.person.aim_buddies + self.person.xmpp_buddies
         if len(buddies) > 0:
-            sm = StatusMessage()
+            sm = StatusMessage(themed=self.__themed)
             sm.set_buddies(buddies)
             self.__set_status(STATUS_IM, sm)
 
     def __update_aim_buddy(self, person):
         if person.aim_buddy:
             if not self.__aim_icon:
-                self.__aim_icon = AimIcon(person.aim_buddy)
+                self.__aim_icon = AimIcon(person.aim_buddy, theme_hints=(not self.__themed and 'notheme' or []))
                 self.__presence_box.append(self.__aim_icon)
         else:
             if self.__aim_icon:
@@ -198,7 +205,7 @@ class PersonItem(PhotoContentItem):
     def __update_xmpp_buddy(self, person):
         if person.xmpp_buddy:
             if not self.__xmpp_icon:
-                self.__xmpp_icon = XMPPIcon(person.xmpp_buddy)
+                self.__xmpp_icon = XMPPIcon(person.xmpp_buddy, theme_hints=(not self.__themed and 'notheme' or []))
                 self.__presence_box.append(self.__xmpp_icon)
         else:
             if self.__xmpp_icon:
@@ -304,10 +311,11 @@ class ExternalAccountIcon(CanvasHBox):
     def __launch_browser(self):
         libbig.show_url(self.__acct.link)
 
-class IMIcon(hippo.CanvasLink, DataBoundItem):
-    def __init__(self, buddy):
+class IMIcon(hippo.CanvasLink, DataBoundItem, ThemedWidgetMixin):
+    def __init__(self, buddy, theme_hints=[]):
         hippo.CanvasLink.__init__(self)
         DataBoundItem.__init__(self, buddy)
+        ThemedWidgetMixin.__init__(theme_hints=theme_hints)
         
         self.connect("activated", self.__on_activated)
 
@@ -331,8 +339,8 @@ class IMIcon(hippo.CanvasLink, DataBoundItem):
 
 
 class AimIcon(IMIcon):
-    def __init__(self, buddy):
-        IMIcon.__init__(self, buddy)        
+    def __init__(self, buddy, **kwargs):
+        IMIcon.__init__(self, buddy, **kwargs)
         
     def _get_protocol_name(self):
         return "AIM"
@@ -342,8 +350,8 @@ class AimIcon(IMIcon):
         return True
 
 class XMPPIcon(IMIcon):
-    def __init__(self, buddy):
-        IMIcon.__init__(self, buddy)        
+    def __init__(self, buddy, **kwargs):
+        IMIcon.__init__(self, buddy, **kwargs)
         
     def _get_protocol_name(self):
         if 'gmail.com' in self.resource.name:
@@ -496,21 +504,28 @@ class ProfileItem(hippo.CanvasBox):
         "close": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (bool,))
        }
         
-    def __init__(self, person, **kwargs):
+    def __init__(self, person, themed=False, **kwargs):
         kwargs['orientation'] = hippo.ORIENTATION_VERTICAL
         hippo.CanvasBox.__init__(self, **kwargs)
         self.person = person
 
-        self.__header = hippo.CanvasGradient(orientation=hippo.ORIENTATION_HORIZONTAL,
-                                             start_color=0xf2f2f2f2,
-                                             end_color=0xc8c8c8ff)
+        self.__themed = themed
+        if themed:
+            self.__header = Header(topborder=False)
+        else:
+            self.__header = hippo.CanvasGradient(orientation=hippo.ORIENTATION_HORIZONTAL,
+                                                 start_color=0xf2f2f2f2,
+                                                 end_color=0xc8c8c8ff)            
 
         self.append(self.__header)
+        
+        textklass = themed and ThemedText or hippo.CanvasText
+        linkklass = themed and ThemedLink or ActionLink
 
         name_vbox = hippo.CanvasBox(padding=6)
-        self.__name = hippo.CanvasText(font="22px")
+        self.__name = textklass(font="22px")
         name_vbox.append(self.__name)
-        rename_link = ActionLink(text='rename', font="10px", xalign=hippo.ALIGNMENT_END)
+        rename_link = linkklass(text='rename', font="10px", xalign=hippo.ALIGNMENT_END)
         name_vbox.append(rename_link)
 
         rename_link.connect('activated', self.__on_rename_activated)
@@ -523,7 +538,7 @@ class ProfileItem(hippo.CanvasBox):
             except AttributeError:
                 user = None
             if user:
-                mugshot_link = ActionLink(text="Mugshot", padding=6)
+                mugshot_link = linkklass(text="Mugshot", padding=6)
                 self.__header.append(mugshot_link, flags=hippo.PACK_END)
                 mugshot_link.connect("activated", self.__on_activate_web)
 
@@ -554,12 +569,12 @@ class ProfileItem(hippo.CanvasBox):
 
         if person.is_contact:
             self.__add_link = None
-            self.__remove_link = ActionLink()
+            self.__remove_link = linkklass()
             self.__remove_link.connect('activated', self.__remove_from_network_clicked)
             self.append(self.__remove_link)
         else:
             self.__remove_link = None
-            self.__add_link = ActionLink(text=('Add %s to network' % self.person.display_name))
+            self.__add_link = linkklass(text=('Add %s to network' % self.person.display_name))
             self.__add_link.connect('activated', self.__add_to_network_clicked)
             self.append(self.__add_link)
         
@@ -614,8 +629,10 @@ class ProfileItem(hippo.CanvasBox):
                 self.__update_loved_accounts(user)
 
     def __add_status_link(self, text, current_status, new_status):
+        textklass = self.__themed and ThemedText or hippo.CanvasText        
+        linkklass = self.__themed and ThemedLink or ActionLink        
         if current_status == new_status:
-            link = hippo.CanvasText(text=text)
+            link = textklass(text=text)
         else:
             def set_new_status(object):
                 model = globals.get_data_model()
@@ -624,7 +641,7 @@ class ProfileItem(hippo.CanvasBox):
                                      status=new_status)
                 query.execute()
         
-            link = ActionLink(text=text)
+            link = linkklass(text=text)
             link.connect("activated", set_new_status)
         
         self.__contact_status_box.append(link)
@@ -726,7 +743,8 @@ class ProfileItem(hippo.CanvasBox):
         if status == 0:
             status = 3 
 
-        self.__contact_status_box.append(hippo.CanvasText(text="In sidebar: "))
+        textklass = self.__themed and ThemedText or hippo.CanvasText
+        self.__contact_status_box.append(textklass(text="In sidebar: "))
         
         self.__add_status_link("Top", status, 4)
         self.__add_status_link("Middle", status, 3)
@@ -758,6 +776,9 @@ class ProfileItem(hippo.CanvasBox):
             self.__link_box.append(self.__local_files_link)
 
     def __update(self, person):
+        textklass = self.__themed and ThemedText or hippo.CanvasText
+        linkklass = self.__themed and ThemedLink or ActionLink
+                
         self.__name.set_property('text', self.person.display_name)
         self.__photo.set_url(self.person.icon_url)
 
@@ -775,21 +796,21 @@ class ProfileItem(hippo.CanvasBox):
                 pass
          
         if emails != None and len(emails) > 0:
-            email = hippo.CanvasLink(text=emails[0], xalign=hippo.ALIGNMENT_START)
+            email = linkklass(text=emails[0], xalign=hippo.ALIGNMENT_START)
             email.connect('activated', self.__on_activate_email)
             self.__address_box.append(email)
 
         if person.aim != None:
-            aim = hippo.CanvasLink(text=person.aim, xalign=hippo.ALIGNMENT_START)
+            aim = linkklass(text=person.aim, xalign=hippo.ALIGNMENT_START)
             aim.connect('activated', self.__on_activate_aim)
             self.__address_box.append(aim)
 
         if person.xmpp != None:
-            xmpp = hippo.CanvasLink(text=person.aim, xalign=hippo.ALIGNMENT_START)
+            xmpp = linkklass(text=person.aim, xalign=hippo.ALIGNMENT_START)
             xmpp.connect('activated', self.__on_activate_xmpp)
             self.__address_box.append(xmpp)
 
-        add = hippo.CanvasLink(text='add address', xalign=hippo.ALIGNMENT_END, font_scale=0.8)
+        add = linkklass(text='add address', xalign=hippo.ALIGNMENT_END, font_scale=0.8)
         add.connect('activated', self.__on_activate_add_address)
         self.__address_box.append(add)
 

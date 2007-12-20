@@ -26,11 +26,13 @@ class FedoraTheme(DefaultTheme):
         self.more_start = self._rgb_to_cairo(0x66859C)
         self.more_end = self._rgb_to_cairo(0x8BA6BA)
         
-    def draw_header(self, cr, area):
-        cr.set_source_rgba(*self.header_top)
-        cr.rectangle(area.x, area.y, area.width, 1)
-        cr.fill()
-        gradient_y_start = area.y+1
+    def draw_header(self, cr, area, topborder=True):
+        if topborder:
+            cr.set_source_rgba(*self.header_top)
+            cr.rectangle(area.x, area.y, area.width, 1)
+            cr.fill()
+        yoff = topborder and 1 or 0
+        gradient_y_start = area.y+yoff
         gradient_y_height = gradient_y_start+area.height-1
         pat = cairo.LinearGradient(area.x, gradient_y_start,
                                    area.x, gradient_y_height)

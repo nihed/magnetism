@@ -115,4 +115,3 @@ class ThemedSlideout(Slideout, ThemedWidgetMixin):
             self.set_opacity(theme.opacity)
             _logger.debug("have compositing, set opacity to %s", theme.opacity)            
             self.queue_draw_area(0,0,-1,-1)
-        

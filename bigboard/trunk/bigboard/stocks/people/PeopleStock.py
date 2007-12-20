@@ -73,7 +73,7 @@ class PeopleStock(AbstractMugshotStock):
         if map.has_key(person):
             return
         
-        item = PersonItem(person)
+        item = PersonItem(person, themed=True)
         box.insert_sorted(item, hippo.PACK_IF_FITS, lambda a,b: sort_people(a.person, b.person))
 
         def resort(*args):
@@ -119,7 +119,7 @@ class PeopleStock(AbstractMugshotStock):
         if same_item:
             return True
 
-        self.__slideout = bigboard.slideout.Slideout()
+        self.__slideout = bigboard.slideout.ThemedSlideout()
         self.__slideout_item = item
 
         coords = item.get_screen_coords()
@@ -128,6 +128,7 @@ class PeopleStock(AbstractMugshotStock):
             return
 
         p = ProfileItem(item.get_person(),
+                        themed=True,
                         border=1,
                         border_color = 0x0000000ff)
 
