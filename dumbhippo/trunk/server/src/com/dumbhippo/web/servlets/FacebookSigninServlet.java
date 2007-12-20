@@ -82,6 +82,7 @@ public class FacebookSigninServlet extends AbstractServlet {
 			    		if (sess != null)
 			    			sess.invalidate();
 			    		SigninBean.initializeAuthentication(request, response, client);
+			    		ac.getOwner().getAccount().setPublicPage(true);
 			    		return redirectToNextPage(request, response, "/account", null);
 			        } else {
 		            	errorMessage = "FacebookResource for " + facebookUserId + " was not claimed by any user.";   	            	

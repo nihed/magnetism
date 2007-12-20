@@ -65,6 +65,12 @@ public class Account extends Resource {
 	private boolean hasDoneShareLinkTutorial;
 	
 	private boolean hasAcceptedTerms;
+	
+	// this variable tells us if we should display the page publicly
+	// we currently don't do that for people who have added Mugshot as an application on Facebook
+	// we can also use this to not display a Mugshot page for people who register on online.gnome.org
+	private boolean publicPage;
+	
 	private boolean needsDownload;
 	
 	private boolean disabled;
@@ -118,6 +124,7 @@ public class Account extends Resource {
 		lastLoginDate = -1;
 		lastLogoutDate = -1;
 		lastWebActivityDate = -1;
+		publicPage = false;
 		wasSentShareLinkTutorial = false;
 		hasDoneShareLinkTutorial = false;
 		needsDownload = true;
@@ -361,6 +368,15 @@ public class Account extends Resource {
 	public void setHasAcceptedTerms(boolean hasAcceptedTerms) {
 		this.hasAcceptedTerms = hasAcceptedTerms;
 	}
+
+	@Column(nullable=false)
+	public boolean isPublicPage() {
+		return publicPage;
+	}
+
+	public void setPublicPage(boolean publicPage) {
+		this.publicPage = publicPage;
+	}
 	
 	@Column(nullable=false)
 	public boolean getNeedsDownload() {
@@ -469,14 +485,7 @@ public class Account extends Resource {
 	
 	@Transient
 	public boolean isActive() {
-		// This used to also check hasAcceptedTerms, but since
-		// the only way we'd have any information for someone who
-		// did not accept terms is if they entered it on Facebook,
-		// we shouldn't check it here, but instead let this function 
-		// return True in that case.
-		// Alternatively, we can create a separate variable 
-		// isFacebookOnly.
-		return !(isDisabled() || isAdminDisabled());
+		return !(isDisabled() || isAdminDisabled()) && hasAcceptedTerms;
 	}
 
 	@Column(nullable=true)

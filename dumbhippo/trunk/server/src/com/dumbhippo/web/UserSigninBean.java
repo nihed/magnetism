@@ -99,7 +99,7 @@ public class UserSigninBean extends SigninBean {
 	
 	@Override
 	public boolean isActive() {
-		return getUser().getAccount().isActive() && getUser().getAccount().getHasAcceptedTerms();
+		return getUser().getAccount().isActive();
 	}
 	
 	@Override

@@ -1232,7 +1232,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	public void doAcceptTerms(UserViewpoint viewpoint) {
-		viewpoint.getViewer().getAccount().setHasAcceptedTerms(true);
+		viewpoint.getViewer().getAccount().setHasAcceptedTerms(true);	
+		// TODO: we can check if we are accepting terms of use from online.gnome.org here
+		// and not set publicPage to true, but we would also need a different place where
+		// we would set it to true (possibly when the person visits there Mugshot account
+		// page for the first time.
+		viewpoint.getViewer().getAccount().setPublicPage(true);
 		// set a better name for a Facebook user, since now the user can edit it, and
 		// we won't be needing to get it from Facebook again
 		if (viewpoint.getViewer().getNickname().contains("Facebook user")) {
