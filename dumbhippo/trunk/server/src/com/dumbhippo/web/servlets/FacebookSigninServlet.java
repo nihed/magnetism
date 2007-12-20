@@ -1,6 +1,7 @@
 package com.dumbhippo.web.servlets;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -13,14 +14,21 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Client;
+import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookResource;
+import com.dumbhippo.persistence.UserNameChangedRevision;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.UserDMO;
+import com.dumbhippo.services.FacebookWebServices;
 import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
@@ -33,6 +41,9 @@ public class FacebookSigninServlet extends AbstractServlet {
 	private static final Logger logger = GlobalSetup.getLogger(FacebookAddServlet.class);
 	
 	static final long serialVersionUID = 1;
+	
+	// how long to wait on the web services calls
+	static protected final int REQUEST_TIMEOUT = 1000 * 12;
 	
 	private Configuration config;
 	
@@ -72,7 +83,9 @@ public class FacebookSigninServlet extends AbstractServlet {
 	        } else {
 	            AccountSystem accounts = WebEJBUtil.defaultLookup(AccountSystem.class);
 	        	IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-	            String facebookUserId = facebookParams.get(FacebookParam.USER.toString()).toString(); 
+	        	FacebookTracker facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
+	        	RevisionControl revisionControl = WebEJBUtil.defaultLookup(RevisionControl.class);
+	        	String facebookUserId = facebookParams.get(FacebookParam.USER.toString()).toString(); 
 	            try {
 			        FacebookResource res = identitySpider.lookupFacebook(facebookUserId);
 			        AccountClaim ac = res.getAccountClaim();
@@ -83,6 +96,21 @@ public class FacebookSigninServlet extends AbstractServlet {
 			    			sess.invalidate();
 			    		SigninBean.initializeAuthentication(request, response, client);
 			    		ac.getOwner().getAccount().setPublicPage(true);
+			    		// set a better name for a Facebook user, since now the user can edit it, and
+			    		// we won't be needing to get it from Facebook again
+			    		if (ac.getOwner().getNickname().contains("Facebook user")) {
+				            FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
+			                FacebookAccount facebookAccount = facebookTracker.getFacebookAccount(facebookUserId);                    
+			                if (facebookAccount != null) {
+			                    String name = ws.getName(facebookAccount);
+			                    if (name.trim().length() > 0) {
+			                    	name = name.trim();
+			                    	ac.getOwner().setNickname(name);
+			            		    DataService.currentSessionRW().changed(UserDMO.class, ac.getOwner().getGuid(), "name");
+			            		    revisionControl.persistRevision(new UserNameChangedRevision(ac.getOwner(), new Date(), name));
+			                    }
+			                }		    		
+			    		}
 			    		return redirectToNextPage(request, response, "/account", null);
 			        } else {
 		            	errorMessage = "FacebookResource for " + facebookUserId + " was not claimed by any user.";   	            	

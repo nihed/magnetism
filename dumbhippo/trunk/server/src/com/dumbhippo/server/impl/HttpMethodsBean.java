@@ -1238,22 +1238,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// we would set it to true (possibly when the person visits there Mugshot account
 		// page for the first time.
 		viewpoint.getViewer().getAccount().setPublicPage(true);
-		// set a better name for a Facebook user, since now the user can edit it, and
-		// we won't be needing to get it from Facebook again
-		if (viewpoint.getViewer().getNickname().contains("Facebook user")) {
-			for (AccountClaim ac : viewpoint.getViewer().getAccountClaims()) {
-				if (ac.getResource() instanceof FacebookResource) {
-				    FacebookResource fr = (FacebookResource)ac.getResource();					
-                    FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
-                    FacebookAccount facebookAccount = facebookTracker.getFacebookAccount(fr.getFacebookUserId());                    
-                    if (facebookAccount != null) {
-                        String name = ws.getName(facebookAccount);
-                        if (name.trim().length() > 0)
-                            doRenamePerson(viewpoint, name);  
-                    }
-				}
-			}
-		}
 	}
 	
 	public void doSetNeedsDownload(UserViewpoint viewpoint, boolean needsDownload) {
