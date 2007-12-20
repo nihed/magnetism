@@ -232,6 +232,16 @@
    </servlet-mapping>   
 
    <servlet>
+      <servlet-name>VerifyServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.VerifyServlet</servlet-class>
+   </servlet>   
+   
+   <servlet-mapping>
+      <servlet-name>VerifyServlet</servlet-name>
+      <url-pattern>/verify</url-pattern>
+   </servlet-mapping>
+
+   <servlet>
       <servlet-name>FacebookAddServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.servlets.FacebookAddServlet</servlet-class>
    </servlet> 
