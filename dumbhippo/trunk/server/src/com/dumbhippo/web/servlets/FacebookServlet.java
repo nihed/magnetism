@@ -340,7 +340,7 @@ public class FacebookServlet extends AbstractServlet {
 			String labelWidth = "180";
 			String leftSideWidth = "width:490px;";
 			String categoryNameLeftMargin = "margin-left:0px;";
-			if (user.getAccount().getHasAcceptedTerms()) {
+			if (user.getAccount().isPublicPage()) {
 			    xml.appendTextNode("span", "Updates to the information below will be reflected in ",
 				    	           "style", "margin-left:22px;");
 		        xml.appendTextNode("a", "your Mugshot account", "href",
@@ -416,7 +416,7 @@ public class FacebookServlet extends AbstractServlet {
 		    xml.closeElement(); // fb:editor 		    
 		    xml.closeElement(); // div with the form
 		    
-		    if (!user.getAccount().getHasAcceptedTerms()) {
+		    if (!user.getAccount().isPublicPage()) {
 		    	xml.openElement("div", "style", "width:184px;float:left;color:#333333;background-color:#EDF2F3;border-style:solid;border-width:1px;border-color:#C2D1D4;margin-top:34px;padding:8px;");
 		    	xml.openElement("span", "style", "font-weight:bold;");
 		    	xml.append("Do you already have a Mugshot account?");

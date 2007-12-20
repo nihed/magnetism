@@ -145,7 +145,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 				AccountClaim ac = res.getAccountClaim();
 				if (ac != null) {
 					if (!ac.getOwner().equals(viewpoint.getViewer())) {
-						if (!ac.getOwner().getAccount().getHasAcceptedTerms()) {
+						if (!ac.getOwner().getAccount().isPublicPage()) {
 							// The only way this could happen is if we created a temporary Facebook account based on the Facebook user id,
 							// and now a user is verifying their Mugshot account from Facebook.
 							// We need to remove sentiment 'love' for the Facebook external account from it, disable it, and remove
@@ -216,6 +216,8 @@ public class FacebookTrackerBean implements FacebookTracker {
 		    facebookAccount.setSessionKeyValid(true);	
 	    if (applicationEnabled != null)
 	        facebookAccount.setApplicationEnabled(applicationEnabled);
+	    if (applicationEnabled)
+	    	facebookAccount.getExternalAccount().getAccount().setHasAcceptedTerms(true);
 	    
 		// make sure the sentiment is LOVE; there is currently no way to unset it from the user interface,
 		// but we should allow changing the sentiment to HATE or at least INDIFFERENT in the future
@@ -250,6 +252,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		}
 		Account account = accounts.createAccountFromResource(res);
 		User user = account.getOwner();
+		// updateOrCreateExternalAccount takes care of setting hasAcceptedTerms to true if the application was enabled 
 		updateOrCreateFacebookAccount(new UserViewpoint(user, Site.MUGSHOT), sessionKey, facebookUserId, applicationEnabled);
 		return user;
 	}
@@ -714,7 +717,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		if (resultsCount == 0) {
 			fbmlSb.append("<div>Once there are new updates, they will show up here.</div>");
 		}
-		if (account.getHasAcceptedTerms()) {
+		if (account.isPublicPage()) {
 			String visitMugshotText = "Visit my Mugshot Page"; 
 			if (resultsCount == INITIAL_BLOCKS_PER_PAGE);
 			    visitMugshotText = visitMugshotText + " To See More";
