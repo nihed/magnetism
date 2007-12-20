@@ -258,6 +258,7 @@ class Person(gobject.GObject):
 
     def __refresh_icon_url(self):
         new_icon_url = None
+        no_photo_url = None
         if self.is_contact:
             try:
                 new_icon_url = self.resource.user.photoUrl
@@ -265,7 +266,10 @@ class Person(gobject.GObject):
                 pass
 
             ## see if we can get an icon from one of our buddies 
-            no_photo_url = self.resource.model.global_resource.fallbackUserPhotoUrl
+            try:
+                no_photo_url = self.resource.model.global_resource.fallbackUserPhotoUrl
+            except AttributeError, e:
+                pass
 
             if not new_icon_url or new_icon_url == no_photo_url:
                 try:

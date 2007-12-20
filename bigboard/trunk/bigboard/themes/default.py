@@ -43,14 +43,16 @@ class DefaultTheme(Singleton):
                     (color & 0x0000FF00) >> 8,                                        
                     (color & 0x000000FF) >> 0))        
         
-    def draw_header(self, cr, area):
-        cr.set_source_rgba(*self.header_top)
-        cr.rectangle(area.x, area.y, area.width, 1)
-        cr.fill()
+    def draw_header(self, cr, area, topborder=True):
+        if topborder:
+            cr.set_source_rgba(*self.header_top)
+            cr.rectangle(area.x, area.y, area.width, 1)
+            cr.fill()
+        yoff = topborder and 1 or 0
         cr.set_source_rgba(*self.header_top2)
-        cr.rectangle(area.x, area.y+1, area.width, 1)
+        cr.rectangle(area.x, area.y+yoff, area.width, 1)
         cr.fill()        
-        gradient_y_start = area.y+2
+        gradient_y_start = area.y+1+yoff
         gradient_y_height = gradient_y_start+area.height-1
         pat = cairo.LinearGradient(area.x, gradient_y_start,
                                    area.x, gradient_y_height)
@@ -89,6 +91,8 @@ class DefaultTheme(Singleton):
         if isinstance(widget, ThemedWidgetMixin) \
            and isinstance(widget, hippo.CanvasText):
             hints = widget.get_theme_hints()
+            if 'notheme' in hints:
+                return
             if 'header' in hints:
                 widget.set_properties(padding_left=8, padding_top=4, padding_bottom=2)
             if 'subforeground' in hints:
