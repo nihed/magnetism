@@ -503,12 +503,8 @@ class Sidebar(DockWindow):
         'show' : 'override',
         }
 
-    def __init__(self, is_left, strut_key):
-        gravity = gtk.gdk.GRAVITY_WEST
-        if not is_left:
-            gravity = gtk.gdk.GRAVITY_EAST
-        DockWindow.__init__(self, gravity)
-        self.is_left = is_left
+    def __init__(self, strut_key):
+        DockWindow.__init__(self, gtk.gdk.GRAVITY_WEST)
         self.__watcher = None
         self.__strut_key = strut_key
 
@@ -531,11 +527,13 @@ class Sidebar(DockWindow):
     def __on_workarea_changed(self, watcher):
         (x,y,width,height) = watcher.get_workarea()
         self.set_size_request(-1, height)
-        self.move(0, y)
+        if self.edge_gravity == gtk.gdk.GRAVITY_WEST: 
+            self.move(0, y)
+        else:
+            self.move(width, y)
         
     def do_set_wm_strut(self):
         kwargs = {}
         if not gconf.client_get_default().get_bool(self.__strut_key):
             kwargs['remove'] = True
         super(Sidebar, self).do_set_wm_strut(**kwargs)
-

@@ -389,11 +389,13 @@ class BigBoardPanel(dbus.service.Object):
           
         _logger.info("constructing")
                 
-        self._dw = Sidebar(True, GCONF_PREFIX + 'visible')
         self.__popped_out = False
         self.__shell = None
         
         gconf_client = gconf.client_get_default()
+        self._dw = Sidebar(GCONF_PREFIX + 'visible')
+        gconf_client.notify_add(GCONF_PREFIX + 'orientation', self.__sync_orient)        
+        self.__sync_orient()            
 
         self.__keybinding = gconf_client.get_string('/apps/bigboard/focus_key')
         if self.__keybinding:
@@ -569,6 +571,18 @@ class BigBoardPanel(dbus.service.Object):
     def action_taken(self):
         _logger.debug("action taken")
         self.__leave_popped_out_state(immediate=True)
+        
+    @log_except()
+    def __sync_orient(self, *args):
+        orient = gconf.client_get_default().get_string(GCONF_PREFIX + 'orientation')
+        if not orient:
+            orient = 'west'
+        if orient.lower() == 'west':
+            gravity = gtk.gdk.GRAVITY_WEST
+        else:
+            gravity = gtk.gdk.GRAVITY_EAST
+        self._dw.set_gravity(gravity)
+        self.__queue_strut()
         
     @log_except()
     def _toggle_size(self):

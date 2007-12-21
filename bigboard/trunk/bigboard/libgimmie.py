@@ -52,11 +52,14 @@ class DockWindow(gtk.Window):
     def get_edge_gravity(self):
         return self.edge_gravity
 
+    def set_gravity(self, gravity):
+        self.edge_gravity = gravity
+
     def do_realize(self):
         ret = gtk.Window.do_realize(self)
         self.do_set_wm_strut()
-        return ret      
-
+        return ret
+    
     # thanks to Gimmie (Alex Graveley) for this method
     def do_set_wm_strut(self, remove=False):
         '''
@@ -72,8 +75,8 @@ class DockWindow(gtk.Window):
         elif remove:
             return
         
-        if self.edge_gravity != gtk.gdk.GRAVITY_WEST:
-            raise "haven't implemented gravities other than WEST"
+        if not self.edge_gravity in (gtk.gdk.GRAVITY_WEST, gtk.gdk.GRAVITY_EAST):
+            raise ValueError("haven't implemented north/south gravity")
 
         if self.window:
             # values are left, right, top, bottom
@@ -82,9 +85,12 @@ class DockWindow(gtk.Window):
             geom = self.get_screen().get_monitor_geometry(0)
             (width, height) = self.size_request()
 
-            _logger.debug("setting west strut to %d width" % (width,))
-
-            propvals[0] = width
+            if self.edge_gravity == gtk.gdk.GRAVITY_WEST:
+                _logger.debug("setting WEST strut to %d width" % (width,))
+                propvals[0] = width
+            elif self.edge_gravity == gtk.gdk.GRAVITY_EAST:
+                _logger.debug("setting EAST strut to %d width" % (width,))
+                propvals[1] = width 
 
             # tell window manager to not overlap buttons with maximized window
             self.window.property_change("_NET_WM_STRUT",
@@ -92,6 +98,8 @@ class DockWindow(gtk.Window):
                                         32,
                                         gtk.gdk.PROP_MODE_REPLACE,
                                         propvals)
+
+
         else:
             _logger.debug("no window, ignoring strut")
             
