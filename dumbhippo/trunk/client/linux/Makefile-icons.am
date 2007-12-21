@@ -50,5 +50,5 @@ EXTRA_DIST +=					\
 	$(mediumicon_DATA)			\
 	$(subnormalicon_DATA)			\
 	$(normalicon_DATA)			\
-	$(largicon_DATA)			\
+	$(largeicon_DATA)			\
 	$(hugeicon_DATA)
