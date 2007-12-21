@@ -201,10 +201,12 @@ public class FacebookServlet extends AbstractServlet {
 			    		// we can change this
 				    	if (entry.getKey().equals(ExternalAccountType.FLICKR)) {
 				    		XmlBuilder xmlForFlickr = new XmlBuilder();
+				    		xmlForFlickr.openElement("result");
 				    		httpMethods.doFindFlickrAccount(xmlForFlickr, userViewpoint, entryValue);
+				    		xmlForFlickr.closeElement(); // result
 				    		Document doc = factory.newDocumentBuilder().parse(new ByteArrayInputStream(xmlForFlickr.getBytes()));
 				    		XPath xpath = XPathFactory.newInstance().newXPath();
-				    		String nsid = ((Node)xpath.evaluate("/flickrUser/nsid", doc, XPathConstants.NODE)).getTextContent();
+				    		String nsid = ((Node)xpath.evaluate("/result/flickrUser/nsid", doc, XPathConstants.NODE)).getTextContent();
 				    		logger.debug("Got nsid {} when setting Flickr account", nsid);
 				    		httpMethods.doSetFlickrAccount(new XmlBuilder(), userViewpoint, nsid, entryValue);
 				    		accountsSetSuccessful.add(ExternalAccountType.FLICKR);
@@ -212,7 +214,9 @@ public class FacebookServlet extends AbstractServlet {
 				    		Method setAccount = httpMethods.getClass().getMethod("doSet" + entry.getKey().getDomNodeIdName() + "Account",
 				    				                                             new Class[] {XmlBuilder.class, UserViewpoint.class, String.class});	
 				    		XmlBuilder resultXml = new XmlBuilder();
+				    		resultXml.openElement("result");
 				    		setAccount.invoke(httpMethods, new Object[] {resultXml, userViewpoint, entryValue});
+				    		resultXml.closeElement(); // result
 				    		// we have messages telling the user about certain limitations of their account
 				    		// for MySpace, Twitter, Reddit, and Amazon
 				    		accountsSetSuccessful.add(entry.getKey());
@@ -220,7 +224,7 @@ public class FacebookServlet extends AbstractServlet {
 					    		try {
 					    		    Document doc = factory.newDocumentBuilder().parse(new ByteArrayInputStream(resultXml.getBytes()));
 					    		    XPath xpath = XPathFactory.newInstance().newXPath();
-					    		    Node node = (Node)xpath.evaluate("/message", doc, XPathConstants.NODE);
+					    		    Node node = (Node)xpath.evaluate("/result/message", doc, XPathConstants.NODE);
 					    		    if (node != null) {
 					    		        String message = node.getTextContent();
 					    		        if (message.trim().length() > 0) {

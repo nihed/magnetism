@@ -393,7 +393,7 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
-	public void doSetWebsiteAccount(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException;
+	public void doSetWebsiteAccount(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
@@ -401,7 +401,7 @@ public interface HttpMethods {
     
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
-	public void doSetBlogAccount(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException, RetryException;	
+	public void doSetBlogAccount(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException, RetryException;	
 	
  	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "filename" })
