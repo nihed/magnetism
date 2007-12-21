@@ -2091,7 +2091,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// DO NOT cut and paste this block into similar external account methods. It's only here because
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
 		// for the plain entries assumes this works.
-		if (urlStr == null) {
+		if (urlStr == null || urlStr.trim().length() == 0) {
 			doRemoveExternalAccount(xml, viewpoint, "WEBSITE");
 			try {
 				ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.WEBSITE);
@@ -2105,6 +2105,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		URL url = null;
 		
 		try {
+			if (!urlStr.startsWith("http"))
+				urlStr = "http://" + urlStr;	
 		    url = new URL(urlStr);
 		} catch (MalformedURLException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
@@ -2128,7 +2130,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// DO NOT cut and paste this block into similar external account methods. It's only here because
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
 		// for the plain entries assumes this works.
-		if (urlStr == null) {
+		if (urlStr == null || urlStr.trim().length() == 0) {
 			doRemoveExternalAccount(xml, viewpoint, "BLOG");
 			try {
 				ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.BLOG);
@@ -2142,6 +2144,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		URL url = null;
 		
 		try {
+			if (!urlStr.startsWith("http"))
+				urlStr = "http://" + urlStr;	
 		    url = new URL(urlStr);
 		} catch (MalformedURLException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
