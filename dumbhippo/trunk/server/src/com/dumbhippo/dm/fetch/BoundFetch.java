@@ -226,7 +226,7 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 
 				int oldMax =0;
 				if (oldOrdering == classOrdering) {
-					oldMax = oldFetch.properties[newIndex].getMax();
+					oldMax = oldFetch.properties[oldIndex].getMax();
 					if (oldMax < property.getDefaultMaxFetch())
 						oldMax = property.getDefaultMaxFetch();
 				}
