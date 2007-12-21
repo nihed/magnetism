@@ -129,6 +129,8 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 					oldMax = oldFetch.properties[oldIndex].getMax();
 					if (oldMax < property.getDefaultMaxFetch())
 						oldMax = property.getDefaultMaxFetch();
+				} else if (oldFetched) {
+					oldMax = property.getDefaultMaxFetch();
 				}
 							
 				int newMax = 0;
@@ -136,6 +138,8 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 					newMax = properties[newIndex].getMax();
 					if (newMax < property.getDefaultMaxFetch())
 						newMax = property.getDefaultMaxFetch();
+				} else if (newFetched) {
+					newMax = property.getDefaultMaxFetch();
 				}
 				
 				if (newMax > oldMax && (newChildren != null || oldChildren != null)) {
@@ -224,11 +228,13 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 				@SuppressWarnings("unchecked")
 				FeedPropertyHolder<K,T,?,?> property = (FeedPropertyHolder<K,T,?,?>)classProperties[classIndex];
 
-				int oldMax =0;
+				int oldMax = 0;
 				if (oldOrdering == classOrdering) {
 					oldMax = oldFetch.properties[oldIndex].getMax();
 					if (oldMax < property.getDefaultMaxFetch())
 						oldMax = property.getDefaultMaxFetch();
+				} else if (oldFetched) {
+					oldMax = property.getDefaultMaxFetch();
 				}
 							
 				int newMax = 0;
@@ -236,6 +242,8 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 					newMax = properties[newIndex].getMax();
 					if (newMax < property.getDefaultMaxFetch())
 						newMax = property.getDefaultMaxFetch();
+				} else if (newFetched) {
+					newMax = property.getDefaultMaxFetch();
 				}
 				
 				long minTimestamp;
