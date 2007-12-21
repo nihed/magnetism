@@ -1,6 +1,6 @@
 import os,sys
 
-import gtk,cairo
+import gtk,cairo,hippo
 
 from bigboard.themes.default import DefaultTheme
 
@@ -56,6 +56,12 @@ class FedoraTheme(DefaultTheme):
         cr.rectangle(area.x, gradient_y_start, area.width, gradient_y_height)
         cr.fill()
         super(FedoraTheme, self).draw_more_button(cr, area)
+        
+    def set_theme_properties(self, widget):
+        if isinstance(widget, hippo.CanvasLink):
+            widget.set_properties(color=self.foreground)
+        else:
+            super(FedoraTheme, self).set_theme_properties(widget)
         
 def getInstance():
     return FedoraTheme.getInstance()
