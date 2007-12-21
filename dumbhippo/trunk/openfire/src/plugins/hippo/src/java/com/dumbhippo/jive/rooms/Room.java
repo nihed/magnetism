@@ -674,6 +674,8 @@ public class Room implements PresenceListener {
 				IdentitySpider spider = EJBUtil.defaultLookup(IdentitySpider.class);
 				UserViewpoint viewpoint = new UserViewpoint(spider.lookupUser(userId), Site.XMPP);
 				
+				DataService.getModel().initializeReadWriteSession(viewpoint);
+				
 				chatSystem.addChatRoomMessage(roomGuid, kind, viewpoint, packet.getBody(), sentiment, new Date());
 			}
 		});

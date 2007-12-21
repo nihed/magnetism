@@ -6,6 +6,7 @@ import javax.persistence.Column;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
+import javax.persistence.Transient;
 
 /**
  * A chat message, we have subclasses that put the chat in a context
@@ -59,6 +60,11 @@ public abstract class EmbeddedMessage extends DBUnique implements ChatMessage {
 	@Column(nullable=false)
 	public Date getTimestamp() {
 		return timestamp >= 0 ? new Date(timestamp) : null;
+	}
+	
+	@Transient
+	public long getTimestampAsLong() {
+		return timestamp;
 	}
 
 	public void setTimestamp(Date timestamp) {

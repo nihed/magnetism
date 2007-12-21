@@ -93,6 +93,10 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 		model.addDMClass(PicasaPersonBlockDMO.class);
 		model.addDMClass(PostBlockDMO.class);
 		
+		model.addDMClass(ChatMessageDMO.class);
+		model.addDMClass(BlockMessageDMO.class);
+		model.addDMClass(PostMessageDMO.class);
+
 		model.addDMClass(ContactDMO.class);
 		model.addDMClass(DesktopSettingDMO.class);
 		model.addDMClass(ExternalAccountDMO.class);

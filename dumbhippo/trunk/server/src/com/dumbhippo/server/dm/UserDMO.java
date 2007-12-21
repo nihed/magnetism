@@ -471,8 +471,6 @@ public abstract class UserDMO extends DMObject<Guid> {
 			for (UserBlockData ubd : blocks) {
 				Class<? extends BlockDMO> dmoClass = BlockDMO.getDMOClass(ubd.getBlock().getBlockType());
 				if (dmoClass != null) {
-					logger.debug("dmoClass for {} is {}", ubd.getBlock().getBlockType(), dmoClass.getName());
-					
 					BlockDMO blockDMO = session.findUnchecked(dmoClass, new BlockDMOKey(ubd.getBlock()));
 					items.add(new DMFeedItem<BlockDMO>(blockDMO, ubd.getStackTimestampAsLong()));
 				}

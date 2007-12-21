@@ -1,10 +1,16 @@
 package com.dumbhippo.server.dm;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import javax.ejb.EJB;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.DMFeed;
+import com.dumbhippo.dm.DMFeedItem;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.annotations.DMFilter;
@@ -17,14 +23,21 @@ import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.dm.store.StoreKey;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.ChatMessage;
 import com.dumbhippo.persistence.StackReason;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.persistence.BlockType.BlockVisibility;
+import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.blocks.BlockView;
+import com.dumbhippo.server.blocks.EntitySourceBlockView;
+import com.dumbhippo.server.blocks.MusicPersonBlockView;
 import com.dumbhippo.server.blocks.TitleBlockView;
 import com.dumbhippo.server.blocks.TitleDescriptionBlockView;
+import com.dumbhippo.server.views.EntityView;
+import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
@@ -49,6 +62,9 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 	@EJB
 	Stacker stacker;
 	
+	@EJB
+	ChatSystem chatSystem;
+
 	protected BlockDMO(BlockDMOKey key) {
 		super(key);
 	}
@@ -154,6 +170,57 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 	@DMProperty(defaultInclude=true)
 	public boolean isPublic() {
 		return blockView.getBlockType().getBlockVisibility() == BlockVisibility.PUBLIC;
+	}
+	
+	@DMProperty(defaultInclude=true, defaultChildren="+")
+	public UserDMO getSourceUser() {
+		if (blockView instanceof EntitySourceBlockView) {
+			/* User sources might be returned even for EntitySourceBlockView's that aren't
+			 * PersonSourceView; for example, PostBlockView, when posted by a user, instead
+			 * of a feed. 
+			 */
+			EntityView entityView = ((EntitySourceBlockView)blockView).getEntitySource();
+			if (entityView instanceof PersonView) {
+				User user = ((PersonView)entityView).getUser();
+				if (user != null)
+					return session.findUnchecked(UserDMO.class, user.getGuid());
+			}
+		}
+		
+		return null;
+	}
+
+	
+	@DMProperty(defaultInclude=true, defaultChildren="+", defaultMaxFetch=5)
+	public DMFeed<ChatMessageDMO> getChatMessages() {
+		return new MessagesFeed();
+	}
+	
+	private class MessagesFeed implements DMFeed<ChatMessageDMO> {
+		public Iterator<DMFeedItem<ChatMessageDMO>> iterator(int start, int max, long minTimestamp) {
+			List<? extends ChatMessage> messages;
+			
+			if (blockView instanceof MusicPersonBlockView)
+				messages = chatSystem.getTrackMessages(((MusicPersonBlockView)blockView).getTrack().getTrackHistory(), start, max, minTimestamp);
+			else
+				messages = chatSystem.getMessages(blockView.getBlock(), start, max, minTimestamp);
+			
+			List<DMFeedItem<ChatMessageDMO>> items = new ArrayList<DMFeedItem<ChatMessageDMO>>(); 
+			for (ChatMessage message : messages) {
+				ChatMessageDMO messageDMO = session.findUnchecked(ChatMessageDMO.class, new ChatMessageKey(message));
+				items.add(new DMFeedItem<ChatMessageDMO>(messageDMO, message.getTimestampAsLong()));
+			}
+			
+			return items.iterator();
+		}
+	}
+
+	@DMProperty(defaultInclude=true)
+	public int getChatMessageCount() {
+		if (blockView instanceof MusicPersonBlockView)
+			return chatSystem.getTrackMessageCount(((MusicPersonBlockView)blockView).getTrack().getTrackHistory());
+		else
+			return chatSystem.getMessageCount(blockView.getBlock());
 	}
 	
 	//////////////////////////////////////////////////////////////////////

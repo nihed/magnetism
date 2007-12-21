@@ -5,6 +5,7 @@ import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.dm.BlockDMOKey;
+import com.dumbhippo.server.dm.ChatMessageKey;
 
 /**
  * SystemViewpoint represents the systems view of the database.
@@ -78,5 +79,11 @@ public class SystemViewpoint extends Viewpoint {
 	@Override
 	public Site getSite() {
 		return Site.NONE;
+	}
+
+	// Override as an optimization
+	@Override
+	public boolean canSeeChatMessage(ChatMessageKey chatMessageKey) {
+		return true;
 	}
 }
