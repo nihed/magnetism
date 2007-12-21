@@ -314,7 +314,7 @@ public class FacebookServlet extends AbstractServlet {
 			}
 			
 			if (accountsWithNotes.size() > 0) {
-				xml.openElement("fb:success");
+				xml.openElement("fb:explanation");
 				xml.appendTextNode("fb:message", "Please Note");
 				xml.openElement("ul");
 				for (Map.Entry<ExternalAccountType, String> entry : accountsWithNotes.entrySet()) {
