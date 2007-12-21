@@ -8,7 +8,7 @@ import bigboard.libbig as libbig
 from bigboard.libbig.imagecache import URLImageCache
 from bigboard.libbig.http import AsyncHTTPFetcher
 from bigboard.stock import Stock
-from bigboard.big_widgets import CanvasMugshotURLImage, CanvasVBox
+from bigboard.big_widgets import CanvasMugshotURLImage, CanvasVBox, ThemeManager, ThemeManager
 import bigboard.search as search
 
 if __name__ == '__main__':
@@ -17,6 +17,68 @@ if __name__ == '__main__':
     libbig.logutil.init('DEBUG', ['bigboard.search.SearchStock'], '')
         
 _logger = logging.getLogger("bigboard.stocks.SearchStock")
+
+class ThemedTextRenderer(gtk.CellRendererText):
+    __gproperties__ = {
+        'themed': (gobject.TYPE_BOOLEAN, 'Themed', 'Whether or not we are themed', False, gobject.PARAM_READWRITE)
+    }
+    def __init__(self, *args, **kwargs):
+        gtk.CellRendererText.__init__(self, *args, **kwargs)
+        self.__tm = ThemeManager.getInstance()
+        self.__themed = False
+        
+    def do_render(self, window, widget, bg, cell_area, expose_area, flags):
+        if self.__themed:
+            tm = self.__tm.get_theme()
+            cr = window.cairo_create()
+            tm.draw_header(cr, cell_area)
+        gtk.CellRendererText.do_render(self, window, widget, bg, cell_area, expose_area, flags)
+        
+   # override
+    def do_set_property(self, pspec, value):
+        if pspec.name == 'themed':
+            self.__themed = value          
+        else:
+            raise AttributeError, 'unknown property %s' % pspec.name
+
+    # override
+    def do_get_property(self, pspec):
+        if pspec.name == 'themed':
+            return self.__themed
+        else:
+            raise AttributeError, 'unknown property %s' % pspec.name           
+gobject.type_register(ThemedTextRenderer)
+
+class ThemedPixbufRenderer(gtk.CellRendererPixbuf):
+    __gproperties__ = {
+        'themed': (gobject.TYPE_BOOLEAN, 'Themed', 'Whether or not we are themed', False, gobject.PARAM_READWRITE)
+    }
+    def __init__(self, *args, **kwargs):
+        gtk.CellRendererPixbuf.__init__(self, *args, **kwargs)
+        self.__tm = ThemeManager.getInstance()
+        self.__themed = False
+        
+    def do_render(self, window, widget, bg, cell_area, expose_area, flags):
+        if self.__themed:
+            tm = self.__tm.get_theme()
+            cr = window.cairo_create()
+            tm.draw_header(cr, cell_area)
+        gtk.CellRendererPixbuf.do_render(self, window, widget, bg, cell_area, expose_area, flags)
+        
+   # override
+    def do_set_property(self, pspec, value):
+        if pspec.name == 'themed':
+            self.__themed = value          
+        else:
+            raise AttributeError, 'unknown property %s' % pspec.name
+
+    # override
+    def do_get_property(self, pspec):
+        if pspec.name == 'themed':
+            return self.__themed
+        else:
+            raise AttributeError, 'unknown property %s' % pspec.name           
+gobject.type_register(ThemedTextRenderer)   
 
 ## this class is so each search has its own "context" and
 ## we ignore async search results from a search that is no longer
@@ -71,13 +133,15 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
         self.__view = gtk.TreeView(self.__store)
         self.__view.set_headers_visible(False)
         
+        self.__tm = ThemeManager.getInstance()
+        
         self.__icon_size = 24
         self.__view.insert_column_with_data_func(-1, '',
-                                                 gtk.CellRendererPixbuf(),
+                                                 ThemedPixbufRenderer(),
                                                  self.__render_icon)
         column = gtk.TreeViewColumn('Result')
         
-        renderer = gtk.CellRendererText()
+        renderer = ThemedTextRenderer()
         renderer.set_property('ellipsize', pango.ELLIPSIZE_END)
         column.pack_start(renderer)
         #column.set_attributes(renderer, markup=2)
@@ -103,9 +167,24 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
         renderer.set_property('markup', markup)
         if result:
             renderer.set_property('background', None)
+            renderer.set_property('weight', pango.WEIGHT_NORMAL)            
         else:
             # this is a heading
-            renderer.set_property('background', 'light blue')
+            renderer.set_property('weight', pango.WEIGHT_BOLD)
+            renderer.set_property('background', (self.__tm.get_theme().background << 8,))
+        renderer.set_property('themed', not result)
+            
+    def __render_icon(self, col, cell, model, iter):
+        result = model.get_value(iter, 0)
+        cell.set_property('themed', not result)      
+        pixbuf = model.get(iter, 1)[0]  
+        if isinstance(pixbuf, gtk.gdk.Pixbuf):
+            cell.set_property('pixbuf', pixbuf)
+        elif isinstance(pixbuf, basestring):
+            cell.set_property('icon-name', pixbuf)
+            cell.set_property('stock-size', gtk.ICON_SIZE_SMALL_TOOLBAR)
+        else:
+            cell.set_property('pixbuf', None)                        
 
     def __on_selection_changed(self, selection):
         (model, rows) = selection.get_selected_rows()
@@ -310,16 +389,6 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
                 return iter
             iter = self.__store.iter_next(iter)
             
-    def __render_icon(self, col, cell, model, iter):
-        pixbuf = model.get(iter, 1)[0]  
-        if isinstance(pixbuf, gtk.gdk.Pixbuf):
-            cell.set_property('pixbuf', pixbuf)
-        elif isinstance(pixbuf, basestring):
-            cell.set_property('icon-name', pixbuf)
-            cell.set_property('stock-size', gtk.ICON_SIZE_SMALL_TOOLBAR)
-        else:
-            cell.set_property('pixbuf', None)
-
     def __handle_image_load(self, url, pixbuf):
         _logger.debug("got load for %s: %s", url, pixbuf)
         iter = self.__findobj(url, 5)
