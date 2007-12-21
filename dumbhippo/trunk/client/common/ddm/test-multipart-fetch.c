@@ -24,9 +24,10 @@ main(int argc, char **argv)
 
     user = NULL;
     ddm_data_resource_get(buddy1,
-                          "fixedUxuser", DDM_DATA_RESOURCE, &user,
+                          "fixedUser", DDM_DATA_RESOURCE, &user,
                           NULL);
-
+    
+    g_assert(user != NULL);
     g_assert(user == user1);
 
     return 0;
