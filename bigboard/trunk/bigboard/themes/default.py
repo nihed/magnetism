@@ -87,7 +87,7 @@ class DefaultTheme(Singleton):
         ctx.update_layout(layout)
         ctx.show_layout(layout)
         
-    def set_properties(self, widget):
+    def set_theme_properties(self, widget):
         if isinstance(widget, ThemedWidgetMixin) \
            and isinstance(widget, hippo.CanvasText):
             hints = widget.get_theme_hints()
@@ -97,6 +97,8 @@ class DefaultTheme(Singleton):
                 widget.set_properties(padding_left=8, padding_top=4, padding_bottom=2)
             if 'subforeground' in hints:
                 widget.set_properties(color=self.subforeground)
+            elif isinstance(widget, hippo.CanvasLink):
+                widget.set_properties(color=0x0066DDFF)
             else:
                 widget.set_properties(color=self.foreground)
         
