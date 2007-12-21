@@ -71,6 +71,17 @@
       <locale name="C">
 		<short>Number of applications to show in sidebar</short>
       </locale>
-    </schema>        
+    </schema>
+    <schema>
+      <key>/schemas/apps/bigboard/orientation</key>
+      <applyto>/apps/bigboard/orientation</applyto>
+      <owner>bigboard</owner>
+      <type>string</type>
+      <default>west</default>
+      <locale name="C">
+                <short>Bigboard panel orientation</short>
+                <long>The orientation of the Bigboard panel. Possible values are "west" or "east". The key specifies which screen edge the panel is on.</long>
+      </locale>
+    </schema> 
   </schemalist>
 </gconfschemafile>
