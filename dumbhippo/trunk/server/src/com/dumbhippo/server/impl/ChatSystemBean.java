@@ -93,13 +93,6 @@ public class ChatSystemBean implements ChatSystem {
 	@IgnoreDependency
 	private Stacker stacker;
 	
-	// We order and select on pm.id, though in rare cases the order by pm.id and by pm.timestamp
-	// might be different if two messages arrive almost at once. In this case, the timestamps will
-	// likely be within a second of each other and its much cheaper this way.
-	private static final String BLOCK_MESSAGE_QUERY = "SELECT pm from BlockMessage pm WHERE pm.block = :block";
-	private static final String BLOCK_MESSAGE_SELECT = " AND pm.id >= :lastSeenSerial ";
-	private static final String BLOCK_MESSAGE_ORDER = " ORDER BY pm.id";
-	
 	public List<? extends ChatMessage> getMessages(Block block, long lastSeenSerial) {
 		switch (block.getBlockType()) {
 		case GROUP_CHAT:
@@ -126,22 +119,44 @@ public class ChatSystemBean implements ChatSystem {
 		switch (block.getBlockType()) {
 		case GROUP_CHAT:
 			Group group = em.find(Group.class, block.getData1AsGuid().toString());
-			return getNewestGroupMessages(group, maxResults);
+			return getGroupMessages(group, 0, maxResults, -1);
 		case MUSIC_CHAT:
 			TrackHistory trackHistory = em.find(TrackHistory.class, block.getData2AsGuid().toString());
-			return getNewestTrackMessages(trackHistory, maxResults);
+			return getTrackMessages(trackHistory, 0, maxResults, -1);
 		case POST:
 			Post post = em.find(Post.class, block.getData1AsGuid().toString());
-			return getNewestPostMessages(post, maxResults);
+			return getPostMessages(post, 0, maxResults, -1);
 		case MUSIC_PERSON:
 			throw new RuntimeException("Use getNewestTrackMessages() instead"); // for efficiency 
 		case GROUP_MEMBER:
 			return Collections.emptyList();
 		default:
-			return getNewestBlockMessages(block, maxResults);
+			return getBlockMessages(block, 0, maxResults, -1);
 		}
 	}
 		
+	public List<? extends ChatMessage> getMessages(Block block, int start, int max, long minTimestamp) {
+		switch (block.getBlockType()) {
+		case GROUP_CHAT:
+			Group group = em.find(Group.class, block.getData1AsGuid().toString());
+			return getGroupMessages(group, start, max, minTimestamp);
+		case MUSIC_CHAT:
+			TrackHistory trackHistory = em.find(TrackHistory.class, block.getData2AsGuid().toString());
+			return getTrackMessages(trackHistory, start, max, minTimestamp);
+		case POST:
+			Post post = em.find(Post.class, block.getData1AsGuid().toString());
+			return getPostMessages(post, start, max, minTimestamp);
+		case MUSIC_PERSON:
+			// If the caller already has a BlockView and hence the latest TrackHistory,
+			// we don't want to look that up again here
+			throw new RuntimeException("Use getTrackMessages() instead"); 
+		case GROUP_MEMBER:
+			return Collections.emptyList();
+		default:
+			return getBlockMessages(block, start, max, minTimestamp);
+		}
+	}
+
 	public int getMessageCount(Block block) {
 		switch (block.getBlockType()) {
 		case GROUP_CHAT:
@@ -162,6 +177,13 @@ public class ChatSystemBean implements ChatSystem {
 		}
 	}
 	
+	// We order and select on bm.id, though in rare cases the order by bm.id and by pm.timestamp
+	// might be different if two messages arrive almost at once. In this case, the timestamps will
+	// likely be within a second of each other and its much cheaper this way.
+	private static final String BLOCK_MESSAGE_QUERY = "SELECT bm from BlockMessage bm WHERE bm.block = :block";
+	private static final String BLOCK_MESSAGE_SELECT = " AND bm.id >= :lastSeenSerial ";
+	private static final String BLOCK_MESSAGE_ORDER = " ORDER BY bm.id";
+	
 	private List<BlockMessage> getBlockMessages(Block block, long lastSeenSerial) {
 		List<?> messages = em.createQuery(BLOCK_MESSAGE_QUERY + BLOCK_MESSAGE_SELECT + BLOCK_MESSAGE_ORDER)
 			.setParameter("block", block)
@@ -171,13 +193,22 @@ public class ChatSystemBean implements ChatSystem {
 		return TypeUtils.castList(BlockMessage.class, messages);
 	}
 	
-	private List<BlockMessage> getNewestBlockMessages(Block block, int maxResults) {
-		List<?> messages = em.createQuery("SELECT bm from BlockMessage bm WHERE bm.block = :block ORDER BY bm.timestamp DESC")
-			.setParameter("block", block)
-			.setMaxResults(maxResults)
-			.getResultList();
+	private List<BlockMessage> getBlockMessages(Block block, int start, int max, long minTimestamp) {
+		Query q;
 		
-		return TypeUtils.castList(BlockMessage.class, messages);		
+		if (minTimestamp >=0) {
+			q = em.createQuery("SELECT bm from BlockMessage bm WHERE bm.block = :block AND bm.timestamp >= :minTimestamp ORDER BY bm.timestamp DESC");
+			q.setParameter("minTimestamp", new Date(minTimestamp));
+		} else {
+			q = em.createQuery("SELECT bm from BlockMessage bm WHERE bm.block = :block ORDER BY bm.timestamp DESC");
+		}
+		
+		q.setParameter("block", block);
+		q.setFirstResult(start);
+		if (max >= 0)
+			q.setMaxResults(max);
+		
+		return TypeUtils.castList(BlockMessage.class, q.getResultList());
 	}
 	
 	private int getBlockMessageCount(Block block) {
@@ -210,13 +241,22 @@ public class ChatSystemBean implements ChatSystem {
 		return TypeUtils.castList(PostMessage.class, messages);
 	}
 	
-	private List<PostMessage> getNewestPostMessages(Post post, int maxResults) {
-		List<?> messages = em.createQuery("SELECT pm from PostMessage pm WHERE pm.post = :post ORDER BY pm.timestamp DESC")
-		.setParameter("post", post)
-		.setMaxResults(maxResults)
-		.getResultList();
+	private List<PostMessage> getPostMessages(Post post, int start, int max, long minTimestamp) {
+		Query q;
 		
-		return TypeUtils.castList(PostMessage.class, messages);		
+		if (minTimestamp >=0) {
+			q = em.createQuery("SELECT pm from PostMessage pm WHERE pm.post = :post AND pm.timestamp >= :minTimestamp ORDER BY pm.timestamp DESC");
+			q.setParameter("minTimestamp", new Date(minTimestamp));
+		} else {
+			q = em.createQuery("SELECT pm from PostMessage pm WHERE pm.post = :post ORDER BY pm.timestamp DESC");
+		}
+		
+		q.setParameter("post", post);
+		q.setFirstResult(start);
+		if (max >= 0)
+			q.setMaxResults(max);
+		
+		return TypeUtils.castList(PostMessage.class, q.getResultList());
 	}
 	
 	private int getPostMessageCount(Post post) {
@@ -249,13 +289,22 @@ public class ChatSystemBean implements ChatSystem {
 		return TypeUtils.castList(GroupMessage.class, messages);
 	}
 	
-	private List<GroupMessage> getNewestGroupMessages(Group group, int maxResults) {
-		List<?> messages =  em.createQuery(GROUP_MESSAGE_QUERY + GROUP_MESSAGE_ORDER + " DESC")
-		.setParameter("group", group)
-		.setMaxResults(maxResults)
-		.getResultList();
+	private List<GroupMessage> getGroupMessages(Group group, int start, int max, long minTimestamp) {
+		Query q;
 		
-		return TypeUtils.castList(GroupMessage.class, messages);		
+		if (minTimestamp >=0) {
+			q = em.createQuery("SELECT gm from GroupMessage gm WHERE gm.group = :group AND gm.timestamp >= :minTimestamp ORDER BY gm.timestamp DESC");
+			q.setParameter("minTimestamp", new Date(minTimestamp));
+		} else {
+			q = em.createQuery("SELECT gm from GroupMessage gm WHERE gm.group = :group ORDER BY gm.timestamp DESC");
+		}
+		
+		q.setParameter("group", group);
+		q.setFirstResult(start);
+		if (max >= 0)
+			q.setMaxResults(max);
+		
+		return TypeUtils.castList(GroupMessage.class, q.getResultList());
 	}
 	
 	private int getGroupMessageCount(Group group) {
@@ -272,13 +321,26 @@ public class ChatSystemBean implements ChatSystem {
 		return groupMessage;
 	}
 
-	public List<TrackMessage> getNewestTrackMessages(TrackHistory trackHistory, int maxResults) {
-		Query q = em.createQuery("SELECT tm from TrackMessage tm WHERE tm.trackHistory = :trackHistory ORDER by tm.timestamp DESC");
+	public List<TrackMessage> getTrackMessages(TrackHistory trackHistory, int start, int max, long minTimestamp) {
+		Query q;
+		
+		if (minTimestamp >=0) {
+			q = em.createQuery("SELECT tm from TrackMessage tm WHERE tm.trackHistory = :trackHistory AND tm.timestamp > :minTimestamp ORDER by tm.timestamp DESC");
+			q.setParameter("minTimestamp", new Date(minTimestamp));
+		} else {
+			q = em.createQuery("SELECT tm from TrackMessage tm WHERE tm.trackHistory = :trackHistory ORDER by tm.timestamp DESC");
+		}
+		
 		q.setParameter("trackHistory", trackHistory);
-		if (maxResults >= 0)
-			q.setMaxResults(maxResults);
+		q.setFirstResult(start);
+		if (max >= 0)
+			q.setMaxResults(max);
 		
 		return TypeUtils.castList(TrackMessage.class, q.getResultList());
+	}
+	
+	public List<TrackMessage> getNewestTrackMessages(TrackHistory trackHistory, int maxResults) {
+		return getTrackMessages(trackHistory, 0, maxResults, -1);
 	}
 
 	private List<TrackMessage> getTrackMessages(TrackHistory trackHistory, long lastSeenSerial) {
@@ -311,14 +373,6 @@ public class ChatSystemBean implements ChatSystem {
 		return viewedMsgs;
 	}
 
-	private User getUserFromGuid(Guid guid) {
-		try {
-			return identitySpider.lookupGuid(User.class, guid);
-		} catch (NotFoundException e) {
-			throw new RuntimeException("User does not exist: " + guid, e);
-		}
-	}
-	
 	private Post getPostForRoom(Guid roomGuid) throws NotFoundException {
 		return postingBoard.loadRawPost(SystemViewpoint.getInstance(), roomGuid);
 	}
@@ -575,5 +629,5 @@ public class ChatSystemBean implements ChatSystem {
 		default:
 			throw new RuntimeException("Unknown chat room type " + kind);
 		}
-	}	
+	}
 }

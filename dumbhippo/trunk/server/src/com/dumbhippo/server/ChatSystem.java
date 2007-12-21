@@ -28,7 +28,11 @@ public interface ChatSystem {
 	
 	public List<? extends ChatMessage> getNewestMessages(Block block, int maxResults);
 	
+	public List<? extends ChatMessage> getMessages(Block block, int start, int max, long minTimestamp);
+
 	public List<? extends ChatMessage> getNewestTrackMessages(TrackHistory trackHistory, int maxResults);
+
+	public List<? extends ChatMessage> getTrackMessages(TrackHistory trackHistory, int start, int max, long minTimestamp);
 
 	/**
 	 * Get the total count of messages that were sent to the chatroom about this

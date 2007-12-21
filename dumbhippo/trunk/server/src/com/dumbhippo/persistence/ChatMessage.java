@@ -24,4 +24,7 @@ public interface ChatMessage {
 	
 	@Transient
 	public long getId();
+
+	@Transient
+	public long getTimestampAsLong();
 }

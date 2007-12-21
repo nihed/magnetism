@@ -1,10 +1,16 @@
 package com.dumbhippo.server.views;
 
 import com.dumbhippo.Site;
+import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
+import com.dumbhippo.dm.store.StoreKey;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.dm.BlockDMOKey;
+import com.dumbhippo.server.dm.ChatMessageDMO;
+import com.dumbhippo.server.dm.ChatMessageKey;
+import com.dumbhippo.server.dm.DataService;
 
 /**
  * The Viewpoint class represents the concept of "current user". 
@@ -60,5 +66,17 @@ public abstract class Viewpoint implements DMViewpoint {
 	 */
 	public AnonymousViewpoint anonymize() {
 		return AnonymousViewpoint.getInstance(getSite());
+	}
+	
+	public boolean canSeeChatMessage(ChatMessageKey chatMessageKey) {
+		DMSession session = DataService.getModel().currentSession();
+
+		StoreKey<?, ?> delegateKey;
+		try {
+			delegateKey = (StoreKey<?,?>)session.getRawProperty(ChatMessageDMO.class, chatMessageKey, "visibilityDelegate");
+			return delegateKey.isVisible(this);
+		} catch (NotFoundException e) {
+			return false;
+		}
 	}
 }
