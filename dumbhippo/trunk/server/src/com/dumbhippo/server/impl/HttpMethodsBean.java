@@ -2087,11 +2087,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.closeElement();
 	}
 	
-	public void doSetWebsiteAccount(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException {
+	public void doSetWebsiteAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlStr) throws XmlMethodException {
 		// DO NOT cut and paste this block into similar external account methods. It's only here because
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
 		// for the plain entries assumes this works.
-		if (url == null) {
+		if (urlStr == null) {
 			doRemoveExternalAccount(xml, viewpoint, "WEBSITE");
 			try {
 				ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.WEBSITE);
@@ -2100,6 +2100,14 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			} catch (NotFoundException e) {
 			}
 			return;
+		}
+		
+		URL url = null;
+		
+		try {
+		    url = new URL(urlStr);
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
 		
 		throwIfUrlNotHttp(url);
@@ -2115,12 +2123,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
 
-	public void doSetBlogAccount(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException, RetryException {
+	public void doSetBlogAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlStr) throws XmlMethodException, RetryException {
 		
 		// DO NOT cut and paste this block into similar external account methods. It's only here because
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
 		// for the plain entries assumes this works.
-		if (url == null) {
+		if (urlStr == null) {
 			doRemoveExternalAccount(xml, viewpoint, "BLOG");
 			try {
 				ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.BLOG);
@@ -2129,6 +2137,14 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			} catch (NotFoundException e) {
 			}
 			return;
+		}
+		
+		URL url = null;
+		
+		try {
+		    url = new URL(urlStr);
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
 		
 		throwIfUrlNotHttp(url);
