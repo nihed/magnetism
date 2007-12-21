@@ -196,7 +196,8 @@ notify_buddy(ImData             *id,
      * matching hash of NULL
      */
     if (!hippo_im_has_icon_hash(resource_id, icon)) {
-        make_icon_request(id, icon, resource_id);
+    	if (icon != NULL)
+    		make_icon_request(id, icon, resource_id);
     } else {
         g_debug("It looks like we already have icon %s", icon ? icon : "(none)");
     }
