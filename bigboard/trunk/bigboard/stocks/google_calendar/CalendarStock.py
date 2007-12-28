@@ -984,7 +984,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         return False       
      
     def __on_failed_load(self, response):
-        _logger.debug("load failed")
+        _logger.debug("load failed: %s", response)
         ## this displays the "need to log in" thing
         self.__refresh_events()
     
