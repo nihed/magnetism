@@ -315,7 +315,7 @@ class IMIcon(hippo.CanvasLink, DataBoundItem, ThemedWidgetMixin):
     def __init__(self, buddy, theme_hints=[]):
         hippo.CanvasLink.__init__(self)
         DataBoundItem.__init__(self, buddy)
-        ThemedWidgetMixin.__init__(theme_hints=theme_hints)
+        ThemedWidgetMixin.__init__(self, theme_hints=theme_hints)
         
         self.connect("activated", self.__on_activated)
 
