@@ -22,7 +22,7 @@ on_buddy1_changed(DDMDataResource *resource,
 
     user = NULL;
     ddm_data_resource_get(resource,
-                          "user", DDM_DATA_RESOURCE, &user,
+                          "fixedUser", DDM_DATA_RESOURCE, &user,
                           NULL);
 
     g_assert(user == user2);
