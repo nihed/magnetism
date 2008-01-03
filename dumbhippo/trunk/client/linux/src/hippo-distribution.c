@@ -1,10 +1,13 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
+#include <config.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
+#ifndef WITH_MAEMO
 #include <libgnome/gnome-desktop-item.h>
+#endif
 #include <libgnomevfs/gnome-vfs.h>
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
@@ -1069,6 +1072,7 @@ hippo_distribution_run_application   (HippoDistribution  *distro,
                                       HippoAsyncCallback  callback,
                                       void               *callback_data)
 {
+#ifndef WITH_MAEMO
     GnomeDesktopItem *item = NULL;
     char *desktop_file = NULL;
     GError *error = NULL;
@@ -1110,6 +1114,7 @@ hippo_distribution_run_application   (HippoDistribution  *distro,
         gnome_desktop_item_unref(item);
     
     g_free(desktop_file);
+#endif
 }
 
 

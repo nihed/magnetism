@@ -69,8 +69,12 @@ typedef struct {
 
 static const RoleProperties role_properties[] = {
     /*                   type_hint,                   skip_taskbar_pager, accept_focus, no_background */
-    /* APPLICATION */  { GDK_WINDOW_TYPE_HINT_NORMAL,  FALSE,              TRUE,         FALSE  },
+    /* APPLICATION */  { GDK_WINDOW_TYPE_HINT_NORMAL,  FALSE,              TRUE,         FALSE },
+#ifdef WITH_MAEMO
+    /* NOTIFICATION */ { GDK_WINDOW_TYPE_HINT_DIALOG,  TRUE,               FALSE,        TRUE  },
+#else
     /* NOTIFICATION */ { GDK_WINDOW_TYPE_HINT_DOCK,    TRUE,               FALSE,        TRUE  },
+#endif
     /* INPUT_POPUP */  { GDK_WINDOW_TYPE_HINT_TOOLBAR, FALSE,              TRUE,         TRUE  },
 };
 

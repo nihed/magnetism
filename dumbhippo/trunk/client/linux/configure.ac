@@ -287,10 +287,15 @@ if test "$jpeg_ok" = yes; then
     fi
 fi
 
+AC_ARG_WITH(maemo,
+	    AC_HELP_STRING([--with-maemo=[yes/no]],
+		           [Whether to use Maemo version of Mugshot client]),
+	    ,
+	    with_maemo=no)
 
 GLIB2_REQUIRED=2.6.0
 GTK2_REQUIRED=2.6.0
-LOUDMOUTH_REQUIRED=1.0
+LOUDMOUTH_REQUIRED=1.2.2
 # unfortunately this breaks us on FC4
 DBUS_REQUIRED=0.60
 DBUS_GLIB_REQUIRED=0.60
@@ -365,11 +370,16 @@ else
     CFLAGS="$hippo_save_CFLAGS"
     LIBS="$hippo_save_LIBS"
 
-    if ! $have_xscreensaver ; then
-        AC_MSG_ERROR([XScreenSaver extension is required - X11/extensions/scnsaver.h, libXss.so])
+    if test "x$with_maemo" != xno ; then        
+        if ! $have_xscreensaver ; then
+            AC_MSG_ERROR([XScreenSaver extension is required - X11/extensions/scnsaver.h, libXss.so])
+        fi
+        XSCREENSAVER_LIBS="-lXss -lXext -lX11 $X_EXTRA_LIBS"
+        XSCREENSAVER_CFLAGS="$X_CFLAGS"
+    else
+        XSCREENSAVER_LIBS=""
+        XSCREENSAVER_CFLAGS=""
     fi
-    XSCREENSAVER_LIBS="-lXss -lXext -lX11 $X_EXTRA_LIBS"
-    XSCREENSAVER_CFLAGS="$X_CFLAGS"
 fi
 
 # PCRE checks
@@ -448,13 +458,26 @@ PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth
 AC_DEFINE(HIPPO_LOUDMOUTH_IS_10, 1, [Define if Loudmouth is version 1.0 or below])
 PKG_CHECK_MODULES(LIBHIPPOIPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
-PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED gnome-desktop-2.0 >= $GNOME_DESKTOP_REQUIRED gnome-vfs-2.0 $XSCREENSAVER_PACKAGES $CANVAS_MODULES)
-MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $CURL_LIBS $XSCREENSAVER_LIBS $JPEG_LIBS $RESOLV_LIBS"
-MUGSHOT_CFLAGS="$MUGSHOT_BASE_CFLAGS $CURL_CFLAGS $XSCREENSAVER_CFLAGS"
+PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED gnome-vfs-2.0 $XSCREENSAVER_PACKAGES $CANVAS_MODULES)
+
+# If we're building the Maemo client, we don't need gnome-desktop
+if test "x$with_maemo" != xno ; then
+    PKG_CHECK_MODULES(MUGSHOT_MAEMO, libosso >= 0.9.19)
+else
+    PKG_CHECK_MODULES(MUGSHOT_GNOME, gnome-desktop-2.0 >= $GNOME_DESKTOP_REQUIRED)
+fi
+   
+MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $MUGSHOT_GNOME_LIBS $MUGSHOT_MAEMO_LIBS $CURL_LIBS $XSCREENSAVER_LIBS $JPEG_LIBS $RESOLV_LIBS"
+MUGSHOT_CFLAGS="$MUGSHOT_BASE_CFLAGS $MUGSHOT_GNOME_CFLAGS $MUGSHOT_MAEMO_CFLAGS $CURL_CFLAGS $XSCREENSAVER_CFLAGS"
 AC_SUBST(MUGSHOT_LIBS)
 AC_SUBST(MUGSHOT_CFLAGS)
 PKG_CHECK_MODULES(MUGSHOT_URI_HANDLER, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 dbus-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(TEST_HIPPO_IPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
+
+if test "x$with_maemo" != xno ; then
+    AC_DEFINE(WITH_MAEMO, , [whether Maemo is active])
+fi
+AM_CONDITIONAL(WITH_MAEMO, test "x$with_maemo" != xno)
 
 GLIB_GENMARSHAL=`$PKG_CONFIG --variable=glib_genmarshal glib-2.0`
 AC_SUBST(GLIB_GENMARSHAL)
@@ -620,7 +643,7 @@ AC_SUBST(XPIDL)
 if $sdk_includes_nspr ; then
     NSPR_LIBS="-L $with_gecko_sdk/lib -lnspr4"
 else
-    for pkg in firefox-nspr xulrunnner-nspr nspr ; do
+    for pkg in firefox-nspr xulrunnner-nspr nspr microb-engine-nspr; do
         if test "x$NSPR_PACKAGES" = x ; then
 	    HIPPO_PKG_CHECK_EXISTS($pkg, NSPR_PACKAGES=$pkg)
 	fi
@@ -631,7 +654,7 @@ else
 fi
 
 if $need_separate_js ; then
-    for pkg in firefox-js xulrunner-js ; do
+    for pkg in firefox-js xulrunner-js microb-engine-js; do
         if test "x$JS_PACKAGES" = x ; then
 	    HIPPO_PKG_CHECK_EXISTS($pkg, JS_PACKAGES=$pkg)
 	fi

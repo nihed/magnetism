@@ -147,16 +147,32 @@ handle_message(DBusConnection     *connection,
    
         if (dbus_message_is_signal(message, "org.freedesktop.NetworkManager", "StateChange")) {
             dbus_uint32_t v_UINT32;
-            
             if (dbus_message_get_args(message, NULL, DBUS_TYPE_UINT32, &v_UINT32, DBUS_TYPE_INVALID)) {
-                HippoNetworkStatus status = HIPPO_NETWORK_STATUS_UNKNOWN;
+            	HippoNetworkStatus status = HIPPO_NETWORK_STATUS_UNKNOWN;            	
                 if (v_UINT32 == 3)
                     status = HIPPO_NETWORK_STATUS_UP;
                 else if (v_UINT32 == 1)
                     status = HIPPO_NETWORK_STATUS_DOWN;
 
                 g_debug("new network status from network manager %u", v_UINT32);
-                
+                g_signal_emit(G_OBJECT(dbus), signals[NETWORK_STATUS_CHANGED], 0, status);                
+            }
+        } else if (dbus_message_is_signal(message, "com.nokia.icd", "status_changed")) {
+            char *iap_id, *bearer, *state;
+
+            if (dbus_message_get_args(message, NULL, 
+                                      DBUS_TYPE_STRING, &iap_id,
+                                      DBUS_TYPE_STRING, &bearer,
+                                      DBUS_TYPE_STRING, &state,
+                                      DBUS_TYPE_INVALID)) {
+                HippoNetworkStatus status = HIPPO_NETWORK_STATUS_UNKNOWN;
+
+                if (strcmp(state, "IDLE") == 0)
+                    status = HIPPO_NETWORK_STATUS_DOWN;
+                else if (strcmp(state, "CONNECTED") == 0)
+                    status = HIPPO_NETWORK_STATUS_UP;
+
+                g_debug("new network status from com.nokia.icd is %s", state);
                 g_signal_emit(G_OBJECT(dbus), signals[NETWORK_STATUS_CHANGED], 0, status);
             }
         } else if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL, "Disconnected")) {
@@ -215,6 +231,15 @@ hippo_system_dbus_open(GError     **error)
                        "org.freedesktop.NetworkManager"
                        "',member='"
                        "StateChange"
+                       "'",
+                       &derror);
+    dbus_bus_add_match(connection,
+                       "type='signal',sender='"
+                       "com.nokia.icd"
+                       "',interface='"
+                       "com.nokia.icd"
+                       "',member='"
+                       "status_changed"
                        "'",
                        &derror);
 

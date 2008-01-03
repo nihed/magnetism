@@ -1,4 +1,5 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include <config.h>
 #include "hippo-cookies-linux.h"
 #include <string.h>
 
@@ -29,6 +30,12 @@ hippo_load_cookies(const char *domain,
     hippo_cookie_locator_add_file(locator, path, HIPPO_BROWSER_GALEON);
     g_free(path);
 
+    path = g_build_filename(homedir,
+                            ".mozilla/microb/cookies.txt",
+                            NULL);
+    hippo_cookie_locator_add_file(locator, path, HIPPO_BROWSER_MAEMO);
+    g_free(path);
+    
     path = g_build_filename(homedir, ".mozilla/firefox", NULL);
     hippo_cookie_locator_add_directory(locator, path, HIPPO_BROWSER_FIREFOX);
     g_free(path);
