@@ -1041,6 +1041,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			account.setMusicSharingEnabled(enabled);
 			notifier.onMusicSharingToggled(viewpoint);
 			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(viewpoint.getViewer().getGuid(), "musicSharingEnabled", Boolean.toString(enabled)));
+			DataService.currentSessionRW().changed(UserDMO.class, account.getOwner().getGuid(), "musicSharingEnabled");
 		}
 	}
 
@@ -1053,7 +1054,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Account account = getAttachedAccount(user);
 		if (account.isMusicSharingPrimed() != primed) {
 			account.setMusicSharingPrimed(primed);
-			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(user.getGuid(), "musicSharingPrimed", Boolean.toString(primed)));			
+			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(user.getGuid(), "musicSharingPrimed", Boolean.toString(primed)));
+			DataService.currentSessionRW().changed(UserDMO.class, account.getOwner().getGuid(), "musicSharingPrimed");	
 		}
 	}
 	
@@ -1067,8 +1069,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		boolean wasSet = account.isApplicationUsageEnabled() != null;
 		boolean wasEnabled = getApplicationUsageEnabled(viewpoint.getViewer());
 		account.setApplicationUsageEnabled(enabled);
-		if (enabled != wasEnabled)
+		if (enabled != wasEnabled) {
 			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(viewpoint.getViewer().getGuid(), "applicationUsageEnabled", Boolean.toString(enabled)));
+			DataService.currentSessionRW().changed(UserDMO.class, account.getOwner().getGuid(), "applicationUsageEnabled");
+		}
 
 		if (enabled != wasEnabled || !wasSet)
 			notifier.onApplicationUsageToggled(viewpoint);
