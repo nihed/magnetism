@@ -4,8 +4,11 @@ import com.dumbhippo.Site;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.dm.BlockDMOKey;
 import com.dumbhippo.server.dm.ChatMessageKey;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.PostDMO;
 
 /**
  * SystemViewpoint represents the systems view of the database.
@@ -65,6 +68,11 @@ public class SystemViewpoint extends Viewpoint {
 		return true;
 	}	
 	
+	@Override
+	public boolean canSeeGroup(Guid groupId) {
+		return true;
+	}
+
 	@Override
 	public boolean canSeeBlock(BlockDMOKey blockKey) {
 		return true;

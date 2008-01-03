@@ -75,6 +75,16 @@ public class AnonymousViewpoint extends Viewpoint {
 	
 
 	@Override
+	public boolean canSeeGroup(Guid groupId) {
+		try {
+			DMSession session = DataService.getModel().currentSession();
+			return (Boolean)session.getRawProperty(PostDMO.class, groupId, "public");
+		} catch (NotFoundException e) {
+			return false;
+		}
+	}
+
+	@Override
 	public boolean canSeeBlock(BlockDMOKey blockKey) {
 		return blockKey.getType().getBlockVisibility() == BlockVisibility.PUBLIC;
 	}

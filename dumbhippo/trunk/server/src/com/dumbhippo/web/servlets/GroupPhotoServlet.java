@@ -73,7 +73,7 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 		groupSystem.incrementGroupVersion(group);
 		
 		// if we upload a photo we have to remove the stock photo that 
-		// would otherwise override
+		// would otherwise override. This also takes care of notifying groupDMO.photoUrl
 		groupSystem.setStockPhoto(viewpoint, group, null);
 		
 		doFinalRedirect(request, response);

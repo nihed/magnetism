@@ -36,6 +36,7 @@ public abstract class ChatMessageDMO extends DMObject<ChatMessageKey> {
 		case POST:
 			return PostMessageDMO.class;
 		case GROUP:
+			return GroupMessageDMO.class;
 		case TRACK:
 			return null;
 		}
