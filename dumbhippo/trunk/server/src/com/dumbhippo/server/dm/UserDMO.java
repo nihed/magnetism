@@ -40,6 +40,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.DesktopSettings;
+import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
@@ -388,6 +389,18 @@ public abstract class UserDMO extends DMObject<Guid> {
 	public boolean getApplicationUsageEnabled() {
 		return identitySpider.getApplicationUsageEnabled(user);
 	}
+	
+	@DMProperty
+	@DMFilter("viewer.canSeePrivate(this)")
+	public boolean getMusicSharingEnabled() {
+		return identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE);
+	}
+	
+	@DMProperty
+	@DMFilter("viewer.canSeePrivate(this)")
+	public boolean getMusicSharingPrimed() {
+		return identitySpider.getMusicSharingPrimed(user);
+	}	
 	
 	@DMProperty
 	@DMFilter("viewer.canSeePrivate(this)")
