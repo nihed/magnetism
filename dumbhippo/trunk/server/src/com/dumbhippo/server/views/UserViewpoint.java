@@ -12,6 +12,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.dm.BlockDMO;
 import com.dumbhippo.server.dm.BlockDMOKey;
 import com.dumbhippo.server.dm.ContactDMO;
+import com.dumbhippo.server.dm.GroupDMO;
 import com.dumbhippo.server.dm.PostDMO;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
@@ -148,6 +149,21 @@ public class UserViewpoint extends Viewpoint {
 		}
 		
 		return false;
+	}
+	
+	@Override
+	public boolean canSeeGroup(Guid groupId) {
+		try {
+			boolean isPublic = (Boolean)session.getRawProperty(GroupDMO.class, groupId, "public");
+			if (isPublic)
+				return true;
+			
+			@SuppressWarnings("unchecked")
+			Set<Guid> members = (Set<Guid>)session.getRawProperty(PostDMO.class, groupId, "canSeeMembers");
+			return members.contains(viewerId);
+		} catch (NotFoundException e) {
+			return false;
+		}
 	}
 
 	@Override

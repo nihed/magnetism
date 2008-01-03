@@ -126,6 +126,7 @@ import com.dumbhippo.server.blocks.TitleDescriptionBlockView;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.ExternalAccountDMO;
 import com.dumbhippo.server.dm.ExternalAccountKey;
+import com.dumbhippo.server.dm.GroupDMO;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.EntityView;
@@ -566,6 +567,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 					
 		group.setName(name);
 		revisionControl.persistRevision(new GroupNameChangedRevision(viewpoint.getViewer(), group, new Date(), name));
+		DataService.currentSessionRW().changed(GroupDMO.class, group.getGuid(), "name");
 	}
 	
 	public void doSetGroupDescription(UserViewpoint viewpoint, Group group, String description) {

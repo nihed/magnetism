@@ -51,6 +51,8 @@ import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.RevisionControl;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.GroupDMO;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.GroupMemberView;
 import com.dumbhippo.server.views.GroupView;
@@ -380,6 +382,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			notifier.onGroupMemberCreated(groupMember, now, notifyGroupMembers);
 		}
 		
+		DataService.currentSessionRW().changed(GroupDMO.class, group.getGuid(), "canSeeMembers");
         LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(),
         		GroupEvent.Detail.MEMBERS_CHANGED));
 	}
@@ -413,6 +416,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		boolean needToInviteFollowers = (group.getAccess() != GroupAccess.PUBLIC && open);
 		
 		group.setAccess(open ? GroupAccess.PUBLIC : GroupAccess.PUBLIC_INVITE);
+		DataService.currentSessionRW().changed(GroupDMO.class, group.getGuid(), "isPublic");
 		
 		int followers = -1;
 		int invitedFollowers = -1;
@@ -482,6 +486,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			groupMember.setStatus(MembershipStatus.REMOVED);
 			
 			notifier.onGroupMemberStatusChanged(groupMember, System.currentTimeMillis(), true);
+			DataService.currentSessionRW().changed(GroupDMO.class, group.getGuid(), "canSeeMembers");
 	        LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
 	        		groupMember.getMember().getGuid(), GroupEvent.Detail.MEMBERS_CHANGED));
 		} else if (groupMember.getStatus().ordinal() < MembershipStatus.REMOVED.ordinal()) {
@@ -491,6 +496,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			
 			// we don't stackGroupMember here, we only care about transitions to REMOVED for timestamp 
 			// updating (right now anyway)
+			DataService.currentSessionRW().changed(GroupDMO.class, group.getGuid(), "canSeeMembers");
 			LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
 					groupMember.getMember().getGuid(), GroupEvent.Detail.MEMBERS_CHANGED));
 		} else {
@@ -946,6 +952,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			throw new RuntimeException("invalid stock photo name");
 		
 		group.setStockPhoto(photo);
+		
+		DataService.currentSessionRW().changed(GroupDMO.class, group.getGuid(), "photoUrl");
 	}
 
 	public GroupView loadGroup(Viewpoint viewpoint, Guid guid) throws NotFoundException {

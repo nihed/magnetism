@@ -88,9 +88,11 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 		case PICASA_PERSON:
 			return PicasaPersonBlockDMO.class;
 			
+		case GROUP_CHAT:
+			return GroupChatBlockDMO.class;
+
 		default:
 		case GROUP_MEMBER: 
-		case GROUP_CHAT:
 		case MUSIC_PERSON:
 		case FACEBOOK_EVENT:
 		case FLICKR_PHOTOSET:
