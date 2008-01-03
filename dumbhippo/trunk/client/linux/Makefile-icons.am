@@ -13,11 +13,13 @@ normalicondir=$(datadir)/$(NORMALICONSUBDIR)
 normalicon_DATA=				\
 	$(NORMALICONSUBDIR)/mugshot.png
 
+if WITH_MAEMO
 SUBNORMALICONSUBDIR=icons/hicolor/40x40/apps
 subnormalicondir=$(datadir)/$(SUBNORMALICONSUBDIR)
 subnormalicon_DATA=				\
 	$(SUBNORMALICONSUBDIR)/mugshot_notification.png		\
 	$(SUBNORMALICONSUBDIR)/mugshot_notification_disabled.png
+endif
 
 MEDIUMICONSUBDIR=icons/hicolor/32x32/apps
 mediumicondir=$(datadir)/$(MEDIUMICONSUBDIR)

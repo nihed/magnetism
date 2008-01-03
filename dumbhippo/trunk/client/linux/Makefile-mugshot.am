@@ -159,7 +159,11 @@ autostart_in_files=mugshot-autostart.desktop.in
 autostart_files=$(autostart_in_files:.desktop.in=.desktop)
 autostart_DATA = $(autostart_files)
 
+if WITH_MAEMO
+desktopfilesdir=$(datadir)/applications/hildon
+else
 desktopfilesdir=$(datadir)/applications
+endif
 desktopfiles_in_files=mugshot.desktop.in
 desktopfiles_files=$(desktopfiles_in_files:.desktop.in=.desktop)
 desktopfiles_DATA = $(desktopfiles_files)

@@ -122,61 +122,61 @@ TESTS += $(ddm_tests)
 
 TESTS_ENVIRONMENT=DDM_SRCDIR=$(COMMONSRCDIR)/ddm
 
-ALL_DDM_TEST_SOURCES =
+ALL_DDM_TESTS =
 
 test_condition_parser_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
 test_condition_parser_LDADD=libddm-1.la
 
 nodist_test_condition_parser_SOURCES=$(COMMONSRCDIR)/ddm/test-condition-parser.c
-ALL_DDM_TEST_SOURCES += $(nodist_test_condition_parser_SOURCES)
+ALL_DDM_TESTS += $(nodist_test_condition_parser_SOURCES)
 
 test_condition_reduce_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
 test_condition_reduce_LDADD=libddm-1.la libddm-test.la
 
 nodist_test_condition_reduce_SOURCES=$(COMMONSRCDIR)/ddm/test-condition-reduce.c
-ALL_DDM_TEST_SOURCES += $(nodist_test_condition_reduce_SOURCES)
+ALL_DDM_TESTS += $(nodist_test_condition_reduce_SOURCES)
 
 test_feed_object_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
 test_feed_object_LDADD=libddm-1.la libddm-test.la
 
 nodist_test_feed_object_SOURCES=$(COMMONSRCDIR)/ddm/test-feed-object.c
-ALL_DDM_TEST_SOURCES += $(nodist_test_feed_object_SOURCES)
+ALL_DDM_TESTS += $(nodist_test_feed_object_SOURCES)
 
 test_ddm_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS)
 test_ddm_LDADD=libddm-1.la
 
 nodist_test_ddm_SOURCES=$(COMMONSRCDIR)/ddm/test-ddm.c
-ALL_DDM_TEST_SOURCES += $(nodist_test_ddm_SOURCES)
+ALL_DDM_TESTS += $(nodist_test_ddm_SOURCES)
 
 test_multipart_fetch_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
 test_multipart_fetch_LDADD=libddm-1.la libddm-test.la
 
 nodist_test_multipart_fetch_SOURCES=$(COMMONSRCDIR)/ddm/test-multipart-fetch.c
-ALL_DDM_TEST_SOURCES += $(nodist_test_multipart_fetch_SOURCES)
+ALL_DDM_TESTS += $(nodist_test_multipart_fetch_SOURCES)
 
 test_notification_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
 test_notification_LDADD=libddm-1.la libddm-test.la
 
 nodist_test_notification_SOURCES=$(COMMONSRCDIR)/ddm/test-notification.c
-ALL_DDM_TEST_SOURCES += $(nodist_test_notification_SOURCES)
+ALL_DDM_TESTS += $(nodist_test_notification_SOURCES)
 
 test_rules_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
 test_rules_LDADD=libddm-1.la libddm-test.la
 
 nodist_test_rules_SOURCES=$(COMMONSRCDIR)/ddm/test-rules.c
-ALL_DDM_TEST_SOURCES += $(nodist_test_rules_SOURCES)
+ALL_DDM_TESTS += $(nodist_test_rules_SOURCES)
 
 test_static_file_parser_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
 test_static_file_parser_LDADD=libddm-1.la libddm-test.la
 
 nodist_test_static_file_parser_SOURCES=$(COMMONSRCDIR)/ddm/test-static-file-parser.c
-ALL_DDM_TEST_SOURCES += $(nodist_test_static_file_parser_SOURCES)
+ALL_DDM_TESTS += $(nodist_test_static_file_parser_SOURCES)
 
 test_static_file_backend_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDDM_CFLAGS) -DDDM_COMPILATION=1
 test_static_file_backend_LDADD=libddm-1.la libddm-test.la
 
 nodist_test_static_file_backend_SOURCES=$(COMMONSRCDIR)/ddm/test-static-file-backend.c
-ALL_DDM_TEST_SOURCES += $(nodist_test_static_file_backend_SOURCES)
+ALL_DDM_TESTS += $(nodist_test_static_file_backend_SOURCES)
 
 ######################################################################
 
@@ -186,7 +186,7 @@ ALL_DDM_TEST_SOURCES += $(nodist_test_static_file_backend_SOURCES)
 libddm-dist-hook:
 	-mkdir $(distdir)/common-dist
 	-mkdir $(distdir)/common-dist/ddm
-	cp $(LIBDDM_SOURCEFILES) $(nodist_libddminclude_HEADERS) $(nodist_libddm_test_la_SOURCES) $(ALL_DDM_TEST_SOURCES) $(distdir)/common-dist/ddm
+	cp $(LIBDDM_SOURCEFILES) $(nodist_libddminclude_HEADERS) $(nodist_libddm_test_la_SOURCES) $(ALL_DDM_TESTS) $(distdir)/common-dist/ddm
 	mkdir $(distdir)/common-dist/ddm/generated
 	cp $(COMMONSRCDIR)/ddm/ddm-marshal.list $(COMMONSRCDIR)/ddm/test-data.xml $(COMMONSRCDIR)/ddm/test-local-data.xml $(distdir)/common-dist/ddm
 

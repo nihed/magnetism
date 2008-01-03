@@ -4,7 +4,9 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#ifndef WITH_MAEMO
 #include <X11/extensions/scrnsaver.h>
+#endif
 #include <gdk/gdkx.h>
 
 #include "hippo-idle.h"
@@ -16,7 +18,9 @@ struct HippoApplicationInfo {
 };
 
 struct HippoIdleMonitor {
+#ifndef WITH_MAEMO
     XScreenSaverInfo *info;
+#endif
     GdkDisplay *display;
     HippoDataCache *cache;
     GTime activity_time;
@@ -226,20 +230,24 @@ poll_for_idleness (void *data)
     idle_time = G_MAXINT;
     n_screens = gdk_display_get_n_screens(monitor->display);
     for (i = 0; i < n_screens; ++i) {
-        int result;
+        int result = 0;
         GdkScreen *screen;
 
-        screen = gdk_display_get_screen(monitor->display, i);        
+        screen = gdk_display_get_screen(monitor->display, i);       
+#ifndef WITH_MAEMO
         result = XScreenSaverQueryInfo(GDK_DISPLAY_XDISPLAY(monitor->display),
                                 GDK_SCREEN_XSCREEN(screen)->root,
                                 monitor->info);
+#endif
         if (result == 0) {
             g_warning("Failed to get idle time from screensaver extension");
             break;
         }
         
         /* monitor->info->idle is time in milliseconds since last user interaction event */
+#ifndef WITH_MAEMO
         idle_time = MIN(monitor->info->idle, idle_time);
+#endif
     }
     
     was_idle = monitor->currently_idle;
@@ -290,16 +298,20 @@ hippo_idle_add (GdkDisplay          *display,
     HippoIdleMonitor *monitor;
         
     xdisplay = GDK_DISPLAY_XDISPLAY(display);
-    
+#ifndef WITH_MAEMO   
     if (!XScreenSaverQueryExtension(xdisplay, &event_base, &error_base)) {
         g_warning("Screensaver extension not found on X display, can't detect user idleness");
         return NULL;
     }
+#endif
+    return NULL;
     
     monitor = g_new0(HippoIdleMonitor, 1);
     monitor->display = g_object_ref(display);
     monitor->cache = g_object_ref(cache);
+#ifndef WITH_MAEMO
     monitor->info = XScreenSaverAllocInfo();
+#endif
     monitor->activity_time = get_time();
     monitor->last_idle = 0;    
     monitor->currently_idle = FALSE;
@@ -319,9 +331,9 @@ hippo_idle_free (HippoIdleMonitor *monitor)
 {
     if (monitor == NULL)
         return; /* means no screensaver extension */
-
+#ifndef WITH_MAEMO
     XFree(monitor->info);
-
+#endif
     g_source_remove(monitor->poll_id);
     g_object_unref(monitor->display);
     g_object_unref(monitor->cache);

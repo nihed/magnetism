@@ -493,16 +493,19 @@ screen_get_work_area(GdkScreen      *screen,
      */
     GdkDisplay *display = gdk_screen_get_display(screen);
     GdkWindow *root = gdk_screen_get_root_window(screen);
+#ifndef WITH_MAEMO
     Atom current_desktop_atom = gdk_x11_get_xatom_by_name_for_display(display, "_NET_CURRENT_DESKTOP");
+#endif
     Atom workarea_atom = gdk_x11_get_xatom_by_name_for_display(display, "_NET_WORKAREA");
     int format;
     Atom type;
     unsigned long n_items;
     unsigned long bytes_after;
     unsigned char *data;
-    guint current_desktop;
+    guint current_desktop = 0;
     guint n_desktops;
     
+#ifndef WITH_MAEMO
     if (XGetWindowProperty(GDK_WINDOW_XDISPLAY(root), GDK_WINDOW_XWINDOW(root),
                            current_desktop_atom, 
                            0, G_MAXLONG, False, XA_CARDINAL,
@@ -519,7 +522,7 @@ screen_get_work_area(GdkScreen      *screen,
 
     current_desktop = ((unsigned long *)data)[0];
     XFree(data);
-    
+#endif    
 
     if (XGetWindowProperty(GDK_WINDOW_XDISPLAY(root), GDK_WINDOW_XWINDOW(root),
                            workarea_atom, 
@@ -542,9 +545,14 @@ screen_get_work_area(GdkScreen      *screen,
     }
 
     work_area->x = ((unsigned long *)data)[current_desktop * 4];
-    work_area->y = ((unsigned long *)data)[current_desktop * 4 + 1];
     work_area->width = ((unsigned long *)data)[current_desktop * 4 + 2];
+#ifndef WITH_MAEMO
+    work_area->y = ((unsigned long *)data)[current_desktop * 4 + 1];
     work_area->height = ((unsigned long *)data)[current_desktop * 4 + 3];
+#else
+    work_area->y = ((unsigned long *)data)[current_desktop * 4 + 1] + 50;
+    work_area->height = ((unsigned long *)data)[current_desktop * 4 + 3] - 50;
+#endif
     
     XFree(data);
     return;
