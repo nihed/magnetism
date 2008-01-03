@@ -301,7 +301,12 @@ class Person(gobject.GObject):
             self.display_name = None
 
         if self.display_name == None:
-            self.display_name = resource.name
+            if resource.protocol == 'mugshot-local':
+                ## resource.name for this would be a data model URI thing
+                self.display_name = 'NO_NAME'
+            else:
+                ## resource.name for xmpp/aim should be the xmpp/aim address
+                self.display_name = resource.name
 
         self.emit("display-name-changed")
 

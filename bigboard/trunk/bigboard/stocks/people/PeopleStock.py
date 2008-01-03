@@ -156,10 +156,10 @@ class PeopleSearchResult(search.SearchResult):
         self.__person = person
 
     def get_title(self):
-        return self.__person.name
+        return self.__person.display_name
 
     def get_detail(self):
-        return self.__person.name
+        return self.__person.display_name
 
     def get_icon(self):
         """Returns an icon for the result"""
@@ -171,7 +171,17 @@ class PeopleSearchResult(search.SearchResult):
 
     def _on_activated(self):
         """Action when user has activated the result"""
-        libbig.show_url(self.__person.homeUrl)
+        if self.__person.is_contact:
+            try:
+                user = self.__person.resource.user
+            except AttributeError:
+                user = None
+            if user:
+                libbig.show_url(user.homeUrl)
+        else:
+            ### FIXME - what should we do here? open an IM conversation?
+            ### or scroll to and pop out the user in the people stock?
+            pass
 
 class PeopleSearchProvider(search.SearchProvider):    
     def __init__(self, tracker):
@@ -194,7 +204,7 @@ class PeopleSearchProvider(search.SearchProvider):
             if p.is_contact and not matched:
                 emails = []
                 try:
-                    emails = person.resource.emails
+                    emails = p.resource.emails
                 except AttributeError:
                     pass
                 for email in emails:
@@ -205,7 +215,10 @@ class PeopleSearchProvider(search.SearchProvider):
             if not matched:
                 if p.aim and query in p.aim:
                     matched = True
-                    
+                
+                if p.xmpp and query in p.xmpp:
+                    matched = True
+
             if matched:
                 results.append(PeopleSearchResult(self, p))
 
