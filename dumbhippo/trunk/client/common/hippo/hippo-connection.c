@@ -153,12 +153,14 @@ static void     hippo_connection_start_signin_timeout (HippoConnection *connecti
 static void     hippo_connection_stop_signin_timeout  (HippoConnection *connection);
 static void     hippo_connection_start_retry_timeout  (HippoConnection *connection);
 static void     hippo_connection_stop_retry_timeout   (HippoConnection *connection);
+static void     hippo_connection_run_signin_timeout   (HippoConnection *connection);
 static void     hippo_connection_stop_music_timeout   (HippoConnection *connection);
 static void     hippo_connection_queue_request_blocks (HippoConnection *connection);
 static void     hippo_connection_unqueue_request_blocks (HippoConnection *connection);
 static void     hippo_connection_connect              (HippoConnection *connection,
                                                        const char      *redirect_host);
 static void     hippo_connection_disconnect           (HippoConnection *connection);
+static void     hippo_connection_retry                (HippoConnection *connection);
 static void     hippo_connection_state_change         (HippoConnection *connection,
                                                        HippoState       state);
 static gboolean hippo_connection_load_auth            (HippoConnection *connection);
@@ -218,6 +220,9 @@ static void            handle_authenticate(LmConnection *connection,
 
 static gboolean handle_data_notify (HippoConnection *connection,
                                     LmMessage       *message);
+
+static void on_cookies_maybe_changed(HippoPlatform     *platform,
+                                     gpointer           data);
 
 struct _HippoConnection {
     GObject parent;
@@ -535,6 +540,9 @@ hippo_connection_new(HippoPlatform *platform)
     
     connection->platform = platform;
     g_object_ref(connection->platform);
+
+    g_signal_connect(G_OBJECT(connection->platform), "cookies-maybe-changed",
+                     G_CALLBACK(on_cookies_maybe_changed), connection);
     
     return connection;
 }
@@ -703,6 +711,28 @@ hippo_connection_get_connected(HippoConnection  *connection)
 {
     g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), FALSE);
     return connection->state == HIPPO_STATE_AUTHENTICATED;
+}
+
+static void
+on_cookies_maybe_changed(HippoPlatform     *platform,
+                         gpointer           data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    
+    g_debug("cookies maybe changed");
+
+    /* the semantics here should be that if we had a timeout waiting to
+     * try reconnect or reauth, we should run it now, but otherwise
+     * we don't care that cookies changed.
+     *
+     * A future enhancement might disconnect if we no longer have the auth
+     * cookie, but we don't do that for now.
+     */
+    if (connection->signin_timeout_id != 0) {
+        hippo_connection_run_signin_timeout(connection);
+    } else if (connection->retry_timeout_id != 0) {
+        hippo_connection_retry(connection);
+    }
 }
 
 /* Returns whether we have the login cookie */
@@ -990,13 +1020,22 @@ signin_timeout(gpointer data)
     connection->signin_timeout_count += 1;
     if (connection->signin_timeout_count == SIGN_IN_INITIAL_COUNT) {
         /* Try more slowly */
-        g_source_remove (connection->signin_timeout_id);
+        if (connection->signin_timeout_id != 0) /* 0 if we were called directly */
+            g_source_remove (connection->signin_timeout_id);
         connection->signin_timeout_id = g_timeout_add (SIGN_IN_SUBSEQUENT_TIMEOUT, signin_timeout, 
                                                        connection);
         return FALSE;
     }
 
     return TRUE;
+}
+
+/* run the signin timeout immediately */
+static void
+hippo_connection_run_signin_timeout(HippoConnection *connection)
+{
+    hippo_connection_stop_signin_timeout(connection);
+    signin_timeout(connection);
 }
 
 static void

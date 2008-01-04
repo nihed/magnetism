@@ -24,6 +24,7 @@ hippo_platform_get_type(void)
 
 enum {
     NETWORK_STATUS_CHANGED,
+    COOKIES_MAYBE_CHANGED,
     LAST_SIGNAL
 };
 static int signals[LAST_SIGNAL];
@@ -44,6 +45,15 @@ hippo_platform_base_init(void *klass)
                           NULL, NULL,
                           g_cclosure_marshal_VOID__INT,
                           G_TYPE_NONE, 1, G_TYPE_INT);        
+        
+        signals[COOKIES_MAYBE_CHANGED] =
+            g_signal_new ("cookies-maybe-changed",
+                          HIPPO_TYPE_PLATFORM,
+                          G_SIGNAL_RUN_LAST,
+                          0,
+                          NULL, NULL,
+                          g_cclosure_marshal_VOID__VOID,
+                          G_TYPE_NONE, 0);
         
         initialized = TRUE;   
     }
@@ -303,4 +313,10 @@ hippo_platform_emit_network_status_changed (HippoPlatform *platform,
                                             HippoNetworkStatus status)
 {
     g_signal_emit(G_OBJECT(platform), signals[NETWORK_STATUS_CHANGED], 0, status);
+}
+
+void
+hippo_platform_emit_cookies_maybe_changed (HippoPlatform *platform)
+{
+    g_signal_emit(G_OBJECT(platform), signals[COOKIES_MAYBE_CHANGED], 0);
 }

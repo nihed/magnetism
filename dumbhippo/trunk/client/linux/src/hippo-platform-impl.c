@@ -172,6 +172,16 @@ on_network_status_changed(HippoSystemDBus   *system_dbus,
     }
 }
 
+static void
+on_cookie_monitor_notification(void *data)
+{
+    HippoPlatformImpl *impl;
+
+    impl = HIPPO_PLATFORM_IMPL(data);
+
+    hippo_platform_emit_cookies_maybe_changed(HIPPO_PLATFORM(impl));
+}
+
 HippoPlatform*
 hippo_platform_impl_new(HippoInstanceType instance)
 {
@@ -191,6 +201,8 @@ hippo_platform_impl_new(HippoInstanceType instance)
         g_error_free(error);
     }
     impl->network_status = HIPPO_NETWORK_STATUS_UNKNOWN;
+
+    hippo_cookie_monitor_add(on_cookie_monitor_notification, impl);
     
     return HIPPO_PLATFORM(impl);
 }
@@ -208,6 +220,8 @@ hippo_platform_impl_dispose(GObject *object)
         g_object_unref(impl->system_dbus);
         impl->system_dbus = NULL;
     }
+
+    hippo_cookie_monitor_remove(on_cookie_monitor_notification, impl);
     
     G_OBJECT_CLASS(hippo_platform_impl_parent_class)->finalize(object);
 }
