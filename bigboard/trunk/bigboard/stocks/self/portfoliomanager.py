@@ -280,6 +280,8 @@ class PortfolioManager(hippo.CanvasWindow):
     def __on_google_gadget_add(self, but):
         _logger.debug("got add for ggadget")
         url = self.__google_gadget_entry.get_property('text')
+        if not url:
+            return
         try:
             urlparse.urlparse(url)
         except:
