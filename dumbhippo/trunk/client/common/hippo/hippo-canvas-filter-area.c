@@ -202,6 +202,9 @@ hippo_canvas_filter_area_constructor (GType                  type,
     
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text", "Hide feeds: ",
+#ifdef WITH_MAEMO
+                        "font", "14px",
+#endif
                         "padding-left", 4,
                         "xalign", HIPPO_ALIGNMENT_START,
                         NULL);
@@ -219,6 +222,9 @@ hippo_canvas_filter_area_constructor (GType                  type,
     
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text", "Hide my items: ",
+#ifdef WITH_MAEMO
+                        "font", "14px",
+#endif
                         "padding-left", 40,
                         "xalign", HIPPO_ALIGNMENT_START,
                         NULL);

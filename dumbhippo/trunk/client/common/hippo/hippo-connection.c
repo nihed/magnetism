@@ -1,4 +1,5 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include <config.h>
 #include "hippo-common-internal.h"
 #include "hippo-connection.h"
 #include "hippo-data-cache-internal.h"
@@ -316,8 +317,14 @@ hippo_connection_init(HippoConnection *connection)
 #ifdef G_OS_WIN32
     connection->login_browser = HIPPO_BROWSER_IE;
 #else
+
+#ifdef WITH_MAEMO
+    connection->login_browser = HIPPO_BROWSER_MAEMO;
+#else
     connection->login_browser = HIPPO_BROWSER_FIREFOX;
-#endif
+#endif /* WITH_MAEMO */
+
+#endif /* G_OS_WIN32 */
 }
 
 static void
