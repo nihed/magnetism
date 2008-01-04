@@ -304,7 +304,6 @@ hippo_idle_add (GdkDisplay          *display,
         return NULL;
     }
 #endif
-    return NULL;
     
     monitor = g_new0(HippoIdleMonitor, 1);
     monitor->display = g_object_ref(display);
