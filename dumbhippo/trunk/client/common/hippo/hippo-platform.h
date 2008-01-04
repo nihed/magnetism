@@ -11,7 +11,7 @@ G_BEGIN_DECLS
 
 typedef struct {
     const char *name;         /* "windows" or "linux" */
-    const char *distribution; /* Not used on Window. "Fedora", "Ubuntu", etc, on Linux */
+    const char *distribution; /* Not used on Windows. "Fedora", "Ubuntu", etc, on Linux */
     const char *version;      /* May be NULL if we don't know anything better */
     const char *architecture; /* May be NULL for "unknown" */
 } HippoPlatformInfo;
@@ -157,6 +157,7 @@ HippoNetworkStatus hippo_platform_get_network_status (HippoPlatform *platform);
 
 void               hippo_platform_emit_network_status_changed (HippoPlatform *platform,
                                                                HippoNetworkStatus status);
+void               hippo_platform_emit_cookies_maybe_changed  (HippoPlatform *platform);
 
 /* Preferences */
 HippoInstanceType hippo_platform_get_instance_type (HippoPlatform *platform);
