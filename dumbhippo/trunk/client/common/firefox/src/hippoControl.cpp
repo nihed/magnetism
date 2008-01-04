@@ -1,5 +1,7 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
+#include <config.h>
+
 #ifdef HIPPO_OS_LINUX
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -135,6 +137,8 @@ NS_IMETHODIMP hippoControl::SetWindow(nsIDOMWindow *window)
 {
     window_ = do_GetWeakReference(window);
 
+#ifndef WITH_MAEMO
+
 #ifdef HIPPO_OS_LINUX
     HippoWindowId windowId = 0;
     
@@ -167,7 +171,9 @@ NS_IMETHODIMP hippoControl::SetWindow(nsIDOMWindow *window)
     
     if (controller_ && endpoint_ && windowId)
         controller_->setWindowId(endpoint_, windowId);
-#endif
+#endif /* HIPPO_OS_LINUX */
+
+#endif /* WITH_MAEMO */
 
     return NS_OK;
 }

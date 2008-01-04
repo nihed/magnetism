@@ -2,6 +2,7 @@
 #ifndef __HIPPO_BASICS_H__
 #define __HIPPO_BASICS_H__
 
+#include <config.h>
 #include <glib-object.h>
 
 G_BEGIN_DECLS
@@ -69,7 +70,8 @@ typedef enum
     HIPPO_BROWSER_IE,
     HIPPO_BROWSER_FIREFOX,
     HIPPO_BROWSER_EPIPHANY,
-    HIPPO_BROWSER_GALEON
+    HIPPO_BROWSER_GALEON,
+    HIPPO_BROWSER_MAEMO
 } HippoBrowserKind;
 
 typedef enum {

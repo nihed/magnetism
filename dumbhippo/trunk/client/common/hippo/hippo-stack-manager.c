@@ -896,6 +896,10 @@ manager_attach(StackManager    *manager,
 
     manager->browser_window = hippo_platform_create_window(platform);
 
+#ifdef WITH_MAEMO
+    g_object_set(manager->browser_window, "role", HIPPO_WINDOW_ROLE_NOTIFICATION, NULL);
+#endif
+
     g_signal_connect(manager->browser_window, "minimize",
                      G_CALLBACK(on_browser_minimize), manager);
 
