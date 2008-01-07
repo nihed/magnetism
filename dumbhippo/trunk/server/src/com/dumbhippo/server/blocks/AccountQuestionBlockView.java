@@ -84,4 +84,8 @@ public class AccountQuestionBlockView extends BlockView {
 	public String getHomeUrl() {
 		return "/person?who=" + getUserBlockData().getUser().getId();
 	}
+
+	public String getAnswer() {
+		return answer;
+	}
 }

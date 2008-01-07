@@ -22,6 +22,10 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.dm.BlockDMO;
+import com.dumbhippo.server.dm.BlockDMOKey;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.tx.RetryException;
@@ -64,7 +68,7 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 		Viewpoint viewpoint = blockView.getViewpoint();
 		String answer = null;
 		
-		if (!viewpoint.isOfUser(getData1User(blockView.getBlock())))
+		if (!(viewpoint instanceof SystemViewpoint || viewpoint.isOfUser(getData1User(blockView.getBlock()))))
 			throw new BlockNotVisibleException("AccountQuestion block only visible to the user it was sent to");
 		
 		switch (blockView.getQuestion()) {
@@ -173,6 +177,9 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 			logger.warn("UserBlockData didn't exist for the account's owner when answering an account question", e);
 		}
 
+		BlockDMOKey dmoKey = new BlockDMOKey(block); 
+		DataService.currentSessionRW().changed(BlockDMO.class, dmoKey, "answer");
+		DataService.currentSessionRW().changed(BlockDMO.class, dmoKey, "buttons");
 		
 		// The call to blockClicked wont restack block since the clicked count 
 		// can only ever be 1, so we need restack the block ourselves to change

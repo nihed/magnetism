@@ -80,6 +80,11 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 	}
 	
 	private void checkCreationInvariants(Viewpoint viewpoint, Block block) throws BlockNotVisibleException {
+		// A bit of a hack... when we load block views to backend the data model, we always
+		// do it with the SystemViewpoint, even for ONLY_WHEN_VIEWING_SELF blocks
+		if (viewpoint instanceof SystemViewpoint)
+			return;
+		
 		UserViewpoint userview = null;
 		if (viewpoint instanceof UserViewpoint)
 			userview = (UserViewpoint) viewpoint;
