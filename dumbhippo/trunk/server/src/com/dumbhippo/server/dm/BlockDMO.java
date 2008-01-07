@@ -85,21 +85,25 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 		case ACCOUNT_QUESTION:
 			return AccountQuestionBlockDMO.class;
 
-		case POST:
-			return PostBlockDMO.class;
-			
-		case PICASA_PERSON:
-			return PicasaPersonBlockDMO.class;
-			
 		case GROUP_CHAT:
 			return GroupChatBlockDMO.class;
 
+		case MUSIC_CHAT:
+			return MusicChatBlockDMO.class;
+			
+		case MUSIC_PERSON:
+			return MusicPersonBlockDMO.class;
+
+		case PICASA_PERSON:
+			return PicasaPersonBlockDMO.class;
+			
+		case POST:
+			return PostBlockDMO.class;
+			
 		default:
 		case GROUP_MEMBER: 
-		case MUSIC_PERSON:
 		case FACEBOOK_EVENT:
 		case FLICKR_PHOTOSET:
-		case MUSIC_CHAT:
 		case GROUP_REVISION:		
 		case NETFLIX_MOVIE:
 		case AMAZON_REVIEW:

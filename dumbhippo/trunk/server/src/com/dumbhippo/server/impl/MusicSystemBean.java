@@ -281,7 +281,7 @@ public class MusicSystemBean implements MusicSystem {
 	}
 	
 	public TrackHistory getCurrentTrack(Viewpoint viewpoint, User user) throws NotFoundException {
-		List<TrackHistory> list = getTrackHistory(viewpoint, user, History.LATEST, 0, 1);
+		List<TrackHistory> list = getTrackHistory(viewpoint, user, History.LATEST, 0, 1, -1);
 		if (list.isEmpty())
 			throw new NotFoundException("No current track");
 		return list.get(0);
@@ -292,7 +292,7 @@ public class MusicSystemBean implements MusicSystem {
 		FREQUENT
 	}
 	
-	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, User user, History type, int firstResult, int maxResults) {
+	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, User user, History type, int firstResult, int maxResults, long minTimestamp) {
 		//logger.debug("getTrackHistory() type {} for {} max results " + maxResults, type, user);
 
 		if (!identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE)) {
@@ -313,9 +313,16 @@ public class MusicSystemBean implements MusicSystem {
 			break;
 		}
 		
-		q = em.createQuery("FROM TrackHistory h WHERE h.user = :user " + 
-				order);
+		String select;
+		if (minTimestamp > 0)
+			select = " AND h.lastUpdated >= :minTimestamp ";
+		else
+			select = "";
+		
+		q = em.createQuery("FROM TrackHistory h WHERE h.user = :user " + select + order);
 		q.setParameter("user", user);
+		if (minTimestamp > 0)
+			q.setParameter("minTimestamp", minTimestamp);
 		q.setFirstResult(firstResult);
 		q.setMaxResults(maxResults);
 		
@@ -868,9 +875,14 @@ public class MusicSystemBean implements MusicSystem {
 
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) {
 		//logger.debug("getLatestTrackViews() for user {}", user);
-		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, 0, maxResults);
+		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, 0, maxResults, -1);
 		return getViewsFromTrackHistories(viewpoint, history, false);
 	}
+	
+	public List<TrackHistory> getLatestTracks(Viewpoint viewpoint, User user, int start, int max, long minTimestamp) {
+		return getTrackHistory(viewpoint, user, History.LATEST, start, max, minTimestamp);
+	}
+
 	
 	private Query buildSongQuery(Viewpoint viewpoint, String artist, String album, String name, int maxResults) throws NotFoundException {
 		int count = 0;
@@ -1289,7 +1301,7 @@ public class MusicSystemBean implements MusicSystem {
 	}
 	
 	public long getLatestPlayTime(Viewpoint viewpoint, User user) {
-		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, 0, 1);
+		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, 0, 1, -1);
 		if (history.isEmpty())
 			return 0;
 		else
