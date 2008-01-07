@@ -185,8 +185,7 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
         if isinstance(pixbuf, gtk.gdk.Pixbuf):
             cell.set_property('pixbuf', pixbuf)
         elif isinstance(pixbuf, basestring):
-            cell.set_property('icon-name', pixbuf)
-            cell.set_property('stock-size', gtk.ICON_SIZE_SMALL_TOOLBAR)
+            pixbuf = gtk.icon_theme_get_default().load_icon(pixbuf, 32, gtk.ICON_LOOKUP_USE_BUILTIN)
         else:
             cell.set_property('pixbuf', None)                        
 
