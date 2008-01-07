@@ -4,6 +4,7 @@ import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 
 import com.dumbhippo.dm.DMObject;
+import com.dumbhippo.dm.annotations.DMInit;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
@@ -29,6 +30,8 @@ import com.dumbhippo.services.LastFmWebServices;
 public abstract class TrackDMO extends DMObject<Long> {
 	private Track track;
 	private TrackView trackView;
+	
+	private static final int TRACK_VIEW_GROUP = 1;
 	
 	@Inject
 	private EntityManager em;
@@ -65,44 +68,29 @@ public abstract class TrackDMO extends DMObject<Long> {
 			return null;
 		}
 	}
+
+	@DMInit(group=TRACK_VIEW_GROUP)
+	public void initTrackView() {
+		trackView = musicSystem.getTrackView(track);
+	}
 	
-	// Possible improvement:
-	// 
-	// If we do anything that requires getting the trackView, we really want to make 
-	// sure that *all* of the work that we did to fetch the cover art, the download
-	// links, etc, gets saved into the DM cache. That would probably require improvements
-	// to the engine ... maybe something like @DMProperty(group=1) to mark a number
-	// of properties that should be cached together.
-	
-	@DMProperty(defaultInclude=true)
+	@DMProperty(defaultInclude=true, group=TRACK_VIEW_GROUP)
 	public int getImageWidth() {
-		ensureTrackView();
-		
 		return trackView.getSmallImageWidth();
 	}
 
-	@DMProperty(defaultInclude=true)
+	@DMProperty(defaultInclude=true, group=TRACK_VIEW_GROUP)
 	public int getImageHeight() {
-		ensureTrackView();
-		
 		return trackView.getSmallImageHeight();
 	}
 
-	@DMProperty(type=PropertyType.URL, defaultInclude=true)
+	@DMProperty(type=PropertyType.URL, defaultInclude=true, group=TRACK_VIEW_GROUP)
 	public String getImageUrl() {
-		ensureTrackView();
-		
 		return trackView.getSmallImageUrl();
 	}
 	
-	@DMProperty(defaultInclude=true)
+	@DMProperty(defaultInclude=true, group=TRACK_VIEW_GROUP)
 	public long getDuration() {
-		ensureTrackView();
-		
 		return trackView.getDurationSeconds() * 1000;
-	}
-		
-	private void ensureTrackView() {
-		trackView = musicSystem.getTrackView(track);
 	}
 }
