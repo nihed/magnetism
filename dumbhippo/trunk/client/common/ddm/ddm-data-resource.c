@@ -78,6 +78,7 @@ struct _DDMDataResource
     DDMDataFetch *requested_fetch;
     gint64 requested_serial;
 
+    GData *data;
 };
 
 static void property_remove_rule_source(DDMDataProperty *property,
@@ -239,6 +240,8 @@ _ddm_data_resource_new(DDMDataModel *model,
     resource->requested_serial = -1;
     resource->received_fetch = NULL;
     resource->local = local;
+
+    g_datalist_init(&resource->data);
 
     return resource;
 }
@@ -410,6 +413,8 @@ ddm_data_resource_unref (DDMDataResource *resource)
             g_warning("Freeing resource '%s' that is still referenced", resource->resource_id);
             g_slist_free(resource->referencing_rule_properties);
         }
+
+        g_datalist_clear(&resource->data);
         
         g_free(resource->resource_id);
         g_free(resource->class_id);
@@ -427,6 +432,22 @@ ddm_data_resource_unref (DDMDataResource *resource)
         
         g_free(resource);
     }
+}
+
+void
+ddm_data_resource_set_data (DDMDataResource *resource,
+                            const char      *key,
+                            gpointer         data,
+                            GDestroyNotify   notify)
+{
+    g_datalist_set_data_full(&resource->data, key, data, notify);
+}
+
+gpointer
+ddm_data_resource_get_data (DDMDataResource *resource,
+                            const char      *key)
+{
+    return g_datalist_get_data(&resource->data, key);
 }
 
 void
@@ -992,23 +1013,23 @@ data_property_append_value(DDMDataProperty *property,
 
     switch (value->type) {
     case DDM_DATA_BOOLEAN:
-        property->value.u.list = g_slist_prepend(property->value.u.list, g_memdup(&value->u.boolean, sizeof(gboolean)));
+        property->value.u.list = g_slist_append(property->value.u.list, g_memdup(&value->u.boolean, sizeof(gboolean)));
         return;
     case DDM_DATA_INTEGER:
-        property->value.u.list = g_slist_prepend(property->value.u.list, g_memdup(&value->u.integer, sizeof(int)));
+        property->value.u.list = g_slist_append(property->value.u.list, g_memdup(&value->u.integer, sizeof(int)));
         return;
     case DDM_DATA_LONG:
-        property->value.u.list = g_slist_prepend(property->value.u.list, g_memdup(&value->u.long_, sizeof(gint64)));
+        property->value.u.list = g_slist_append(property->value.u.list, g_memdup(&value->u.long_, sizeof(gint64)));
         return;
     case DDM_DATA_FLOAT:
-        property->value.u.list = g_slist_prepend(property->value.u.list, g_memdup(&value->u.float_, sizeof(double)));
+        property->value.u.list = g_slist_append(property->value.u.list, g_memdup(&value->u.float_, sizeof(double)));
         return;
     case DDM_DATA_RESOURCE:
-        property->value.u.list = g_slist_prepend(property->value.u.list, value->u.resource);
+        property->value.u.list = g_slist_append(property->value.u.list, value->u.resource);
         return;
     case DDM_DATA_STRING:
     case DDM_DATA_URL:
-        property->value.u.list = g_slist_prepend(property->value.u.list, g_strdup(value->u.string));
+        property->value.u.list = g_slist_append(property->value.u.list, g_strdup(value->u.string));
         return;
     case DDM_DATA_NONE:
     case DDM_DATA_FEED:
