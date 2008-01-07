@@ -689,8 +689,6 @@ class BigBoardPanel(dbus.service.Object):
     ## syncs our current state to a change in the gconf setting for visible mode
     @log_except()
     def __sync_visible_mode(self, *args):
-        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
-
         ## unpopout button is only visible if unpopout is allowed
         vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
         self.__unpopout_button.set_visible(not vis)

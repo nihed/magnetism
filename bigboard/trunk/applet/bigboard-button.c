@@ -167,6 +167,7 @@ typedef struct {
         PanelAppletOrient orient;
         int size;
 
+        gboolean suppress_popout_set;
         guint showing_bigboard : 2; /* Represents "unknown" basically */
         guint button_activate;
 
@@ -217,7 +218,9 @@ handle_popped_out_changed(DBusConnection *connection,
         }
 
         g_debug ("got bb PoppedOutChanged: %d\n", is_expanded);
+        button_data->suppress_popout_set = TRUE;
         update_showing_bigboard (button_data, is_expanded);
+        button_data->suppress_popout_set = FALSE;
 }
 
 static void
@@ -642,7 +645,9 @@ bigboard_button_applet_realized (PanelApplet *applet,
                                      button_data,
                                      button_data->applet);
 
+        button_data->suppress_popout_set = TRUE;
         update_button_state (button_data);
+        button_data->suppress_popout_set = FALSE;
 }
 
 static void
@@ -967,6 +972,8 @@ static void
 button_toggled_callback (GtkWidget       *button,
                          ButtonData      *button_data)
 {
+        if (button_data->suppress_popout_set)
+        	return;
         if (button_data->bb_proxy) {
                 if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button))) {
                         hippo_dbus_proxy_VOID__UINT32 (button_data->bb_proxy, "Popout",
