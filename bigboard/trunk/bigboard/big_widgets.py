@@ -66,13 +66,14 @@ class ThemeManager(gobject.GObject):
     @log_except(_logger)
     def __sync_theme(self, *args):
         themename = gconf.client_get_default().get_string('/apps/bigboard/theme')
-        _logger.debug("doing theme sync: %r", themename)        
+        _logger.debug("doing theme sync: <THEMENAME>%r</THEMENAME>", themename)        
         if themename == 'Fedora':
-            from bigboard.themes.fedora import FedoraTheme
-            self.__theme = FedoraTheme.getInstance()
+            from bigboard.themes.fedora import getInstance as FedoraTheme
+            self.__theme = FedoraTheme()
         else:
-            from bigboard.themes.default import DefaultTheme
-            self.__theme = DefaultTheme.getInstance()        
+            from bigboard.themes.default import getInstance as DefaultTheme
+            self.__theme = DefaultTheme()        
+        _logger.debug("new target theme: <THEME>%r</THEME>", self.__theme)             
         self.emit('theme-changed')            
          
 class ThemedWidgetMixin(object):

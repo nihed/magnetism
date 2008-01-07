@@ -62,6 +62,10 @@ class FedoraTheme(DefaultTheme):
             widget.set_properties(color=self.foreground)
         else:
             super(FedoraTheme, self).set_theme_properties(widget)
-        
+   
+_instance = None
 def getInstance():
-    return FedoraTheme.getInstance()
+    global _instance
+    if _instance is None:
+        _instance = FedoraTheme()
+    return _instance

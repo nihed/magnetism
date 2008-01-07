@@ -5,7 +5,7 @@ import hippo, gtk, gobject, cairo, pangocairo, pango
 from bigboard.libbig.singletonmixin import Singleton
 from bigboard.big_widgets import ThemedWidgetMixin
 
-class DefaultTheme(Singleton):
+class DefaultTheme(object):
     def __init__(self):
         super(DefaultTheme, self).__init__()
         
@@ -102,5 +102,9 @@ class DefaultTheme(Singleton):
             else:
                 widget.set_properties(color=self.foreground)
         
+_instance = None
 def getInstance():
-    return DefaultTheme.getInstance()
+    global _instance
+    if _instance is None:
+        _instance = DefaultTheme()
+    return _instance
