@@ -28,6 +28,8 @@ cookie_monitors_notify(void)
     for (l = cookie_monitors; l != NULL; l = l->next) {
         CookieMonitor *cm = l->data;
 
+        g_assert(cm != NULL);
+        
         (* cm->func) (cm->data);
         
         if (start_serial != cookie_monitors_serial) {
@@ -152,6 +154,8 @@ hippo_cookie_monitor_add (HippoCookiesMonitorFunc  func,
     CookieMonitor *cm;
 
     cm = g_new0(CookieMonitor, 1);
+    cm->func = func;
+    cm->data = data;
     cookie_monitors = g_slist_append(cookie_monitors, cm);
 
     ++cookie_monitors_serial;
