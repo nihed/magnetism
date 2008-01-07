@@ -1,5 +1,9 @@
 package com.dumbhippo.server.dm;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 
@@ -9,6 +13,7 @@ import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.dm.annotations.PropertyType;
+import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
@@ -92,5 +97,18 @@ public abstract class TrackDMO extends DMObject<Long> {
 	@DMProperty(defaultInclude=true, group=TRACK_VIEW_GROUP)
 	public long getDuration() {
 		return trackView.getDurationSeconds() * 1000;
+	}
+	
+	@DMProperty(defaultInclude=true, group=TRACK_VIEW_GROUP)
+	public List<String> getDownloads() {
+		List<String> result = new ArrayList<String>();
+		
+		Map<SongDownloadSource, String> downloads = trackView.getDownloads();
+		for (SongDownloadSource source: trackView.getDownloads().keySet()) {
+			String url = downloads.get(source);
+			result.add(source.name() + ":" + url);
+		}
+		
+		return result;
 	}
 }

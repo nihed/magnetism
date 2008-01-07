@@ -24,6 +24,9 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.dm.BlockDMO;
+import com.dumbhippo.server.dm.BlockDMOKey;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
@@ -138,6 +141,8 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 	
 	public void onTrackPlayed(User user, Track track, Date when) {
 		Block block = stacker.stack(getKey(user), when.getTime(), user, false, StackReason.BLOCK_UPDATE);
+		
+		DataService.currentSessionRW().feedChanged(BlockDMO.class, new BlockDMOKey(block), "tracks", when.getTime());
 
 		// if we weren't public we might be now. Playing a track won't 
 		// ever un-public us though.
