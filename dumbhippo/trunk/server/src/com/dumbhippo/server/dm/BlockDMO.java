@@ -82,6 +82,9 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 		case GOOGLE_READER_SHARED_ITEM:
 			return BlockDMO.class;
 
+		case ACCOUNT_QUESTION:
+			return AccountQuestionBlockDMO.class;
+
 		case POST:
 			return PostBlockDMO.class;
 			
@@ -99,7 +102,6 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 		case MUSIC_CHAT:
 		case GROUP_REVISION:		
 		case NETFLIX_MOVIE:
-		case ACCOUNT_QUESTION:
 		case AMAZON_REVIEW:
 		case AMAZON_WISH_LIST_ITEM:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
