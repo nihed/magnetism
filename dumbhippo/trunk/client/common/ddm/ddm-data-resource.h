@@ -92,6 +92,13 @@ struct _DDMDataValue {
 DDMDataResource *ddm_data_resource_ref   (DDMDataResource *resource);
 void             ddm_data_resource_unref (DDMDataResource *resource);
 
+void     ddm_data_resource_set_data (DDMDataResource *resource,
+                                     const char      *key,
+                                     gpointer         data,
+                                     GDestroyNotify   notify);
+gpointer ddm_data_resource_get_data (DDMDataResource *resource,
+                                     const char      *key);
+
 void ddm_data_value_get_element(DDMDataValue *value,
                                 GSList         *element_node,
                                 DDMDataValue *element);
