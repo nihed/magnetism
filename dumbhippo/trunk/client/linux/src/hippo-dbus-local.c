@@ -15,12 +15,14 @@
 typedef struct {
     char *session_id;
     char *user_resource_id;
+    char *name;
     char *webdav_url;
 } LocalBuddy;
 
 typedef struct {
     const char *key;
     const char *value;
+    gboolean required;
 } DictStringEntry;
 
 static GHashTable *local_buddies = NULL;
@@ -79,8 +81,8 @@ dict_extract_string_values(const DBusMessageIter *orig_dict_iter,
     {
         int i;
         for (i = 0; entries[i].key != NULL; ++i) {
-            if (entries[i].value == NULL) {
-                g_warning("Missing property '%s'", entries[i].key);
+            if (entries[i].value == NULL && entries[i].required) {
+                g_warning("local: Missing property '%s'", entries[i].key);
                 return FALSE;
             }
         }
@@ -139,22 +141,27 @@ maybe_remove_local_buddy(const char *session_id)
 
     if (local_buddy->user_resource_id == NULL && local_buddy->webdav_url == NULL) {
         g_hash_table_remove(local_buddies, session_id);
+        g_free(local_buddy->name);
         g_free(local_buddy);
     }
 }
 
 static void
 update_mugshot_info(const char *session_id,
-                    const char *user_resource_id)
+                    const char *user_resource_id,
+                    const char *name)
 {
     LocalBuddy *local_buddy = ensure_local_buddy(session_id);
 
     if (local_buddy->user_resource_id != NULL) {
         g_free(local_buddy->user_resource_id);
         local_buddy->user_resource_id = NULL;
+        g_free(local_buddy->name);
+        local_buddy->name = NULL;
     }
 
     local_buddy->user_resource_id = g_strdup(user_resource_id);
+    local_buddy->name = g_strdup(name);
 }
 
 static void
@@ -191,7 +198,8 @@ update_im_buddy(const char           *session_id)
          * bother pulling it out.
          */
         hippo_im_update_buddy(resource_id,
-                              "mugshot-local", local_buddy->user_resource_id, NULL,
+                              "mugshot-local", local_buddy->user_resource_id,
+                              local_buddy->name,
                               TRUE, "Around", NULL, local_buddy->webdav_url);
     }
     
@@ -229,9 +237,10 @@ static gboolean
 read_mugshot_info(DBusMessageIter *struct_iter,
                   char           **machine_id_p,
                   char           **session_id_p,
-                  char           **user_resource_id_p)
+                  char           **user_resource_id_p,
+                  char           **name_p)
 {
-    DictStringEntry info_entries[2];
+    DictStringEntry info_entries[3];
     DBusMessageIter dict_iter;
  
     dbus_message_iter_recurse(struct_iter, &dict_iter);
@@ -242,7 +251,10 @@ read_mugshot_info(DBusMessageIter *struct_iter,
     dbus_message_iter_next(struct_iter);
 
     info_entries[0].key = "userResourceId";
-    info_entries[1].key = NULL;
+    info_entries[0].required = TRUE;
+    info_entries[1].key = "name";
+    info_entries[1].required = FALSE; /* for back compat with older versions that don't provide this */
+    info_entries[2].key = NULL;
     
     dbus_message_iter_recurse(struct_iter, &dict_iter);
     
@@ -257,9 +269,15 @@ read_mugshot_info(DBusMessageIter *struct_iter,
         }
         return FALSE;
     }
+
+    g_debug("local: Read local user info user resource ID '%s' and name '%s'\n",
+            info_entries[0].value, info_entries[1].value ? info_entries[1].value : 'null');
     
     if (user_resource_id_p)
         *user_resource_id_p = g_strdup(info_entries[0].value);
+
+    if (name_p)
+        *name_p = g_strdup(info_entries[1].value);
     
     return TRUE;
 }
@@ -270,18 +288,21 @@ read_and_update_mugshot_info(DBusMessageIter *struct_iter)
     char *machine_id;
     char *session_id;
     char *user_resource_id;
-
+    char *name;
+    
     machine_id = NULL;
     session_id = NULL;
     user_resource_id = NULL;
+    name = NULL;
     if (!read_mugshot_info(struct_iter, &machine_id, &session_id,
-                           &user_resource_id))
+                           &user_resource_id, &name))
         return NULL;
 
-    update_mugshot_info(session_id, user_resource_id);
+    update_mugshot_info(session_id, user_resource_id, name);
 
     g_free(machine_id);
     g_free(user_resource_id);
+    g_free(name);
 
     return session_id;
 }
@@ -349,7 +370,7 @@ clean_mugshot_info_foreach(void *key,
     GHashTable *seen_mugshot_ids = data;
 
     if (g_hash_table_lookup(seen_mugshot_ids, session_id) == NULL)
-        update_mugshot_info(session_id, NULL);
+        update_mugshot_info(session_id, NULL, NULL);
 }
 
 static void
@@ -375,6 +396,7 @@ update_im_buddies_foreach(void *key,
     update_im_buddy(session_id);
 
     if (local_buddy->user_resource_id == NULL && local_buddy->webdav_url == NULL) {
+        g_free(local_buddy->name);
         g_free(local_buddy);
         return TRUE;
     } else {
@@ -583,7 +605,7 @@ handle_info_removed(DBusConnection *connection,
         return;
     
     if (strcmp(name, MUGSHOT_INFO_NAME) == 0) {
-        update_mugshot_info(session_id, NULL);
+        update_mugshot_info(session_id, NULL, NULL);
     } else if (strcmp(name, STANDARD_INFO_NAME) == 0) {
         update_standard_info(session_id, NULL);
     }
@@ -610,6 +632,28 @@ get_self_id(void)
     return self_resource_id;
 }
 
+static const char*
+get_self_name(void)
+{
+    DDMDataModel *ddm_model;
+    
+    ddm_model = hippo_app_get_data_model(hippo_get_app());
+    
+    if (ddm_model) {
+        DDMDataResource *resource;
+        
+        resource = ddm_data_model_get_self_resource(ddm_model);
+        
+        if (resource) {
+            const char *name = NULL;
+            ddm_data_resource_get(resource, "name", DDM_DATA_STRING, &name, NULL);
+            return name;
+        }
+    }
+
+    return NULL;
+}
+
 static dbus_bool_t
 append_mugshot_info(DBusMessage *message,
                     void        *data)
@@ -629,10 +673,19 @@ append_mugshot_info(DBusMessage *message,
     
     s = get_self_id();
     if (s != NULL) {
+        const char *name;
+        
         if (!append_string_pair(&prop_iter, "userResourceId", s))
             return FALSE;
-    }
+
+        name = get_self_name();
         
+        if (name) {
+            if (!append_string_pair(&prop_iter, "name", name))
+                return FALSE;
+        }
+    }
+    
     if (!dbus_message_iter_close_container(&iter, &prop_iter))
         return FALSE;
 
@@ -645,7 +698,7 @@ update_local_export_info(DBusConnection *connection)
     gboolean should_locally_export;
 
     should_locally_export = local_export_unique_name != NULL &&
-        get_self_id() != NULL;
+        get_self_id() != NULL && get_self_name() != NULL;
     
     if (should_locally_export != have_locally_exported &&
         local_export_unique_name) {
@@ -673,6 +726,18 @@ update_local_export_info(DBusConnection *connection)
 }
 
 static void
+on_self_properties_changed(DDMDataResource *resource,
+                           GSList          *changed_properties,
+                           gpointer         user_data)
+{
+    DBusConnection *connection;
+
+    connection = user_data;
+
+    update_local_export_info(connection);
+}
+
+static void
 connection_has_auth_changed(HippoConnection *hippo_connection,
                             void            *data)
 {
@@ -697,7 +762,7 @@ handle_service_available(DBusConnection *connection,
         g_free(local_export_unique_name);
     }
 
-    g_debug("%s (%s) appeared", well_known_name, unique_name);
+    g_debug("local: %s (%s) appeared", well_known_name, unique_name);
     
     local_export_unique_name = g_strdup(unique_name);
     
@@ -722,12 +787,31 @@ handle_service_unavailable(DBusConnection *connection,
                            const char     *unique_name,
                            void           *data)
 {
-    g_debug("%s (%s) going away", well_known_name, unique_name);
+    g_debug("local: %s (%s) going away", well_known_name, unique_name);
 
     g_free(local_export_unique_name);
     local_export_unique_name = NULL;
 
     update_local_export_info(connection);
+}
+
+static void
+on_data_model_ready(DDMDataModel *ddm_model,
+                    void         *data)
+{
+    DBusConnection *connection;
+    DDMDataResource *resource;
+    
+    connection = data;
+    
+    resource = ddm_data_model_get_self_resource(ddm_model);
+
+    g_debug("local: Data model ready, connecting to name on self resource '%p'", resource);
+    if (resource) {
+        ddm_data_resource_connect(resource, "name",
+                                  on_self_properties_changed,
+                                  connection);
+    }
 }
 
 static const HippoDBusSignalTracker signal_handlers[] = {
@@ -750,6 +834,7 @@ hippo_dbus_init_local(DBusConnection *connection)
 {
     HippoDataCache *cache;
     HippoConnection *hippo_connection;
+    DDMDataModel *ddm_model;
     
     local_buddies = g_hash_table_new(g_str_hash, g_str_equal);
     
@@ -765,6 +850,12 @@ hippo_dbus_init_local(DBusConnection *connection)
     g_signal_connect(G_OBJECT(hippo_connection),
                      "has-auth-changed",
                      G_CALLBACK(connection_has_auth_changed),
+                     connection);
+
+    ddm_model = hippo_app_get_data_model(hippo_get_app());
+    
+    g_signal_connect(G_OBJECT(ddm_model), "ready",
+                     G_CALLBACK(on_data_model_ready),
                      connection);
 }
 
