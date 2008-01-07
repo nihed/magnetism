@@ -91,6 +91,8 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 		model.addDMClass(BlockDMO.class);
 		model.addDMClass(AccountQuestionBlockDMO.class);
 		model.addDMClass(GroupChatBlockDMO.class);
+		model.addDMClass(MusicChatBlockDMO.class);
+		model.addDMClass(MusicPersonBlockDMO.class);
 		model.addDMClass(ThumbnailsBlockDMO.class);
 		model.addDMClass(PicasaPersonBlockDMO.class);
 		model.addDMClass(PostBlockDMO.class);
@@ -99,6 +101,7 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 		model.addDMClass(BlockMessageDMO.class);
 		model.addDMClass(GroupMessageDMO.class);
 		model.addDMClass(PostMessageDMO.class);
+		model.addDMClass(TrackMessageDMO.class);
 
 		model.addDMClass(ContactDMO.class);
 		model.addDMClass(DesktopSettingDMO.class);

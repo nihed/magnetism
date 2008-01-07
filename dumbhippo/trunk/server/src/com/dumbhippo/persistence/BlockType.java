@@ -74,7 +74,14 @@ public enum BlockType {
 	MUSIC_PERSON { // 3
 		@Override
 		public BlockVisibility getBlockVisibility() {
-			return BlockVisibility.DELEGATE;
+			// The rule we use elsewhere is "visible if the
+			// user has any track plays", but that doesn't fit into into any of
+			// our block visibility types. Using PUBLIC shouldn't in information
+			// leakage ... at worst, things might look a little funny. An alternative
+			// would be to use DELEGATE make the always-visible first track the
+			// delegate (requires fixing null-delegate == not-visible rather than
+			// the current NullPointerException)
+			return BlockVisibility.PUBLIC;
 		}
 		
 		@Override

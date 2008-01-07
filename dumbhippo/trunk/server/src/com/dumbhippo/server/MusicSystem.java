@@ -40,6 +40,7 @@ public interface MusicSystem extends ExternalAccountFeedListener {
 	public boolean hasTrackHistory(Viewpoint viewpoint, User user);
 	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults);
+	public List<TrackHistory> getLatestTracks(Viewpoint viewpoint, User user, int start, int max, long minTimestamp);
 	
 	/**
 	 * Returns a track view for a matching track.
