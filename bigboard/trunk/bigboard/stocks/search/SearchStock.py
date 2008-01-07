@@ -31,7 +31,7 @@ class ThemedTextRenderer(gtk.CellRendererText):
         if self.__themed:
             tm = self.__tm.get_theme()
             cr = window.cairo_create()
-            tm.draw_header(cr, cell_area)
+            tm.draw_header(cr, bg)
         gtk.CellRendererText.do_render(self, window, widget, bg, cell_area, expose_area, flags)
         
    # override
@@ -62,7 +62,7 @@ class ThemedPixbufRenderer(gtk.CellRendererPixbuf):
         if self.__themed:
             tm = self.__tm.get_theme()
             cr = window.cairo_create()
-            tm.draw_header(cr, cell_area)
+            tm.draw_header(cr, bg)
         gtk.CellRendererPixbuf.do_render(self, window, widget, bg, cell_area, expose_area, flags)
         
    # override
@@ -171,7 +171,11 @@ class ResultsView(gobject.GObject, search.SearchConsumer):
         else:
             # this is a heading
             renderer.set_property('weight', pango.WEIGHT_BOLD)
-            renderer.set_property('background', (self.__tm.get_theme().background << 8,))
+#            bg = self.__tm.get_theme().background
+#            bg_color = gtk.gdk.color_parse('#%02X%02X%02X' % ((bg >> 24) & 0xFF,
+#                                                              (bg >> 16) & 0xFF,
+#                                                              (bg >> 8) & 0xFF,))
+#            renderer.set_property('background-gdk', bg_color)
         renderer.set_property('themed', not result)
             
     def __render_icon(self, col, cell, model, iter):
@@ -427,9 +431,7 @@ class SearchEntry(gtk.Entry):
         self.__results_view.connect('match-selected', lambda obj: self.emit('match-selected'))
         
         treeview = self.__results_view.get_widget()
-        frame = gtk.Frame()
-        frame.add(treeview)
-        vbox.add(frame)
+        vbox.add(treeview)
         vbox.show_all()
 
         self.__idle_search_id = 0

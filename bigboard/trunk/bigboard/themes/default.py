@@ -17,7 +17,7 @@ class DefaultTheme(Singleton):
         self.prelight = 0xE2E2E2FF
         self.foreground = 0x000000FF
         self.subforeground = 0x666666FF
-        self.slideout_border = (1, 0xFFFFFFFF)        
+        self.slideout_border = (1, 0xFFFFFFFF)
         
         self.header_fg = self._rgba_to_cairo(self.foreground)
         self.header_top = self._rgb_to_cairo(0x9EA3A5)
