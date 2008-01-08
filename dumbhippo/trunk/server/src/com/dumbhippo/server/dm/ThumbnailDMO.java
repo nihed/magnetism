@@ -19,6 +19,8 @@ public abstract class ThumbnailDMO extends DMObject<ThumbnailKey> {
 	@MetaConstruct
 	public static Class<? extends ThumbnailDMO> getDMOClass(ThumbnailKey key) {
 		switch (key.getType()) {
+		case FACEBOOK_PHOTO:
+			return FacebookPhotoThumbnailDMO.class;
 		case PICASA_ALBUM:
 			return PicasaAlbumThumbnailDMO.class;
 		case YOUTUBE:

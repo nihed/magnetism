@@ -26,6 +26,20 @@ public class FacebookPhotoDataStatus extends DBUnique {
 	private String photoId;
 	// deprecated
 	private Integer photoIdSalt;
+	
+	// We store the facebook "photo ID" to try and uniquely identify a photo over time.
+	// However this isn't perfect: facebook photo ID's are only unique among photos
+	// uploaded by a particular user. So we could have the situation where our user
+	// is tagged in two photos with the same photo ID uploaded by different facebook
+	// users. If that happens, we'll throw a constaint violation when trying to save
+	// the photos to CachedFacebookPhotoData.java. Luckily, this situation seems
+	// to occur very infrequently.
+	//
+	// The way to fix this is to store not just the facebook photo ID
+	// but the facebook photo ID and the ID of the facebook user that uploaded the
+	// photo. (A transitional measure after adding the uploading user ID is to consider a 
+	// FacebookPhotoDataStatus with no uploading user ID as matching any photo 
+	// with the same photo ID.)
 	private String facebookPhotoId;
 	
 	protected FacebookPhotoDataStatus() {}
