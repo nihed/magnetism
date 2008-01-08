@@ -27,22 +27,35 @@ def remove_strange_tags(s, markup=False):
         s = s.replace("\\u003c/b\\>", e)
     return s
 
+_CONVERT_ENTITIES_RE = re.compile("&(?:(#[0-9]+)|(#x[0-9A-Fa-f]+)|([A-Za-z]+));")
+
+def _convert_entity(m):
+    try:
+        if m.group(1) is not None:
+            return unichr(int(m.group(1)[1:]))
+        elif m.group(2) is not None:
+            return unichr(int(m.group(2)[2:], 16))
+        else:
+            return unichr(htmlentitydefs.name2codepoint[m.group(3)])
+    except ValueError:
+        return m.group(0)
+    except KeyError:
+        return m.group(0)
+    except OverflowError:
+        return m.group(0)
+
 def convert_entities(s):
-    exp = re.compile("&[#a-zA-Z0-9]*;")
-    for match in exp.finditer(s):
-        if match is not None:
-            html_entity = match.group()
-            try:
-                if html_entity[1] == '#':
-                    entity_num = int(html_entity[2:-1])
-                    replacement_entity = unichr(entity_num)
-                else:
-                    entity_str = html_entity[1:-1]
-                    replacement_entity = unichr(htmlentitydefs.name2codepoint[entity_str])
-                s = s.replace(html_entity, replacement_entity)
-            except KeyError:
-                pass
-    return s
+    """Replace standard HTML entities and numeric character references in the string"""
+    return _CONVERT_ENTITIES_RE.sub(_convert_entity, s) 
+
+# assert convert_entities("&amp;") == "&"
+# assert convert_entities("&amp;foo&lt;") == "&foo<"
+# assert convert_entities("&#x41;") == "A"
+# assert convert_entities("&#65;") == "A"
+# assert convert_entities("&zzz_amp;") == "&zzz_amp;" # not something we parse as an entity
+# assert convert_entities("&zzzamp;") == "&zzzamp;" # unknown entity
+# assert convert_entities("&#x1000000;") == "&#x1000000;" # not a unicode character
+# assert convert_entities("&#x1000000000;") == "&#x1000000000;" # overflow
 
 class LabelSlideout(ThemedSlideout):
     __gsignals__ = {
