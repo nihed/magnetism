@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -21,6 +22,8 @@ public interface FacebookTracker {
 	public FacebookAccount getFacebookAccount(String facebookUserId);
 	
 	public void updateFbmlForUser(User user);
+	
+	public void publishUserAction(Block block, User user);
 	
 	public void updateMessageCount(long facebookAccountId);
 	

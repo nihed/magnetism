@@ -724,10 +724,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			    }				
 				updateGroupBlockDatas(attached, isGroupParticipation, reason);
 
-				if (participant != null && block.getBlockType() != BlockType.FACEBOOK_EVENT) {
+				// FACEBOOK_EVENT blocks are never public, but we might as well check explicitly.
+				// We'll need to change this logic if we want to display some private blocks to
+				// a subset of person's friends who can also see those private blocks on Mugshot.
+				if (participant != null && block.isPublicBlock() && block.getBlockType() != BlockType.FACEBOOK_EVENT) {
 				    TxUtils.runOnCommit(new Runnable() {
 					    public void run() {
 					    	facebookTracker.updateFbmlForUser(participant);
+					        facebookTracker.publishUserAction(block, participant);
 					    }
 				    });
 				}	 

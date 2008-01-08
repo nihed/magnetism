@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -357,6 +358,20 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	        facebookClient.profile_setFBML(profileFbml, Integer.valueOf(facebookAccount.getFacebookUserId()));
 		} catch (FacebookException e) {
 			logger.error("FacebookException when setting profile FBML for {}: {}",
+					     facebookAccount.getFacebookUserId(), e.toString());
+		} catch (IOException e) {
+			logger.error("IOException when converting {} to an integer", facebookAccount.getFacebookUserId());
+		}
+	}
+	
+	public void publishUserAction(FacebookAccount facebookAccount, CharSequence titleTemplate,
+                                  Map<String, CharSequence> titleData) {
+		try {
+	        FacebookXmlRestClient facebookClient = new FacebookXmlRestClient(apiKey, secret, facebookAccount.getSessionKey());	
+	        facebookClient.feed_publishTemplatizedAction(Integer.valueOf(facebookAccount.getFacebookUserId()), titleTemplate, 
+	        		                                     titleData, null, null, null, null, null);
+		} catch (FacebookException e) {
+			logger.error("FacebookException when publishing user action for {}: {}",
 					     facebookAccount.getFacebookUserId(), e.toString());
 		} catch (IOException e) {
 			logger.error("IOException when converting {} to an integer", facebookAccount.getFacebookUserId());

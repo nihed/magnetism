@@ -161,6 +161,11 @@ public enum BlockType {
 		public boolean isDirectlyChattable() {
 			return false;
 		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.FACEBOOK;
+		}
 	},
 	FACEBOOK_EVENT { // 8
 		@Override
@@ -182,6 +187,11 @@ public enum BlockType {
 		public boolean isDirectlyChattable() {
 			return false; // not completely clear ... it would make sense for some subtypes and not others
 		}
+
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.FACEBOOK;
+		}
 	},
 	FLICKR_PERSON { // 9
 		// Right now we only get completely public Flickr photos
@@ -198,6 +208,11 @@ public enum BlockType {
 		@Override
 		public boolean isDirectlyChattable() {
 			return true; // per-photo chats might make more sense long-term
+		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.FACEBOOK;
 		}
 	},
 	FLICKR_PHOTOSET { // 10
@@ -216,6 +231,11 @@ public enum BlockType {
 		public boolean isDirectlyChattable() {
 			return true;
 		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.FLICKR;
+		}
 	},
 	YOUTUBE_PERSON { // 11
 		@Override
@@ -232,6 +252,11 @@ public enum BlockType {
 		public boolean isDirectlyChattable() {
 			return true;  // per-video chats might make more sense long-term
 		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.YOUTUBE;
+		}
 	},
 	MYSPACE_PERSON { // 12
 		@Override
@@ -247,6 +272,11 @@ public enum BlockType {
 		@Override
 		public boolean isDirectlyChattable() {
 			return false; // wait until we have block-per-entry
+		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.MYSPACE;
 		}
 	},
 	MUSIC_CHAT { // 13
@@ -280,6 +310,11 @@ public enum BlockType {
 		public boolean isDirectlyChattable() {
 			return true;
 		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.BLOG;
+		}
 	},
 	DELICIOUS_PUBLIC_BOOKMARK { // 15
 		@Override
@@ -296,6 +331,11 @@ public enum BlockType {
 		public boolean isDirectlyChattable() {
 			return true;
 		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.DELICIOUS;
+		}
 	},
 	TWITTER_PERSON { // 16
 		@Override
@@ -311,6 +351,11 @@ public enum BlockType {
 		@Override
 		public boolean isDirectlyChattable() {
 			return false;
+		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.TWITTER;
 		}
 	},
 	// an item from the Digg "stuff you Dugg" feed
@@ -329,6 +374,11 @@ public enum BlockType {
 		public boolean isDirectlyChattable() {
 			return true;
 		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.DIGG;
+		}
 	},
 	// an item from the Reddit Overview feed, which is your comments and submissions both
 	REDDIT_ACTIVITY_ENTRY { // 18
@@ -345,6 +395,11 @@ public enum BlockType {
 		@Override
 		public boolean isDirectlyChattable() {
 			return true;
+		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.REDDIT;
 		}
 	},
 	// a revision to a group's attributes
@@ -377,6 +432,11 @@ public enum BlockType {
 		@Override
 		public boolean isDirectlyChattable() {
 			return true;
+		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.NETFLIX;
 		}
 	},
 	// a question to the user about account options
@@ -416,6 +476,11 @@ public enum BlockType {
 		public boolean isDirectlyChattable() {
 			return true;
 		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.GOOGLE_READER;
+		}
 	},
 	PICASA_PERSON { // 23
 		@Override
@@ -431,6 +496,11 @@ public enum BlockType {
 		@Override
 		public boolean isDirectlyChattable() {
 			return true; // might want per-album chats eventually
+		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.PICASA;
 		}
 	},
 	AMAZON_REVIEW { // 24
@@ -448,6 +518,11 @@ public enum BlockType {
 		public boolean isDirectlyChattable() {
 			return true;
 		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.AMAZON;
+		}
 	}, 
 	AMAZON_WISH_LIST_ITEM { // 25
 		@Override
@@ -463,6 +538,11 @@ public enum BlockType {
 		@Override
 		public boolean isDirectlyChattable() {
 			return true;
+		}
+		
+		@Override
+		public ExternalAccountType getExternalAccountSource() {
+			return ExternalAccountType.AMAZON;
 		}
 	};
 	
@@ -522,5 +602,9 @@ public enum BlockType {
     /** returns true if the block keeps track of clicks */
     public boolean getClickedCountUseful() {
     	return false;
+    }
+    
+    public ExternalAccountType getExternalAccountSource() {
+    	return null;
     }
 }
