@@ -85,6 +85,12 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 		case ACCOUNT_QUESTION:
 			return AccountQuestionBlockDMO.class;
 
+		case AMAZON_REVIEW:
+			return AmazonReviewBlockDMO.class;
+			
+		case AMAZON_WISH_LIST_ITEM:
+			return AmazonWishListItemBlockDMO.class;
+
 		case GROUP_CHAT:
 			return GroupChatBlockDMO.class;
 
@@ -93,6 +99,9 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 			
 		case MUSIC_PERSON:
 			return MusicPersonBlockDMO.class;
+
+		case NETFLIX_MOVIE:
+			return NetflixMovieBlockDMO.class;
 
 		case PICASA_PERSON:
 			return PicasaPersonBlockDMO.class;
@@ -105,9 +114,6 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 		case FACEBOOK_EVENT:
 		case FLICKR_PHOTOSET:
 		case GROUP_REVISION:		
-		case NETFLIX_MOVIE:
-		case AMAZON_REVIEW:
-		case AMAZON_WISH_LIST_ITEM:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
 		case OBSOLETE_BLOG_PERSON:
