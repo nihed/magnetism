@@ -91,6 +91,9 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 		case AMAZON_WISH_LIST_ITEM:
 			return AmazonWishListItemBlockDMO.class;
 
+		case FACEBOOK_EVENT:
+			return FacebookEventBlockDMO.class;
+			
 		case GROUP_CHAT:
 			return GroupChatBlockDMO.class;
 
@@ -111,7 +114,6 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 			
 		default:
 		case GROUP_MEMBER: 
-		case FACEBOOK_EVENT:
 		case FLICKR_PHOTOSET:
 		case GROUP_REVISION:		
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:

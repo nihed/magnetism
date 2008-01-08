@@ -18,7 +18,7 @@ import com.dumbhippo.services.PicasaAlbum;
 import com.dumbhippo.services.caches.PicasaAlbumsCache;
 import com.dumbhippo.services.caches.WebServiceCache;
 
-@DMO(classId="http://mugshot.org/p/o/youTubeThumbnail")
+@DMO(classId="http://mugshot.org/p/o/picasaAlbumThumbnail")
 public abstract class PicasaAlbumThumbnailDMO extends ThumbnailDMO {
 	@EJB
 	private ExternalAccountSystem externalAccountSystem;
