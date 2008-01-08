@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -27,6 +30,8 @@ import com.dumbhippo.Pair;
 import com.dumbhippo.Site;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
+import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
@@ -280,18 +285,86 @@ public class FacebookTrackerBean implements FacebookTracker {
 					}
 				}	
 			});
-			Pair<Account, Set<ExternalAccountView>> accountsPair = TxUtils.runInTransaction(new Callable<Pair<Account, Set<ExternalAccountView>>>() {
-				public Pair<Account, Set<ExternalAccountView>> call() {
-					    Account account = accounts.lookupAccountByUser(user);
-					    UserViewpoint viewpoint = new UserViewpoint(account.getOwner(), Site.MUGSHOT);
-						Set<ExternalAccountView> allAccounts = externalAccounts.getExternalAccountViews(viewpoint, account.getOwner());
-				        externalAccounts.loadThumbnails(viewpoint, allAccounts);
-				        return new Pair<Account, Set<ExternalAccountView>>(account, allAccounts);
-				}	
-			});
 		    if (facebookAccount != null && facebookAccount.isApplicationEnabled()) {
+				Pair<Account, Set<ExternalAccountView>> accountsPair = TxUtils.runInTransaction(new Callable<Pair<Account, Set<ExternalAccountView>>>() {
+					public Pair<Account, Set<ExternalAccountView>> call() {
+						    Account account = accounts.lookupAccountByUser(user);
+						    UserViewpoint viewpoint = new UserViewpoint(account.getOwner(), Site.MUGSHOT);
+							Set<ExternalAccountView> allAccounts = externalAccounts.getExternalAccountViews(viewpoint, account.getOwner());
+					        externalAccounts.loadThumbnails(viewpoint, allAccounts);
+					        return new Pair<Account, Set<ExternalAccountView>>(account, allAccounts);
+					}	
+				});
 		        FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
 			    ws.setProfileFbml(facebookAccount, createFbmlForUser(accountsPair.getFirst(), accountsPair.getSecond()));
+            }		    
+		} catch (Exception e) {
+			logger.error("Caught an exception when getting a FacebookAccount for {}: {}", user, e.getMessage());
+			throw new RuntimeException(e);            			
+		}
+	}
+	
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public void publishUserAction(final Block block, final User user) {		
+		TxUtils.assertNoTransaction();
+		
+    	// let's publish Facebook news items about roughly one of 20 tracks the user plays
+    	if (block.getBlockType() == BlockType.MUSIC_PERSON && (new Random()).nextInt(20) != 19)
+    		return;
+    	
+		try {
+			FacebookAccount facebookAccount = TxUtils.runInTransaction(new Callable<FacebookAccount>() {
+				public FacebookAccount call() {
+					try {
+					    return facebookSystem.lookupFacebookAccount(SystemViewpoint.getInstance(), user);
+					} catch (NotFoundException e) {
+						return null;
+					}
+				}	
+			});
+			if (facebookAccount != null && facebookAccount.isApplicationEnabled()) {
+				BlockView blockView = TxUtils.runInTransaction(new Callable<BlockView>() {
+					public BlockView call() {
+						try {
+			                return stacker.loadBlock(new UserViewpoint(user, Site.MUGSHOT), block);
+						} catch (NotFoundException e) {
+							logger.error("The block {} was not found for user {} when creating user action for Facebook about it", block, user);
+							return null;
+						}
+					}	
+				});
+				
+				if (blockView != null) {
+					String titleTemplate = "{actor} {action} {link}{where}";
+					Map<String, CharSequence> titleData = new HashMap<String, CharSequence>();
+					
+					String action = blockView.getSummaryHeading().toLowerCase();
+					String link = "<a target{{=}}'_blank' href{{=}}'" + getAbsoluteUrl(blockView.getSummaryLink()) + "'>" + blockView.getSummaryLinkText() + "</a>";
+                    String where = "";
+					if (blockView.getBlockType().getExternalAccountSource() != null) {
+                        if (blockView.getSummaryHeading().contains("Chatted about")) {
+                        	where = " from " + blockView.getBlockType().getExternalAccountSource().getSiteName();
+                        } else {
+                        	where = " on " + blockView.getBlockType().getExternalAccountSource().getSiteName();                        	
+                        }
+                    } else if (!blockView.getBlockType().equals(BlockType.MUSIC_PERSON)) {
+                        // There are multiple options for how we know about someone's music (Rhapsody, Last.fm, 
+                    	// iTunes, Yahoo Music Player, Rhythmbox). It'd be nice to be able to identify this here,
+                    	// but for now, let's just not say anything. All other actions, like sharing a link,
+                    	// joining a group, or chatting happen on Mugshot.
+                    	where = " on Mugshot";                        	                    	
+                    }
+					
+					logger.debug("action: {}", action);
+					logger.debug("link: {}", link);
+					logger.debug("where: {}", where);
+					
+					titleData.put("action", action);
+					titleData.put("link", link);
+					titleData.put("where", where);
+			        FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
+				    ws.publishUserAction(facebookAccount, titleTemplate, titleData);
+				}
             }		    
 		} catch (Exception e) {
 			logger.error("Caught an exception when getting a FacebookAccount for {}: {}", user, e.getMessage());

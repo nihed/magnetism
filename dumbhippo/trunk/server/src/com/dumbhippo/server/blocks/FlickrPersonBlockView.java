@@ -37,7 +37,7 @@ public class FlickrPersonBlockView extends ExternalThumbnailedPersonBlockView {
 	}
 
 	public @Override String getBlockSummaryHeading() {
-		return "Posted photos";
+		return "Posted new photos";
 	}
 
 	public @Override String getBlockSummaryLink() {

@@ -37,7 +37,7 @@ public class PicasaPersonBlockView extends ExternalThumbnailedPersonBlockView {
 	}
 
 	public @Override String getBlockSummaryHeading() {
-		return "Posted albums";
+		return "Posted new albums";
 	}
 
 	public @Override String getBlockSummaryLink() {
