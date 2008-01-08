@@ -193,10 +193,6 @@ update_im_buddy(const char           *session_id)
     if (!local_buddy || local_buddy->user_resource_id == NULL) {
         hippo_im_remove_buddy(resource_id);
     } else {
-        /* It would be more complete to provide the unix name exported over the local service
-         * as the alias, but right now we won't actually use it for anything, so we don't
-         * bother pulling it out.
-         */
         hippo_im_update_buddy(resource_id,
                               "mugshot-local", local_buddy->user_resource_id,
                               local_buddy->name,
@@ -271,7 +267,7 @@ read_mugshot_info(DBusMessageIter *struct_iter,
     }
 
     g_debug("local: Read local user info user resource ID '%s' and name '%s'\n",
-            info_entries[0].value, info_entries[1].value ? info_entries[1].value : 'null');
+            info_entries[0].value, info_entries[1].value ? info_entries[1].value : "null");
     
     if (user_resource_id_p)
         *user_resource_id_p = g_strdup(info_entries[0].value);
