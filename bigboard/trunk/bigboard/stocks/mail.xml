@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+  <ModulePrefs title="Mail"
+               author="Natan Yellin"
+               author_email="online-desktop-list@gnome.org"
+               author_location="Israel"
+               screenshot="mail.png"
+               thumbnail="thumbnail.png"
+               description="View your recent emails">
+  </ModulePrefs>
+  <Content type="online-desktop-builtin"></Content>  
+</Module>
