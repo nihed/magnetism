@@ -671,29 +671,10 @@ hippo_connection_get_self_resource_id(HippoConnection  *connection)
         
         const char *self_guid = hippo_connection_get_self_guid(connection);
 
-        /* There isn't any notification when hippo_platform_get_web_server() changes
-         * but that won't happen in normal operation; right now the only time that
-         * it happens is when adjusting the web server in the hidden properties
-         * dialog on the windows client.
+        /* The resource ID does not change according to which server we connect to,
+         * it is always mugshot.org
          */
-        const char *raw_server = hippo_platform_get_web_server(connection->platform,
-                                                               HIPPO_SERVER_STACKER);
-        char *server;
-
-        /* Somewhat hacky: we need to match the server's own idea of what it's
-         * URL is; we've added on :80 elsewhere to "canonicalize" the URL, and
-         * strip it out again here. We might be better off having the server
-         * send it's resource base (or the user's "self ID") in the initial
-         * handshake.
-         */
-        if (g_str_has_suffix(raw_server, ":80"))
-            server = g_strndup(raw_server, strlen(raw_server) - 3);
-        else
-            server = g_strdup(raw_server);
-        
-        connection->self_resource_id = g_strdup_printf("http://%s/o/user/%s", server, self_guid);
-
-        g_free(server);
+        connection->self_resource_id = g_strdup_printf("http://mugshot.org/o/user/%s", self_guid);
     }
 
     return connection->self_resource_id;
