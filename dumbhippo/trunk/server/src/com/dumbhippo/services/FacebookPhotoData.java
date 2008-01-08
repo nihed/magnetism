@@ -94,7 +94,7 @@ public class FacebookPhotoData implements FacebookPhotoDataView {
 		int startOfPid = link.indexOf("pid=");
 		
 		if (startOfPid < 0)
-			return "";
+			throw new RuntimeException("Did not find pid in the following Facebook photo link: " + link);
 		
 		int endOfPid = link.indexOf("&", startOfPid);
 		// pid is not the last parameter normally, but just in case
