@@ -1,0 +1,52 @@
+This is a patch to libgmail to add the ability to the count of unread messages in
+each "folder' (labels and standard folders such as "inbox").
+
+http://sourceforge.net/tracker/index.php?func=detail&aid=1852698&group_id=113492&atid=665333
+
+Copyright Red Hat, Inc. 2007 and licensed under the same terms as libgmail. (The GPL)
+
+Index: libgmail.py
+===================================================================
+RCS file: /cvsroot/libgmail/libgmail/libgmail.py,v
+retrieving revision 1.100
+diff -u -p -r1.100 libgmail.py
+--- libgmail.py	19 Nov 2007 01:23:59 -0000	1.100
++++ libgmail.py	17 Dec 2007 22:08:53 -0000
+@@ -320,6 +320,7 @@ class GmailAccount:
+ 
+         self._cachedQuotaInfo = None
+         self._cachedLabelNames = None
++        self._cachedFolderCounts = None
+         
+ 
+     def login(self):
+@@ -411,6 +412,11 @@ class GmailAccount:
+         
+         try:
+             self._cachedLabelNames = [category[CT_NAME] for category in items[D_CATEGORIES][0]]
++            self._cachedFolderCounts = {}
++            for category in items[D_CATEGORIES][0]:
++                self._cachedFolderCounts[category[CT_NAME]] = category[CT_COUNT]
++            for summary in items[D_DEFAULTSEARCH_SUMMARY][0]:
++                self._cachedFolderCounts[summary[CT_NAME]] = summary[CT_COUNT]
+         except KeyError:
+             pass
+         
+@@ -518,6 +524,17 @@ class GmailAccount:
+         return self._cachedLabelNames
+ 
+ 
++    def getFolderCounts(self, refresh = False):
++        """
++        """
++        # TODO: Change this to a property?
++        if not self._cachedFolderCounts or refresh:
++            # TODO: Handle this better...
++            self.getMessagesByFolder(U_INBOX_SEARCH)
++
++        return self._cachedFolderCounts
++
++
+     def getMessagesByLabel(self, label, allPages = False):
+         """
+         """
