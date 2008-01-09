@@ -856,7 +856,6 @@ ddm_data_resource_disconnect (DDMDataResource *resource,
         if (connection->function == function && connection->user_data == user_data) {
             resource->connections = g_slist_delete_link(resource->connections, l);
             g_free(connection);
-            return;
         }
     }
 }
