@@ -706,6 +706,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// never "roll back" to an earlier timestamp
 		if (block.getTimestampAsLong() < activity) { 
 			block.setTimestampAsLong(activity);
+			DataService.currentSessionRW().changed(BlockDMO.class, new BlockDMOKey(block), "timestamp");
 		}
 		
 		// Now we need to create demand-create user/group block data objects and update the
