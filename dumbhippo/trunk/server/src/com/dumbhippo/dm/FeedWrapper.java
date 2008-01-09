@@ -156,8 +156,11 @@ public class FeedWrapper<K, T extends DMObject<K>, KI, TI extends DMObject<KI>> 
 					return;
 				}
 			}
-	
-			if (cachedFeed != null)
+
+			// We only should update the maxFetched if we didn't specify a minTimestamp
+			// when fetching; if we specified a minTimestamp, we have no idea how many
+			// items actually were in the feed beyond the ones we got
+			if (cachedFeed != null && minTimestamp <= 0)
 				cachedFeed.addToMaxfetched(start + max);
 		}
 		
