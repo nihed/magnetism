@@ -339,7 +339,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 					Map<String, CharSequence> titleData = new HashMap<String, CharSequence>();
 					
 					String action = blockView.getSummaryHeading().toLowerCase();
-					String link = "<a target{{=}}'_blank' href{{=}}'" + getAbsoluteUrl(blockView.getSummaryLink()) + "'>" + blockView.getSummaryLinkText() + "</a>";
+					String link = "<a target='_blank' href='" + getAbsoluteUrl(blockView.getSummaryLink()) + "'>" + blockView.getSummaryLinkText() + "</a>";
                     String where = "";
 					if (blockView.getBlockType().getExternalAccountSource() != null) {
                         if (blockView.getSummaryHeading().contains("Chatted about")) {
