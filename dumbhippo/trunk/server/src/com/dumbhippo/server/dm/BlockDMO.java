@@ -71,7 +71,6 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 	
 	public static Class<? extends BlockDMO> getDMOClass(BlockType blockType) {
 		switch (blockType) {
-		case FLICKR_PERSON:
 		case YOUTUBE_PERSON:
 		case MYSPACE_PERSON:
 		case BLOG_ENTRY:
@@ -94,6 +93,12 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 		case FACEBOOK_EVENT:
 			return FacebookEventBlockDMO.class;
 			
+		case FLICKR_PERSON:
+			return FlickrPersonBlockDMO.class;
+
+		case FLICKR_PHOTOSET:
+			return FlickrPhotosetBlockDMO.class;
+
 		case GROUP_CHAT:
 			return GroupChatBlockDMO.class;
 
@@ -114,7 +119,6 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 			
 		default:
 		case GROUP_MEMBER: 
-		case FLICKR_PHOTOSET:
 		case GROUP_REVISION:		
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:

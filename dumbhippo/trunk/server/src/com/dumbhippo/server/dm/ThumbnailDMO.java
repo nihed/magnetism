@@ -21,6 +21,8 @@ public abstract class ThumbnailDMO extends DMObject<ThumbnailKey> {
 		switch (key.getType()) {
 		case FACEBOOK_PHOTO:
 			return FacebookPhotoThumbnailDMO.class;
+		case FLICKR_PHOTO:
+			return FlickrPhotoThumbnailDMO.class;
 		case PICASA_ALBUM:
 			return PicasaAlbumThumbnailDMO.class;
 		case YOUTUBE:

@@ -92,12 +92,14 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 		model.addDMClass(AccountQuestionBlockDMO.class);
 		model.addDMClass(AmazonWishListItemBlockDMO.class);
 		model.addDMClass(AmazonReviewBlockDMO.class);
-		model.addDMClass(FacebookEventBlockDMO.class);
 		model.addDMClass(GroupChatBlockDMO.class);
 		model.addDMClass(MusicChatBlockDMO.class);
 		model.addDMClass(MusicPersonBlockDMO.class);
 		model.addDMClass(NetflixMovieBlockDMO.class);	
 		model.addDMClass(ThumbnailsBlockDMO.class);
+		model.addDMClass(FacebookEventBlockDMO.class);
+		model.addDMClass(FlickrPersonBlockDMO.class);
+		model.addDMClass(FlickrPhotosetBlockDMO.class);
 		model.addDMClass(PicasaPersonBlockDMO.class);
 		model.addDMClass(PostBlockDMO.class);
 		
@@ -115,6 +117,7 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 		model.addDMClass(NetflixMovieDMO.class);
 		
 		model.addDMClass(ThumbnailDMO.class);
+		model.addDMClass(FlickrPhotoThumbnailDMO.class);
 		model.addDMClass(FacebookPhotoThumbnailDMO.class);
 		model.addDMClass(PicasaAlbumThumbnailDMO.class);
 		model.addDMClass(YouTubeThumbnailDMO.class);
