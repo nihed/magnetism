@@ -59,5 +59,9 @@ Source: http://developers.facebook.com/resources.php
 License: BSD 
 
 File: json-1.0.jar
-Source: http://code.google.com/p/facebook-java-api or http://json.org/java/simple.txt
+Source: http://code.google.com/p/facebook-java-api
 License: MIT
+
+File: json-simple.jar
+Source: http://json.org/java/simple.txt
+License: LGPL
