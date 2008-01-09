@@ -97,7 +97,7 @@ public class FetchTests extends AbstractFetchTests {
 		em = support.beginSessionRO(viewpoint);
 		
 		TestGroupDMO groupDMO = support.currentSessionRO().find(TestGroupDMO.class, groupId);
-		doFetchTest(Guid.class, TestGroupDMO.class, groupDMO, "+;members +", "bobAndJane",
+		doFetchTest(Guid.class, TestGroupDMO.class, groupDMO, "+;members +", "bobAndJaneDefault",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());

@@ -186,6 +186,9 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 			else {
 				StringBuilder sb = new StringBuilder();
 				
+				if ((oldFetch != null && oldFetch.getIncludeDefault()) || getIncludeDefault())
+					sb.append("+");
+				
 				newIndex = 0; oldIndex = 0;
 				newOrdering = propertyOrdering(0);
 				oldOrdering = oldFetch != null ? oldFetch.propertyOrdering(0) : Long.MAX_VALUE;
