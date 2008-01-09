@@ -46,7 +46,7 @@ work_item_notify_resource_new (DDMDataResource *resource,
     WorkItemNotifyResource *notify_resource = g_new0(WorkItemNotifyResource, 1);
     
     notify_resource->resource = resource;
-    notify_resource->fetch = ddm_data_fetch_ref(fetch);
+    notify_resource->fetch = fetch ? ddm_data_fetch_ref(fetch) : NULL;
     notify_resource->changed_properties = g_slist_copy(changed_properties);
 
     return notify_resource;
@@ -55,7 +55,8 @@ work_item_notify_resource_new (DDMDataResource *resource,
 static void
 work_item_notify_resource_free (WorkItemNotifyResource *notify_resource)
 {
-    ddm_data_fetch_unref(notify_resource->fetch);
+    if (notify_resource->fetch)
+        ddm_data_fetch_unref(notify_resource->fetch);
     g_slist_free(notify_resource->changed_properties);
     
     g_free(notify_resource);
@@ -197,7 +198,7 @@ item_fetch_additional(DDMWorkItem     *item,
         if (received_fetch != NULL) {
             unreceived_fetch = ddm_data_fetch_subtract(fetch, received_fetch);
         } else {
-            unreceived_fetch = ddm_data_fetch_ref(fetch);
+            unreceived_fetch = fetch? ddm_data_fetch_ref(fetch) : NULL;
         }
 
         if (unreceived_fetch != NULL) {
