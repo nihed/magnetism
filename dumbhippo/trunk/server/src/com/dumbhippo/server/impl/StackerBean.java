@@ -390,13 +390,18 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
-	private void updateParticipantUserBlockData(final Block block, final Guid participantId, final StackReason reason) throws RetryException {
-		TxUtils.runNeedsRetry(new TxRunnable() {
-			public void run() {
+	private Pair<Long, StackReason> updateParticipantUserBlockData(final Block block, final Guid participantId, final StackReason reason) throws RetryException {
+		return TxUtils.runNeedsRetry(new TxCallable<Pair<Long, StackReason>>() {
+			public Pair<Long, StackReason> call() throws RetryException {
+				Pair<Long, StackReason> previousParticipation = new Pair<Long, StackReason>(Long.valueOf(-1), null);
 				User participant = em.find(User.class, participantId.toString());
 				UserBlockData userData = queryUserBlockData(block, participant);
 				if (userData != null) {
 					userData.setDeleted(false);
+					
+					if (userData.getParticipated())
+						previousParticipation = new Pair<Long, StackReason>(userData.getParticipatedTimestamp().getTime(), userData.getParticipatedReason());
+					
 					userData.setParticipatedTimestamp(block.getTimestamp());
 					userData.setParticipatedReason(reason);
 					if (!userData.isIgnored())
@@ -408,18 +413,23 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				}
 				
 				DataService.currentSessionRW().feedChanged(UserDMO.class, participantId, "stack", block.getTimestampAsLong());
+				
+				return previousParticipation;
 			}
 		});
 	}
 	
 	// Don't call directly, RetryException is added in the wrapper for readability
-	private void updateUserBlockDatasInternal(Block block, Set<User> desiredUsers, Guid participantId, StackReason reason) {
+	// returns a pair with information about previous participation by the current participant
+	private Pair<Long, StackReason> updateUserBlockDatasInternal(Block block, Set<User> desiredUsers, Guid participantId, StackReason reason) {
 		ReadWriteSession session = DataService.getModel().currentSessionRW();
 
 		int addCount;
 		int removeCount;
 		
 		Set<Guid> affectedGuids = new HashSet<Guid>();
+		
+		Pair<Long, StackReason> previousParticipation = new Pair<Long, StackReason>(Long.valueOf(-1), null);
 		
 		// be sure we have the right UserBlockData. This would be a lot saner to do
 		// at the point where it changes... e.g. when people add/remove friends, 
@@ -451,6 +461,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 					addCount += 1;
 				old.setDeleted(false);
 				if (u.getGuid().equals(participantId)) {
+					
+					if (old.getParticipated())
+						previousParticipation = new Pair<Long, StackReason>(old.getParticipatedTimestamp().getTime(), old.getParticipatedReason());
+
 					old.setParticipatedTimestamp(block.getTimestamp());
 					old.setParticipatedReason(reason);
 				}
@@ -482,14 +496,16 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		
 		BlockEvent event = new BlockEvent(block.getGuid(), block.getTimestampAsLong(), affectedGuids);
 		LiveState.getInstance().queueUpdate(event);
+		
+		return previousParticipation;
 	}
 	
-	private void updateUserBlockDatas(final Block block, final Guid participantId, final StackReason reason) throws RetryException {
+	private Pair<Long, StackReason> updateUserBlockDatas(final Block block, final Guid participantId, final StackReason reason) throws RetryException {
 		final Set<User> desiredUsers = getHandler(block).getInterestedUsers(block);
 
-		TxUtils.runNeedsRetry(new TxRunnable() {
-			public void run() throws RetryException {
-				updateUserBlockDatasInternal(block, desiredUsers, participantId, reason);
+		return TxUtils.runNeedsRetry(new TxCallable<Pair<Long, StackReason>>() {
+			public Pair<Long, StackReason> call() throws RetryException {
+				return updateUserBlockDatasInternal(block, desiredUsers, participantId, reason);
 			}
 		});
 	}
@@ -717,14 +733,18 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			public void run() throws RetryException {
 				DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
 				
+				Pair<Long, StackReason> previousParticipation = new Pair<Long, StackReason>(Long.valueOf(-1), null);;
+				
 				Block attached = em.find(Block.class, block.getId());
 				if (updateAllUserBlockDatas) {
-				    updateUserBlockDatas(attached, (participant != null ? participant.getGuid() : null), reason);
+				    previousParticipation = updateUserBlockDatas(attached, (participant != null ? participant.getGuid() : null), reason);
 			    } else if (participant != null) {
-			        updateParticipantUserBlockData(attached, participant.getGuid(), reason);	
+			        previousParticipation = updateParticipantUserBlockData(attached, participant.getGuid(), reason);	
 			    }				
 				updateGroupBlockDatas(attached, isGroupParticipation, reason);
 
+				final Pair<Long, StackReason> previousParticipationFinal = previousParticipation;
+				
 				// FACEBOOK_EVENT blocks are never public, but we might as well check explicitly.
 				// We'll need to change this logic if we want to display some private blocks to
 				// a subset of person's friends who can also see those private blocks on Mugshot.
@@ -732,7 +752,27 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				    TxUtils.runOnCommit(new Runnable() {
 					    public void run() {
 					    	facebookTracker.updateFbmlForUser(participant);
-					        facebookTracker.publishUserAction(block, participant);
+					    	
+					    	// We do not want to publish repeated user actions reflected by the same block, such as 
+					    	// chatting or playing music. 
+					    	// If we kept track of when we last published a story about the block, we would be able
+					    	// to publish a story about a similar activity after a certain amount of time from a previous
+					    	// story. However, we currently only keep track of when the user last participated in
+					    	// a certain activity, as a result this code will publish a new story only after a user
+					    	// did not participate in that activity for a certain amount of time. Such as, if the user
+					    	// did not play music for more than 6 hours, but then started playing it again, or if the user
+					    	// did not chat about something for 6 hours, but then had something new to say about it.
+					    	// This is fine because it allows us to create notifications when new events happen.
+					    	// The time interval can be different for different block types or stack reasons.
+					    	// The downside of this logic is that if someone plays music every 5 hours or comments on
+					    	// a block every 5 hours, we'll never create a new update about it after the first one.
+					    	if (previousParticipationFinal.getSecond() == null || 
+					            !previousParticipationFinal.getSecond().equals(reason) ||
+								previousParticipationFinal.getFirst() < (new Date().getTime()) - 6 * 60 * 60 * 1000) {
+					    		
+					    	    facebookTracker.publishUserAction(block, participant);	
+					    		 
+					    	}      
 					    }
 				    });
 				}	 
