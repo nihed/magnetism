@@ -113,6 +113,9 @@ public class GroupMemberBlockView extends BlockView {
 			return "Invited to";
 		case ACTIVE:
 			return "Joined";
+		case NONMEMBER:
+		case REMOVED:
+			break;
 		}	
 		
 		if (isStoppedFollowing())

@@ -61,7 +61,7 @@ public class CachedFeed<K> {
 		while (pos > 0 && timestamp >= items[pos -1].time)
 			pos--;
 		
-		if (pos >= items.length) {
+		if (itemCount >= items.length) {
 			int newLength = items.length * 2;
 			if (newLength < 0)
 				throw new OutOfMemoryError();

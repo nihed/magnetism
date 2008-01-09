@@ -102,6 +102,12 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 		case GROUP_CHAT:
 			return GroupChatBlockDMO.class;
 
+		case GROUP_MEMBER: 
+			return GroupMemberBlockDMO.class;
+			
+		case GROUP_REVISION:		
+			return GroupRevisionBlockDMO.class;
+
 		case MUSIC_CHAT:
 			return MusicChatBlockDMO.class;
 			
@@ -118,8 +124,6 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 			return PostBlockDMO.class;
 			
 		default:
-		case GROUP_MEMBER: 
-		case GROUP_REVISION:		
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
 		case OBSOLETE_BLOG_PERSON:

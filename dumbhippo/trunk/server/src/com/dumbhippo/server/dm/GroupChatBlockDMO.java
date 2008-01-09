@@ -11,11 +11,6 @@ public abstract class GroupChatBlockDMO extends BlockDMO {
 		super(key);
 	}
 
-	@Override
-	public String getChatId() {
-		return ((GroupChatBlockView)blockView).getGroupView().getGroup().getId();
-	}
-	
 	@DMProperty(defaultInclude=true, defaultChildren="+")
 	public GroupDMO getGroup() {
 		return session.findUnchecked(GroupDMO.class, ((GroupChatBlockView)blockView).getGroupView().getGroup().getGuid());
