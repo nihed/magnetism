@@ -12,7 +12,8 @@ import bigboard.google as google
 import bigboard.slideout as slideout
 from bigboard.stock import AbstractMugshotStock
 import bigboard.google_stock as google_stock  
-from bigboard.big_widgets import CanvasMugshotURLImage, CanvasVBox, CanvasHBox, ActionLink, Button, PrelightingCanvasBox
+from bigboard.big_widgets import CanvasMugshotURLImage, CanvasVBox, CanvasHBox
+from bigboard.big_widgets import ActionLink, Button, PrelightingCanvasBox, ThemedText
 from bigboard.libbig.struct import AutoStruct
 import bigboard.libbig.polling as polling
 
@@ -757,7 +758,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
             return
 
         _logger.debug("have a google login, refreshing events")
-        title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        title = ThemedText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         title.set_property("text", fmt_date(self.__day_displayed))
         title.set_property("font", "13px Bold")
         self.__box.append(title) 
@@ -898,7 +899,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
             else:
                 text = "Loading events..."
 
-            no_events_text = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+            no_events_text = ThemedText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
             no_events_text.set_property("text", text)
             today = datetime.date.today()
             # always pass in false for is_today because we don't want to make it bold 
