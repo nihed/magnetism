@@ -48,6 +48,9 @@ import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.blocks.GroupChatBlockHandler;
 import com.dumbhippo.server.blocks.MusicChatBlockHandler;
 import com.dumbhippo.server.blocks.PostBlockHandler;
+import com.dumbhippo.server.dm.BlockDMO;
+import com.dumbhippo.server.dm.BlockDMOKey;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.TrackView;
@@ -581,7 +584,9 @@ public class ChatSystemBean implements ChatSystem {
 			throw new RuntimeException("Can't add a chat message to a chat room of unknown kind");
 		}
 
-		stacker.stack(block, message.getTimestamp().getTime(),
+		DataService.currentSessionRW().feedChanged(BlockDMO.class, new BlockDMOKey(block), "chatMessages", message.getTimestampAsLong());
+
+		stacker.stack(block, message.getTimestampAsLong(),
 					  message.getFromUser(),
 					  block.getBlockType().isChatGroupParticipation(),
 					  StackReason.CHAT_MESSAGE);
