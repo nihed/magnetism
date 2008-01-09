@@ -22,6 +22,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.dm.ReadWriteSession;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.GroupEvent;
@@ -53,6 +54,7 @@ import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.GroupDMO;
+import com.dumbhippo.server.dm.UserClientMatcher;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.GroupMemberView;
 import com.dumbhippo.server.views.GroupView;
@@ -112,6 +114,25 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return g;
 	}
 
+	private void invalidateGroupMemberStatus(GroupMember groupMember) {
+		ReadWriteSession session = DataService.currentSessionRW();
+		
+		Guid groupId = groupMember.getGroup().getGuid();
+		
+		session.changed(GroupDMO.class, groupId, "invitedToFollowMembers");
+		session.changed(GroupDMO.class, groupId, "followerMembers");
+		session.changed(GroupDMO.class, groupId, "invitedMembers");
+		session.changed(GroupDMO.class, groupId, "removedMembers");
+		session.changed(GroupDMO.class, groupId, "activeMembers");
+		session.changed(GroupDMO.class, groupId, "canSeeMembers");
+
+		AccountClaim ac = groupMember.getMember().getAccountClaim();
+		if (ac != null) {
+			Guid memberUserId = ac.getOwner().getGuid();
+			session.changed(GroupDMO.class, groupId, "status", new UserClientMatcher(memberUserId));
+		}
+	}
+	
 	private GroupMember getGroupMemberForUser(Group group, User user, boolean fixupExpected) throws NotFoundException {
 		List<GroupMember> allMembers = new ArrayList<GroupMember>(); 
 		for (GroupMember member : group.getMembers()) {
@@ -178,6 +199,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				accountMember.setAdders(adders);
 			em.persist(accountMember);
 			group.getMembers().add(accountMember);
+			invalidateGroupMemberStatus(accountMember);
 			notifier.onGroupMemberCreated(accountMember, System.currentTimeMillis(), true);
 		}
 
@@ -382,7 +404,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			notifier.onGroupMemberCreated(groupMember, now, notifyGroupMembers);
 		}
 		
-		DataService.currentSessionRW().changed(GroupDMO.class, group.getGuid(), "canSeeMembers");
+		invalidateGroupMemberStatus(groupMember);
         LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(),
         		GroupEvent.Detail.MEMBERS_CHANGED));
 	}
@@ -486,7 +508,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			groupMember.setStatus(MembershipStatus.REMOVED);
 			
 			notifier.onGroupMemberStatusChanged(groupMember, System.currentTimeMillis(), true);
-			DataService.currentSessionRW().changed(GroupDMO.class, group.getGuid(), "canSeeMembers");
+			invalidateGroupMemberStatus(groupMember);
 	        LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
 	        		groupMember.getMember().getGuid(), GroupEvent.Detail.MEMBERS_CHANGED));
 		} else if (groupMember.getStatus().ordinal() < MembershipStatus.REMOVED.ordinal()) {
@@ -496,7 +518,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			
 			// we don't stackGroupMember here, we only care about transitions to REMOVED for timestamp 
 			// updating (right now anyway)
-			DataService.currentSessionRW().changed(GroupDMO.class, group.getGuid(), "canSeeMembers");
+			invalidateGroupMemberStatus(groupMember);
 			LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
 					groupMember.getMember().getGuid(), GroupEvent.Detail.MEMBERS_CHANGED));
 		} else {

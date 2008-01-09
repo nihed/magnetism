@@ -15,6 +15,9 @@ import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.dm.BlockDMOKey;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.GroupMemberBlockDMO;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -136,6 +139,15 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 		if (a == null)
 			return; // ignore "resource" members
 		
+		Block block;
+		try {
+			 block = stacker.queryBlock(getKey(member.getGroup(), a.getOwner()));
+		} catch (NotFoundException e) {
+			// Could possibly occur if the account owning the resource of the member changes
+			// since we don't create new blocks in that case
+			return;
+		}
+		
 		// we no longer consider membership status changes as group participation,
 		// because they make group mugshots too noisy
 		switch (member.getStatus()) {
@@ -152,5 +164,7 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 			break;
 			// don't add a default case, we want a warning if any are missing
 		}
+		
+		DataService.currentSessionRW().changed(GroupMemberBlockDMO.class, new BlockDMOKey(block), "status");
 	}
 }
