@@ -11,7 +11,8 @@ import com.dumbhippo.dm.schema.DMPropertyHolder;
 import com.dumbhippo.dm.schema.ResourcePropertyHolder;
 
 
-public class PropertyFetchNode {
+public class PropertyFetchNode implements Comparable<PropertyFetchNode> {
+	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(PropertyFetchNode.class); 
 	
 	private String property;
@@ -81,6 +82,28 @@ public class PropertyFetchNode {
 		}
 	}
 
+	// FIXME: We should probably validate the types during or immediately after parsing
+
+	private boolean getNotify() {
+		for (FetchAttributeNode attr : attributes) {
+			if (attr.getType() == FetchAttributeType.NOTIFY &&
+				attr.getValue() instanceof Boolean)
+				return (Boolean)attr.getValue();
+		}
+		
+		return true;
+	}
+	
+	private int getMax() {
+		for (FetchAttributeNode attr : attributes) {
+			if (attr.getType() == FetchAttributeType.MAX &&
+				attr.getValue() instanceof Integer)
+				return (Integer)attr.getValue();
+		}
+		
+		return -1;
+	}
+
 	/**
 	 * Finds all properties in the given class and in *subclasses* of the given class
 	 * that match this node, bind them and return the result.
@@ -91,28 +114,8 @@ public class PropertyFetchNode {
 	 * @param resultList list to append the results to 
 	 */
 	public void bind(DMClassHolder<?,?> classHolder, boolean skipDefault, List<PropertyFetch> resultList) {
-		int max = -1;
-		boolean notify = true;
-		for (FetchAttributeNode attribute : attributes) {
-			switch (attribute.getType()) {
-			case MAX:
-				// FIXME: We probably should make bind() throw an exception and make this fatal
-				if (!(attribute.getValue() instanceof Integer)) {
-					logger.warn("Ignoring non-integer max attribute");
-					continue;
-				}
-				max = ((Integer)(attribute.getValue()));
-				break;
-			case NOTIFY:
-				// FIXME: We probably should make bind() throw an exception and make this fatal
-				if (!(attribute.getValue() instanceof Boolean)) {
-					logger.warn("Ignoring non-boolean notify attribute");
-					continue;
-				}
-				notify = ((Boolean)(attribute.getValue())).booleanValue();
-				break;
-			}
-		}
+		int max = getMax();
+		boolean notify = getNotify();
 		
 		bindToClass(classHolder, skipDefault, resultList, max, notify);
 		for (DMClassHolder<?,?> subclassHolder : classHolder.getDerivedClasses())
@@ -147,5 +150,86 @@ public class PropertyFetchNode {
 		}
 		
 		return b.toString();
+	}
+
+	/* This sort is used in FetchNode to sort properties to make merging easy */
+	public int compareTo(PropertyFetchNode other) {
+		return property.compareTo(other.property);
+	}
+
+	public PropertyFetchNode merge(PropertyFetchNode other) {
+		assert(property.equals(other.property));
+		
+		FetchNode newChildren;
+		
+		if (other.children == null)
+			newChildren = children;
+		else if (children == null)
+			newChildren = other.children;
+		else
+			newChildren = children.merge(other.children);
+
+		FetchAttributeNode newAttr[];
+
+		if (other.attributes.length == 0)
+			newAttr = attributes;
+		else if (attributes.length == 0)
+			newAttr = other.attributes;
+		else {
+			int newMax = Math.max(getMax(), other.getMax());
+			boolean newNotify = getNotify() || other.getNotify();
+			
+			if (newMax >= 0 && !newNotify)
+				newAttr = new FetchAttributeNode[] {
+						new FetchAttributeNode(FetchAttributeType.MAX, newMax),
+						new FetchAttributeNode(FetchAttributeType.NOTIFY, newNotify),
+			    };
+			else if (newMax >= 0)
+				newAttr = new FetchAttributeNode[] {
+						new FetchAttributeNode(FetchAttributeType.MAX, newMax)
+			    };
+			else if (!newNotify)
+				newAttr = new FetchAttributeNode[] {
+						new FetchAttributeNode(FetchAttributeType.NOTIFY, newNotify),
+			    };
+			else
+				newAttr = new FetchAttributeNode[0];
+		}
+		
+		// Common special case is "name".merge("name"), avoid allocation for that
+		if (newAttr == attributes && newChildren == children)
+			return this;
+		else if (newAttr == other.attributes && newChildren == other.children)
+			return other;
+		else
+			return new PropertyFetchNode(property, newAttr, newChildren);
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof PropertyFetchNode))
+			return false;
+		
+		PropertyFetchNode other = (PropertyFetchNode)o;
+		
+		if (!other.property.equals(property))
+			return false;
+		
+		// We count "property []" as different than "property" for convenience 
+		if (children != null) {
+			if (!children.equals(other.children))
+				return false;
+		} else {
+			if (other.children != null)
+				return false;
+		}
+		
+		if (getMax() != other.getMax())
+			return false;
+		
+		if (getNotify() != other.getNotify())
+			return false;
+		
+		return true;
 	}
 }

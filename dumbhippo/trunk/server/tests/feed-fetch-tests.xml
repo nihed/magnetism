@@ -9,7 +9,7 @@
 		<be:resource m:resourceId="blogEntry/$(bob).2" m:indirect="true" m:fetch="title">
 			<be:title>Stupid Alligator Tricks</be:title>
 		</be:resource>
-		<u:resource m:resourceId="user/$(bob)" m:fetch="blogEntries">
+		<u:resource m:resourceId="user/$(bob)" m:fetch="blogEntries title">
 			<u:blogEntries m:resourceId="blogEntry/$(bob).2" m:ts="1163532712000"/>
 		</u:resource>
 	</fetchResult>
@@ -18,13 +18,13 @@
 		<be:resource m:resourceId="blogEntry/$(bob).1" m:indirect="true" m:fetch="title">
 			<be:title>My Life</be:title>
 		</be:resource>
-		<u:resource m:resourceId="user/$(bob)" m:fetch="blogEntries">
+		<u:resource m:resourceId="user/$(bob)" m:fetch="blogEntries(max=10) title">
 			<u:blogEntries m:resourceId="blogEntry/$(bob).1" m:ts="1151092892000"/>
 		</u:resource>
 	</fetchResult>
 	
 	<fetchResult id="bobsAlreadyFetchedFeed">
-		<u:resource m:resourceId="user/$(bob)" m:fetch="blogEntries">
+		<u:resource m:resourceId="user/$(bob)" m:fetch="blogEntries(max=10) title">
 		</u:resource>
 	</fetchResult>
 
@@ -32,7 +32,7 @@
 		<be:resource m:resourceId="blogEntry/$(bob).3" m:indirect="true" m:fetch="title">
 			<be:title>My 9-fingered Life</be:title>
 		</be:resource>
-		<u:resource m:resourceId="user/$(bob)" m:fetch="blogEntries">
+		<u:resource m:resourceId="user/$(bob)" m:fetch="blogEntries(max=10) title">
 			<u:blogEntries m:resourceId="blogEntry/$(bob).3" m:ts="1174657444000"/>
 		</u:resource>
 	</fetchResult>

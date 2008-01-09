@@ -22,10 +22,12 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 	
 	private PropertyFetch[] properties;
 	private boolean includeDefault;
+	private FetchNode unboundFetch;
 	
-	public BoundFetch(PropertyFetch[] properties, boolean includeDefault) {
+	public BoundFetch(PropertyFetch[] properties, boolean includeDefault, FetchNode unboundFetch) {
 		this.properties = properties;
 		this.includeDefault = includeDefault;
+		this.unboundFetch = unboundFetch;
 	}
 	
 	public PropertyFetch[] getProperties() {
@@ -73,8 +75,8 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 		else
 			oldFetch = null;
 
-		boolean allFetched = true;
-		boolean noneFetched = true;
+		// boolean allFetched = true;
+		// boolean noneFetched = true;
 		boolean newAnyFetched = false;
 		
 		int newIndex = 0, oldIndex = 0;
@@ -108,10 +110,10 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 				newChildren = classProperties[classIndex].getDefaultChildren();
 			}
 			
-			if (oldFetched || newFetched)
-				noneFetched = false;
-			else
-				allFetched = false;
+			// if (oldFetched || newFetched)
+			//	noneFetched = false;
+			// else
+			//	 allFetched = false;
 			
 			if (newFetched && !oldFetched)
 				newAnyFetched = true;
@@ -176,41 +178,28 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 		// Otherwise, if there are no new properties to fetch, we are done 
 		if (indirect && oldFetch != null && !newAnyFetched)
 			return;
-		
-		String fetchString = null;
-		if (needFetch == true) {
-			if (noneFetched)
-				fetchString = "";
-			else if (allFetched)
-				fetchString = "*";
-			else {
-				StringBuilder sb = new StringBuilder();
-				
-				if ((oldFetch != null && oldFetch.getIncludeDefault()) || getIncludeDefault())
-					sb.append("+");
-				
-				newIndex = 0; oldIndex = 0;
-				newOrdering = propertyOrdering(0);
-				oldOrdering = oldFetch != null ? oldFetch.propertyOrdering(0) : Long.MAX_VALUE;
-				for (int classIndex = 0; classIndex < classProperties.length; classIndex++) {
-					long classOrdering = classOrdering(classProperties, classIndex);
 
-					while (oldOrdering < classOrdering)
-						oldOrdering = oldFetch.propertyOrdering(++oldIndex);
-					while (newOrdering < classOrdering)
-						newOrdering = propertyOrdering(++newIndex);
-					
-					boolean oldFetched = oldOrdering == classOrdering || (oldFetch != null && oldFetch.includeDefault && classProperties[classIndex].getDefaultInclude());
-					boolean newFetched = newOrdering == classOrdering || (includeDefault && classProperties[classIndex].getDefaultInclude());
-					
-					if (oldFetched || newFetched)
-						appendToFetchString(sb, classProperties[classIndex], classHolder.mustQualifyProperty(classIndex));
-				}
-				
-				fetchString = sb.toString();
-			}
-		}
-		
+		// The protocol requirement here is that the fetch string that we send
+		// includes all newly fetched and monitored properties; it doesn't need
+		// to include previously fetched properties. We keep things simple for
+		// now by sending exactly the fetch supplied by the client. (For a notification, 
+		// that will be merge of previous fetches; for a request it's the fetch in that 
+		// request.)
+		//
+		// We could:
+		//
+		//  * Expand '+' to '+;<property1> <property1 children>;<property2> ....'
+		//    saves round trips at the expense of protocol efficiency, since the
+		//    client can know to short-circuit a later request for property1.
+		//
+		//  * Add a '*' if all properties are fetched, to let the client know
+		//    that fetches for additional properties will not succeed.
+		//
+		//  * Omit properties from the fetch string that were previously sent.
+		//    even if they are explicitly requested again. (We already do this
+		//    for property *values*, just not in the fetch string.)
+		// 
+		String fetchString = needFetch ? unboundFetch.toString() : null;
 		visitor.beginResource(classHolder, object.getKey(), fetchString, indirect);
 
 		newIndex = 0; oldIndex = 0;
@@ -271,15 +260,6 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 		visit(session, object, visitor, false);
 	}
 	
-	private void appendToFetchString(StringBuilder sb, DMPropertyHolder<?,?,?> propertyHolder, boolean qualify) {
-		if (sb.length() > 0)
-			sb.append(";");
-		if (qualify)
-			sb.append(propertyHolder.getPropertyId());
-		else
-			sb.append(propertyHolder.getName());
-	}
-
 	@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof BoundFetch))
@@ -362,9 +342,16 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 			}
 		}
 		
+		FetchNode unboundFetch = this.unboundFetch.merge(other.unboundFetch);
+		
 		// If the other property is a subset of this one, we can just return this one
-		if (!changedProperties && newCount == this.properties.length && (this.includeDefault || !other.includeDefault))
-			return this;
+		// and vice-versa
+		if (!changedProperties) {
+			if (newCount == this.properties.length && (this.includeDefault || !other.includeDefault) && unboundFetch == this.unboundFetch)
+				return this;
+			else if (newCount == other.properties.length && (other.includeDefault || !this.includeDefault) && unboundFetch == other.unboundFetch)
+				return other;
+		}
 		
 		PropertyFetch[] newProperties = new PropertyFetch[newCount];
 		
@@ -390,7 +377,7 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 		}
 		
 		@SuppressWarnings("unchecked")
-		BoundFetch<?, ?> newFetch = new BoundFetch(newProperties, this.includeDefault || other.includeDefault);
+		BoundFetch<?, ?> newFetch = new BoundFetch(newProperties, this.includeDefault || other.includeDefault, unboundFetch);
 		
 		return newFetch;
 	}
@@ -456,49 +443,7 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 			result.addNotification(client, key, this, notifiedMask, childFetches, maxes);
 	}
 	
-	public <U extends T> String getFetchString(DMClassHolder<K,U> classHolder) {
-		DMPropertyHolder<K,U,?>[] classProperties = classHolder.getProperties();
-		
-		boolean allFetched = true;
-		boolean noneFetched = true;
-		
-		int propertyIndex = 0;
-		long propertyOrdering = propertyOrdering(0);
-		for (int classIndex = 0; classIndex < classProperties.length; classIndex++) {
-			long classOrdering = classOrdering(classProperties, classIndex);
-
-			while (propertyOrdering < classOrdering)
-				propertyOrdering = propertyOrdering(++propertyIndex);
-
-			boolean fetch = propertyOrdering == classOrdering || (includeDefault && classProperties[classIndex].getDefaultInclude());
-			
-			if (fetch)
-				noneFetched = false;
-			else
-				allFetched = false;
-		}
-		
-		if (noneFetched)
-			return "";
-		else if (allFetched)
-			return "*";
-
-		StringBuilder sb = new StringBuilder();
-			
-		propertyIndex = 0;
-		propertyOrdering = propertyOrdering(0);
-		for (int classIndex = 0; classIndex < classProperties.length; classIndex++) {
-			long classOrdering = classOrdering(classProperties, classIndex);
-
-			while (propertyOrdering < classOrdering)
-				propertyOrdering = propertyOrdering(++propertyIndex);
-			
-			boolean fetch = propertyOrdering == classOrdering || (includeDefault && classProperties[classIndex].getDefaultInclude());
-			
-			if (fetch)
-				appendToFetchString(sb, classProperties[classIndex], classHolder.mustQualifyProperty(classIndex));
-		}
-			
-		return sb.toString();
+	public <U extends T> String getFetchString() {
+		return unboundFetch.toString();
 	}
 }
