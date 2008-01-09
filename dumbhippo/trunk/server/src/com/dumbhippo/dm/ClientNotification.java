@@ -113,7 +113,7 @@ public class ClientNotification {
 				}
 			}
 			
-			visitor.beginResource(key.getClassHolder(), key.getKey(), fetch.getFetchString(classHolder), false);
+			visitor.beginResource(key.getClassHolder(), key.getKey(), fetch.getFetchString(), false);
 			
 			v = propertyMask;
 			propertyIndex = 0;
