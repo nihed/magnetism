@@ -190,14 +190,18 @@ public final class BoundFetch<K,T extends DMObject<K>> {
 		//
 		//  * Expand '+' to '+;<property1> <property1 children>;<property2> ....'
 		//    saves round trips at the expense of protocol efficiency, since the
-		//    client can know to short-circuit a later request for property1.
+		//    client can know to short-circuit a later request for '<property1>'.
 		//
 		//  * Add a '*' if all properties are fetched, to let the client know
 		//    that fetches for additional properties will not succeed.
 		//
 		//  * Omit properties from the fetch string that were previously sent.
 		//    even if they are explicitly requested again. (We already do this
-		//    for property *values*, just not in the fetch string.)
+		//    for property *values*, just not in the fetch string.) Compacts
+		//    the protocol a bit.
+		//
+		// But for the case where most of our traffic is requests for '+',
+		// this simple approach works fine.
 		// 
 		String fetchString = needFetch ? unboundFetch.toString() : null;
 		visitor.beginResource(classHolder, object.getKey(), fetchString, indirect);
