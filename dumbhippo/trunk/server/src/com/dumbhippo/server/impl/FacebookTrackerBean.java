@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -307,10 +306,6 @@ public class FacebookTrackerBean implements FacebookTracker {
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public void publishUserAction(final Block block, final User user) {		
 		TxUtils.assertNoTransaction();
-		
-    	// let's publish Facebook news items about roughly one of 20 tracks the user plays
-    	if (block.getBlockType() == BlockType.MUSIC_PERSON && (new Random()).nextInt(20) != 19)
-    		return;
     	
 		try {
 			FacebookAccount facebookAccount = TxUtils.runInTransaction(new Callable<FacebookAccount>() {
