@@ -19,12 +19,9 @@ typedef struct _HippoGroupClass HippoGroupClass;
 GType            hippo_group_get_type                  (void) G_GNUC_CONST;
 HippoGroup*      hippo_group_new                       (const char  *guid);
 
-GTime          hippo_group_get_date_last_ignored   (HippoGroup    *group);
-gboolean       hippo_group_get_ignored             (HippoGroup    *group);
-void           hippo_group_set_date_last_ignored   (HippoGroup    *group,
-                                                    GTime          date);
-void           hippo_group_set_ignored             (HippoGroup    *group,
-                                                    gboolean       is_ignored);
+HippoGroup*      hippo_group_get_for_resource (DDMDataResource *resource);
+
+HippoMembershipStatus hippo_group_get_status (HippoGroup *group);
 
 G_END_DECLS
 

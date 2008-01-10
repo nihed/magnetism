@@ -729,27 +729,6 @@ hippo_options_free_fields(HippoOptions *options)
     g_strfreev(options->restart_argv);
 }
 
-const char*
-hippo_hotness_debug_string(HippoHotness hotness)
-{
-    switch (hotness) {
-    case HIPPO_HOTNESS_COLD:
-        return "COLD";
-    case HIPPO_HOTNESS_COOL:
-        return "COOL";
-    case HIPPO_HOTNESS_WARM:
-        return "WARM";
-    case HIPPO_HOTNESS_GETTING_HOT:
-        return "GETTING_HOT";
-    case HIPPO_HOTNESS_HOT:
-        return "HOT";
-    case HIPPO_HOTNESS_UNKNOWN:
-        return "UNKNOWN";
-    }
-    /* not a default case so we get a warning if we omit one from the switch */
-    return "WHAT THE?";
-}
-
 /* FIXME not really clear on how uri escaping relates to 
  * character encoding, i.e. is %NN a binary byte which expands
  * to part of a utf-8 char, or is %NN the Unicode codepoint?
@@ -1382,6 +1361,29 @@ hippo_current_time_ms(void)
 
     g_get_current_time(&now);
     return (gint64)now.tv_sec * 1000 + now.tv_usec / 1000;
+}
+
+gboolean
+hippo_membership_status_from_string(const char            *s,
+                                    HippoMembershipStatus *result)
+{
+    static const struct { const char *name; HippoMembershipStatus status; } statuses[] = {
+        { "NONMEMBER", HIPPO_MEMBERSHIP_STATUS_NONMEMBER },
+        { "INVITED_TO_FOLLOW", HIPPO_MEMBERSHIP_STATUS_INVITED_TO_FOLLOW },
+        { "FOLLOWER", HIPPO_MEMBERSHIP_STATUS_FOLLOWER },
+        { "REMOVED", HIPPO_MEMBERSHIP_STATUS_REMOVED },
+        { "INVITED", HIPPO_MEMBERSHIP_STATUS_INVITED },
+        { "ACTIVE", HIPPO_MEMBERSHIP_STATUS_ACTIVE }
+    };
+    unsigned int i;
+    for (i = 0; i < G_N_ELEMENTS(statuses); ++i) {
+        if (strcmp(s, statuses[i].name) == 0) {
+            *result = statuses[i].status;
+            return TRUE;
+        }
+    }
+    g_warning("Unknown membership status '%s'", s);
+    return FALSE;
 }
 
 /* this returns a value with the port in it already */

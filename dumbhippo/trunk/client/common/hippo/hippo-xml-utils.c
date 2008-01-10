@@ -94,7 +94,6 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
                               GError         **error)
 {
     HippoEntity *entity;
-    HippoPost *post;
     
     switch (info->flags & HIPPO_SPLIT_TYPE_MASK) {
     case HIPPO_SPLIT_NODE:
@@ -163,7 +162,7 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
             return FALSE;
         }
 
-        entity = hippo_data_cache_lookup_entity(cache, value);
+        entity = NULL; /* hippo_data_cache_lookup_entity(cache, value); */
         if (!entity) {
             g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
                         "Value '%s' for attribute '%s' of node <%s/> is not a entity we know about",
@@ -188,29 +187,6 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
         }
         
         *(HippoEntity **)info->location = entity;
-        break;
-    case HIPPO_SPLIT_POST:
-        CHECK_NULL_IF_OPTIONAL(info, HippoPost*);
-        
-        if (!cache)
-            g_error("HIPPO_SPLIT_POST used without passing in a HippoDataCache");
-        
-        if (!hippo_verify_guid(value)) {
-            g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
-                        "Value '%s' for attribute '%s' of node <%s/> is not a GUID",
-                        value, info->attribute_name, node_name);
-            return FALSE;
-        }
-
-        post = hippo_data_cache_lookup_post(cache, value);
-        if (!post) {
-            g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
-                        "Value '%s' for attribute '%s' of node <%s/> is not a post we know about",
-                        value, info->attribute_name, node_name);
-            return FALSE;
-        }
-
-        *(HippoPost **)info->location = post;
         break;
     case HIPPO_SPLIT_URI_ABSOLUTE:
         CHECK_NULL_IF_OPTIONAL(info, char*);

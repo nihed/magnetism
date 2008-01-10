@@ -95,7 +95,6 @@ hippo_canvas_block_amazon_activity_init(HippoCanvasBlockAmazonActivity *block_am
 {
     HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(block_amazon_activity);
 
-    block->required_type = HIPPO_BLOCK_TYPE_AMAZON_ACTIVITY;
     block->skip_heading = TRUE;    
 }
 
@@ -478,7 +477,7 @@ set_person(HippoCanvasBlockAmazonActivity *block_amazon_activity,
     set_list_item_comment_markup(block_amazon_activity);
 
     hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(block_amazon_activity),
-                                  person ? hippo_entity_get_guid(HIPPO_ENTITY(person)) : NULL);
+                                  person ? HIPPO_ENTITY(person) : NULL);
 }
 
 static void
@@ -779,10 +778,10 @@ hippo_canvas_block_amazon_activity_set_block(HippoCanvasBlock *canvas_block,
                  "block", canvas_block->block,
                  NULL);
     g_object_set(block_amazon_activity->last_message_preview,
-                 "block", canvas_block->block,
+                 "block", canvas_block->block ? hippo_block_get_resource(canvas_block->block) : NULL,
                  NULL);
     g_object_set(block_amazon_activity->chat_preview,
-                 "block", canvas_block->block,
+                 "block", canvas_block->block ? hippo_block_get_resource(canvas_block->block) : NULL,
                  NULL);
     
     if (canvas_block->block != NULL) {

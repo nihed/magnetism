@@ -2,7 +2,6 @@
 #include "hippo-common-internal.h"
 #include "hippo-block-abstract-person.h"
 #include "hippo-person.h"
-#include "hippo-xml-utils.h"
 #include <string.h>
 
 static void      hippo_block_abstract_person_init                (HippoBlockAbstractPerson       *block_abstract_person);
@@ -10,6 +9,8 @@ static void      hippo_block_abstract_person_class_init          (HippoBlockAbst
 
 static void      hippo_block_abstract_person_dispose             (GObject              *object);
 static void      hippo_block_abstract_person_finalize            (GObject              *object);
+
+static void      hippo_block_abstract_person_update              (HippoBlock           *block);
 
 static void hippo_block_abstract_person_set_property (GObject      *object,
                                                       guint         prop_id,
@@ -43,7 +44,7 @@ hippo_block_abstract_person_init(HippoBlockAbstractPerson *block_abstract_person
 static void
 hippo_block_abstract_person_class_init(HippoBlockAbstractPersonClass *klass)
 {
-    /* HippoBlockClass *block_class = HIPPO_BLOCK_CLASS(klass); */
+    HippoBlockClass *block_class = HIPPO_BLOCK_CLASS(klass);
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
     object_class->set_property = hippo_block_abstract_person_set_property;
@@ -51,6 +52,8 @@ hippo_block_abstract_person_class_init(HippoBlockAbstractPersonClass *klass)
 
     object_class->dispose = hippo_block_abstract_person_dispose;
     object_class->finalize = hippo_block_abstract_person_finalize;
+
+    block_class->update = hippo_block_abstract_person_update;
 
     g_object_class_install_property(object_class,
                                     PROP_USER,
@@ -136,3 +139,25 @@ hippo_block_abstract_person_get_user(HippoBlockAbstractPerson *block_person)
 {
     return block_person->user;
 }
+
+static void
+hippo_block_abstract_person_update(HippoBlock *block)
+{
+    HippoBlockAbstractPerson *block_person = HIPPO_BLOCK_ABSTRACT_PERSON(block);
+    DDMDataResource *owner_resource;
+
+    HIPPO_BLOCK_CLASS(hippo_block_abstract_person_parent_class)->update(block);
+    
+    ddm_data_resource_get(block->resource,
+                          "owner", DDM_DATA_RESOURCE, &owner_resource,
+                          NULL);
+
+    if (owner_resource != NULL) {
+        HippoPerson *owner = hippo_person_get_for_resource(owner_resource);
+        hippo_block_abstract_person_set_user(block_person, owner);
+        g_object_unref(owner);
+    } else {
+        hippo_block_abstract_person_set_user(block_person, NULL);
+    }
+}
+

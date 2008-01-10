@@ -61,17 +61,12 @@ HippoState       hippo_connection_get_state                 (HippoConnection  *c
  */
 gboolean         hippo_connection_get_connected             (HippoConnection  *connection);
 
-/* Essentially whether or not the data cache has been primed */
-gboolean         hippo_connection_get_contacts_loaded       (HippoConnection  *connection);
-
 /* signin returns TRUE if we're waiting on the user to set the login cookie, FALSE if we already have it */
 gboolean         hippo_connection_signin                    (HippoConnection  *connection);
 void             hippo_connection_signout                   (HippoConnection  *connection);
 /* TRUE if user needs to log in (we think we have no login cookie) */
 gboolean         hippo_connection_get_need_login            (HippoConnection  *connection);
 
-void             hippo_connection_set_post_ignored          (HippoConnection  *connection,
-                                                             const char       *post_id);
 void             hippo_connection_do_invite_to_group        (HippoConnection  *connection,
                                                              const char       *group_id,
                                                              const char       *person_id);                                                             
@@ -110,9 +105,6 @@ void             hippo_connection_send_quip                 (HippoConnection *co
                                                              const char      *text,
                                                              HippoSentiment   sentiment);
 
-void             hippo_connection_request_chat_room_details (HippoConnection *connection,
-                                                             HippoChatRoom   *room);
-
 void     hippo_connection_request_prefs             (HippoConnection *connection);
 void     hippo_connection_request_hotness           (HippoConnection *connection);
 void     hippo_connection_request_blocks            (HippoConnection *connection,
@@ -120,7 +112,6 @@ void     hippo_connection_request_blocks            (HippoConnection *connection
                                                      const char      *filter);
 
 void     hippo_connection_request_title_patterns    (HippoConnection *connection);
-void     hippo_connection_request_contacts          (HippoConnection *connection);
 
 
 void     hippo_connection_set_block_hushed          (HippoConnection *connection,
@@ -150,16 +141,6 @@ gint64   hippo_connection_get_server_time_offset    (HippoConnection *connection
 void     hippo_connection_update_last_blocks_timestamp (HippoConnection *connection,
                                                         gint64           timestamp);
 
-void hippo_connection_request_myspace_name          (HippoConnection *connection);
-void hippo_connection_request_myspace_blog_comments (HippoConnection *connection);
-void hippo_connection_request_myspace_contacts      (HippoConnection *connection);
-void hippo_connection_add_myspace_comment           (HippoConnection *connection,
-                                                     int              comment_id,
-                                                     int              poster_id);
-void hippo_connection_notify_myspace_contact_post   (HippoConnection *connection,
-                                                     const char      *myspace_name);
-
-
 const char*      hippo_connection_get_tooltip       (HippoConnection *connection);
 
 /* return string form of enum values */
@@ -188,8 +169,6 @@ void hippo_connection_send_desktop_setting     (HippoConnection *connection,
                                                 const char      *key,
                                                 const char      *value);
                                                 
-void hippo_connection_request_mugshot_whereim  (HippoConnection *connection); 
-
 guint hippo_connection_send_external_iq        (HippoConnection *connection,
                                                 gboolean         is_set,
                                                 const char      *element,

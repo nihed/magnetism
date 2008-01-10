@@ -1,7 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-common-internal.h"
 #include "hippo-block-account-question.h"
-#include "hippo-xml-utils.h"
 #include <string.h>
 
 static void      hippo_block_account_question_init                (HippoBlockAccountQuestion       *block_account_question);
@@ -10,9 +9,7 @@ static void      hippo_block_account_question_class_init          (HippoBlockAcc
 static void      hippo_block_account_question_dispose             (GObject              *object);
 static void      hippo_block_account_question_finalize            (GObject              *object);
 
-static gboolean  hippo_block_account_question_update_from_xml     (HippoBlock           *block,
-                                                                   HippoDataCache       *cache,
-                                                                   LmMessageNode        *node);
+static void      hippo_block_account_question_update              (HippoBlock           *block);
 
 static void hippo_block_account_question_set_property (GObject      *object,
                                                        guint         prop_id,
@@ -82,7 +79,7 @@ hippo_block_account_question_class_init(HippoBlockAccountQuestionClass *klass)
     object_class->dispose = hippo_block_account_question_dispose;
     object_class->finalize = hippo_block_account_question_finalize;
 
-    block_class->update_from_xml = hippo_block_account_question_update_from_xml;
+    block_class->update = hippo_block_account_question_update;
     
     g_object_class_install_property(object_class,
                                     PROP_ANSWER,
@@ -256,58 +253,43 @@ hippo_block_account_question_get_property(GObject         *object,
 }
 
 
-static gboolean
-hippo_block_account_question_update_from_xml (HippoBlock           *block,
-                                              HippoDataCache       *cache,
-                                              LmMessageNode        *node)
+static void
+hippo_block_account_question_update (HippoBlock *block)
 {
     HippoBlockAccountQuestion *block_account_question = HIPPO_BLOCK_ACCOUNT_QUESTION(block);
-    LmMessageNode *account_question_node;
-    LmMessageNode *buttons_node = NULL;
     const char *title = NULL;
     const char *description = NULL;
     const char *more_link = NULL;
     const char *answer = NULL;
+    GSList *button_strings = NULL;
     GSList *buttons = NULL;
-    
+    GSList *l;
 
-    if (!HIPPO_BLOCK_CLASS(hippo_block_account_question_parent_class)->update_from_xml(block, cache, node))
-        return FALSE;
+    HIPPO_BLOCK_CLASS(hippo_block_account_question_parent_class)->update(block);
 
-    if (!hippo_xml_split(cache, node, NULL,
-                         "accountQuestion", HIPPO_SPLIT_NODE, &account_question_node,
-                         NULL))
-        return FALSE;
-    
-    if (!hippo_xml_split(cache, account_question_node, NULL,
-                         "title", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &title,
-                         "description", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &description,
-                         "answer", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &answer,
-                         "buttons", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &buttons_node,
-                         "moreLink", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &more_link,
-                         NULL))
-        return FALSE;
+    ddm_data_resource_get(block->resource,
+                          "title", DDM_DATA_STRING, &title,
+                          "description", DDM_DATA_STRING, &description,
+                          "moreLink", DDM_DATA_URL, &more_link,
+                          "answer", DDM_DATA_STRING, &answer,
+                          "buttons", DDM_DATA_STRING | DDM_DATA_LIST, &button_strings,
+                          NULL);
 
-    if (buttons_node) {
-        LmMessageNode *child;
+    for (l = button_strings; l; l = l->next) {
+        const char *str = l->data;
+        const char *colon = strchr(l->data, ':');
+        char *response;
         
-        for (child = buttons_node->children; child; child = child->next) {
-            const char *text;
-            const char *response;
-            
-            if (!strcmp(child->name, "button") == 0)
-                continue;
-
-            if (!hippo_xml_split(cache, child, NULL,
-                                 "text", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &text,
-                                 "response", HIPPO_SPLIT_STRING, &response,
-                                 NULL))
-                continue;
-
-            buttons = g_slist_prepend(buttons, hippo_account_question_button_new(text, response));
+        if (colon == NULL) {
+            g_warning("Button isn't of the form response:Text");
+            continue;
         }
-    }
 
+        response = g_strndup(str, colon - str);
+        buttons = g_slist_prepend(buttons, hippo_account_question_button_new(colon + 1, response));
+        g_free(response);
+    }
+    
     buttons = g_slist_reverse(buttons);
             
     set_answer(block_account_question, answer);
@@ -316,8 +298,6 @@ hippo_block_account_question_update_from_xml (HippoBlock           *block,
     set_more_link(block_account_question, more_link);
     hippo_block_set_pinned(block, answer == NULL);
     set_buttons(block_account_question, buttons); /* Assumes ownership */
-
-    return TRUE;
 }
 
 static HippoAccountQuestionButton *

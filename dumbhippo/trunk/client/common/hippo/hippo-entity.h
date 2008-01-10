@@ -3,7 +3,7 @@
 #define __HIPPO_ENTITY_H__
 
 #include <hippo/hippo-basics.h>
-#include <loudmouth/loudmouth.h>
+#include <ddm/ddm.h>
 
 G_BEGIN_DECLS
 
@@ -25,12 +25,6 @@ typedef struct _HippoEntityClass HippoEntityClass;
 #define HIPPO_ENTITY_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_ENTITY, HippoEntityClass))
 
 GType            hippo_entity_get_type            (void) G_GNUC_CONST;
-HippoEntity*     hippo_entity_new                 (HippoEntityType type,
-                                                   const char     *guid);
-
-gboolean         hippo_entity_update_from_xml     (HippoEntity    *entity,
-                                                   HippoDataCache *cache,
-                                                   LmMessageNode  *node);
 
 const char*      hippo_entity_get_guid            (HippoEntity    *entity);
 HippoEntityType  hippo_entity_get_entity_type     (HippoEntity    *entity);

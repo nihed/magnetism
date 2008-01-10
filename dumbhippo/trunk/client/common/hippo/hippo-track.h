@@ -43,6 +43,9 @@ typedef enum {
     HIPPO_SONG_DOWNLOAD_RHAPSODY
 } HippoSongDownloadSource;
 
+HippoSongDownload *hippo_song_download_new_from_string (const char        *string);
+void               hippo_song_download_free            (HippoSongDownload *download);
+
 HippoSongDownloadSource hippo_song_download_get_source(HippoSongDownload *download);
 const char* hippo_song_download_get_url(HippoSongDownload *download);
 const char* hippo_song_download_source_get_name(HippoSongDownloadSource source);

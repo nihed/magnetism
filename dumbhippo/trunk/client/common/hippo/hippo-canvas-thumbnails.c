@@ -3,159 +3,88 @@
 #include <string.h>
 #include <cairo.h>
 #include "hippo-canvas-thumbnails.h"
-#include "hippo-thumbnails.h"
+#include "hippo-canvas-thumbnail.h"
+#include "hippo-canvas-resource.h"
 #include <hippo/hippo-canvas-item.h>
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-url-image.h>
 #include <hippo/hippo-canvas-url-link.h>
 
-static void      hippo_canvas_thumbnails_init                (HippoCanvasThumbnails       *thumbnails);
-static void      hippo_canvas_thumbnails_class_init          (HippoCanvasThumbnailsClass  *klass);
-static void      hippo_canvas_thumbnails_iface_init          (HippoCanvasItemIface   *item_class);
 static void      hippo_canvas_thumbnails_dispose             (GObject                *object);
 static void      hippo_canvas_thumbnails_finalize            (GObject                *object);
 
-static void hippo_canvas_thumbnails_set_property (GObject      *object,
-                                                  guint         prop_id,
-                                                  const GValue *value,
-                                                  GParamSpec   *pspec);
-static void hippo_canvas_thumbnails_get_property (GObject      *object,
-                                                  guint         prop_id,
-                                                  GValue       *value,
-                                                  GParamSpec   *pspec);
+static void hippo_canvas_thumbnails_create_children (HippoCanvasResource *canvas_resource);
+static void hippo_canvas_thumbnails_update          (HippoCanvasResource *canvas_resource);
 
-static void set_thumbnails (HippoCanvasThumbnails *canvas_thumbnails,
-                            HippoThumbnails       *thumbnails);
-static void set_actions    (HippoCanvasThumbnails *canvas_thumbnails,
-                            HippoActions          *actions);
+static void hippo_canvas_thumbnails_get_property(GObject         *object,
+                                                 guint            prop_id,
+                                                 GValue          *value,
+                                                 GParamSpec      *pspec);
 
 struct _HippoCanvasThumbnails {
-    HippoCanvasBox parent;
+    HippoCanvasResource parent;
 
-    HippoActions *actions;
-    HippoThumbnails *thumbnails;
+    HippoCanvasItem *more_link;
+    HippoCanvasBox *thumbs_box;
+
+    GSList *thumbnails;
 };
 
 struct _HippoCanvasThumbnailsClass {
-    HippoCanvasBoxClass parent_class;
+    HippoCanvasResourceClass parent_class;
 };
-
-enum {
-    NO_SIGNALS_YET,
-    LAST_SIGNAL
-};
-
-/* static int signals[LAST_SIGNAL]; */
 
 enum {
     PROP_0,
-    PROP_THUMBNAILS,
-    PROP_ACTIONS
+    PROP_HAS_THUMBNAILS
 };
 
-G_DEFINE_TYPE_WITH_CODE(HippoCanvasThumbnails, hippo_canvas_thumbnails, HIPPO_TYPE_CANVAS_BOX,
-                        G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_ITEM, hippo_canvas_thumbnails_iface_init));
+G_DEFINE_TYPE(HippoCanvasThumbnails, hippo_canvas_thumbnails, HIPPO_TYPE_CANVAS_RESOURCE)
 
 static void
-hippo_canvas_thumbnails_init(HippoCanvasThumbnails *thumbnails)
+hippo_canvas_thumbnails_init(HippoCanvasThumbnails *thumbnail)
 {
-}
-
-static HippoCanvasItemIface *item_parent_class;
-
-static void
-hippo_canvas_thumbnails_iface_init(HippoCanvasItemIface *item_class)
-{
-    item_parent_class = g_type_interface_peek_parent(item_class);
-
-    /* item_class->motion_notify_event = hippo_canvas_thumbnails_motion_notify_event; */
 }
 
 static void
 hippo_canvas_thumbnails_class_init(HippoCanvasThumbnailsClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    /* HippoCanvasBoxClass *box_class = HIPPO_CANVAS_BOX_CLASS(klass); */
-
-    object_class->set_property = hippo_canvas_thumbnails_set_property;
-    object_class->get_property = hippo_canvas_thumbnails_get_property;
+    HippoCanvasResourceClass *resource_class = HIPPO_CANVAS_RESOURCE_CLASS(klass);
 
     object_class->dispose = hippo_canvas_thumbnails_dispose;
     object_class->finalize = hippo_canvas_thumbnails_finalize;
 
-    g_object_class_install_property(object_class,
-                                    PROP_ACTIONS,
-                                    g_param_spec_object("actions",
-                                                        _("Actions"),
-                                                        _("UI actions object"),
-                                                        HIPPO_TYPE_ACTIONS,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+    object_class->get_property = hippo_canvas_thumbnails_get_property;
+
+    resource_class->create_children = hippo_canvas_thumbnails_create_children;
+    resource_class->update = hippo_canvas_thumbnails_update;
     
     g_object_class_install_property(object_class,
-                                    PROP_THUMBNAILS,
-                                    g_param_spec_object("thumbnails",
-                                                        _("Thumbnails"),
-                                                        _("The thumbnails to display"),
-                                                        HIPPO_TYPE_THUMBNAILS,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+                                    PROP_HAS_THUMBNAILS,
+                                    g_param_spec_boolean("has-thumbnails",
+                                                         _("Has Thumbnails"),
+                                                         _("Whether the block has any thumbnails"),
+                                                         FALSE,
+                                                         G_PARAM_READABLE));
 }
 
 static void
-hippo_canvas_thumbnails_dispose(GObject *object)
+hippo_canvas_thumbnails_dispose (GObject *object)
 {
-    HippoCanvasThumbnails *thumbnails = HIPPO_CANVAS_THUMBNAILS(object);
-
-    set_actions(thumbnails, NULL);
-    set_thumbnails(thumbnails, NULL);
-
+    HippoCanvasThumbnails *canvas_thumbnails = HIPPO_CANVAS_THUMBNAILS(object);
+    
+    g_slist_free(canvas_thumbnails->thumbnails);
+    canvas_thumbnails->thumbnails = NULL;
+    
     G_OBJECT_CLASS(hippo_canvas_thumbnails_parent_class)->dispose(object);
 }
 
 static void
-hippo_canvas_thumbnails_finalize(GObject *object)
+hippo_canvas_thumbnails_finalize (GObject *object)
 {
-    /* HippoCanvasThumbnails *thumbnails = HIPPO_CANVAS_THUMBNAILS(object); */
-
     G_OBJECT_CLASS(hippo_canvas_thumbnails_parent_class)->finalize(object);
-}
-
-HippoCanvasItem*
-hippo_canvas_thumbnails_new(void)
-{
-    HippoCanvasThumbnails *thumbnails = g_object_new(HIPPO_TYPE_CANVAS_THUMBNAILS, NULL);
-
-
-    return HIPPO_CANVAS_ITEM(thumbnails);
-}
-
-static void
-hippo_canvas_thumbnails_set_property(GObject         *object,
-                                     guint            prop_id,
-                                     const GValue    *value,
-                                     GParamSpec      *pspec)
-{
-    HippoCanvasThumbnails *thumbnails;
-
-    thumbnails = HIPPO_CANVAS_THUMBNAILS(object);
-
-    switch (prop_id) {
-    case PROP_THUMBNAILS:
-        {
-            HippoThumbnails *new_thumbs = (HippoThumbnails*) g_value_get_object(value);
-            set_thumbnails(thumbnails, new_thumbs);
-        }
-        break;
-    case PROP_ACTIONS:
-        {
-            HippoActions *actions = (HippoActions*) g_value_get_object(value);
-            set_actions(thumbnails, actions);
-        }
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-        break;
-    }
 }
 
 static void
@@ -164,153 +93,98 @@ hippo_canvas_thumbnails_get_property(GObject         *object,
                                      GValue          *value,
                                      GParamSpec      *pspec)
 {
-    HippoCanvasThumbnails *thumbnails;
+    HippoCanvasThumbnails *canvas_thumbnails;
 
-    thumbnails = HIPPO_CANVAS_THUMBNAILS (object);
+    canvas_thumbnails = HIPPO_CANVAS_THUMBNAILS (object);
 
     switch (prop_id) {
-    case PROP_THUMBNAILS:
-        g_value_set_object(value, thumbnails->thumbnails);
-        break;
-    case PROP_ACTIONS:
-        g_value_set_object(value, thumbnails->actions);
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+    case PROP_HAS_THUMBNAILS:
+        g_value_set_boolean(value, canvas_thumbnails->thumbnails != NULL);
         break;
     }
 }
 
 static void
-hippo_canvas_thumbnails_create_children(HippoCanvasThumbnails *canvas_thumbnails)
+hippo_canvas_thumbnails_create_children (HippoCanvasResource *canvas_resource)
 {
-    HippoCanvasBox *box;
-    int i;
-    HippoThumbnails *thumbnails;
-    HippoCanvasBox *thumbs_box;
-    HippoCanvasItem *more_link;
+    HippoCanvasThumbnails *canvas_thumbnails = HIPPO_CANVAS_THUMBNAILS(canvas_resource);
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(canvas_resource);
+    
     HippoCanvasBox *no_expand_box;
     
-    box = HIPPO_CANVAS_BOX(canvas_thumbnails);
-
-    hippo_canvas_box_remove_all(box);
-
-    thumbnails = canvas_thumbnails->thumbnails;
-
-    if (thumbnails == NULL)
-        return;
+    canvas_thumbnails->thumbs_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                                 "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                                                 "spacing", 8,
+                                                 "border", 8,
+                                                 NULL);
+    hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(canvas_thumbnails->thumbs_box), HIPPO_PACK_EXPAND);
     
-    thumbs_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                              "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                              "spacing", 8,
-                              "border", 8,
-                              NULL);
-    hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(thumbs_box), HIPPO_PACK_EXPAND);
-    
-    for (i = 0; i < hippo_thumbnails_get_count(thumbnails); ++i) {
-        HippoThumbnail *thumb;
-        HippoCanvasBox *thumb_box;
-        HippoCanvasItem *image;
-        HippoCanvasItem *caption;
-        
-        thumb = hippo_thumbnails_get_nth(thumbnails, i);
-        
-        thumb_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                                 "spacing", 4,
-                                 NULL);
-
-        no_expand_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                                     "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                                     "xalign", HIPPO_ALIGNMENT_CENTER,
-                                     "yalign", HIPPO_ALIGNMENT_CENTER,
-                                     NULL);
-        hippo_canvas_box_append(thumb_box, HIPPO_CANVAS_ITEM(no_expand_box), HIPPO_PACK_EXPAND);
-        
-        image = g_object_new(HIPPO_TYPE_CANVAS_URL_IMAGE,
-                             "actions", canvas_thumbnails->actions,
-                             "url", hippo_thumbnail_get_href(thumb),
-                             /* "tooltip", hippo_thumbnail_get_title(thumb), */
-                             NULL);
-        hippo_actions_load_thumbnail_async(canvas_thumbnails->actions,
-                                           hippo_thumbnail_get_src(thumb),
-                                           image);
-        hippo_canvas_box_append(no_expand_box, image, 0);
-
-        no_expand_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                                     "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                                     "xalign", HIPPO_ALIGNMENT_CENTER,
-                                     "yalign", HIPPO_ALIGNMENT_CENTER,
-                                     NULL);
-        hippo_canvas_box_append(thumb_box, HIPPO_CANVAS_ITEM(no_expand_box), HIPPO_PACK_EXPAND);
-
-        caption = g_object_new(HIPPO_TYPE_CANVAS_URL_LINK,
-                               "actions", canvas_thumbnails->actions,
-                               "url", hippo_thumbnail_get_href(thumb),
-                               "text", hippo_thumbnail_get_title(thumb),
-                               "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                               NULL);
-        hippo_canvas_box_append(no_expand_box, caption, 0);
-
-        hippo_canvas_box_append(thumbs_box,
-                                HIPPO_CANVAS_ITEM(thumb_box),
-                                HIPPO_PACK_EXPAND | HIPPO_PACK_IF_FITS);
-    }
-
     no_expand_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                  "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                                  NULL);
     hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(no_expand_box), 0);
 
-    more_link = g_object_new(HIPPO_TYPE_CANVAS_URL_LINK,
-                             "actions", canvas_thumbnails->actions,
-                             "url", hippo_thumbnails_get_more_link(thumbnails),
-                             "text", "More...",
-                             "tooltip", hippo_thumbnails_get_more_title(thumbnails),
-                             "xalign", HIPPO_ALIGNMENT_START,
-                             "yalign", HIPPO_ALIGNMENT_END,
-                             NULL);
-    hippo_canvas_box_append(no_expand_box, more_link, 0);
+    canvas_thumbnails->more_link = g_object_new(HIPPO_TYPE_CANVAS_URL_LINK,
+                                                "actions", canvas_resource->actions,
+                                                "text", "More...",
+                                                "xalign", HIPPO_ALIGNMENT_START,
+                                                "yalign", HIPPO_ALIGNMENT_END,
+                                                NULL);
+    hippo_canvas_box_append(no_expand_box, canvas_thumbnails->more_link, 0);
+}
+
+static gboolean
+lists_equal(GSList *l,
+            GSList *m)
+{
+    while (l && m) {
+        if (l->data != m->data)
+            return FALSE;
+        
+        l = l->next;
+        m = m->next;
+    }
+
+    return (l == NULL && m == NULL);
 }
 
 static void
-set_thumbnails(HippoCanvasThumbnails *canvas_thumbnails,
-               HippoThumbnails       *thumbnails)
+hippo_canvas_thumbnails_update  (HippoCanvasResource *canvas_resource)
 {
-    if (canvas_thumbnails->thumbnails == thumbnails)
+    HippoCanvasThumbnails *canvas_thumbnails = HIPPO_CANVAS_THUMBNAILS(canvas_resource);
+    
+    const char *link = NULL;
+    const char *title = NULL;
+    GSList *thumbnails = NULL;
+    GSList *l;
+    gboolean has_thumbnails_changed;
+    
+    if (canvas_resource->resource != NULL)
+        ddm_data_resource_get(canvas_resource->resource,
+                              "moreThumbnailsLink",   DDM_DATA_URL,     &link,
+                              "moreThumbnailsTitle",  DDM_DATA_STRING,  &title,
+                              "thumbnails",           DDM_DATA_RESOURCE | DDM_DATA_LIST, &thumbnails,
+                              NULL);
+
+    g_object_set(canvas_thumbnails->more_link,
+                 "url", link,
+                 "tooltip", title,
+                 NULL);
+
+    if (lists_equal(thumbnails, canvas_thumbnails->thumbnails))
         return;
 
-    if (canvas_thumbnails->thumbnails) {
-        g_object_unref(canvas_thumbnails->thumbnails);
+    has_thumbnails_changed = (thumbnails == NULL) != (canvas_thumbnails->thumbnails == NULL);
 
-        canvas_thumbnails->thumbnails = NULL;
-    }
-    
-    if (thumbnails) {
-        g_object_ref(thumbnails);
-        canvas_thumbnails->thumbnails = thumbnails;
-    }
-
-    hippo_canvas_thumbnails_create_children(canvas_thumbnails);
-    
-    g_object_notify(G_OBJECT(canvas_thumbnails), "thumbnails");
-}
-
-static void
-set_actions(HippoCanvasThumbnails *canvas_thumbnails,
-            HippoActions          *actions)
-{
-    if (actions == canvas_thumbnails->actions)
-        return;
-
-    if (canvas_thumbnails->actions) {
-        g_object_unref(canvas_thumbnails->actions);
-        canvas_thumbnails->actions = NULL;
-    }
-    
-    if (actions) {
-        g_object_ref(actions);
-        canvas_thumbnails->actions = actions;
+    g_slist_free(canvas_thumbnails->thumbnails);
+    canvas_thumbnails->thumbnails = g_slist_copy(thumbnails);
+                      
+    hippo_canvas_box_remove_all(canvas_thumbnails->thumbs_box);
+    for (l = thumbnails; l; l = l->next) {
+        HippoCanvasItem *thumbnail = hippo_canvas_thumbnail_new(l->data, canvas_resource->actions);
+        hippo_canvas_box_append(canvas_thumbnails->thumbs_box, thumbnail, 0);
     }
 
-    g_object_notify(G_OBJECT(canvas_thumbnails), "actions");
+    if (has_thumbnails_changed)
+        g_object_notify(G_OBJECT(canvas_thumbnails), "has-thumbnails");
 }

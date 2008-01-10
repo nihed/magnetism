@@ -47,4 +47,16 @@ hippo_feed_finalize(GObject *object)
 
 /* === HippoFeed exported API === */
 
+HippoFeed*
+hippo_feed_get_for_resource(DDMDataResource *resource)
+{
+    HippoFeed *feed = ddm_data_resource_get_data(resource, "hippo-entity");
+    if (feed == NULL)
+        feed = HIPPO_FEED(hippo_entity_new(HIPPO_ENTITY_FEED, resource));
+    else
+        g_object_ref(feed);
+
+    return feed;
+}
+
                                

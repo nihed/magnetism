@@ -215,8 +215,7 @@ on_group_changed(HippoBlock *block,
                      "title", hippo_entity_get_name(HIPPO_ENTITY(group)),
                      NULL);
                                      
-        hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_group_chat),
-                                      hippo_entity_get_guid(HIPPO_ENTITY(group)));
+        hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_group_chat), HIPPO_ENTITY(group));
 
         g_object_unref(group);
     }
@@ -246,10 +245,10 @@ hippo_canvas_block_group_chat_set_block(HippoCanvasBlock *canvas_block,
                  "block", canvas_block->block,
                  NULL);
     g_object_set(block_group_chat->last_message_preview,
-                 "block", canvas_block->block,
+                 "block", canvas_block->block ? hippo_block_get_resource(canvas_block->block) : NULL,
                  NULL);
     g_object_set(block_group_chat->chat_preview,
-                 "block", canvas_block->block,
+                 "block", canvas_block->block ? hippo_block_get_resource(canvas_block->block) : NULL,
                  NULL);
     
     if (canvas_block->block != NULL) {

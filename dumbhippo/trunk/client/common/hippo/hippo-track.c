@@ -18,7 +18,6 @@ static void hippo_track_get_property (GObject      *object,
 
 static HippoSongDownload *hippo_song_download_new_from_xml (HippoDataCache    *cache,
                                                             LmMessageNode     *node);
-static void               hippo_song_download_free         (HippoSongDownload *download);
 
 struct _HippoTrack {
     GObject parent;
@@ -432,6 +431,34 @@ hippo_song_download_new_from_xml(HippoDataCache *cache,
 
     return download;
 }
+
+HippoSongDownload *
+hippo_song_download_new_from_string(const char *string)
+{
+    HippoSongDownload *download;
+    char *source_str;
+    HippoSongDownloadSource source;
+    gboolean success;
+    const char *colon = strchr(string, ':');
+    
+    if (colon == NULL) {
+        g_warning("Download '%s' isn't of the form 'SOURCE_NAME:URL'", string);
+        return NULL;
+    }
+    
+    source_str = g_strndup(string, colon - string);
+    success = song_download_source_from_string(source_str, &source);
+    g_free(source_str);
+    
+    if (!success)
+        return NULL;
+
+    download = g_new(HippoSongDownload, 1);
+    download->source = source;
+    download->url = g_strdup(colon + 1);
+
+    return download;
+}
     
 HippoSongDownloadSource
 hippo_song_download_get_source(HippoSongDownload *download)
@@ -445,7 +472,7 @@ hippo_song_download_get_url(HippoSongDownload *download)
     return download->url;
 }
 
-static void
+void
 hippo_song_download_free(HippoSongDownload *download)
 {
     g_free(download->url);

@@ -45,8 +45,11 @@ static void hippo_canvas_block_generic_hush     (HippoCanvasBlock *canvas_block)
 static void hippo_canvas_block_generic_unhush   (HippoCanvasBlock *canvas_block);
 
 
+
+
 /* Our own methods */
-static void hippo_canvas_block_generic_update_visibility    (HippoCanvasBlockGeneric *block_generic);
+static void hippo_canvas_block_generic_update_visibility (HippoCanvasBlockGeneric *block_generic);
+static void hippo_canvas_block_generic_update_expandable (HippoCanvasBlockGeneric *block_generic);
 
 
 struct _HippoCanvasBlockGeneric {
@@ -171,6 +174,23 @@ hippo_canvas_block_generic_get_property(GObject         *object,
 }
 
 static void
+on_has_thumbnails_changed(HippoCanvasItem         *thumbnails_item,
+                          GParamSpec              *pspec,
+                          HippoCanvasBlockGeneric *block_generic)
+{
+    gboolean has_thumbnails;
+
+    g_object_get(thumbnails_item, "has-thumbnails", &has_thumbnails, NULL);
+
+    if (has_thumbnails != block_generic->have_thumbnails) {
+        block_generic->have_thumbnails = has_thumbnails;
+        hippo_canvas_block_generic_update_visibility(block_generic);
+        hippo_canvas_block_generic_update_expandable(block_generic);
+    }
+}
+
+
+static void
 hippo_canvas_block_generic_append_content_items(HippoCanvasBlock *block,
                                                 HippoCanvasBox   *parent_box)
 {
@@ -216,6 +236,9 @@ hippo_canvas_block_generic_append_content_items(HippoCanvasBlock *block,
     block_generic->thumbnails_item = g_object_new(HIPPO_TYPE_CANVAS_THUMBNAILS,
                                                   "actions", block->actions,
                                                   NULL);
+    g_signal_connect(block_generic->thumbnails_item, "notify::has-thumbnails",
+                     G_CALLBACK(on_has_thumbnails_changed), block_generic);
+    
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(parent_box),
                             block_generic->thumbnails_item, 0);
 
@@ -378,12 +401,11 @@ hippo_canvas_block_generic_unexpand(HippoCanvasBlock *canvas_block)
 }
 
 static void
-update_expandable(HippoCanvasBlock *canvas_block)
+hippo_canvas_block_generic_update_expandable(HippoCanvasBlockGeneric *block_generic)
 {
-    HippoCanvasBlockGeneric *block_generic;
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_generic);
+    
     gboolean have_chat_id;
-
-    block_generic = HIPPO_CANVAS_BLOCK_GENERIC(canvas_block);
 
     have_chat_id = FALSE;
     if (canvas_block->block)
@@ -430,11 +452,9 @@ on_block_description_changed(HippoBlock *block,
                              GParamSpec *arg, /* null when first calling this */
                              void       *data)
 {
-    HippoCanvasBlock *canvas_block;
     HippoCanvasBlockGeneric *block_generic;
     char *description;
 
-    canvas_block = HIPPO_CANVAS_BLOCK(data);
     block_generic = HIPPO_CANVAS_BLOCK_GENERIC(data);
     
     description = NULL;
@@ -448,7 +468,7 @@ on_block_description_changed(HippoBlock *block,
 
     block_generic->have_description = description != NULL;
     
-    update_expandable(canvas_block);
+    hippo_canvas_block_generic_update_expandable(block_generic);
 }
 
 static void
@@ -464,39 +484,10 @@ on_block_source_changed(HippoBlock *block,
     source = NULL;
     g_object_get(G_OBJECT(block), "source", &source, NULL);
 
-    hippo_canvas_block_set_sender(canvas_block,
-                                  source ? hippo_entity_get_guid(source) : NULL);
+    hippo_canvas_block_set_sender(canvas_block, source);
     
     if (source)
         g_object_unref(source);
-}
-
-static void
-on_block_thumbnails_changed(HippoBlock *block,
-                            GParamSpec *arg, /* null when first calling this */
-                            void       *data)
-{
-    HippoCanvasBlock *canvas_block;
-    HippoCanvasBlockGeneric *canvas_block_generic;
-    HippoThumbnails *thumbnails;
-
-    canvas_block = HIPPO_CANVAS_BLOCK(data);
-    canvas_block_generic = HIPPO_CANVAS_BLOCK_GENERIC(data);
-    
-    thumbnails = NULL;
-    g_object_get(G_OBJECT(block), "thumbnails", &thumbnails, NULL);
-
-    /* g_printerr("Thumbnails = %p count %d\n", thumbnails, thumbnails ? hippo_thumbnails_get_count(thumbnails) : 0); */
-    
-    g_object_set(G_OBJECT(canvas_block_generic->thumbnails_item), "thumbnails", thumbnails, NULL);
-
-    canvas_block_generic->have_thumbnails = thumbnails != NULL && hippo_thumbnails_get_count(thumbnails) > 0;
-    
-    if (thumbnails)
-        g_object_unref(thumbnails);
-
-    update_expandable(canvas_block);
-    hippo_canvas_block_generic_update_visibility(canvas_block_generic);
 }
 
 static void
@@ -504,12 +495,10 @@ on_block_chat_id_changed(HippoBlock *block,
                          GParamSpec *arg, /* null when first calling this */
                          void       *data)
 {
-    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
     HippoCanvasBlockGeneric *canvas_block_generic = HIPPO_CANVAS_BLOCK_GENERIC(data);
     
     hippo_canvas_block_generic_update_visibility(canvas_block_generic);
-    
-    update_expandable(canvas_block);
+    hippo_canvas_block_generic_update_expandable(canvas_block_generic);
 }
 
 static void
@@ -532,9 +521,6 @@ hippo_canvas_block_generic_set_block(HippoCanvasBlock *canvas_block,
                                              G_CALLBACK(on_block_source_changed),
                                              canvas_block);
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
-                                             G_CALLBACK(on_block_thumbnails_changed),
-                                             canvas_block);
-        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_block_chat_id_changed),
                                              canvas_block);
     }
@@ -546,10 +532,14 @@ hippo_canvas_block_generic_set_block(HippoCanvasBlock *canvas_block,
                  "block", canvas_block->block,
                  NULL);
     g_object_set(block_generic->last_message_preview,
-                 "block", canvas_block->block,
+                 "block", canvas_block->block ? hippo_block_get_resource(canvas_block->block) : NULL,
                  NULL);
     g_object_set(block_generic->chat_preview,
-                 "block", canvas_block->block,
+                 "block", canvas_block->block ? hippo_block_get_resource(canvas_block->block) : NULL,
+                 NULL);
+
+    g_object_set(block_generic->thumbnails_item,
+                 "resource", canvas_block->block ? hippo_block_get_resource(canvas_block->block) : NULL,
                  NULL);
     
     if (canvas_block->block != NULL) {
@@ -570,10 +560,6 @@ hippo_canvas_block_generic_set_block(HippoCanvasBlock *canvas_block,
                          G_CALLBACK(on_block_source_changed),
                          canvas_block);
         g_signal_connect(G_OBJECT(canvas_block->block),
-                         "notify::thumbnails",
-                         G_CALLBACK(on_block_thumbnails_changed),
-                         canvas_block);
-        g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::chat-id",
                          G_CALLBACK(on_block_chat_id_changed),
                          canvas_block);
@@ -581,7 +567,6 @@ hippo_canvas_block_generic_set_block(HippoCanvasBlock *canvas_block,
         on_block_title_changed(canvas_block->block, NULL, canvas_block);
         on_block_description_changed(canvas_block->block, NULL, canvas_block);
         on_block_source_changed(canvas_block->block, NULL, canvas_block);
-        on_block_thumbnails_changed(canvas_block->block, NULL, canvas_block);
         on_block_chat_id_changed(canvas_block->block, NULL, canvas_block);
     }
 }

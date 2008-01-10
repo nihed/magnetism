@@ -19,6 +19,8 @@ typedef struct _HippoFeedClass HippoFeedClass;
 GType           hippo_feed_get_type                  (void) G_GNUC_CONST;
 HippoFeed*      hippo_feed_new                       (const char  *guid);
 
+HippoFeed*      hippo_feed_get_for_resource (DDMDataResource *resource);
+
 G_END_DECLS
 
 #endif /* __HIPPO_FEED_H__ */

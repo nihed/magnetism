@@ -527,32 +527,6 @@ hippo_chat_message_new(HippoPerson   *person,
     return message;
 }
 
-HippoChatMessage *
-hippo_chat_message_new_from_xml(HippoDataCache *cache,
-                                LmMessageNode  *node)
-{
-    gint64 serial;
-    gint64 timestamp;
-    HippoPerson *sender;
-    const char *text;
-    const char *sentiment_str = NULL;
-    HippoSentiment sentiment = HIPPO_SENTIMENT_INDIFFERENT;
-    
-    if (!hippo_xml_split(cache, node, NULL,
-                         "serial", HIPPO_SPLIT_INT64, &serial,
-                         "timestamp", HIPPO_SPLIT_TIME_MS, &timestamp,
-                         "sender", HIPPO_SPLIT_PERSON, &sender,
-                         "text", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &text,
-                         "sentiment", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &sentiment_str,
-                         NULL))
-        return NULL;
-
-    if (sentiment_str && !hippo_parse_sentiment(sentiment_str, &sentiment))
-        return NULL;
-
-    return hippo_chat_message_new(sender, text, sentiment, timestamp / 1000, serial);
-}
-
 void
 hippo_chat_message_free(HippoChatMessage *message)
 {

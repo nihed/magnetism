@@ -2,16 +2,13 @@
 #include "hippo-common-internal.h"
 #include "hippo-person.h"
 #include "hippo-entity-protected.h"
-#include "hippo-xml-utils.h"
 #include <string.h>
 
 /* === HippoPerson implementation === */
 
 static void     hippo_person_finalize             (GObject *object);
 
-static gboolean hippo_person_update_from_xml(HippoEntity    *entity,
-                                             HippoDataCache *cache,
-                                             LmMessageNode  *node);
+static void hippo_person_update(HippoEntity *entity);
 
 static void hippo_person_set_property (GObject      *object,
                                        guint         prop_id,
@@ -64,7 +61,7 @@ hippo_person_class_init(HippoPersonClass *klass)
     object_class->set_property = hippo_person_set_property;
     object_class->get_property = hippo_person_get_property;
     
-    entity_class->update_from_xml = hippo_person_update_from_xml;
+    entity_class->update = hippo_person_update;
 
 
     g_object_class_install_property(object_class,
@@ -87,40 +84,14 @@ hippo_person_finalize(GObject *object)
     G_OBJECT_CLASS(hippo_person_parent_class)->finalize(object); 
 }
 
-static gboolean
-hippo_person_update_from_xml(HippoEntity    *entity,
-                             HippoDataCache *cache,
-                             LmMessageNode  *node)
+static void
+hippo_person_update(HippoEntity    *entity)
 {
-    HippoPerson *person = HIPPO_PERSON(entity);
-    LmMessageNode *current_track_node = NULL;
-    HippoTrack *track;
+    /*    HippoPerson *person = HIPPO_PERSON(entity); */
     
-    if (!HIPPO_ENTITY_CLASS(hippo_person_parent_class)->update_from_xml(entity, cache, node))
-        return FALSE;
+    HIPPO_ENTITY_CLASS(hippo_person_parent_class)->update(entity);
 
-    if (!hippo_xml_split(cache, node, NULL,
-                         "currentTrack", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &current_track_node,
-                         NULL))
-        return FALSE;
-
-    if (current_track_node) {
-        track = hippo_track_new_from_xml(cache, current_track_node);
-        if (!track)
-            return FALSE;
-
-        if (person->current_track)
-            g_object_unref(person->current_track);
-
-        person->current_track = track;
-
-        g_object_notify(G_OBJECT(person), "current-track");
-        
-        // need to kill this 
-        hippo_entity_notify(HIPPO_ENTITY(person));
-    }
-
-    return TRUE;
+    /* FIXME: currentTrack */
 }
 
 static void
@@ -177,10 +148,14 @@ hippo_person_get_property(GObject         *object,
 /* === HippoPerson exported API === */
 
 HippoPerson*
-hippo_person_new(const char *guid)
+hippo_person_get_for_resource(DDMDataResource *resource)
 {
-    HippoPerson *person = HIPPO_PERSON(hippo_entity_new(HIPPO_ENTITY_PERSON, guid));
-    
+    HippoPerson *person = ddm_data_resource_get_data(resource, "hippo-entity");
+    if (person == NULL)
+        person = HIPPO_PERSON(hippo_entity_new(HIPPO_ENTITY_PERSON, resource));
+    else
+        g_object_ref(person);
+
     return person;
 }
 

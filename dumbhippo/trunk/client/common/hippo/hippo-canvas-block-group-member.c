@@ -229,8 +229,7 @@ on_group_changed(HippoBlock *block,
          * get set back to non-null later
          */
     } else {
-        hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_group_member),
-                                      hippo_entity_get_guid(HIPPO_ENTITY(group)));
+        hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_group_member), HIPPO_ENTITY(group));
         g_object_unref(group);
     }
 }

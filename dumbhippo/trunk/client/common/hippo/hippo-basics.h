@@ -49,16 +49,6 @@ typedef enum {
     HIPPO_INSTANCE_DEBUG
 } HippoInstanceType;
 
-typedef enum {
-    HIPPO_HOTNESS_COLD,
-    HIPPO_HOTNESS_COOL,
-    HIPPO_HOTNESS_WARM,
-    HIPPO_HOTNESS_GETTING_HOT,
-    HIPPO_HOTNESS_HOT,
-    HIPPO_HOTNESS_UNKNOWN
-} HippoHotness;
-
-
 /* This can be used to specify which browser to use,
  * in which case UNKNOWN = use system default,
  * or to specify which browser was used (e.g. for cookies)
@@ -288,8 +278,6 @@ gboolean hippo_parse_options         (int          *argc_p,
                                       HippoOptions *results);
 void     hippo_options_free_fields   (HippoOptions *options);
 
-const char* hippo_hotness_debug_string(HippoHotness hotness);
-
 gboolean hippo_parse_uri                   (const char         *uri,
                                             HippoUriActionData *data,
                                             GError            **error);
@@ -309,6 +297,9 @@ int      hippo_compare_versions            (const char *version_a,
 gint64   hippo_current_time_ms             (void);
 char*    hippo_format_time_ago             (GTime       now,
                                             GTime       then);
+
+gboolean hippo_membership_status_from_string (const char            *s,
+                                              HippoMembershipStatus *result);
 
 char*    hippo_size_photo_url              (const char *base_url,
                                             int         size);

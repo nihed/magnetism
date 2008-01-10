@@ -2,11 +2,10 @@
 #include "hippo-common-internal.h"
 #include <hippo/hippo-person.h>
 #include "hippo-canvas-block.h"
-#include "hippo-block-facebook-event.h"
-#include "hippo-canvas-block-facebook-event.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-text.h>
+#include "hippo-canvas-block-facebook-event.h"
 #include "hippo-canvas-url-link.h"
 #include "hippo-canvas-thumbnails.h"
 
@@ -44,6 +43,8 @@ struct _HippoCanvasBlockFacebookEvent {
     HippoCanvasBlock canvas_block;
     HippoCanvasItem *thumbnails;
     HippoPerson *person;
+
+    gboolean have_thumbnails;
 };
 
 struct _HippoCanvasBlockFacebookEventClass {
@@ -72,7 +73,7 @@ hippo_canvas_block_facebook_event_init(HippoCanvasBlockFacebookEvent *block_face
 {
     HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(block_facebook_event);
 
-    block->required_type = HIPPO_BLOCK_TYPE_FACEBOOK_EVENT;
+    block->required_type = HIPPO_BLOCK_TYPE_GENERIC;
 }
 
 static HippoCanvasItemIface *item_parent_class;
@@ -157,6 +158,25 @@ hippo_canvas_block_facebook_event_get_property(GObject         *object,
 }
 
 static void
+on_has_thumbnails_changed(HippoCanvasItem               *thumbnails_item,
+                          GParamSpec                    *pspec,
+                          HippoCanvasBlockFacebookEvent *block_facebook_event)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_facebook_event);
+    gboolean has_thumbnails;
+
+    g_object_get(thumbnails_item, "has-thumbnails", &has_thumbnails, NULL);
+
+    if (has_thumbnails != block_facebook_event->have_thumbnails) {
+        block_facebook_event->have_thumbnails = has_thumbnails;
+        canvas_block->expandable = has_thumbnails;
+
+        if (!has_thumbnails)
+            hippo_canvas_block_set_expanded(canvas_block, FALSE);
+    }
+}
+
+static void
 hippo_canvas_block_facebook_event_append_content_items (HippoCanvasBlock *block,
                                                         HippoCanvasBox   *parent_box)
 {
@@ -169,6 +189,9 @@ hippo_canvas_block_facebook_event_append_content_items (HippoCanvasBlock *block,
                      "actions", block->actions,
                      NULL);
 
+    g_signal_connect(block_facebook_event->thumbnails, "notify::has-thumbnails",
+                     G_CALLBACK(on_has_thumbnails_changed), block_facebook_event);
+    
     hippo_canvas_box_append(parent_box,
                             block_facebook_event->thumbnails, 0);
 
@@ -194,7 +217,7 @@ set_person(HippoCanvasBlockFacebookEvent *block_facebook_event,
     }
 
     hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(block_facebook_event),
-                                  person ? hippo_entity_get_guid(HIPPO_ENTITY(person)) : NULL);
+                                  person ? HIPPO_ENTITY(person) : NULL);
 }
 
 static void
@@ -202,101 +225,99 @@ on_user_changed(HippoBlock *block,
                 GParamSpec *arg, /* null when first calling this */
                 HippoCanvasBlockFacebookEvent *block_facebook_event)
 {
-    HippoPerson *person;
-    person = NULL;
-    g_object_get(G_OBJECT(block), "user", &person, NULL);
+    HippoPerson *person = NULL;
+
+    if (block)
+        g_object_get(G_OBJECT(block), "user", &person, NULL);
+    
     set_person(block_facebook_event, person);
+    
     if (person)
         g_object_unref(person);
 }
 
 static void 
-on_title_changed(HippoBlockFacebookEvent *block_facebook_event,
+on_title_changed(HippoBlock *block,
                  GParamSpec *arg, /* null when first calling this */
-                 HippoCanvasBlockFacebookEvent *canvas_block_facebook_event)
+                 HippoCanvasBlockFacebookEvent *block_facebook_event)
 {
-    HippoThumbnails *thumbnails;
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_facebook_event);
 
-    thumbnails = hippo_block_facebook_event_get_thumbnails(block_facebook_event);
-    if (thumbnails != NULL)
-        hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_block_facebook_event),
-                                     hippo_block_facebook_event_get_title(block_facebook_event), 
-                                     hippo_thumbnails_get_more_link(thumbnails),
-                                     FALSE);
+    const char *title = NULL;
+    const char *title_link = NULL;
+
+    if (block != NULL) {
+        title = hippo_block_get_title(block);
+        title_link = hippo_block_get_title_link(block);
+    }
+    
+    hippo_canvas_block_set_title(canvas_block, title, title_link, FALSE);
 }
 
 static void
 hippo_canvas_block_facebook_event_set_block(HippoCanvasBlock *canvas_block,
-                                             HippoBlock       *block)
+                                            HippoBlock       *block)
 {
+    HippoCanvasBlockFacebookEvent *block_facebook_event = HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(canvas_block);
+    
     /* g_debug("canvas-block-facebook-person set block %p", block); */
 
     if (block == canvas_block->block)
         return;
 
     if (canvas_block->block != NULL) {
-        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
-                                             G_CALLBACK(on_user_changed),
+        g_signal_handlers_disconnect_by_func(canvas_block->block,
+                                             (gpointer)on_user_changed,
                                              canvas_block);
         set_person(HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(canvas_block), NULL);
 
-        g_signal_handlers_disconnect_by_func(G_OBJECT(HIPPO_BLOCK_FACEBOOK_EVENT(canvas_block->block)),
-                                             G_CALLBACK(on_title_changed),
+        g_signal_handlers_disconnect_by_func(canvas_block->block,
+                                             (gpointer)on_title_changed,
                                              canvas_block);
-        hippo_canvas_block_set_title(canvas_block, NULL, NULL, FALSE);
+
+        
     }
 
     /* Chain up to get the block really changed */
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_facebook_event_parent_class)->set_block(canvas_block, block);
 
+    g_object_set(block_facebook_event->thumbnails,
+                 "resource", canvas_block->block ? hippo_block_get_resource(canvas_block->block) : NULL,
+                 NULL);
+    
     if (canvas_block->block != NULL) {
-        HippoThumbnails *thumbnails;
-
-        g_signal_connect(G_OBJECT(canvas_block->block),
+        g_signal_connect(canvas_block->block,
                          "notify::user",
                          G_CALLBACK(on_user_changed),
                          canvas_block);
-
-        g_signal_connect(G_OBJECT(HIPPO_BLOCK_FACEBOOK_EVENT(canvas_block->block)),
+        g_signal_connect(canvas_block->block,
                          "notify::title",
                          G_CALLBACK(on_title_changed),
                          canvas_block);
-
-        on_user_changed(canvas_block->block, NULL,
-                        HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(canvas_block));
-        
-        on_title_changed(HIPPO_BLOCK_FACEBOOK_EVENT(canvas_block->block), NULL,
-                         HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(canvas_block));
-
-        thumbnails = hippo_block_facebook_event_get_thumbnails(HIPPO_BLOCK_FACEBOOK_EVENT(canvas_block->block));
-        if (thumbnails != NULL) {
-            g_object_set(HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(canvas_block)->thumbnails,
-                         "thumbnails", thumbnails,
-                         NULL);        
-            if (hippo_thumbnails_get_count(thumbnails) <= 0)
-                canvas_block->expandable = FALSE;
-        } else {
-            canvas_block->expandable = FALSE;
-        }
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::title-link",
+                         G_CALLBACK(on_title_changed),
+                         canvas_block);
     }
+    
+    on_user_changed(canvas_block->block, NULL, block_facebook_event);
+    on_title_changed(canvas_block->block, NULL, block_facebook_event);
 }
 
 static void
 hippo_canvas_block_facebook_event_title_activated(HippoCanvasBlock *canvas_block)
 {
-    HippoActions *actions;
-    HippoThumbnails *thumbnails;
+    const char *link;
 
     if (canvas_block->block == NULL)
         return;
+    
+    link = hippo_block_get_title_link(canvas_block->block);
+    if (link != NULL) {
+        HippoActions *actions = hippo_canvas_block_get_actions(canvas_block);
 
-    thumbnails = hippo_block_facebook_event_get_thumbnails(HIPPO_BLOCK_FACEBOOK_EVENT(canvas_block->block));
-    if (thumbnails == NULL)
-        return;
-
-    actions = hippo_canvas_block_get_actions(canvas_block);
-
-    hippo_actions_open_url(actions, hippo_thumbnails_get_more_link(thumbnails));
+        hippo_actions_open_url(actions, link);
+    }
 }
 
 static void

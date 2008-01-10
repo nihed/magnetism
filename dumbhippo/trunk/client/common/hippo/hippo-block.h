@@ -5,6 +5,7 @@
 #include <loudmouth/loudmouth.h>
 #include <hippo/hippo-basics.h>
 #include <hippo/hippo-entity.h>
+#include <ddm/ddm.h>
 
 G_BEGIN_DECLS
 
@@ -21,7 +22,8 @@ typedef enum {
     HIPPO_BLOCK_TYPE_FACEBOOK_EVENT,
     HIPPO_BLOCK_TYPE_YOUTUBE_PERSON,
     HIPPO_BLOCK_TYPE_NETFLIX_MOVIE,    
-    HIPPO_BLOCK_TYPE_AMAZON_ACTIVITY,
+    HIPPO_BLOCK_TYPE_AMAZON_REVIEW,
+    HIPPO_BLOCK_TYPE_AMAZON_WISH_LIST_ITEM,
     HIPPO_BLOCK_TYPE_GENERIC
 } HippoBlockType;
 
@@ -31,12 +33,6 @@ typedef enum {
     HIPPO_STACK_VIEWER_COUNT,
     HIPPO_STACK_CHAT_MESSAGE
 } HippoStackReason;
-
-typedef enum {
-    HIPPO_BLOCK_FILTER_FLAG_FEED = 1 << 0
-    // OTHER_FLAG = 1 << 1,
-    // ANOTHER_FLAG = 1 << 2
-} HippoBlockFilterFlag;
 
 typedef struct _HippoBlock      HippoBlock;
 typedef struct _HippoBlockClass HippoBlockClass;
@@ -50,7 +46,8 @@ typedef struct _HippoBlockClass HippoBlockClass;
 
 struct _HippoBlock {
     GObject parent;
-    char   *guid;
+    DDMDataResource *resource;
+    char *guid;
     HippoBlockType type;
     HippoEntity *source;
     gboolean is_public;
@@ -60,13 +57,11 @@ struct _HippoBlock {
     gint64 ignored_timestamp;
     int significant_clicked_count;
     int clicked_count;
-    int message_count;
     char *chat_id;
     char *icon_url;
     char *title;
     char *title_link;
     HippoStackReason stack_reason;
-    GSList *recent_messages;
     guint is_feed : 1;
     guint is_mine : 1;
     guint clicked : 1;
@@ -77,6 +72,9 @@ struct _HippoBlock {
 struct _HippoBlockClass {
     GObjectClass parent;
 
+    void (*update) (HippoBlock *block);
+
+    /* FIXME: Just here to keep things compiling for the moment */
     gboolean (*update_from_xml) (HippoBlock     *block,
                                  HippoDataCache *cache,
                                  LmMessageNode  *node);
@@ -84,12 +82,6 @@ struct _HippoBlockClass {
 };
 
 GType            hippo_block_get_type                  (void) G_GNUC_CONST;
-HippoBlock*      hippo_block_new                       (const char    *guid,
-                                                        HippoBlockType type);
-
-gboolean         hippo_block_update_from_xml           (HippoBlock     *block,
-                                                        HippoDataCache *cache,
-                                                        LmMessageNode  *node);
 
 const char*      hippo_block_get_guid                  (HippoBlock *block);
 HippoBlockType   hippo_block_get_block_type            (HippoBlock *block);
@@ -100,35 +92,29 @@ void             hippo_block_set_source                (HippoBlock *block, Hippo
 gboolean hippo_block_is_public             (HippoBlock *block);
 void     hippo_block_set_public            (HippoBlock *block,
                                             gboolean    value);
-GTime    hippo_block_get_update_time       (HippoBlock *block);
-void     hippo_block_set_update_time       (HippoBlock *block,
-                                            GTime       t);
 gint64   hippo_block_get_timestamp         (HippoBlock *block);
 void     hippo_block_set_timestamp         (HippoBlock *block,
                                             gint64      value);
-gint64   hippo_block_get_clicked_timestamp (HippoBlock *block);
+gint64   hippo_block_get_clicked_timestamp (HippoBlock *block); /* Unused */
 void     hippo_block_set_clicked_timestamp (HippoBlock *block,
                                             gint64      value);
 gint64   hippo_block_get_ignored_timestamp (HippoBlock *block);
 void     hippo_block_set_ignored_timestamp (HippoBlock *block,
                                             gint64      value);
 gint64   hippo_block_get_sort_timestamp    (HippoBlock *block);
-int      hippo_block_get_clicked_count     (HippoBlock *block);
+int      hippo_block_get_clicked_count     (HippoBlock *block); /* Unused */
 void     hippo_block_set_clicked_count     (HippoBlock *block,
                                             int         value);
 int      hippo_block_get_significant_clicked_count     (HippoBlock *block);
 void     hippo_block_set_significant_clicked_count     (HippoBlock *block,
                                                         int         value);
-int      hippo_block_get_message_count     (HippoBlock *block);
-void     hippo_block_set_message_count     (HippoBlock *block,
-                                            int         value);
 gboolean hippo_block_get_clicked           (HippoBlock *block);
 void     hippo_block_set_clicked           (HippoBlock *block,
                                             gboolean    value);
-gboolean hippo_block_get_ignored           (HippoBlock *block);
+gboolean hippo_block_get_ignored           (HippoBlock *block); /* Unused */
 void     hippo_block_set_ignored           (HippoBlock *block,
                                             gboolean    value);
-gboolean hippo_block_get_pinned            (HippoBlock *block);
+gboolean hippo_block_get_pinned            (HippoBlock *block); /* Client side */
 void     hippo_block_set_pinned            (HippoBlock *block,
                                             gboolean    pinned);
 
@@ -144,38 +130,27 @@ HippoStackReason hippo_block_get_stack_reason (HippoBlock      *block);
 void             hippo_block_set_stack_reason (HippoBlock      *block,
                                                HippoStackReason value);
 
-GSList * hippo_block_get_recent_messages(HippoBlock *block);
-void     hippo_block_set_recent_messages(HippoBlock *block,
-                                         GSList     *recent_messages);
-
-/* For subclassses that support legacy recentMessages nodes not in the toplevel */
-gboolean hippo_block_set_recent_messages_from_xml (HippoBlock     *block,
-                                                   HippoDataCache *cache,
-                                                   LmMessageNode  *node);
-    
 const char * hippo_block_get_chat_id       (HippoBlock *block);
 void         hippo_block_set_chat_id       (HippoBlock *block,
                                             const char *chat_id);
-guint    hippo_block_get_filter_flags      (HippoBlock *block);
-void     hippo_block_set_filter_flags      (HippoBlock *block, guint flags);
-
 const char* hippo_block_get_title          (HippoBlock *block); 
 void        hippo_block_set_title          (HippoBlock *block,
                                             const char *title);
 
-const char* hippo_block_get_title_link     (HippoBlock *block); 
+const char* hippo_block_get_title_link     (HippoBlock *block);
 void        hippo_block_set_title_link     (HippoBlock *block,
                                             const char *title_link);
 
-const char* hippo_block_get_icon_url       (HippoBlock *block); 
+const char* hippo_block_get_icon_url       (HippoBlock *block);
 void        hippo_block_set_icon_url       (HippoBlock *block,
                                             const char *icon_url);
 
 int      hippo_block_compare_newest_first  (gconstpointer block_a,
                                             gconstpointer block_b);
 
-HippoBlockType hippo_block_type_from_attributes(const char  *type,
-                                                const char  *generic_types);
+DDMDataResource *hippo_block_get_resource (HippoBlock *block);
+
+HippoBlock *hippo_block_create_for_resource (DDMDataResource *resource);
 
 G_END_DECLS
 
