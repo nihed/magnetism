@@ -73,6 +73,8 @@ public abstract class QueryIQMethod extends AnnotatedIQMethod {
 				paramInfo[i] = new BooleanParamInfo(name, defaultValue);
 			} else if (paramType == Integer.TYPE) {
 				paramInfo[i] = new IntegerParamInfo(name, defaultValue);
+			} else if (paramType == Long.TYPE) {
+				paramInfo[i] = new LongParamInfo(name, defaultValue);
 			} else if (paramType.isAssignableFrom(UserViewpoint.class)) {
 				paramInfo[i] = new ViewpointParamInfo();
 			} else if (DMObject.class.isAssignableFrom(paramType)) {
@@ -208,6 +210,23 @@ public abstract class QueryIQMethod extends AnnotatedIQMethod {
 				return Integer.parseInt(value);
 			} catch (NumberFormatException e) {
 				throw IQException.createBadRequest("Bad integer value for parameter '" + value + "': " + e.getMessage());
+			}
+		}
+	}
+	
+	private static class LongParamInfo extends ParamInfo {
+		protected LongParamInfo(String name, String defaultValue) {
+			super(name, defaultValue);
+			if (optional && defaultValue == null)
+				throw new RuntimeException("null is not a valid default for an long parameter");
+		}
+
+		@Override
+		public Object parse(String value) throws IQException {
+			try {
+				return Long.parseLong(value);
+			} catch (NumberFormatException e) {
+				throw IQException.createBadRequest("Bad long value for parameter '" + value + "': " + e.getMessage());
 			}
 		}
 	}

@@ -433,6 +433,12 @@ public abstract class UserDMO extends DMObject<Guid> {
 		return result;
 	}
 	
+	@DMProperty
+	@DMFilter("viewer.canSeePrivate(this)")
+	public String getStackFilter() {
+		return user.getAccount().getStackFilter();
+	}
+	
 	@DMInit(group=CURRENT_TRACK_GROUP)
 	public void initCurrentTrack() {
 		try {

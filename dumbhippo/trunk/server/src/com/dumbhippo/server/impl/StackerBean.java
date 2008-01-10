@@ -986,7 +986,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	 * 
 	 * @param viewpoint
 	 * @param user
-	 * @param lastTimestamp -1 to ignore this param, otherwise the timestamp to get changes since
+	 * @param lastTimestamp -1 to ignore this param, otherwise only return blocks newer than this
+	 * @param stackedBefore -1 to ignore this param, otherwise only return blocks older than this
 	 * @param start
 	 * @param count
 	 * @param participantOnly if true, only include blocks where someone participated, and sort by participation time 
@@ -995,7 +996,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	 * @param noSelfSource 
 	 * @return 
 	 */
-	private List<UserBlockData> getBlocks(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, 
+	private List<UserBlockData> getBlocks(Viewpoint viewpoint, User user, 
+									      long lastTimestamp, long stackedBefore,
+										  int start, int count, 
 			                              String filter, boolean participantOnly) {
 		StackFilterExpression parsedExpression = new StackFilterExpression(filter);
 		
@@ -1017,6 +1020,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (lastTimestamp > 0)
 			sb.append(" AND ubd.stackTimestamp > :timestamp ");
 		
+		// if lastTimestamp == 0 then all blocks are included so just skip the test in the sql
+		// The timestamp here is the timestamp of the block last seen by the client. 
+		// Using > here rather than >= means that if two blocks are stacked within the
+		// same millisecond and notified on separately, then the second block will get
+		// lost, but that's better than always sending two blocks.
+		if (stackedBefore > 0)
+			sb.append(" AND ubd.stackTimestamp < :stackedBefore ");
+
 		if (parsedExpression.isNoFeed())
 			sb.append(" AND block.filterFlags != " + StackFilterFlags.FEED.getValue());
 		
@@ -1078,6 +1089,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		q.setMaxResults(count);
 		if (lastTimestamp > 0)
 			q.setParameter("timestamp", new Date(lastTimestamp));
+		if (stackedBefore > 0)
+			q.setParameter("stackedBefore", new Date(stackedBefore));
 		q.setParameter("user", user);
 		if (viewpoint instanceof UserViewpoint)
 			q.setParameter("viewpointGuid", ((UserViewpoint) viewpoint).getViewer().getGuid().toString());
@@ -1087,7 +1100,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 
 	// Note the off-by-one difference betweeb minTimestamp and lastTimestamp
 	public List<UserBlockData> getStackBlocks(User user, int start, int count, long minTimestamp) {
-		return getBlocks(SystemViewpoint.getInstance(), user, minTimestamp - 1, start, count, null, false);
+		return getBlocks(SystemViewpoint.getInstance(), user, minTimestamp - 1, -1, start, count, null, false);
 	}
 	
 	private interface BlockSource<T> {
@@ -1176,7 +1189,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageStack(viewpoint, new BlockSource<UserBlockData>() {
 			public List<Pair<Block, UserBlockData>> get(int start, int count) {
 				List<Pair<Block, UserBlockData>> results = new ArrayList<Pair<Block, UserBlockData>>();
-				for (UserBlockData ubd : getBlocks(viewpoint, user, lastTimestamp, start, count, filter, participantOnly)) {
+				for (UserBlockData ubd : getBlocks(viewpoint, user, lastTimestamp, -1, start, count, filter, participantOnly)) {
 					results.add(new Pair<Block, UserBlockData>(ubd.getBlock(), ubd));
 				}
 				return results;
@@ -1614,20 +1627,23 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageable.setTotalCount(groupSystem.getPublicGroupCount());
 	}
 	
-
-	public List<BlockView> getUnansweredQuestions(UserViewpoint viewpoint, long stackedBefore) {
+	private List<UserBlockData> getUnansweredQuestionsBlockData(UserViewpoint viewpoint, long stackedBefore) {
 		Query q = em.createQuery("   SELECT ubd FROM UserBlockData ubd " +
-				                 "    WHERE ubd.user = :user " +
-				                 "      AND ubd.block.blockType = " + BlockType.ACCOUNT_QUESTION.ordinal() + " " +
-				                 "      AND ubd.clickedTimestamp IS NULL " +
-				                 "      AND ubd.stackTimestamp < :stackedBefore " +
-				                 " ORDER BY ubd.stackTimestamp DESC")
-		    .setParameter("user", viewpoint.getViewer())
-		    .setParameter("stackedBefore", new Date(stackedBefore));
+                "    WHERE ubd.user = :user " +
+                "      AND ubd.block.blockType = " + BlockType.ACCOUNT_QUESTION.ordinal() + " " +
+                "      AND ubd.clickedTimestamp IS NULL " +
+                "      AND ubd.stackTimestamp < :stackedBefore " +
+                " ORDER BY ubd.stackTimestamp DESC")
+           .setParameter("user", viewpoint.getViewer())
+           .setParameter("stackedBefore", new Date(stackedBefore));
 		
+		return TypeUtils.castList(UserBlockData.class, q.getResultList());
+	}
+	
+	public List<BlockView> getUnansweredQuestions(UserViewpoint viewpoint, long stackedBefore) {
 		List<BlockView> results = new ArrayList<BlockView>();
 		
-		for (UserBlockData ubd : TypeUtils.castList(UserBlockData.class, q.getResultList())) {
+		for (UserBlockData ubd : getUnansweredQuestionsBlockData(viewpoint, stackedBefore)) {
 			try {
 				results.add(loadBlock(viewpoint, ubd));
 			} catch (NotFoundException e) {
@@ -1639,6 +1655,21 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return results;
 	}	
 	
+	public List<Block> getOldBlocks(UserViewpoint viewpoint, String filter, long stackedBefore, int desiredCount) {
+		List<Block> results = new ArrayList<Block>();
+		
+		for (UserBlockData ubd : getUnansweredQuestionsBlockData(viewpoint, stackedBefore)) {
+			results.add(ubd.getBlock());
+		}
+		
+		for (UserBlockData ubd : getBlocks(viewpoint, viewpoint.getViewer(), -1, stackedBefore, 0, desiredCount - results.size(), filter, false)) {
+			results.add(ubd.getBlock());
+		}
+
+		
+		return results;
+	}	
+
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException {
 		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.user = :user AND ubd.block = block AND block.id = :blockId");
 		q.setParameter("user", viewpoint.getViewer());
@@ -2234,5 +2265,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	public void setUserStackFilterPrefs(User user, String filter) {
 		user.getAccount().setStackFilter(filter);
+		DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "stackFilter");
 	}
 }
