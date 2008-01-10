@@ -1,0 +1,28 @@
+@CHARSET "UTF-8";
+
+/* used in dht2:selfInvite, dht2:notevil */
+.dh-special-subtitle, .dh-disclaimer, .dh-disclaimer-own-section {
+	font-size: 			14pt;
+	color: 				#666666;
+	margin-bottom:		10px;
+}
+
+#dhSelfInviteButton {
+	background-color: #5cc400;
+	border: 2px outset #57e925;
+	color: #fff;
+}
+
+#dhSelfInviteButton:hover {
+	background-color: #7ee600;
+}
+
+#dhLoginButton {
+	background-color: #0066dd;
+	border: 2px outset #0033aa;
+	color: #fff;
+}
+
+#dhLoginButton:hover {
+	background-color: #0099ff;
+}

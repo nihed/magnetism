@@ -1,0 +1,47 @@
+@CHARSET "UTF-8";
+@IMPORT url("person-positions.css");
+
+#dhContentColumn .dh-zone-box .dh-hated-place {
+	color:				#cc0033;
+}
+
+#dhContentColumn .dh-zone-box .dh-hated-place .dh-hated-place-name {
+	font-weight:		bold;
+}
+
+#dhContentColumn .dh-zone-box .dh-where-at-label {
+	font-weight: 			bold;
+	color:				black;
+	font-size:			12px;
+}
+
+#dhContentColumn .dh-zone-box .dh-where-at-link {
+	color:				blue;
+	font-size:			12px;
+}
+
+#dhContentColumn .dh-zone-box .dh-where-at-empty {
+	color:			#777777;
+	font-size:			12px;
+}
+
+#dhContentColumn .dh-zone-box .dh-thumbnail-box-border, #dhContentColumn .dh-zone-box .dh-rss-box-border {
+	background-color:	#cccccc;
+	color:				inherit;
+}
+#dhContentColumn .dh-zone-box .dh-thumbnail-box, #dhContentColumn .dh-zone-box .dh-rss-box {
+	font-size:			12px;
+	color:				#000000;
+	background-color:	#f3f3f3;
+}
+
+#dhContentColumn .dh-zone-box .dh-thumbnail-status, #dhContentColumn .dh-zone-box .dh-rss-status {
+	color:				#666666;
+	background-color:	inherit;
+}
+#dhContentColumn .dh-zone-box .dh-thumbnail-title {
+	font-size:			10px;
+}
+#dhContentColumn .dh-zone-box .dh-thumbnail-title a {
+	text-decoration:		underline;
+}

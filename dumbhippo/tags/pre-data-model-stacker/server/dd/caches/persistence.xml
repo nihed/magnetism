@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd"
+   version="1.0">
+    <persistence-unit name="dumbhippo-caches">
+    <!-- Remember to also look at the definition of this data source 
+    	for settings -->
+    <jta-data-source>java:/DumbHippoCachesDS</jta-data-source>
+	<properties>
+		<!-- DO NOT turn this on, it prints sql to stdout. Instead
+		mess with org.hibernate.SQL logger in log4j.xml -->
+    	<property name="hibernate.show_sql"
+              value="false"/>
+        <!-- This means to blow away tables when our app is 
+        	removed ... there is no "magic right thing" setting
+        	apparently, "update" means "don't blow away tables,
+            unless the schema changed, then blow them away" -->
+        <property name="hibernate.hbm2ddl.auto"
+              value="update"/>
+              
+        <!-- We set this in the ejb3 deployer's persistance.properties
+             so that we can switch between MySQL and PostgreSQL from
+             the super configuration
+	
+	     It's important to set properly: othrewise hbm2ddl will
+	     create hosed-up sql for creating the tables and you'll
+             get bizarre hibernate failures -->
+	<!--
+        <property name="hibernate.dialect"
+              value="org.hibernate.dialect.MySQLDialect" />
+        -->
+        <!--  Bind an entity manager factory into JNDI so we can get access to entity
+              managers outside of session beans (FIXME perhaps not needed for the cache .par) -->
+        <property name="jboss.entity.manager.factory.jndi.name" value="java:/DumbHippoCachesManagerFactory"/>
+  	</properties>
+  	</persistence-unit>
+</persistence>

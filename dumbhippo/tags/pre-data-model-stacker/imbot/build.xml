@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="all" name="imbot">
+        <import file="${basedir}/../common.xml"/>
+
+	<property name="target" value="target" />
+	<property name="build" value="${target}/classes" />
+	<property name="build.tests" value="${target}/test-classes" />
+	<property name="reports.tests" value="${target}/reports" />
+	<property name="target.lib" value="${target}/lib" />
+	<property name="src.java" value="src/java" />
+	<property name="src.tests.java" value="src/test/java" />
+	<fileset dir="${dumbhippo.global.jboss.root}/client" id="dependency.jars.jboss">
+		<include name="jbossall-client.jar"/>
+		<include name="jbossmq-client.jar"/>
+		<include name="jboss-j2ee.jar"/>
+		<include name="log4j.jar"/>
+	</fileset>
+	<fileset dir="${dumbhippo.global.trunkdir}" id="dependency.jars.server">
+		<include name="server/target/classes/dumbhippo-client.jar"/>
+		<include name="lib/server/slf4j-*.jar"/>
+	</fileset>
+    <path id="project.classpath">
+        <pathelement location="${build}"/>
+    	<fileset refid="dependency.jars.jboss" />
+    	<fileset refid="dependency.jars.server" />
+    </path>
+    <target name="init">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+    	<echo message="creating directories..." />
+        <mkdir dir="${build}"/>    	
+        <mkdir dir="${build.tests}"/>    	
+        <mkdir dir="${reports.tests}"/> 
+    	<mkdir dir="${target.lib}"/>
+    	<echo message="checking for up to date jar..." />
+		<uptodate property="uptodate.imbot" targetfile="target/classes/dumbhippo-imbot.jar">
+		    <srcfiles dir= "${src.java}" includes="**/*.java"/>
+		    <srcfiles dir= "${src.java}" includes="**/*.properties" />
+		</uptodate>
+    	<echo message="copying in dependency jars" />
+    	<copy todir="${target.lib}">
+			<mapper type="flatten" />
+	    	<fileset refid="dependency.jars.jboss" />
+    		<fileset refid="dependency.jars.server" />
+    	</copy>
+    </target>
+    <target name="clean">
+        <delete dir="target"/>
+    </target>
+    <target depends="init" name="build">
+        <javac destdir="${build}" debug="on" source="1.5">
+            <src path="${src.java}"/>
+            <classpath refid="project.classpath"/>
+        </javac>
+    </target>
+	<target name="jar" depends="build" unless="uptodate.imbot">
+		<echo message="repacking jar" />
+		<jar destfile="${build}/dumbhippo-imbot.jar">
+			<fileset dir="${build}">
+				<include name="**/*.properties" />
+				<include name="**/*.class" />
+			</fileset>
+			<manifest>
+				<attribute name="Main-Class" value="com.dumbhippo.aimbot.Main" />
+			</manifest>
+		</jar>
+	</target>
+    <target name="run">
+        <java classname="com.dumbhippo.aimbot.Main" failonerror="true" fork="yes">
+            <classpath refid="project.classpath"/>
+        </java>
+    </target>
+	<target name="all" depends="jar,test"/>
+	
+	<!-- test stuff -->
+	<path id="tests.classpath">
+		<pathelement location="${build.tests}"/>
+		<path refid="project.classpath" />
+	</path>
+
+	<target name="test" depends="build">
+		<javac srcdir="${src.tests.java}" destdir="${build.tests}" source="1.5">
+			<classpath refid="tests.classpath" />
+		</javac>
+		<!-- fork=yes required for assertions to be enabled -->
+		<junit printsummary="yes" haltonfailure="yes">
+			<assertions enableSystemAssertions="true">
+				<enable />
+			</assertions>
+			<formatter type="plain" usefile="false" />
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${reports.tests}">
+				<fileset dir="${src.tests.java}">
+					<include name="com/dumbhippo/imbot/test/AllTests.java" />
+				</fileset>
+			</batchtest>
+			<classpath refid="tests.classpath"/>
+		</junit>
+	</target>
+	
+</project>

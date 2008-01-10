@@ -1,0 +1,199 @@
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="simple.css"/>
+  
+  <script language="javascript">
+    function doXmlHttpRequest(url, callback, postdata) {
+      var xmlhttp = null;
+      var loaded = false;
+      
+      /*@cc_on @*/
+      /*@if (@_jscript_version >= 5)
+        try {
+          xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+        } catch (e1) {
+          try {
+           xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+          } catch (e2) {
+           xmlhttp = false;
+          }
+        }
+      @end @*/
+
+      if (!xmlhttp && typeof XMLHttpRequest != 'undefined') {
+        xmlhttp = new XMLHttpRequest();
+      }
+      
+      xmlhttp.open(postdata == null ? "GET" : "POST", url, true);
+      xmlhttp.onreadystatechange = function() {
+        if (!loaded && xmlhttp.readyState == 4) {
+          callback(xmlhttp);
+          loaded = true;
+        }
+      }
+      xmlhttp.send(postdata);
+    }
+    
+    function testXML() {
+      doXmlHttpRequest(
+      "xmlhttp_server_xml.php", 
+      function(xmlhttp) {
+        alert("server time is: " + 
+              xmlhttp.responseXML.documentElement
+              .getElementsByTagName("serverTime")[0].firstChild.nodeValue);
+      });
+    }
+    
+    function testHTML() {
+      doXmlHttpRequest(
+        "xmlhttp_server_html.php",
+        function(xmlhttp) {
+          document.getElementById("html-result").innerHTML 
+            = xmlhttp.responseText;
+        });
+    }
+    
+    function testJavaScript() {
+      function showTime(stime) {
+        alert("Server time is: " + stime);
+      }
+      
+      doXmlHttpRequest(
+        "xmlhttp_server_js.php",
+        function(xmlhttp) {
+          eval(xmlhttp.responseText);
+        })
+    }
+  </script>
+</head>
+<body>
+
+<h1><a href="index.html">DHTML RPC Revisited</a>: XMLHTTP</h1>
+
+<h2>Summary</h2>
+<p>The XMLHTTPRequest object was first implemented as a proprietary Active-X control in _WinIE5_. Later it was _emulated_ by Mozilla in an effort to increase that browser's compatibility with DHTML which used the extension. Once that occured, it quickly became a practical necessity for other browsers to implement it in the same way to stay relevant for advanced DHTML.</p>
+
+<p>The current list of browsers which have a useable level of XMLHTTP support is: _WinIE5+_, _Gecko-based?+_ (Mozilla?+, Firefox?+), Konqueor?+, Safari?+, Opera?+, and OmniWeb?+. This wide support has encouraged major public facing applications such as _GMail_ and _Base Camp_ to us to adopt the technology.</p>
+
+<h2>Implementation</h2>
+<p>The web is littered with good, detailed descriptions of how to implement XMLHTTPRequest. For the sake of discussion, lets just use the really simple function below.</p>
+
+<pre>/**
+ * A super simple XMLHTTPRequest wrapper for handling the most common 
+ * cases. Mostly stolen from http://jibbering.com/2002/4/httprequest.html
+ *
+ * @param url       The URL to request with any querystring already 
+ *                  appended.
+ * @param callback  A function to call when load is complete. Function will
+ *                  be passed the native XMLHTTPRequest object as an 
+ *                  argument, which it can examine for results.
+ * @param postdata  form-urlencoded data to be sent through POST, or null 
+ *                  if none required.
+ */
+function doXmlHttpRequest(url, callback, postdata) {
+  var xmlhttp = null;
+  var loaded = false;
+
+  // special conditional compilation comments hide this code from all 
+  // browsers except win/ie. 
+  
+  /*@cc_on @*/
+  /*@if (@_jscript_version >= 5)
+    try {
+      xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+    } catch (e1) {
+      try {
+        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+      } catch (e2) {
+        xmlhttp = false;
+      }
+    }
+  @end @*/
+
+  if (!xmlhttp &amp;&amp; typeof XMLHttpRequest != 'undefined') {
+    xmlhttp = new XMLHttpRequest();
+  }
+
+  xmlhttp.open(postdata == null ? "GET" : "POST", url, true);
+  xmlhttp.onreadystatechange = function() {
+    // must check whether previously loaded because of bug in Safari/Opera 
+    // where onreadystatechange gets called multiple times with 
+    //readyState == 4.
+    if (!loaded && xmlhttp.readyState == 4) {
+       callback(xmlhttp);
+       loaded = true;
+    }
+  }
+  xmlhttp.send(postdata);
+}
+</pre>
+
+<h2>Response Formats</h2>
+<p>Once you've decided to use XmlHttp, you need to decide what the response format will be. This decision has a significant impact on the speed, flexibility, and extensibility of your app.</p>
+
+<h3>Return XML</h3>
+<p>If the server returns a valid XML document, you can retreive it through the <code>_responseXML_</code> property. Note that in order for this property to be non-null in all browsers, the response <em>must</em> be sent with it's Content-type header set to "text/xml". You can then navigate it's DOM tree to extract the returned data.</p>
+<p>Assuming the server-side PHP script <code>xmlhttp_server_xml.php</code> contained this code:</p>
+<pre>&lt;result&gt;
+  &lt;serverTime&gt;&lt;?= date('r') ?&gt;&lt;/serverTime&gt;
+&lt;/result&gt;</pre>
+<p>... then you could use the following JavaScript to call it and parse the result:</p>
+<pre>function testXML() {
+  doXmlHttpRequest(
+  "xmlhttp_server_xml.php", 
+  function(xmlhttp) {
+    alert("server time is: " + 
+          xmlhttp.responseXML.documentElement
+          .getElementsByTagName("serverTime")[0].firstChild.nodeValue);
+  });
+}</pre>
+<p><button onclick="testXML()">Try It</button></p>
+<p>The upside of using XML is that it creates a clean, platform-independent, widely-supported server interface. If you intend for other, non-DHTML clients to call this URL, or if they ever end up doing so, they will almost certainly have well-tested libraries available on their platform for manipulating XML. _Google Maps_ is an example of an application using XMLHTTP with an XML response type for this reason.</p>
+<p>The downside of XML is that it isn't an optimal format for DHTML itself. Although the XMLHTTPRequest object is highly standardized across browsers, the XMLDocument object is not. The methods for executing XPath expressions for example, which are the best way to navigate a DOM tree, are incompatible across WinIE and Mozilla.</p>
+<p>Another downside of returning XML is that it is a very memory and processor intensive format. The entire returned document must be parsed and loaded up into a DOM tree before it can be used. And even then, you will likely have to make at least one more pass over the data, creating intermediate data structures, before the UI can be updated.</p>
+
+<h3>Return HTML</h3>
+<p>In some cases, all you are trying to do is update a section of the UI. If your app's structure and presentation are relatively separated, it may be easy to simply send replacement HTML.</p>
+<p>The advantage is that it's very easy. The <code>innerHTML</code> property can be used (in most cases, not with an XHTML strict doctype) to overwrite the contents of some element in one line. For example, if you had the following PHP file called <code>xmlhttp_server_html.php</code>:</p>
+<pre>&lt;p&gt;&lt;strong&gt;Server time is:&lt;/strong&gt; &lt;?= date('r') ?&gt;.&lt;/p&gt;</pre>
+<p>... then you could use the following javascript to insert the result into the document:</p>
+<pre>function testHTML() {
+  doXmlHttpRequest(
+    "xmlhttp_server_html.php",
+    function(xmlhttp) {
+      document.getElementById("html-result").innerHTML 
+        = xmlhttp.responseText;
+    });
+}</pre>
+<div id="html-result" style="background-color:red; color:white;"></div>
+<p><button onclick="testHTML()">Try It</button></p>
+<p>The downside of returning HTML is that it ties your server interface more tightly to the UI which displays it. If the UI changes significantly, the server interface may have to change as well.</p>
+
+
+<h3>Return JavaScript</h3>
+<p>A response format which has recently gained some popularity, with _Google Suggest_ for example, is JavaScript. The advantage being that it is extremely fast since it uses the fastest possible parser in DHTML: the JavaScript parser itself.</p>
+<p>The strategy is to return some JavaScript from the server which calls a function waiting on the receiving page...</p>
+<pre>showTime("<?= date('r') ?>");</pre>
+<p>The JavaScript code is then run by using JavaScript's built-in <code>_eval()_</code> method:</p>
+<pre>function testJavaScript() {
+  function showTime(stime) {
+    alert("Server time is: " + stime);
+  }
+  
+  doXmlHttpRequest(
+    "xmlhttp_server_js.php",
+    function(xmlhttp) {
+      eval(xmlhttp.responseText);
+    })
+}</pre>
+<p><button onclick="testJavaScript()">Try It</button></p>
+<p>The downside again of this approach is even tighter coupling to the client UI than returning HTML. However, that might be an appropriate tradeoff for applications requiring ultimate responsiveness and expecting few requirements for alternative clients.</p>
+
+
+<h3>Return Something Else</h3>
+
+<!--
+-->
+
+</body>
+</html>

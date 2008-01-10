@@ -1,0 +1,44 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="http://dojotoolkit.org/css/screen.css" media="screen">
+<link rel="stylesheet" type="text/css" href="http://dojotoolkit.org/css/print.css" media="print">
+</head>
+<body class="docs">
+<!--#include virtual="/rest_template/header.html" -->
+<h1>Documentation</h1>
+<h3>APIS</h3>
+<ul>
+	<li><a href="http://dojotoolkit.org/docs/apis/index.shtml">Dojo 0.1 API Outlines</a></li>
+</ul>
+
+<h3>Release Notes</h3>
+<ul>
+	<li><a href="http://dojotoolkit.org/docs/release_notes_0.1.0.html">Dojo 0.1.0 Release Notes</a></li>
+</ul>
+
+<h3>Articles</h3>
+<ul>
+	<li><a href="http://dojotoolkit.org/docs/getting_started_with_packaged_dojo.html">Getting Started With a Dojo Package</a></li>
+	<li><a href="http://dojotoolkit.org/docs/dojo_event_system.html">The Dojo Event System</a></li>
+	<li><a href="http://dojotoolkit.org/docs/fast_widget_authoring.html">Fast Widget Authoring With Dojo</a></li>
+	<li><a href="http://dojotoolkit.org/docs/intro_to_dojo_io.html">An Introduction to dojo.io.bind()</a></li>
+	<li><a href="http://dojotoolkit.org/docs/the_dojo_way.html">Project Philosophy: The Dojo Way</a></li>
+	<li><a href="http://dojotoolkit.org/docs/compressor_system.html">Making JavaScript Smaller: Dojo's Compressor</a></li>
+	<li><a href="http://dojotoolkit.org/docs/js_style_guide.html">The Dojo JavaScript Style Guide</a></li>
+	<li><a href="http://dojotoolkit.org/docs/projectRoadmap.html">Project Roadmap</a></li>
+	<li><a href="http://dojotoolkit.org/docs/projectStatus.html">Project Status</a></li>
+</ul>
+<p>
+</p>
+
+<h3>Wiki</h3>
+<p>
+	Dojo maintains a publicly-editable Wiki at <a
+	href="http://dojo.jot.com">dojo.jot.com</a>. It contains information on how
+	to get Dojo source code and many useful code snippets and HOWTOs.
+</p>
+
+<!--#include virtual="/rest_template/sidebar.html" -->
+<!--#include virtual="/rest_template/footer.html" -->
+</body>
+</html>

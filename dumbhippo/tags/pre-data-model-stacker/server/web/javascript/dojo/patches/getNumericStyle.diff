@@ -1,0 +1,18 @@
+Index: style.js
+===================================================================
+--- style.js	(revision 1772)
++++ style.js	(working copy)
+@@ -99,11 +99,8 @@
+ 	var s = dojo.style.getComputedStyle(element, cssSelector);
+ 	if (s == ''){ return 0; }
+ 	if (dojo.lang.isUndefined(s)){ return NaN };
+-	var match = s.match(/([\d.]+)([a-z]*)/);
+-	if (!match || !match[1]) 
+-		return NaN;
+-	var n = Number(match[1]);
+-	return (n == 0 || match[2]=='px' ? n : NaN);
++	var match = s.match(/([\d\.]+)(px){0,1}/i);
++	return match ? Number(match[1]) : NaN;
+ }
+ 
+ dojo.style.getMarginWidth = function(node){

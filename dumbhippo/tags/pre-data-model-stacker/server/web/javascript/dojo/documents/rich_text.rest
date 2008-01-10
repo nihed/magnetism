@@ -1,0 +1,80 @@
+.. title:: Rich Text Editing With Dojo
+
+.. raw:: html
+   :file: website/rest_template/header.html
+
+The Importance Being Solid
+--------------------------
+
+JotSpot has been a tremendous sponsor of the Dojo project for a long time time.
+As the first Wiki to provide users with the advantages of WYSIWYG editing, it
+is imperative for Jot to get WYSIWYG right. The editing component is an
+adopter's most frequent, and error-prone, interaction with any web-based
+content system. The usability advantages of WYSIWYG can be quickly undermined
+if there are niggling iteraction problems or even crashes that make users
+distrustful of the editor.
+
+It was always hoped that we could avoid writing our own WYSIWYG component. Good
+engineers don't solve hard problems for the sake of solving them (on the clock,
+anyway). But after some frustration with the incumbent tool, it was decided to
+make a survey of all of the available options, including a ground-up rewrite.
+
+While it seems obvious in retrospect that a solid editing experience is what
+matters most, our testing showed almost every in-browser editor not built on a
+plugin attempts things that break user's expectations or make editing unstable.
+Of course it's not intentional. WYSIWYG on the web *is* a hard problem, and
+providing features cross-browser is a difficult feat. Somewhere in the heat of
+battle against unhelpful APIs, lousy documentation, and a never-ending maze of
+Mozilla bugs it becomes easy to forget that even though it may be possible to
+add a feature, endangering the user experience is almost certainly never worth
+it. What use is an editor if it breaks "undo"? Does the "semanticness" of an
+editors output matter if it crashes?
+
+In the end it became clear that the things a Rich Text control doesn't do are
+as important as what it does provide. Sadly, the available options weren't
+salvagable.
+
+Paul Sowden set about to write an editor that adhered to strict user-experience
+and reliability principles and the result is the Dojo Rich Text component and
+Editor control. The Editor builds on the Rich Text component and gives it a
+toolbar that represents only those functions a given browser can provide.
+JotSpot has generously made these components Open Source software under the
+same extremely liberal license that Dojo itself uses.
+
+Using the Editor
+----------------
+
+The Dojo Editor widget is a container for a Rich Text editor and a toolbar to
+control its behavior. When you build an editor, you can outline which buttons
+you'd like to be in the toolbars and their order. If the browser viewing the
+page can't support a particular option you've specified, its button won't
+appear in the toolbar.
+
+.. FIXME: need to add example here
+.. FIXME: add toolbar configuration demos
+.. FIXME: discuss form participation
+.. FIXME: outline browser compat and limitations: IE, FF, Safari
+
+Using the Rich Text Component By Itself
+---------------------------------------
+
+.. FIXME: discuss fast creation/removal of RichText controls
+.. FIXME: discuss customizing event handlers
+
+.. raw:: html
+   :file: website/rest_template/sidebar.html
+
+Rich Text Editing With Dojo
+===========================
+
+:Author: Alex Russell
+:Version: 0.1
+:Copyright: Dojo Foundation, 2005
+:Date: 2005/10/18
+
+.. contents::
+
+.. raw:: html
+   :file: website/rest_template/footer.html
+
+.. vim:ts=4:et:tw=0:shiftwidth=4:

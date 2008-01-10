@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+        "http://www.w3.org/TR/html4/strict.dtd"> 
+
+<title>Dojo Button Widget Test</title>
+
+<script type="text/javascript">
+	var djConfig = {isDebug: true, debugAtAllCosts: true };
+</script>
+
+<script type="text/javascript" src="../../dojo.js"></script>
+<script type="text/javascript">
+	dojo.require("dojo.widget.*");
+	dojo.require("dojo.event.*");
+	dojo.require("dojo.widget.Button");
+	dojo.require("dojo.widget.html.Button");
+	dojo.hostenv.writeIncludes();
+</script>
+<script type="text/javascript">
+	function init(){
+		var buttonArgs = {
+			label: "button from script",
+			onFoo: function(){
+				dojo.debug("dojo.widget.button.onFoo");
+			},
+			onClick: function(){
+				dojo.debug("dojo.widget.button.onClick");
+			}
+		};
+		var button = dojo.widget.fromScript("Button", buttonArgs);
+		dojo.html.body().appendChild(button.domNode);
+	}
+
+	dojo.addOnLoad(init);
+</script>
+
+<button class="dojo-button" label="built using XHTML class attribute">
+	button from class name
+</button>
+
+
+<button id="testDojoButton" class="dojo-button" label="this is a test button!" 
+	onClick="alert(this.domNode.innerHTML);" onFoo="dojo.hostenv.println('onFoo');">
+	you shouldn't be seeing this
+</button>
+
+<dojo:button label="from namespace prefix"></dojo:button>
+
+<button dojo:type="button" label="namespace'd attribute used" onClick="dojo.debug('foo');">
+	button from namespace'd attribute
+</button>

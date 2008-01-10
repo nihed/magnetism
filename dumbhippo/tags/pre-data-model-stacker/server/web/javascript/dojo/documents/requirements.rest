@@ -1,0 +1,268 @@
+Requirements for the Dojo Project
+=================================
+
+:Author: Alex Russell
+:Version: 0.7
+:Copyright: Copyright 2004, The Dojo Foundation
+
+.. contents::
+
+Change History
+===============
+
++----------+----------+-----------------+--------------------------------------+
+| Version  | Date     | Author          | Comment                              |
++==========+==========+=================+======================================+
+| 0.1      | 20040607 | Alex Russell    | Initial Draft                        |
++----------+----------+-----------------+--------------------------------------+
+| 0.2      | 20040617 | Alex Russell    | Filling in, adding information about |
+|          |          |                 | "how", "what", and "why"             |
++----------+----------+-----------------+--------------------------------------+
+| 0.3      | 20040617 | Alex Russell    | Fixing spelling errors               |
++----------+----------+-----------------+--------------------------------------+
+| 0.4      | 20040617 | Alex Russell    | Reworking project structure section  |
+|          |          |                 | with feedback from Jennifer Tharp    |
++----------+----------+-----------------+--------------------------------------+
+| 0.5      | 20040618 | Alex Russell    | Adding "further requirements" section|
++----------+----------+-----------------+--------------------------------------+
+| 0.6      | 20041112 | Alex Russell    | More info regarding non-functional   |
+|          |          |                 | requirements                         |
++----------+----------+-----------------+--------------------------------------+
+| 0.7      | 20041112 | Alex Russell    | Port from DocBook to reST            |
++----------+----------+-----------------+--------------------------------------+
+
+What? Why?
+==========
+The Dojo Tookit will attempt to meet the following goals:
+
+1. Reduce adoption costs for all deliverables
+2. Provide full and complete JavaScript toolkit
+3. Provide full and complete DOM toolkit
+4. Provide full and complete widget set and communications infrastructure
+
+It will take a lot of hard work to make the stated goals a reality, and so the
+reasoning for why we would attempt such a thing needs to be laid out in further
+detail. Firstly, as the reader may be aware, web application interfaces have
+traditionally been static once sent to the browser. In these applications the
+browser acts a "dumb client" to an application server which maintains all the
+state information about the user's interactions and the data the user is
+manipulating. In this model, any modifications to data require an HTTP
+transaction to take place and the entire web page to be re-generated on the
+server side and subsequently re-rendered on the client.
+
+Over time, client-side browsers have evolved well past the capabilities of a
+dumb terminal for a server-managed application.  Browsers today can request
+data asynchronously, handle parsing and rendering tasks, and uniformly provide
+full-featured languages with bindings to manipulate any portion of an
+application's in-browser rendering. Taken as a whole, these capabilities
+provide for the possibility of a rich-client application in which interactions
+between client and server become data-driven and not formatting based.
+
+There are practical obstacles to achieving this type of application
+development, though. It is very hard today to capitalize on the promise of the
+rich-client application within a web browser. Much work is required to provide
+even UI primitives like menu systems, combo-boxes, grid/list controls,
+data-transfer and parsing, and rich-text editing controls within the framework
+of the browser.  Application developers must constantly re-invent or kludge
+together solutions to these basic "plumbing" problems before they can even
+begin to work on their application-specific logic. The Dojo project seeks to
+provide a stable, capable, and complete foundation upon which application
+authors can base their in-client application development. Furthermore, we will
+unify many of the competing parties in the DHTML toolkit landscape today and
+provide a clearly superior option for those evaluating the development of
+highly interactive, data-driven web applications.
+
+Project organization
+====================
+
+The Dojo project will attempt to be as "self organizing" as possible. While
+various people may have interests that lie only in a subset of the project's
+deliverable targets, it seems somewhat premature to force structure on the
+development process at this stage. Should it become necessaray, responsibility
+deliniation within the development team may lead to sub-section leads being
+named and mailing lists being created for sub-teams, but not until such time as
+it becomes necessaray.
+
+Infrastucture
+=============
+
+The Dojo project will require significant infastructure to support both the
+development and marketing goals of the developers. Mailing lists, email, source
+control, bug tracking, blogs, and wiki tools are all to be under the purview of
+the Dojo Infrastructure Team.  Joyce Park is currently heading up our
+infrastucture efforts.
+
+License and Intellectual Property
+=================================
+
+Comitters will need to submit IP agreement in writing (similar to apache
+contributors agreement). The purpose of this intellectual property disclaimer
+is to prevent future disputes about the origin and/or ownership of the code
+produced by the project and to insulate users of the project's products from
+liability regarding inappropriate appropriation of intellectual property. This
+safeguard will also ensure that project comitters understand their obligations
+to donate unencumbered intellectual property.
+
+`The Apache Foundation's Contributors License Agreement`_ can be found online.
+
+Membership
+==========
+
+New members to the group are to be nominated by a member of the group and
+approved by overall project lead. Persons with approved subscriptions to the
+ng-dhtml mailing list at the time of adoption of this document are granted
+automatic project membership (although they must file the appropriate IP
+agreements to ensure ongoing membership, etc.).
+
+Deliverables
+============
+
+The deliverables constitute the "how" of our effort. They are broadly
+categorized (although their categorizations may change):
+
+- JS Core library
+
+  + string/date formatting and sorting
+  + namespaces
+  + build system
+  + JS linker
+  + language extensions
+  + generics and algorithms
+  + event and message passing system (must tie to comm layer easily)
+
+- DOM Utilities core
+
+  + CSS/browser fixes
+  + sorting, table manipulation, etc.
+  + widget template (theme) and inline ctor support
+
+- Base widget classes and support objects
+
+  + widget tracking
+  + keystroke handling and dispatching
+  + widget class definition
+  + full XML schema for widget ctors, XSLT mapping to XHTML and SVG extension
+    syntaxes
+  + drag-and-drop support
+  + animation (path and function based)
+  + viewport coordinate translation (if/when required)
+
+- Comm layer
+
+  + iframe queue
+  + mod_pubsub integration
+  + data window" for large data sets
+  + server-side language bindings for data binding
+  + client-side classes for data manipulation and update support
+  + on-the-wire efficiency for RPC mechanisms
+  + SOAP and web-services proxies
+  + comm layer performance profiling
+
+- Widgets
+
+  + split-pane
+  + tree
+  + list
+  + scrollable table (re-sizeable columns, field editing, etc.)
+  + menu-bar
+  + contextual-menu
+  + date-picker
+  + combo-box
+  + dialogue
+  + sprite animation
+  + collapse-pane
+  + color picker
+  + rich-text editing
+  + note-taking widget
+  + "canvas" for layout applications (including coord translation)
+  + button (w/ images)
+  + toolbar
+  + progress indicators
+  + slider controls
+  + tabs
+  + layout managers
+  + "window" management (pop-ups, alerts, dialogs, configuration systems, etc.)
+
+- Sample Applications
+
+  + collaboration application:
+
+    The envisioned collaborative application will provide a showcase for the
+    technologies provided by each group. Real-time messaging between
+    participants, distributed "white-boarding" and document sharing are
+    desirable features.
+							
+      * server-side support for storage and session persistence
+      * app-specific client-side logic
+      * work with widgets and comm groups to make interface responsive and
+        suitable for application
+
+Further Requirements
+====================
+
+The Deliverables list provides a basis for understanding what, at the time of
+this writing, we expect to be critical to the success of the project, but it is
+not a substitue for a full requirements gathering process. The intended
+audience for our toolkit will be web application authors, and it must therefore
+meet their un-met needs. These detailed requirements can be broken down into
+two categories: functional and non-functional requirements. Detailed documents
+will be produced to address these areas for each of the major areas listed in
+the Deliverables section of this document.
+		
+The process of gathering, documenting, and assessing the requirements for the
+toolkit should be an ongoing process, with a built-in iteration plan for each
+component. In order to garuntee that we are currently meeting developer's
+requirements and will continue to do so in the future, it is necessaray to
+continuiously integrate feedback from users of the tookit as to how it can be
+improved. Mechanisms for gathering, tracking, and acting on this feedback will
+be developed.
+		
+Functional Requirements
+-----------------------
+
+Functional Requirements can be roughly described as the list of things that the
+toolkit must do or support in order to be considered "feature complete". These
+requirements do not include such attributes as stability, performance, etc.
+
+For each major sub-section of the deliverables list, the project will produce a
+detailed set of functional requirements that outline in as much detail as is
+required (without becoming a design document) what the toolkit should do. These
+requirements should be gathered with enough detail to allow test cases to be
+written for each case to verify that a feature is complete.  From the
+functional requirements, a test plan will be generated for each major
+component.
+		
+Non-Functional Requirements
+---------------------------
+
+Non-Functional Requirements are the set of attributes that the toolkit must
+posess in order to be successful but which are not strictly feature related. 
+
+One of Dojo's guiding principles is to lower adoption costs of the toolkit.
+This statement informs many of the non-functional requirements of the toolkit.
+Put another way, the toolkit must give the developer a minimal number of
+reasons not to adopt it within the target market. For browser applications, the
+factors that influence adoption decisions include size of the javascript file
+to be downloaded, performance and capability of the widgets, platform support
+(breadth of supported browsers), stability, and "hackability". If the toolkit
+does not provide an adequate experience to either end-users or developers, a
+barrier to adoption has been created. Other factors that can affect adoption
+decision cost ("adoption cost" or "barriers to adoption") are the quality and
+completeness of documentation, the availability of examples that illustrate
+common problems and usage scenarios, ease of obtaining support for the toolkit,
+ability to file and track bugs, and the extent of (actual or perceived)
+industry support.
+
+To ensure that Dojo provides a complete and acceptable toolkit for our target
+market, non-functional requirements for the toolkit at large and each major
+sub-component will be laid out in architecture or design documents. Testable
+metrics will be determined on a per-item basis (where possible), target values
+and minimum-acceptance values will be specified for each, and automated tests
+will be constructed to verify that each component meets our standards for
+developer and end-user acceptance.
+
+.. _`The Apache Foundation's Contributors License Agreement`: http://www.apache.org/licenses/cla.txt
+
+.. FIXME: need to add more links and external documentation here!
+
+.. vim:ts=2:et:ai:tw=0:shiftwidth=2

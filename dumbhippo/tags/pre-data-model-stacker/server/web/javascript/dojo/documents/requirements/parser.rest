@@ -1,0 +1,191 @@
+Component Parser Requirements
+===================================
+
+:Author: Dylan Schiemann
+:Version: 0.1
+:Copyright: Dojo Foundation, 2005
+:Date: $Date:$
+
+.. contents::
+
+Purpose
+-------
+
+This document outlines the rationale and usage scenarios for parsing component 
+and application information from multivarious sources.
+
+Requirements
+------------
+
+The client-side parser component of Dojo MUST:
+
+- provide a single, uniform data structure from all of the various supported
+  markup encodings
+- instantiate and provide properties (data and configuration directives) to
+  components and widgets
+- a second pass of the parser MUST provide deeper linking structures such as
+  property sets shared among items, and event handling linkage
+
+Use Cases
+------------
+
+.. image:: ../images/applicationParsingRendering.png
+
+Author apps using a third-party application declaration language
+****************************************************************
+
+An app author wants to use a pre-existing third party application 
+declaration language such as JSF, Struts, Tapestry, etc.  Reasons for this 
+include using dojo components in another environment to extend the capabilites 
+of an existing framework, or to comply with a set of standards for building 
+distributed web applications.
+
+In this case, the parser will usually receive dojoml or inline constructors from 
+the server framework.
+
+Author apps using dojoml
+************************
+
+A mechanism for an author to describe components, their properties, events, and 
+data sources, through a sane xml declaration language.
+
+In most of today's browser environments, this would either be transformed to 
+HTML and/or SVG documents with inline dojo constructors and a reference to the 
+dojoml document, or to HTML and/or SVG documents with the dojo environment and 
+a reference to the dojoml document(s) for the application which would then be 
+parsed on the client side.
+
+The parser would thus need to be able to handle both inline constructors and 
+dojoml documents.  Property sets and data sources may also reside in external 
+resources.
+
+Author apps using inline html and/or svg constructors
+*****************************************************
+
+The author is simply interested in a single namespace environment such as HTML 
+or SVG, and wants to add some dojo components and logic to their application.
+
+Author apps using JavaScript objects
+************************************
+
+The author is a more sophisticated JavaScript developer and does not want to 
+use markup to describe their applications.
+
+In this case, the parser would skip the first pass and start directly with JS 
+objects representing components and application logic and properties.
+
+Author apps using more than one of the above methods
+********************************************************
+
+Because an author might want to use more than one of the techniques listed 
+above, the parsing system needs to accommodate the mixing of these options.  The
+most common example would seem to be using inline constructors and JacaScript 
+objects together.
+
+Parsing Environments
+-----------------------
+
+Arbitrary xml server-side languages
+***********************************
+
+(not sure if we would ever need to parse these... but we would need to offer a 
+translation step between the language and what dojo components support/expect
+
+Dojoml
+***********************************
+
+It should be possible for the parser to read dojoml files and parse them into 
+components, data models, and property sets, and to retrieve external resources 
+for each of these.
+
+Inline constructors
+***********************************
+
+The parser needs to be able to parse incline component constructors in HTML and 
+SVG namespaces into the same result set as it would were it reading a dojoml 
+document.  It should also be able to retrieve external resources, and be able 
+to map translated property names that may be used in non-namespace aware 
+environments.  For example, dojo:componentName in dojoml may be the same as div 
+dojoType="componentName" in an inline HTML constructor.
+
+JavaScript objects
+***********************************
+
+JavaScript objects are essentially already parsed, so the only issue is mixing them with other component declaration styles,a nd external resources.
+
+Abstraction of namespaces
+***********************************
+
+In a namespace aware environment, dojoml and inline constructors use namespaced 
+attributes.  In other environments, custom attributes and tags are prefixed
+according to a rule set stored in ???????.
+
+
+Parsing Steps
+-------------
+
+Generic XML to generic JavaScript
+*********************************
+
+The first step of parsing instantiates an instance of 
+dojo.xml.ParseDocumentFragment, which offers the ability to parse a fragment 
+into a generic JavaScript object structure.  Basically each level of nested 
+elements is translated into an array of objects, which may contain an array of 
+objects representing attributes and nested elements.  Because properties may 
+be described as elements and attributes, and because there is no requirement for 
+uniqueness, every nested level has the somewhat confusing obfuscation of 
+everything being an array.
+
+For example, the following dojoml fragment::
+
+	<dojo:button dataProvider="#buttonDataProvider">
+		<dojo:image xlink:href="test.png">
+	</dojo:button>
+
+would be translated to::
+
+	fragmentObject = {
+		dojo:button[0]:{
+			dataProvider[0]:"#buttonDataProvider",
+			dojo:image[0]: {
+				xlink:href[0]:"test.png"
+			}
+		}
+	}
+
+The primary reason for doing this step is that it seems to be more performant 
+to parse all of the xml to JavaScript once, rather than making multiple passes 
+on XML data structures.
+
+Generic JavaScript to component and data objects
+************************************************
+
+This step converts a generic JavaScript object structure to one that populates 
+structures that describe components, their properties, and data models.  There 
+should be a way to define the set of rules and properties from a component.  For 
+example, what should be done with unrecognized property attributes?  Should they 
+be added to the data structure in an unknown attribute collection, or should 
+they be ignored, but still available by going back and looking at the source XML 
+structure.
+
+There also needs to be a mechanism for round-tripping so that the application 
+end user may modify data or properties, which would then be provided back to the 
+server and stored locally in the xml structure.  Does this make sense?
+
+So how do we define a generic component interface, and then properties and 
+subcomponents or child components specific to a particular component type?  Do 
+we use a hash map or lookup map style system?  Do we use a factory pattern for 
+components?  I guess that I am currently working under the assumption that there 
+will be a base component class, and types of components will have the properties 
+that they accept defined in a dictionary or list, as well as a listing of 
+subcomponents that they accept or expect.  How this will be done is still 
+somewhat of an ill-formulated thought in my mind, though I am sure that Alex 
+has a better concept worked out in his mind.
+
+Also, at this stage of parsing, we need to be able to mixin external data models 
+and property sets, as well as deal with conflicting properties, e.g. the same 
+property being defined in multiple ways.  The conclusion we have come to for 
+property cascading or inheritance is to simply choose the last specified 
+instance of a property, and by last, this also means most specific.  So this 
+would imply that the parser would work from the top down in determining property 
+values.

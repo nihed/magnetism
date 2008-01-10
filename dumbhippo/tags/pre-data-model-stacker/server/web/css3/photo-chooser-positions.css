@@ -1,0 +1,68 @@
+@CHARSET "UTF-8";
+
+.dh-photo-chooser {
+	width:			293px;
+}
+
+.dh-photo-chooser .dh-border {
+	width:				292px;
+}
+
+.dh-photo-chooser .dh-content-padding {
+	width:				290px;
+}
+
+.dh-photo-chooser .dh-content {
+	width:				270px;
+}
+
+.dh-photo-chooser .dh-content .dh-title {
+	position:			relative;
+	margin-bottom:		10px;
+}
+
+.dh-photo-chooser .dh-content .dh-image-grid {
+	position:			relative;
+	width:				270px;
+	height:				270px;
+}
+
+.dh-photo-chooser .dh-content .dh-image-grid .dh-image {
+	float:				left;
+	width:				60px;
+	height:				60px;
+	margin-right:		10px;
+	margin-bottom:		10px;
+	/* without this IE will grow the box a bit apparently */
+	overflow:			hidden;
+}
+
+/* This rule isn't really necessary, but maybe helps the browser 
+ * avoid width/height calculations or something
+ */
+.dh-photo-chooser .dh-content .dh-image-grid .dh-image a, 
+	.dh-photo-chooser .dh-content .dh-image-grid .dh-image a img {
+	width:				60px;
+	height:				60px;
+}
+
+.dh-photo-chooser .dh-content .dh-image-grid .dh-image-right-side {
+	margin-right:		0px;
+}
+
+.dh-photo-chooser .dh-content .dh-image-grid .dh-image-bottom-side {
+	margin-bottom:		0px;
+}
+
+/* remember that this section can be hidden */
+.dh-photo-chooser .dh-content .dh-controls {
+	padding-top:		10px;
+}
+
+.dh-photo-chooser .dh-content .dh-controls .dh-left {
+	float:				left;
+}
+
+.dh-photo-chooser .dh-content .dh-controls .dh-right {
+	float:				right;
+}

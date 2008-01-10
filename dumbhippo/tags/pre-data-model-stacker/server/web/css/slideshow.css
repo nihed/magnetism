@@ -1,0 +1,51 @@
+@CHARSET "UTF-8";
+
+.dh-account-movie-area {
+	width:					450px;	/* Setting to an absolute width, can fix when we have more slideshows at different sizes */
+	margin:					auto;
+	text-align:				center;
+}
+#dhAccountSlideshow, .dh-slideshow-player {
+	/* you want to float or absolute-position it so it shrinks to fit contents */
+	width:					450px;	/* Setting to an absolute width, can fix when we have more slideshows at different sizes */
+}
+
+.dh-slideshow-screen {
+	position:				relative;
+	border: 				1px solid black;
+}
+
+.dh-slideshow-control-area {
+	text-align:				center;
+}
+
+.dh-slideshow-where {
+	margin-left:			auto;
+	margin-right:			auto;
+	padding:				4px;
+}
+
+.dh-slideshow-slide {
+	position:				relative;
+}
+	
+img.dh-slideshow-slide {
+	/* background ensures other slides don't show through */
+	background: #2222FF;
+}
+
+#dhSlideshowTextarea {
+	vertical-align:			middle;
+	height:				100%;
+	width:				100%;
+	padding:			7px;
+}
+
+#dhSlideshowTextarea, .dh-slideshow-text, .dh-slideshow-link {
+	text-align:			center;
+	margin:				auto;
+}
+
+.dh-slideshow-text {
+	margin-top:			4em;
+}

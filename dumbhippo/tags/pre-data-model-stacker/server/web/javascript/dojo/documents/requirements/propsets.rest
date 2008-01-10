@@ -1,0 +1,259 @@
+Property Set Requirements
+=========================
+
+:Author: Dylan Schiemann
+:Version: 0.2
+:Copyright: Dojo Foundation, 2005
+:Date: $Date:$
+
+.. contents::
+
+Purpose
+-------
+
+This document outlines the rationale and development concepts for Dojo xml 
+property sets
+
+Requirements
+------------
+
+To serialize or not to serialize, that is the question
+******************************************************
+
+In early discussions about an xml syntax for describing Dojo applications, the 
+main point of contention was, should this be something that is directly 
+serializable to our underlying object structure, or not?  The general approach
+we took was that for now it should not for the sake of simplicity in
+development, performance, and xml structure.
+
+Overriding and cascading
+************************
+
+A property set can be specified on several levels:
+
+- declared globally, applied to all components
+- declared globally, applied to all components of a certain type
+- declared globally, applied to components that reference this propset by id
+- declared globally, applied only to a specific component instance
+- declared inline, applied to that component
+
+Property sets should also be able to be nested inside other property sets, or 
+declared in external documents.
+
+Usage Scenarios
+---------------
+
+A property set is a way to define a set of attributes, both stylistic and 
+behavioral, that apply to a specific component, a class of components, or all 
+components.
+
+Property sets need to support both simple presentation attributes and complex 
+inter-component relationships.
+
+There should be a way to declare that a certain property set can not be 
+overwritten by other property sets.  This allows someone to have global control 
+over the appearance and behavior of their application, if desired.
+
+Development Decisions
+---------------------
+
+Some decisions that we have made in our early efforts on this:
+
+- don't spend too much time on specifics of the markup syntax as it is certain 
+  to change as we get further along in our development
+- focus early efforts on the way components and properties are related and 
+  specified
+  
+	- Many of our thoughts on this are contained in comments in the source code.
+
+- Currently, we have a two-pass xml parser that does the following:
+  
+  - Step 1 takes an xml structure and converts it to a very generic and 
+    somewhat ugly tree of JavaScript objects.  It is somewhat ugly due to the
+    non-uniqueness of tags and their properties.
+  - Step 2 takes the result from step 1, parses components and property sets, 
+    specifies relationships between the two, which are then to be used for 
+    instantiating components.
+
+- Support for the depth of relationships between property sets and components,
+  and the ways properties are defined, is currently limited to enough variation
+  to get this working.
+- We have generally been opposed to trying to reinvent, or even reimplement, a 
+  cascade mechanism for properties as sophisticated and complex as that found in
+  CSS.  We are currently 
+  working under the assumption that we will do a simple override, in the order 
+  that a property is found, and that the order of overriding is such that 
+  something that applies to all components is looked at first, followed by 
+  property sets that apply to all components of a specific type or class, and
+  finally followed by property sets specific to a single instance of a 
+  component. If more than one of the previous declarations is duplicated, then 
+  whatever is read last is what is applied.
+	
+Examples
+--------
+
+Markup for various property sets is defined as follows:
+
+base propset markup
+*********************
+::
+
+	<dojo:propertySet match="dojo.global" scrollType="auto" />
+
+multiple properties in a single propset
+***************************************
+::
+
+	<dojo:propertySet match="dojo.global">
+		<dojo:scroll type="auto"/>
+		<dojo:reorder type="none"/>
+	</dojo:propertySet>
+
+"named" propsets
+****************
+::
+
+	<dojo:propertySet id="propsetFoo">
+		<dojo:scroll type="auto"/>
+		<dojo:reorder type="none"/>
+	</dojo:propertySet>
+
+"typed" propsets (those that affect all widgets of a given base type)
+*********************************************************************
+::
+
+	<dojo:propertySet match="dojo.grid">
+		<dojo:scroll type="auto"/>
+		<dojo:reorder type="none"/>
+	</dojo:propertySet>
+
+specifying a list of named propsets on a widget
+*********************************************************************
+
+from within a dojoml document:::
+
+	<dojo:grid propertyProviderList="#propsetFoo #propsetBar file#propsetBaz" />
+
+from within an html document:::
+	
+	<div dojoType="grid" dojoPropertyProviderList="#propsetFoo #propsetBar
+		file#propsetBaz">
+	</div>
+
+from within an xhtml document or document with support for namespaces:::
+	
+	<div dojo:tagName="grid" dojo:propertyProviderList="#propsetFoo #propsetBar
+		file#propsetBaz" />
+
+from within an svg document:::
+	
+	<g dojo:tagName="grid" dojo:propertyProviderList="#propsetFoo #propsetBar
+		file#propsetBaz" />
+	
+It seems to make sense, for consistency, to require a # or some other delimiter.
+
+child propsets in a widget/component declaration
+*********************************************************************
+
+from within a dojoml document:::
+
+	<dojo:grid>
+		<dojo:propertySet>
+			<dojo:scroll type="auto"/>
+			<dojo:reorder type="none"/>
+		</dojo:propertySet>
+	</dojo:grid>
+	
+from within an html document:::
+	
+	<div dojoType="grid">
+		<div dojoType="propertySet">
+			<div dojoType="scroll" dojoType="auto"/>
+			<div:dojoType="reorder" dojoType="none"/>
+		</div>
+	</div>
+
+from within an xhtml document or document with support for namespaces:::
+	
+	<div dojo:tagName="grid">
+		<div dojo:tagName="propertySet">
+			<div dojo:tagName="scroll" dojo:type="auto"/>
+			<div dojo:tagName="reorder" dojo:type="none"/>
+		</div>
+	</div>
+
+from within an svg document:::
+	
+	<g dojo:tagName="grid" dojo:propertyProviderList="#propsetFoo #propsetBar
+		file#propsetBaz">
+		<g dojo:tagName="propertySet">
+			<g dojo:tagName="scroll" dojo:type="auto"/>
+			<g dojo:tagName="reorder" dojo:type="none"/>
+		</g>
+	</g>
+
+inline properties in a widget/component declaration
+*********************************************************************
+
+from within a dojoml document:::
+
+	<dojo:grid scrollType="auto" reorderType="none"/>
+	
+from within an html document:::
+	
+	<div dojoType="grid" dojoScrollType="auto" dojoReorderType="none">
+	</div>
+
+from within an xhtml document or document with support for namespaces:::
+	
+	<div dojo:tagName="grid" dojo:scrollType="auto" dojo:reorderType="none">
+	</div>
+
+from within an svg document:::
+	
+	<g dojo:tagName="grid"  dojo:scrollType="auto" dojo:reorderType="none" />
+	
+
+specifying propsets in an external document
+*********************************************************************
+
+I've been working under the assumption that an external document, if it is an 
+xml document, will still specify a specific property set element:::
+
+	<dojo:grid propertyProviderList="http://www.foo.com/foo.xml#propsetFoo" />
+
+I can see this perhaps not being sufficient in the case of a css style external 
+document, but we'll revisit this at a late date.
+
+.. FIXME: CSS?
+
+A more interesting case is either a nested property set, or a property set that 
+simply points to an external property set.  For example,::
+
+	<dojo:grid propertyProviderList="#propsetFoo" />
+	<dojo:propertySet id="propsetFoo"
+		xlink:href="http://www.foo.com/bar.xml#propsetBar" />
+
+specifying propsets rule declaration type
+*********************************************************************
+
+I'm not yet convinced that there is a substantial advantage in specifying the 
+type of a propset, where types are currently css and xml.  The main drawback is 
+the difficulty in specifying a source type for each property set in a list of 
+property sets.
+
+
+specifying propsets that apply only to a certain output format
+*********************************************************************
+
+This suffers from the same complexity in specification issue as a declaration 
+type, but its need is greater.
+
+(html vs. svg, for example)
+..FIXME
+
+Precedence Rules
+----------------
+
+this is not complete
+..FIXME

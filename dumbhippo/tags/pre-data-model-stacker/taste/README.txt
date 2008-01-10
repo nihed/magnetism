@@ -1,0 +1,1 @@
+All documentation can be found at docs/index.html; javadoc is located at docs/javadoc/index.html. Enjoy!

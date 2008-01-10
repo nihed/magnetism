@@ -1,0 +1,36 @@
+body {
+  font-family:georgia;
+  font-size:12px;
+  line-height:1.5em;
+  max-width:80ex;
+  margin:1.5em auto;
+}
+h1 {
+  font-size:2em;
+}
+h2 {
+  font-size:1.5em;
+}
+h3 {
+  font-size:1.2em;
+}
+dt {
+  font-weight:bold;
+  float:left;
+  margin-right:1ex;
+}
+dd {
+  margin-left:2em;
+}
+a {
+  font-weight:bold;
+}
+pre {
+  max-height:20em; 
+  line-height:1em;
+  overflow:auto;
+  background:#ffa;
+  border:2px solid #333;
+  padding:.5em;
+  color:black;
+}

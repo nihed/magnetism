@@ -1,0 +1,581 @@
+
+<html>
+<head>
+	<title>IRC Chat: Data Binding API</title>
+<style type="text/css">
+body { font-family : Lucida Grande, Tahoma, sans-serif; }
+
+th { text-align: left; }
+
+.time {
+	padding-right : 5px;
+	color: #aaa;
+	font-size: 70%;
+}
+
+.author {
+	padding-right : 5px;
+	text-align: right;
+}
+.progrium { color: maroon; }.fbos { color: blue; }.mda { color: green; }.slightlyoff { color: red; }.PSquad32 { color: orange; }.dylanks { color: purple; }
+</style>
+</head>
+<body>
+<table>
+<thead>
+	<tr>
+		<th>Time</th>
+		<th>Who</th>
+		<th>Said</th>
+	</tr>
+</thead>
+<tbody>
+<tr><td class="time">[10:04am]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">howdy</td></tr>
+<tr><td class="time">[11:46am]</td><td class="author"></td><td class="talk">tris left the chat room. (Read error: 60 (Operation timed out))</td></tr>
+<tr><td class="time">[12:07pm]</td><td class="author"></td><td class="talk">tris joined the chat room.</td></tr>
+<tr><td class="time">[12:58pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">hey tris, do you work on ehtereal?</td></tr>
+<tr><td class="time">[1:30pm]</td><td class="author"></td><td class="talk">fbos joined the chat room.</td></tr>
+<tr><td class="time">[1:30pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">howdy</td></tr>
+<tr><td class="time">[1:30pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Hi</td></tr>
+<tr><td class="time">[1:31pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">I understand there's a chat 'round 2 PM PST ?</td></tr>
+<tr><td class="time">[1:31pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">that's the hope = )</td></tr>
+<tr><td class="time">[1:31pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">(this is Alex, btw)</td></tr>
+<tr><td class="time">[1:31pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">About data binding... So, what's to talk about ?</td></tr>
+<tr><td class="time">[1:32pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Great, pleased to meet you, I am FranÁois incompatible encoding</td></tr>
+<tr><td class="time">[1:32pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so we've known for a long time that Dojo is going to need some sort of nice way to provide data binding</td></tr>
+<tr><td class="time">[1:32pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and bi-directional binding at that</td></tr>
+<tr><td class="time">[1:32pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Binding to databases or XML ?</td></tr>
+<tr><td class="time">[1:33pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">does it matter?</td></tr>
+<tr><td class="time">[1:33pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">one can be the other</td></tr>
+<tr><td class="time">[1:33pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Just wanted to make sure we were talking about the same thing</td></tr>
+<tr><td class="time">[1:33pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">oh, OK</td></tr>
+<tr><td class="time">[1:33pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Any plans currently ?</td></tr>
+<tr><td class="time">[1:33pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">(BTW, anybody keeping a log for offline use ?)</td></tr>
+<tr><td class="time">[1:33pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">nope, other than to spec out a sane api for dojo to use on the client side</td></tr>
+<tr><td class="time">[1:33pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">(I am)</td></tr>
+<tr><td class="time">[1:34pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and then provide some way for people to map that to data sources on servers</td></tr>
+<tr><td class="time">[1:34pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">So, the hope is to say something like "bind control X to such and such at URL Y" ?</td></tr>
+<tr><td class="time">[1:34pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">we have all kinds of issues like paging, flat vs. hierarchial, etc. to work through</td></tr>
+<tr><td class="time">[1:34pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">if that's what the developer wants, yes</td></tr>
+<tr><td class="time">[1:35pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but like all things Dojo, the easy things should be trivial and the hard things easier</td></tr>
+<tr><td class="time">[1:35pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">I have to admit I stumbled upon Dojo when I was searching for an Ajax-style JavaScript solution.</td></tr>
+<tr><td class="time">[1:35pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">I only used dojo.io.bind() at the moment.</td></tr>
+<tr><td class="time">[1:35pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so if they want to bind a paged data set with bi-directional updates, that doesn't have to be the only thing we design for</td></tr>
+<tr><td class="time">[1:35pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">how are you finding it?</td></tr>
+<tr><td class="time">[1:36pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Great !</td></tr>
+<tr><td class="time">[1:36pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">It's working just fine.</td></tr>
+<tr><td class="time">[1:36pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I built a new package the other day</td></tr>
+<tr><td class="time">[1:36pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">it fixes some bugs that people were reporting with back-button stuff</td></tr>
+<tr><td class="time">[1:36pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Yes, I saw, but I'm using a checked out copy.</td></tr>
+<tr><td class="time">[1:36pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">ok</td></tr>
+<tr><td class="time">[1:36pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">I thought I should be expanding my use slightly, because I have something currently. Let me explain, and it will probably be made clear.</td></tr>
+<tr><td class="time">[1:36pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">ahh = )</td></tr>
+<tr><td class="time">[1:37pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">It's an eCommerce site (like everyone else). I want to update some values on screen when the user selects a country of destination.</td></tr>
+<tr><td class="time">[1:37pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">ok</td></tr>
+<tr><td class="time">[1:37pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">On the server, I have a PHP script which generates XML which in turn contains things like <service class="expedited"><price>12.22</price><name>Expedited</name></service></td></tr>
+<tr><td class="time">[1:37pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">yada, yada</td></tr>
+<tr><td class="time">[1:37pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">righty</td></tr>
+<tr><td class="time">[1:37pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">There can be multiple <service> items</td></tr>
+<tr><td class="time">[1:37pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">ok</td></tr>
+<tr><td class="time">[1:38pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">So, I have an HTML SELECT control at the moment</td></tr>
+<tr><td class="time">[1:38pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">I'm using dojo.io.bind to get at the XML, and then I'm parsing to create OPTION elements, live</td></tr>
+<tr><td class="time">[1:39pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">right, makes sense</td></tr>
+<tr><td class="time">[1:40pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">It's slightly painful to create the elements by-hand</td></tr>
+<tr><td class="time">[1:40pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">If there is some kind of data binding, I would like to say:</td></tr>
+<tr><td class="time">[1:40pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">attach(ID of element, URL, XPath expression)</td></tr>
+<tr><td class="time">[1:40pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">ah, hrm</td></tr>
+<tr><td class="time">[1:41pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so I guess I'm a bit wary of xpath right now (on the client, anyway)</td></tr>
+<tr><td class="time">[1:41pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but I can see your point</td></tr>
+<tr><td class="time">[1:41pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Yeah, sure. That was in an ideal world, of course </td></tr>
+<tr><td class="time">[1:41pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">heh</td></tr>
+<tr><td class="time">[1:41pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">if xpath is ideal, I want a new world </td></tr>
+<tr><td class="time">[1:42pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Of couse, the third argument could be a function instead of a regular parameter, which could be handed off something (an element, perhaps ?), and could return the appropriate values</td></tr>
+<tr><td class="time">[1:42pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">right</td></tr>
+<tr><td class="time">[1:42pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so I think the Dojo approach for something like this would be a widget</td></tr>
+<tr><td class="time">[1:42pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">which would handle the creation of the elements</td></tr>
+<tr><td class="time">[1:42pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and the widget would get bound to the data source</td></tr>
+<tr><td class="time">[1:42pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but I'm just ad-libbing here</td></tr>
+<tr><td class="time">[1:42pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Ok, NP</td></tr>
+<tr><td class="time">[1:43pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">since we don't even know what binding will look like yet</td></tr>
+<tr><td class="time">[1:43pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I'm in the middle of an article on fast widget authoring</td></tr>
+<tr><td class="time">[1:43pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but it's not done yet = \</td></tr>
+<tr><td class="time">[1:43pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Refreshing the control's values must || should be manual && automatic.</td></tr>
+<tr><td class="time">[1:43pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">In my case, I know when to refresh - every time the user changes the destination country</td></tr>
+<tr><td class="time">[1:44pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">But I can envision use cases where the values should refresh themselves.</td></tr>
+<tr><td class="time">[1:46pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">refresh themselves? based on what event?</td></tr>
+<tr><td class="time">[1:46pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Time ? Other controls changing values ? Randomly ?</td></tr>
+<tr><td class="time">[1:46pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">ok</td></tr>
+<tr><td class="time">[1:47pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Okay, third one's probably not that useful, but time is surely something important.</td></tr>
+<tr><td class="time">[1:47pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Some kind of polling, since we can't get a notification when the server's view of the world changes.</td></tr>
+<tr><td class="time">[1:48pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">HTTP already offers "304 Not Modified" for such cases</td></tr>
+<tr><td class="time">[1:49pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so we've already talked about things like mod_pubsub or LivePage for up-to-date communciation w/ the server</td></tr>
+<tr><td class="time">[1:49pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but I've already had other requests for polling w/ bind()</td></tr>
+<tr><td class="time">[1:50pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Wasn't aware of that.</td></tr>
+<tr><td class="time">[1:50pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">But it would probably be something interesting.</td></tr>
+<tr><td class="time">[1:50pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I've started on the mod_pubsub port, but there are integration issues w/ the current server</td></tr>
+<tr><td class="time">[1:50pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I started on the LivePage port yesterday</td></tr>
+<tr><td class="time">[1:51pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and that looks more promising</td></tr>
+<tr><td class="time">[1:51pm]</td><td class="author"></td><td class="talk">PSquad32 joined the chat room.</td></tr>
+<tr><td class="time">[1:51pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">hey there</td></tr>
+<tr><td class="time">[1:51pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk"><-- Patrick Lightbody</td></tr>
+<tr><td class="time">[1:51pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">hi Patrick!</td></tr>
+<tr><td class="time">[1:51pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Hello Patrick,</td></tr>
+<tr><td class="time">[1:51pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">i'll mostly be lurking</td></tr>
+<tr><td class="time">[1:51pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">How do you do ?</td></tr>
+<tr><td class="time">[1:51pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Ok</td></tr>
+<tr><td class="time">[1:52pm]</td><td class="author"></td><td class="talk">progrium joined the chat room.</td></tr>
+<tr><td class="time">[1:52pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I'm trying like mad to get the test cases for the combo box data provider to pass so we have something to look at = )</td></tr>
+<tr><td class="time">[1:53pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Yummy!</td></tr>
+<tr><td class="time">[1:53pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">eh, there's not much there</td></tr>
+<tr><td class="time">[1:53pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and I dislike the API</td></tr>
+<tr><td class="time">[1:53pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Well, something's better than nothing when we want to discuss</td></tr>
+<tr><td class="time">[1:53pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but it would at be nice to have it at least semi-functional = )</td></tr>
+<tr><td class="time">[1:54pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">who is the moderator for this meeting?</td></tr>
+<tr><td class="time">[1:56pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I guess me = )</td></tr>
+<tr><td class="time">[1:56pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">ok, is there an agenda?</td></tr>
+<tr><td class="time">[1:56pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">although I'm more inflamitory than most people</td></tr>
+<tr><td class="time">[1:56pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">are you Alex?</td></tr>
+<tr><td class="time">[1:56pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">other than to come up w/ a sane set of APIs for producers and consumers of data, no</td></tr>
+<tr><td class="time">[1:56pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">yes, I'm alex</td></tr>
+<tr><td class="time">[1:57pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">ok, well i suggest in the future that an agenda be set -- especially when you get more users, things can get hectic </td></tr>
+<tr><td class="time">[1:57pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">anyway, my personal feelings are that Dojo is missing a framework for bring users in to the fold and understanding what dojo is</td></tr>
+<tr><td class="time">[1:57pm]</td><td class="author"><strong class="progrium">progrium</strong></td><td class="talk">yay for agendas</td></tr>
+<tr><td class="time">[1:58pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Okay, I gotta go, since my wife just came in.</td></tr>
+<tr><td class="time">[1:58pm]</td><td class="author"><strong class="fbos">fbos</strong></td><td class="talk">Have a nice one, everyone !</td></tr>
+<tr><td class="time">[1:58pm]</td><td class="author"></td><td class="talk">fbos left the chat room.</td></tr>
+<tr><td class="time">[1:58pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">given that it is 100% javascript, there is no reason you couldn't create a nice tutorial (using frames? eh, maybe) that allows users to enter in some templates/widgets/whatever and render them</td></tr>
+<tr><td class="time">[1:58pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">lemme dig up a good example of this:</td></tr>
+<tr><td class="time">[1:58pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">well, I've started working on an article that discusses how to easily build widgets</td></tr>
+<tr><td class="time">[1:58pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but yes, I see your point</td></tr>
+<tr><td class="time">[1:59pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">http:/​​/​​www.laszlosystems.com/​​lps/​​laszlo-in-ten-minutes/​​</td></tr>
+<tr><td class="time">[1:59pm]</td><td class="author"></td><td class="talk">dylanks joined the chat room.</td></tr>
+<tr><td class="time">[1:59pm]</td><td class="author"></td><td class="talk">alerque_ joined the chat room.</td></tr>
+<tr><td class="time">[1:59pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">see how they show you some code, plus what it is renders as? then they let you _change_ the code</td></tr>
+<tr><td class="time">[1:59pm]</td><td class="author"><strong class="progrium">progrium</strong></td><td class="talk">or a video of making something cool like ruby on rails, haha</td></tr>
+<tr><td class="time">[1:59pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">that would get people having that "Ah ha!" moment _much_ faster</td></tr>
+<tr><td class="time">[1:59pm]</td><td class="author"></td><td class="talk">schontz joined the chat room.</td></tr>
+<tr><td class="time">[2:00pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so who's gonna help w/ this stuff?</td></tr>
+<tr><td class="time">[2:00pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I agree w/ everything you're saying</td></tr>
+<tr><td class="time">[2:00pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but I'm swamped</td></tr>
+<tr><td class="time">[2:00pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">yes, help is definitely needed</td></tr>
+<tr><td class="time">[2:00pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">what i found at OpenSymphony is that all you have to do is establish the framework, then others will do the ground work</td></tr>
+<tr><td class="time">[2:01pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">for example, write one tutorial like in that example URL</td></tr>
+<tr><td class="time">[2:01pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">others will write the rest</td></tr>
+<tr><td class="time">[2:01pm]</td><td class="author"></td><td class="talk">You changed the topic to "data binding for fun and profilt!".</td></tr>
+<tr><td class="time">[2:01pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">what's profilt?</td></tr>
+<tr><td class="time">[2:02pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">you can "/topic" just as well as I can </td></tr>
+<tr><td class="time">[2:03pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">one of the things that might good would be a tutorial on how to use JS inside the wiki</td></tr>
+<tr><td class="time">[2:03pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">since that might be somepalce where people could work on this kind of thing</td></tr>
+<tr><td class="time">[2:03pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">are mda or trenka going to join us?</td></tr>
+<tr><td class="time">[2:03pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">dunno, ping 'em</td></tr>
+<tr><td class="time">[2:03pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I would hope for at least one or the other</td></tr>
+<tr><td class="time">[2:05pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so it's 2:05 by my clock</td></tr>
+<tr><td class="time">[2:05pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">i concur</td></tr>
+<tr><td class="time">[2:05pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">(that it is 2:05 )</td></tr>
+<tr><td class="time">[2:05pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">no from trenka</td></tr>
+<tr><td class="time">[2:05pm]</td><td class="author"></td><td class="talk">schontz left the chat room.</td></tr>
+<tr><td class="time">[2:05pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">no response from mda</td></tr>
+<tr><td class="time">[2:05pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">hrm</td></tr>
+<tr><td class="time">[2:05pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">oh wait, mda is on his way</td></tr>
+<tr><td class="time">[2:05pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">great!</td></tr>
+<tr><td class="time">[2:06pm]</td><td class="author"><strong class="PSquad32">PSquad32</strong></td><td class="talk">who is mda?</td></tr>
+<tr><td class="time">[2:06pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">Mark Anderson</td></tr>
+<tr><td class="time">[2:06pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">author of the the Burst library</td></tr>
+<tr><td class="time">[2:06pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">burstlib</td></tr>
+<tr><td class="time">[2:06pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and a freaking smart guy</td></tr>
+<tr><td class="time">[2:06pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">he is a committer to netWindows as well</td></tr>
+<tr><td class="time">[2:07pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">he also came up w/ the basics of the bind() API and the Dojo bootstrap system</td></tr>
+<tr><td class="time">[2:07pm]</td><td class="author"></td><td class="talk">mda joined the chat room.</td></tr>
+<tr><td class="time">[2:07pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">speak of the devil!</td></tr>
+<tr><td class="time">[2:07pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">hi Mark</td></tr>
+<tr><td class="time">[2:07pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">hi.</td></tr>
+<tr><td class="time">[2:07pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">so data binding...</td></tr>
+<tr><td class="time">[2:08pm]</td><td class="author"></td><td class="talk">schontz joined the chat room.</td></tr>
+<tr><td class="time">[2:08pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">(hopefully i can stay on. currently my mac is in that "let me mysteriously abuse your disk indefinitely" mode.)</td></tr>
+<tr><td class="time">[2:08pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">yes data binding - what has happened since the last time we discussed it?</td></tr>
+<tr><td class="time">[2:08pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">nada</td></tr>
+<tr><td class="time">[2:08pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">well, not exactly</td></tr>
+<tr><td class="time">[2:08pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I'm afraid = \</td></tr>
+<tr><td class="time">[2:08pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">basically I've implemented some very basic interfaces for it</td></tr>
+<tr><td class="time">[2:09pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">basically all it does now though is two things:</td></tr>
+<tr><td class="time">[2:09pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">as have I (but they're not passing my tests right now)</td></tr>
+<tr><td class="time">[2:09pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">fetch an external data file that is a JS object, load/eval it with dojo.io.bind, and provide it to a widget</td></tr>
+<tr><td class="time">[2:09pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">by specifying a dataProvider attribute</td></tr>
+<tr><td class="time">[2:10pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">right</td></tr>
+<tr><td class="time">[2:10pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">2) an abstract dataProvider class</td></tr>
+<tr><td class="time">[2:10pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">that basically is something widgets can read and write to</td></tr>
+<tr><td class="time">[2:10pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">what is an example of a dataProvider attribute?</td></tr>
+<tr><td class="time">[2:10pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">dataProvider="someUrl" in markup</td></tr>
+<tr><td class="time">[2:11pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">dyaln, is this checked in somewhere that we can look at?</td></tr>
+<tr><td class="time">[2:11pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">the abstract data provider basically can live independently before a widget is created or after it is destroyed</td></tr>
+<tr><td class="time">[2:11pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">let me see</td></tr>
+<tr><td class="time">[2:12pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">the code to load it is checked in, but no example of the data itself yet</td></tr>
+<tr><td class="time">[2:12pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">Ok</td></tr>
+<tr><td class="time">[2:12pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">basically it is just a JS object of key value pairs</td></tr>
+<tr><td class="time">[2:12pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so making this a bit more concrete, my current use case is for a combo box</td></tr>
+<tr><td class="time">[2:12pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">of which the value can also be objects</td></tr>
+<tr><td class="time">[2:12pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">right</td></tr>
+<tr><td class="time">[2:12pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and I can easily see one for "grid" type data</td></tr>
+<tr><td class="time">[2:12pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">as well as tree-style data (trees, menus, etc.)</td></tr>
+<tr><td class="time">[2:13pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">basically anything where it isn't just a set of attributes</td></tr>
+<tr><td class="time">[2:13pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">or where incremental loading or replacement of data is needed</td></tr>
+<tr><td class="time">[2:13pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and I'd like to come up with some set of classes/APIs that allow us to do these things asynchronously, in a paged way, and without tying us too strongly to any server implementation</td></tr>
+<tr><td class="time">[2:14pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">my first thought was that there should be a couple of mixins/interfaces for data providers</td></tr>
+<tr><td class="time">[2:14pm]</td><td class="author"></td><td class="talk">schontz left the chat room.</td></tr>
+<tr><td class="time">[2:14pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and that they should all be asynchronous</td></tr>
+<tr><td class="time">[2:14pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">is everyone following what we're talking about?</td></tr>
+<tr><td class="time">[2:14pm]</td><td class="author"><strong class="progrium">progrium</strong></td><td class="talk">yes and no</td></tr>
+<tr><td class="time">[2:15pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">afaik what is currently implemented isn't really data binding.</td></tr>
+<tr><td class="time">[2:16pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">it is more a convenience for a widget declaration to say where some remote data comes from.</td></tr>
+<tr><td class="time">[2:16pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">feel free to ask questions...</td></tr>
+<tr><td class="time">[2:16pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">but it is up to that widget implementation to programmatically decide what to do with that data.</td></tr>
+<tr><td class="time">[2:16pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">right</td></tr>
+<tr><td class="time">[2:16pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">I said it was primitive </td></tr>
+<tr><td class="time">[2:17pm]</td><td class="author"><strong class="progrium">progrium</strong></td><td class="talk">what's the alternative?</td></tr>
+<tr><td class="time">[2:17pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">whereas a "real" data binding would let you say something like: the width of this div should be equal to the temperature in alaska as obtained from some weather service.</td></tr>
+<tr><td class="time">[2:17pm]</td><td class="author"><strong class="progrium">progrium</strong></td><td class="talk">ah</td></tr>
+<tr><td class="time">[2:17pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">negative widths? </td></tr>
+<tr><td class="time">[2:17pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">it would be in kelvin </td></tr>
+<tr><td class="time">[2:18pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">heh</td></tr>
+<tr><td class="time">[2:18pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so lets work backwards from that definition</td></tr>
+<tr><td class="time">[2:18pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">so basically we need some ideas for ways of providing useful interfaces for both</td></tr>
+<tr><td class="time">[2:19pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">MDA's definition implies what you want</td></tr>
+<tr><td class="time">[2:20pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">right... just reframing the question...</td></tr>
+<tr><td class="time">[2:20pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">OK</td></tr>
+<tr><td class="time">[2:20pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">i think the missing (bridging) piece is that there has to be an indicator of what propert of the widget is being set.</td></tr>
+<tr><td class="time">[2:20pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">i mean, i guess it could be some property named "data" </td></tr>
+<tr><td class="time">[2:20pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">yeah, right now it is dataProvider</td></tr>
+<tr><td class="time">[2:21pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">no, dataProvider is the url where you get the value.</td></tr>
+<tr><td class="time">[2:21pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">the question is what is the variable that is being set to that value?</td></tr>
+<tr><td class="time">[2:21pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">it is some property of the widget such as "combochoices" or "tablevalues"</td></tr>
+<tr><td class="time">[2:22pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">i think it has to be thought of that way, so that instead you can say that the width is equal to the result of some remote query.</td></tr>
+<tr><td class="time">[2:22pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">and so that you can actually set multiple distinct properties of a single widget to different data sources.</td></tr>
+<tr><td class="time">[2:22pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so throwing a bit of every-more-icky reality into the situation: we can't detect property changes or act on them</td></tr>
+<tr><td class="time">[2:22pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">we can detect and act on function calls, however</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="progrium">progrium</strong></td><td class="talk">getters and setters : \</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">this is what we currently have as an interface:</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> this.getDataProvider = function(objRef, dataUrl) {</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> // FIXME: this is currently sync. To make this async, we made need to move</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> //this step into the widget ctor, so that it is loaded when it is needed</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> // to populate the widget</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> dojo.io.bind({</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> url: dataUrl,</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> load: function(type, evaldObj){</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> if(type=="load"){</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> objRef.dataProvider = evaldObj;</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> }</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> },</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> mimetype: "text/javascript",</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> sync: true</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> });</td></tr>
+<tr><td class="time">[2:23pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"> }</td></tr>
+<tr><td class="time">[2:24pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">yeah, getters and setters buy us that, but suck in having to have them</td></tr>
+<tr><td class="time">[2:24pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">or an observer that's keyed by name</td></tr>
+<tr><td class="time">[2:24pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">which you can listen to</td></tr>
+<tr><td class="time">[2:25pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">some function that gets called when a property gets set and passes that name in</td></tr>
+<tr><td class="time">[2:25pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">anyway, that's putting the cart before the horse</td></tr>
+<tr><td class="time">[2:25pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">right</td></tr>
+<tr><td class="time">[2:26pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">what i want to do is find a way where the common use cases require no coding at all.</td></tr>
+<tr><td class="time">[2:26pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I agree w/ mda that we should be able to bind different properties to different sources</td></tr>
+<tr><td class="time">[2:26pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">amen = )</td></tr>
+<tr><td class="time">[2:26pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">i mean, except for core implementors.</td></tr>
+<tr><td class="time">[2:26pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">yes</td></tr>
+<tr><td class="time">[2:26pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"></td></tr>
+<tr><td class="time">[2:27pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so we have a "mixInProperties" method that gets us some of the way there for properties that are set from the parsed ctor nodes</td></tr>
+<tr><td class="time">[2:27pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">but the person writing the table or combobox widget can just say "hey, i've got this property called griddata, which is an array".</td></tr>
+<tr><td class="time">[2:27pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">it doesn't care or want to know how that value comes in at run time.</td></tr>
+<tr><td class="time">[2:27pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">sure, but it has to have some kind of method for saying "ok, I've got this property called griddata, and I need to know when it gets updated"</td></tr>
+<tr><td class="time">[2:28pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">or when it has expired</td></tr>
+<tr><td class="time">[2:28pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">or anotherwise implicit syntax for saying "I want this to happen when this is set"</td></tr>
+<tr><td class="time">[2:28pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">and the person using the table or combobox widget can declare their widget instance to have that data come from: static inline content, or remote content as xml, or remote content as js, or some js function call, or some expression (xpath?) applied to another bound variable.</td></tr>
+<tr><td class="time">[2:28pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">yes</td></tr>
+<tr><td class="time">[2:29pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">each might also imply some kind of translator that we apply to set the end value</td></tr>
+<tr><td class="time">[2:29pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">i think all widgets have to implement a "redraw" method or something like that.</td></tr>
+<tr><td class="time">[2:29pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">they then scurry around saying "what changed?"</td></tr>
+<tr><td class="time">[2:29pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">if they *want* to optimize for what in particular has actually changed, they can do that.</td></tr>
+<tr><td class="time">[2:29pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">ah, hrm</td></tr>
+<tr><td class="time">[2:29pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">but minimally, all widgets have to implement that base method.</td></tr>
+<tr><td class="time">[2:29pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">damnit, I want watch() back in the language...</td></tr>
+<tr><td class="time">[2:29pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk"></td></tr>
+<tr><td class="time">[2:29pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">that is how X Window widget sets usually did it back in the 80s, as i recall </td></tr>
+<tr><td class="time">[2:30pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">yeah, that's how the heavyweight widget sets do it today</td></tr>
+<tr><td class="time">[2:30pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">(Isomorphic, etc.)</td></tr>
+<tr><td class="time">[2:30pm]</td><td class="author"></td><td class="talk">manzoid joined the chat room.</td></tr>
+<tr><td class="time">[2:30pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">it would be something like the widget implementing changeNotify(propname, propvalue)</td></tr>
+<tr><td class="time">[2:30pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">and returning a boolean indicating that it has handled it or not.</td></tr>
+<tr><td class="time">[2:31pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">if not, or if the method doesn't exist, it calls the universal redraw() method.</td></tr>
+<tr><td class="time">[2:31pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">OK</td></tr>
+<tr><td class="time">[2:31pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so I want something else for DOM-based widgets</td></tr>
+<tr><td class="time">[2:32pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and I'll add this later: but I think I want a way to say "data bound to this property applies to this part of the template"</td></tr>
+<tr><td class="time">[2:32pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">although perhaps that's a separate but related problem</td></tr>
+<tr><td class="time">[2:32pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">right now, if I were to implement a redraw() method, it would have to know how to build each part of the widget over</td></tr>
+<tr><td class="time">[2:33pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">i've got this vague notion that your "template" should be merged somehow with metadata declaration of the widget.</td></tr>
+<tr><td class="time">[2:33pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">could be</td></tr>
+<tr><td class="time">[2:33pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">you could do that today by setting the templateString property in the ctor</td></tr>
+<tr><td class="time">[2:33pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">somewhat unrelated... for things like a grid or combobox, you need add/remove for data that populates subtemplates</td></tr>
+<tr><td class="time">[2:33pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but they're usually pretty big/long</td></tr>
+<tr><td class="time">[2:33pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">yes</td></tr>
+<tr><td class="time">[2:33pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">since something somewhere needs to be able to say that the title property is a string without markup, etc.</td></tr>
+<tr><td class="time">[2:34pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">for kaiser i had to implement the ability to dynamically add new expander definitions for the textarea without a refresh.</td></tr>
+<tr><td class="time">[2:34pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">that was a bit of a pain.</td></tr>
+<tr><td class="time">[2:34pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I can imagine</td></tr>
+<tr><td class="time">[2:34pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">because the code was very oriented around doing everything at constructor time.</td></tr>
+<tr><td class="time">[2:34pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">my bad </td></tr>
+<tr><td class="time">[2:35pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">so imposing some requirements on widget writers i think is entirely fair.</td></tr>
+<tr><td class="time">[2:35pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I agree</td></tr>
+<tr><td class="time">[2:35pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">in particular, doing everything at constructor time is natural for the web apps that are doing page refreshes all the time.</td></tr>
+<tr><td class="time">[2:35pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">but not for what we are imagining where they sit there forever.</td></tr>
+<tr><td class="time">[2:35pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">agreed</td></tr>
+<tr><td class="time">[2:36pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">also, I kind of get the feeling that it should always be easy for someone to take boilerplate widget code and wire things up</td></tr>
+<tr><td class="time">[2:36pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so whatever constraints we impose shouldn't endanger that</td></tr>
+<tr><td class="time">[2:36pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">today, it's actually reasonably straightforward</td></tr>
+<tr><td class="time">[2:37pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">i also think there are two levels of declaration complexity.</td></tr>
+<tr><td class="time">[2:37pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">?</td></tr>
+<tr><td class="time">[2:37pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">for the person writing a GUI declaration.</td></tr>
+<tr><td class="time">[2:37pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">there is the simple case where they just say that the grid data comes from this remote URL.</td></tr>
+<tr><td class="time">[2:38pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">and then various default policies are used for polling, or fetch once, etc.</td></tr>
+<tr><td class="time">[2:38pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">but then there is the more complex case where there is a level of indirection, so that the person can declare that stuff.</td></tr>
+<tr><td class="time">[2:38pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">they can say that the values of the griddata comes from invoking the "alaskatemp" service.</td></tr>
+<tr><td class="time">[2:39pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">and the "alaskatemp" service is declared elsewhere, with some properties about it.</td></tr>
+<tr><td class="time">[2:39pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">the difference is whether there is an explicit declaration of that data source, or it is all inline.</td></tr>
+<tr><td class="time">[2:39pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">you make it explicit if you want to set non-default treatment of it, or share it among multiple properties, or just make your code cleaner.</td></tr>
+<tr><td class="time">[2:40pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">sure</td></tr>
+<tr><td class="time">[2:40pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">this is starting to sound like the propertyset concept that Dylan and I have been working on</td></tr>
+<tr><td class="time">[2:40pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but with the second level of indirection added</td></tr>
+<tr><td class="time">[2:40pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">another case of indirection is where you want to set the value to some calculation .</td></tr>
+<tr><td class="time">[2:41pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">some computed value.</td></tr>
+<tr><td class="time">[2:41pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">yes</td></tr>
+<tr><td class="time">[2:41pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">for example, suppose you want to set the width of the box to the temperature, *and* update a label that gives the temperature in farenheit.</td></tr>
+<tr><td class="time">[2:41pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and in that case, you need some sort of selector syntax</td></tr>
+<tr><td class="time">[2:41pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">that *could* be done by a custom change notification handler.</td></tr>
+<tr><td class="time">[2:41pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">but instead i'd rather just declare both properties, and have the infrastructure do it.</td></tr>
+<tr><td class="time">[2:42pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so would we then have properties that act as calculations?</td></tr>
+<tr><td class="time">[2:42pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">(properties of the widget, taht is)</td></tr>
+<tr><td class="time">[2:43pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">so we had talked a lot early on about basically providing what is in essence script based transformations of data</td></tr>
+<tr><td class="time">[2:43pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">so that the data from a remote source doesn't have to map directly to what a widget expects</td></tr>
+<tr><td class="time">[2:44pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">you would provide some sort of transformation object that acted as a proxy</td></tr>
+<tr><td class="time">[2:44pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but we run into all kinds of dirty-data issues with back-propigation of changes from the UI</td></tr>
+<tr><td class="time">[2:44pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">laszlo and avalon have some support for such dependency tracking, as i recall.</td></tr>
+<tr><td class="time">[2:45pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">it is a familiar problem with every mature gui toolkit.</td></tr>
+<tr><td class="time">[2:45pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">i remember the old days of the motif XmForm....</td></tr>
+<tr><td class="time">[2:45pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">well, I'm glad that I'm running into problems of mature toolkits and not just immature toolkits = )</td></tr>
+<tr><td class="time">[2:45pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">you drag one thing, and it spends a minute vibrating with dependencies....</td></tr>
+<tr><td class="time">[2:45pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">heh</td></tr>
+<tr><td class="time">[2:47pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I'd like it to be hard for users to hurt themselves like that...or at least an intentional choice</td></tr>
+<tr><td class="time">[2:48pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">any thoughts from anyone else, or have we overwhelmed you all?</td></tr>
+<tr><td class="time">[2:49pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so I think the easy thing to do is mark data w/ an "isDirty" flag and refuse to back-propigate changes</td></tr>
+<tr><td class="time">[2:49pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">which is fine</td></tr>
+<tr><td class="time">[2:50pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but it gets us back to the question of bi-directional data</td></tr>
+<tr><td class="time">[2:50pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">should we even try to solve it?</td></tr>
+<tr><td class="time">[2:50pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">the approach I've been taking is as follows</td></tr>
+<tr><td class="time">[2:51pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">basically I update on the client when I submit</td></tr>
+<tr><td class="time">[2:51pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">and then I update from the server when I'm notified of an update</td></tr>
+<tr><td class="time">[2:51pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">so basically I update twice</td></tr>
+<tr><td class="time">[2:51pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">the isDirty would apply between the two updates</td></tr>
+<tr><td class="time">[2:52pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">right</td></tr>
+<tr><td class="time">[2:52pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">it works ok with small data</td></tr>
+<tr><td class="time">[2:52pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so you just make an end-run around synchronization</td></tr>
+<tr><td class="time">[2:52pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">not sure how/if it scales</td></tr>
+<tr><td class="time">[2:52pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">right</td></tr>
+<tr><td class="time">[2:53pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so lets assume that we're working with a paged data set (sane), it won't really ever hurt the client too badly until and unless the server chokes on calculations for the updated ata</td></tr>
+<tr><td class="time">[2:53pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">data</td></tr>
+<tr><td class="time">[2:53pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and if it's offloading some of that to the client anyway, no big deal</td></tr>
+<tr><td class="time">[2:54pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">which just leaves us w/ specifying how to propagate changes back</td></tr>
+<tr><td class="time">[2:54pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">or if the data change isn't accepted/allowed</td></tr>
+<tr><td class="time">[2:54pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">yes</td></tr>
+<tr><td class="time">[2:54pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">which should probably be the default?</td></tr>
+<tr><td class="time">[2:55pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">right</td></tr>
+<tr><td class="time">[2:55pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">so by how to propagate, you are wondering if we have an interface for specifying diffs?</td></tr>
+<tr><td class="time">[2:55pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">no, just a way to specify a URL or other type of method to pass the new data back to</td></tr>
+<tr><td class="time">[2:56pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">SOAP, REST, function call, etc.</td></tr>
+<tr><td class="time">[2:56pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">gotcha</td></tr>
+<tr><td class="time">[2:56pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">so basically something like dojo.io.bind, but that creates the thing to be sent/posted/enveloped/etc.</td></tr>
+<tr><td class="time">[2:57pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">yes, and a way of specifying it along with the bound data</td></tr>
+<tr><td class="time">[2:57pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">source</td></tr>
+<tr><td class="time">[2:57pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">right... so I'm currently doing this with post, and just populating a form</td></tr>
+<tr><td class="time">[2:58pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">for get/post requests at least</td></tr>
+<tr><td class="time">[2:58pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">right, I think that'll be a common case</td></tr>
+<tr><td class="time">[2:58pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">we're just turning the widget into a protocol participant</td></tr>
+<tr><td class="time">[2:58pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">right</td></tr>
+<tr><td class="time">[2:58pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">which is, frankly, what I think they should be doing</td></tr>
+<tr><td class="time">[2:58pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">so I guess there needs to be a way to specify what properties the server expects</td></tr>
+<tr><td class="time">[2:59pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">yeah, but I think this goes back to mda's concept of multiple levels of indirection</td></tr>
+<tr><td class="time">[2:59pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">for example, if there's a generic url, and then a property to specify the data record</td></tr>
+<tr><td class="time">[2:59pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">gotcha</td></tr>
+<tr><td class="time">[2:59pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">where each level of indirection can specify it's preferred method of handling updates</td></tr>
+<tr><td class="time">[2:59pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and the one "closest" to the wire actually wins</td></tr>
+<tr><td class="time">[2:59pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">did we lose mda?</td></tr>
+<tr><td class="time">[3:00pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">seems like I'm talking a lot more now </td></tr>
+<tr><td class="time">[3:00pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">: \</td></tr>
+<tr><td class="time">[3:00pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">mda just got called into a kaiser outage....</td></tr>
+<tr><td class="time">[3:00pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">ouch</td></tr>
+<tr><td class="time">[3:00pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">at least they pay you by the hour </td></tr>
+<tr><td class="time">[3:02pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so we've at least got a couple of organizing principles for doing a design:</td></tr>
+<tr><td class="time">[3:03pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">yes</td></tr>
+<tr><td class="time">[3:03pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">we haven't talked about xpath vs. javascript vs. something else.</td></tr>
+<tr><td class="time">[3:03pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">but i don't think we need to.</td></tr>
+<tr><td class="time">[3:03pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">my feeling is that at the end of the day, it's all gotta run through JS anyway</td></tr>
+<tr><td class="time">[3:03pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">because i think the answer is (1) you get a lot of mileage without any expressions, and (2) we can support both.</td></tr>
+<tr><td class="time">[3:04pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">agreed</td></tr>
+<tr><td class="time">[3:04pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I agree on both counts</td></tr>
+<tr><td class="time">[3:04pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">and JS is the one that will get implemented first</td></tr>
+<tr><td class="time">[3:04pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">i might have been imagining it, but i thought i even saw an IETF draft for a "data:" url.</td></tr>
+<tr><td class="time">[3:04pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">for inline values....</td></tr>
+<tr><td class="time">[3:04pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">svg has that</td></tr>
+<tr><td class="time">[3:05pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">they use it for specifying paths, right?</td></tr>
+<tr><td class="time">[3:05pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">also for raster image data</td></tr>
+<tr><td class="time">[3:06pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">so any questions before Alex summarizes?</td></tr>
+<tr><td class="time">[3:06pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">well, I don't know that we have enough for a summary yet</td></tr>
+<tr><td class="time">[3:06pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">we have some principles:</td></tr>
+<tr><td class="time">[3:06pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">don't make the end-developer work</td></tr>
+<tr><td class="time">[3:06pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">(that's what I meant)</td></tr>
+<tr><td class="time">[3:06pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">make most translations implicit if possible, and put the burden on the widget author where you can't</td></tr>
+<tr><td class="time">[3:07pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and allow layering of both data reading and writing activities for those that need it</td></tr>
+<tr><td class="time">[3:07pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so, about those APIs...</td></tr>
+<tr><td class="time">[3:07pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk"></td></tr>
+<tr><td class="time">[3:08pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">what SHOULD this look like to a.)</td></tr>
+<tr><td class="time">[3:08pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">the end developer</td></tr>
+<tr><td class="time">[3:08pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">b.) the widget author</td></tr>
+<tr><td class="time">[3:09pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">c.) the core infrastructure</td></tr>
+<tr><td class="time">[3:09pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">(in that order)</td></tr>
+<tr><td class="time">[3:09pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">well, a probably needs to be possible with just attributes</td></tr>
+<tr><td class="time">[3:09pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">for most common cases</td></tr>
+<tr><td class="time">[3:09pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">well, we've got attribute/subitem duality via the parser</td></tr>
+<tr><td class="time">[3:10pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">yes, those are equivalent in my mind... point was just some properties in markup</td></tr>
+<tr><td class="time">[3:10pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but I agree, the syntax should lend itself to being settable as just an attr for most cases</td></tr>
+<tr><td class="time">[3:10pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">exactly</td></tr>
+<tr><td class="time">[3:11pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">ie dataProvider="someUrl"</td></tr>
+<tr><td class="time">[3:11pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so how does the end widget author say: "set this property of the widget to be equal to this value from this peice of data"</td></tr>
+<tr><td class="time">[3:11pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">well, more like:</td></tr>
+<tr><td class="time">[3:12pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">something like <dataProvider xlink:href="someUrl"><map source="" target="" /></dataProvider></td></tr>
+<tr><td class="time">[3:12pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">dataProvider="name:foo; source: someVariable;" bindData="localAttribute: foo.bar.baz"</td></tr>
+<tr><td class="time">[3:12pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">mda, suggestions?</td></tr>
+<tr><td class="time">[3:13pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">problem with two attributes is how do you tie them together</td></tr>
+<tr><td class="time">[3:13pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">yes</td></tr>
+<tr><td class="time">[3:13pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I agree</td></tr>
+<tr><td class="time">[3:13pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">and multiple providers</td></tr>
+<tr><td class="time">[3:13pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">also true</td></tr>
+<tr><td class="time">[3:14pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">so really you need a data provider list</td></tr>
+<tr><td class="time">[3:14pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">yes</td></tr>
+<tr><td class="time">[3:14pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and a compact syntax</td></tr>
+<tr><td class="time">[3:14pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">and here's where we run into trouble of how we want to specify them (xpath, js object style, css style, etc.)</td></tr>
+<tr><td class="time">[3:14pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">i guess i'm not a big fan of it being so provider-ish.</td></tr>
+<tr><td class="time">[3:15pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">makes it smell of java </td></tr>
+<tr><td class="time">[3:15pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">meaning the name or how it works?</td></tr>
+<tr><td class="time">[3:15pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">the name.</td></tr>
+<tr><td class="time">[3:15pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">alex really like the name canvas</td></tr>
+<tr><td class="time">[3:15pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"></td></tr>
+<tr><td class="time">[3:15pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk"></td></tr>
+<tr><td class="time">[3:16pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">I'm pretty sure I picked up the idea of Provider from either laszlo or flex</td></tr>
+<tr><td class="time">[3:16pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and Java! don't forget how much I love java!</td></tr>
+<tr><td class="time">[3:16pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk"><dojo:set name="width" service="alaskatemperature"></td></tr>
+<tr><td class="time">[3:16pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">: <dojo:set name="width" value="10"></td></tr>
+<tr><td class="time">[3:16pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk"><dojo:set name="width" src="http:/​​/​​fsdf.org/​​temp.txt​"/​​​></td></tr>
+<tr><td class="time">[3:17pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">no selector syntax (even an eval())?</td></tr>
+<tr><td class="time">[3:17pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">dojo:set name="width" expr-type="text/javascript" expr="1 + 1"/></td></tr>
+<tr><td class="time">[3:18pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk"><dojo:set name="width" expr-type="xpath" expr="$height * 2"/></td></tr>
+<tr><td class="time">[3:18pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">or maybe js-expr and xpath-expr and forget about expr-type</td></tr>
+<tr><td class="time">[3:18pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">sure</td></tr>
+<tr><td class="time">[3:18pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">WFM</td></tr>
+<tr><td class="time">[3:19pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk"><dojo:set name="width" url="data:10"/></td></tr>
+<tr><td class="time">[3:19pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">that may be the same as src.....</td></tr>
+<tr><td class="time">[3:19pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">i'm just not sure what to do about things like "data:" and "javascript:"</td></tr>
+<tr><td class="time">[3:20pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">well, we have a few choices... attr name, separate attr, or wrap the attr value... is value="js( )"</td></tr>
+<tr><td class="time">[3:22pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so MDA, I think we could get layering of this kind of thing using the propertyset mechanism</td></tr>
+<tr><td class="time">[3:23pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">ok.</td></tr>
+<tr><td class="time">[3:23pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">where you define your <set> tags somewhere, give them a name, and then mix them in by specifying them as properties to get mixed in</td></tr>
+<tr><td class="time">[3:23pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">or give the <set> a "type" and have it apply to all widgets of that type</td></tr>
+<tr><td class="time">[3:24pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so from that perspective, I think we've got some of the layering groundwork done</td></tr>
+<tr><td class="time">[3:24pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">it doesn't sound like we're coming up w/ a simple syntax that you can use on the widget, though</td></tr>
+<tr><td class="time">[3:25pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">or rather, as an attribute of widget declaration</td></tr>
+<tr><td class="time">[3:25pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">like:</td></tr>
+<tr><td class="time">[3:25pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk"><dojo:button set="???" ... /></td></tr>
+<tr><td class="time">[3:25pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">well, you can still say <combobox width="10"></td></tr>
+<tr><td class="time">[3:25pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">but i think for any value that isn't a literal, you have to be nested.</td></tr>
+<tr><td class="time">[3:26pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">alrighty</td></tr>
+<tr><td class="time">[3:26pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk"><combobox width="10"><property name="height" xpath-expr="$width * 2"></td></tr>
+<tr><td class="time">[3:26pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">well, unless the data source is just a list of name value pairs</td></tr>
+<tr><td class="time">[3:26pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">that applies directly</td></tr>
+<tr><td class="time">[3:26pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I'm actually fine with now that we've shown it's not easy </td></tr>
+<tr><td class="time">[3:27pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">s/with/with that/</td></tr>
+<tr><td class="time">[3:28pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so as for the widget author, what should (s)he be expecting?</td></tr>
+<tr><td class="time">[3:28pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">we mentioned the need to be notified</td></tr>
+<tr><td class="time">[3:29pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and, worst case, provide for a full "repaint"</td></tr>
+<tr><td class="time">[3:30pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">man, while we're yapping, Schontzler going to town on the animation stuff</td></tr>
+<tr><td class="time">[3:30pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">yup</td></tr>
+<tr><td class="time">[3:30pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">I'm discussing that with him as well</td></tr>
+<tr><td class="time">[3:31pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">w00t!</td></tr>
+<tr><td class="time">[3:32pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so how do we make this easy for widget authors?</td></tr>
+<tr><td class="time">[3:32pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">what i'd like to see for the widget author is something a bit like what i did in burst, where there is an explicit declaration of all the properties of the widget.</td></tr>
+<tr><td class="time">[3:32pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">howso?</td></tr>
+<tr><td class="time">[3:32pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">(pointer to code?)</td></tr>
+<tr><td class="time">[3:32pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">giving type, name, default value, help string in english, optional vs. mandatory, the usual thing.</td></tr>
+<tr><td class="time">[3:33pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">then, if they do that, the widget author is free to simply refer to this.mydata</td></tr>
+<tr><td class="time">[3:33pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">the values are just taken care of by the core, without the widget author knowing.</td></tr>
+<tr><td class="time">[3:33pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so would that be a packed structure (object) that you set for every property that can be used this way?</td></tr>
+<tr><td class="time">[3:34pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">or more like a pre-preocessor?</td></tr>
+<tr><td class="time">[3:36pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">see http:/​​/​​burstproject.org/​​burst/​​webui/​​widgets/​​SortTable.js</td></tr>
+<tr><td class="time">[3:37pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">hrm, OK</td></tr>
+<tr><td class="time">[3:38pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">way too long for me to parse while chatting </td></tr>
+<tr><td class="time">[3:38pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">if done this way, we could actually build implicit getters/setters for these things</td></tr>
+<tr><td class="time">[3:38pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">so you can see that PROP_DEFS data structure.</td></tr>
+<tr><td class="time">[3:38pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">which of course could have been done in XML for the true believers.</td></tr>
+<tr><td class="time">[3:39pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">heh</td></tr>
+<tr><td class="time">[3:39pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">the last thing this toolkit needs is a strong reliance on XML in environments where it's not free</td></tr>
+<tr><td class="time">[3:40pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">there is extra trickier in the build process where those same property declarations that are used by the code are *also* used in the generated documentation.</td></tr>
+<tr><td class="time">[3:40pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">http:/​​/​​burstproject.org/​​build/​​apidoc/​​html/​​classburst_1_1webui_1_1widgets_1_1SortTable.html</td></tr>
+<tr><td class="time">[3:40pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">custom parsing for doxygen?</td></tr>
+<tr><td class="time">[3:41pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">right.</td></tr>
+<tr><td class="time">[3:41pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">some bastard combination of perl and java.</td></tr>
+<tr><td class="time">[3:41pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">you don't want to see how the sausage is made.</td></tr>
+<tr><td class="time">[3:42pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">oh wait, you guys have already been exposed to my makefiles.... </td></tr>
+<tr><td class="time">[3:43pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk"></td></tr>
+<tr><td class="time">[3:44pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">yeah, they're the reason I keep clinging to my hope of generating docs straight from Rhino </td></tr>
+<tr><td class="time">[3:45pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">keep in mind that this declaration can also be the basis some day of a graphical gui builder...</td></tr>
+<tr><td class="time">[3:46pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">yeah, with automatic property introspection</td></tr>
+<tr><td class="time">[3:46pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">OK, this is actually pretty siple</td></tr>
+<tr><td class="time">[3:46pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">simple</td></tr>
+<tr><td class="time">[3:46pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and retrofitting the mix-in properties code to handle this is straightforward</td></tr>
+<tr><td class="time">[3:50pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so widget authors should be able to expect that any property built this way will be available for binding</td></tr>
+<tr><td class="time">[3:50pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">are there open loose ends that I'm missing before I go post a log of this discussion the Dojo site?</td></tr>
+<tr><td class="time">[3:53pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">well, there is the aspect of how this relates to styling.</td></tr>
+<tr><td class="time">[3:53pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">how so?</td></tr>
+<tr><td class="time">[3:54pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">well, you might want to be able to tie color, width, background image, etc. to remote data.</td></tr>
+<tr><td class="time">[3:54pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">how to connect data to style attributes</td></tr>
+<tr><td class="time">[3:55pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">or make it computed.</td></tr>
+<tr><td class="time">[3:55pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">right; the issue is that it is a case where there is no explicit metadata for the properties.</td></tr>
+<tr><td class="time">[3:55pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">the stumbling block is the general problem we've hit before, which is how to support styling of widgets without exposing too much of their internals.</td></tr>
+<tr><td class="time">[3:55pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">well, those are DOM properties generally, and I say that's up toe the wiget</td></tr>
+<tr><td class="time">[3:55pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">widget</td></tr>
+<tr><td class="time">[3:56pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">I was going to say it's the widget authors pain as well</td></tr>
+<tr><td class="time">[3:56pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">but maybe we provide something to widget authors to ease their map</td></tr>
+<tr><td class="time">[3:56pm]</td><td class="author"><strong class="dylanks">dylanks</strong></td><td class="talk">pain, not map</td></tr>
+<tr><td class="time">[3:56pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I can see building a proxy attribute and doing a connect() to the implicit setter</td></tr>
+<tr><td class="time">[3:56pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and maybe make a shorthand for that pattern from the template?</td></tr>
+<tr><td class="time">[3:57pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">or from the widget?</td></tr>
+<tr><td class="time">[3:57pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">one of these other toolkits has a delegation model.</td></tr>
+<tr><td class="time">[3:58pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">i forget which one....</td></tr>
+<tr><td class="time">[3:58pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">hrm, how would that help?</td></tr>
+<tr><td class="time">[3:58pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">it helps the widget implementor.</td></tr>
+<tr><td class="time">[3:58pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I was trying to think through style and DOM value assignment the other day</td></tr>
+<tr><td class="time">[3:58pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">and given the issues, I eventually wound up w/ some sort of eval()-able JS that the widget author can set</td></tr>
+<tr><td class="time">[3:59pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">they can say that setting the color of the widget (which is the js thing) is equivalent of setting the DOM/CSS color of this member DOM object.</td></tr>
+<tr><td class="time">[3:59pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">ah, OK</td></tr>
+<tr><td class="time">[4:00pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">a quick google turns up lots of references to event delegation models</td></tr>
+<tr><td class="time">[4:00pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but nothing about property setting (or nothing that I'm seeing)</td></tr>
+<tr><td class="time">[4:01pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">boodman had mentioned that XBL has an inherits tag that handles something like this</td></tr>
+<tr><td class="time">[4:01pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but since we can't count on sanity for property setting, it needs to be more flexible</td></tr>
+<tr><td class="time">[4:01pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">take the case of setting a CSS class</td></tr>
+<tr><td class="time">[4:02pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I SHOULD be able to say node.className = "foo"</td></tr>
+<tr><td class="time">[4:02pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">but some browsers prefer setAttribute("class", "foo");</td></tr>
+<tr><td class="time">[4:03pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">so do we just punt on this for now and revisit as necesaray?</td></tr>
+<tr><td class="time">[4:03pm]</td><td class="author"><strong class="mda">mda</strong></td><td class="talk">i think so.</td></tr>
+<tr><td class="time">[4:05pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">OK</td></tr>
+<tr><td class="time">[4:05pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">alright, we just crossed the oh-so-magical 2-hour line</td></tr>
+<tr><td class="time">[4:05pm]</td><td class="author"><strong class="slightlyoff">slightlyoff</strong></td><td class="talk">I'm gonna cut this off now for the sake of everyone = )</td></tr>
+
+</tbody>
+</table>
+</body>
+</html>
+	

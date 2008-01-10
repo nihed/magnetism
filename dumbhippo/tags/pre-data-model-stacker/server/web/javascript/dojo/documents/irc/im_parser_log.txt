@@ -1,0 +1,35 @@
+03/30 23:09:55 schontz05: I just kinda wanna know how it flows
+03/30 23:10:02 schontz05: and how you attach to different points
+03/30 23:10:08 schontz05: i.e. tags vs. attributes,etc
+03/30 23:10:20 schontz05: and how you turn the xml to JS and such
+03/30 23:10:26 dylans: ok, so basically they're pretty much all treated the same
+03/30 23:10:43 dylans: there are a couple of somewhat helpful documents in svn
+03/30 23:10:54 schontz05: k
+03/30 23:11:12 dylans: basically the first step, in xml/Parse.js, takes any xml fragment, and parses it into a js structure
+03/30 23:11:30 dylans: basically it is a recursive ball of objects of arrays of objects
+03/30 23:11:42 dylans: everything is an array because nothing is guaranteed to be unique
+03/30 23:12:02 dylans: we store a few things for convenience, like a reference to the node, and we normalize the tag name
+03/30 23:12:05 schontz05: ok
+03/30 23:12:18 dylans: so basically the namespaced version is the same as an unspaced version
+03/30 23:12:29 dylans: and everything is converted to lowercase for convenience
+03/30 23:12:54 dylans: the second step is in webui/widgets/Parse.js
+03/30 23:13:13 dylans: this part knows the difference between a component, a property set, etc.
+03/30 23:13:24 schontz05: k
+03/30 23:13:31 dylans: then, anywhere in the app, you can define something like this:
+03/30 23:14:12 dylans: dojo.webui.widgets.tags["dojo:contextmenu"] = function(fragment, widgetParser){
+	dojo.webui.widgets.buildWidgetFromParseTree("dojo:contextmenu", fragment, widgetParser);
+}
+03/30 23:14:57 dylans: so basically an array of things that you consider to be tags, for which you then define the relationship between the tag name and component name
+03/30 23:15:26 dylans: now, each component has a template string
+03/30 23:16:02 dylans: which can either be defined as a JS string, or as an html + css file (which is great for fast widget prototyping, but not performant for a deployment env)
+03/30 23:16:54 dylans: and in the template string, you basically define event and attach points, i.e. dojoAttachEvent='onMouseMove: onFoo; onClick;' 
+	dojoAttachPoint='labelNode'
+03/30 23:17:22 dylans: onMouseMove: onFoo means call onFoo when onMouseMove happens
+03/30 23:17:36 dylans: onClick means call onClick when onClick happens, etc.
+03/30 23:18:03 dylans: the attach points are replaced with methods you define, for example, see HTMLButton.js
+03/30 23:18:19 dylans: a lot of the replacement code is found in DomWidget.js
+03/30 23:18:55 dylans: there are a number of steps that happen and it is somewhat hard to follow at this point (at least for me at least)... hopefully it will either get clearer, or Alex will add some comments :)
+03/30 23:19:17 schontz05: that's cool
+03/30 23:19:42 schontz05: so I'm assuming we'll offer some way to "compile" those HTML+CSS bits?
+03/30 23:20:13 dylans: so things that need help are nested widgets (which I just landed an initial rev)... yes, we'll likely offer a compile for that... right now we use xmlhttpreq
+03/30 23:21:08 dylans: and a good model for basically arbitrarily defining widget properties given properties of their parents and context... for example, how to define what things should appear in a context menu given where it is clicked is nontrivial, but something I hope to work through soon with Alex

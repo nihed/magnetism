@@ -1,0 +1,67 @@
+This file documents the source of external libraries and code, as well
+as their license.
+
+File: commons-collections.jar
+Source: http://jakarta.apache.org/commons/collections
+License: Apache 2.0
+
+File: dom4j
+Source: http://www.dom4j.org
+License: BSD
+
+File: smack-svn-local-build
+Source: http://www.jivesoftware.org/source.php
+License: Apache 2.0
+
+File: smackx-svn-local-build
+Source: http://www.jivesoftware.org/source.php
+License: Apache 2.0
+
+File: standard.jar
+Source: http://jakarta.apache.org/taglibs
+License: Apache 2.0
+
+File: jboss-remoting.jar
+Source: http://labs.jboss.com/portal/index.html?ctrl:id=page.default.info&project=jbossremoting
+License: LGPL
+
+File: commons-codec.jar
+Source: http://jakarta.apache.org/commons/codec
+License: Apache 2.0
+
+File: commons-httpclient.jar
+Source: http://commons.apache.org/httpclient/
+License: Apache 2.0
+
+File: commons-fileupload.jar
+Source: http://jakarta.apache.org/commons/fileupload
+License: Apache 2.0
+
+File: lucene-core.jar
+Source: http://lucene.apache.org/java/docs/index.html
+License: Apache 2.0
+
+File: slf4j.jar
+Source: http://slf4j.org
+License: X11
+
+File: postgresql-8.1-404.jdbc3.jar
+Source: jdbc.postgresql.org
+License: BSD
+
+File: mysql-connector-java-3.1.12-bin.jar
+Source: mysql.com
+License: GPL
+License: Apache 2.0
+
+File: facebook.jar
+Source: http://developers.facebook.com/resources.php
+License: BSD 
+
+File: json-1.0.jar
+Source: http://code.google.com/p/facebook-java-api
+License: MIT
+
+File: json-simple.jar
+Source: http://json.org/java/simple.txt
+License: LGPL
