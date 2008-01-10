@@ -23,8 +23,6 @@ mugshot_SOURCES	=				\
 	src/hippo-distribution.h		\
 	src/hippo-dbus-client.c			\
 	src/hippo-dbus-client.h			\
-	src/hippo-dbus-contacts.c		\
-	src/hippo-dbus-contacts.h		\
 	src/hippo-dbus-cookies.c		\
 	src/hippo-dbus-cookies.h		\
 	src/hippo-dbus-helper.c			\
@@ -62,8 +60,6 @@ mugshot_SOURCES	=				\
 	src/hippo-im.h				\
 	src/hippo-pixbuf-cache.c		\
 	src/hippo-pixbuf-cache.h		\
-	src/hippo-person-renderer.c		\
-	src/hippo-person-renderer.h		\
 	src/hippo-platform-impl.c		\
 	src/hippo-platform-impl.h		\
 	src/hippo-ui.c				\

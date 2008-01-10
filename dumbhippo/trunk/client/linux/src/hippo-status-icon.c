@@ -5,11 +5,6 @@
 #include "main.h"
 #include <hippo/hippo-stack-manager.h>
 
-typedef struct {
-    const HippoHotness hotness;
-    const char *icon_name;
-} HotnessIcon;
-
 static void      hippo_status_icon_init                (HippoStatusIcon       *icon);
 static void      hippo_status_icon_class_init          (HippoStatusIconClass  *klass);
 
