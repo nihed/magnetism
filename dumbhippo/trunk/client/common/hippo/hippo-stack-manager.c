@@ -26,10 +26,10 @@
 #define WINDOW_BORDER 1
 
 struct _HippoStackManager {
-    int              refcount;
     HippoDataCache  *cache;
+    DDMDataModel    *model;
+    HippoPlatform   *platform;
     HippoActions    *actions;
-    HippoConnection *connection;
     gboolean         nofeed_active;
     gboolean         noselfsource_active;
     DDMFeed         *stack;
@@ -203,13 +203,11 @@ update_window_positions(StackManager *manager,
                         gboolean      position_browser,
                         gboolean      position_notification)
 {
-    HippoPlatform *platform;
     HippoRectangle monitor;
     HippoRectangle icon;
     HippoOrientation icon_orientation;
     
-    platform = hippo_connection_get_platform(manager->connection);
-    hippo_platform_get_screen_info(platform, &monitor, &icon, &icon_orientation);
+    hippo_platform_get_screen_info(manager->platform, &monitor, &icon, &icon_orientation);
     
     update_for_screen_info(manager, &monitor, &icon, icon_orientation, position_browser, position_notification);
 }
@@ -217,7 +215,6 @@ update_window_positions(StackManager *manager,
 static void
 resize_browser_to_natural_size(StackManager *manager)
 {
-    HippoPlatform *platform;
     HippoRectangle monitor;
     int natural_width;
     int natural_height;
@@ -228,8 +225,7 @@ resize_browser_to_natural_size(StackManager *manager)
      * advantage
      */
     
-    platform = hippo_connection_get_platform(manager->connection);
-    hippo_platform_get_screen_info(platform, &monitor, NULL, NULL);
+    hippo_platform_get_screen_info(manager->platform, &monitor, NULL, NULL);
     
     hippo_canvas_item_get_width_request(manager->browser_box, &natural_width, NULL);
 
@@ -360,8 +356,7 @@ manager_set_notification_visible(StackManager *manager,
 static void
 manager_hush(StackManager *manager)
 {
-    HippoConnection *connection = hippo_data_cache_get_connection(manager->cache);
-    gint64 hush_timestamp = hippo_current_time_ms() + hippo_connection_get_server_time_offset(connection) + HUSH_TIME;
+    gint64 hush_timestamp = hippo_current_time_ms() + hippo_actions_get_server_time_offset(manager->actions) + HUSH_TIME;
 
     manager_set_hush_timestamp(manager, hush_timestamp);
     manager_set_notification_visible(manager, FALSE);
@@ -395,7 +390,6 @@ manager_set_browser_visible(StackManager *manager,
 
         hippo_window_set_visible(manager->browser_window, TRUE);
     } else {
-        HippoPlatform *platform;
         HippoRectangle icon;
 
         /* For GTK+, if you position a window once, then every time you show it again,
@@ -412,8 +406,7 @@ manager_set_browser_visible(StackManager *manager,
          * don't distinguish close and minimize, so we show the minimize animation if
          * possible.
          */
-        platform = hippo_connection_get_platform(manager->connection);
-        hippo_platform_get_screen_info(platform, NULL, &icon, NULL);
+        hippo_platform_get_screen_info(manager->platform, NULL, &icon, NULL);
 
         hippo_window_hide_to_icon(manager->browser_window, &icon);
     }
@@ -481,8 +474,7 @@ on_get_old_blocks_success (GSList   *results,
      * just not the most recent blocks)
      */
     StackManager *manager = user_data;
-    DDMDataModel *model = hippo_data_cache_get_model(manager->cache);
-    DDMDataResource *self_resource = ddm_data_model_get_self_resource(model);
+    DDMDataResource *self_resource = ddm_data_model_get_self_resource(manager->model);
     DDMQName *stack_qname = ddm_qname_get("http://mugshot.org/p/o/user", "stack");
     GSList *l;
 
@@ -512,11 +504,10 @@ on_get_old_blocks_error(DDMDataError  error,
 static void
 manager_get_old_blocks(StackManager *manager)
 {
-    DDMDataModel *model = hippo_data_cache_get_model(manager->cache);
     DDMDataQuery *query;
     char *filter_string = make_filter_string(manager);
         
-    query = ddm_data_model_query(model,
+    query = ddm_data_model_query(manager->model,
                                  "http://mugshot.org/p/blocks#getOldBlocks", "+",
                                  "filter", filter_string,
                                   NULL);
@@ -538,11 +529,10 @@ on_send_filter_error(DDMDataError  error,
 static void
 manager_send_filter(StackManager *manager)
 {
-    DDMDataModel *model = hippo_data_cache_get_model(manager->cache);
     DDMDataQuery *query;
     char *filter_string = make_filter_string(manager);
 
-    query = ddm_data_model_update(model,
+    query = ddm_data_model_update(manager->model,
                                   "http://mugshot.org/p/blocks#setStackFilter",
                                   "filter", filter_string,
                                   NULL);
@@ -577,9 +567,7 @@ static gboolean
 chat_is_visible(StackManager *manager,
                 const char   *chat_id)
 {
-    HippoPlatform *platform = hippo_connection_get_platform(manager->connection);
-    
-    switch (hippo_platform_get_chat_window_state(platform, chat_id)) {
+    switch (hippo_platform_get_chat_window_state(manager->platform, chat_id)) {
     case HIPPO_WINDOW_STATE_CLOSED:
         return FALSE;
     case HIPPO_WINDOW_STATE_HIDDEN:
@@ -927,78 +915,6 @@ on_ready(DDMDataModel *model,
 }
 
 static void
-manager_disconnect(StackManager *manager)
-{
-    if (manager->cache) {
-        DDMDataModel *model = hippo_data_cache_get_model(manager->cache);
-        
-        stop_notification_timeout(manager);
-        
-        g_signal_handlers_disconnect_by_func(model,
-                                             G_CALLBACK(on_ready),
-                                             manager);
-
-        manager_set_stack(manager, NULL);
-        
-        while (manager->blocks != NULL) {
-                remove_block(manager->blocks->data, manager);
-        }
-
-        hippo_window_set_visible(manager->notification_window, FALSE);
-        g_object_unref(manager->notification_window);
-        manager->notification_window = NULL;
-        manager->notification_base_item = NULL;
-        manager->notification_item = NULL;
-        
-        hippo_window_set_visible(manager->browser_window, FALSE);
-        g_object_unref(manager->browser_window);
-        manager->browser_window = NULL;
-        manager->browser_base_item = NULL;
-        manager->browser_scroll_item = NULL;
-        manager->browser_item = NULL;
-        manager->browser_resize_grip = NULL;
-
-        g_object_unref(manager->actions);
-        manager->actions = NULL;
-        
-        g_object_unref(manager->cache);
-        manager->cache = NULL;
-        manager->connection = NULL;
-    }
-}
-
-static void
-manager_ref(StackManager *manager)
-{
-    manager->refcount += 1;
-}
-
-static void
-manager_unref(StackManager *manager)
-{
-    g_return_if_fail(manager->refcount > 0);
-    manager->refcount -= 1;
-    if (manager->refcount == 0) {
-        g_debug("Finalizing stack manager");
-        manager_disconnect(manager);
-        g_free(manager);
-    }
-}
-
-static StackManager*
-manager_new(void)
-{
-    StackManager *manager;
-
-    manager = g_new0(StackManager, 1);
-    manager->item_to_block = g_hash_table_new_full(g_direct_hash, NULL,
-                                                   NULL, (GDestroyNotify)g_object_unref);
-    manager->refcount = 1;
-    
-    return manager;
-}
-
-static void
 on_browser_minimize(HippoWindow *window,
                     void        *data)
 {
@@ -1058,19 +974,16 @@ on_notification_motion_notify(HippoCanvasItem *item,
     return FALSE;
 }
 
-static void
-manager_attach(StackManager    *manager,
-               HippoDataCache  *cache)
+HippoStackManager*
+hippo_stack_manager_new(HippoDataCache *cache)
 {
-    HippoPlatform *platform;
-    DDMDataModel *model;
-    
-    g_debug("Stack manager attaching to data cache");
-    
-    manager->cache = cache;
-    g_object_ref(manager->cache);
-    manager->connection = hippo_data_cache_get_connection(manager->cache);
+    StackManager *manager;
+    HippoConnection *connection;
 
+    manager = g_new0(StackManager, 1);
+    manager->item_to_block = g_hash_table_new_full(g_direct_hash, NULL,
+                                                   NULL, (GDestroyNotify)g_object_unref);
+    
     /* FIXME really the "actions" should probably be more global, e.g.
      * shared with the tray icon, but the way I wanted to do that
      * is to stuff it on the data cache, but that requires moving
@@ -1078,20 +991,14 @@ manager_attach(StackManager    *manager,
      * right this second since a bunch of eventually xp stuff is in
      * the linux dir.
      */
-    manager->actions = hippo_actions_new(manager->cache);
+    manager->actions = hippo_actions_new(cache, manager);
     
-    platform = hippo_connection_get_platform(manager->connection);
+    connection = hippo_data_cache_get_connection(cache);
+    manager->platform = g_object_ref(hippo_connection_get_platform(connection));
+                                                       
+    manager->model = g_object_ref(hippo_data_cache_get_model(cache));
 
-    /* this creates a refcount cycle, but
-     * hippo_stack_manager_free breaks it.
-     * Also, too lazy right now to key to the cache/icon
-     * pair, right now it just keys to the cache
-     */
-    manager_ref(manager);
-    g_object_set_data_full(G_OBJECT(cache), "stack-manager",
-                           manager, (GFreeFunc) manager_unref);
-
-    manager->browser_window = hippo_platform_create_window(platform);
+    manager->browser_window = hippo_platform_create_window(manager->platform);
 
 #ifdef WITH_MAEMO
     g_object_set(manager->browser_window, "role", HIPPO_WINDOW_ROLE_NOTIFICATION, NULL);
@@ -1164,7 +1071,7 @@ manager_attach(StackManager    *manager,
     
     hippo_window_set_contents(manager->browser_window, manager->browser_box);
 
-    manager->notification_window = hippo_platform_create_window(platform);
+    manager->notification_window = hippo_platform_create_window(manager->platform);
 
     /* Omit the window from the task-list and (for platforms where there is one) the pager */
     g_object_set(manager->notification_window, "role", HIPPO_WINDOW_ROLE_NOTIFICATION, NULL);
@@ -1195,37 +1102,11 @@ manager_attach(StackManager    *manager,
 
     hippo_window_set_contents(manager->notification_window, manager->notification_box);
 
-    model = hippo_data_cache_get_model(manager->cache);
-
-    g_signal_connect(model, "ready",
+    g_signal_connect(manager->model, "ready",
                      G_CALLBACK(on_ready), manager);
 
-    if (ddm_data_model_is_ready(model))
-        on_ready(model, manager);
-}
-
-static void
-manager_detach(HippoDataCache  *cache)
-{
-    StackManager *manager;
-
-    manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
-    g_return_if_fail(manager != NULL);
-
-    manager_disconnect(manager);
-
-    /* may destroy the manager */
-    g_object_set_data(G_OBJECT(cache), "stack-manager", NULL);
-}
-
-HippoStackManager*
-hippo_stack_manager_new(HippoDataCache *cache)
-{
-    StackManager *manager;
-
-    manager = manager_new();
-
-    manager_attach(manager, cache);
+    if (ddm_data_model_is_ready(manager->model))
+        on_ready(manager->model, manager);
 
     return manager;
 }
@@ -1233,14 +1114,42 @@ hippo_stack_manager_new(HippoDataCache *cache)
 void
 hippo_stack_manager_free(HippoStackManager *manager)
 {
-    manager_detach(manager->cache);
-    manager_unref(manager);
-}
-
-HippoStackManager*
-hippo_stack_manager_get (HippoDataCache *cache)
-{
-    return g_object_get_data(G_OBJECT(cache), "stack-manager");
+    stop_notification_timeout(manager);
+        
+    g_signal_handlers_disconnect_by_func(manager->model,
+                                         G_CALLBACK(on_ready),
+                                         manager);
+    
+    manager_set_stack(manager, NULL);
+    
+    while (manager->blocks != NULL) {
+        remove_block(manager->blocks->data, manager);
+    }
+    
+    hippo_window_set_visible(manager->notification_window, FALSE);
+    g_object_unref(manager->notification_window);
+    manager->notification_window = NULL;
+    manager->notification_base_item = NULL;
+    manager->notification_item = NULL;
+    
+    hippo_window_set_visible(manager->browser_window, FALSE);
+    g_object_unref(manager->browser_window);
+    manager->browser_window = NULL;
+    manager->browser_base_item = NULL;
+    manager->browser_scroll_item = NULL;
+    manager->browser_item = NULL;
+    manager->browser_resize_grip = NULL;
+    
+    g_object_unref(manager->actions);
+    manager->actions = NULL;
+    
+    g_object_unref(manager->platform);
+    manager->platform = NULL;
+    
+    g_object_unref(manager->model);
+    manager->model = NULL;
+    
+    g_free(manager);
 }
 
 void
@@ -1298,13 +1207,9 @@ void
 hippo_stack_manager_show_browser(HippoStackManager *manager,
                                  gboolean           hide_if_visible)
 {
-    HippoConnection *connection;
-
     g_return_if_fail(manager != NULL);
     
-    connection = hippo_data_cache_get_connection(manager->cache);
-
-    if (!hippo_connection_get_connected(connection)) {
+    if (!ddm_data_model_get_connected(manager->model)) {
         return;
     }
 
@@ -1314,13 +1219,9 @@ hippo_stack_manager_show_browser(HippoStackManager *manager,
 void
 hippo_stack_manager_toggle_filter(HippoStackManager *manager)
 {
-    HippoConnection *connection;
-
     g_return_if_fail(manager != NULL);
     
-    connection = hippo_data_cache_get_connection(manager->cache);
-
-    if (!hippo_connection_get_connected(connection)) {
+    if (!ddm_data_model_get_connected(manager->model)) {
         g_debug("ignoring filter toggle due to current disconnection state");
         return;
     }
@@ -1331,13 +1232,9 @@ hippo_stack_manager_toggle_filter(HippoStackManager *manager)
 void
 hippo_stack_manager_toggle_nofeed(HippoStackManager *manager)
 {
-    HippoConnection *connection;
-
     g_return_if_fail(manager != NULL);
     
-    connection = hippo_data_cache_get_connection(manager->cache);
-
-    if (!hippo_connection_get_connected(connection)) {
+    if (!ddm_data_model_get_connected(manager->model)) {
         g_debug("ignoring nofeed toggle due to current disconnection state");        
         return;
     }
@@ -1348,13 +1245,9 @@ hippo_stack_manager_toggle_nofeed(HippoStackManager *manager)
 void
 hippo_stack_manager_toggle_noselfsource(HippoStackManager *manager)
 {
-    HippoConnection *connection;
-
     g_return_if_fail(manager != NULL);
 
-    connection = hippo_data_cache_get_connection(manager->cache);
-
-    if (!hippo_connection_get_connected(connection)) {
+    if (!ddm_data_model_get_connected(manager->model)) {
         g_debug("ignoring noselfsource toggle due to current disconnection state");        
         return;
     }

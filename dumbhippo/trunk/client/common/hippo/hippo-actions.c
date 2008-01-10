@@ -16,6 +16,7 @@ static void      hippo_actions_finalize            (GObject            *object);
 struct _HippoActions {
     GObject parent;
     HippoDataCache *cache;
+    HippoStackManager *stack_manager;
 
     /* We have an image cache for each kind of
      * image, because otherwise we can't really predict
@@ -120,6 +121,8 @@ hippo_actions_dispose(GObject *object)
         g_object_unref(actions->music_thumbnail_cache);
         actions->music_thumbnail_cache = NULL;
     }
+
+    actions->stack_manager = NULL;
     
     G_OBJECT_CLASS(hippo_actions_parent_class)->dispose(object);
 }
@@ -133,15 +136,16 @@ hippo_actions_finalize(GObject *object)
 }
 
 HippoActions*
-hippo_actions_new(HippoDataCache *cache)
+hippo_actions_new(HippoDataCache    *cache,
+                  HippoStackManager *stack_manager)
 {
     HippoActions *actions;
 
     actions = g_object_new(HIPPO_TYPE_ACTIONS,
                            NULL);
 
-    g_object_ref(cache);
-    actions->cache = cache;
+    actions->cache = g_object_ref(cache);
+    actions->stack_manager = stack_manager;
     
     return actions;
 }
@@ -311,44 +315,44 @@ hippo_actions_get_server_time_offset (HippoActions *actions)
 void
 hippo_actions_close_browser(HippoActions    *actions)
 {
-    hippo_stack_manager_close_browser(hippo_stack_manager_get(actions->cache));
+    hippo_stack_manager_close_browser(actions->stack_manager);
 }
 
 void
 hippo_actions_close_notification(HippoActions    *actions)
 {
-    hippo_stack_manager_close_notification(hippo_stack_manager_get(actions->cache));
+    hippo_stack_manager_close_notification(actions->stack_manager);
 }
 
 void
 hippo_actions_hush_notification(HippoActions    *actions)
 {
-    hippo_stack_manager_hush(hippo_stack_manager_get(actions->cache));
+    hippo_stack_manager_hush(actions->stack_manager);
 }
 
 void
 hippo_actions_expand_notification(HippoActions *actions)
 {
-    hippo_stack_manager_close_notification(hippo_stack_manager_get(actions->cache));
-    hippo_stack_manager_show_browser(hippo_stack_manager_get(actions->cache), FALSE);
+    hippo_stack_manager_close_notification(actions->stack_manager);
+    hippo_stack_manager_show_browser(actions->stack_manager, FALSE);
 }
 
 void
 hippo_actions_toggle_filter(HippoActions *actions)
 {
-    hippo_stack_manager_toggle_filter(hippo_stack_manager_get(actions->cache));
+    hippo_stack_manager_toggle_filter(actions->stack_manager);
 }
 
 void
 hippo_actions_toggle_nofeed(HippoActions *actions)
 {
-    hippo_stack_manager_toggle_nofeed(hippo_stack_manager_get(actions->cache));
+    hippo_stack_manager_toggle_nofeed(actions->stack_manager);
 }
 
 void
 hippo_actions_toggle_noselfsource(HippoActions *actions)
 {
-    hippo_stack_manager_toggle_noselfsource(hippo_stack_manager_get(actions->cache));
+    hippo_stack_manager_toggle_noselfsource(actions->stack_manager);
 }
 
 void

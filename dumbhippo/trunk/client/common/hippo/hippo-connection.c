@@ -3127,7 +3127,7 @@ char*
 hippo_connection_make_absolute_url(HippoConnection *connection,
                                    const char      *maybe_relative)
 {
-	return hippo_connection_make_absolute_url_for_server(connection, connection->auth_server_type, maybe_relative);
+    return hippo_connection_make_absolute_url_for_server(connection, connection->auth_server_type, maybe_relative);
 }
 
 void

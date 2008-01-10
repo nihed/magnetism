@@ -215,6 +215,7 @@ private:
 
     HippoGObjectPtr<HippoPlatform> platform_;
     HippoGObjectPtr<HippoDataCache> dataCache_;
+    HippoStackManager *stack_;
 
     GConnection1<void,int> hotnessChanged_;
     GConnection1<void,gboolean> connectedChanged_;
