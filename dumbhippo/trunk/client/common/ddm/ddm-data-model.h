@@ -47,7 +47,7 @@ void ddm_data_model_add_rule (DDMDataModel       *model,
                               const char         *default_children,
                               const char         *condition);
 
-gboolean      ddm_data_model_get_connected      (DDMDataModel   *model);
+gboolean      ddm_data_model_is_online          (DDMDataModel   *model);
 gboolean      ddm_data_model_is_ready           (DDMDataModel   *model);
 
 DDMDataResource *ddm_data_model_get_global_resource (DDMDataModel *model);

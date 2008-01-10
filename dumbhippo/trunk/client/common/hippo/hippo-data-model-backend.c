@@ -262,9 +262,6 @@ hippo_add_model    (DDMDataModel *ddm_model,
 
     connection = hippo_data_cache_get_connection(cache);
 
-    ddm_data_model_set_connected(hippo_model->ddm_model,
-                                 hippo_connection_get_connected(connection));
-    
     g_signal_connect(connection, "connected-changed",
                      G_CALLBACK(on_connection_connected_changed), hippo_model);
     
@@ -346,22 +343,39 @@ hippo_send_query   (DDMDataModel *ddm_model,
 }
 
 static gboolean
-do_offline_update_error(gpointer data)
+handle_local_update (HippoDataCache *cache,
+                     DDMDataQuery   *query)
 {
-    DDMDataQuery *query = data;
+    DDMQName *qname = ddm_data_query_get_qname(query);
+    if (!g_str_has_prefix(qname->uri, "online-desktop:"))
+        return FALSE;
 
-    ddm_data_query_error(query,
-                         DDM_DATA_ERROR_NO_CONNECTION,
-                         "Not connected to server");
+    if (strcmp(qname->uri, "online-desktop:/p/system") == 0) {
+        GHashTable *params = ddm_data_query_get_params(query);
+        HippoConnection *connection = hippo_data_cache_get_connection(cache);
+        
+        if (strcmp(qname->name, "openUrl") == 0) {
+            const char *url = g_hash_table_lookup(params, "url");
+            if (url == NULL) {
+                ddm_data_query_error_async(query,
+                                           DDM_DATA_ERROR_BAD_REQUEST,
+                                           "'url' parameter missing for openUrl request");
+                return TRUE;
+            }
 
-    return FALSE;
-}
+            hippo_connection_open_maybe_relative_url(connection, url);
 
-static void
-queue_offline_update_error(DDMDataModel *ddm_model,
-                           DDMDataQuery *query)
-{
-    g_idle_add(do_offline_update_error, query);
+            /* FIXME: signal success */
+            
+            return TRUE;
+        }
+    }
+
+    ddm_data_query_error_async(query,
+                               DDM_DATA_ERROR_BAD_REQUEST,
+                               "Unknown local data model update");
+
+    return TRUE;
 }
 
 static void
@@ -376,12 +390,17 @@ hippo_send_update (DDMDataModel *ddm_model,
     hippo_model = get_hippo_model(ddm_model);    
 
     cache = HIPPO_DATA_CACHE(backend_data);
-    connection = hippo_data_cache_get_connection(cache);
+
+    if (handle_local_update(cache, query))
+        return;
     
+    connection = hippo_data_cache_get_connection(cache);
     if (hippo_connection_get_connected(connection))
         hippo_connection_send_query(connection, query);
     else
-        queue_offline_update_error(ddm_model, query);
+        ddm_data_query_error_async(query,
+                                   DDM_DATA_ERROR_NO_CONNECTION,
+                                   "Not connected to server");
 }
 
 static const DDMDataModelBackend hippo_backend = {

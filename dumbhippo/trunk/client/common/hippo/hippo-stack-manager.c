@@ -1209,7 +1209,7 @@ hippo_stack_manager_show_browser(HippoStackManager *manager,
 {
     g_return_if_fail(manager != NULL);
     
-    if (!ddm_data_model_get_connected(manager->model)) {
+    if (!ddm_data_model_is_online(manager->model)) {
         return;
     }
 
@@ -1221,7 +1221,7 @@ hippo_stack_manager_toggle_filter(HippoStackManager *manager)
 {
     g_return_if_fail(manager != NULL);
     
-    if (!ddm_data_model_get_connected(manager->model)) {
+    if (!ddm_data_model_is_online(manager->model)) {
         g_debug("ignoring filter toggle due to current disconnection state");
         return;
     }
@@ -1234,7 +1234,7 @@ hippo_stack_manager_toggle_nofeed(HippoStackManager *manager)
 {
     g_return_if_fail(manager != NULL);
     
-    if (!ddm_data_model_get_connected(manager->model)) {
+    if (!ddm_data_model_is_online(manager->model)) {
         g_debug("ignoring nofeed toggle due to current disconnection state");        
         return;
     }
@@ -1247,7 +1247,7 @@ hippo_stack_manager_toggle_noselfsource(HippoStackManager *manager)
 {
     g_return_if_fail(manager != NULL);
 
-    if (!ddm_data_model_get_connected(manager->model)) {
+    if (!ddm_data_model_is_online(manager->model)) {
         g_debug("ignoring noselfsource toggle due to current disconnection state");        
         return;
     }

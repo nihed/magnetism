@@ -215,11 +215,18 @@ ddm_data_model_new_no_backend (void)
 }
 
 gboolean
-ddm_data_model_get_connected(DDMDataModel   *model)
+ddm_data_model_is_online(DDMDataModel   *model)
 {
+    gboolean connected = FALSE;
+    
     g_return_val_if_fail(DDM_IS_DATA_MODEL(model), FALSE);
 
-    return model->connected;
+    if (model->global_resource != NULL)
+        ddm_data_resource_get(model->global_resource,
+                              "online", DDM_DATA_BOOLEAN, &connected,
+                              NULL);
+
+    return connected;
 }
 
 gboolean

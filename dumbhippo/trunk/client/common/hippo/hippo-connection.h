@@ -67,9 +67,6 @@ void             hippo_connection_signout                   (HippoConnection  *c
 /* TRUE if user needs to log in (we think we have no login cookie) */
 gboolean         hippo_connection_get_need_login            (HippoConnection  *connection);
 
-void             hippo_connection_do_invite_to_group        (HippoConnection  *connection,
-                                                             const char       *group_id,
-                                                             const char       *person_id);                                                             
 void             hippo_connection_notify_music_changed      (HippoConnection  *connection,
                                                              gboolean          currently_playing,
                                                              const HippoSong  *song);
@@ -106,17 +103,8 @@ void             hippo_connection_send_quip                 (HippoConnection *co
                                                              HippoSentiment   sentiment);
 
 void     hippo_connection_request_prefs             (HippoConnection *connection);
-void     hippo_connection_request_hotness           (HippoConnection *connection);
-void     hippo_connection_request_blocks            (HippoConnection *connection,
-                                                     gint64           last_timestamp,
-                                                     const char      *filter);
-
 void     hippo_connection_request_title_patterns    (HippoConnection *connection);
 
-
-void     hippo_connection_set_block_hushed          (HippoConnection *connection,
-                                                     const char      *block_id,
-                                                     gboolean         hushed);
 
 /* Sends a list of applications active over the last collection_period seconds
  * to the server for use in social application browsing; the applications can
@@ -128,18 +116,11 @@ void     hippo_connection_send_active_applications  (HippoConnection *connection
                                                      GSList          *appids,
                                                      GSList          *wm_classes);
 
-void hippo_connection_send_account_question_response(HippoConnection *connection,
-                                                     const char      *block_id,
-                                                     const char      *response);
-
 void hippo_connection_send_query (HippoConnection *connection,
                                   DDMDataQuery    *query);
 
 /* Gets the number of milliseconds to add to the local time to get the server time */
 gint64   hippo_connection_get_server_time_offset    (HippoConnection *connection);
-
-void     hippo_connection_update_last_blocks_timestamp (HippoConnection *connection,
-                                                        gint64           timestamp);
 
 const char*      hippo_connection_get_tooltip       (HippoConnection *connection);
 
