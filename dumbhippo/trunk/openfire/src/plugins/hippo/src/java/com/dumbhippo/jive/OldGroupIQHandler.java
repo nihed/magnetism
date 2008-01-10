@@ -14,11 +14,11 @@ import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
 
-public class GroupIQHandler extends AbstractIQHandler {
+public class OldGroupIQHandler extends AbstractIQHandler {
 
 	private IQHandlerInfo info;
 	
-	public GroupIQHandler() {
+	public OldGroupIQHandler() {
 		super("DumbHippo Group IQ Handler");
 		
 		Log.debug("creating Group handler");
