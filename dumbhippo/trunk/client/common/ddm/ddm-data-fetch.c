@@ -342,6 +342,9 @@ fetch_from_string_internal(const char      *str,
         if (*p == '+') {
             include_default = TRUE;
             p++;
+        } else if (*p == '*') {
+            /* Means 'all properties' in certain contexts, just ignore for now */
+            p++;
         } else {
             if (!fetch_property_from_string(str, &p, &property))
                 goto error;
