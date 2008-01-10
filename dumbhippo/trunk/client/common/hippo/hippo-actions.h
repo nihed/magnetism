@@ -26,6 +26,8 @@
 #include <hippo/hippo-group.h>
 #include <hippo/hippo-canvas-item.h>
 
+#include <hippo/hippo-stack-manager.h>
+
 G_BEGIN_DECLS
 
 typedef struct _HippoActions      HippoActions;
@@ -40,7 +42,8 @@ typedef struct _HippoActionsClass HippoActionsClass;
 
 GType            hippo_actions_get_type               (void) G_GNUC_CONST;
 
-HippoActions* hippo_actions_new                     (HippoDataCache  *cache);
+HippoActions* hippo_actions_new                     (HippoDataCache  *cache,
+                                                     HippoStackManager *stack_manager);
 void          hippo_actions_visit_post              (HippoActions    *actions,
                                                      HippoPost       *post);
 void          hippo_actions_visit_entity            (HippoActions    *actions,

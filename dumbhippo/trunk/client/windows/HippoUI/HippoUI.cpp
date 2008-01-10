@@ -509,7 +509,7 @@ HippoUI::create(HINSTANCE instance)
 
 #if 1
     // and very last once we're all ready, fire up the stacker
-    hippo_stack_manager_manage(dataCache_);
+    stack_ = hippo_stack_manager_new(dataCache_);
 #endif
 
 #if 0
@@ -531,7 +531,7 @@ HippoUI::create(HINSTANCE instance)
 void
 HippoUI::destroy()
 {
-    hippo_stack_manager_unmanage(dataCache_);
+    hippo_stack_manager_free(stack_);
 
     if (currentShare_) {
         delete currentShare_;
@@ -575,7 +575,7 @@ HippoUI::getPreferences()
 HRESULT
 HippoUI::ShowRecent()
 {
-    hippo_stack_manager_show_browser(dataCache_, FALSE);    
+    hippo_stack_manager_show_browser(stack_, FALSE);    
 
     return S_OK;
 }
@@ -872,7 +872,7 @@ HippoUI::showMenu(UINT buttonFlag)
             platform = hippo_connection_get_platform(connection);
             hippo_platform_show_disconnected_window(platform, connection);
         } else {
-            hippo_stack_manager_show_browser(dataCache_, TRUE);
+            hippo_stack_manager_show_browser(stack_, TRUE);
         }
     }
 }

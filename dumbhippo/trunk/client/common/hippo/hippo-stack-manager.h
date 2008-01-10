@@ -13,8 +13,6 @@ G_BEGIN_DECLS
 HippoStackManager* hippo_stack_manager_new   (HippoDataCache    *cache);
 void               hippo_stack_manager_free  (HippoStackManager *manager);
 
-HippoStackManager* hippo_stack_manager_get   (HippoDataCache    *cache);
-
 void hippo_stack_manager_set_idle        (HippoStackManager   *manager,
                                           gboolean             idle);
 void hippo_stack_manager_set_screen_info (HippoStackManager   *manager,

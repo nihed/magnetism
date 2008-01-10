@@ -128,7 +128,8 @@ hippo_status_icon_activate(GtkStatusIcon *gtk_icon)
             hippo_platform_show_disconnected_window(platform, connection);
         } else {
             /* the UI has to exist since we (the tray icon) are part of it */
-            hippo_stack_manager_show_browser(hippo_stack_manager_get(icon->cache), TRUE);
+            HippoStackManager *stack_manager = hippo_app_get_stack(hippo_get_app());
+            hippo_stack_manager_show_browser(stack_manager, TRUE);
         }
     } else if (button == 3) {
         time = gtk_get_current_event_time();
