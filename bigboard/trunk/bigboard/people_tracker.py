@@ -95,6 +95,13 @@ class Person(gobject.GObject):
 
             if resource.protocol == 'mugshot-local':
                 self.local_buddy = resource
+
+                ## The merge code in the data model won't know about the user 
+                ## corresponding to the local buddy, so the merge rule won't 
+                ## trigger to create local_buddy.user, unless we do this
+                _logger.debug("Ensuring we load user %s" % (self.local_buddy.name))
+                query = bigboard.globals.get_data_model().query_resource(self.local_buddy.name, "+")
+                query.execute()
             else:
                 self.local_buddy = None
 
@@ -367,7 +374,7 @@ class SinglePersonSet(PersonSet):
             if resource.class_id == "online-desktop:/p/o/buddy":
                 try:
                     user = resource.user
-                except:
+                except AttributeError:
                     user = None
                     
                 if user != None:
@@ -550,7 +557,9 @@ class RemoveDuplicatesPersonSet(PersonSet):
             return False
 
         if hider.is_contact and \
-                (hidden.resource == hider.aim_buddy or hidden.resource == hider.xmpp_buddy):
+                (hidden.resource == hider.aim_buddy or \
+                     hidden.resource == hider.xmpp_buddy or \
+                     hidden.resource == hider.local_buddy):
             return True
         else:
             return False
@@ -574,7 +583,7 @@ class PeopleTracker(Singleton):
     """
     
     def __init__(self):
-        self.__model = DataModel(bigboard.globals.server_name)
+        self.__model = bigboard.globals.get_data_model()
         self.__model.add_ready_handler(self.__on_ready)
 
         self.contacts = SinglePersonSet()
@@ -592,14 +601,14 @@ class PeopleTracker(Singleton):
         # When we disconnect from the server we freeze existing content, then on reconnect
         # we clear everything and start over.
 
-        contact_props = '[+;name;user [+;photoUrl;mugshotLocalBuddy];aims;aimBuddies [+;icon;statusMessage];mugshotLocalBuddies [+;icon];xmpps;xmppBuddies [+;icon;statusMessage];emails;status]'
+        contact_props = '[+;name;user [+;photoUrl;mugshotLocalBuddy];aims;aimBuddies [+;icon;statusMessage];mugshotLocalBuddies [+;icon;user];xmpps;xmppBuddies [+;icon;statusMessage];emails;status]'
 
         query = self.__model.query_resource(self.__model.self_resource, "contacts %s" % contact_props)
         query.add_handler(self.__on_got_self)
         query.execute()
         
         query = self.__model.query_resource(self.__model.global_resource,
-                                            "aimBuddies [+;icon;statusMessage;contact %s]; xmppBuddies [+;icon;statusMessage;contact %s]; mugshotLocalBuddies [+;icon;contact %s]" % (contact_props, contact_props, contact_props))
+                                            "aimBuddies [+;icon;statusMessage;contact %s]; xmppBuddies [+;icon;statusMessage;contact %s]; mugshotLocalBuddies [+;icon;user;contact %s]" % (contact_props, contact_props, contact_props))
 
         query.add_handler(self.__on_got_global)
         query.execute()

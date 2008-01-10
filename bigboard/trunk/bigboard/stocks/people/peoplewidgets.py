@@ -724,11 +724,21 @@ class ProfileItem(hippo.CanvasBox):
                              address=address)
         query.execute()
 
+    def __create_user_contact(self, user_resource):
+        _logger.debug("creating contact %s" % (str(user_resource)))
+        
+        model = globals.get_data_model()
+        query = model.update(("http://mugshot.org/p/contacts", "createUserContact"),
+                             user=user_resource);
+        query.execute()
+
     def __add_to_network_clicked(self, link):
         if self.person.aim:
             self.__create_contact('aim', self.person.aim)
         elif self.person.xmpp:
             self.__create_contact('xmpp', self.person.xmpp)
+        elif self.person.local_buddy:
+            self.__create_user_contact(self.person.local_buddy.user)
 
         # action_taken = False to leave the stock open which seems nicer in this case
         self.emit("close", False)
