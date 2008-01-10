@@ -595,15 +595,6 @@ on_has_auth_changed(HippoConnection *connection,
 }
 
 static void
-on_contacts_loaded(HippoConnection *connection,
-                   void            *data)
-{
-    HippoApp *app = data;
-
-    hippo_dbus_notify_contacts_loaded(app->dbus);
-}
-
-static void
 on_pref_changed(HippoConnection *connection,
                 const char      *key,
                 gboolean         value,
@@ -615,15 +606,6 @@ on_pref_changed(HippoConnection *connection,
 }
 
 static void
-on_whereim_changed(HippoConnection            *connection,
-                   HippoExternalAccount       *acct,
-                   void                       *data)
-{
-    HippoApp *app = data;
-    hippo_dbus_notify_whereim_changed(app->dbus, app->connection, acct);
-}
-
-static void
 on_external_iq_return(HippoConnection      *connection,
                       guint                 id,
                       const char           *content,
@@ -632,19 +614,6 @@ on_external_iq_return(HippoConnection      *connection,
     HippoApp *app = data;
     
     hippo_dbus_notify_external_iq_return(app->dbus, id, content);
-}
-
-static void
-on_entity_changed(HippoEntity *entity, HippoApp *app)
-{
-	hippo_dbus_notify_entity_changed(app->dbus, entity);	
-}
-
-static void
-on_entity_added(HippoDataCache *cache, HippoEntity *entity, HippoApp *app)
-{
-    g_signal_connect(G_OBJECT(entity), "changed",
-                     G_CALLBACK(on_entity_changed), app);	
 }
 
 static HippoApp*
@@ -678,9 +647,6 @@ hippo_app_new(HippoInstanceType  instance_type,
 
     /*** If you add handlers here, disconnect them in hipp_app_free() ***/
     
-    g_signal_connect(G_OBJECT(app->cache), "entity-added",
-                     G_CALLBACK(on_entity_added), app);
-    
     g_signal_connect(G_OBJECT(app->connection), "client-info-available", 
                      G_CALLBACK(on_client_info_available), app);
     g_signal_connect(G_OBJECT(app->connection), "auth-failed",
@@ -691,14 +657,10 @@ hippo_app_new(HippoInstanceType  instance_type,
                      G_CALLBACK(on_connected_changed), app);
     g_signal_connect(G_OBJECT(app->connection), "initial-application-burst",
                      G_CALLBACK(on_initial_application_burst), app);
-    g_signal_connect(G_OBJECT(app->connection), "contacts-loaded", 
-                     G_CALLBACK(on_contacts_loaded), app);
     g_signal_connect(G_OBJECT(app->connection), "pref-changed", 
                      G_CALLBACK(on_pref_changed), app);   
                      
     /* Hook up D-BUS reflectors */
-    g_signal_connect(G_OBJECT(app->connection), "whereim-changed",
-                     G_CALLBACK(on_whereim_changed), app);      
     g_signal_connect(G_OBJECT(app->connection), "external-iq-return",
                      G_CALLBACK(on_external_iq_return), app);
     
@@ -735,9 +697,6 @@ hippo_app_free(HippoApp *app)
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->dbus),
                                          G_CALLBACK(on_dbus_song_changed), app);
     
-    g_signal_handlers_disconnect_by_func(G_OBJECT(app->cache),
-                                         G_CALLBACK(on_entity_added), app);
-    
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
                                          G_CALLBACK(on_client_info_available), app);
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
@@ -748,10 +707,6 @@ hippo_app_free(HippoApp *app)
                                          G_CALLBACK(on_connected_changed), app);
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
                                          G_CALLBACK(on_initial_application_burst), app);
-    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
-                                         G_CALLBACK(on_contacts_loaded), app);
-    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
-                                         G_CALLBACK(on_whereim_changed), app);
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
                                          G_CALLBACK(on_external_iq_return), app);
 
@@ -769,18 +724,6 @@ hippo_app_free(HippoApp *app)
     g_strfreev(app->restart_argv);
     
     g_free(app);
-}
-
-static gboolean
-show_debug_share_timeout(void *data)
-{
-    HippoApp *app = data;
-    
-    g_debug("Adding debug share data");
-    
-    hippo_data_cache_add_debug_data(app->cache);
-    /* remove timeout */
-    return FALSE;
 }
 
 /* 
@@ -919,11 +862,6 @@ main(int argc, char **argv)
 
     /* enable stacker UI */
     hippo_app_set_show_stacker(the_app, TRUE);
-    
-    if (options.initial_debug_share) {
-        /* timeout removes itself */
-        g_timeout_add(1000, show_debug_share_timeout, the_app);
-    }
     
     hippo_options_free_fields(&options);
 

@@ -8,7 +8,6 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include "hippo-dbus-server.h"
 #include "hippo-dbus-client.h"
-#include "hippo-dbus-contacts.h"
 #include "hippo-dbus-cookies.h"
 #include "hippo-dbus-model.h"
 #include "hippo-dbus-mugshot.h"
@@ -406,8 +405,6 @@ hippo_dbus_init_services(HippoDBus   *dbus)
      */
     hippo_dbus_try_acquire_online_prefs_manager(connection, FALSE);
     
-    hippo_dbus_init_contacts(connection, FALSE);
-
     hippo_dbus_init_local(connection);
     hippo_dbus_init_pidgin(connection);    
     hippo_dbus_init_model(connection);
@@ -1946,10 +1943,6 @@ handle_message(DBusConnection     *connection,
             if (strcmp(member, "GetConnectionStatus") == 0) {
                 reply = hippo_dbus_handle_mugshot_get_connection_status(dbus, message);
             } else if (strcmp(member, "NotifyAllWhereim") == 0) {
-                reply = hippo_dbus_handle_mugshot_get_whereim(dbus, xmpp_connection, message);
-            } else if (strcmp(member, "GetNetwork") == 0) {
-                reply = hippo_dbus_handle_mugshot_get_network(dbus, message);
-            } else if (strcmp(member, "SendExternalIQ") == 0) {
                 reply = hippo_dbus_handle_mugshot_send_external_iq(dbus, message);                       
             } else if (strcmp(member, "GetBaseProperties") == 0) {
                 reply = hippo_dbus_handle_mugshot_get_baseprops(dbus, message);                   
@@ -1966,17 +1959,6 @@ handle_message(DBusConnection     *connection,
                 dbus_connection_send(dbus->connection, reply, NULL);
                 dbus_message_unref(reply);
             }        
-        } else if (path && member &&
-                   g_str_has_prefix(path, HIPPO_DBUS_MUGSHOT_DATACACHE_PATH_PREFIX)) {
-            DBusMessage *reply;
-                               	
-            reply = hippo_dbus_handle_mugshot_entity_message(dbus, message);
-            
-            if (reply != NULL) {
-            	result = DBUS_HANDLER_RESULT_HANDLED;
-        	    dbus_connection_send(dbus->connection, reply, NULL);
-                dbus_message_unref(reply);
-            }
         }        
     } else if (type == DBUS_MESSAGE_TYPE_SIGNAL) {
         const char *sender = dbus_message_get_sender(message);
@@ -2123,27 +2105,6 @@ hippo_dbus_foreach_chat_window(HippoDBus             *dbus,
                 (*function) (window_id, state, data);
 	}
     }
-}
-
-void       
-hippo_dbus_notify_whereim_changed(HippoDBus               *dbus,
-                                  HippoConnection         *xmpp_connection,
-                                  HippoExternalAccount    *acct)
-{
-    DBusMessage *signal;
-    signal = hippo_dbus_mugshot_signal_whereim_changed(dbus, xmpp_connection, acct);
-    dbus_connection_send(dbus->connection, signal, NULL);
-    dbus_message_unref(signal);
-}
-
-void       
-hippo_dbus_notify_entity_changed(HippoDBus               *dbus,
-                                 HippoEntity             *entity)
-{
-    DBusMessage *signal;
-    signal = hippo_dbus_mugshot_signal_entity_changed(dbus, entity);
-    dbus_connection_send(dbus->connection, signal, NULL);
-    dbus_message_unref(signal);
 }
 
 void

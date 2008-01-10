@@ -73,61 +73,6 @@ append_strings_as_dict(DBusMessageIter *iter,
     dbus_message_iter_close_container(iter, &subiter);
 }
 
-static void
-append_entity(HippoDBus         *dbus,
-              DBusMessage       *message,
-              HippoEntity       *entity)
-{
-    DBusMessageIter iter;
-    HippoConnection *connection;
-    const char *guid;
-    const char *name;
-    const char *home_url;
-    const char *photo_url;
-    const char *type;
-
-    connection = hippo_data_cache_get_connection(hippo_app_get_data_cache(hippo_get_app()));
-
-    guid = hippo_entity_get_guid(entity);
-    name = hippo_entity_get_name(entity);
-    home_url = hippo_entity_get_home_url(entity);
-    photo_url = hippo_entity_get_photo_url(entity);
-
-    type = NULL;
-    switch (hippo_entity_get_entity_type(entity)) {
-    case HIPPO_ENTITY_PERSON:
-        type = "person";
-        break;
-    case HIPPO_ENTITY_GROUP:
-        type = "group";
-        break;
-    case HIPPO_ENTITY_RESOURCE:
-        type = "resource";
-        break;
-    case HIPPO_ENTITY_FEED:
-        type = "feed";
-        break;
-    }
-
-    /* append_strings_as_dict will skip pairs with null value */
-    dbus_message_iter_init_append(message, &iter);
-    append_strings_as_dict(&iter, "guid", guid, "type", type, "name", name, "home-url", home_url, "photo-url", photo_url, NULL);
-}
-
-static HippoEntity *
-entity_from_ref(HippoDBus *dbus,
-                const char *ref)
-{
-    HippoDataCache *cache;
-
-    cache = hippo_app_get_data_cache(hippo_get_app());
-
-    if (!g_str_has_prefix(ref, HIPPO_DBUS_MUGSHOT_DATACACHE_PATH_PREFIX))
-        return NULL;
-
-    return hippo_data_cache_lookup_entity(cache, ref + strlen(HIPPO_DBUS_MUGSHOT_DATACACHE_PATH_PREFIX));
-}
-
 static char *
 get_entity_path(HippoEntity *entity)
 {
@@ -224,7 +169,7 @@ hippo_dbus_handle_mugshot_get_connection_status(HippoDBus   *dbus,
 
     have_auth = hippo_connection_get_has_auth(connection);
     connected = hippo_connection_get_connected(connection);
-    contacts_loaded = hippo_connection_get_contacts_loaded(connection);
+    contacts_loaded = FALSE;
 
     reply = dbus_message_new_method_return(message);
     dbus_message_append_args(reply, DBUS_TYPE_BOOLEAN, &have_auth,
@@ -233,40 +178,6 @@ hippo_dbus_handle_mugshot_get_connection_status(HippoDBus   *dbus,
                              DBUS_TYPE_INVALID);
 
     return reply;
-}
-
-DBusMessage*
-hippo_dbus_handle_mugshot_entity_message(HippoDBus   *dbus,
-                                         DBusMessage  *message)
-{
-    DBusError error;
-    HippoEntity *entity;
-    DBusMessage *reply = NULL;
-
-    dbus_error_init(&error);
-
-    entity = entity_from_ref(dbus, dbus_message_get_path(message));
-
-    if (!entity) {
-    	return dbus_message_new_error(message, "org.mugshot.Mugshot.UnknownEntity", "Unknown entity");
-    }
-
-    if (!strcmp(dbus_message_get_member(message), "GetProperties")) {
-        reply = dbus_message_new_method_return(message);
-        append_entity(dbus, reply, HIPPO_ENTITY(entity));
-    }
-
-    return reply;
-}
-
-DBusMessage*
-hippo_dbus_handle_mugshot_get_whereim(HippoDBus   *dbus,
-                                      HippoConnection *connection,
-                                      DBusMessage *message)
-{
-    hippo_connection_request_mugshot_whereim(connection);
-
-    return dbus_message_new_method_return(message);  /* Send out the results as signals.  */
 }
 
 DBusMessage*
@@ -309,42 +220,6 @@ hippo_dbus_handle_mugshot_send_external_iq(HippoDBus   *dbus,
 
     reply = dbus_message_new_method_return(message);
     dbus_message_append_args(reply, DBUS_TYPE_UINT32, &request_id, NULL);
-    return reply;
-}
-
-static void
-append_network_ref(gpointer entity_ptr, gpointer data)
-{
-    HippoEntity *entity = (HippoEntity*) entity_ptr;
-    DBusMessageIter *iter = (DBusMessageIter*) data;
-
-    if (hippo_entity_get_in_network(entity)) {
-    	char *ref;
-    	ref = get_entity_path(entity);
-        dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &ref);
-        g_free(ref);
-    }
-}
-
-DBusMessage*
-hippo_dbus_handle_mugshot_get_network(HippoDBus   *dbus,
-                                      DBusMessage  *message)
-{
-    DBusMessage *reply;
-    DBusMessageIter iter, array_iter;
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
-
-    reply = dbus_message_new_method_return(message);
-    dbus_message_iter_init_append(reply, &iter);
-    dbus_message_iter_open_container(&iter,
-                                     DBUS_TYPE_ARRAY,
-                                     DBUS_TYPE_OBJECT_PATH_AS_STRING,
-                                     &array_iter);
-
-    hippo_data_cache_foreach_entity(cache, append_network_ref, &array_iter);
-
-    dbus_message_iter_close_container(&iter, &array_iter);
-
     return reply;
 }
 
@@ -396,11 +271,6 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
                     );
 
     g_string_append(xml,
-                    "    <signal name=\"WhereimChanged\">\n"
-                    "      <arg direction=\"in\" type=\"a{ss}\"/>\n"
-                    "    </signal>\n");
-
-    g_string_append(xml,
                     "    <signal name=\"EntityChanged\">\n"
                     "      <arg direction=\"in\" type=\"a{ss}\"/>\n"
                     "    </signal>\n");
@@ -420,55 +290,12 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
 }
 
 DBusMessage*
-hippo_dbus_mugshot_signal_whereim_changed(HippoDBus            *dbus,
-                                          HippoConnection      *connection,
-                                          HippoExternalAccount *acct)
-{
-    DBusMessage *signal;
-    DBusMessageIter iter;
-    char *name, *sentiment, *icon_url, *link;
-
-    g_object_get(acct, "name", &name, "sentiment", &sentiment, "icon-url", &icon_url, "link", &link, NULL);
-
-    signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
-                                     HIPPO_DBUS_MUGSHOT_INTERFACE,
-                                     "WhereimChanged");
-    dbus_message_iter_init_append(signal, &iter);
-
-    append_strings_as_dict(&iter,
-                           "name", name,
-                           "sentiment", sentiment,
-                           "icon-url", icon_url,
-                           "link", link,
-                           NULL);
-    g_free(name);
-    g_free(sentiment);
-    g_free(icon_url);
-    g_free(link);
-    return signal;
-}
-
-DBusMessage*
 hippo_dbus_mugshot_signal_connection_changed(HippoDBus            *dbus)
 {
     DBusMessage *signal;
     signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
                                      HIPPO_DBUS_MUGSHOT_INTERFACE,
                                      "ConnectionStatusChanged");
-    return signal;
-}
-
-DBusMessage*
-hippo_dbus_mugshot_signal_entity_changed(HippoDBus            *dbus,
-                                         HippoEntity          *entity)
-{
-    DBusMessage *signal;
-    char *path;
-    path = get_entity_path(entity);
-    signal = dbus_message_new_signal(path,
-                                     HIPPO_DBUS_MUGSHOT_ENTITY_INTERFACE,
-                                     "Changed");
-    g_free(path);
     return signal;
 }
 
