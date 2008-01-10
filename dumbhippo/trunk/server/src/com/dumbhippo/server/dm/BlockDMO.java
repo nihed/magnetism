@@ -193,7 +193,7 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 	
 	@DMProperty(defaultInclude=true)
 	public boolean isPublic() {
-		return blockView.getBlockType().getBlockVisibility() == BlockVisibility.PUBLIC;
+		return blockView.isPublic();
 	}
 	
 	@DMProperty(defaultInclude=true, defaultChildren="+")
