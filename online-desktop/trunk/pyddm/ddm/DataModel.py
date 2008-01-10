@@ -168,6 +168,13 @@ class DataModel(AbstractModel):
                 value = self._get_resource(value)
             except KeyError:
                 raise Exception("Resource-valued element points to a resource we don't know about: " + str(value))
+        elif type_byte == ord('F'):
+            item_resource_id, item_timestamp = value
+            try:
+                item_resource = self._get_resource(item_resource_id)
+            except KeyError:
+                raise Exception("Feed-valued element points to a resource we don't know about: " + str(value))
+            value = item_resource, int(item_timestamp)
         elif type_byte == ord('s') or type_byte == ord('u'):
             value = unicode(value)
         elif type_byte == ord('b'):
