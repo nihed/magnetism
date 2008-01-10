@@ -16,6 +16,7 @@ import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AccountClaim;
+import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
@@ -48,13 +49,22 @@ public abstract class PostDMO extends DMObject<Guid> {
 		post = postingBoard.loadRawPost(SystemViewpoint.getInstance(), getKey());
 	}
 	
-	@DMProperty(defaultInclude=true)
+	@DMProperty(defaultInclude=true, defaultChildren="+")
 	public UserDMO getPoster() {
 		User poster = post.getPoster();
 		if (poster != null)
 			return session.findUnchecked(UserDMO.class, post.getPoster().getGuid());
 		else
 			return null;
+	}
+	
+	@DMProperty(defaultInclude=true, defaultChildren="+")
+	public FeedDMO getFeed() {
+		if (post instanceof FeedPost) {
+			return session.findUnchecked(FeedDMO.class, ((FeedPost)post).getFeed().getGuid());
+		} else {
+			return null;
+		}
 	}
 	
 	@DMProperty(defaultInclude=true)

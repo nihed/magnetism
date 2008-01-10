@@ -117,6 +117,7 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 		model.addDMClass(DesktopSettingDMO.class);
 		model.addDMClass(ExternalAccountDMO.class);
 		model.addDMClass(GroupDMO.class);
+		model.addDMClass(FeedDMO.class);
 		model.addDMClass(PostDMO.class);
 		model.addDMClass(NetflixMovieDMO.class);
 		

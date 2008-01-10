@@ -27,7 +27,6 @@ import com.dumbhippo.persistence.ChatMessage;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
-import com.dumbhippo.persistence.BlockType.BlockVisibility;
 import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Stacker;

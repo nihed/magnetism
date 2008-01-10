@@ -38,7 +38,10 @@ public class ReadWriteSession extends CachedSession {
 	public <K, T extends DMObject<K>> Object storeAndFilter(StoreKey<K,T> key, int propertyIndex, Object value) {
 		DMPropertyHolder<K,T,?> property = key.getClassHolder().getProperty(propertyIndex);
 		
-		return property.filter(getViewpoint(), key.getKey(), value);
+		if (value == null)
+			return null;
+		else
+			return property.filter(getViewpoint(), key.getKey(), value);
 	}
 
 	@Override
