@@ -1,0 +1,227 @@
+@CHARSET "UTF-8";
+
+#dhApplicationsColumns {
+	table-layout: fixed;
+	width: 100%;
+	border-spacing: 0px;
+}
+
+#dhApplicationsLeft {
+	width: 244px;
+	vertical-align: top;
+	padding: 0px;
+}
+
+#dhApplicationsMain {
+	vertical-align: top;
+	padding: 0px;
+	padding-right: 24px;
+}
+
+#dhApplicationsRight {
+	width: 244px;
+	vertical-align: top;
+	padding: 0px;
+}
+
+.dh-applications-heading {
+	margin-bottom: 7px;
+}
+
+.dh-applications-subheading {
+	margin-top: 10px;
+	margin-bottom: 7px;
+}
+
+#dhApplicationSearchEntry {
+	margin-bottom: 9px;
+}
+
+#dhApplicationsStatsHeader {
+	float: left;
+	width: 104px;
+}
+
+#dhApplicationsApplicationsHeader {
+	position: relative;
+	left: 7px;
+}
+
+.dh-applications-application {
+	margin-top: 6px;
+	margin-bottom: 6px;
+}
+
+.dh-applications-application .dh-applications-application-stats-outer {
+	float: left;
+}
+
+#dhApplicationsApplications .dh-applications-application-stats-outer {
+	width: 104px;
+}
+
+.dh-mini-applications .dh-applications-application-stats-outer {
+	width: 35px;
+}
+
+#dhApplicationsApplications .dh-applications-application-stats {
+	position: relative;
+	left: 12px;
+	width: 80px;
+}
+
+.dh-applications-application-mini .dh-applications-application-stats {
+	position: relative;
+	left: 5px;
+	width: 25px;
+}
+
+.dh-applications-application-icon {
+	float: left;
+	text-align: center;
+}
+
+.dh-applications-application-big .dh-applications-application-icon {
+	width: 62px;
+}
+
+.dh-applications-application-mini .dh-applications-application-icon {
+	width: 31px;
+}
+
+.dh-applications-application-big .dh-applications-application-details {
+	position: relative;
+	left: 6px;
+}
+
+.dh-applications-application-separator {
+	clear: both;
+}
+
+.dh-applications-more {
+	margin-left: 12px;
+}
+
+.dh-applications-categories {
+	padding-left: 12px;
+	padding-bottom: 12px;
+}
+
+.dh-applications-category td {
+	padding-top:    3px;
+	padding-bottom: 3px;
+}
+
+.dh-applications-category-name {
+	padding-left:  5px;
+	padding-right: 15px;
+}
+
+.dh-applications-category-bar-outer {
+	width: 		   80px;
+	height: 	   10px;
+	padding-right: 5px;
+}
+
+.dh-applications-category-bar {
+	height: 10px;
+}
+
+#dhApplicationsBusy {
+	display: block;
+	position: absolute;
+	bottom: 10px;
+	right: 10px;
+}
+
+.dh-applications-no-data {
+	padding-top: 8px;
+	padding-left: 12px;
+}
+
+.dh-application-more {
+	margin-top: 	20px;
+	margin-bottom: 	12px;
+	
+	padding-left: 	8px;
+	padding-top: 	6px;
+	padding-bottom:	6px;
+}
+
+.dh-application-more .dh-applications-application-stats-outer {
+	float: right;
+}
+
+.dh-application-description {
+	margin-bottom:	8px;
+}
+
+.dh-application-description-in-list {
+	margin-top:		-2px;
+	margin-bottom:	12px;
+	margin-left:	172px;
+}
+
+.dh-application-description p {
+	margin-top:		8px;
+	margin-bottom:	8px;
+}
+
+.dh-application-description-in-list p {
+	margin-top:     0px;
+	margin-bottom:  4px;
+}
+
+.dh-application-edit {
+	table-layout: fixed;
+}
+
+.dh-application-edit-label {
+	width: 10em;
+}
+
+.dh-application-edit-control {
+	position: relative;
+	width: 	  40em;
+}
+
+.dh-application-edit-control input {
+	width:    40em;
+}
+
+.dh-application-edit-control textarea {
+	width:    40em;
+	height:   5em;
+}
+
+.dh-application-edit-description textarea {
+	height:   10em;
+}
+
+.dh-application-edit-help {
+	width:    40em;
+	padding-bottom: 20px;
+}
+
+.dh-application-edit-comment .dh-application-edit-help {
+	padding-bottom: 10px;
+}
+
+.dh-application-edit-spacer-row {
+	height:   12px;
+}
+
+.dh-application-upload-history {
+	margin-left:	1em;
+}
+
+.dh-application-upload-history td {
+	padding-top:       2px;
+	padding-bottom:    2px;
+}
+
+.dh-application-upload-comment {
+	padding-left:  12px;
+	padding-right: 12px;
+	width: 		   30em;
+}

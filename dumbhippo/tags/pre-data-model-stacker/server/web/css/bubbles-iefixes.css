@@ -1,0 +1,30 @@
+@CHARSET "UTF-8";
+
+.dh-share {
+	height:					150px;
+}
+.dh-share-from {
+   	font-size: 				x-small;
+}
+.dh-share-from a.dh-person {
+   	font-size: 				x-small;
+}
+.dh-share-to a {
+	font-size:				x-small;
+}
+.dh-share-shadow {
+	width:					480px;
+	position:				relative;
+	left:					-10px;
+	top:					10px;
+}
+.dh-share {	/* this is to counter the shadow code */
+	left:					10px;
+	top:					-0px;
+}
+.dh-share-shadow {
+   	height:  				150px;
+	background-image:		none;
+/*	filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src="/images/ie-shadow.png", sizingMethod="scale"); */
+}
+

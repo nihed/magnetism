@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="loudmouth"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories=".;../dependencies/gettext/include;../../common/glib;../../common/glib/glib;../libglib;../../common/loudmouth"
+		PreprocessorDefinitions="__WIN32__;LM_COMPILATION;HAVE_CONFIG_H;_CRT_SECURE_NO_DEPRECATE"
+		DisableSpecificWarnings="4244;4267"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalDependencies="intl.lib glib-2.0.lib ws2_32.lib"
+		OutputFile="$(OutDir)/loudmouth-1.dll"
+		AdditionalLibraryDirectories="../dependencies/gettext/lib;../dependencies/glib/lib"
+		ModuleDefinitionFile="../../common/loudmouth/loudmouth/loudmouth.def"
+	/>
+</VisualStudioPropertySheet>

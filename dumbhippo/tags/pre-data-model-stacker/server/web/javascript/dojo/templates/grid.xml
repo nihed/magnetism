@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dojo:application xmlns:dojo="http://www.dojotoolkit.org/2004/dojoml" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<dojo:grid id="dojoGridExample" dataProvider="gridExampleDataModel" propertyProviderList="gridDefinitions" />
+	<dojo:propertySet id="gridDefinitions" componentClass="default">
+		<dojo:propertySet xlink:href="grid.css/.dojoGrid" sourceType="css" targetType="all" />
+		<dojo:propertySet xlink:href="#gridEvents" sourceType="xml" targetType="all"  />
+		<dojo:event type="onclick" target="gridCellItem" action="evt.target.highlight()" />
+		<dojo:sort type="user" />
+		<dojo:head>
+			<dojo:rows>
+				<dojo:repetition frequency="1" propertyProviderList="grid.css/.headRowClassName1" sourceType="css" targetType="all" />
+				<dojo:rowHeight>1.5em</dojo:rowHeight><!-- should this really be height... what if we wanted to be able to specify rowHeight as an attribute of the dojo:grid element? -->
+				<dojo:cells>
+					<dojo:repetition frequency="1" propertyProviderList="grid.css/.headCellClassName1" sourceType="css" targetType="all" />
+				</dojo:cells>
+			</dojo:rows>
+		</dojo:head>
+		<dojo:body>
+			<dojo:rows>
+				<dojo:repetition frequency="1" propertyProviderList="grid.css/.bodyRowClassName1, grid.css/.bodyRowClassName2" sourceType="css" targetType="html" />
+				<dojo:repetition frequency="1" propertyProviderList="gridSVG.css/.bodyRowClassName1, gridSVG.css/.bodyRowClassName2" sourceType="css" targetType="svg" />
+				<dojo:rowHeight>1.2em</dojo:rowHeight>
+				<dojo:cells>
+					<dojo:repetition frequency="1" propertyProviderList="grid.css/.bodyCellClassName1, grid.css/.bodyRowClassName1" sourceType="css" targetType="html" />
+					<dojo:repetition frequency="1" propertyProviderList="gridSVG.css/.bodyRowClassName1, gridSVG.css/.bodyRowClassName1" sourceType="css" targetType="svg" />
+				</dojo:cells>
+			</dojo:rows>
+		</dojo:body>
+		<dojo:foot>
+			<dojo:rows>
+				<dojo:cssClassList>footRowClassName1</dojo:cssClassList>
+				<dojo:rowHeight>1.5em</dojo:rowHeight>
+				<dojo:cells>
+					<dojo:cssClassList>footCellClassName1</dojo:cssClassList>
+				</dojo:cells>
+			</dojo:rows>
+		</dojo:foot>
+	</dojo:propertySet>
+	<dojo:dataModel id="gridExampleDataModel" src="#staticExampleModel" type="xml"><!-- this example shows inclusion of only certain elements from a data structure -->
+		<dojo:label elementName="name" />
+		<dojo:gridRowItem elementName="structure">
+			<dojo:gridCellItem elementName="subStructure" />
+			<dojo:gridCellItem elementName="subStructure3" />
+			<dojo:gridCellItem elementName="subStructure4" />
+		</dojo:gridRowItem>
+	</dojo:dataModel>
+
+	<dojo:dataModel id="gridExampleDataModel2" src="#staticExampleModel" type="xml"><!-- this example shows combining a couple of fields -->
+		<dojo:label elementName="name" />
+		<dojo:gridRowItem elementName="structure">
+			<dojo:gridCellItem elementName="subStructure" />
+			<dojo:gridCellItem>
+				<dojo:elementName>substructure2</dojo:elementName>
+				<dojo:elementName>substructure3</dojo:elementName>
+				<!-- TODO: do we want a way to define simple operations between combined items, as well as a way to parse data, show substrings, etc.? -->
+			</dojo:gridCellItem>
+			<dojo:gridCellItem elementName="subStructure4" />
+		</dojo:gridRowItem>
+	</dojo:dataModel>
+
+	<dojo:dataModel id="gridExampleDataModel3" src="gridData.js#staticExampleModel" type="javascript"><!-- this example references a javascript version of the model -->
+		<dojo:label elementName="name" />
+		<dojo:gridRowItem elementName="structure">
+			<dojo:gridCellItem elementName="subStructure" />
+			<dojo:gridCellItem>
+				<dojo:elementName>substructure2</dojo:elementName>
+				<dojo:elementName>substructure3</dojo:elementName>
+			</dojo:gridCellItem>
+			<dojo:gridCellItem elementName="subStructure4" />
+		</dojo:gridRowItem>
+	</dojo:dataModel>
+
+	<arbitraryDataStructure id="staticExampleModel">
+		<name>testGrid</name>
+		<structure>
+			<subStructure>
+				item11
+			</subStructure>
+			<subStructure2>
+				item12
+			</subStructure2>
+			<subStructure3>
+				item13
+			</subStructure3>
+			<subStructure4>
+				item14
+			</subStructure4>
+		</structure>
+		<structure>
+			<subStructure>
+				item21
+			</subStructure>
+			<subStructure2>
+				item22
+			</subStructure2>
+			<subStructure3>
+				item23
+			</subStructure3>
+			<subStructure4>
+				item24
+			</subStructure4>
+		</structure>
+		<structure>
+			<subStructure>
+				item31
+			</subStructure>
+			<subStructure2>
+				item32
+			</subStructure2>
+			<subStructure3>
+				item33
+			</subStructure3>
+			<subStructure4>
+				item34
+			</subStructure4>
+		</structure>
+	</arbitraryDataStructure>
+</dojo:application>

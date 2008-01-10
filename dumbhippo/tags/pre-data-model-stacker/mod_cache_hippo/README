@@ -1,0 +1,37 @@
+This is a slightly modified version of mod_cache that looks at whether
+the web browser sent our authorization Cookie into account when deciding
+whether to serve data from the cache.
+
+The basic extension is that if the authorization cookie is found, 
+caching will be skipped, since we need to serve the user-specific view
+of the site to the user.
+
+mod_cache is extended with three new configuration directives:
+
+ CacheHippoServerName machine.example.com
+
+   The server name encoded into the authorization cookie to look for.
+   This is needed because web browsers will sometimes send multiple
+   cookies, especially when we have servers at both 
+   dumbhippo.com and dogfood.dumbhippo.com. (For example)
+
+   If this is not set, all authorization cookies will be ignored.
+
+ CacheHippoAlways /path
+
+   Ignores the presence of authorization cookies for a particular
+   URL path prefix. This is used for paths like /javascript
+   /css where the content doesn't depend on the user. This 
+   directive can be specified multiple times.
+
+ CacheHippoIgnoreNoExpires On|Off
+
+   If set, cache requests with a query string even if no Expires:
+   header is set on the response; (in violation of RFC 2616/13.9)
+   We use this because we know that our anonymous content is cacheable
+   and side-effect free, but if we returned an Expires header to
+   the client, then the client would cache pages like /music that
+   change when the user logs in.
+
+These directives can be used at the global scope or for a particular
+virtual server, though only the latter really makes sense.

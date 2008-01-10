@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<server>
+    <mbean code="com.dumbhippo.jive.jmx.XMPPService" name="dumbhippo.com:service=XMPP">
+        <loader-repository>dumbhippo.com:loader=dumbhippo.ear</loader-repository>
+        <depends>dumbhippo.com:service=Hippo</depends>
+        <depends>dumbhippo.com:service=Presence</depends>
+        <attribute name="HomeDirectory">@@targetdir@@</attribute>
+   </mbean>
+</server>

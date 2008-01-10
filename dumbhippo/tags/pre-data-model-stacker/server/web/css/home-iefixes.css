@@ -1,0 +1,37 @@
+@CHARSET "UTF-8";
+
+/* @import "sitewide-iefixes.css"; */
+@import "bubbles-iefixes.css";
+
+
+a.dh-group {
+	font-size:				x-small;
+}
+a.dh-group:link {
+	font-size:				x-small;
+}
+span.dh-headshot {
+	cursor:					hand;
+}
+a.dh-person {
+	font-size:				x-small;
+}
+a.dh-person:link {
+	font-size:				x-small;
+}
+
+.dh-listed-person {
+	font-size:				x-small;
+}
+
+.dh-listed-person-with-invite-link {
+	font-size:				x-small;
+}
+
+.dh-invite-link {
+    font-size:              x-small;
+}
+
+span.dh-headshot {
+	font-size:				x-small;
+}

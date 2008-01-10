@@ -1,0 +1,57 @@
+.TreeNodeContainer, .TreeNodeTitle, .TreeNodeHeader {
+	display: block;
+	cursor: default;
+    border-width:1px;
+}
+.TreeNodeTitle {
+	display: inline;
+	color : #333333;
+	font-size: 10pt;
+    padding: .2em;
+    cursor: pointer;
+}
+
+.TreeNodeImage {
+	vertical-align: middle;
+}
+
+.TreeNodeParent {
+   /* border-left-color: #8b0000;
+    border-left-style: solid;
+    border-left-width: 1px; */
+}
+
+.TreeNodeContainer {
+    margin-left: 1em;
+}
+
+.TreeNodeSelected {
+    background:#465B92;
+    color : #ffffff;
+    border-color: #465B92;
+}
+
+.TreeNodeContainer {
+    /*list-style:none;*/
+    /*padding-left: 4px;*/
+    /*padding-bottom: 1em;*/
+    /*border-color: #8b0000;*/
+    /*border-style: solid;*/
+    /*margin: 4px;*/
+}
+
+.TreeNodeBody {
+    display: none;
+    /*background: #f5f5dc;*/
+    /*border-color: #daa520;*/
+    /*border-style: solid;*/
+    /*margin: 4px;*/
+}
+
+.TreeNodeHeader:hover {
+	background: #dddddd;
+    border-color: #a9a9a9;
+    border-style: solid;
+    border-width: 1px;
+    color : #333333;
+}

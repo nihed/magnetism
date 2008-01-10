@@ -1,0 +1,14 @@
+@CHARSET "UTF-8";
+@IMPORT url("legal-positions.css");
+
+#dhLegalContentsOuter {
+	text-align: center;
+}
+
+#dhLegalContents {
+	text-align: left;
+}
+
+#dhLegalContents ol ol {
+	list-style-type: lower-alpha;
+}

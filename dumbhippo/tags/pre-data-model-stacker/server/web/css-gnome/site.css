@@ -1,0 +1,190 @@
+@CHARSET "UTF-8";
+
+/*
+ * classes are like gnome-my-class and ids are gnomeMyId
+ */
+
+/* This class violates the naming conventions for backward compatibility, since
+   it's referenced from javascript which may apply to old pages.
+ */
+.dhInvisible {
+	display:			none;
+}
+
+body {
+	margin:      20px;
+	font-size:   14pt;
+	color:       #222222;
+	font-family: "Bitstream Vera Sans", "Liberation Sans", sans-serif;
+}
+
+a {
+	color: 		#0066dd;
+}
+
+img {
+	border-style:		none;	
+}
+
+input[type="text"], input[type="password"], textarea {
+	padding: 		  0.1em;
+	border: 		  1px solid #777777;
+	background-color: #f5f5f5;
+	color: 			  #222222;
+}
+
+input[type="submit"], input[type="button"] {
+	font-size:      	12pt;
+	font-weight:    	bold;
+	padding: 			0 1em 0.1em 1em;
+	background-color: 	#222222;
+	color: 				#ffffff;
+	border: 			0;
+}
+
+input[type="submit"]:hover {
+	background-color: 	#444444;
+}
+
+table, tr, td, th {
+	padding: 	0px;
+	margin: 	0px;
+}
+
+#gnomeFootLogo {
+	position: 	      		fixed;
+	bottom: 	        	40px;
+	right: 			    	40px;
+	height: 		    	100px;
+	width: 			    	73px;
+	background-image:   	url('/images-gnome/gnome_logo.png');
+	background-position:	top left;
+	background-repeat: 		no-repeat;
+}
+
+#gnomePage {
+	min-height: 			600px;
+}
+
+#gnomeContent {	
+	border-bottom: 			1px solid #222222;
+}
+
+#gnomeHeader {
+	margin: 		0px;
+	margin-bottom:  20px;
+	padding: 		0px;
+	border-bottom:  4px solid #222222;
+}
+
+a.gnome-header {
+	font-size: 	 		24pt; /* mimic the h1 */
+	font-weight: 		bold;
+	text-decoration: 	none;
+	display: 			block;
+	margin-top: 		0.5em;
+	margin-bottom: 		0.5em;
+	color: 				#222222;
+}
+
+.gnome-title {
+	font-size: 			18pt;
+	font-weight: 		bold;
+}
+
+/*
+ * stuff for the dh* tags shared with mugshot site 
+ */
+ 
+textarea.dh-text-input-showing-default {
+	color:				#aaaaaa;
+} 
+
+input.dh-text-input-showing-default {
+	color:				#aaaaaa;
+} 
+
+/* This isn't precision, just "kind of next to"
+ * IE considers a scrollbar click as mouse input ergo it doesn't allow people to scroll horizontally 
+ * and see the rest of the popup under 800x600
+ */
+.dh-popup {
+	position:		absolute;
+	left:           5px;
+	bottom:         15px;	
+	z-index:        1;			
+}
+
+/* For the nested div onion creating the borders of the popup,
+ * position: relative would make more sense but seems to 
+ * confuse firefox into drawing the background color of the outermost
+ * div over the top and bottom of the chooser.
+ * Using float: left fixes firefox, but creates the "double margin" 
+ * bug in IE, which is fixed with display:inline
+ * (inline is invalid on floats, but gets ignored except
+ * to mysteriously fix the IE double margin bug)
+ */
+
+.dh-popup .dh-border {
+	/* hacks! see comment above */
+	float:				left;
+	display:			inline;
+	/* end hacks */
+	margin-left:		0px;
+	margin-top:			0px;
+	/* background of parent is drop shadow */
+	margin-bottom:		1px;
+}
+
+.dh-popup .dh-content-padding {
+	/* hacks! see comment above */
+	float:				left;
+	display:			inline;
+	/* end hacks */
+	/* background of parent is the black border */
+	margin-top:			1px;
+	margin-bottom:		1px;
+	margin-left:		1px;
+}
+
+.dh-popup .dh-content {
+	/* hacks! see comment above */
+	float:				left;
+	display:			inline;
+	/* end hacks */	
+	margin-top:			10px;
+	margin-left:		10px;
+	/* IE seems to ignore margin-bottom, I don't know why,
+	 * since we don't set any heights padding works too
+	 */
+	padding-bottom:		10px;
+	/* if we have a fixed width, don't exceed it */
+	overflow:			hidden;
+}
+
+.dh-popup .dh-content .dh-title {
+	position:			relative;
+}
+
+.dh-popup {
+	/* drop shadow color */
+	background-color:	#b3b3b3;
+}
+
+.dh-popup .dh-border {
+	background-color:	black;
+}
+
+.dh-popup .dh-content-padding {
+	background-color:	white;
+}
+
+.dh-popup .dh-title {
+	font-size:			16px;
+	font-weight:		bold;
+	text-align:			left;
+}
+
+.dh-popup .dh-controls {
+	font-size:			12px;
+}

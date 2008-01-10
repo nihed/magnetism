@@ -1,0 +1,40 @@
+@CHARSET "UTF-8";
+
+#dhAddImPopup {
+	z-index: 5;
+	padding: 10px;
+}
+
+#dhAddImClose {
+	position:	absolute;
+	top:		10px;
+	right:		10px;
+}
+
+#dhAddImPopup .im-account-type {
+	margin-top:    4px;
+	margin-bottom: 4px;
+}
+
+#dhAddImPopup .im-account-content {
+	margin-top:    8px;
+}
+
+#dhAddImPopup .im-account-note {
+	margin-top:			4px;
+	margin-bottom:		4px;
+}
+
+#dhAddImPopup .im-action-row {
+	margin-top:	8px;
+	text-align: right;
+}
+
+#dhAddImPopupHeader {
+	margin-bottom:  6px;
+}
+
+.dh-im-address {
+	padding-right:	8px;
+}
+

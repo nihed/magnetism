@@ -1,0 +1,24 @@
+@CHARSET "UTF-8";
+@IMPORT url("im-account-positions.css");
+
+#dhAddImPopup {
+	border:  1px solid black;
+	font-size: 14px;
+	background-color: white;
+}
+
+#dhAddImPopupHeader {
+	font-size:     16px;
+}
+
+#dhAddImPopup .im-account-note {
+	color:				#444444;
+}
+
+.dh-im-pending-address {
+	font-weight:		bold;
+}
+
+.dh-im-verify-message {
+	color:				#444444;
+}

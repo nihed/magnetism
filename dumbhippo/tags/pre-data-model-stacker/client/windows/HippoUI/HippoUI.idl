@@ -1,0 +1,116 @@
+/* HippoUI.idl: IDL interfaces used only within the HippoUI client. These are generally
+ *  interfaces that we export to Javascript. (See also HippoUtil.idl for interfaces used
+ *  between our modules.)
+ *
+ * Copyright Red Hat, Inc. 2006
+ **/
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+    uuid(015773B1-22A6-4368-9F79-37513D8F1801),
+    helpstring("DumbUI Interfaces"),
+    lcid(0x0000),
+    version(0.1)
+]
+library HippoUI {
+    [
+        uuid(D489ADCD-F3B5-4E72-AA5f-18633DA61304), // IID_IHippoBubble
+        helpstring("DumbHippo Notification Bubble"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoBubble : IUnknown
+    {
+        [id(120), helpstring("Open an external URL")]
+        HRESULT OpenExternalURL([in] BSTR url);
+        [id(121), helpstring("Close notification window")]
+        HRESULT Close();
+        [id(122), helpstring("Display a shared link")]
+        HRESULT DisplaySharedLink([in] BSTR postId, [in] BSTR url);
+        [id(123), helpstring("Debug log")]
+        HRESULT DebugLog([in] BSTR msg);
+        [id(125), helpstring("Set the size of the bubble window")]
+        HRESULT Resize([in] int width, [in] int height);
+        [id(126), helpstring("Return the base Url for the DumbHippo server")]
+        HRESULT GetServerBaseUrl([out, retval] BSTR *url);
+        [id(127), helpstring("Signal whether or not we have missed notifications")]
+        HRESULT SetHaveMissedBubbles([in] BOOL haveMissed);
+        [id(128), helpstring("Refresh the display of notification window")]
+        HRESULT UpdateDisplay();
+        [id(129), helpstring("Join chat for a link")]
+        HRESULT ShowChatWindow([in] BSTR postId);
+        [id(130), helpstring("Ignore a post")]
+        HRESULT IgnorePost([in] BSTR postId);
+        [id(131), helpstring("Ignore an entity")]
+        HRESULT IgnoreEntity([in] BSTR entityId);
+        [id(132), helpstring("Ignore a chat")]
+        HRESULT IgnoreChat([in] BSTR chatId);
+        [id(133), helpstring("Invite a user to a group")]
+        HRESULT DoGroupInvite([in] BSTR groupId, [in] BSTR userId);
+        // up to 150
+    }
+    [
+        uuid(A2B1B344-F645-4EF0-B5A6-0C310353D2A6),
+        helpstring("DumbHippo Chat Window"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoChatWindow : IUnknown
+    {
+        [id(210), helpstring("Activate or flash the window on an incoming message")]
+        HRESULT DemandAttention();
+    }
+    [
+        uuid(47004E9B-AC50-4328-BECE-EF4024944105), // IID_IHippoFlickr
+        helpstring("DumbHippo Flickr Uploader"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoFlickr : IUnknown
+    {
+        [id(150), helpstring("Create a photoset from current photos")]
+        HRESULT CreatePhotoset([in] BSTR title);
+        [id(151), helpstring("Signal whether or not user has a Flickr account")]
+        HRESULT HaveFlickrAccount([in] BOOL haveAccount);
+    }
+    [
+        uuid(7C14E15B-463D-4A62-A3F8-E4CB4C962514),
+        helpstring("DumbHippo Bubble List"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoBubbleList : IUnknown
+    {
+        [id(190), helpstring("Display a shared link")]
+        HRESULT DisplaySharedLink([in] BSTR postId, [in] BSTR url);
+        [id(191), helpstring("Set the size of the window")]
+        HRESULT Resize([in] int width, [in] int height);
+        [id(192), helpstring("Return the base Url for the DumbHippo server")]
+        HRESULT GetServerBaseUrl([out, retval] BSTR *url);
+        [id(193), helpstring("Join chat for a link")]
+        HRESULT ShowChatWindow([in] BSTR postId);
+        [id(194), helpstring("Ignore a post")]
+        HRESULT IgnorePost([in] BSTR postId);
+        // up to ?
+    }
+    [
+        uuid(CECA44AA-12EE-4697-A81E-B6C94F8038AF), // IID_IHippoMenu
+        helpstring("DumbHippo Menu Window"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoMenu : IUnknown
+    {
+        [id(180), helpstring("Exit the client and remove the notification icon")]
+        HRESULT Exit();
+        [id(181), helpstring("Return the base Url for the DumbHippo server")]
+        HRESULT GetServerBaseUrl([out, retval] BSTR *result);
+        [id(182), helpstring("Go into hush mode")]
+        HRESULT Hush();
+        [id(183), helpstring("Set the size of the window")]
+        HRESULT Resize([in] int width, [in] int height);
+        [id(184), helpstring("Show recent links")]
+        HRESULT ShowRecent();
+    }
+}

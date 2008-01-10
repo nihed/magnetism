@@ -1,0 +1,184 @@
+@CHARSET "UTF-8";
+@IMPORT url("applications-positions.css");
+
+.dh-applications-heading {
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.dh-applications-subheading {
+	font-size: 14px;
+	font-weight: bold;
+}
+
+#dhApplicationsHeader {
+	font-size: 12px;
+}
+
+#dhApplicationsStatsHeader {
+	text-align: center; 
+}
+
+.dh-applications-application-stats {
+	text-align: center; 
+}
+
+.dh-applications-application-stats-heading {
+	font-size:	12px;
+	text-align:	center;
+}
+
+#dhApplicationsApplications {
+	font-size:	12px;
+}
+
+#dhApplicationsApplications .dh-applications-application-stats {
+	background: url("/images3/purple_gradient.png") top left repeat-x;
+}
+
+#dhApplicationsApplications .dh-applications-rank {
+	font-size: 24px;
+}
+
+.dh-applications-application-big .dh-applications-application-details {
+	line-height: 1.1;
+}
+
+.dh-applications-application-mini .dh-applications-rank {
+	font-size: 16px;
+}
+
+label.dh-applications-search {
+	font-weight: bold;
+	font-size:	14px;
+}
+
+.dh-applications-usage {
+	font-size: 14px;
+	color: #777777;
+}
+
+.dh-applications-application-name {
+	font-size:   14px;
+}
+
+.dh-applications-application-big .dh-applications-application-name {
+	font-size:   16px;
+	font-weight: bold;
+}
+
+.dh-applications-application-generic-name {
+	font-size: 12px;
+	font-style: italic;
+	color:	#777777;
+}
+
+.dh-applications-application-category {
+	font-size: 12px;
+}
+
+.dh-applications-application-local {
+	font-size: 12px;
+}
+
+.dh-applications-categories {
+	border-collapse: collapse;
+}
+
+.dh-applications-category {
+	font-size: 	      14px;
+	border-bottom:    1px solid #cccccc;
+}
+
+.dh-applications-current-category {
+	font-weight: bold;
+	background-color: #eeeeee;
+}
+
+.dh-applications-last-category {
+	border-bottom: none;
+}
+
+.dh-applications-no-applications {
+   font-size: 15px;
+   color:     #444444;
+}
+
+.dh-applications-learnmore h2 {
+	margin-top: 8px;
+	margin-bottom: 4px;
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.dh-applications-learnmore p {
+	margin-top: 4px;
+	margin-top: 4px;
+}
+
+.dh-applications-settings {
+	padding: 			8px;
+	background-color:	#fbfadc;
+	border:				1px solid #cccc99;
+}
+
+.dh-application-more {
+	border:				1px solid #cccccc;
+}
+
+.dh-application-action {
+	font-size: 	 18px;
+	font-weight: bold;
+}
+
+.dh-application-no-local-header {
+	font-size: 	 16px;
+	font-weight: bold;
+	color:		 #777777;
+}
+
+.dh-application-more-details {
+	font-size:	14px;
+	color:		#444444;
+}
+
+
+.dh-application-description {
+	font-size:			12px;
+}
+
+.dh-applications-no-data {
+    font-size:  18px;
+    color:      #444444;
+}
+
+.dh-application-edit-label {
+	font-weight: bold;
+	text-align: right;
+	vertical-align: baseline;
+}
+
+.dh-application-edit-control textarea {
+	font-family: Luxi Sans, Arial, sans-serif;
+}
+
+.dh-application-edit-help {
+	font-style: italic;
+}
+
+.dh-application-upload-history th { 
+	text-align: left;
+}
+
+.dh-application-upload .dh-application-upload-comment {
+	font-style: italic;
+}
+
+.dh-application-upload-current {
+	font-weight: bold;
+}
+
+.dh-application-upload-odd {
+	background: #f4f4cc;
+}
+
