@@ -3906,6 +3906,7 @@ remove_box_child(HippoCanvasBox *box,
     box->children = g_slist_remove(box->children, c);
     disconnect_child(box, child);
     hippo_canvas_item_set_context(child, NULL);
+    hippo_canvas_item_set_parent(child, NULL);
  
     g_object_unref(child);
 
