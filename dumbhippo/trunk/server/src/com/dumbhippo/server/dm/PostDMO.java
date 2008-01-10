@@ -22,6 +22,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.views.SystemViewpoint;
@@ -30,6 +31,9 @@ import com.dumbhippo.server.views.Viewpoint;
 @DMO(classId="http://mugshot.org/p/o/post", resourceBase="/o/post")
 @DMFilter("viewer.canSeePost(this)")
 public abstract class PostDMO extends DMObject<Guid> {
+	@EJB
+	Configuration configuration; 
+
 	@EJB
 	PostingBoard postingBoard; 
 	
@@ -81,6 +85,12 @@ public abstract class PostDMO extends DMObject<Guid> {
 	@DMProperty(defaultInclude=true, type=PropertyType.URL)
 	public String getLink() {
 		return post.getUrl().toString();
+	}
+	
+	@DMProperty(defaultInclude=true, type=PropertyType.URL)
+	public String getVisitUrl() {
+		// Viewing shares and group feeds is always a Mugshot thing, not a online.gnome.org thing
+		return configuration.getBaseUrlMugshot() + "/visit?post=" + post.getId();
 	}
 	
 	@DMProperty(defaultInclude=true)
