@@ -28,8 +28,6 @@ gint64        _ddm_data_resource_get_requested_serial (DDMDataResource *resource
 void _ddm_data_resource_fetch_requested (DDMDataResource *resource,
                                          DDMDataFetch    *fetch,
                                          guint64          serial);
-void _ddm_data_resource_fetch_received  (DDMDataResource *resource,
-                                         DDMDataFetch    *received_fetch);
 
 void _ddm_data_resource_send_local_notifications (DDMDataResource    *resource,
                                                   GSList             *changed_properties);

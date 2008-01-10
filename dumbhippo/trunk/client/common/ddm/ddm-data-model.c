@@ -597,7 +597,9 @@ _ddm_data_model_mark_changed(DDMDataModel    *model,
         g_hash_table_insert(model->changed_resources, resource, ddm_data_resource_ref(resource));
     }
 
+#if 0    
     g_debug("Scheduling flush due to mark_changed");
+#endif    
     ddm_data_model_schedule_flush(model);
 }
 
