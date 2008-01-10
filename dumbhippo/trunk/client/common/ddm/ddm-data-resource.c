@@ -462,6 +462,12 @@ ddm_data_resource_set_class_id(DDMDataResource    *resource,
     resource->class_id = g_strdup(class_id);
 }
 
+DDMDataModel *
+ddm_data_resource_get_model(DDMDataResource *resource)
+{
+    return resource->model;
+}
+
 const char *
 ddm_data_resource_get_resource_id (DDMDataResource *resource)
 {
@@ -1824,8 +1830,8 @@ _ddm_data_resource_fetch_requested (DDMDataResource *resource,
 }
 
 void
-_ddm_data_resource_fetch_received (DDMDataResource *resource,
-                                   DDMDataFetch    *received_fetch)
+ddm_data_resource_fetch_received (DDMDataResource *resource,
+                                  DDMDataFetch    *received_fetch)
 {
     if (resource->received_fetch == NULL) {
         resource->received_fetch = ddm_data_fetch_ref(received_fetch);
@@ -1835,6 +1841,65 @@ _ddm_data_resource_fetch_received (DDMDataResource *resource,
         ddm_data_fetch_unref(old_received);
     }
 }
+
+void
+ddm_data_resource_mark_received_fetches(DDMDataResource *resource,
+                                        DDMDataFetch    *fetch,
+                                        gboolean         mark_remote_resources)
+{
+    DDMDataFetchIter iter;
+
+    /* For a fetch we short-circuit locally, we don't need to record
+     * record any additional fetches on remote resources ... we can
+     * only short-circuit a remote fetch if we already have everything
+     * we need. But for a local resource (injected into the data model),
+     * we want to record our fetch in resource->received_fetch, because
+     * we use resource->received_fetch when calculating local interest.
+     *
+     * See comment in _ddm_data_resource_resolve_notification()
+     */
+    if (mark_remote_resources || ddm_data_resource_is_local(resource))
+        ddm_data_resource_fetch_received(resource, fetch);
+
+    ddm_data_fetch_iter_init(&iter, resource, fetch);
+
+    while (ddm_data_fetch_iter_has_next(&iter)) {
+        DDMDataProperty *property;
+        DDMDataFetch *children;
+        DDMDataValue value;
+        
+        ddm_data_fetch_iter_next(&iter, &property, &children);
+
+        if (children != NULL) {
+            ddm_data_property_get_value(property, &value);
+            
+            if (DDM_DATA_BASE(value.type) == DDM_DATA_RESOURCE) { /* Could also be NONE */
+                if (DDM_DATA_IS_LIST(value.type)) {
+                    GSList *l;
+                    
+                    for (l = value.u.list; l; l = l->next) {
+                        ddm_data_resource_mark_received_fetches(l->data, children, mark_remote_resources);
+                    }
+                } else {
+                    ddm_data_resource_mark_received_fetches(value.u.resource, children, mark_remote_resources);
+                }
+            } else if (value.type == DDM_DATA_FEED) {
+                if (value.u.feed != NULL) {
+                    DDMFeedIter feed_iter;
+                    DDMDataResource *item_resource;
+
+                    ddm_feed_iter_init(&feed_iter, value.u.feed);
+                    while (ddm_feed_iter_next(&feed_iter, &item_resource, NULL))
+                        ddm_data_resource_mark_received_fetches(item_resource, children, mark_remote_resources);
+                }
+            }
+        }
+    }
+    
+    ddm_data_fetch_iter_clear(&iter);
+}
+
+
 
 static DDMDataProperty *
 resource_ensure_rule_property(DDMDataResource *resource,

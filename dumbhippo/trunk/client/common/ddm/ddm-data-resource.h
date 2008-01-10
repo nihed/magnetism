@@ -61,6 +61,8 @@ typedef enum {
     DDM_DATA_CARDINALITY_N
 } DDMDataCardinality;
 
+typedef struct _DDMDataModel         DDMDataModel; /* Avoid circular include */
+
 typedef struct _DDMDataValue         DDMDataValue;
 typedef struct _DDMDataProperty      DDMDataProperty;
 typedef struct _DDMDataFetch         DDMDataFetch; /* Avoid circular include */
@@ -103,9 +105,10 @@ void ddm_data_value_get_element(DDMDataValue *value,
                                 GSList         *element_node,
                                 DDMDataValue *element);
 
-const char *ddm_data_resource_get_resource_id (DDMDataResource *resource);
-const char *ddm_data_resource_get_class_id    (DDMDataResource *resource);
-gboolean    ddm_data_resource_is_local        (DDMDataResource *resource);
+DDMDataModel *ddm_data_resource_get_model       (DDMDataResource *resource);
+const char *  ddm_data_resource_get_resource_id (DDMDataResource *resource);
+const char *  ddm_data_resource_get_class_id    (DDMDataResource *resource);
+gboolean      ddm_data_resource_is_local        (DDMDataResource *resource);
 
 void ddm_data_resource_get               (DDMDataResource *resource,
                                           ...) G_GNUC_NULL_TERMINATED;
@@ -145,6 +148,18 @@ gboolean           ddm_data_resource_update_property       (DDMDataResource    *
                                                             gboolean            default_include,
                                                             const char         *default_children,
                                                             DDMDataValue       *value);
+/* Add the given fetch to the received fetch for a particular resource */
+void               ddm_data_resource_fetch_received        (DDMDataResource    *resource,
+                                                            DDMDataFetch       *received_fetch);
+/* Add the given fetch to the received fetch for a particular resource, and recurse into children
+ * and add the appropriate fetches for them as well. If mark_remote_resources is FALSE, then
+ * we only do the marking for resources that are local and skip marking any resources in the
+ * tree that are remote, though we mark local children.
+ */
+void               ddm_data_resource_mark_received_fetches (DDMDataResource    *resource,
+                                                            DDMDataFetch       *fetch,
+                                                            gboolean            mark_remote_resources);
+
 gboolean           ddm_data_resource_update_feed_property  (DDMDataResource    *resource,
                                                             DDMQName           *property_id,
                                                             DDMDataUpdate       update,
