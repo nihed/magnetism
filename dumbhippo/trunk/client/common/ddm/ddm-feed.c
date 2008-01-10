@@ -210,7 +210,7 @@ ddm_feed_clear_internal (DDMFeed *feed,
     feed->items = NULL;
 
     for (l = items; l; l = l->next) {
-        DDMFeedItem *item = items->data;
+        DDMFeedItem *item = l->data;
 
         if (emit_signals)
             g_signal_emit(feed, signals[ITEM_REMOVED], 0, item->resource);
