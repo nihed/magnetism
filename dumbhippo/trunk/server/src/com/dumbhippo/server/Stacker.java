@@ -173,6 +173,23 @@ public interface Stacker {
 	 * @return list of blockviews, sorted in reverse-chronological order
 	 */
 	public List<BlockView> getUnansweredQuestions(UserViewpoint viewpoint, long stackedBefore);
+	
+	/**
+	 * Gets a set of blocks of interest to a user. The intent here is to be used to round out 
+	 * the top of the user's stack with other interesting blocks, hence the name "old blocks".
+	 * The two types of "blocks of interest" that might not be at the top of the stack
+	 * are old unanswered account question blocks, and blocks that are more specifically
+	 * filtered than in the stack.
+	 * 
+	 * @param viewpoint the user
+	 * @param filter string specifying filter on the blocks to return
+	 * @param stackedBefore only return blocks stacked before this timestamp
+	 * @param desiredCount target number of blocks to return (more may be returned under some circumstances,
+	 *    such as having outstanding unanswered account question blocks)
+	 * 
+	 * @return list of blockviews, sorted in reverse-chronological order
+	 */
+	public List<Block> getOldBlocks(UserViewpoint viewpoint, String filter, long stackedBefore, int desiredCount);
 
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException;
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, BlockKey key) throws NotFoundException;

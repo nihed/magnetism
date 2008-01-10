@@ -90,7 +90,8 @@ public class HippoPlugin implements Plugin {
 			addIQHandler(new HotnessIQHandler());	
 			addIQHandler(new RecentPostsIQHandler());
 			addIQHandler(new PostControlsIQHandler());
-			addIQHandler(new GroupIQHandler());			
+			addIQHandler(new GroupIQHandler());	
+			addIQHandler(new OldBlocksIQHandler());
 			addIQHandler(new BlocksIQHandler());
 			addIQHandler(new AccountQuestionIQHandler());
 			addIQHandler(new SettingsIQHandler());			

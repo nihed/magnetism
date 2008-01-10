@@ -20,4 +20,12 @@ public abstract class GroupChatBlockDMO extends BlockDMO {
 	public StoreKey<?,?> getVisibilityDelegate() {
 		return getGroup().getStoreKey();
 	}
+	
+	// GroupMemberBlockView returns "" for the title link, and I'm hestitant to change
+	// that for fear something is depending on it in the JSP's, so we just override
+	// it here to a more sensible null.
+	@Override
+	public String getTitleLink() {
+		return null;
+	}
 }
