@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
 import java.util.regex.Pattern;
 
 import javax.ejb.EJB;
@@ -29,7 +28,6 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
-import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -61,10 +59,12 @@ import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.syndication.RhapModule;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.FeedScraper;
 import com.dumbhippo.server.util.HtmlTextExtractor;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.services.FeedFetcher;
 import com.dumbhippo.services.FeedFetcher.FeedFetchResult;
 import com.dumbhippo.services.FeedFetcher.FetchFailedException;
@@ -99,20 +99,6 @@ public class FeedSystemBean implements FeedSystem {
 	@EJB
 	private RevisionControl revisionControl;
 	
-	private static ExecutorService notificationService;
-	private static boolean shutdown = false;
-
-	
-	private static synchronized ExecutorService getNotificationService() {
-		if (shutdown)
-			throw new RuntimeException("getNotificationService() called after shutdown");
-		
-		if (notificationService == null)
-			notificationService = ThreadUtils.newSingleThreadExecutor("FeedSystem notification");
-		
-		return notificationService;
-	}
-
 	private Feed lookupExistingFeed(LinkResource source) {
 		try {
 			Feed feed = (Feed)em.createQuery("SELECT f FROM Feed f WHERE f.source = :source")
@@ -507,24 +493,27 @@ public class FeedSystemBean implements FeedSystem {
 			// above. If that ever matters, we would need to preserve the entry index down
 			// to this point, or otherwise restructure things.
 			//
+			// (To actually get this ordering, we depend on Transaction.registerSynchronization
+			// preserving ordering. If that wasn't the case, then we'd need to make things more
+			// complicated by doing a single onCommit handler, that starts an asynchronous
+			// task per entry. But then again, long term, we may want to do everything in
+			// a single transaction so that we can coellesce notifications.)
+			//
 			Collections.reverse(newEntryIds);
 			
-			TxUtils.runOnCommit(new Runnable() {
-				public void run() {
-					logger.debug("  Transaction committed, running new entry notification for {} entries", newEntryIds.size());
-					for (final long entryId : newEntryIds) {
-						getNotificationService().execute(new Runnable() {
-							public void run() {
-								try {
-									EJBUtil.defaultLookup(FeedSystem.class).handleNewEntryNotification(entryId);
-								} catch (RuntimeException e) {
-									logger.error("Exception handling feed entry notification", e);
-								}
-							}
-						});
+			for (final long entryId : newEntryIds) {
+				TxUtils.runInTransactionOnCommit(new Runnable() {
+					public void run() {
+						DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
+						
+						try {
+							EJBUtil.defaultLookup(FeedSystem.class).handleNewEntryNotification(entryId);
+						} catch (RuntimeException e) {
+							logger.error("Exception handling feed entry notification", e);
+						}
 					}
-				}
-			});
+				});
+			}
 		} else {
 			logger.debug("  No new entries to process for feed {}", feed.getSource());
 			return false;
@@ -817,12 +806,6 @@ public class FeedSystemBean implements FeedSystem {
 	}
 	
 	public synchronized static void shutdown() {
-		shutdown = true;
-		
-		if (notificationService != null) {
-			ThreadUtils.shutdownAndAwaitTermination(notificationService);
-			notificationService = null;
-		}
 	}
 
 	public void addGroupFeed(User adder, Group group, Feed feed) {
