@@ -47,7 +47,7 @@ public class ReadOnlySession extends CachedSession {
 //			logger.debug("Cached new value for {}.{}", key, property.getName());
 		}
 
-		if (bypassFilter)
+		if (bypassFilter || value == null)
 			return value;
 		else
 			return property.filter(getViewpoint(), key.getKey(), value);

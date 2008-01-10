@@ -11,6 +11,7 @@ import com.dumbhippo.server.dm.BlockDMOKey;
 import com.dumbhippo.server.dm.ChatMessageDMO;
 import com.dumbhippo.server.dm.ChatMessageKey;
 import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.FeedDMO;
 
 /**
  * The Viewpoint class represents the concept of "current user". 
@@ -75,6 +76,18 @@ public abstract class Viewpoint implements DMViewpoint {
 		StoreKey<?, ?> delegateKey;
 		try {
 			delegateKey = (StoreKey<?,?>)session.getRawProperty(ChatMessageDMO.class, chatMessageKey, "visibilityDelegate");
+			return delegateKey.isVisible(this);
+		} catch (NotFoundException e) {
+			return false;
+		}
+	}
+	
+	public boolean canSeeFeed(Guid guid) {
+		DMSession session = DataService.getModel().currentSession();
+
+		StoreKey<?, ?> delegateKey;
+		try {
+			delegateKey = (StoreKey<?,?>)session.getRawProperty(FeedDMO.class, guid, "visibilityDelegate");
 			return delegateKey.isVisible(this);
 		} catch (NotFoundException e) {
 			return false;
