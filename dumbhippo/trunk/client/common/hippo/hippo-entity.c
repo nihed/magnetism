@@ -182,6 +182,14 @@ hippo_entity_new(HippoEntityType  type,
     return entity;
 }
 
+DDMDataResource *
+hippo_entity_get_resource(HippoEntity *entity)
+{
+    g_return_val_if_fail(HIPPO_IS_ENTITY(entity), NULL);
+
+    return entity->resource;
+}
+
 static void
 hippo_entity_update(HippoEntity *entity)
 {
@@ -258,14 +266,4 @@ hippo_entity_set_photo_url(HippoEntity    *entity,
     g_return_if_fail(HIPPO_IS_ENTITY(entity));
     /* g_debug("Setting photo for '%s' to '%s'", entity->guid, url ? url : "null"); */
     hippo_entity_set_string(entity, &entity->photo_url, url);
-}
-
-void
-hippo_entity_set_in_network(HippoEntity    *entity,
-                            gboolean        in_network)
-{
-    g_return_if_fail(HIPPO_IS_ENTITY(entity));
-
-    entity->in_network = in_network != FALSE;
-    hippo_entity_notify(entity);
 }

@@ -156,6 +156,12 @@ get_connection(HippoActions *actions)
     return hippo_data_cache_get_connection(actions->cache);
 }
 
+static DDMDataModel*
+get_model(HippoActions *actions)
+{
+    return hippo_data_cache_get_model(actions->cache);
+}
+
 static HippoPlatform*
 get_platform(HippoActions *actions)
 {
@@ -166,14 +172,22 @@ void
 hippo_actions_visit_post(HippoActions   *actions,
                          HippoPost      *post)
 {
-    hippo_connection_visit_post(get_connection(actions), post);
+    const char *visit_url;
+    
+    ddm_data_resource_get(hippo_post_get_resource(post),
+                          "visitUrl", DDM_DATA_URL, &visit_url,
+                          NULL);
+
+    if (visit_url != NULL)
+        hippo_actions_open_url(actions, visit_url);
 }
 
 void
 hippo_actions_visit_entity(HippoActions    *actions,
                            HippoEntity     *entity)
 {
-    hippo_connection_visit_entity(get_connection(actions), entity);
+    const char *home_url = hippo_entity_get_home_url(entity);
+    hippo_actions_open_url(actions, home_url);
 }
 
 static void
@@ -214,19 +228,13 @@ hippo_actions_load_favicon_async(HippoActions    *actions,
                                  const char      *image_url,
                                  HippoCanvasItem *image_item)
 {
-    char *absolute;
-    
     if (actions->favicon_cache == NULL) {
         actions->favicon_cache = hippo_image_cache_new(get_platform(actions));
     }
 
     /* hippo_object_cache_debug_dump(HIPPO_OBJECT_CACHE(actions->favicon_cache)); */
     
-    absolute = hippo_connection_make_absolute_url(get_connection(actions),
-                                                  image_url);
-    load_image_url_async(actions, actions->favicon_cache, absolute, image_item);
-    
-    g_free(absolute);
+    load_image_url_async(actions, actions->favicon_cache, image_url, image_item);
 }
 
 void
@@ -234,19 +242,13 @@ hippo_actions_load_thumbnail_async(HippoActions    *actions,
                                    const char      *image_url,
                                    HippoCanvasItem *image_item)
 {
-    char *absolute;
-    
     if (actions->thumbnail_cache == NULL) {
         actions->thumbnail_cache = hippo_image_cache_new(get_platform(actions));
     }
 
     /* hippo_object_cache_debug_dump(HIPPO_OBJECT_CACHE(actions->thumbnail_cache)); */
     
-    absolute = hippo_connection_make_absolute_url(get_connection(actions),
-                                                  image_url);
-    load_image_url_async(actions, actions->thumbnail_cache, absolute, image_item);
-    
-    g_free(absolute);
+    load_image_url_async(actions, actions->thumbnail_cache, image_url, image_item);
 }
 
 void
@@ -254,19 +256,13 @@ hippo_actions_load_music_thumbnail_async(HippoActions    *actions,
                                          const char      *image_url,
                                          HippoCanvasItem *image_item)
 {
-    char *absolute;
-    
     if (actions->music_thumbnail_cache == NULL) {
         actions->music_thumbnail_cache = hippo_image_cache_new(get_platform(actions));
     }
 
     /* hippo_object_cache_debug_dump(HIPPO_OBJECT_CACHE(actions->music_thumbnail_cache)); */
     
-    absolute = hippo_connection_make_absolute_url(get_connection(actions),
-                                                  image_url);
-    load_image_url_async(actions, actions->music_thumbnail_cache, absolute, image_item);
-    
-    g_free(absolute);
+    load_image_url_async(actions, actions->music_thumbnail_cache, image_url, image_item);
 }
 
 void
@@ -277,7 +273,6 @@ hippo_actions_load_entity_photo_async(HippoActions    *actions,
 {
     const char *url;
     char *sized;
-    char *absolute;        
     
     url = hippo_entity_get_photo_url(entity);
     
@@ -298,11 +293,8 @@ hippo_actions_load_entity_photo_async(HippoActions    *actions,
 
     /* hippo_object_cache_debug_dump(HIPPO_OBJECT_CACHE(actions->entity_photo_cache)); */
     
-    absolute = hippo_connection_make_absolute_url(get_connection(actions),
-                                                  sized);
-    load_image_url_async(actions, actions->entity_photo_cache, absolute, image_item);
+    load_image_url_async(actions, actions->entity_photo_cache, sized, image_item);
     
-    g_free(absolute);
     g_free(sized);
 }
 
@@ -358,28 +350,75 @@ hippo_actions_toggle_noselfsource(HippoActions *actions)
 void
 hippo_actions_open_home_page(HippoActions    *actions)
 {
-    hippo_connection_open_maybe_relative_url(get_connection(actions), "/");
+    DDMDataResource *self = ddm_data_model_get_self_resource(get_model(actions));
+    const char *home_url;
+
+    ddm_data_resource_get(self,
+                          "homeUrl", DDM_DATA_URL, &home_url,
+                          NULL);
+
+    if (home_url != NULL)
+        hippo_actions_open_url(actions, home_url);
+}
+
+static void
+on_open_url_error(DDMDataError  error,
+                     const char   *message,
+                     gpointer      data)
+{
+     g_warning("Failed to open URL in browser: %s", message);
 }
 
 void
-hippo_actions_open_url(HippoActions    *actions,
-                                const char      *url)
+hippo_actions_open_url(HippoActions *actions,
+                       const char   *url)
 {
-    hippo_connection_open_maybe_relative_url(get_connection(actions), url);
+    DDMDataQuery *query;
+
+    query = ddm_data_model_update(get_model(actions),
+                                  "online-desktop:/p/system#openUrl",
+                                  "url", url,
+                                  NULL);
+    
+    ddm_data_query_set_error_handler(query, on_open_url_error, actions);
+}
+
+static void
+on_set_block_hushed_error(DDMDataError  error,
+                     const char   *message,
+                     gpointer      data)
+{
+     g_warning("Failed to set block hush state: %s", message);
+}
+
+static void
+set_block_hushed(HippoActions *actions,
+                 HippoBlock   *block,
+                 gboolean      hushed)
+{
+    DDMDataQuery *query;
+
+    query = ddm_data_model_update(get_model(actions),
+                                  "http://mugshot.org/p/blocks#setBlockHushed",
+                                  "blockId", hippo_block_get_guid(block),
+                                  "hushed", hushed ? "true" : "false",
+                                  NULL);
+    
+    ddm_data_query_set_error_handler(query, on_set_block_hushed_error, actions);
 }
 
 void
 hippo_actions_hush_block(HippoActions    *actions,
                          HippoBlock      *block)
 {
-    hippo_connection_set_block_hushed(get_connection(actions), hippo_block_get_guid(block), TRUE);
+    set_block_hushed(actions, block, TRUE);
 }
 
 void
 hippo_actions_unhush_block(HippoActions    *actions,
                            HippoBlock      *block)
 {
-    hippo_connection_set_block_hushed(get_connection(actions), hippo_block_get_guid(block), FALSE);
+    set_block_hushed(actions, block, FALSE);
 }
 
 void
@@ -396,14 +435,28 @@ hippo_actions_join_chat_id(HippoActions    *actions,
     hippo_platform_show_chat_window(get_platform(actions), chat_id);
 }
 
+static void
+on_invite_user_error(DDMDataError  error,
+                     const char   *message,
+                     gpointer      data)
+{
+     g_warning("Failed to invite user to group: %s", message);
+}
+
 void
 hippo_actions_invite_to_group(HippoActions    *actions,
                               HippoGroup      *group,
                               HippoPerson     *person)
 {
-    hippo_connection_do_invite_to_group(get_connection(actions),
-                                        hippo_entity_get_guid(HIPPO_ENTITY(group)),
-                                        hippo_entity_get_guid(HIPPO_ENTITY(person)));
+    DDMDataQuery *query;
+
+    query = ddm_data_model_update(get_model(actions),
+                                  "http://mugshot.org/p/blocks#accountQuestionResponse",
+                                  "groupId", hippo_entity_get_guid(HIPPO_ENTITY(group)),
+                                  "userId", hippo_entity_get_guid(HIPPO_ENTITY(person)),
+                                  NULL);
+    
+    ddm_data_query_set_error_handler(query, on_invite_user_error, actions);
 }
 
 gboolean
@@ -430,11 +483,26 @@ hippo_actions_quip(HippoActions   *actions,
     g_object_unref(quip_window);
 }
 
+static void
+on_account_question_response_error(DDMDataError  error,
+                     const char   *message,
+                     gpointer      data)
+{
+     g_warning("Failed to set account question response: %s", message);
+}
+
 void 
 hippo_actions_send_account_question_response(HippoActions *actions,
                                              const char   *block_id,
                                              const char   *response)
 {
-    hippo_connection_send_account_question_response(get_connection(actions),
-                                                    block_id, response);
+    DDMDataQuery *query;
+
+    query = ddm_data_model_update(get_model(actions),
+                                  "http://mugshot.org/p/blocks#accountQuestionResponse",
+                                  "blockId", block_id,
+                                  "response", response,
+                                  NULL);
+    
+    ddm_data_query_set_error_handler(query, on_account_question_response_error, actions);
 }

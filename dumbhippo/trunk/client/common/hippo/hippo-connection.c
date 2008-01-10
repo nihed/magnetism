@@ -275,8 +275,6 @@ struct _HippoConnection {
     char *download_url;
     char *tooltip;
     char *active_block_filter;
-    int request_blocks_id;
-    gint64 last_blocks_timestamp;
     gint64 server_time_offset;
     unsigned int too_old : 1;
     unsigned int upgrade_available : 1;
@@ -646,10 +644,29 @@ hippo_connection_get_self_resource_id(HippoConnection  *connection)
         
         const char *self_guid = hippo_connection_get_self_guid(connection);
 
-        /* The resource ID does not change according to which server we connect to,
-         * it is always mugshot.org
+        /* There isn't any notification when hippo_platform_get_web_server() changes
+         * but that won't happen in normal operation; right now the only time that
+         * it happens is when adjusting the web server in the hidden properties
+         * dialog on the windows client.
          */
-        connection->self_resource_id = g_strdup_printf("http://mugshot.org/o/user/%s", self_guid);
+        const char *raw_server = hippo_platform_get_web_server(connection->platform,
+                                                               HIPPO_SERVER_STACKER);
+        char *server;
+
+        /* Somewhat hacky: we need to match the server's own idea of what it's
+         * URL is; we've added on :80 elsewhere to "canonicalize" the URL, and
+         * strip it out again here. We might be better off having the server
+         * send it's resource base (or the user's "self ID") in the initial
+         * handshake.
+         */
+        if (g_str_has_suffix(raw_server, ":80"))
+            server = g_strndup(raw_server, strlen(raw_server) - 3);
+        else
+            server = g_strdup(raw_server);
+        
+        connection->self_resource_id = g_strdup_printf("http://%s/o/user/%s", server, self_guid);
+
+        g_free(server);
     }
 
     return connection->self_resource_id;
@@ -735,32 +752,6 @@ add_track_props(LmMessageNode *node,
         lm_message_node_set_attribute(prop_node, "key", keys[i]);
         lm_message_node_set_value(prop_node, values[i]);  
     }
-}
-
-void
-hippo_connection_do_invite_to_group (HippoConnection  *connection,
-                                     const char       *group_id,
-                                     const char       *person_id)
-{
-    LmMessage *message;
-    LmMessageNode *node;
-    LmMessageNode *method;
-            
-    g_return_if_fail(HIPPO_IS_CONNECTION(connection));
-    
-    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
-                                           LM_MESSAGE_SUB_TYPE_SET);
-    node = lm_message_get_node(message);
-
-    method = lm_message_node_add_child (node, "groupSystem", NULL);
-    lm_message_node_set_attribute(method, "xmlns", "http://dumbhippo.com/protocol/groupSystem");
-    lm_message_node_set_attribute(method, "op", "addMember");
-    lm_message_node_set_attribute(method, "groupId", group_id);
-    lm_message_node_set_attribute(method, "userId", person_id);    
- 
-    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
-
-    lm_message_unref(message);
 }
 
 static void
@@ -1809,200 +1800,15 @@ hippo_connection_get_server_time_offset(HippoConnection *connection)
     return connection->server_time_offset;
 }
 
+#if 0
 static void
 hippo_connection_update_server_time_offset(HippoConnection *connection,
                                            gint64           server_time)
 {
     connection->server_time_offset = server_time - hippo_current_time_ms();
 }
+#endif
  
-static void
-hippo_connection_update_filter(HippoConnection *connection,
-                               const char      *filter)
-{
-    g_free(connection->active_block_filter);
-    connection->active_block_filter = g_strdup(filter);
-    g_signal_emit(connection, signals[BLOCK_FILTER_CHANGED], 0, connection->active_block_filter);
-}
- 
-static gboolean
-hippo_connection_parse_blocks(HippoConnection *connection,
-                              LmMessageNode   *node)
-{
-    const char *filter = NULL;
-    gint64 server_timestamp;
-
-    /* g_debug("Parsing blocks list <%s>", node->name); */
-    
-    if (!hippo_xml_split(connection->cache, node, NULL,
-                         "filter", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &filter,
-                         "serverTime", HIPPO_SPLIT_TIME_MS, &server_timestamp,
-                         NULL)) {
-        g_debug("missing serverTime on blocks");
-        return FALSE;
-    }
-
-    hippo_connection_update_server_time_offset(connection, server_timestamp);
-    if (filter)
-        hippo_connection_update_filter(connection, filter);
-    
-#if 0    
-    LmMessageNode *subchild;
-    
-    for (subchild = node->children; subchild; subchild = subchild->next) {
-        if (!hippo_data_cache_update_from_xml(connection->cache, subchild)) {
-            g_debug("Did not successfully update <%s> from xml", subchild->name);
-        } else {
-            /* g_debug("Updated <%s>", subchild->name) */ ;
-        }
-    }
-
-    /* g_debug("Done parsing blocks list <%s>", node->name); */
-#endif    
-    
-    return TRUE;
-}
-
-static LmHandlerResult
-on_request_blocks_reply(LmMessageHandler *handler,
-                        LmConnection     *lconnection,
-                        LmMessage        *message,
-                        gpointer          data)
-{
-    HippoConnection *connection = HIPPO_CONNECTION(data);
-    LmMessageNode *child;
-
-    child = message->node->children;
-
-    g_debug("got reply for blocks");
-
-    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/blocks", "blocks")) {
-        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-    }
-
-    if (!hippo_connection_parse_blocks(connection, child))
-        g_warning("Failed to parse <blocks>");
-    
-    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-}
-
-void
-hippo_connection_request_blocks(HippoConnection *connection,
-                                gint64           last_timestamp,
-                                const char      *filter)
-{
-    LmMessage *message;
-    LmMessageNode *node;
-    LmMessageNode *child;
-    char *s;
-    
-    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
-                                           LM_MESSAGE_SUB_TYPE_GET);
-    node = lm_message_get_node(message);
-    
-    child = lm_message_node_add_child (node, "blocks", NULL);
-    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/blocks");
-    s = g_strdup_printf("%" G_GINT64_FORMAT, last_timestamp);
-    lm_message_node_set_attribute(child, "lastTimestamp", s);
-    g_free(s);
-    if (filter) {
-        lm_message_node_set_attribute(child, "filter", filter);
-    }
-    if (filter != connection->active_block_filter) {
-        g_free(connection->active_block_filter);
-        connection->active_block_filter = g_strdup(filter);
-    }
-    
-    hippo_connection_send_message_with_reply(connection, message,
-                                             on_request_blocks_reply, SEND_MODE_AFTER_AUTH);
-
-    lm_message_unref(message);
-
-    g_debug("Sent request for blocks lastTimestamp %" G_GINT64_FORMAT, last_timestamp);
-}
-
-static LmHandlerResult
-on_block_hushed_reply(LmMessageHandler *handler,
-                      LmConnection     *lconnection,
-                      LmMessage        *message,
-                      gpointer          data)
-{
-    HippoConnection *connection = HIPPO_CONNECTION(data);
-    LmMessageNode *child;
-
-    child = message->node->children;
-
-    g_debug("got reply for <blockHushed/>");
-
-    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/blocks", "blockHushed")) {
-        g_warning("Got unexpected reply for <blockHushed/>");
-        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-    }
-
-    if (!hippo_connection_parse_blocks(connection, child))
-        g_warning("Failed to parse <blockHushed/>");
-    
-    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-}
-
-void
-hippo_connection_set_block_hushed(HippoConnection *connection,
-                                  const char      *block_id,
-                                  gboolean         hushed)
-{
-    LmMessage *message;
-    LmMessageNode *node;
-    LmMessageNode *child;
-    
-    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
-                                           LM_MESSAGE_SUB_TYPE_SET);
-    node = lm_message_get_node(message);
-    
-    child = lm_message_node_add_child (node, "blockHushed", NULL);
-    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/blocks");
-    lm_message_node_set_attribute(child, "blockId", block_id);
-    lm_message_node_set_attribute(child, "hushed", hushed ? "true" : "false");
-
-    hippo_connection_send_message_with_reply(connection, message, on_block_hushed_reply, SEND_MODE_AFTER_AUTH);
-
-    lm_message_unref(message);
-
-    g_debug("Sent blockHushed=%d", hushed);
-}
-
-void
-hippo_connection_send_account_question_response(HippoConnection *connection,
-                                                const char      *block_id,
-                                                const char      *response)
-{
-    LmMessage *message;
-    LmMessageNode *node;
-    LmMessageNode *child;
-    
-    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
-                                           LM_MESSAGE_SUB_TYPE_SET);
-    node = lm_message_get_node(message);
-    
-    child = lm_message_node_add_child (node, "response", NULL);
-    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/accountQuestion");
-    lm_message_node_set_attribute(child, "blockId", block_id);
-    lm_message_node_set_attribute(child, "response", response);
-
-    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
-
-    lm_message_unref(message);
-}
-
-void
-hippo_connection_update_last_blocks_timestamp (HippoConnection *connection,
-                                               gint64           timestamp)
-{
-    if (timestamp >= connection->last_blocks_timestamp) {
-        g_debug("Have new latest block timestamp %" G_GINT64_FORMAT, timestamp);
-        connection->last_blocks_timestamp = timestamp;
-    }
-}
-
 static void 
 send_room_presence(HippoConnection *connection,
                    HippoChatRoom   *room,
@@ -2735,39 +2541,6 @@ handle_setting_changed(HippoConnection *connection,
 }
 
 static gboolean
-handle_blocks_changed(HippoConnection *connection,
-                      LmMessage       *message)
-{
-#if 0    
-    LmMessageNode *child;
-    gint64 last_timestamp;
-    
-    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
-        return FALSE;
-
-    child = find_child_node(message->node, "http://dumbhippo.com/protocol/blocks", "blocksChanged");
-    if (child == NULL)
-        return FALSE;
-
-    if (!hippo_xml_split(connection->cache, child, NULL,
-                         "lastTimestamp", HIPPO_SPLIT_TIME_MS, &last_timestamp,
-                         NULL))
-        return TRUE;
-    
-    g_debug("handling blocksChanged message timestamp %" G_GINT64_FORMAT " our latest timestamp %" G_GINT64_FORMAT,
-            last_timestamp, connection->last_blocks_timestamp);
-
-    /* last_timestamp of -1 means the server has lost track of what the latest timestamp
-     * is, but something has potentially changed
-     */
-    if (last_timestamp < 0 || last_timestamp > connection->last_blocks_timestamp)
-        hippo_connection_queue_request_blocks(connection);
-#endif
-    
-    return TRUE;
-}
-
-static gboolean
 handle_prefs_changed(HippoConnection *connection,
                      LmMessage       *message)
 {
@@ -2850,10 +2623,6 @@ handle_message (LmMessageHandler *handler,
     }
 
     if (handle_data_notify(connection, message)) {
-        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-    }
-    
-    if (handle_blocks_changed(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
     
