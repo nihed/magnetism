@@ -5,16 +5,19 @@
 #include "hippo-person.h"
 #include "hippo-resource.h"
 #include "hippo-chat-room.h"
-#include "hippo-xml-utils.h"
 #include <string.h>
 
 /* === HippoEntity implementation === */
 
 static void     hippo_entity_finalize             (GObject *object);
 
-static gboolean hippo_entity_real_update_from_xml(HippoEntity    *entity,
-                                                  HippoDataCache *cache,
-                                                  LmMessageNode  *node);
+static void hippo_entity_real_update(HippoEntity    *entity);
+
+static void hippo_entity_update (HippoEntity *entity);
+
+static void on_entity_resource_changed (DDMDataResource *resource,
+                                        GSList          *changed_properties,
+                                        gpointer         data);
 
 G_DEFINE_ABSTRACT_TYPE(HippoEntity, hippo_entity, G_TYPE_OBJECT);
 
@@ -48,13 +51,17 @@ hippo_entity_class_init(HippoEntityClass *klass)
                       G_TYPE_NONE, 0);
 
     object_class->finalize = hippo_entity_finalize;
-    klass->update_from_xml = hippo_entity_real_update_from_xml;
+    klass->update = hippo_entity_real_update;
 }
 
 static void
 hippo_entity_finalize(GObject *object)
 {
     HippoEntity *entity = HIPPO_ENTITY(object);
+
+    ddm_data_resource_disconnect(entity->resource, on_entity_resource_changed, entity);
+    ddm_data_resource_set_data(entity->resource, "hippo-entity", NULL, NULL);
+    ddm_data_resource_unref(entity->resource);
 
     g_free(entity->guid);
     g_free(entity->name);
@@ -64,39 +71,22 @@ hippo_entity_finalize(GObject *object)
     G_OBJECT_CLASS(hippo_entity_parent_class)->finalize(object); 
 }
 
-static gboolean
-hippo_entity_real_update_from_xml(HippoEntity    *entity,
-                                  HippoDataCache *cache,
-                                  LmMessageNode  *node)
+static void
+hippo_entity_real_update(HippoEntity *entity)
 {
-    const char *id;
     const char *name; 
-    const char *photoUrl = NULL;
-    const char *homeUrl = NULL;
-
-    if (!hippo_xml_split(cache, node, NULL,
-                         "id", HIPPO_SPLIT_GUID, &id,
-                         "name", HIPPO_SPLIT_STRING, &name,
-                         "photoUrl", HIPPO_SPLIT_URI_RELATIVE | HIPPO_SPLIT_OPTIONAL, &photoUrl,
-                         /* Home url isn't relative if this is a feed, for example */
-                         "homeUrl", HIPPO_SPLIT_URI_EITHER | HIPPO_SPLIT_OPTIONAL, &homeUrl,
-                         NULL))
-        return FALSE;
+    const char *photoUrl;
+    const char *homeUrl;
     
-    if (!strcmp(id, entity->guid) == 0) {
-        g_warning("ID on node for update doesn't match entity's ID");
-        return FALSE;
-    }
+    ddm_data_resource_get(entity->resource,
+                          "name", DDM_DATA_STRING, &name,
+                          "photoUrl", DDM_DATA_URL, &photoUrl,
+                          "homeUrl", DDM_DATA_URL, &homeUrl,
+                          NULL);
 
     hippo_entity_set_name(entity, name);
-
-    if (photoUrl)
-        hippo_entity_set_photo_url(entity, photoUrl);
-
-    if (homeUrl)
-        hippo_entity_set_home_url(entity, homeUrl);
-
-    return TRUE;
+    hippo_entity_set_photo_url(entity, photoUrl);
+    hippo_entity_set_home_url(entity, homeUrl);
 }
 
 /* === HippoEntity "protected" API === */
@@ -143,12 +133,27 @@ hippo_entity_set_string(HippoEntity *entity,
 
 /* === HippoEntity exported API === */
 
+static void
+on_entity_resource_changed(DDMDataResource *resource,
+                         GSList          *changed_properties,
+                         gpointer         data)
+{
+    hippo_entity_update(data);
+}
+
 HippoEntity*
 hippo_entity_new(HippoEntityType  type,
-                 const char      *guid)
+                 DDMDataResource *resource)
 {
+    const char *resource_id = ddm_data_resource_get_resource_id(resource);
+    const char *slash = strrchr(resource_id, '/');
     HippoEntity *entity = NULL;
 
+    if (slash == NULL) {
+        g_warning("Cannot extract entity GUID from resource ID");
+        return NULL;
+    }
+    
     switch (type) {
     case HIPPO_ENTITY_RESOURCE:
         entity = g_object_new(HIPPO_TYPE_RESOURCE, NULL);
@@ -167,26 +172,24 @@ hippo_entity_new(HippoEntityType  type,
     g_assert(entity != NULL);
     
     entity->type = type;
-    entity->guid = g_strdup(guid);
+    entity->resource = ddm_data_resource_ref(resource);
+    ddm_data_resource_set_data(entity->resource, "hippo-entity", entity, NULL);
+    entity->guid = g_strdup(slash + 1);
+
+    ddm_data_resource_connect(entity->resource, NULL, on_entity_resource_changed, entity);
+    hippo_entity_update(entity);
     
     return entity;
 }
 
-gboolean
-hippo_entity_update_from_xml(HippoEntity    *entity,
-                             HippoDataCache *cache,
-                             LmMessageNode  *node)
+static void
+hippo_entity_update(HippoEntity *entity)
 {
-    gboolean success;
-    
     hippo_entity_freeze_notify(entity);
 
-    success = HIPPO_ENTITY_GET_CLASS(entity)->update_from_xml(entity, cache, node);
+    HIPPO_ENTITY_GET_CLASS(entity)->update(entity);
 
     hippo_entity_thaw_notify(entity);
-
-    return success;
-    
 }
 
 const char*

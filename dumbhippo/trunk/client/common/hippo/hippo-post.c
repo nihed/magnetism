@@ -1,6 +1,8 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include "hippo-feed.h"
+#include "hippo-group.h"
+#include "hippo-person.h"
 #include "hippo-post.h"
-#include "hippo-xml-utils.h"
 #include <string.h>
 
 /* === HippoPost implementation === */
@@ -9,33 +11,14 @@ static void     hippo_post_finalize             (GObject *object);
 
 struct _HippoPost {
     GObject parent;
+    DDMDataResource *resource;
     char *guid;
-    char *sender;
+    HippoEntity *sender;
     char *url;
     char *title;
     char *description;
     GSList *recipients;
-    char *info;
     GTime date;
-    gboolean is_public;
-    int timeout;
-    /* have we clicked on this post ever */
-    guint have_viewed : 1;
-    /* did we just now get this as a newPost message 
-     * (gets unset when we bubble it up)
-     */
-    guint is_new : 1;
-    guint is_ignored : 1;
-
-    /* Once we load the chat room, it overrides viewing_user_count and chatting_user_count
-     * which are the CURRENT counts of people actively present. The total_viewers and 
-     * viewers fields are people who have EVER viewed the post, so the chat room 
-     * does not override those.
-     */
-    int viewing_user_count;
-    int chatting_user_count;
-    int total_viewers;
-    GSList *viewers;
 
     /* GObject-like freeze count for coelescing notifications */
     int notify_freeze_count;
@@ -45,6 +28,12 @@ struct _HippoPost {
 struct _HippoPostClass {
     GObjectClass parent;
 };
+
+static void hippo_post_update (HippoPost *post);
+
+static void on_post_resource_changed (DDMDataResource *resource,
+                                      GSList          *changed_properties,
+                                      gpointer         data);
 
 G_DEFINE_TYPE(HippoPost, hippo_post, G_TYPE_OBJECT);
 
@@ -82,16 +71,17 @@ hippo_post_finalize(GObject *object)
 {
     HippoPost *post = HIPPO_POST(object);
 
+    ddm_data_resource_disconnect(post->resource, on_post_resource_changed, post);
+    ddm_data_resource_unref(post->resource);
+
     g_free(post->guid);
-    g_free(post->sender);
+    if (post->sender)
+        g_object_unref(post->sender);
     g_free(post->url);
     g_free(post->title);
     g_free(post->description);
     g_slist_foreach(post->recipients, (GFunc) g_object_unref, NULL);
     g_slist_free(post->recipients);    
-    g_slist_foreach(post->viewers, (GFunc) g_object_unref, NULL);
-    g_slist_free(post->viewers);
-    g_free(post->info);
 
     G_OBJECT_CLASS(hippo_post_parent_class)->finalize(object); 
 }
@@ -123,90 +113,100 @@ hippo_post_notify(HippoPost *post)
 
 /* === HippoPost exported API === */
 
-HippoPost*
-hippo_post_new(const char *guid)
+static void
+on_post_resource_changed(DDMDataResource *resource,
+                         GSList          *changed_properties,
+                         gpointer         data)
 {
-    HippoPost *post = g_object_new(HIPPO_TYPE_POST, NULL);
+    hippo_post_update(data);
+}
+
+HippoPost*
+hippo_post_new(DDMDataResource *resource)
+{
+    const char *resource_id = ddm_data_resource_get_resource_id(resource);
+    const char *slash = strrchr(resource_id, '/');
+    HippoPost *post;
+
+    if (slash == NULL) {
+        g_warning("Cannot extract post GUID from resource ID");
+        return NULL;
+    }
     
-    post->guid = g_strdup(guid);
+    post = g_object_new(HIPPO_TYPE_POST, NULL);
+    post->resource = ddm_data_resource_ref(resource);
+
+    post->guid = g_strdup(slash + 1);
+
+    ddm_data_resource_connect(post->resource, NULL, on_post_resource_changed, post);
+    hippo_post_update(post);
     
     return post;
 }
 
-gboolean
-hippo_post_update_from_xml(HippoPost      *post,
-                           HippoDataCache *cache,
-                           LmMessageNode  *node)
+static void
+hippo_post_update(HippoPost *post)
 {
-    const char *id, *href, *title, *description;
-    HippoEntity *poster;
-    gint64 post_date;
-    gboolean total_viewers_set;
-    int total_viewers;
-    LmMessageNode *recipients_node = NULL;
+    const char *link, *title, *text;
+    DDMDataResource *poster_resource;
+    DDMDataResource *feed_resource;
+    GSList *user_recipients;
+    GSList *group_recipients;
     GSList *recipients = NULL;
-    gboolean viewed = FALSE;
+    GSList *l;
+    gint64 post_date;
 
-    if (!hippo_xml_split(cache, node, NULL,
-                         "id", HIPPO_SPLIT_GUID, &id,
-                         "href", HIPPO_SPLIT_URI_ABSOLUTE, &href,
-                         "poster", HIPPO_SPLIT_ENTITY, &poster,
-                         "postDate", HIPPO_SPLIT_TIME_MS, &post_date,
-                         "title", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &title,
-                         "description", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &description,
-                         "recipients", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &recipients_node,
-                         "totalViewers", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_OPTIONAL, &total_viewers,
-                         "totalViewers", HIPPO_SPLIT_SET, &total_viewers_set,
-                         "viewed", HIPPO_SPLIT_BOOLEAN, &viewed,
-                         NULL))
-        return FALSE;
-
-    if (recipients_node) {
-        LmMessageNode *subchild;
-        
-        for (subchild = recipients_node->children; subchild; subchild = subchild->next) {
-            HippoEntity *recipient;
-            
-            if (strcmp(subchild->name, "recipient") != 0)
-                continue;
-
-            if (!hippo_xml_split(cache, subchild, NULL,
-                                 "recipientId", HIPPO_SPLIT_ENTITY, &recipient,
-                                 NULL))
-                continue;
-
-            recipients = g_slist_prepend(recipients, recipient);
-        }
-
-        recipients = g_slist_reverse(recipients);
-    }
-
-    if (strcmp(id, post->guid) != 0) {
-        g_warning("ID on <post/> element doesn't match ID for post");
-        return FALSE;
-    }
+    ddm_data_resource_get(post->resource,
+                          "link", DDM_DATA_URL, &link,
+                          "poster", DDM_DATA_RESOURCE, &poster_resource,
+                          "feed", DDM_DATA_RESOURCE, &feed_resource,
+                          "title", DDM_DATA_STRING, &title,
+                          "text", DDM_DATA_STRING, &text,
+                          "date", DDM_DATA_LONG, &post_date,
+                          "userRecipients", DDM_DATA_RESOURCE | DDM_DATA_LIST, &user_recipients,
+                          "groupRecipients", DDM_DATA_RESOURCE | DDM_DATA_LIST, &group_recipients,
+                          NULL);
 
     hippo_post_freeze_notify(post);
 
-    hippo_post_set_url(post, href);
-    hippo_post_set_sender(post, hippo_entity_get_guid(HIPPO_ENTITY(poster)));
-    hippo_post_set_date(post, post_date / 1000); /* Convert ms to seconds */
-    hippo_post_set_title(post, title);
-    hippo_post_set_description(post, description);
+    for (l = user_recipients; l; l = l->next) {
+        DDMDataResource *user_resource = l->data;
+        recipients = g_slist_prepend(recipients, hippo_person_get_for_resource(user_resource));
+    }
     
-    if (recipients_node)
-        hippo_post_set_recipients(post, recipients);
-
-    if (total_viewers_set)
-        hippo_post_set_total_viewers(post, total_viewers);
-
-    hippo_post_set_have_viewed(post, viewed);
-
-    hippo_post_thaw_notify(post);
-
+    for (l = group_recipients; l; l = l->next) {
+        DDMDataResource *group_resource = l->data;
+        recipients = g_slist_prepend(recipients, hippo_group_get_for_resource(group_resource));
+    }
+                          
+    hippo_post_set_recipients(post, recipients);
+    g_slist_foreach(recipients, (GFunc)g_object_unref, NULL);
     g_slist_free(recipients);
 
-    return TRUE;
+    hippo_post_set_url(post, link);
+    if (poster_resource) {
+        HippoPerson *person = hippo_person_get_for_resource(poster_resource);
+        hippo_post_set_sender(post, HIPPO_ENTITY(person));
+        g_object_unref(person);
+    } else if (feed_resource) {
+        HippoFeed *feed = hippo_feed_get_for_resource(feed_resource);
+        hippo_post_set_sender(post, HIPPO_ENTITY(feed));
+        g_object_unref(feed);
+    } else {
+        hippo_post_set_sender(post, NULL);
+    }
+    
+    hippo_post_set_date(post, post_date / 1000); /* Convert ms to seconds */
+    hippo_post_set_title(post, title);
+    hippo_post_set_description(post, text);
+
+    hippo_post_thaw_notify(post);
+}
+
+DDMDataResource *
+hippo_post_get_resource(HippoPost *post)
+{
+    return post->resource;
 }
 
 const char*
@@ -216,7 +216,7 @@ hippo_post_get_guid(HippoPost *post)
     return post->guid;
 }
 
-const char*
+HippoEntity *
 hippo_post_get_sender(HippoPost *post)
 {
     g_return_val_if_fail(HIPPO_IS_POST(post), NULL);
@@ -251,96 +251,11 @@ hippo_post_get_recipients(HippoPost *post)
     return post->recipients;
 }
 
-HippoEntity *    
-hippo_post_get_primary_recipient (HippoPost *post)
-{
-    /* TODO - make this smarter.  The server could figure out
-     * which recipient was the most interesting to this user; 
-     * i.e. if they received it via membership to a group, display
-     * that group */
-    if (post->recipients) {
-        return post->recipients->data;
-    }
-    return NULL;
-}
-
-GSList*
-hippo_post_get_viewers(HippoPost *post)
-{
-    g_return_val_if_fail(HIPPO_IS_POST(post), NULL);
-    return post->viewers;
-}
-
-const char*
-hippo_post_get_info(HippoPost *post)
-{
-    g_return_val_if_fail(HIPPO_IS_POST(post), NULL);
-    return post->info;
-}
-
 GTime
 hippo_post_get_date(HippoPost *post)
 {
     g_return_val_if_fail(HIPPO_IS_POST(post), 0);
     return post->date;
-}
-
-gboolean
-hippo_post_is_public(HippoPost *post)
-{
-    g_return_val_if_fail(HIPPO_IS_POST(post), 0);
-    return post->is_public;
-}
-
-int
-hippo_post_get_timeout(HippoPost *post)
-{
-    g_return_val_if_fail(HIPPO_IS_POST(post), 0);
-    return post->timeout;
-}
-
-int
-hippo_post_get_viewing_user_count(HippoPost *post)
-{
-    g_return_val_if_fail(HIPPO_IS_POST(post), 0);
-
-    return post->viewing_user_count;
-}
-
-int
-hippo_post_get_chatting_user_count(HippoPost *post)
-{
-    g_return_val_if_fail(HIPPO_IS_POST(post), 0);
-
-    return post->chatting_user_count;
-}
-
-int
-hippo_post_get_total_viewers(HippoPost *post)
-{
-    g_return_val_if_fail(HIPPO_IS_POST(post), 0);
-    return post->total_viewers;
-}
-
-gboolean
-hippo_post_get_have_viewed(HippoPost *post)
-{
-    g_return_val_if_fail(HIPPO_IS_POST(post), FALSE);
-    return post->have_viewed;
-}
-
-gboolean
-hippo_post_get_ignored(HippoPost *post)
-{
-    g_return_val_if_fail(HIPPO_IS_POST(post), FALSE);
-    return post->is_ignored;
-}
-
-gboolean
-hippo_post_get_new(HippoPost *post)
-{
-    g_return_val_if_fail(HIPPO_IS_POST(post), FALSE);
-    return post->is_new;
 }
 
 static void
@@ -358,11 +273,23 @@ set_str(HippoPost *post, char **s_p, const char *val)
 }
                    
 void
-hippo_post_set_sender(HippoPost  *post,
-                      const char *value)
+hippo_post_set_sender(HippoPost   *post,
+                      HippoEntity *sender)
 {
     g_return_if_fail(HIPPO_IS_POST(post));
-    set_str(post, &post->sender, value);
+
+    if (sender == post->sender)
+        return;
+
+    if (post->sender)
+        g_object_unref(post->sender);
+
+    post->sender = sender;
+    
+    if (post->sender)
+        g_object_ref(post->sender);
+    
+    hippo_post_notify(post);
 }
 
 void
@@ -437,125 +364,12 @@ hippo_post_set_recipients(HippoPost  *post,
 }
 
 void
-hippo_post_set_viewers(HippoPost  *post,
-                       GSList     *value)
-{
-    g_return_if_fail(HIPPO_IS_POST(post));
-    set_entity_list(post, &post->viewers, value);
-}
-
-void
-hippo_post_set_info(HippoPost  *post,
-                    const char *value)
-{
-    g_return_if_fail(HIPPO_IS_POST(post));
-    set_str(post, &post->info, value);
-}
-
-void
 hippo_post_set_date(HippoPost  *post,
                     GTime       value)
 {
     g_return_if_fail(HIPPO_IS_POST(post));
     if (post->date != value) {
         post->date = value;
-        hippo_post_notify(post);
-    }
-}
-
-static void
-set_int(HippoPost *post, int *ip, int value)
-{
-    g_return_if_fail(HIPPO_IS_POST(post));
-    if (*ip != value) {
-        *ip = value;
-        hippo_post_notify(post);
-    }
-}
-
-static void
-set_bool(HippoPost *post, gboolean *ip, gboolean value)
-{
-    g_return_if_fail(HIPPO_IS_POST(post));
-    value = !!value;
-    if (*ip != value) {
-        *ip = value;
-        hippo_post_notify(post);
-    }
-}
-                    
-void
-hippo_post_set_timeout(HippoPost  *post,
-                       int         value)
-{
-    g_return_if_fail(HIPPO_IS_POST(post));
-    set_int(post, &post->timeout, value);
-}
-
-void
-hippo_post_set_public(HippoPost  *post,
-                      gboolean    value)
-{
-    g_return_if_fail(HIPPO_IS_POST(post));
-    set_bool(post, &post->is_public, value);
-}
-                       
-void
-hippo_post_set_viewing_user_count(HippoPost  *post,
-                                  int         value)
-{
-    g_return_if_fail(HIPPO_IS_POST(post));
-    set_int(post, &post->viewing_user_count, value);
-}                                  
-
-void
-hippo_post_set_chatting_user_count(HippoPost  *post,
-                                   int         value)
-{
-    g_return_if_fail(HIPPO_IS_POST(post));
-    set_int(post, &post->chatting_user_count, value);
-}                                   
-
-void
-hippo_post_set_total_viewers(HippoPost  *post,
-                             int         value)
-{
-    g_return_if_fail(HIPPO_IS_POST(post));
-    set_int(post, &post->total_viewers, value);
-}                             
-
-void
-hippo_post_set_have_viewed(HippoPost  *post,
-                           gboolean    value)
-{
-    g_return_if_fail(HIPPO_IS_POST(post));
-    value = value != FALSE;
-    if (post->have_viewed != value) {
-        post->have_viewed = value;
-        hippo_post_notify(post);
-    }
-}
-
-void
-hippo_post_set_ignored (HippoPost  *post,
-                        gboolean    value)
-{
-    g_return_if_fail(HIPPO_IS_POST(post));
-    value = value != FALSE;
-    if (post->is_ignored != value) {
-        post->is_ignored = value;
-        hippo_post_notify(post);
-    }
-}
-
-void
-hippo_post_set_new(HippoPost  *post,
-                   gboolean    value)
-{
-    g_return_if_fail(HIPPO_IS_POST(post));
-    value = value != FALSE;
-    if (post->is_new != value) {
-        post->is_new = value;
         hippo_post_notify(post);
     }
 }

@@ -7,8 +7,7 @@
 #include "hippo-canvas-block-post.h"
 #include "hippo-canvas-block-group-chat.h"
 #include "hippo-canvas-block-group-member.h"
-#include "hippo-canvas-block-music-chat.h"
-#include "hippo-canvas-block-music-person.h"
+#include "hippo-canvas-block-music.h"
 #include "hippo-canvas-block-netflix-movie.h"
 #include "hippo-canvas-block-amazon-activity.h"
 #include "hippo-canvas-block-facebook-event.h"
@@ -290,10 +289,8 @@ hippo_canvas_block_new(HippoBlockType type,
         object_type = HIPPO_TYPE_CANVAS_BLOCK_GROUP_CHAT;
         break;
     case HIPPO_BLOCK_TYPE_MUSIC_CHAT:
-        object_type = HIPPO_TYPE_CANVAS_BLOCK_MUSIC_CHAT;
-        break;
     case HIPPO_BLOCK_TYPE_MUSIC_PERSON:
-        object_type = HIPPO_TYPE_CANVAS_BLOCK_MUSIC_PERSON;
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_MUSIC;
         break;
     case HIPPO_BLOCK_TYPE_GROUP_MEMBER:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_GROUP_MEMBER;
@@ -304,7 +301,8 @@ hippo_canvas_block_new(HippoBlockType type,
     case HIPPO_BLOCK_TYPE_NETFLIX_MOVIE:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_NETFLIX_MOVIE;
         break;        
-    case HIPPO_BLOCK_TYPE_AMAZON_ACTIVITY:
+    case HIPPO_BLOCK_TYPE_AMAZON_REVIEW:
+    case HIPPO_BLOCK_TYPE_AMAZON_WISH_LIST_ITEM:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_AMAZON_ACTIVITY;
         break;        
     case HIPPO_BLOCK_TYPE_FLICKR_PERSON:
@@ -757,19 +755,6 @@ hippo_canvas_block_button_release_event(HippoCanvasItem    *item,
 }
 
 static void
-on_block_clicked_count_changed(HippoBlock *block,
-                               GParamSpec *arg, /* null when we invoke callback manually */
-                               void       *data)
-{
-    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
-    HippoCanvasBlockClass *klass;
-
-    klass = HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block);
-    if (klass->clicked_count_changed)
-        (* klass->clicked_count_changed) (canvas_block);
-}
-
-static void
 on_block_significant_clicked_count_changed(HippoBlock *block,
                                            GParamSpec *arg,
                                            void       *data)
@@ -881,9 +866,6 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
             g_signal_connect(G_OBJECT(new_block), "notify::timestamp",
                              G_CALLBACK(on_block_timestamp_changed),
                              canvas_block);
-            g_signal_connect(G_OBJECT(new_block), "notify::clicked-count",
-                             G_CALLBACK(on_block_clicked_count_changed),
-                             canvas_block);
             g_signal_connect(G_OBJECT(new_block), "notify::significant-clicked-count",
                              G_CALLBACK(on_block_significant_clicked_count_changed),
                              canvas_block);
@@ -900,9 +882,6 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
         if (canvas_block->block) {
             g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                                  G_CALLBACK(on_block_timestamp_changed),
-                                                 canvas_block);
-            g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
-                                                 G_CALLBACK(on_block_clicked_count_changed),
                                                  canvas_block);
             g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                                  G_CALLBACK(on_block_significant_clicked_count_changed),
@@ -922,7 +901,6 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
 
         if (new_block) {
             on_block_timestamp_changed(new_block, NULL, canvas_block);
-            on_block_clicked_count_changed(new_block, NULL, canvas_block);
             on_block_significant_clicked_count_changed(new_block, NULL, canvas_block);
             on_block_ignored_changed(new_block, NULL, canvas_block);
             on_block_stack_reason_changed(new_block, NULL, canvas_block);
@@ -1093,38 +1071,15 @@ hippo_canvas_block_set_title(HippoCanvasBlock *canvas_block,
 
 void
 hippo_canvas_block_set_sender(HippoCanvasBlock *canvas_block,
-                              const char       *entity_guid)
+                              HippoEntity      *entity)
 {    
-    if (entity_guid) {
-        HippoEntity *entity;
-
-        if (canvas_block->actions == NULL) {
-            g_warning("setting block sender before setting actions");
-            return;
-        }
-        
-        entity = hippo_actions_lookup_entity(canvas_block->actions,
-                                             entity_guid);
-        if (entity == NULL) {
-            g_warning("needed entity is unknown %s", entity_guid);
-            return;
-        }
-        
-        g_object_set(G_OBJECT(canvas_block->headshot_item),
-                     "entity", entity,
-                     NULL);
-        
-        g_object_set(G_OBJECT(canvas_block->name_item),
-                     "entity", entity,
-                     NULL);
-    } else {        
-        g_object_set(G_OBJECT(canvas_block->headshot_item),
-                     "entity", NULL,
-                     NULL);
-        g_object_set(G_OBJECT(canvas_block->name_item),
-                     "entity", NULL,
-                     NULL);
-    }
+    g_object_set(G_OBJECT(canvas_block->headshot_item),
+                 "entity", entity,
+                 NULL);
+    
+    g_object_set(G_OBJECT(canvas_block->name_item),
+                 "entity", entity,
+                 NULL);
 }
 
 void

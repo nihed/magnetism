@@ -36,29 +36,12 @@ HippoChatRoom*   hippo_data_cache_ensure_chat_room       (HippoDataCache  *cache
                                                           const char      *chat_id,
                                                           HippoChatKind    kind);
 
-void             hippo_data_cache_set_hotness               (HippoDataCache  *cache,
-                                                             HippoHotness     hotness);
 void             hippo_data_cache_set_music_sharing_enabled (HippoDataCache  *cache,
                                                              gboolean         enabled);
 void             hippo_data_cache_set_music_sharing_primed  (HippoDataCache  *cache,
                                                              gboolean         primed);
 void             hippo_data_cache_set_application_usage_enabled (HippoDataCache *cache,
                                                                  gboolean        enabled);
-
-void             hippo_data_cache_clear_active_posts        (HippoDataCache  *cache);
-void             hippo_data_cache_add_active_posts          (HippoDataCache  *cache,
-                                                             GSList          *posts);
-void             hippo_data_cache_set_active_posts          (HippoDataCache  *cache,
-                                                             GSList          *posts);
-                                                             
-void             hippo_data_cache_set_myspace_name          (HippoDataCache  *cache,
-                                                             const char      *name);
-
-/* these take ownership of the list members and the list itself */
-void             hippo_data_cache_set_myspace_blog_comments (HippoDataCache  *cache,
-                                                             GSList          *comments);
-void             hippo_data_cache_set_myspace_contacts      (HippoDataCache  *cache,
-                                                             GSList          *contacts);
 
 void             hippo_data_cache_set_client_info           (HippoDataCache        *cache,
                                                              const HippoClientInfo *info);

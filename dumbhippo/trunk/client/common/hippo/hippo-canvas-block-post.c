@@ -321,10 +321,10 @@ hippo_canvas_block_post_set_block(HippoCanvasBlock *canvas_block,
                  "block", canvas_block->block,
                  NULL);
     g_object_set(block_post->last_message_preview,
-                 "block", canvas_block->block,
+                 "block", canvas_block->block ? hippo_block_get_resource(canvas_block->block) : NULL,
                  NULL);
     g_object_set(block_post->chat_preview,
-                 "block", canvas_block->block,
+                 "block", canvas_block->block ? hippo_block_get_resource(canvas_block->block) : NULL,
                  NULL);
     
     if (canvas_block->block != NULL) {
@@ -362,8 +362,8 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
     } else {
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_block_post),
                                      hippo_post_get_title(post),
-                                     hippo_post_get_url(post), 
-                                     hippo_post_get_have_viewed(post));
+                                     hippo_post_get_url(post),
+                                     hippo_block_get_clicked(HIPPO_CANVAS_BLOCK(canvas_block_post)->block));
         hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_block_post),
                                       hippo_post_get_sender(post));
         hippo_canvas_block_set_sent_to(HIPPO_CANVAS_BLOCK(canvas_block_post),

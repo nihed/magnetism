@@ -3,7 +3,6 @@
 #include "hippo-block-amazon-activity.h"
 #include "hippo-block-abstract-person.h"
 #include "hippo-person.h"
-#include "hippo-xml-utils.h"
 #include <string.h>
 
 static void      hippo_block_amazon_activity_init                (HippoBlockAmazonActivity       *block);
@@ -12,9 +11,7 @@ static void      hippo_block_amazon_activity_class_init          (HippoBlockAmaz
 static void      hippo_block_amazon_activity_dispose             (GObject              *object);
 static void      hippo_block_amazon_activity_finalize            (GObject              *object);
 
-static gboolean  hippo_block_amazon_activity_update_from_xml     (HippoBlock           *block,
-                                                                HippoDataCache       *cache,
-                                                                LmMessageNode        *node);
+static void      hippo_block_amazon_activity_update              (HippoBlock           *block);
 
 static void hippo_block_amazon_activity_set_property (GObject      *object,
                                                     guint         prop_id,
@@ -82,7 +79,7 @@ hippo_block_amazon_activity_class_init(HippoBlockAmazonActivityClass *klass)
     object_class->dispose = hippo_block_amazon_activity_dispose;
     object_class->finalize = hippo_block_amazon_activity_finalize;
 
-    block_class->update_from_xml = hippo_block_amazon_activity_update_from_xml;
+    block_class->update = hippo_block_amazon_activity_update;
     
     g_object_class_install_property(object_class,
                                     PROP_DESCRIPTION,
@@ -341,7 +338,7 @@ set_list_link(HippoBlockAmazonActivity *block_amazon_activity,
 
 static void 
 set_list_item_comment(HippoBlockAmazonActivity *block_amazon_activity,
-                const char             *list_item_comment)
+                      const char               *list_item_comment)
 {
     if (block_amazon_activity->list_item_comment == list_item_comment ||
         (block_amazon_activity->list_item_comment && list_item_comment && strcmp(block_amazon_activity->list_item_comment, list_item_comment) == 0))
@@ -354,16 +351,10 @@ set_list_item_comment(HippoBlockAmazonActivity *block_amazon_activity,
     g_object_notify(G_OBJECT(block_amazon_activity), "list-item-comment");
 }
 
-static gboolean
-hippo_block_amazon_activity_update_from_xml (HippoBlock           *block,
-                                             HippoDataCache       *cache,
-                                             LmMessageNode        *node)
+static void
+hippo_block_amazon_activity_update (HippoBlock *block)
 {
     HippoBlockAmazonActivity *block_amazon_activity = HIPPO_BLOCK_AMAZON_ACTIVITY(block);
-    LmMessageNode *amazon_activity_node;
-    LmMessageNode *review_node = NULL;
-    LmMessageNode *list_item_node = NULL;
-    HippoPerson *user;
     const char *description = NULL;
     const char *image_url = NULL;
     guint image_width;
@@ -373,42 +364,29 @@ hippo_block_amazon_activity_update_from_xml (HippoBlock           *block,
     const char *list_name = NULL;
     const char *list_link = NULL;
     const char *list_item_comment = NULL; 
-
-    if (!HIPPO_BLOCK_CLASS(hippo_block_amazon_activity_parent_class)->update_from_xml(block, cache, node))
-        return FALSE;
-
-    if (!hippo_xml_split(cache, node, NULL,
-                         "amazonActivity", HIPPO_SPLIT_NODE, &amazon_activity_node,
-                         "description", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &description,
-                         NULL))
-        return FALSE;
-
-    if (!hippo_xml_split(cache, amazon_activity_node, NULL,
-                         "review", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &review_node,
-                         "listItem", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &list_item_node,
-                         "userId", HIPPO_SPLIT_PERSON, &user,
-                         "imageUrl", HIPPO_SPLIT_STRING, &image_url,
-                         "imageWidth", HIPPO_SPLIT_INT32, &image_width,
-                         "imageHeight", HIPPO_SPLIT_INT32, &image_height, 
-                         NULL))
-        return FALSE;
     
-    if (review_node != NULL) {
-        if (!hippo_xml_split(cache, review_node, NULL, 
-                             "title", HIPPO_SPLIT_STRING, &review_title,
-                             "rating", HIPPO_SPLIT_INT32, &review_rating,   
-                             NULL))
-            return FALSE;
+    HIPPO_BLOCK_CLASS(hippo_block_amazon_activity_parent_class)->update(block);
+
+    ddm_data_resource_get(block->resource,
+                          "description", DDM_DATA_STRING, &description,
+                          "imageUrl", DDM_DATA_URL, &image_url,
+                          "imageWidth", DDM_DATA_INTEGER, &image_width,
+                          "imageHeight", DDM_DATA_INTEGER, &image_height,
+                          NULL);
+
+    if (block->type == HIPPO_BLOCK_TYPE_AMAZON_REVIEW) {
+        ddm_data_resource_get(block->resource,
+                              "reviewRating", DDM_DATA_INTEGER, &review_rating,
+                              "reviewTitle", DDM_DATA_STRING, &review_title,
+                              NULL);
+    } else { /* HIPPO_BLOCK_TYPE_WISH_LIST_ITEM */
+        ddm_data_resource_get(block->resource,
+                              "comment", DDM_DATA_STRING, &list_item_comment,
+                              "listLink", DDM_DATA_URL, &list_link,
+                              "listName", DDM_DATA_STRING, &list_name,
+                              NULL);
     }
 
-    if (list_item_node != NULL) {
-        if (!hippo_xml_split(cache, list_item_node, NULL, 
-                             "listName", HIPPO_SPLIT_STRING, &list_name,
-                             "listLink", HIPPO_SPLIT_STRING, &list_link, 
-                             "comment", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &list_item_comment,
-                             NULL))
-            return FALSE;
-     }
 
     set_description(block_amazon_activity, description);
     set_image_width(block_amazon_activity, image_width);
@@ -419,10 +397,6 @@ hippo_block_amazon_activity_update_from_xml (HippoBlock           *block,
     set_list_name(block_amazon_activity, list_name);
     set_list_link(block_amazon_activity, list_link);
     set_list_item_comment(block_amazon_activity, list_item_comment);
-
-    hippo_block_abstract_person_set_user(HIPPO_BLOCK_ABSTRACT_PERSON(block_amazon_activity), user);
-    
-    return TRUE;
 }
 
 const char *
@@ -472,7 +446,3 @@ hippo_block_amazon_activity_get_list_item_comment(HippoBlockAmazonActivity *amaz
 {
   return amazon_activity->list_item_comment;
 }
-
-
-
-

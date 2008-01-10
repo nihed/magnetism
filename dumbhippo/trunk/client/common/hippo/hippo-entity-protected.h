@@ -9,6 +9,7 @@ G_BEGIN_DECLS
 struct _HippoEntity {
     GObject parent;
     HippoEntityType type;
+    DDMDataResource *resource;
     char *guid;
     char *name;
     char *home_url;
@@ -22,10 +23,11 @@ struct _HippoEntity {
 struct _HippoEntityClass {
     GObjectClass parent;
 
-    gboolean (*update_from_xml) (HippoEntity    *entity,
-                                 HippoDataCache *cache,
-                                 LmMessageNode  *node);
+    void (*update) (HippoEntity    *entity);
 };
+
+HippoEntity* hippo_entity_new(HippoEntityType type,
+                              DDMDataResource *resource);
 
 void hippo_entity_freeze_notify (HippoEntity *entity);
 void hippo_entity_thaw_notify   (HippoEntity *entity);

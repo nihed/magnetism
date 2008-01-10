@@ -2,8 +2,8 @@
 #include "hippo-common-internal.h"
 #include "hippo-block.h"
 #include "hippo-block-post.h"
+#include "hippo-feed.h"
 #include "hippo-post.h"
-#include "hippo-xml-utils.h"
 #include <string.h>
 
 static void      hippo_block_post_init                (HippoBlockPost       *block_post);
@@ -12,9 +12,7 @@ static void      hippo_block_post_class_init          (HippoBlockPostClass  *kla
 static void      hippo_block_post_dispose             (GObject              *object);
 static void      hippo_block_post_finalize            (GObject              *object);
 
-static gboolean  hippo_block_post_update_from_xml     (HippoBlock           *block,
-                                                       HippoDataCache       *cache,
-                                                       LmMessageNode        *node);
+static void      hippo_block_post_update              (HippoBlock           *block);
 
 static void hippo_block_post_set_property (GObject      *object,
                                            guint         prop_id,
@@ -66,7 +64,7 @@ hippo_block_post_class_init(HippoBlockPostClass *klass)
     object_class->dispose = hippo_block_post_dispose;
     object_class->finalize = hippo_block_post_finalize;
 
-    block_class->update_from_xml = hippo_block_post_update_from_xml;
+    block_class->update = hippo_block_post_update;
     
     g_object_class_install_property(object_class,
                                     PROP_POST,
@@ -157,36 +155,35 @@ hippo_block_post_get_property(GObject         *object,
     }
 }
 
-static gboolean
-hippo_block_post_update_from_xml (HippoBlock           *block,
-                                  HippoDataCache       *cache,
-                                  LmMessageNode        *node)
+static void
+hippo_block_post_update (HippoBlock           *block)
 {
     HippoBlockPost *block_post = HIPPO_BLOCK_POST(block);
-    LmMessageNode *post_node;
-    HippoPost *post;
-    LmMessageNode *recent_messages_node = NULL;
+    DDMDataResource *post_resource;
+    gboolean is_feed;
 
-    if (!HIPPO_BLOCK_CLASS(hippo_block_post_parent_class)->update_from_xml(block, cache, node))
-        return FALSE;
+    HIPPO_BLOCK_CLASS(hippo_block_post_parent_class)->update(block);
 
-    if (!hippo_xml_split(cache, node, NULL,
-                         "post", HIPPO_SPLIT_NODE, &post_node,
-                         NULL))
-        return FALSE;
+    ddm_data_resource_get(block->resource,
+                          "post", DDM_DATA_RESOURCE, &post_resource,
+                          "feed", DDM_DATA_BOOLEAN, &is_feed,
+                          NULL);
 
-    if (!hippo_xml_split(cache, post_node, NULL,
-                         "postId", HIPPO_SPLIT_POST, &post,
-                         "recentMessages", HIPPO_SPLIT_NODE, &recent_messages_node,
-                         NULL))
-        return FALSE;
+    if (post_resource == NULL && block_post->post == NULL)
+        return;
 
-    if (!hippo_block_set_recent_messages_from_xml(block, cache, recent_messages_node))
-        return FALSE;
-    
-    hippo_block_set_chat_id(block, hippo_post_get_guid(post));
-    
-    set_post(block_post, post);
+    if (post_resource != NULL && block_post->post != NULL) {
+        if (hippo_post_get_resource(block_post->post) == post_resource)
+            return;
+    }
 
-    return TRUE;
+    if (post_resource != NULL) {
+        HippoPost *post = hippo_post_new(post_resource);
+        set_post(block_post, post);
+        g_object_unref(post);
+    } else{
+        set_post(block_post, NULL);
+    }
+
+    hippo_block_set_is_feed(block, is_feed);
 }

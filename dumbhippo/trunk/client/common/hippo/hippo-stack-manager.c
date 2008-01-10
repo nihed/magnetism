@@ -1,7 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <string.h>
 #include "hippo-block-group-chat.h"
-#include "hippo-block-music-chat.h"
 #include "hippo-block-post.h"
 #include "hippo-common-internal.h"
 #include "hippo-stack-manager.h"
@@ -33,7 +32,10 @@ struct _HippoStackManager {
     HippoConnection *connection;
     gboolean         nofeed_active;
     gboolean         noselfsource_active;
+    DDMFeed         *stack;
     GSList          *blocks;
+
+    GHashTable      *item_to_block;
 
     HippoWindow     *browser_window;
     HippoCanvasItem *browser_box;
@@ -443,51 +445,112 @@ manager_toggle_filter(StackManager *manager)
                                   manager->filter_area_visible);                
 }
 
-static gboolean
-apply_current_filter(StackManager *manager,
-                     HippoBlock   *block)
+static void
+manager_apply_filter_to_stack(StackManager *manager)
 {
-    if (manager->nofeed_active && hippo_block_get_is_feed(block))
-        return FALSE;
-    else if (manager->noselfsource_active && hippo_block_get_is_mine(block))
-        return FALSE;
-           
-    return TRUE;
+    hippo_canvas_stack_set_filter(HIPPO_CANVAS_STACK(manager->browser_item),
+                                  manager->nofeed_active, manager->noselfsource_active);
 }
 
-static void 
-filter_canvas_item(HippoCanvasItem *item,
-                   gpointer         data)
+static char *
+make_filter_string(StackManager *manager)
 {
-    StackManager *manager = (StackManager*) data;
-    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(item);
+    GString *filter_string = g_string_new(NULL);
     
-    hippo_canvas_item_set_visible(HIPPO_CANVAS_ITEM(canvas_block),
-                                  apply_current_filter(manager, canvas_block->block));
+    if (manager->nofeed_active) {
+        if (filter_string->len > 0)
+            g_string_append_c(filter_string, ',');
+        g_string_append(filter_string, "nofeed");
+    }
+    
+    if (manager->noselfsource_active) {
+        if (filter_string->len > 0)
+            g_string_append_c(filter_string, ',');
+        g_string_append(filter_string, "noselfsource");
+    }
+
+    return g_string_free(filter_string, FALSE);
 }
 
 static void
-apply_filter_all(StackManager *manager)
+on_get_old_blocks_success (GSList   *results,
+                           gpointer  user_data)
 {
-    GList *conditions = NULL, *elt;
-    GString *filter_string;
-    g_debug("Refiltering all blocks");    
-    hippo_canvas_box_foreach(HIPPO_CANVAS_BOX(manager->browser_item),
-                             filter_canvas_item,
-                             manager);
-    filter_string = g_string_new("");
-    if (manager->nofeed_active)
-        conditions = g_list_prepend(conditions, "nofeed");       
-    if (manager->noselfsource_active)
-        conditions = g_list_prepend(conditions, "noselfsource");
-    for (elt = conditions; elt; elt = elt->next) {
-        g_string_append(filter_string, (const char*) elt->data);
-        if (elt->next != NULL)
-            g_string_append(filter_string, ",");
+    /* Once we get the list of "old blocks" back from the server, we stuff them into the
+     * stack as if we had received them normally (they are part of the stack, after all,
+     * just not the most recent blocks)
+     */
+    StackManager *manager = user_data;
+    DDMDataModel *model = hippo_data_cache_get_model(manager->cache);
+    DDMDataResource *self_resource = ddm_data_model_get_self_resource(model);
+    DDMQName *stack_qname = ddm_qname_get("http://mugshot.org/p/o/user", "stack");
+    GSList *l;
+
+    for (l = results; l; l = l->next) {
+        DDMDataResource *block_resource = l->data;
+        gint64 timestamp;
+
+        ddm_data_resource_get(block_resource,
+                              "timestamp", DDM_DATA_LONG, &timestamp,
+                              NULL);
+
+        ddm_data_resource_update_feed_property(self_resource, stack_qname,
+                                               DDM_DATA_UPDATE_ADD,
+                                               FALSE, "+",
+                                               block_resource, timestamp);
     }
-    hippo_connection_request_blocks(manager->connection, 0, 
-                                    filter_string->str);
-    g_string_free(filter_string, TRUE); 
+}
+
+static void
+on_get_old_blocks_error(DDMDataError  error,
+                        const char   *message,
+                        gpointer      data)
+{
+     g_warning("Failed to get extra blocks: %s", message);
+}
+
+static void
+manager_get_old_blocks(StackManager *manager)
+{
+    DDMDataModel *model = hippo_data_cache_get_model(manager->cache);
+    DDMDataQuery *query;
+    char *filter_string = make_filter_string(manager);
+        
+    query = ddm_data_model_query(model,
+                                 "http://mugshot.org/p/blocks#getOldBlocks", "+",
+                                 "filter", filter_string,
+                                  NULL);
+    
+    ddm_data_query_set_multi_handler(query, on_get_old_blocks_success, manager);
+    ddm_data_query_set_error_handler(query, on_get_old_blocks_error, manager);
+
+    g_free(filter_string);
+}
+
+static void
+on_send_filter_error(DDMDataError  error,
+                     const char   *message,
+                     gpointer      data)
+{
+     g_warning("Failed to set filter preference: %s", message);
+}
+
+static void
+manager_send_filter(StackManager *manager)
+{
+    DDMDataModel *model = hippo_data_cache_get_model(manager->cache);
+    DDMDataQuery *query;
+    char *filter_string = make_filter_string(manager);
+
+    query = ddm_data_model_update(model,
+                                  "http://mugshot.org/p/blocks#setStackFilter",
+                                  "filter", filter_string,
+                                  NULL);
+    
+    ddm_data_query_set_error_handler(query, on_send_filter_error, manager);
+
+    g_free(filter_string);
+    
 }
 
 static void
@@ -495,7 +558,9 @@ manager_toggle_nofeed(StackManager *manager)
 {
     manager->nofeed_active = !manager->nofeed_active;
     
-    apply_filter_all(manager);                             
+    manager_apply_filter_to_stack(manager);
+    manager_send_filter(manager);
+    manager_get_old_blocks(manager);
 }
 
 static void
@@ -503,39 +568,9 @@ manager_toggle_noselfsource(StackManager *manager)
 {
     manager->noselfsource_active = !manager->noselfsource_active;
     
-    apply_filter_all(manager);                             
-}
-
-static void
-handle_filter_change(HippoConnection *connection, const char *filter, StackManager *manager) 
-{
-    char **elts = g_strsplit(filter, ",", 0);
-    char **elt;
-    gboolean nofeed = FALSE;
-    gboolean noselfsource = FALSE;
-    
-    for (elt = elts; *elt; elt++) {
-        if (strcmp(*elt, "nofeed") == 0) {
-            nofeed = TRUE;    
-        } else if (strcmp(*elt, "noselfsource") == 0) {
-            noselfsource = TRUE;    
-        } else {
-            g_warning("Unknown block filter qualifier: '%s'", *elt);
-        }
-    }
-    g_strfreev(elts);
-    
-    manager->nofeed_active = nofeed;
-    hippo_canvas_filter_area_set_nofeed_active(HIPPO_CANVAS_FILTER_AREA(manager->browser_filter_area_item), manager->nofeed_active);
-    manager->noselfsource_active = noselfsource;  
-    hippo_canvas_filter_area_set_noselfsource_active(HIPPO_CANVAS_FILTER_AREA(manager->browser_filter_area_item), manager->noselfsource_active);
-        
-    apply_filter_all(manager);
-    
-    if ((manager->nofeed_active || manager->noselfsource_active)
-        && !manager->filter_area_visible) {
-        manager_toggle_filter(manager);
-    }
+    manager_apply_filter_to_stack(manager);                             
+    manager_send_filter(manager);
+    manager_get_old_blocks(manager);
 }
 
 static gboolean
@@ -594,16 +629,9 @@ notification_is_needed_callback(HippoCanvasItem *item,
                 notify_for_block = FALSE;
             g_object_unref(group);
         }
-    } else if (HIPPO_IS_BLOCK_MUSIC_CHAT(block)) {
-        HippoTrack *track = NULL;
-    
-        g_object_get(G_OBJECT(block), "track", &track, NULL);
-        if (track) {
-            if (chat_is_visible(info->manager, hippo_track_get_play_id(track)))
-                notify_for_block = FALSE;
-
-            g_object_unref(track);
-        }
+    } else if (block->type == HIPPO_BLOCK_TYPE_MUSIC_CHAT) {
+        if (chat_is_visible(info->manager, hippo_block_get_chat_id(block)))
+            notify_for_block = FALSE;
     }
 
     g_object_unref(block);
@@ -647,19 +675,16 @@ resort_block(StackManager *manager,
                                             hippo_block_compare_newest_first);
 
    
-    visible = apply_current_filter(manager, block);
-    
-        hippo_canvas_stack_add_block(HIPPO_CANVAS_STACK(manager->browser_item),
-                                 block, 
-                                 visible);                
+    visible = hippo_canvas_stack_add_block(HIPPO_CANVAS_STACK(manager->browser_item),
+                                           block);                
 
-    if (visible)
-            hippo_canvas_stack_add_block(HIPPO_CANVAS_STACK(manager->notification_item),
-                                     block,
-                                     TRUE);
-
-    if (visible && !browser_is_onscreen(manager) && notification_is_needed(manager))
-        manager_set_notification_visible(manager, TRUE);
+    if (visible) {
+        hippo_canvas_stack_add_block(HIPPO_CANVAS_STACK(manager->notification_item),
+                                     block);
+        
+        if (!browser_is_onscreen(manager) && notification_is_needed(manager))
+            manager_set_notification_visible(manager, TRUE);
+    }
 }
 
 static void
@@ -669,30 +694,6 @@ on_block_sort_changed(HippoBlock *block,
 {
     StackManager *manager = data;
 
-    resort_block(manager, block);
-}
-
-static void
-on_block_added(HippoDataCache *cache,
-               HippoBlock     *block,
-               void           *data)
-{
-    StackManager *manager = data;
-    
-    /* We won't know how to display this anyway */
-    if (hippo_block_get_block_type(block) == HIPPO_BLOCK_TYPE_UNKNOWN)
-        return;
-    
-    if (g_slist_find(manager->blocks, block) != NULL) {
-        return;
-    }
-
-    g_object_ref(block);
-
-    g_signal_connect(G_OBJECT(block), "notify::sort-timestamp",
-                     G_CALLBACK(on_block_sort_changed),
-                     data);
-                     
     resort_block(manager, block);
 }
 
@@ -708,40 +709,236 @@ remove_block(HippoBlock   *block,
         manager->blocks = g_slist_remove(manager->blocks, block);
     }
     
-    g_signal_handlers_disconnect_by_func(G_OBJECT(block),
-                                         G_CALLBACK(on_block_sort_changed),
-                                             manager);                                       
-    g_object_unref(block);    
-
     hippo_canvas_stack_remove_block(HIPPO_CANVAS_STACK(manager->browser_item), block); 
     hippo_canvas_stack_remove_block(HIPPO_CANVAS_STACK(manager->notification_item), block);
 }
 
 static void
-on_block_removed(HippoDataCache *cache,
-                 HippoBlock     *block,
-                 void           *data)
+on_item_added(DDMFeed         *stack,
+              DDMDataResource *item,
+              gint64           timestamp,
+              StackManager    *manager)
+{
+    HippoBlock *block;
+    
+    g_debug("Block added, resource_id=%s, timestamp=%" G_GINT64_FORMAT,
+            ddm_data_resource_get_resource_id(item), timestamp);
+
+    block = hippo_block_create_for_resource(item);
+    if (block != NULL)
+        g_hash_table_replace(manager->item_to_block, item, block);
+
+    g_signal_connect(G_OBJECT(block), "notify::sort-timestamp",
+                     G_CALLBACK(on_block_sort_changed),
+                     manager);
+                     
+    resort_block(manager, block);
+}
+
+static void
+on_item_changed(DDMFeed         *stack,
+                DDMDataResource *item,
+                gint64           timestamp,
+                StackManager    *manager)
+{
+    /* We don't need to call resort_block() here because blocks will be resorted when
+     * the block.timestamp property is notified */
+
+#if 0
+    HippoBlock *block;
+
+    g_debug("Block restacked, resource_id=%s, timestamp=%" G_GINT64_FORMAT,
+            ddm_data_resource_get_resource_id(item), timestamp);
+
+    block = g_hash_table_lookup(manager->item_to_block, item);
+    if (block == NULL) {
+        g_warning("Block restacked that we don't know about");
+        return;
+    }
+#endif
+}
+
+static void
+on_item_removed(DDMFeed         *stack,
+                DDMDataResource *item,
+                StackManager    *manager)
+{
+    HippoBlock *block;
+
+    g_debug("Block removed, resource_id=%s",
+            ddm_data_resource_get_resource_id(item));
+    
+    block = g_hash_table_lookup(manager->item_to_block, item);
+    if (block == NULL) {
+        g_warning("Block removed that we don't know about");
+        return;
+    }
+
+    g_signal_handlers_disconnect_by_func(G_OBJECT(block),
+                                         G_CALLBACK(on_block_sort_changed),
+                                         manager);
+    remove_block(block, manager);
+
+    g_hash_table_remove(manager->item_to_block, item);
+}
+
+static void
+on_stack_filter_changed(DDMDataResource *user,
+                        GSList          *changed_properties,
+                        gpointer         data)
+{
+    StackManager *manager = data;
+    const char *stack_filter;
+    
+    gboolean nofeed = FALSE;
+    gboolean noselfsource = FALSE;
+
+    ddm_data_resource_get(user,
+                          "stackFilter", DDM_DATA_STRING, &stack_filter,
+                          NULL);
+
+    if (stack_filter) {
+        char **elements = g_strsplit(stack_filter, ",", 0);
+        char **p;
+    
+        for (p = elements; *p; p++) {
+            if (strcmp(*p, "nofeed") == 0) {
+                nofeed = TRUE;    
+            } else if (strcmp(*p, "noselfsource") == 0) {
+                noselfsource = TRUE;    
+            } else {
+                g_warning("Unknown block filter qualifier: '%s'", *p);
+            }
+        }
+        g_strfreev(elements);
+    }
+
+    if (manager->nofeed_active == nofeed && manager->noselfsource_active == noselfsource)
+        return;
+    
+    manager->nofeed_active = nofeed;
+    hippo_canvas_filter_area_set_nofeed_active(HIPPO_CANVAS_FILTER_AREA(manager->browser_filter_area_item), manager->nofeed_active);
+    manager->noselfsource_active = noselfsource;  
+    hippo_canvas_filter_area_set_noselfsource_active(HIPPO_CANVAS_FILTER_AREA(manager->browser_filter_area_item), manager->noselfsource_active);
+
+    manager_apply_filter_to_stack(manager);
+        
+    if ((manager->nofeed_active || manager->noselfsource_active)
+        && !manager->filter_area_visible) {
+        manager_toggle_filter(manager);
+    }
+}
+
+static void
+manager_set_stack(StackManager *manager,
+                  DDMFeed      *stack)
+{
+    DDMFeedIter iter;
+    DDMDataResource *item;
+    gint64 timestamp;
+    
+    if (stack == manager->stack)
+        return;
+    
+    if (manager->stack != NULL) {
+        g_signal_handlers_disconnect_by_func(manager->stack,
+                                             (gpointer)on_item_added,
+                                             manager);
+        g_signal_handlers_disconnect_by_func(manager->stack,
+                                             (gpointer)on_item_changed,
+                                             manager);
+        g_signal_handlers_disconnect_by_func(manager->stack,
+                                             (gpointer)on_item_removed,
+                                             manager);
+
+        ddm_feed_iter_init(&iter, manager->stack);
+        while (ddm_feed_iter_next(&iter, &item, NULL))
+            on_item_removed(manager->stack, item, manager);
+        
+        g_object_unref(manager->stack);
+    }
+
+    manager->stack = stack;
+
+    if (stack != NULL) {
+        g_object_ref(manager->stack);
+
+        g_signal_connect(manager->stack, "item-added",
+                         G_CALLBACK(on_item_added), manager);
+        g_signal_connect(manager->stack, "item-removed",
+                         G_CALLBACK(on_item_removed), manager);
+        g_signal_connect(manager->stack, "item-changed",
+                         G_CALLBACK(on_item_changed), manager);
+        
+        ddm_feed_iter_init(&iter, manager->stack);
+        while (ddm_feed_iter_next(&iter, &item, &timestamp))
+            on_item_added(manager->stack, item, timestamp, manager);
+    }
+}
+
+static void
+on_stack_changed(DDMDataResource *user,
+                 GSList          *changed_properties,
+                 gpointer         data)
+{
+    StackManager *manager = data;
+    DDMFeed *stack;
+
+    ddm_data_resource_get(user,
+                          "stack", DDM_DATA_FEED, &stack,
+                          NULL);
+
+    manager_set_stack(manager, stack);
+}
+
+static void
+on_get_stack_success(DDMDataResource *user,
+                     gpointer         data)
 {
     StackManager *manager = data;
 
-    remove_block(block, manager);
+    ddm_data_resource_connect(user, "stackFilter", on_stack_filter_changed, manager);
+    ddm_data_resource_connect(user, "stack", on_stack_changed, manager);
+    on_stack_filter_changed(user, NULL, manager);
+    on_stack_changed(user, NULL, manager);
+
+    manager_get_old_blocks(manager);
+}
+
+static void
+on_get_stack_error(DDMDataError  error,
+                   const char   *message,
+                   gpointer      data)
+{
+     g_warning("Failed to get stack: %s, will retry on reconnection", message);
+}
+
+static void
+on_ready(DDMDataModel *model,
+         StackManager *manager)
+{
+    DDMDataResource *self_resource = ddm_data_model_get_self_resource(model);
+
+    if (self_resource != NULL) {
+        DDMDataQuery *query = ddm_data_model_query_resource(model, self_resource, "stack +;stackFilter");
+        ddm_data_query_set_single_handler(query, on_get_stack_success, manager);
+        ddm_data_query_set_error_handler(query, on_get_stack_error, manager);
+    }
 }
 
 static void
 manager_disconnect(StackManager *manager)
 {
     if (manager->cache) {
+        DDMDataModel *model = hippo_data_cache_get_model(manager->cache);
+        
         stop_notification_timeout(manager);
         
-        g_signal_handlers_disconnect_by_func(manager->cache,
-                                             G_CALLBACK(on_block_added),
-                                             manager);
-        g_signal_handlers_disconnect_by_func(manager->cache,
-                                             G_CALLBACK(on_block_removed),
+        g_signal_handlers_disconnect_by_func(model,
+                                             G_CALLBACK(on_ready),
                                              manager);
 
-        g_signal_handlers_disconnect_by_func(manager->connection,
-                                             G_CALLBACK(handle_filter_change), manager);
+        manager_set_stack(manager, NULL);
         
         while (manager->blocks != NULL) {
                 remove_block(manager->blocks->data, manager);
@@ -794,6 +991,8 @@ manager_new(void)
     StackManager *manager;
 
     manager = g_new0(StackManager, 1);
+    manager->item_to_block = g_hash_table_new_full(g_direct_hash, NULL,
+                                                   NULL, (GDestroyNotify)g_object_unref);
     manager->refcount = 1;
     
     return manager;
@@ -864,15 +1063,13 @@ manager_attach(StackManager    *manager,
                HippoDataCache  *cache)
 {
     HippoPlatform *platform;
+    DDMDataModel *model;
     
     g_debug("Stack manager attaching to data cache");
     
     manager->cache = cache;
     g_object_ref(manager->cache);
     manager->connection = hippo_data_cache_get_connection(manager->cache);
-
-    g_signal_connect(manager->connection, "block-filter-changed",
-                     G_CALLBACK(handle_filter_change), manager);
 
     /* FIXME really the "actions" should probably be more global, e.g.
      * shared with the tray icon, but the way I wanted to do that
@@ -997,11 +1194,14 @@ manager_attach(StackManager    *manager,
                             manager->notification_item, 0);
 
     hippo_window_set_contents(manager->notification_window, manager->notification_box);
-    
-    g_signal_connect(manager->cache, "block-added",
-                     G_CALLBACK(on_block_added), manager);
-    g_signal_connect(manager->cache, "block-removed",
-                     G_CALLBACK(on_block_removed), manager);
+
+    model = hippo_data_cache_get_model(manager->cache);
+
+    g_signal_connect(model, "ready",
+                     G_CALLBACK(on_ready), manager);
+
+    if (ddm_data_model_is_ready(model))
+        on_ready(model, manager);
 }
 
 static void

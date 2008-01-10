@@ -23,9 +23,11 @@ GType            hippo_canvas_stack_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_stack_new    (void);
 
-void hippo_canvas_stack_add_block   (HippoCanvasStack *canvas_stack,
-                                     HippoBlock       *block,
-                                     gboolean          visible);
+/* The boolean return indicates whether the block is visible in the stack
+ * after addition.
+ */
+gboolean hippo_canvas_stack_add_block   (HippoCanvasStack *canvas_stack,
+                                         HippoBlock       *block);
 
 void hippo_canvas_stack_remove_block(HippoCanvasStack *canvas_stack,
                                      HippoBlock       *block);
@@ -35,6 +37,10 @@ void hippo_canvas_stack_update_hidden_blocks(HippoCanvasStack *canvas_stack);
 /* Only blocks after this timestamp are included in the stack */
 void hippo_canvas_stack_set_min_timestamp(HippoCanvasStack *canvas_stack,
                                           gint64            min_timestamp);
+
+void hippo_canvas_stack_set_filter (HippoCanvasStack *canvas_stack,
+                                    gboolean          nofeed_active,
+                                    gboolean          noselfsource_active);
 
 G_END_DECLS
 

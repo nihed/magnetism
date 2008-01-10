@@ -30,7 +30,6 @@ typedef enum {                                              /* Destination type 
     HIPPO_SPLIT_ENTITY       = 11, /* DumbHippo entity          HippoEntity *           */
     HIPPO_SPLIT_PERSON       = 12, /* DumbHippo user            HippoPerson *           */
     HIPPO_SPLIT_GROUP        = 13, /* DumbHippo group           HippoGroup *            */
-    HIPPO_SPLIT_POST         = 14, /* Post                      HippoPost *             */
 
     HIPPO_SPLIT_TYPE_MASK = 0x001f,
     

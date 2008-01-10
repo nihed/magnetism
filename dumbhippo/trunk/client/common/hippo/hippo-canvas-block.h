@@ -105,7 +105,7 @@ void hippo_canvas_block_set_expanded(HippoCanvasBlock *canvas_block,
 
 /* probably has to get factored out into subclass */
 void hippo_canvas_block_set_sender  (HippoCanvasBlock *canvas_block,
-                                     const char       *entity_guid);
+                                     HippoEntity      *entity);
 void hippo_canvas_block_set_sent_to (HippoCanvasBlock *canvas_block,
                                      GSList           *entities);
 void hippo_canvas_block_set_original_age (HippoCanvasBlock *canvas_block,

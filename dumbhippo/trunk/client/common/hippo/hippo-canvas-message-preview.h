@@ -32,7 +32,7 @@ typedef struct _HippoCanvasMessagePreviewClass HippoCanvasMessagePreviewClass;
 struct _HippoCanvasMessagePreview {
     HippoCanvasBox parent;
     
-    HippoChatMessage *message;
+    DDMDataResource *message;
     HippoActions *actions;
     unsigned int hushed : 1;
 

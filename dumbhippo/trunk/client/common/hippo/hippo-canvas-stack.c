@@ -3,8 +3,6 @@
 #include "hippo-common-internal.h"
 #include "hippo-canvas-stack.h"
 #include "hippo-canvas-block.h"
-#include "hippo-block-music-person.h"
-#include "hippo-block-music-chat.h"
 #include <hippo/hippo-canvas-box.h>
 #include "hippo-actions.h"
 
@@ -29,7 +27,10 @@ struct _HippoCanvasStack {
     HippoActions *actions;
     gint64 min_timestamp;
     int max_blocks;
-    gboolean pin_messages;
+    
+    guint pin_messages : 1;
+    guint nofeed_active : 1;
+    guint noselfsource_active : 1;
 };
 
 struct _HippoCanvasStackClass {
@@ -315,17 +316,17 @@ canvas_block_compare(HippoCanvasItem *a,
     return result;
 }
 
-void
+gboolean
 hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
-                             HippoBlock       *block,
-                             gboolean          visible)
+                             HippoBlock       *block)
 {
     HippoCanvasItem *item;
     gint64 sort_timestamp;
+    gboolean visible;
 
     sort_timestamp = hippo_block_get_sort_timestamp(block);
     if (sort_timestamp < canvas_stack->min_timestamp)
-        return;
+        return FALSE;
 
     item = find_block_item(canvas_stack, block);
 
@@ -342,11 +343,8 @@ hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
     hippo_canvas_box_insert_sorted(HIPPO_CANVAS_BOX(canvas_stack), item, 0,
                                    canvas_block_compare, canvas_stack);
 
-    hippo_canvas_item_set_visible(item, visible);
     remove_extra_children(canvas_stack);
     
-    g_object_unref(item);
-
     /* Updating possibly visible blocks at this point doesn't take
      * into account the possibility of a block changing in such a way
      * to cause other blocks to be hidden without being restacked;
@@ -355,6 +353,12 @@ hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
      * to happen currently.
      */
     hippo_canvas_stack_update_hidden_blocks(canvas_stack);
+
+    visible = hippo_canvas_item_get_parent(item) != NULL && hippo_canvas_item_get_visible(item);
+    
+    g_object_unref(item);
+
+    return visible;
 }
 
 void
@@ -384,40 +388,33 @@ foreach_update_hidden(HippoCanvasItem *child,
 {
     UpdateHiddenData *uhd = data;
     HippoBlock *child_block = NULL;
+    gboolean visible = TRUE;
 
     g_object_get(G_OBJECT(child), "block", &child_block, NULL);
 
-    if (HIPPO_IS_BLOCK_MUSIC_CHAT(child_block)) {
-        const char *play_id = NULL;
-        HippoTrack *track = NULL;
-        g_object_get(child_block, "track", &track, NULL);
-
-        if (track) {
-            play_id = hippo_track_get_play_id(track);
-            g_object_unref(track);
-        }
-
-        if (play_id)
-            g_hash_table_insert(uhd->chatted, (void *)play_id, GUINT_TO_POINTER(1));
+    if (child_block->type == HIPPO_BLOCK_TYPE_MUSIC_CHAT) {
+        const char *chat_id = hippo_block_get_chat_id(child_block);
+        if (chat_id)
+            g_hash_table_insert(uhd->chatted, (void *)chat_id, GUINT_TO_POINTER(1));
         
-    } else if (HIPPO_IS_BLOCK_MUSIC_PERSON(child_block)) {
-        const char *play_id = NULL;
-        GSList *track_history = NULL;
+    } else if (child_block->type == HIPPO_BLOCK_TYPE_MUSIC_PERSON) {
+        const char *chat_id = hippo_block_get_chat_id(child_block);
         gboolean seen_track = FALSE;
         
-        g_object_get(child_block, "track_history", &track_history, NULL);
+        if (chat_id)
+            seen_track = g_hash_table_lookup(uhd->chatted, chat_id) != NULL;
 
-        if (track_history) {
-            HippoTrack *track = track_history->data;
-            play_id = hippo_track_get_play_id(track);
-        }
-
-        if (play_id)
-            seen_track = g_hash_table_lookup(uhd->chatted, play_id) != NULL;
-
-        hippo_canvas_item_set_visible(child, !seen_track);
+        if (seen_track)
+            visible = FALSE;
     }
 
+    if (uhd->canvas_stack->nofeed_active && hippo_block_get_is_feed(child_block))
+        visible = FALSE;
+    else if (uhd->canvas_stack->noselfsource_active && hippo_block_get_is_mine(child_block))
+        visible = FALSE;
+
+    hippo_canvas_item_set_visible(child, visible);
+    
     if (child_block)
         g_object_unref(child_block);
 }
@@ -479,4 +476,19 @@ hippo_canvas_stack_set_min_timestamp(HippoCanvasStack *canvas_stack,
     hippo_canvas_box_foreach(HIPPO_CANVAS_BOX(canvas_stack),
                              foreach_update_min_timestamp,
                              canvas_stack);
+}
+
+void
+hippo_canvas_stack_set_filter (HippoCanvasStack *canvas_stack,
+                               gboolean          nofeed_active,
+                               gboolean          noselfsource_active)
+{
+    if (canvas_stack->nofeed_active == nofeed_active &&
+        canvas_stack->noselfsource_active == noselfsource_active)
+        return;
+
+    canvas_stack->nofeed_active = nofeed_active;
+    canvas_stack->noselfsource_active = noselfsource_active;
+
+    hippo_canvas_stack_update_hidden_blocks(canvas_stack);
 }

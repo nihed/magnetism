@@ -28,7 +28,7 @@ static GObject* hippo_canvas_message_preview_constructor (GType                 
                                                           GObjectConstructParam *construct_properties);
 
 static void hippo_canvas_message_preview_set_message (HippoCanvasMessagePreview *message_preview,
-                                                      HippoChatMessage          *message);
+                                                      DDMDataResource           *message);
 static void hippo_canvas_message_preview_update      (HippoCanvasMessagePreview *message_preview);
 static void hippo_canvas_message_preview_set_actions (HippoCanvasMessagePreview *message_preview,
                                                       HippoActions              *actions);
@@ -127,7 +127,7 @@ hippo_canvas_message_preview_set_property(GObject         *object,
     switch (prop_id) {
     case PROP_MESSAGE:
         {
-            HippoChatMessage *new_room = (HippoChatMessage*) g_value_get_pointer(value);
+            DDMDataResource *new_room = (DDMDataResource*) g_value_get_pointer(value);
             hippo_canvas_message_preview_set_message(message_preview, new_room);
         }
         break;
@@ -242,15 +242,20 @@ update_time(HippoCanvasMessagePreview *preview)
 {
     gint64 server_time_now;
     char *when;
+    gint64 time;
 
-    if (preview->message == NULL)
-        return;
+    if (preview->message)
+        ddm_data_resource_get(preview->message,
+                              "time", DDM_DATA_LONG, &time,
+                              NULL);
+    else
+        time = 0;
 
     /* See comments in hippo-canvas-block.c:update_time */
 
     server_time_now = hippo_current_time_ms() + hippo_actions_get_server_time_offset(preview->actions);
     
-    when = hippo_format_time_ago(server_time_now / 1000, hippo_chat_message_get_timestamp(preview->message));
+    when = hippo_format_time_ago(server_time_now / 1000, time / 1000);
 
     hippo_canvas_item_set_visible(preview->time_ago,
                                   strcmp(when, "") != 0);
@@ -272,51 +277,60 @@ on_minute_ticked(HippoActions              *actions,
 static void
 hippo_canvas_message_preview_update(HippoCanvasMessagePreview *message_preview)
 {
-    HippoChatMessage *message = message_preview->message;
     const char *icon_name = NULL;
+    const char *sentiment = NULL;
+    const char *text = NULL;
+    DDMDataResource *sender_resource = NULL;
+    HippoPerson *sender = NULL;
+
+    if (message_preview->message)
+        ddm_data_resource_get(message_preview->message,
+                              "text", DDM_DATA_STRING, &text,
+                              "sender", DDM_DATA_RESOURCE, &sender_resource,
+                              "sentiment", DDM_DATA_STRING, &sentiment,
+                              NULL);
+
+    if (sender_resource)
+        sender = hippo_person_get_for_resource(sender_resource);
     
     g_object_set(G_OBJECT(message_preview->message_text),
-                 "text", message ? hippo_chat_message_get_text(message) : NULL,
+                 "text", text,
                  NULL);
     g_object_set(G_OBJECT(message_preview->entity_name),
-                 "entity", message ? hippo_chat_message_get_person(message) : NULL,
+                 "entity", sender,
                  NULL);
 
-    if (message) {
-        switch (hippo_chat_message_get_sentiment(message)) {
-        case HIPPO_SENTIMENT_INDIFFERENT:
-            icon_name = "chat";
-            break;
-        case HIPPO_SENTIMENT_LOVE:
-            icon_name = "quiplove_icon";
-            break;
-        case HIPPO_SENTIMENT_HATE:
-            icon_name = "quiphate_icon";
-            break;
-        }
-    }
+    if (sentiment != NULL && strcmp(sentiment, "LOVE") == 0)
+        icon_name = "quiplove_icon";
+    else if (sentiment != NULL && strcmp(sentiment, "HATE") == 0)
+        icon_name = "quiphate_icon";
+    else
+        icon_name = "chat";
     
     g_object_set(message_preview->icon,
                  "image-name", icon_name,
                  NULL);
     
     update_time(message_preview);
+
+    if (sender != NULL)
+        g_object_unref(sender);
 }
 
 static void
 hippo_canvas_message_preview_set_message(HippoCanvasMessagePreview *message_preview,
-                                         HippoChatMessage          *message)
+                                         DDMDataResource           *message)
 {
     if (message == message_preview->message)
         return;
 
     if (message_preview->message) {
-        hippo_chat_message_free(message_preview->message);
+        ddm_data_resource_unref(message_preview->message);
         message_preview->message = NULL;
     }
     
     if (message) {
-        message_preview->message = hippo_chat_message_copy(message);
+        message_preview->message = ddm_data_resource_ref(message);
     }
 
     hippo_canvas_message_preview_update(message_preview);

@@ -302,13 +302,6 @@ hippo_actions_load_entity_photo_async(HippoActions    *actions,
     g_free(sized);
 }
 
-HippoEntity*
-hippo_actions_lookup_entity(HippoActions    *actions,
-                            const char      *entity_guid)
-{
-    return hippo_data_cache_lookup_entity(actions->cache, entity_guid);
-}
-
 gint64
 hippo_actions_get_server_time_offset (HippoActions *actions)
 {

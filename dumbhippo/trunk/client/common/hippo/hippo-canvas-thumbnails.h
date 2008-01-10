@@ -20,9 +20,6 @@ typedef struct _HippoCanvasThumbnailsClass HippoCanvasThumbnailsClass;
 
 GType            hippo_canvas_thumbnails_get_type               (void) G_GNUC_CONST;
 
-HippoCanvasItem* hippo_canvas_thumbnails_new    (void);
-
-
 G_END_DECLS
 
 #endif /* __HIPPO_CANVAS_THUMBNAILS_H__ */

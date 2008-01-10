@@ -18,7 +18,9 @@ typedef struct _HippoPersonClass HippoPersonClass;
 #define HIPPO_PERSON_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_PERSON, HippoPersonClass))
 
 GType            hippo_person_get_type                  (void) G_GNUC_CONST;
-HippoPerson*     hippo_person_new                       (const char  *guid);
+
+
+HippoPerson*     hippo_person_get_for_resource          (DDMDataResource *resource);
 
 /* This should eventually replace the methods below, but isn't yet hooked up for chatrooms
  */

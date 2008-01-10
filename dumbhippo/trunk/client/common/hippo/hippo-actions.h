@@ -22,6 +22,7 @@
  */
 
 #include <hippo/hippo-data-cache.h>
+#include <hippo/hippo-block.h>
 #include <hippo/hippo-group.h>
 #include <hippo/hippo-canvas-item.h>
 
@@ -57,8 +58,6 @@ void          hippo_actions_load_thumbnail_async    (HippoActions    *actions,
 void          hippo_actions_load_music_thumbnail_async(HippoActions    *actions,
                                                        const char      *image_url,
                                                        HippoCanvasItem *image_item);
-HippoEntity*  hippo_actions_lookup_entity           (HippoActions    *actions,
-                                                     const char      *entity_guid);
 gint64        hippo_actions_get_server_time_offset  (HippoActions    *actions);
 void          hippo_actions_close_browser           (HippoActions    *actions);
 void          hippo_actions_close_notification      (HippoActions    *actions);

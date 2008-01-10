@@ -6,17 +6,11 @@
 #include "hippo-block-group-chat.h"
 #include "hippo-block-group-member.h"
 #include "hippo-block-post.h"
-#include "hippo-block-music-chat.h"
-#include "hippo-block-music-person.h"
-#include "hippo-block-facebook-person.h"
-#include "hippo-block-flickr-person.h"
-#include "hippo-block-youtube-person.h"
-#include "hippo-block-flickr-photoset.h"
-#include "hippo-block-facebook-event.h"
 #include "hippo-block-netflix-movie.h"
 #include "hippo-block-amazon-activity.h"
-#include "hippo-xml-utils.h"
 #include <string.h>
+
+static void hippo_block_update (HippoBlock *block);
 
 static void     hippo_block_finalize             (GObject *object);
 
@@ -29,9 +23,11 @@ static void hippo_block_get_property (GObject      *object,
                                       GValue       *value,
                                       GParamSpec   *pspec);
 
-static gboolean hippo_block_real_update_from_xml (HippoBlock     *block,
-                                                  HippoDataCache *cache,
-                                                  LmMessageNode  *node);
+static void hippo_block_real_update (HippoBlock *block);
+
+static void on_block_resource_changed (DDMDataResource *resource,
+                                       GSList          *changed_properties,
+                                       gpointer         data);
 
 G_DEFINE_TYPE(HippoBlock, hippo_block, G_TYPE_OBJECT);
 
@@ -53,15 +49,12 @@ enum {
     PROP_TIMESTAMP,
     PROP_CLICKED_TIMESTAMP,
     PROP_IGNORED_TIMESTAMP,
-    PROP_CLICKED_COUNT,
     PROP_SIGNIFICANT_CLICKED_COUNT,
-    PROP_MESSAGE_COUNT,
     PROP_CHAT_ID,
     PROP_CLICKED,
     PROP_ICON_URL,
     PROP_IGNORED,
     PROP_PINNED,
-    PROP_RECENT_MESSAGES,
     PROP_TITLE,
     PROP_TITLE_LINK,
     PROP_STACK_REASON,
@@ -73,20 +66,19 @@ static void
 hippo_block_init(HippoBlock *block)
 {
     block->stack_reason = HIPPO_STACK_NEW_BLOCK;
-    block->message_count = -1;
 }
 
 static void
 hippo_block_class_init(HippoBlockClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
-          
+
     object_class->finalize = hippo_block_finalize;
 
     object_class->set_property = hippo_block_set_property;
     object_class->get_property = hippo_block_get_property;
 
-    klass->update_from_xml = hippo_block_real_update_from_xml;
+    klass->update = hippo_block_real_update;
 
     g_object_class_install_property(object_class,
                                     PROP_GUID,
@@ -154,14 +146,6 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                        -1, G_MAXINT64,
                                                        0,
                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
-    g_object_class_install_property(object_class,
-                                    PROP_CLICKED_COUNT,
-                                    g_param_spec_int("clicked-count",
-                                                     _("Clicked count"),
-                                                     _("Number of people who clicked on the block"),
-                                                     0, G_MAXINT,
-                                                     0,
-                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
 
     g_object_class_install_property(object_class,
                                     PROP_SIGNIFICANT_CLICKED_COUNT,
@@ -170,15 +154,6 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                      _("Last click count that caused a restack"),
                                                      0, G_MAXINT,
                                                      0,
-                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
-
-    g_object_class_install_property(object_class,
-                                    PROP_MESSAGE_COUNT,
-                                    g_param_spec_int("message-count",
-                                                     _("Message count"),
-                                                     _("Number of comments and quips for this block"),
-                                                     -1, G_MAXINT,
-                                                     -1,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
 
     g_object_class_install_property(object_class,
@@ -244,13 +219,6 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                      0, G_MAXINT, HIPPO_STACK_NEW_BLOCK,
                                                      G_PARAM_READABLE));
                                                      
-    g_object_class_install_property(object_class,
-                                    PROP_RECENT_MESSAGES,
-                                    g_param_spec_pointer("recent-messages",
-                                                         _("Recent Messages"),
-                                                         _("Recent Messages in the block's Chat Room"),
-                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
-    
    g_object_class_install_property(object_class,
                                    PROP_IS_FEED,
                                    g_param_spec_boolean("is-feed",
@@ -273,13 +241,13 @@ hippo_block_finalize(GObject *object)
 {
     HippoBlock *block = HIPPO_BLOCK(object);
 
-    hippo_block_set_recent_messages(block, NULL);
-    
     g_free(block->guid);
     g_free(block->icon_url);
     g_free(block->title);
     g_free(block->title_link);
     g_free(block->chat_id);
+
+    ddm_data_resource_disconnect(block->resource, on_block_resource_changed, block);
 
     G_OBJECT_CLASS(hippo_block_parent_class)->finalize(object); 
 }
@@ -307,25 +275,13 @@ hippo_block_set_property(GObject         *object,
         hippo_block_set_ignored_timestamp(block,
                                           g_value_get_int64(value));        
         break;
-    case PROP_CLICKED_COUNT:
-        hippo_block_set_clicked_count(block,
-                                      g_value_get_int(value));
-        break;
     case PROP_SIGNIFICANT_CLICKED_COUNT:
         hippo_block_set_significant_clicked_count(block,
                                                   g_value_get_int(value));
         break;
-    case PROP_MESSAGE_COUNT:
-        hippo_block_set_message_count(block,
-                                      g_value_get_int(value));
-        break;
     case PROP_CHAT_ID:
         hippo_block_set_chat_id(block,
                                 g_value_get_string(value));
-        break;
-    case PROP_RECENT_MESSAGES:
-        hippo_block_set_recent_messages(block,
-                                        g_value_get_pointer(value));
         break;
     case PROP_CLICKED:
         hippo_block_set_clicked(block,
@@ -398,14 +354,8 @@ hippo_block_get_property(GObject         *object,
     case PROP_IGNORED_TIMESTAMP:
         g_value_set_int64(value, block->ignored_timestamp);
         break;
-    case PROP_CLICKED_COUNT:
-        g_value_set_int(value, block->clicked_count);
-        break;
     case PROP_SIGNIFICANT_CLICKED_COUNT:
         g_value_set_int(value, block->significant_clicked_count);
-        break;
-    case PROP_MESSAGE_COUNT:
-        g_value_set_int(value, block->message_count);
         break;
     case PROP_CHAT_ID:
         g_value_set_string(value, block->chat_id);
@@ -421,9 +371,6 @@ hippo_block_get_property(GObject         *object,
         break;
     case PROP_STACK_REASON:
         g_value_set_int(value, block->stack_reason);
-        break;
-    case PROP_RECENT_MESSAGES:
-        g_value_set_pointer(value, block->recent_messages);
         break;
     case PROP_ICON_URL:
         g_value_set_string(value, block->icon_url);
@@ -463,130 +410,86 @@ stack_reason_from_string(const char *string)
     }
 }
 
-static gboolean
-hippo_block_real_update_from_xml (HippoBlock     *block,
-                                  HippoDataCache *cache,
-                                  LmMessageNode  *node)
+static void
+hippo_block_real_update (HippoBlock     *block)
 {
-    const char *guid;
-    const char *type_str;
-    HippoBlockType type;
-    gboolean is_public;
+    gboolean public;
     gint64 timestamp;
     gint64 clicked_timestamp;
     gint64 ignored_timestamp;
-    int clicked_count;
     int significant_clicked_count = 0;
-    int message_count = -1;
-    gboolean clicked;
-    gboolean ignored;
-    LmMessageNode *title_node;
-    const char *title = NULL;
-    const char *title_link = NULL;
-    const char *icon_url = NULL;
-    const char *stack_reason_str = NULL;
-    const char *generic_types = NULL;
-    const char *chat_id = NULL;
-    HippoStackReason stack_reason = HIPPO_STACK_NEW_BLOCK;
-    const char *filter_flags;
-    LmMessageNode *recent_messages_node = NULL;
-    gboolean is_mine = 0;
-    gboolean is_feed = 0;
-    LmMessageNode *source_node = NULL;
-    HippoEntity *source;
+    const char *title;
+    const char *title_link;
+    const char *icon;
+    const char *stack_reason_str;
+    const char *chat_id;
+    DDMDataModel *model;
+    DDMDataResource *self;
+    DDMDataResource *owner;
+    DDMDataResource *source_user;
     
-    g_assert(cache != NULL);
+    HippoStackReason stack_reason = HIPPO_STACK_NEW_BLOCK;
 
-    if (!hippo_xml_split(cache, node, NULL,
-                         "id", HIPPO_SPLIT_GUID, &guid,
-                         "type", HIPPO_SPLIT_STRING, &type_str,
-                         "genericTypes", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &generic_types,
-                         "isPublic", HIPPO_SPLIT_BOOLEAN, &is_public,
-                         "timestamp", HIPPO_SPLIT_TIME_MS, &timestamp,
-                         "clickedTimestamp", HIPPO_SPLIT_TIME_MS, &clicked_timestamp,
-                         "ignoredTimestamp", HIPPO_SPLIT_TIME_MS, &ignored_timestamp,
-                         "clickedCount", HIPPO_SPLIT_INT32, &clicked_count,
-                         "significantClickedCount", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_OPTIONAL, &significant_clicked_count ,
-                         "messageCount", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_OPTIONAL, &message_count,
-                         "chatId", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &chat_id,
-                         "clicked", HIPPO_SPLIT_BOOLEAN, &clicked, 
-                         "ignored", HIPPO_SPLIT_BOOLEAN, &ignored,
-                         "icon", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &icon_url,
-                         "recentMessages", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &recent_messages_node,
-                         "stackReason", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &stack_reason_str,
-                         "filterFlags", HIPPO_SPLIT_STRING, &filter_flags,
-                         "isFeed", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_OPTIONAL, &is_feed,                         
-                         "isMine", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_OPTIONAL, &is_mine,
-                         "source", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &source_node,                         
-                         NULL)) {
-        g_debug("missing attributes on <block> %s update", block->guid);
-        return FALSE;
-    }
+    model = ddm_data_resource_get_model(block->resource);
+    self = ddm_data_model_get_self_resource(model);
 
-    if (strcmp(block->guid, guid) != 0) {
-        g_warning("Update to <block/> node doesn't match original ID");
-        return FALSE;
-    }
-                         
-    type = hippo_block_type_from_attributes(type_str, generic_types);
-    if (type != block->type) {
-        g_warning("Update to <block/> node doesn't match original type");
-        return FALSE;
-    }
-
-    hippo_block_set_public(block, is_public);
+    ddm_data_resource_get(block->resource,
+                          "public", DDM_DATA_BOOLEAN, &public,
+                          "timestamp", DDM_DATA_LONG, &timestamp,
+                          "clickedTimestamp", DDM_DATA_LONG, &clicked_timestamp,
+                          "ignoredTimestamp", DDM_DATA_LONG, &ignored_timestamp,
+                          "significantClickedCount", DDM_DATA_INTEGER, &significant_clicked_count,
+                          "icon", DDM_DATA_URL, &icon,
+                          "title", DDM_DATA_STRING, &title,
+                          "titleLink", DDM_DATA_URL, &title_link,
+                          "stackReason", DDM_DATA_STRING, &stack_reason_str,
+                          "chatId", DDM_DATA_STRING, &chat_id,
+                          "owner", DDM_DATA_RESOURCE, &owner,
+                          "sourceUser", DDM_DATA_RESOURCE, &source_user,
+                          NULL);
+                            
+    hippo_block_set_public(block, public);
     hippo_block_set_timestamp(block, timestamp);
     hippo_block_set_clicked_timestamp(block, clicked_timestamp);
     hippo_block_set_ignored_timestamp(block, ignored_timestamp);
-    hippo_block_set_clicked_count(block, clicked_count);
     hippo_block_set_significant_clicked_count(block, significant_clicked_count);
-    hippo_block_set_message_count(block, message_count);
     hippo_block_set_chat_id(block, chat_id);
-    hippo_block_set_clicked(block, clicked);
-    hippo_block_set_ignored(block, ignored);
-    hippo_block_set_icon_url(block, icon_url);
-    hippo_block_set_is_feed(block, strcmp(filter_flags, "FEED") == 0); /* replace with is_feed later */
-    hippo_block_set_is_mine(block, is_mine);
-
-    if (recent_messages_node != NULL) {
-        if (!hippo_block_set_recent_messages_from_xml(block, cache, recent_messages_node))
-            return FALSE;
-    }
+    hippo_block_set_clicked(block, clicked_timestamp >= 0);
+    hippo_block_set_ignored(block, ignored_timestamp >= 0);
     
-    if (source_node != NULL) {
-        if (!hippo_xml_split(cache, source_node, NULL,
-                             "id", HIPPO_SPLIT_ENTITY, &source,
-                             NULL))
-            return FALSE;
-        hippo_block_set_source(block, source);
-    }
+    hippo_block_set_is_mine(block, owner == self);
 
-    title_node = lm_message_node_get_child(node, "title");
-    if (title_node) {
-        title_link = lm_message_node_get_attribute(title_node, "link");
-        title = lm_message_node_get_value(title_node);
-        hippo_block_set_title(block, title);
-        hippo_block_set_title_link(block, title_link);
+    hippo_block_set_icon_url(block, icon);
+    hippo_block_set_title(block, title);
+    hippo_block_set_title_link(block, title_link);
+
+    if (source_user != NULL) {
+        HippoPerson *person = hippo_person_get_for_resource(source_user);
+        hippo_block_set_source(block, HIPPO_ENTITY(person));
+        g_object_unref(person); 
+    } else {
+        hippo_block_set_source(block, NULL);
     }
 
     if (stack_reason_str)
         stack_reason = stack_reason_from_string(stack_reason_str);
     hippo_block_set_stack_reason(block, stack_reason);
-    
-    g_debug("Parsed block %s type %s - %s timestamp = %" G_GINT64_FORMAT,
-            guid, g_type_name_from_instance((GTypeInstance*) block), type_str,
-            timestamp);
-    
-    return TRUE;
 }
 
 /* === HippoBlock exported API === */
 
+static void
+on_block_resource_changed (DDMDataResource *resource,
+                           GSList          *changed_properties,
+                           gpointer         data)
+{
+    hippo_block_update(data);
+}
 
-
-HippoBlock*
-hippo_block_new(const char    *guid,
-                HippoBlockType type)
+static HippoBlock*
+hippo_block_new(DDMDataResource *resource,
+                const char      *guid,
+                HippoBlockType   type)
 {
     HippoBlock *block;
     GType object_type;
@@ -609,27 +512,20 @@ hippo_block_new(const char    *guid,
         object_type = HIPPO_TYPE_BLOCK_POST;
         break;
     case HIPPO_BLOCK_TYPE_MUSIC_CHAT:
-        object_type = HIPPO_TYPE_BLOCK_MUSIC_CHAT;
-        break;
     case HIPPO_BLOCK_TYPE_MUSIC_PERSON:
-        object_type = HIPPO_TYPE_BLOCK_MUSIC_PERSON;
-        break;
-    case HIPPO_BLOCK_TYPE_FLICKR_PERSON:
-        object_type = HIPPO_TYPE_BLOCK_FLICKR_PERSON;
-        break;
-    case HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET:
-        object_type = HIPPO_TYPE_BLOCK_FLICKR_PHOTOSET;
+        object_type = HIPPO_TYPE_BLOCK;
         break;
     case HIPPO_BLOCK_TYPE_FACEBOOK_EVENT:
-        object_type = HIPPO_TYPE_BLOCK_FACEBOOK_EVENT;
-        break;
+    case HIPPO_BLOCK_TYPE_FLICKR_PERSON:
+    case HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET:
     case HIPPO_BLOCK_TYPE_YOUTUBE_PERSON:
-        object_type = HIPPO_TYPE_BLOCK_YOUTUBE_PERSON;
+        object_type = HIPPO_TYPE_BLOCK_GENERIC;
         break;
     case HIPPO_BLOCK_TYPE_NETFLIX_MOVIE:
         object_type = HIPPO_TYPE_BLOCK_NETFLIX_MOVIE;
         break;        
-    case HIPPO_BLOCK_TYPE_AMAZON_ACTIVITY:
+    case HIPPO_BLOCK_TYPE_AMAZON_REVIEW:
+    case HIPPO_BLOCK_TYPE_AMAZON_WISH_LIST_ITEM:
         object_type = HIPPO_TYPE_BLOCK_AMAZON_ACTIVITY;
         break;        
     case HIPPO_BLOCK_TYPE_GENERIC:
@@ -641,26 +537,31 @@ hippo_block_new(const char    *guid,
     block = g_object_new(object_type,
                          NULL);
     block->type = type;
+    block->resource = ddm_data_resource_ref(resource);
     block->guid = g_strdup(guid);
+
+    ddm_data_resource_connect(resource, NULL, on_block_resource_changed, block);
+    hippo_block_update(block);
     
     return block;
 }
 
-gboolean
-hippo_block_update_from_xml(HippoBlock     *block,
-                            HippoDataCache *cache,
-                            LmMessageNode  *node)
+DDMDataResource *
+hippo_block_get_resource (HippoBlock *block)
 {
-    gboolean success;
-    
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), NULL);
+
+    return block->resource;
+}
+
+static void
+hippo_block_update (HippoBlock *block)
+{
     g_object_freeze_notify(G_OBJECT(block));
 
-    success = HIPPO_BLOCK_GET_CLASS(block)->update_from_xml(block, cache, node);
+    HIPPO_BLOCK_GET_CLASS(block)->update(block);
 
     g_object_thaw_notify(G_OBJECT(block));
-
-    return success;
-    
 }
 
 const char*
@@ -807,26 +708,6 @@ hippo_block_set_significant_clicked_count(HippoBlock *block,
     }
 }
 
-int
-hippo_block_get_message_count(HippoBlock *block)
-{
-    g_return_val_if_fail(HIPPO_IS_BLOCK(block), 0);
-
-    return block->message_count;
-}
-
-void
-hippo_block_set_message_count(HippoBlock *block,
-                              int         value)
-{
-    g_return_if_fail(HIPPO_IS_BLOCK(block));
-
-    if (value != block->message_count) {
-        block->message_count = value;
-        g_object_notify(G_OBJECT(block), "message-count");
-    }
-}
-
 gboolean
 hippo_block_get_clicked(HippoBlock *block)
 {
@@ -929,69 +810,6 @@ hippo_block_set_stack_reason(HippoBlock      *block,
     }
 }
 
-GSList *
-hippo_block_get_recent_messages(HippoBlock *block)
-{
-    g_return_val_if_fail(HIPPO_IS_BLOCK(block), NULL);
-
-    return block->recent_messages;
-}
-
-void
-hippo_block_set_recent_messages(HippoBlock *block,
-                                GSList     *recent_messages)
-{
-    GSList *l;
-    
-    g_return_if_fail(HIPPO_IS_BLOCK(block));
-    
-    g_slist_foreach(block->recent_messages, (GFunc)hippo_chat_message_free, NULL);
-    g_slist_free(block->recent_messages);
-    block->recent_messages = NULL;
-
-    for (l = recent_messages; l; l = l->next) {
-        block->recent_messages = g_slist_prepend(block->recent_messages,
-                                                 hippo_chat_message_copy(l->data));
-    }
-
-    block->recent_messages = g_slist_reverse(block->recent_messages);
-
-    g_object_notify(G_OBJECT(block), "recent-messages");
-}
-
-gboolean
-hippo_block_set_recent_messages_from_xml (HippoBlock     *block,
-                                          HippoDataCache *cache,
-                                          LmMessageNode  *node)
-{
-    LmMessageNode *child;
-    GSList *recent_messages = NULL;
-    
-    g_return_val_if_fail(HIPPO_IS_BLOCK(block), FALSE);
-    
-    for (child = node->children; child; child = child->next) {
-        HippoChatMessage *chat_message;
-        
-        if (!strcmp(child->name, "message") == 0)
-            continue;
-        
-        chat_message = hippo_chat_message_new_from_xml(cache, child);
-        if (!chat_message)
-            continue;
-        
-        recent_messages = g_slist_prepend(recent_messages, chat_message);
-    }
-    
-    recent_messages = g_slist_reverse(recent_messages);
-    
-    hippo_block_set_recent_messages(block, recent_messages);
-    
-    g_slist_foreach(recent_messages, (GFunc)hippo_chat_message_free, NULL);
-    g_slist_free(recent_messages);
-
-    return TRUE;
-}
-    
 const char *
 hippo_block_get_chat_id(HippoBlock *block)
 {
@@ -1158,11 +976,15 @@ hippo_block_set_source(HippoBlock        *block,
     g_object_notify(G_OBJECT(block), "source");
 }
 
-HippoBlockType
-hippo_block_type_from_attributes(const char *type,
-                                 const char *generic_types)
+HippoBlock *
+hippo_block_create_for_resource(DDMDataResource *resource)
 {
     HippoBlockType block_type;
+    HippoBlock *block;
+    const char *resource_id;
+    const char *type;
+    const char *slash;
+    char *guid;
     
     static const struct { const char *name; HippoBlockType type; } types[] = {
         { "POST", HIPPO_BLOCK_TYPE_POST },
@@ -1176,13 +998,29 @@ hippo_block_type_from_attributes(const char *type,
         { "FACEBOOK_EVENT", HIPPO_BLOCK_TYPE_FACEBOOK_EVENT },
         { "YOUTUBE_PERSON", HIPPO_BLOCK_TYPE_YOUTUBE_PERSON },
         { "NETFLIX_MOVIE", HIPPO_BLOCK_TYPE_NETFLIX_MOVIE },
-        { "AMAZON_REVIEW", HIPPO_BLOCK_TYPE_AMAZON_ACTIVITY },
-        { "AMAZON_WISH_LIST_ITEM", HIPPO_BLOCK_TYPE_AMAZON_ACTIVITY }
+        { "AMAZON_REVIEW", HIPPO_BLOCK_TYPE_AMAZON_REVIEW },
+        { "AMAZON_WISH_LIST_ITEM", HIPPO_BLOCK_TYPE_AMAZON_WISH_LIST_ITEM }
     };
     unsigned int i;
 
-    g_return_val_if_fail(type != NULL, HIPPO_BLOCK_TYPE_UNKNOWN);
-    /* generic_types can be NULL */
+    g_return_val_if_fail(resource != NULL, NULL);
+
+    resource_id = ddm_data_resource_get_resource_id(resource);
+    type = strrchr(resource_id, '.');
+    if (type == NULL) {
+        g_warning("Cannot extract type from block resource ID");
+        return NULL;
+    }
+
+    type++; /* Skip the '.' */
+    
+    slash = strrchr(resource_id, '/');
+    if (slash == NULL || slash >= type) {
+        g_warning("Cannot extract guid from block resource ID");
+        return NULL;
+    }
+
+    guid = g_strndup(slash + 1, type - 1 - slash);
     
     block_type = HIPPO_BLOCK_TYPE_UNKNOWN;
     
@@ -1193,25 +1031,12 @@ hippo_block_type_from_attributes(const char *type,
         }
     }
 
-    if (block_type == HIPPO_BLOCK_TYPE_UNKNOWN &&
-        generic_types != NULL) {
-        char **generics;
-
-        generics = g_strsplit(generic_types, ",", -1);
-
-        if (generics != NULL) {
-            for (i = 0; generics[i] != NULL; ++i) {
-                /* TITLE_DESCRIPTION, ENTITY_SOURCE, THUMBNAILS are also possible,
-                 * the generic block type simply uses the description and source
-                 * information if it's available, but requires the title information.
-                 */
-                if (strcmp(generics[i], "TITLE") == 0)
-                    block_type = HIPPO_BLOCK_TYPE_GENERIC;
-            }
-
-            g_strfreev(generics);
-        }
-    }
+    if (block_type == HIPPO_BLOCK_TYPE_UNKNOWN)
+        block_type = HIPPO_BLOCK_TYPE_GENERIC;
     
-    return block_type;
+    block = hippo_block_new(resource, guid, block_type);
+
+    g_free(guid);
+
+    return block;
 }
