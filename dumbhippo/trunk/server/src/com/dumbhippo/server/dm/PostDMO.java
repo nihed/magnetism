@@ -17,6 +17,7 @@ import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.FeedPost;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
@@ -97,6 +98,16 @@ public abstract class PostDMO extends DMObject<Guid> {
 			if (accountClaim != null)
 				result.add(session.findUnchecked(UserDMO.class, accountClaim.getOwner().getGuid()));
 		}
+		
+		return result;
+	}
+
+	@DMProperty(defaultInclude=true, defaultChildren="+")
+	public List<GroupDMO> getGroupRecipients() {
+		List<GroupDMO> result = new ArrayList<GroupDMO>();
+		
+		for (Group group : post.getGroupRecipients())
+			result.add(session.findUnchecked(GroupDMO.class, group.getGuid()));
 		
 		return result;
 	}
