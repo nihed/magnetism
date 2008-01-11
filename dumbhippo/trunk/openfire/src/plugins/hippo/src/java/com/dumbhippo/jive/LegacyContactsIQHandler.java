@@ -30,8 +30,8 @@ import com.dumbhippo.server.views.ViewStream;
  * @author Havoc Pennington
  *
  */
-@IQHandler(namespace=OldContactsIQHandler.CONTACTS_NAMESPACE)
-public class OldContactsIQHandler extends AnnotatedIQHandler {
+@IQHandler(namespace=LegacyContactsIQHandler.CONTACTS_NAMESPACE)
+public class LegacyContactsIQHandler extends AnnotatedIQHandler {
 	static final String CONTACTS_NAMESPACE = "http://dumbhippo.com/protocol/contacts";
 	
 	@EJB
@@ -43,7 +43,7 @@ public class OldContactsIQHandler extends AnnotatedIQHandler {
 	@EJB
 	private ViewStreamBuilder viewStreamBuilder;
 	
-	public OldContactsIQHandler() {
+	public LegacyContactsIQHandler() {
 		super("Hippo contacts IQ Handler");
 		Log.debug("creating ContactsIQHandler");
 	}

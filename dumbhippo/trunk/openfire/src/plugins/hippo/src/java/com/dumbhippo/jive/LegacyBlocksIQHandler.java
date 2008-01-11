@@ -25,8 +25,8 @@ import com.dumbhippo.server.views.ObjectView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.ViewStream;
 
-@IQHandler(namespace=OldBlocksIQHandler.BLOCKS_NAMESPACE)
-public class OldBlocksIQHandler extends AnnotatedIQHandler {
+@IQHandler(namespace=LegacyBlocksIQHandler.BLOCKS_NAMESPACE)
+public class LegacyBlocksIQHandler extends AnnotatedIQHandler {
 	static final String BLOCKS_NAMESPACE = "http://dumbhippo.com/protocol/blocks"; 
 	
 	@EJB
@@ -35,7 +35,7 @@ public class OldBlocksIQHandler extends AnnotatedIQHandler {
 	@EJB
 	private ViewStreamBuilder viewStreamBuilder;
 
-	public OldBlocksIQHandler() {
+	public LegacyBlocksIQHandler() {
 		super("Old Hippo Blocks IQ Handler");
 		Log.debug("creating OldBlocksIQHandler");
 	}
