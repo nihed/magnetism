@@ -41,6 +41,8 @@ struct _DDMDataModel {
     gint64 next_query_serial;
     gint64 max_answered_query_serial;
 
+    gint64 server_time_offset;
+
     guint flush_idle;
 
     guint ready : 1;
@@ -1038,3 +1040,26 @@ ddm_data_model_get_self_resource(DDMDataModel *model)
 {
     return model->self_resource;
 }
+
+static gint64
+current_time_ms(void)
+{
+    GTimeVal now;
+
+    g_get_current_time(&now);
+    return (gint64)now.tv_sec * 1000 + now.tv_usec / 1000;
+}
+
+void
+ddm_data_model_update_server_time_offset(DDMDataModel *model,
+                                         gint64        server_time)
+{
+    model->server_time_offset = server_time - current_time_ms();
+}
+
+gint64
+ddm_data_model_get_server_time_offset(DDMDataModel *model)
+{
+    return model->server_time_offset;
+}
+ 

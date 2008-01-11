@@ -220,6 +220,7 @@ HippoTrack *
 hippo_track_new_from_xml(HippoDataCache *cache,
                          LmMessageNode  *node)
 {
+#if 0
     GSList *downloads = NULL;
     const char *artist;
     const char *album;
@@ -311,6 +312,7 @@ hippo_track_new_from_xml(HippoDataCache *cache,
     track->now_playing = now_playing;
 
     return track;
+#endif    
 }
 
 const char*

@@ -690,7 +690,7 @@ on_endpoint_message(HippoEndpointProxy *proxy,
     DBusMessage *message;
     
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
-    HippoConnection *connection = hippo_data_cache_get_connection(cache);
+    DDMDataModel *model = hippo_data_cache_get_model(cache);
     guint64 endpoint = hippo_endpoint_proxy_get_id(proxy);
     const char *chat_id = hippo_chat_room_get_id(chat_room);
     const char *user_id = hippo_entity_get_guid(HIPPO_ENTITY(hippo_chat_message_get_person(chat_message)));
@@ -714,7 +714,7 @@ on_endpoint_message(HippoEndpointProxy *proxy,
     /* Time in millseconds */
     timestamp = hippo_chat_message_get_timestamp(chat_message) * 1000.;
     /* Convert server time to client time, so the Javascript can format it correctly */
-    timestamp -= hippo_connection_get_server_time_offset(connection);
+    timestamp -= ddm_data_model_get_server_time_offset(model);
 
     g_debug("Sending message, %s, serial=%d", text, serial);
 

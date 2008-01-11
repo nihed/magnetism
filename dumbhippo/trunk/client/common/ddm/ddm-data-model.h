@@ -116,6 +116,20 @@ void ddm_data_model_set_global_resource (DDMDataModel    *model,
 void ddm_data_model_set_self_resource   (DDMDataModel    *model,
                                          DDMDataResource *self_resource);
 
+/* Tracking the server side offset in the data model is a little
+ * conceptually questionable since if we supported getting data from
+ * multiple servers, we might have a different time offset from each
+ * one. However, time offsets should be higly consistent assuming that
+ * the servers are all using NNTP or similar; in fact, if the local
+ * client is using NNTP, zero is a better estimate for the local time
+ * offset than anything we can do ourself. We track it ourself
+ * because the local client might have a screwed up time and if things
+ * start happening in the future it looks really weird.
+ */
+void   ddm_data_model_update_server_time_offset (DDMDataModel *model,
+                                                 gint64        server_time);
+gint64 ddm_data_model_get_server_time_offset    (DDMDataModel *model);
+
 G_END_DECLS
 
 #endif /* __DDM_DATA_MODEL_H__ */

@@ -73,10 +73,11 @@ static void dm_context_push_node (DMContext       *context,
                                   LmMessageNode   *node);
 static void dm_context_pop_node  (DMContext       *context);
 
-static DDMDataResource *update_resource (DMContext          *context,
-                                         DDMNotificationSet *broadcast_notifications,
-                                         DDMNotificationSet *save_notifications,
-                                         gboolean            mark_received);
+static DDMDataResource *update_resource           (DMContext          *context,
+                                                   DDMNotificationSet *broadcast_notifications,
+                                                   DDMNotificationSet *save_notifications,
+                                                   gboolean            mark_received);
+static void             update_server_time_offset (DMContext          *context);
 
 static void 
 message_context_ref(MessageContext *context)
@@ -1794,21 +1795,6 @@ hippo_connection_send_active_applications  (HippoConnection *connection,
     lm_message_unref(message);
 }
 
-gint64
-hippo_connection_get_server_time_offset(HippoConnection *connection)
-{
-    return connection->server_time_offset;
-}
-
-#if 0
-static void
-hippo_connection_update_server_time_offset(HippoConnection *connection,
-                                           gint64           server_time)
-{
-    connection->server_time_offset = server_time - hippo_current_time_ms();
-}
-#endif
- 
 static void 
 send_room_presence(HippoConnection *connection,
                    HippoChatRoom   *room,
@@ -2260,6 +2246,7 @@ parse_chat_resources(DMContext *context)
         return;
 
     dm_context_push_node(context, resources_node);
+    update_server_time_offset(context);
     
     for (resource_node = resources_node->children; resource_node; resource_node = resource_node->next) {
         dm_context_push_node(context, resource_node);
@@ -3178,6 +3165,32 @@ dm_context_get_system_attribute(DMContext  *context,
     return NULL;
 }
 
+static gboolean
+dm_context_get_system_attribute_int64(DMContext  *context,
+                                      const char *name,
+                                      gint64     *result)
+{
+    const char *value = dm_context_get_system_attribute(context, name);
+    if (value == NULL) {
+        return FALSE;
+    } else {
+        char *str_stripped;
+        char *end;
+        
+        str_stripped = g_strdup(value);
+        g_strstrip(str_stripped);
+        
+        *result = g_ascii_strtoll(str_stripped, &end, 10);
+        if (*str_stripped == '\0' || *end != '\0') {
+            g_warning("Invalid m:%s attribute '%s'", name, value);
+            return FALSE;
+        }
+
+        g_free(str_stripped);
+        return TRUE;
+    }
+}
+
 static void
 dm_context_push_node(DMContext     *context,
                      LmMessageNode *node)
@@ -3329,26 +3342,11 @@ dm_context_get_type(DMContext            *context,
 static gint64
 dm_context_get_ts(DMContext *context)
 {
-    const char *ts_attr = dm_context_get_system_attribute(context, "ts");
-    if (ts_attr == NULL) {
-        return -1;
-    } else {
-        char *str_stripped;
-        char *end;
-        gint64 result;
-        
-        str_stripped = g_strdup(ts_attr);
-        g_strstrip(str_stripped);
-        
-        result = g_ascii_strtoll(str_stripped, &end, 10);
-        if (*str_stripped == '\0' || *end != '\0') {
-            g_warning("Invalid m:ts attribute '%s'", ts_attr);
-            result = -1;
-        }
+    gint64 ts = -1;
+    
+    dm_context_get_system_attribute_int64(context, "ts", &ts);
 
-        g_free(str_stripped);
-        return result;
-    }
+    return ts;
 }
 
 static gboolean
@@ -3484,6 +3482,16 @@ update_property(DMContext            *context,
     }
 }
 
+static void
+update_server_time_offset(DMContext *context)
+{
+    gint64 server_time = -1;
+    
+    if (dm_context_get_system_attribute_int64(context, "serverTime", &server_time)) {
+        ddm_data_model_update_server_time_offset(context->model, server_time);
+    }
+}
+
 static DDMDataResource *
 update_resource(DMContext          *context,
                 DDMNotificationSet *broadcast_notifications,
@@ -3607,6 +3615,8 @@ on_query_reply(LmMessageHandler *handler,
             error_code = DDM_DATA_ERROR_BAD_REPLY;
             goto pop_child;
         }
+
+        update_server_time_offset(&context);
         
         notifications = ddm_notification_set_new(context.model);
         
@@ -3747,6 +3757,8 @@ handle_data_notify (HippoConnection *connection,
         }
 
         found = TRUE;
+
+        update_server_time_offset(&context);
 
         broadcast_notifications = ddm_notification_set_new(context.model);
         save_notifications = ddm_notification_set_new(context.model);
