@@ -2,7 +2,8 @@
 #ifndef __HIPPO_QUIP_WINDOW_H__
 #define __HIPPO_QUIP_WINDOW_H__
 
-#include <hippo/hippo-data-cache.h>
+#include <ddm/ddm.h>
+#include <hippo/hippo-stacker-platform.h>
 
 G_BEGIN_DECLS
 
@@ -18,8 +19,8 @@ typedef struct _HippoQuipWindowClass HippoQuipWindowClass;
 
 GType            hippo_quip_window_get_type               (void) G_GNUC_CONST;
 
-HippoQuipWindow* hippo_quip_window_new (DDMDataModel  *model,
-                                        HippoPlatform *platform);
+HippoQuipWindow* hippo_quip_window_new (DDMDataModel         *model,
+                                        HippoStackerPlatform *platform);
 
 void hippo_quip_window_set_chat      (HippoQuipWindow *quip_window,
                                       HippoChatKind    chat_kind,

@@ -41,7 +41,7 @@ static void hippo_object_cache_get_property (GObject      *object,
 
 
 typedef struct {
-    HippoPlatform *platform;
+    HippoStackerPlatform *platform;
     
     CacheEntry *strong_cache[MAX_STRONG_ENTRIES];
 
@@ -245,8 +245,8 @@ cache_entry_load(CacheEntry               *entry,
             
             entry->loading = TRUE;
             cache_entry_ref(entry); /* held by http_func */
-            hippo_platform_http_request(priv->platform,
-                                        entry->url, http_func, entry);
+            hippo_stacker_platform_http_request(priv->platform,
+                                                entry->url, http_func, entry);
         }
     } else {
         /* nothing to do, just keep waiting for http to return */
@@ -338,8 +338,8 @@ hippo_object_cache_set_property(GObject         *object,
     switch (prop_id) {
     case PROP_PLATFORM:
         {
-            HippoPlatform *new_platform =
-                (HippoPlatform*) g_value_get_object(value);
+            HippoStackerPlatform *new_platform =
+                (HippoStackerPlatform*) g_value_get_object(value);
             if (new_platform != priv->platform) {
                 if (priv->platform)
                     g_object_unref(priv->platform);
@@ -380,7 +380,7 @@ hippo_object_cache_get_property(GObject         *object,
 }
 
 HippoObjectCache*
-hippo_object_cache_new(HippoPlatform *platform)
+hippo_object_cache_new(HippoStackerPlatform *platform)
 {    
     HippoObjectCache *cache;
 

@@ -1982,24 +1982,6 @@ hippo_connection_send_chat_room_message(HippoConnection *connection,
     send_chat_room_message(connection, to, text, sentiment);
 }
 
-void
-hippo_connection_send_quip(HippoConnection *connection,
-                           HippoChatKind    kind,
-                           const char      *id,
-                           const char      *text,
-                           HippoSentiment   sentiment)
-{
-    char *node, *to;
-    
-    node = hippo_id_to_jabber_id(id);
-    to = g_strconcat(node, "@" HIPPO_ROOMS_JID_DOMAIN, NULL);
-    g_free(node);
-
-    send_chat_room_message(connection, to, text, sentiment);
-
-    g_free(to);
-}
-
 static gboolean
 parse_room_jid(const char *jid,
                char      **chat_id_p,

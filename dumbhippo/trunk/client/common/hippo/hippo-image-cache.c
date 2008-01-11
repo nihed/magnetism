@@ -44,7 +44,7 @@ hippo_image_cache_class_init(HippoImageCacheClass  *klass)
 }
 
 HippoImageCache*
-hippo_image_cache_new(HippoPlatform *platform)
+hippo_image_cache_new(HippoStackerPlatform *platform)
 {
     HippoImageCache *cache;
 

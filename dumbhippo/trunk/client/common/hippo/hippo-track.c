@@ -16,9 +16,6 @@ static void hippo_track_get_property (GObject      *object,
                                       GValue       *value,
                                       GParamSpec   *pspec);
 
-static HippoSongDownload *hippo_song_download_new_from_xml (HippoDataCache    *cache,
-                                                            LmMessageNode     *node);
-
 struct _HippoTrack {
     GObject parent;
     
@@ -201,6 +198,7 @@ hippo_track_get_property(GObject         *object,
     }
 }
 
+#if 0
 static gboolean
 track_ended(gpointer data)
 {
@@ -213,6 +211,7 @@ track_ended(gpointer data)
     
     return FALSE;
 }
+#endif
 
 /* === HippoTrack exported API === */
 
@@ -312,7 +311,8 @@ hippo_track_new_from_xml(HippoDataCache *cache,
     track->now_playing = now_playing;
 
     return track;
-#endif    
+#endif
+    return NULL;
 }
 
 const char*
@@ -408,31 +408,6 @@ struct _HippoSongDownload {
     HippoSongDownloadSource source;
     char *url;
 };
-
-static HippoSongDownload *
-hippo_song_download_new_from_xml(HippoDataCache *cache,
-                                 LmMessageNode  *node)
-{
-    HippoSongDownload *download;
-    const char *source_str;
-    const char *url;
-    HippoSongDownloadSource source;
-    
-    if (!hippo_xml_split(cache, node, NULL,
-                         "source", HIPPO_SPLIT_STRING, &source_str,
-                         "url", HIPPO_SPLIT_URI_ABSOLUTE, &url,
-                         NULL))
-        return NULL;
-
-    if (!song_download_source_from_string(source_str, &source))
-        return NULL;
-
-    download = g_new(HippoSongDownload, 1);
-    download->source = source;
-    download->url = g_strdup(url);
-
-    return download;
-}
 
 HippoSongDownload *
 hippo_song_download_new_from_string(const char *string)

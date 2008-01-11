@@ -29,7 +29,9 @@ void             hippo_ui_join_chat            (HippoUI                  *ui,
                                                 const char               *chat_id);
 HippoWindowState hippo_ui_get_chat_state       (HippoUI                  *ui,
                                                 const char               *chat_id);
-HippoStackManager* hippo_ui_get_stack_manager  (HippoUI                  *ui);
+
+HippoStackManager*    hippo_ui_get_stack_manager    (HippoUI *ui);
+HippoStackerPlatform *hippo_ui_get_stacker_platform (HippoUI *ui);
 
 G_END_DECLS
 

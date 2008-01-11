@@ -4,7 +4,7 @@
 
 /* A cache of objects (such as images) that are retrieved via http */
 
-#include <hippo/hippo-platform.h>
+#include <hippo/hippo-stacker-platform.h>
 
 G_BEGIN_DECLS
 
@@ -42,7 +42,7 @@ struct _HippoObjectCacheClass {
 
 GType            hippo_object_cache_get_type               (void) G_GNUC_CONST;
 
-HippoObjectCache* hippo_object_cache_new                    (HippoPlatform *platform);
+HippoObjectCache* hippo_object_cache_new                    (HippoStackerPlatform *platform);
 
 /* callback is invoked synchronously if there's a cache hit */
 void             hippo_object_cache_load                   (HippoObjectCache          *cache,

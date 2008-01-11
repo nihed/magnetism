@@ -509,11 +509,11 @@ HippoUI::create(HINSTANCE instance)
 
 #if 1
     // and very last once we're all ready, fire up the stacker
-    stack_ = hippo_stack_manager_new(dataCache_);
+    stack_ = hippo_stack_manager_new(hippo_data_cache_get_model(dataCache_), platform_);
 #endif
 
 #if 0
-    HippoWindow *window = hippo_platform_create_window(platform_);
+    HippoWindow *window = hippo_platform_create_window(HIPPO_STACKER_PLATFORM(platform_));
     hippo_window_set_resizable(window, HIPPO_ORIENTATION_HORIZONTAL, TRUE);
     hippo_window_set_resizable(window, HIPPO_ORIENTATION_VERTICAL, TRUE);
     HippoCanvasItem *root = hippo_canvas_test_get_root();

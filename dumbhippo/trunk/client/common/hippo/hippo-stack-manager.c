@@ -28,7 +28,7 @@
 struct _HippoStackManager {
     HippoDataCache  *cache;
     DDMDataModel    *model;
-    HippoPlatform   *platform;
+    HippoStackerPlatform *platform;
     HippoActions    *actions;
     gboolean         nofeed_active;
     gboolean         noselfsource_active;
@@ -207,7 +207,7 @@ update_window_positions(StackManager *manager,
     HippoRectangle icon;
     HippoOrientation icon_orientation;
     
-    hippo_platform_get_screen_info(manager->platform, &monitor, &icon, &icon_orientation);
+    hippo_stacker_platform_get_screen_info(manager->platform, &monitor, &icon, &icon_orientation);
     
     update_for_screen_info(manager, &monitor, &icon, icon_orientation, position_browser, position_notification);
 }
@@ -225,7 +225,7 @@ resize_browser_to_natural_size(StackManager *manager)
      * advantage
      */
     
-    hippo_platform_get_screen_info(manager->platform, &monitor, NULL, NULL);
+    hippo_stacker_platform_get_screen_info(manager->platform, &monitor, NULL, NULL);
     
     hippo_canvas_item_get_width_request(manager->browser_box, &natural_width, NULL);
 
@@ -406,7 +406,7 @@ manager_set_browser_visible(StackManager *manager,
          * don't distinguish close and minimize, so we show the minimize animation if
          * possible.
          */
-        hippo_platform_get_screen_info(manager->platform, NULL, &icon, NULL);
+        hippo_stacker_platform_get_screen_info(manager->platform, NULL, &icon, NULL);
 
         hippo_window_hide_to_icon(manager->browser_window, &icon);
     }
@@ -567,7 +567,7 @@ static gboolean
 chat_is_visible(StackManager *manager,
                 const char   *chat_id)
 {
-    switch (hippo_platform_get_chat_window_state(manager->platform, chat_id)) {
+    switch (hippo_stacker_platform_get_chat_window_state(manager->platform, chat_id)) {
     case HIPPO_WINDOW_STATE_CLOSED:
         return FALSE;
     case HIPPO_WINDOW_STATE_HIDDEN:
@@ -975,7 +975,8 @@ on_notification_motion_notify(HippoCanvasItem *item,
 }
 
 HippoStackManager*
-hippo_stack_manager_new(HippoDataCache *cache)
+hippo_stack_manager_new(DDMDataModel         *model,
+                        HippoStackerPlatform *platform)
 {
     StackManager *manager;
     HippoConnection *connection;
@@ -984,14 +985,12 @@ hippo_stack_manager_new(HippoDataCache *cache)
     manager->item_to_block = g_hash_table_new_full(g_direct_hash, NULL,
                                                    NULL, (GDestroyNotify)g_object_unref);
 
-    manager->model = g_object_ref(hippo_data_cache_get_model(cache));
-    
-    connection = hippo_data_cache_get_connection(cache);
-    manager->platform = g_object_ref(hippo_connection_get_platform(connection));
+    manager->model = g_object_ref(model);
+    manager->platform = g_object_ref(platform);
                                                        
     manager->actions = hippo_actions_new(manager->model, manager->platform, manager);
     
-    manager->browser_window = hippo_platform_create_window(manager->platform);
+    manager->browser_window = hippo_stacker_platform_create_window(manager->platform);
 
 #ifdef WITH_MAEMO
     g_object_set(manager->browser_window, "role", HIPPO_WINDOW_ROLE_NOTIFICATION, NULL);
@@ -1064,7 +1063,7 @@ hippo_stack_manager_new(HippoDataCache *cache)
     
     hippo_window_set_contents(manager->browser_window, manager->browser_box);
 
-    manager->notification_window = hippo_platform_create_window(manager->platform);
+    manager->notification_window = hippo_stacker_platform_create_window(manager->platform);
 
     /* Omit the window from the task-list and (for platforms where there is one) the pager */
     g_object_set(manager->notification_window, "role", HIPPO_WINDOW_ROLE_NOTIFICATION, NULL);

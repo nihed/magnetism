@@ -23,7 +23,7 @@ typedef struct _HippoImageCacheClass HippoImageCacheClass;
 
 GType            hippo_image_cache_get_type               (void) G_GNUC_CONST;
 
-HippoImageCache* hippo_image_cache_new                    (HippoPlatform            *platform);
+HippoImageCache* hippo_image_cache_new                    (HippoStackerPlatform     *platform);
 
 /* callback is invoked synchronously if there's a cache hit */
 void             hippo_image_cache_load                   (HippoImageCache          *cache,

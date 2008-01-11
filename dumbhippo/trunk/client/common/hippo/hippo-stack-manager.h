@@ -6,11 +6,14 @@
  * Manage all the windows that make up the stacker UI, when to display them, etc.
  */
 
-#include <hippo/hippo-data-cache.h>
+#include <ddm/ddm.h>
+#include <hippo/hippo-stacker-platform.h>
 
 G_BEGIN_DECLS
 
-HippoStackManager* hippo_stack_manager_new   (HippoDataCache    *cache);
+HippoStackManager* hippo_stack_manager_new (DDMDataModel         *model,
+                                            HippoStackerPlatform *platform);
+
 void               hippo_stack_manager_free  (HippoStackManager *manager);
 
 void hippo_stack_manager_set_idle        (HippoStackManager   *manager,
