@@ -83,6 +83,7 @@ public class HippoPlugin implements Plugin {
 			addIQHandler(new SystemIQHandler());
 			addIQHandler(new ApplicationsIQHandler());
 			addIQHandler(new LegacyApplicationsIQHandler());
+			addIQHandler(new ChatMessagesIQHandler());
 			addIQHandler(new ClientInfoIQHandler());
 			addIQHandler(new MySpaceIQHandler());					
 			addIQHandler(new MusicIQHandler());
