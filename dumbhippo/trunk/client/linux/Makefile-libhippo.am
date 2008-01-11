@@ -152,6 +152,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-settings.h			\
 	$(COMMONSRCDIR)/hippo/hippo-stack-manager.c		\
 	$(COMMONSRCDIR)/hippo/hippo-stack-manager.h		\
+	$(COMMONSRCDIR)/hippo/hippo-stacker-platform.c		\
+	$(COMMONSRCDIR)/hippo/hippo-stacker-platform.h		\
 	$(COMMONSRCDIR)/hippo/hippo-surface.c			\
 	$(COMMONSRCDIR)/hippo/hippo-surface.h			\
 	$(COMMONSRCDIR)/hippo/hippo-thumbnails.c		\

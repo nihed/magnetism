@@ -11,10 +11,12 @@
 #include <Windows.h>
 #include <mshtml.h>
 #include <hippo/hippo-basics.h>
+#include <hippo/hippo-stacker-impl.h>
 
 static void      hippo_platform_impl_init                (HippoPlatformImpl       *impl);
 static void      hippo_platform_impl_class_init          (HippoPlatformImplClass  *klass);
 static void      hippo_platform_impl_iface_init          (HippoPlatformClass      *klass);
+static void      hippo_platform_impl_stacker_iface_init  (HippoStackerPlatformClass *klass);
 
 static void      hippo_platform_impl_finalize            (GObject                 *object);
 
@@ -78,23 +80,17 @@ struct _HippoPlatformImplClass {
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoPlatformImpl, hippo_platform_impl, G_TYPE_OBJECT,
-                        G_IMPLEMENT_INTERFACE(HIPPO_TYPE_PLATFORM, hippo_platform_impl_iface_init));
+                        G_IMPLEMENT_INTERFACE(HIPPO_TYPE_PLATFORM, hippo_platform_impl_iface_init);
+                        G_IMPLEMENT_INTERFACE(HIPPO_TYPE_STACKER_PLATFORM, hippo_stacker_platform_impl_iface_init));
 
 static void
 hippo_platform_impl_iface_init(HippoPlatformClass *klass)
 {
     klass->get_platform_info = hippo_platform_impl_get_platform_info;
-    klass->create_window = hippo_platform_impl_create_window;
-    klass->get_screen_info = hippo_platform_impl_get_screen_info;
-    klass->get_pointer_position = hippo_platform_impl_get_pointer_position;
     klass->read_login_cookie = hippo_platform_impl_read_login_cookie;
     klass->delete_login_cookie = hippo_platform_impl_delete_login_cookie;
     klass->get_jabber_resource = hippo_platform_impl_get_jabber_resource;
     klass->open_url = hippo_platform_impl_open_url;
-    klass->http_request = hippo_platform_impl_http_request;
-    klass->show_chat_window = hippo_platform_impl_show_chat_window;
-    klass->get_chat_window_state = hippo_platform_impl_get_chat_window_state;
-    klass->can_play_song_download = hippo_platform_impl_can_play_song_download;
     klass->get_instance_type = hippo_platform_impl_get_instance_type;
     klass->get_message_server = hippo_platform_impl_get_message_server;
     klass->get_web_server = hippo_platform_impl_get_web_server;
@@ -102,6 +98,18 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->set_message_server = hippo_platform_impl_set_message_server;
     klass->set_web_server = hippo_platform_impl_set_web_server;
     klass->set_signin = hippo_platform_impl_set_signin;
+}
+
+static void
+hippo_platform_impl_stacker_iface_init(HippoStackerPlatformClass *klass)
+{
+    klass->create_window = hippo_platform_impl_create_window;
+    klass->get_screen_info = hippo_platform_impl_get_screen_info;
+    klass->get_pointer_position = hippo_platform_impl_get_pointer_position;
+    klass->http_request = hippo_platform_impl_http_request;
+    klass->show_chat_window = hippo_platform_impl_show_chat_window;
+    klass->get_chat_window_state = hippo_platform_impl_get_chat_window_state;
+    klass->can_play_song_download = hippo_platform_impl_can_play_song_download;
 }
 
 static void

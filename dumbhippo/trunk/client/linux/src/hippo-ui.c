@@ -6,6 +6,7 @@
 #include <hippo/hippo-stack-manager.h>
 #include "hippo-status-icon.h"
 #include "hippo-embedded-image.h"
+#include "hippo-stacker-platform-impl.h"
 #include <string.h>
 #include <hippo/hippo-canvas.h>
 #include <gdk/gdkx.h>
@@ -13,6 +14,7 @@
 
 struct HippoUI {
     HippoPlatform *platform;
+    HippoStackerPlatform *stacker_platform;
     HippoDataCache *cache;
     HippoConnection *connection;
     HippoDBus *dbus;
@@ -663,11 +665,12 @@ hippo_ui_new(HippoDataCache *cache,
 
     ui->connection = hippo_data_cache_get_connection(ui->cache);
     ui->platform = hippo_connection_get_platform(ui->connection);
+    ui->stacker_platform = hippo_stacker_platform_impl_new();
 
     ui->dbus = dbus;
     g_object_ref(ui->dbus);
     
-    ui->stack = hippo_stack_manager_new(ui->cache);
+    ui->stack = hippo_stack_manager_new(hippo_data_cache_get_model(cache), ui->stacker_platform);
     
     ui->icon = hippo_status_icon_new(ui->cache);
 
@@ -717,3 +720,10 @@ hippo_ui_get_stack_manager  (HippoUI *ui)
 {
     return ui->stack;
 }
+
+HippoStackerPlatform *
+hippo_ui_get_stacker_platform (HippoUI *ui)
+{
+    return ui->stacker_platform;
+}
+

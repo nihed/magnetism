@@ -16,7 +16,7 @@ static void      hippo_actions_finalize            (GObject            *object);
 struct _HippoActions {
     GObject parent;
     DDMDataModel *model;
-    HippoPlatform *platform;
+    HippoStackerPlatform *platform;
     HippoStackManager *stack_manager;
 
     /* We have an image cache for each kind of
@@ -142,9 +142,9 @@ hippo_actions_finalize(GObject *object)
 }
 
 HippoActions*
-hippo_actions_new(DDMDataModel      *model,
-                  HippoPlatform     *platform,
-                  HippoStackManager *stack_manager)
+hippo_actions_new(DDMDataModel             *model,
+                  HippoStackerPlatform     *platform,
+                  HippoStackManager        *stack_manager)
 {
     HippoActions *actions;
 
@@ -398,7 +398,8 @@ void
 hippo_actions_join_chat_id(HippoActions    *actions,
                            const char      *chat_id)
 {
-    hippo_platform_show_chat_window(actions->platform, chat_id);
+
+    hippo_stacker_platform_show_chat_window(actions->platform, chat_id);
 }
 
 void
@@ -417,7 +418,7 @@ gboolean
 hippo_actions_can_play_song_download(HippoActions      *actions,
                                      HippoSongDownload *song_download)
 {
-    return hippo_platform_can_play_song_download(actions->platform, song_download);
+    return hippo_stacker_platform_can_play_song_download(actions->platform, song_download);
 }
 
 void

@@ -20,7 +20,7 @@ static void      hippo_quip_window_finalize            (GObject            *obje
 struct _HippoQuipWindow {
     GObject parent;
     DDMDataModel *model;
-    HippoPlatform *platform;
+    HippoStackerPlatform *platform;
 
     HippoChatKind chat_kind;
     char *chat_id;
@@ -250,8 +250,8 @@ create_sentiment_box(HippoQuipWindow *quip_window,
 }
  
 HippoQuipWindow*
-hippo_quip_window_new(DDMDataModel  *model,
-                      HippoPlatform *platform)
+hippo_quip_window_new(DDMDataModel         *model,
+                      HippoStackerPlatform *platform)
 {
     HippoQuipWindow *quip_window;
     HippoCanvasBox *outer_box;
@@ -262,7 +262,7 @@ hippo_quip_window_new(DDMDataModel  *model,
     HippoCanvasItem *item;
 
     g_return_val_if_fail(DDM_IS_DATA_MODEL(model), NULL);
-    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
+    g_return_val_if_fail(HIPPO_IS_STACKER_PLATFORM(platform), NULL);
 
     quip_window = g_object_new(HIPPO_TYPE_QUIP_WINDOW,
                                NULL);
@@ -270,7 +270,7 @@ hippo_quip_window_new(DDMDataModel  *model,
     quip_window->model = g_object_ref(model);
     quip_window->platform = g_object_ref(platform);
 
-    quip_window->window = hippo_platform_create_window(quip_window->platform);
+    quip_window->window = hippo_stacker_platform_create_window(quip_window->platform);
 
     g_signal_connect(quip_window->window, "notify::active",
                      G_CALLBACK(on_notify_active),  quip_window);
@@ -472,9 +472,9 @@ hippo_quip_window_show(HippoQuipWindow *quip_window)
     quip_window->visible = TRUE;
     g_object_ref(quip_window);
 
-    hippo_platform_get_screen_info(quip_window->platform, &monitor_rect, NULL, NULL);
+    hippo_stacker_platform_get_screen_info(quip_window->platform, &monitor_rect, NULL, NULL);
     
-    if (!hippo_platform_get_pointer_position(quip_window->platform, &pointer_x, &pointer_y)) {
+    if (!hippo_stacker_platform_get_pointer_position(quip_window->platform, &pointer_x, &pointer_y)) {
         /* Pointer on a different X screen, we'll just position at lower right */
         pointer_x = monitor_rect.x + monitor_rect.width;
         pointer_y = monitor_rect.y + monitor_rect.height;

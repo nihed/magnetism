@@ -68,6 +68,12 @@ hippo_app_get_data_cache (HippoApp *app)
     return app->cache;
 }
 
+HippoStackerPlatform *
+hippo_app_get_stacker_platform (HippoApp *app)
+{
+    return hippo_ui_get_stacker_platform(app->ui);
+}
+
 HippoDBus*
 hippo_app_get_dbus (HippoApp *app)
 {

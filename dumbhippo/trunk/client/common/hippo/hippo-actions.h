@@ -21,10 +21,12 @@
  *   can_play_song_download(). -owt
  */
 
-#include <hippo/hippo-data-cache.h>
+#include <ddm/ddm.h>
 #include <hippo/hippo-block.h>
 #include <hippo/hippo-group.h>
+#include <hippo/hippo-person.h>
 #include <hippo/hippo-canvas-item.h>
+#include <hippo/hippo-stacker-platform.h>
 
 #include <hippo/hippo-stack-manager.h>
 
@@ -42,9 +44,9 @@ typedef struct _HippoActionsClass HippoActionsClass;
 
 GType            hippo_actions_get_type               (void) G_GNUC_CONST;
 
-HippoActions* hippo_actions_new (DDMDataModel      *model,
-                                 HippoPlatform     *platform,
-                                 HippoStackManager *stack_manager);
+HippoActions* hippo_actions_new (DDMDataModel         *model,
+                                 HippoStackerPlatform *platform,
+                                 HippoStackManager    *stack_manager);
 
 void          hippo_actions_visit_post              (HippoActions    *actions,
                                                      HippoPost       *post);
