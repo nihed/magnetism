@@ -90,15 +90,15 @@ public class HippoPlugin implements Plugin {
 			addIQHandler(new HotnessIQHandler());	
 			addIQHandler(new RecentPostsIQHandler());
 			addIQHandler(new PostControlsIQHandler());
-			addIQHandler(new OldGroupIQHandler());	
+			addIQHandler(new LegacyGroupIQHandler());	
 			addIQHandler(new GroupsIQHandler());	
-			addIQHandler(new OldBlocksIQHandler());
+			addIQHandler(new LegacyBlocksIQHandler());
 			addIQHandler(new BlocksIQHandler());
 			addIQHandler(new AccountQuestionIQHandler());
 			addIQHandler(new SettingsIQHandler());			
 			addIQHandler(new LegacySettingsIQHandler());
 			addIQHandler(new WhereImIQHandler());
-			addIQHandler(new OldContactsIQHandler());
+			addIQHandler(new LegacyContactsIQHandler());
 			addIQHandler(new ContactsIQHandler());
 			addIQHandler(new EntityIQHandler());			
 			
