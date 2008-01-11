@@ -595,6 +595,7 @@ public class Room implements PresenceListener {
 		}
 		BoundFetch<Guid,DMObject<Guid>> fetch = USER_FETCH.bind(userDMO.getClassHolder());
 		session.visitFetch(userDMO, fetch, visitor, true);
+		visitor.finish();
 		
 		if (resources.elements().size() == 0)
 			rootElement.remove(resources);

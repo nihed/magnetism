@@ -164,6 +164,8 @@ public class XmppClient implements UserClient {
 	public void endNotification(FetchVisitor visitor, long serial) {
 		XmppFetchVisitor xmppVisitor = (XmppFetchVisitor)visitor;
 		
+		xmppVisitor.finish();
+		
         Message message = new Message();
         message.setType(Message.Type.headline);
         message.getElement().add(xmppVisitor.getRootElement());
