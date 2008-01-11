@@ -95,13 +95,6 @@ void             hippo_connection_send_chat_room_message    (HippoConnection *co
                                                              const char      *text,
                                                              HippoSentiment   sentiment);
 
-/* Like send_chat_room_message, but without a chat room */
-void             hippo_connection_send_quip                 (HippoConnection *connection,
-                                                             HippoChatKind    kind,
-                                                             const char      *id,
-                                                             const char      *text,
-                                                             HippoSentiment   sentiment);
-
 void     hippo_connection_request_prefs             (HippoConnection *connection);
 void     hippo_connection_request_title_patterns    (HippoConnection *connection);
 
@@ -118,9 +111,6 @@ void     hippo_connection_send_active_applications  (HippoConnection *connection
 
 void hippo_connection_send_query (HippoConnection *connection,
                                   DDMDataQuery    *query);
-
-/* Gets the number of milliseconds to add to the local time to get the server time */
-gint64   hippo_connection_get_server_time_offset    (HippoConnection *connection);
 
 const char*      hippo_connection_get_tooltip       (HippoConnection *connection);
 

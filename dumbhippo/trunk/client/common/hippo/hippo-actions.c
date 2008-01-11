@@ -15,7 +15,8 @@ static void      hippo_actions_finalize            (GObject            *object);
 
 struct _HippoActions {
     GObject parent;
-    HippoDataCache *cache;
+    DDMDataModel *model;
+    HippoPlatform *platform;
     HippoStackManager *stack_manager;
 
     /* We have an image cache for each kind of
@@ -93,11 +94,18 @@ hippo_actions_dispose(GObject *object)
         actions->minute_timeout_id = 0;
     }
     
-    if (actions->cache) {
-        g_object_unref(actions->cache);
-        actions->cache = NULL;
+    if (actions->model) {
+        g_object_unref(actions->model);
+        actions->model = NULL;
     }
 
+    if (actions->platform) {
+        g_object_unref(actions->platform);
+        actions->platform = NULL;
+    }
+
+    actions->stack_manager = NULL;
+    
     if (actions->entity_photo_cache) {
         g_object_run_dispose(G_OBJECT(actions->entity_photo_cache));
         g_object_unref(actions->entity_photo_cache);
@@ -122,8 +130,6 @@ hippo_actions_dispose(GObject *object)
         actions->music_thumbnail_cache = NULL;
     }
 
-    actions->stack_manager = NULL;
-    
     G_OBJECT_CLASS(hippo_actions_parent_class)->dispose(object);
 }
 
@@ -136,7 +142,8 @@ hippo_actions_finalize(GObject *object)
 }
 
 HippoActions*
-hippo_actions_new(HippoDataCache    *cache,
+hippo_actions_new(DDMDataModel      *model,
+                  HippoPlatform     *platform,
                   HippoStackManager *stack_manager)
 {
     HippoActions *actions;
@@ -144,28 +151,11 @@ hippo_actions_new(HippoDataCache    *cache,
     actions = g_object_new(HIPPO_TYPE_ACTIONS,
                            NULL);
 
-    actions->cache = g_object_ref(cache);
+    actions->model = g_object_ref(model);
+    actions->platform = g_object_ref(platform);
     actions->stack_manager = stack_manager;
     
     return actions;
-}
-
-static HippoConnection*
-get_connection(HippoActions *actions)
-{
-    return hippo_data_cache_get_connection(actions->cache);
-}
-
-static DDMDataModel*
-get_model(HippoActions *actions)
-{
-    return hippo_data_cache_get_model(actions->cache);
-}
-
-static HippoPlatform*
-get_platform(HippoActions *actions)
-{
-    return hippo_connection_get_platform(get_connection(actions));
 }
 
 void
@@ -229,7 +219,7 @@ hippo_actions_load_favicon_async(HippoActions    *actions,
                                  HippoCanvasItem *image_item)
 {
     if (actions->favicon_cache == NULL) {
-        actions->favicon_cache = hippo_image_cache_new(get_platform(actions));
+        actions->favicon_cache = hippo_image_cache_new(actions->platform);
     }
 
     /* hippo_object_cache_debug_dump(HIPPO_OBJECT_CACHE(actions->favicon_cache)); */
@@ -243,7 +233,7 @@ hippo_actions_load_thumbnail_async(HippoActions    *actions,
                                    HippoCanvasItem *image_item)
 {
     if (actions->thumbnail_cache == NULL) {
-        actions->thumbnail_cache = hippo_image_cache_new(get_platform(actions));
+        actions->thumbnail_cache = hippo_image_cache_new(actions->platform);
     }
 
     /* hippo_object_cache_debug_dump(HIPPO_OBJECT_CACHE(actions->thumbnail_cache)); */
@@ -257,7 +247,7 @@ hippo_actions_load_music_thumbnail_async(HippoActions    *actions,
                                          HippoCanvasItem *image_item)
 {
     if (actions->music_thumbnail_cache == NULL) {
-        actions->music_thumbnail_cache = hippo_image_cache_new(get_platform(actions));
+        actions->music_thumbnail_cache = hippo_image_cache_new(actions->platform);
     }
 
     /* hippo_object_cache_debug_dump(HIPPO_OBJECT_CACHE(actions->music_thumbnail_cache)); */
@@ -288,7 +278,7 @@ hippo_actions_load_entity_photo_async(HippoActions    *actions,
     sized = hippo_size_photo_url(url, size);
 
     if (actions->entity_photo_cache == NULL) {
-        actions->entity_photo_cache = hippo_image_cache_new(get_platform(actions));
+        actions->entity_photo_cache = hippo_image_cache_new(actions->platform);
     }
 
     /* hippo_object_cache_debug_dump(HIPPO_OBJECT_CACHE(actions->entity_photo_cache)); */
@@ -301,7 +291,7 @@ hippo_actions_load_entity_photo_async(HippoActions    *actions,
 gint64
 hippo_actions_get_server_time_offset (HippoActions *actions)
 {
-    return hippo_connection_get_server_time_offset(get_connection(actions));
+    return ddm_data_model_get_server_time_offset(actions->model);
 }
 
 void
@@ -350,7 +340,7 @@ hippo_actions_toggle_noselfsource(HippoActions *actions)
 void
 hippo_actions_open_home_page(HippoActions    *actions)
 {
-    DDMDataResource *self = ddm_data_model_get_self_resource(get_model(actions));
+    DDMDataResource *self = ddm_data_model_get_self_resource(actions->model);
     const char *home_url;
 
     ddm_data_resource_get(self,
@@ -361,34 +351,14 @@ hippo_actions_open_home_page(HippoActions    *actions)
         hippo_actions_open_url(actions, home_url);
 }
 
-static void
-on_open_url_error(DDMDataError  error,
-                     const char   *message,
-                     gpointer      data)
-{
-     g_warning("Failed to open URL in browser: %s", message);
-}
-
 void
 hippo_actions_open_url(HippoActions *actions,
                        const char   *url)
 {
-    DDMDataQuery *query;
-
-    query = ddm_data_model_update(get_model(actions),
-                                  "online-desktop:/p/system#openUrl",
-                                  "url", url,
-                                  NULL);
-    
-    ddm_data_query_set_error_handler(query, on_open_url_error, actions);
-}
-
-static void
-on_set_block_hushed_error(DDMDataError  error,
-                     const char   *message,
-                     gpointer      data)
-{
-     g_warning("Failed to set block hush state: %s", message);
+    ddm_data_model_update(actions->model,
+                          "online-desktop:/p/system#openUrl",
+                          "url", url,
+                          NULL);
 }
 
 static void
@@ -396,15 +366,11 @@ set_block_hushed(HippoActions *actions,
                  HippoBlock   *block,
                  gboolean      hushed)
 {
-    DDMDataQuery *query;
-
-    query = ddm_data_model_update(get_model(actions),
-                                  "http://mugshot.org/p/blocks#setBlockHushed",
-                                  "blockId", hippo_block_get_guid(block),
-                                  "hushed", hushed ? "true" : "false",
-                                  NULL);
-    
-    ddm_data_query_set_error_handler(query, on_set_block_hushed_error, actions);
+    ddm_data_model_update(actions->model,
+                          "http://mugshot.org/p/blocks#setBlockHushed",
+                          "blockId", hippo_block_get_guid(block),
+                          "hushed", hushed ? "true" : "false",
+                          NULL);
 }
 
 void
@@ -432,15 +398,7 @@ void
 hippo_actions_join_chat_id(HippoActions    *actions,
                            const char      *chat_id)
 {
-    hippo_platform_show_chat_window(get_platform(actions), chat_id);
-}
-
-static void
-on_invite_user_error(DDMDataError  error,
-                     const char   *message,
-                     gpointer      data)
-{
-     g_warning("Failed to invite user to group: %s", message);
+    hippo_platform_show_chat_window(actions->platform, chat_id);
 }
 
 void
@@ -448,22 +406,18 @@ hippo_actions_invite_to_group(HippoActions    *actions,
                               HippoGroup      *group,
                               HippoPerson     *person)
 {
-    DDMDataQuery *query;
-
-    query = ddm_data_model_update(get_model(actions),
-                                  "http://mugshot.org/p/blocks#accountQuestionResponse",
-                                  "groupId", hippo_entity_get_guid(HIPPO_ENTITY(group)),
-                                  "userId", hippo_entity_get_guid(HIPPO_ENTITY(person)),
-                                  NULL);
-    
-    ddm_data_query_set_error_handler(query, on_invite_user_error, actions);
+    ddm_data_model_update(actions->model,
+                          "http://mugshot.org/p/groups#inviteUser",
+                          "groupId", hippo_entity_get_guid(HIPPO_ENTITY(group)),
+                          "userId", hippo_entity_get_guid(HIPPO_ENTITY(person)),
+                          NULL);
 }
 
 gboolean
 hippo_actions_can_play_song_download(HippoActions      *actions,
                                      HippoSongDownload *song_download)
 {
-    return hippo_platform_can_play_song_download(get_platform(actions), song_download);
+    return hippo_platform_can_play_song_download(actions->platform, song_download);
 }
 
 void
@@ -473,7 +427,7 @@ hippo_actions_quip(HippoActions   *actions,
                    HippoSentiment  sentiment,
                    const char     *title)
 {
-    HippoQuipWindow *quip_window = hippo_quip_window_new(actions->cache);
+    HippoQuipWindow *quip_window = hippo_quip_window_new(actions->model, actions->platform);
 
     hippo_quip_window_set_chat(quip_window, kind, id);
     hippo_quip_window_set_sentiment(quip_window, sentiment);
@@ -483,26 +437,14 @@ hippo_actions_quip(HippoActions   *actions,
     g_object_unref(quip_window);
 }
 
-static void
-on_account_question_response_error(DDMDataError  error,
-                     const char   *message,
-                     gpointer      data)
-{
-     g_warning("Failed to set account question response: %s", message);
-}
-
 void 
 hippo_actions_send_account_question_response(HippoActions *actions,
                                              const char   *block_id,
                                              const char   *response)
 {
-    DDMDataQuery *query;
-
-    query = ddm_data_model_update(get_model(actions),
-                                  "http://mugshot.org/p/blocks#accountQuestionResponse",
-                                  "blockId", block_id,
-                                  "response", response,
-                                  NULL);
-    
-    ddm_data_query_set_error_handler(query, on_account_question_response_error, actions);
+    ddm_data_model_update(actions->model,
+                          "http://mugshot.org/p/blocks#accountQuestionResponse",
+                          "blockId", block_id,
+                          "response", response,
+                          NULL);
 }

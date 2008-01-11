@@ -285,14 +285,51 @@ _ddm_data_query_local_response (DDMDataQuery *query,
     data_query_response_internal(query, results, TRUE);
 }
 
+static void
+params_to_string_foreach(gpointer k,
+                         gpointer v,
+                         gpointer data)
+{
+    const char *name = k;
+    const char *value = v;
+    GString *result = data;
+
+    if (result->len > 0)
+        g_string_append(result, ", ");
+    
+    g_string_append_printf(result, "%s='%s'", name, value);
+}
+
+static char *
+params_to_string(GHashTable *params)
+{
+    GString *result = g_string_new(NULL);
+    
+    g_hash_table_foreach(params, params_to_string_foreach, result);
+
+    return g_string_free(result, FALSE);
+}
+
 void
 _ddm_data_query_run_response (DDMDataQuery *query)
 {
     g_return_if_fail(query != NULL);
 
     if (query->error_message) {
-        if (query->error_handler)    
+        if (query->error_handler) {
             query->error_handler(query->error, query->error_message, query->error_handler_data);
+        } else {
+            char *method = ddm_qname_to_uri(query->qname);
+            char *params = params_to_string(query->params);
+        
+            g_warning("%s %s(%s) failed: %s",
+                      query->is_update ? "Update" : "Query",
+                      method, params,
+                      query->error_message);
+            
+            g_free(method);
+            g_free(params);
+        }
     
         ddm_data_query_free(query);
 

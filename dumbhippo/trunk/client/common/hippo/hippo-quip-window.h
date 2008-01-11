@@ -18,7 +18,8 @@ typedef struct _HippoQuipWindowClass HippoQuipWindowClass;
 
 GType            hippo_quip_window_get_type               (void) G_GNUC_CONST;
 
-HippoQuipWindow* hippo_quip_window_new (HippoDataCache *data_cache);
+HippoQuipWindow* hippo_quip_window_new (DDMDataModel  *model,
+                                        HippoPlatform *platform);
 
 void hippo_quip_window_set_chat      (HippoQuipWindow *quip_window,
                                       HippoChatKind    chat_kind,

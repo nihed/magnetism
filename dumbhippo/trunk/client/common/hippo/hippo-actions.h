@@ -42,8 +42,10 @@ typedef struct _HippoActionsClass HippoActionsClass;
 
 GType            hippo_actions_get_type               (void) G_GNUC_CONST;
 
-HippoActions* hippo_actions_new                     (HippoDataCache  *cache,
-                                                     HippoStackManager *stack_manager);
+HippoActions* hippo_actions_new (DDMDataModel      *model,
+                                 HippoPlatform     *platform,
+                                 HippoStackManager *stack_manager);
+
 void          hippo_actions_visit_post              (HippoActions    *actions,
                                                      HippoPost       *post);
 void          hippo_actions_visit_entity            (HippoActions    *actions,

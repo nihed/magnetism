@@ -983,21 +983,14 @@ hippo_stack_manager_new(HippoDataCache *cache)
     manager = g_new0(StackManager, 1);
     manager->item_to_block = g_hash_table_new_full(g_direct_hash, NULL,
                                                    NULL, (GDestroyNotify)g_object_unref);
-    
-    /* FIXME really the "actions" should probably be more global, e.g.
-     * shared with the tray icon, but the way I wanted to do that
-     * is to stuff it on the data cache, but that requires moving
-     * hippo-actions to the common library which can't be done with
-     * right this second since a bunch of eventually xp stuff is in
-     * the linux dir.
-     */
-    manager->actions = hippo_actions_new(cache, manager);
+
+    manager->model = g_object_ref(hippo_data_cache_get_model(cache));
     
     connection = hippo_data_cache_get_connection(cache);
     manager->platform = g_object_ref(hippo_connection_get_platform(connection));
                                                        
-    manager->model = g_object_ref(hippo_data_cache_get_model(cache));
-
+    manager->actions = hippo_actions_new(manager->model, manager->platform, manager);
+    
     manager->browser_window = hippo_platform_create_window(manager->platform);
 
 #ifdef WITH_MAEMO

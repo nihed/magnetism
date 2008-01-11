@@ -222,8 +222,8 @@ HippoListenerProxyImpl::onMessage(HippoChatRoom *room, HippoChatMessage *message
 
     // The Javascript code needs to get local times, not server times, in order to
     // be able to do "time ago" properly
-    HippoConnection *connection = hippo_data_cache_get_connection(dataCache_);
-    gint64 serverTimeOffset = hippo_connection_get_server_time_offset(connection);
+    DDMDataModel *model = hippo_data_cache_get_model(dataCache_);
+    gint64 serverTimeOffset = ddm_data_model_get_server_time_offset(model);
     double timestamp = hippo_chat_message_get_timestamp(message) * 1000. - serverTimeOffset;
 
     if (listener_)

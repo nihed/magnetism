@@ -19,7 +19,8 @@ static void      hippo_quip_window_finalize            (GObject            *obje
 
 struct _HippoQuipWindow {
     GObject parent;
-    HippoDataCache *cache;
+    DDMDataModel *model;
+    HippoPlatform *platform;
 
     HippoChatKind chat_kind;
     char *chat_id;
@@ -82,30 +83,24 @@ hippo_quip_window_dispose(GObject *object)
         quip_window->window = NULL;
     }
 
+    g_object_unref(quip_window->model);
+    quip_window->model = NULL;
+    
+    g_object_unref(quip_window->platform);
+    quip_window->platform = NULL;
+        
     G_OBJECT_CLASS(hippo_quip_window_parent_class)->dispose(object);
 }
 
 static void
 hippo_quip_window_finalize(GObject *object)
 {
-     HippoQuipWindow *quip_window = HIPPO_QUIP_WINDOW(object);
+    HippoQuipWindow *quip_window = HIPPO_QUIP_WINDOW(object);
 
     g_free(quip_window->title);
     quip_window->title = NULL;
 
     G_OBJECT_CLASS(hippo_quip_window_parent_class)->finalize(object);
-}
-
-static HippoConnection*
-get_connection(HippoQuipWindow *quip_window)
-{
-    return hippo_data_cache_get_connection(quip_window->cache);
-}
-
-static HippoPlatform*
-get_platform(HippoQuipWindow *quip_window)
-{
-    return hippo_connection_get_platform(get_connection(quip_window));
 }
 
 static void
@@ -147,12 +142,17 @@ send_quip(HippoQuipWindow *quip_window)
     }
 #endif
 
+    const char *sentiment_str = hippo_sentiment_as_string(quip_window->sentiment);
     char *text = NULL;
     g_object_get(G_OBJECT(quip_window->entry), "text", &text, NULL);
 
-    hippo_connection_send_quip(get_connection(quip_window),
-                               quip_window->chat_kind, quip_window->chat_id,
-                               text, quip_window->sentiment);
+    ddm_data_model_update(quip_window->model,
+                          "http://mugshot.org/p/chatMessages#addMessage",
+                          "chatId", quip_window->chat_id,
+                          "text", text,
+                          "sentiment", sentiment_str,
+                          NULL);
+    
     g_free(text);
     
     hippo_quip_window_hide(quip_window);
@@ -250,7 +250,8 @@ create_sentiment_box(HippoQuipWindow *quip_window,
 }
  
 HippoQuipWindow*
-hippo_quip_window_new(HippoDataCache *cache)
+hippo_quip_window_new(DDMDataModel  *model,
+                      HippoPlatform *platform)
 {
     HippoQuipWindow *quip_window;
     HippoCanvasBox *outer_box;
@@ -260,15 +261,16 @@ hippo_quip_window_new(HippoDataCache *cache)
     HippoCanvasBox *box;
     HippoCanvasItem *item;
 
-    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+    g_return_val_if_fail(DDM_IS_DATA_MODEL(model), NULL);
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
 
     quip_window = g_object_new(HIPPO_TYPE_QUIP_WINDOW,
                                NULL);
 
-    g_object_ref(cache);
-    quip_window->cache = cache;
+    quip_window->model = g_object_ref(model);
+    quip_window->platform = g_object_ref(platform);
 
-    quip_window->window = hippo_platform_create_window(get_platform(quip_window));
+    quip_window->window = hippo_platform_create_window(quip_window->platform);
 
     g_signal_connect(quip_window->window, "notify::active",
                      G_CALLBACK(on_notify_active),  quip_window);
@@ -470,9 +472,9 @@ hippo_quip_window_show(HippoQuipWindow *quip_window)
     quip_window->visible = TRUE;
     g_object_ref(quip_window);
 
-    hippo_platform_get_screen_info(get_platform(quip_window), &monitor_rect, NULL, NULL);
+    hippo_platform_get_screen_info(quip_window->platform, &monitor_rect, NULL, NULL);
     
-    if (!hippo_platform_get_pointer_position(get_platform(quip_window), &pointer_x, &pointer_y)) {
+    if (!hippo_platform_get_pointer_position(quip_window->platform, &pointer_x, &pointer_y)) {
         /* Pointer on a different X screen, we'll just position at lower right */
         pointer_x = monitor_rect.x + monitor_rect.width;
         pointer_y = monitor_rect.y + monitor_rect.height;
