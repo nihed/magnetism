@@ -6,7 +6,6 @@ import java.util.List;
 import javax.ejb.EJB;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 
 import com.dumbhippo.TypeUtils;
@@ -36,8 +35,7 @@ public class LegacyBlocksIQHandler extends AnnotatedIQHandler {
 	private ViewStreamBuilder viewStreamBuilder;
 
 	public LegacyBlocksIQHandler() {
-		super("Old Hippo Blocks IQ Handler");
-		Log.debug("creating OldBlocksIQHandler");
+		super("Hippo Blocks IQ Handler (deprecated version)");
 	}
 	
 	private String getBlocksXml(UserViewpoint viewpoint, String filter, String elementName, List<BlockView> views) {
