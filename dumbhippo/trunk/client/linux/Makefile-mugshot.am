@@ -58,8 +58,6 @@ mugshot_SOURCES	=				\
 	src/hippo-idle.h                	\
 	src/hippo-im.c				\
 	src/hippo-im.h				\
-	src/hippo-pixbuf-cache.c		\
-	src/hippo-pixbuf-cache.h		\
 	src/hippo-platform-impl.c		\
 	src/hippo-platform-impl.h		\
 	src/hippo-ui.c				\

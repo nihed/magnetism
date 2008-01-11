@@ -22,7 +22,6 @@
 #include <gtk/gtkaboutdialog.h>
 #include <gtk/gtkmessagedialog.h>
 #include <glib/gi18n-lib.h>
-#include "hippo-pixbuf-cache.h"
 
 G_BEGIN_DECLS
 
@@ -54,13 +53,6 @@ void              hippo_app_join_chat     (HippoApp   *app,
 HippoWindowState hippo_app_get_chat_state (HippoApp   *app,
                                            const char *chat_id);
 
-/* use this only for user and group photos, caching is weird 
- * if the cache for lots of image types interacts
- */
-void       hippo_app_load_photo     (HippoApp                *app,
-                                     HippoEntity             *entity,
-                                     HippoPixbufCacheLoadFunc func,
-                                     void                    *data);
 void       hippo_app_get_screen_info   (HippoApp         *app,
                                         HippoRectangle   *monitor_rect_p,
                                         HippoRectangle   *tray_icon_rect_p,

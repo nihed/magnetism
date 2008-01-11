@@ -183,15 +183,6 @@ hippo_app_get_chat_state (HippoApp   *app,
 }
 
 void
-hippo_app_load_photo(HippoApp                *app,
-                     HippoEntity             *entity,
-                     HippoPixbufCacheLoadFunc func,
-                     void                    *data)
-{
-    hippo_ui_load_photo(app->ui, entity, func, data);
-}
-
-void
 hippo_app_get_screen_info(HippoApp         *app,
                           HippoRectangle   *monitor_rect_p,
                           HippoRectangle   *tray_icon_rect_p,

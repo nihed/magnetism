@@ -29,10 +29,6 @@ void             hippo_ui_join_chat            (HippoUI                  *ui,
                                                 const char               *chat_id);
 HippoWindowState hippo_ui_get_chat_state       (HippoUI                  *ui,
                                                 const char               *chat_id);
-void             hippo_ui_load_photo           (HippoUI                  *ui,
-                                                HippoEntity              *entity,
-                                                HippoPixbufCacheLoadFunc  func,
-                                                void                     *data);
 HippoStackManager* hippo_ui_get_stack_manager  (HippoUI                  *ui);
 
 G_END_DECLS

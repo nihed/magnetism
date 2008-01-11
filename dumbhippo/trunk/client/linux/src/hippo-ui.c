@@ -21,7 +21,6 @@ struct HippoUI {
     
     HippoStatusIcon *icon;
     GtkWidget *about_dialog;
-    HippoPixbufCache *photo_cache;
 };
 
 static void
@@ -320,31 +319,6 @@ hippo_ui_get_chat_state (HippoUI    *ui,
                                    get_chat_state_foreach, &summary_state);
 
     return summary_state;
-}
-
-void
-hippo_ui_load_photo(HippoUI                 *ui,
-                    HippoEntity             *entity,
-                    HippoPixbufCacheLoadFunc func,
-                    void                    *data)
-{
-    const char *url;
-    
-    url = hippo_entity_get_photo_url(entity);
-    
-    g_debug("Loading photo for entity '%s' url '%s'",
-        hippo_entity_get_guid(entity),
-        url ? url : "null");
-    
-    if (url == NULL) {
-        /* not gonna succeed in loading this... */
-        (* func)(NULL, data);
-    } else {
-        char *absolute = hippo_connection_make_absolute_url(ui->connection,
-                                                            url);
-        hippo_pixbuf_cache_load(ui->photo_cache, absolute, func, data);
-        g_free(absolute);
-    }
 }
 
 /* This is copied from gdk_cairo_set_source_pixbuf()
@@ -693,8 +667,6 @@ hippo_ui_new(HippoDataCache *cache,
     ui->dbus = dbus;
     g_object_ref(ui->dbus);
     
-    ui->photo_cache = hippo_pixbuf_cache_new(ui->platform);
-
     ui->stack = hippo_stack_manager_new(ui->cache);
     
     ui->icon = hippo_status_icon_new(ui->cache);
@@ -722,7 +694,6 @@ hippo_ui_free(HippoUI *ui)
                                          ui);
     
     g_object_unref(ui->icon);
-    g_object_unref(ui->photo_cache);
     g_object_unref(ui->dbus);
     g_object_unref(ui->cache);
     g_free(ui);
