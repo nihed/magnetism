@@ -5,7 +5,6 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 
-import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 
 import com.dumbhippo.TypeUtils;
@@ -44,8 +43,7 @@ public class LegacyContactsIQHandler extends AnnotatedIQHandler {
 	private ViewStreamBuilder viewStreamBuilder;
 	
 	public LegacyContactsIQHandler() {
-		super("Hippo contacts IQ Handler");
-		Log.debug("creating ContactsIQHandler");
+		super("Hippo Contacts IQ Handler (deprecated version)");
 	}
 	
 	@IQMethod(name="contacts", type=IQ.Type.get)

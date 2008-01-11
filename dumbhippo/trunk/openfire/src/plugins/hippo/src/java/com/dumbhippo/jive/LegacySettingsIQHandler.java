@@ -39,8 +39,7 @@ public class LegacySettingsIQHandler extends AnnotatedIQHandler implements LiveE
 	private IdentitySpider spider;
 	
 	public LegacySettingsIQHandler() {
-		super("Legacy Hippo settings IQ Handler");
-		Log.debug("creating LegacySettingsIQHandler");
+		super("Hippo Settings IQ Handler (deprecated version)");
 	}
 	
 	private String getOneSettingXml(String key, String value) {

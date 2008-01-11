@@ -19,9 +19,8 @@ public class LegacyGroupIQHandler extends AbstractIQHandler {
 	private IQHandlerInfo info;
 	
 	public LegacyGroupIQHandler() {
-		super("DumbHippo Group IQ Handler");
+		super("DumbHippo Group IQ Handler (deprecated version)");
 		
-		Log.debug("creating Group handler");
 		info = new IQHandlerInfo("groupSystem", "http://dumbhippo.com/protocol/groupSystem");
 	}
 
