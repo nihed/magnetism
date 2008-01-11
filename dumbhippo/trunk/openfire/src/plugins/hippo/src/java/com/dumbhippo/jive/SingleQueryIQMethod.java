@@ -41,5 +41,6 @@ public class SingleQueryIQMethod extends QueryIQMethod {
 		
 		XmppFetchVisitor visitor = new XmppFetchVisitor(root, session.getModel());
 		fetchAndVisit(session, resultObject, fetchNode, visitor);
+		visitor.finish();
 	}
 }

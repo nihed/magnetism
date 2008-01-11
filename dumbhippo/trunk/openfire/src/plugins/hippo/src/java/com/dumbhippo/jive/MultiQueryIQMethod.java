@@ -59,6 +59,8 @@ public class MultiQueryIQMethod<K, T extends DMObject<K>> extends QueryIQMethod 
 		for (T object : resultObjects) {
 			session.visitFetch(object, fetch, visitor);
 		}
+		
+		visitor.finish();
 	}
 	
 	// This "casts" two classes K and T to be related, note we need a K and a T in order to construct

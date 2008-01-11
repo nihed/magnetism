@@ -26,6 +26,7 @@ public class XmppFetchVisitor implements FetchVisitor {
 	
 	private static final Namespace SYSTEM_NAMESPACE = Namespace.get("m", "http://mugshot.org/p/system");
 	
+	private static final QName RESOURCE_BASE_QNAME = QName.get("resourceBase", SYSTEM_NAMESPACE);
 	private static final QName RESOURCE_ID_QNAME = QName.get("resourceId", SYSTEM_NAMESPACE);
 	private static final QName FETCH_QNAME = QName.get("fetch", SYSTEM_NAMESPACE);
 	private static final QName INDIRECT_QNAME = QName.get("indirect", SYSTEM_NAMESPACE);
@@ -33,16 +34,18 @@ public class XmppFetchVisitor implements FetchVisitor {
 	private static final QName TYPE_QNAME = QName.get("type", SYSTEM_NAMESPACE);
 	private static final QName DEFAULT_CHILDREN_QNAME = QName.get("defaultChildren", SYSTEM_NAMESPACE);
 	private static final QName UPDATE_QNAME = QName.get("update", SYSTEM_NAMESPACE);
+	private static final QName SERVER_TIME_QNAME = QName.get("serverTime", SYSTEM_NAMESPACE);
 	
 	public XmppFetchVisitor(Element rootElement, DataModel model) {
 		this.rootElement = rootElement;
 		
-		DocumentFactory factory = DocumentFactory.getInstance();
-		
 		rootElement.add(SYSTEM_NAMESPACE);
-		
-		QName resourceBaseAttr = factory.createQName("resourceBase", SYSTEM_NAMESPACE);
-		rootElement.addAttribute(resourceBaseAttr, model.getBaseUrl());
+		rootElement.addAttribute(RESOURCE_BASE_QNAME, model.getBaseUrl());
+	}
+
+	// Adding this at the end should give more slightly more accurate times
+	public void finish() {
+		rootElement.addAttribute(SERVER_TIME_QNAME, Long.toString(System.currentTimeMillis()));
 	}
 	
 	public Element getRootElement() {
