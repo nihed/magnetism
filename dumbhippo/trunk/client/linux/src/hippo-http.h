@@ -3,7 +3,7 @@
 #define __HIPPO_HTTP_H__
 
 #include <glib-object.h>
-#include <hippo/hippo-basics.h>
+#include <stacker/hippo-stacker-platform.h> /* For HippoHttpFunc */
 
 G_BEGIN_DECLS
 
