@@ -288,9 +288,6 @@ gboolean hippo_membership_status_from_string (const char            *s,
 char*    hippo_size_photo_url              (const char *base_url,
                                             int         size);
 
-#define HIPPO_ADD_WEAK(ptr)    g_object_add_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr))
-#define HIPPO_REMOVE_WEAK(ptr) do { if (*ptr) { g_object_remove_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr)); *ptr = NULL; } } while(0)
-
 G_END_DECLS
 
 #endif /* __HIPPO_BASICS_H__ */

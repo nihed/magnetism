@@ -8,6 +8,10 @@
 /* how often to retry on failure */
 #define RETRY_INTERVAL_SECONDS (60*2)
 
+
+#define ADD_WEAK(ptr)    g_object_add_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr))
+#define REMOVE_WEAK(ptr) do { if (*ptr) { g_object_remove_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr)); *ptr = NULL; } } while(0)
+
 typedef struct {
     HippoObjectCacheLoadFunc  func;
     void                     *data;
@@ -69,7 +73,7 @@ cache_entry_new(HippoObjectCache *cache,
     entry = g_new0(CacheEntry, 1);
     entry->refcount = 1;
     entry->cache = cache;
-    HIPPO_ADD_WEAK(&entry->cache);
+    ADD_WEAK(&entry->cache);
     entry->url = g_strdup(url);
     return entry;
 }
@@ -80,9 +84,9 @@ cache_entry_finalize(CacheEntry *entry)
     g_return_if_fail(!entry->loading);
     
     /* be sure all callbacks get an error reply if they haven't */
-    HIPPO_REMOVE_WEAK(&entry->cache);
+    REMOVE_WEAK(&entry->cache);
     entry->cache = NULL;
-    HIPPO_REMOVE_WEAK(&entry->cached_obj);
+    REMOVE_WEAK(&entry->cached_obj);
     entry->cached_obj = NULL;
 
     while (entry->callbacks != NULL) {
@@ -184,7 +188,7 @@ http_func(const char *content_type,
     }
 
     if (entry->cached_obj)
-        HIPPO_ADD_WEAK(&entry->cached_obj);
+        ADD_WEAK(&entry->cached_obj);
 
     /* if cached_obj is NULL we failed, otherwise we succeeded.
      * either way we invoke the callbacks.
