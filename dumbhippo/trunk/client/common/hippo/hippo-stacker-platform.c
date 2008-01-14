@@ -107,18 +107,3 @@ hippo_stacker_platform_get_chat_window_state (HippoStackerPlatform *platform,
 
     return HIPPO_STACKER_PLATFORM_GET_CLASS(platform)->get_chat_window_state(platform, chat_id);
 }
-
-void
-hippo_stacker_platform_show_disconnected_window (HippoStackerPlatform *platform,
-                                                 HippoConnection      *connection)
-{
-    HippoStackerPlatformClass *klass;
-    
-    g_return_if_fail(HIPPO_IS_STACKER_PLATFORM(platform));
-
-    klass = HIPPO_STACKER_PLATFORM_GET_CLASS(platform);
-    
-    if (klass->show_disconnected_window != NULL) {
-        (* klass->show_disconnected_window) (platform, connection);
-    }
-}

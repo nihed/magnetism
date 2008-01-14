@@ -36,9 +36,8 @@ static HippoWindowState hippo_stacker_platform_impl_get_chat_window_state (Hippo
 
 static gboolean     hippo_stacker_platform_impl_can_play_song_download (HippoStackerPlatform     *platform,
                                                                         HippoSongDownload        *song_download);
-static void         hippo_stacker_platform_impl_show_disconnected_window (HippoStackerPlatform *platform,
-                                                                          HippoConnection      *connection);
 
+#if 0
 typedef struct Dialogs Dialogs;
 
 static Dialogs* dialogs_get                        (HippoConnection *connection);
@@ -49,7 +48,7 @@ static void     dialogs_update_login               (Dialogs         *dialogs,
                                                     gboolean         show_if_not_showing);
 static void     dialogs_update_status              (Dialogs         *dialogs,
                                                     gboolean         show_if_not_showing);
-
+#endif
 
 struct _HippoStackerPlatformImpl {
     GObject parent;
@@ -75,7 +74,6 @@ hippo_stacker_platform_impl_iface_init(HippoStackerPlatformClass *klass)
     klass->show_chat_window = hippo_stacker_platform_impl_show_chat_window;
     klass->get_chat_window_state = hippo_stacker_platform_impl_get_chat_window_state;
     klass->can_play_song_download = hippo_stacker_platform_impl_can_play_song_download;
-    klass->show_disconnected_window = hippo_stacker_platform_impl_show_disconnected_window;
 }
 
 static void
@@ -185,18 +183,7 @@ hippo_stacker_platform_impl_can_play_song_download(HippoStackerPlatform     *pla
     return TRUE;
 }
 
-static void
-hippo_stacker_platform_impl_show_disconnected_window(HippoStackerPlatform   *platform,
-                                                     HippoConnection *connection)
-{
-    /* HippoStackerPlatformImpl *impl = HIPPO_STACKER_PLATFORM_IMPL(platform); */
-    Dialogs *dialogs;
-
-    dialogs = dialogs_get(connection);
-    
-    dialogs_update_disconnected_window(dialogs, TRUE);
-}
-
+#if 0
 /* We want to show either a login dialog or a dialog with connection status
  * when the tray icon is clicked but we aren't signed in
  */
@@ -413,3 +400,4 @@ dialogs_update_status(Dialogs *dialogs,
     if (dialogs->connection_status_dialog)
         gtk_window_present(GTK_WINDOW(dialogs->connection_status_dialog));
 }
+#endif
