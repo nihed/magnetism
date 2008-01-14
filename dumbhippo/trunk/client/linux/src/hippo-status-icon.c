@@ -123,8 +123,11 @@ hippo_status_icon_activate(GtkStatusIcon *gtk_icon)
 
         connection = hippo_data_cache_get_connection(icon->cache);
         if (!hippo_connection_get_connected(connection)) {
+#if 0
+            /* FIXME: Implement this getting the necessary information via the data model */
             HippoStackerPlatform *platform = hippo_app_get_stacker_platform(hippo_get_app());
             hippo_stacker_platform_show_disconnected_window(platform, connection);
+#endif            
         } else {
             /* the UI has to exist since we (the tray icon) are part of it */
             HippoStackManager *stack_manager = hippo_app_get_stack(hippo_get_app());

@@ -46,9 +46,6 @@ struct _HippoStackerPlatformClass {
     
     gboolean (* can_play_song_download) (HippoStackerPlatform *platform,
                                          HippoSongDownload    *song_download);
-    
-    void (* show_disconnected_window) (HippoStackerPlatform   *platform,
-                                       HippoConnection *connection);
 };
 
 GType            hippo_stacker_platform_get_type               (void) G_GNUC_CONST;
@@ -83,9 +80,6 @@ void             hippo_stacker_platform_http_request           (HippoStackerPlat
 
 gboolean         hippo_stacker_platform_can_play_song_download (HippoStackerPlatform   *platform,
                                                                 HippoSongDownload      *song_download);
-
-void             hippo_stacker_platform_show_disconnected_window (HippoStackerPlatform *platform,
-                                                                  HippoConnection      *connection);
     
 G_END_DECLS
 
