@@ -41,7 +41,7 @@ class HippoUI
 : public IHippoUI 
 {
 public:
-    HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool initialDebugShare);
+    HippoUI(HippoInstanceType instanceType, bool replaceExisting);
     ~HippoUI();
 
     //IUnknown methods
