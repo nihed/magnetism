@@ -8,6 +8,39 @@
 #include "hippo-sqlite-utils.h"
 
 gboolean
+hippo_sqlite_bind_parameter(sqlite3      *db,
+		                        sqlite3_stmt *stmt,
+		                        const char  *name,
+		                        GValue       *val)
+{
+	int index;
+    int sql_result;
+    
+    index = sqlite3_bind_parameter_index(stmt, name);
+    if (index == 0) {
+        g_warning("Parameter '%s' not found", name);
+        return FALSE;
+    }
+    
+    if (G_VALUE_HOLDS_INT(val)) {
+        sql_result = sqlite3_bind_int(stmt, index, g_value_get_int(val));
+    } else if (G_VALUE_HOLDS_STRING(val)) {
+    	const char *value = g_value_get_string(val);
+        if (value)
+        	sql_result = sqlite3_bind_text(stmt, index, g_strdup(value), strlen(value), (void(*)(void*))g_free);
+        else
+            sql_result = SQLITE_OK;
+    } else {
+    	g_assert_not_reached();
+    }
+    if (sql_result != SQLITE_OK) {
+        g_warning("Error binding parameter '%s': %s'", name, sqlite3_errmsg(db));
+        return FALSE;
+    }
+    return TRUE;
+}
+
+gboolean
 hippo_sqlite_bind_sql_parameters(sqlite3        *db,
                                       sqlite3_stmt   *stmt,
                                       va_list        *vap)
