@@ -10,7 +10,6 @@
  */
 
 #include <hippo/hippo-canvas-item.h>
-#include <hippo/hippo-chat-room.h>
 
 G_BEGIN_DECLS
 

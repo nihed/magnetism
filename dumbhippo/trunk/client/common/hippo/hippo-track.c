@@ -1,9 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <string.h>
 #include "hippo-common-internal.h"
-#include "hippo-data-cache.h"
 #include "hippo-track.h"
-#include "hippo-xml-utils.h"
 
 static void     hippo_track_finalize             (GObject *object);
 

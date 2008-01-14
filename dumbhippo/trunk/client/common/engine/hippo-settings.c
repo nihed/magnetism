@@ -1,5 +1,5 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#include "hippo-common-internal.h"
+#include "hippo-engine-internal.h"
 #include "hippo-settings.h"
 #include "hippo-connection.h"
 #include <string.h>

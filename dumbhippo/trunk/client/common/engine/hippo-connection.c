@@ -1,10 +1,9 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <config.h>
-#include "hippo-common-internal.h"
+#include "hippo-engine-internal.h"
 #include "hippo-connection.h"
 #include "hippo-data-cache-internal.h"
-#include "hippo-common-marshal.h"
-#include "hippo-external-account.h"
+#include "hippo-engine-marshal.h"
 #include "hippo-title-pattern.h"
 #include "hippo-xml-utils.h"
 #include "hippo-disk-cache.h"
@@ -426,7 +425,7 @@ hippo_connection_class_init(HippoConnectionClass *klass)
                       G_SIGNAL_RUN_LAST,
                       0,
                       NULL, NULL,
-                      hippo_common_marshal_VOID__STRING_STRING,
+                      hippo_engine_marshal_VOID__STRING_STRING,
                       G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
 
     signals[SETTINGS_LOADED] =
@@ -453,7 +452,7 @@ hippo_connection_class_init(HippoConnectionClass *klass)
                       G_SIGNAL_RUN_LAST,
                       0,
                       NULL, NULL,
-                      hippo_common_marshal_VOID__STRING_BOOLEAN,
+                      hippo_engine_marshal_VOID__STRING_BOOLEAN,
                       G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);   
                       
     signals[EXTERNAL_IQ_RETURN] =

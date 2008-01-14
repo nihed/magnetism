@@ -26,7 +26,6 @@
 #define WINDOW_BORDER 1
 
 struct _HippoStackManager {
-    HippoDataCache  *cache;
     DDMDataModel    *model;
     HippoStackerPlatform *platform;
     HippoActions    *actions;

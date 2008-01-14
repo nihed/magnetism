@@ -2,7 +2,7 @@
 #ifndef __HIPPO_PLATFORM_H__
 #define __HIPPO_PLATFORM_H__
 
-#include <hippo/hippo-basics.h>
+#include <engine/hippo-engine-basics.h>
 
 G_BEGIN_DECLS
 
