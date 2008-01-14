@@ -150,6 +150,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-resource.h			\
 	$(COMMONSRCDIR)/hippo/hippo-settings.c			\
 	$(COMMONSRCDIR)/hippo/hippo-settings.h			\
+    $(COMMONSRCDIR)/hippo/hippo-sqlite-utils.c     \
+    $(COMMONSRCDIR)/hippo/hippo-sqlite-utils.h     \	
 	$(COMMONSRCDIR)/hippo/hippo-stack-manager.c		\
 	$(COMMONSRCDIR)/hippo/hippo-stack-manager.h		\
 	$(COMMONSRCDIR)/hippo/hippo-stacker-platform.c		\

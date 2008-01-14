@@ -13,6 +13,7 @@
 #include "hippo-connection.h"
 #include "hippo-disk-cache.h"
 #include "hippo-data-cache.h"
+#include "hippo-sqlite-utils.h"
 
 /* How often to touch a field in the database indicating the last time the
  * current session was used
@@ -70,252 +71,6 @@ hippo_disk_cache_finalize(GObject *object)
     G_OBJECT_CLASS(hippo_disk_cache_parent_class)->finalize(object);
 }
 
-#ifdef HAVE_SQLITE
-static gboolean
-bind_sql_parameters(HippoDiskCache *cache,
-                    sqlite3_stmt   *stmt,
-                    va_list        *vap)
-{
-    while (TRUE) {
-        const char *spec = va_arg(*vap, const char *);
-        const char *colon;
-        int index;
-        int sql_result;
-
-        if (spec == NULL)
-            break;
-        
-        colon = strchr(spec, ':');
-        
-        if (colon == NULL || *(colon + 1) == '\0' || colon != spec + 1) {
-            g_warning("Parameter specification %s should be <type_char>:<name>", spec);
-            return FALSE;
-        }
-
-        index = sqlite3_bind_parameter_index(stmt, colon);
-        if (index == 0) {
-            g_warning("Parameter '%s' not found", colon);
-            return FALSE;
-        }
-
-        switch (*spec) {
-        case 'i':
-            {
-                int value = va_arg(*vap, int);
-                sql_result = sqlite3_bind_int(stmt, index, value);
-                break;
-            }
-        case 'l':
-            {
-                gint64 value = va_arg(*vap, gint64);
-                sql_result = sqlite3_bind_int64(stmt, index, value);
-                break;
-            }
-        case 'f':
-            {
-                double value = va_arg(*vap, double);
-                sql_result = sqlite3_bind_double(stmt, index, value);
-                break;
-            }
-        case 's':
-            {
-                const char *value = va_arg(*vap, const char *);
-                if (value)
-                    sql_result = sqlite3_bind_text(stmt, index, g_strdup(value), strlen(value), (void(*)(void*))g_free);
-                else
-                    sql_result = SQLITE_OK;
-                break;
-            }
-        default:
-            g_warning("Unknown type character '%c'", *spec);
-            return FALSE;
-        }
-
-        if (sql_result != SQLITE_OK) {
-            g_warning("Error binding parameter '%s': %s'", colon, sqlite3_errmsg(cache->db));
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-static gboolean
-get_row_datav(sqlite3_stmt *stmt,
-              va_list      *vap)
-{
-    const char *types = va_arg(*vap, const char *);
-    const char *p;
-    GSList *to_free = NULL;
-
-    if (types == NULL)
-        return TRUE;
-
-    if ((int)strlen(types) > sqlite3_column_count(stmt)) {
-        g_warning("Got %d columns from query, expected at least %d", sqlite3_column_count(stmt),
-                  (int) strlen(types));
-        goto error;
-    }
-
-    for (p = types; *p; p++) {
-        switch (*p) {
-        case 'i':
-            {
-                int *l = va_arg(*vap, int *);
-                *l = sqlite3_column_int(stmt, p - types);
-                break;
-            }
-        case 'l':
-            {
-                gint64 *l = va_arg(*vap, gint64 *);
-                *l = sqlite3_column_int64(stmt, p - types);
-                break;
-            }
-        case 'f':
-            {
-                double *l = va_arg(*vap, double *);
-                *l = sqlite3_column_double(stmt, p - types);
-                break;
-            }
-        case 's':
-            {
-                char **l = va_arg(*vap, char **);
-                const unsigned char *value = sqlite3_column_text(stmt, p - types);
-                *l = g_strdup((const char *)value);
-                to_free = g_slist_prepend(to_free, *l);
-                break;
-            }
-        default:
-            g_warning("Unknown type character '%c'", *p);
-            goto error;
-        }
-    }
-
-    return TRUE;
-
- error:
-    g_slist_foreach(to_free, (GFunc)g_free, NULL);
-    return FALSE;
-}
-
-static gboolean
-get_row_data(sqlite3_stmt *stmt,
-             ...)
-{
-    gboolean result;
-    va_list vap;
-
-    va_start(vap, stmt);
-    result = get_row_datav(stmt, &vap);
-    va_end(vap);
-
-    return result;
-}
-
-static sqlite3_stmt *
-prepare_sqlv(HippoDiskCache *cache,
-             const char     *sql,
-             va_list        *vap)
-{
-    sqlite3_stmt *stmt;
-    
-    if (sqlite3_prepare(cache->db, sql, -1, &stmt, NULL) != SQLITE_OK) {
-        g_warning("Failed to prepare SQL command %s: %s\n", sql, sqlite3_errmsg(cache->db));
-        return FALSE;
-    }
-
-    if (!bind_sql_parameters(cache, stmt, vap)) {
-        sqlite3_finalize(stmt);
-        return NULL;
-    }
-
-    return stmt;
-}
-
-static sqlite3_stmt *
-prepare_sql(HippoDiskCache *cache,
-            const char     *sql,
-            ...)
-{
-    va_list vap;
-    sqlite3_stmt *stmt;
-    
-    va_start(vap, sql);
-    stmt = prepare_sqlv(cache, sql, &vap);
-    va_end(vap);
-
-    return stmt;
-}
-
-static gboolean
-execute_sql(HippoDiskCache *cache,
-            const char     *sql,
-            ...)
-{
-    sqlite3_stmt *stmt;
-    int sql_result;
-    gboolean result = FALSE;
-    va_list vap;
-
-    va_start(vap, sql);
-    stmt = prepare_sqlv(cache, sql, &vap);
-    va_end(vap);
-    
-    if (stmt == NULL)
-        return FALSE;
-
-    sql_result = sqlite3_step(stmt);
-    if (sql_result != SQLITE_DONE && sql_result != SQLITE_ROW) {
-        g_warning("Failed to execute SQL command: %s\n", sqlite3_errmsg(cache->db));
-        goto out;
-    }
-
-    result = TRUE;
-
- out:
-    sqlite3_finalize(stmt);
-    return result;
-}
-
-static gboolean
-execute_sql_single_result(HippoDiskCache *cache,
-                          const char     *sql,
-                          ...)
-{
-    sqlite3_stmt *stmt;
-    int sql_result;
-    gboolean result = FALSE;
-    va_list vap;
-    
-    va_start(vap, sql);
-
-    stmt = prepare_sqlv(cache, sql, &vap);
-    if (stmt == NULL)
-        goto out;
-    
-    sql_result = sqlite3_step(stmt);
-    if (sql_result != SQLITE_DONE && sql_result != SQLITE_ROW) {
-        g_warning("Failed to execute SQL command: %s\n", sqlite3_errmsg(cache->db));
-        goto out;
-    }
-
-    if (sql_result != SQLITE_ROW) {
-        goto out;
-    }
-
-    if (!get_row_datav(stmt, &vap))
-        goto out;
-
-    result = TRUE;
-
- out:
-    va_end(vap);
-
-    if (stmt)
-        sqlite3_finalize(stmt);
-    
-    return result;
-}
 
 static char *
 make_db_name(HippoDiskCache *cache)
@@ -359,7 +114,7 @@ run_migration_0_1(HippoDiskCache *cache)
     };
     
     for (i = 0; statements[i]; i++) {
-        if (!execute_sql(cache, statements[i], NULL))
+        if (!hippo_sqlite_execute_sql(cache->db, statements[i], NULL))
             return FALSE;
     }
 
@@ -408,15 +163,15 @@ open_database(HippoDiskCache *cache)
     }
 
     for (i = 0; create_statements[i]; i++) {
-        if (!execute_sql(cache, create_statements[i], NULL)) {
+        if (!hippo_sqlite_execute_sql(cache->db, create_statements[i], NULL)) {
             goto error;
         }
     }
 
-    if (execute_sql_single_result(cache,
-                                  "SELECT value from CacheProperties WHERE key = 'schemaVersion'",
-                                  NULL,
-                                  "i", &old_version)) {
+    if (hippo_sqlite_execute_sql_single_result(cache->db,
+                                               "SELECT value from CacheProperties WHERE key = 'schemaVersion'",
+                                               NULL,
+                                               "i", &old_version)) {
         if (old_version > SCHEMA_VERSION) {
             g_warning("Database version %d newer than we understand", old_version);
             goto error;
@@ -427,9 +182,9 @@ open_database(HippoDiskCache *cache)
         }
     }
 
-    if (!execute_sql(cache,
-                     "INSERT OR REPLACE INTO CacheProperties (key, value) VALUES ('schemaVersion', :version)",
-                     "i:version", SCHEMA_VERSION, NULL)) {
+    if (!hippo_sqlite_execute_sql(cache->db,
+                                  "INSERT OR REPLACE INTO CacheProperties (key, value) VALUES ('schemaVersion', :version)",
+                                  "i:version", SCHEMA_VERSION, NULL)) {
         goto error;
     }
 
@@ -458,19 +213,19 @@ on_connection_connected_changed(HippoConnection *connection,
         return;
 
     if (connected) {
-        if (!execute_sql(cache,
-                         "INSERT INTO Session (connectTime, disconnectTime, heartbeatTime) VALUES (:timestamp, -1, :timestamp)",
-                         "l:timestamp", get_current_timestamp(),
-                         NULL)) {
+        if (!hippo_sqlite_execute_sql(cache->db,
+                                     "INSERT INTO Session (connectTime, disconnectTime, heartbeatTime) VALUES (:timestamp, -1, :timestamp)",
+                                     "l:timestamp", get_current_timestamp(),
+                                     NULL)) {
             return;
         }
         cache->db_session = sqlite3_last_insert_rowid(cache->db);
     } else if (cache->db_session != -1) {
-        execute_sql(cache,
-                    "UPDATE Session SET heartbeatTime = :timestamp, disconnectTime = :timestamp WHERE id = :session",
-                    "l:timestamp", get_current_timestamp(),
-                    "l:session", cache->db_session,
-                    NULL);
+        hippo_sqlite_execute_sql(cache->db,
+                                 "UPDATE Session SET heartbeatTime = :timestamp, disconnectTime = :timestamp WHERE id = :session",
+                                 "l:timestamp", get_current_timestamp(),
+                                 "l:session", cache->db_session,
+                                 NULL);
         cache->db_session = -1;
     }
 }
@@ -481,7 +236,7 @@ database_heartbeat(void *data)
     HippoDiskCache *cache = data;
 
     if (cache->db && cache->db_session != -1) {
-        execute_sql(cache,
+        hippo_sqlite_execute_sql(cache->db,
                     "UPDATE Session SET heartbeatTime = :timestamp WHERE id = :session",
                     "l:timestamp", get_current_timestamp(),
                     "l:session", cache->db_session,
@@ -569,13 +324,13 @@ save_class_id_to_disk(HippoDiskCache    *cache,
     static const char *property_id = "http://mugshot.org/p/system#classId";
     const char *class_id = ddm_data_resource_get_class_id(resource);
     
-    execute_sql(cache,
+    hippo_sqlite_execute_sql(cache->db,
                 "DELETE FROM Property WHERE resourceId = :resourceId AND propertyId = :propertyId",
                 "s:resourceId", resource_id,
                 "s:propertyId", property_id,
                 NULL);
     
-    execute_sql(cache,
+    hippo_sqlite_execute_sql(cache->db,
                 "INSERT INTO Property (session, timestamp, resourceId, propertyId, type, value)"
                 " VALUES (:session, :timestamp, :resourceId, :propertyId, :type, :value)",
                 "l:session", cache->db_session,
@@ -641,7 +396,7 @@ save_property_value_to_disk(HippoDiskCache    *cache,
     }
 
     if (is_long)
-        execute_sql(cache,
+        hippo_sqlite_execute_sql(cache->db,
                     "INSERT INTO Property (session, timestamp, resourceId, propertyId, type, defaultChildren,  value)"
                     " VALUES (:session, :timestamp, :resourceId, :propertyId, :type, :defaultChildren, :value)",
                     "l:session", cache->db_session,
@@ -653,7 +408,7 @@ save_property_value_to_disk(HippoDiskCache    *cache,
                     "l:value", value_long,
                     NULL);
     else if (is_float)
-        execute_sql(cache,
+        hippo_sqlite_execute_sql(cache->db,
                     "INSERT INTO Property (session, timestamp, resourceId, propertyId, type, defaultChildren,  value)"
                     " VALUES (:session, :timestamp, :resourceId, :propertyId, :type, :defaultChildren, :value)",
                     "l:session", cache->db_session,
@@ -665,7 +420,7 @@ save_property_value_to_disk(HippoDiskCache    *cache,
                     "f:value", value_float,
                     NULL);
     else if (is_string)
-        execute_sql(cache,
+        hippo_sqlite_execute_sql(cache->db,
                     "INSERT INTO Property (session, timestamp, resourceId, propertyId, type, defaultChildren,  value)"
                     " VALUES (:session, :timestamp, :resourceId, :propertyId, :type, :defaultChildren, :value)",
                     "l:session", cache->db_session,
@@ -689,7 +444,7 @@ save_feed_property_value_to_disk(HippoDiskCache    *cache,
                                  const char        *default_children,
                                  gint64             timestamp)
 {
-    execute_sql(cache,
+    hippo_sqlite_execute_sql(cache->db,
                 "INSERT INTO Property (session, timestamp, resourceId, propertyId, type, defaultChildren,  value, itemTimestamp)"
                 " VALUES (:session, :timestamp, :resourceId, :propertyId, :type, :defaultChildren, :value, :itemTimestamp)",
                 "l:session", cache->db_session,
@@ -830,7 +585,7 @@ load_resource_from_db(HippoDiskCache   *cache,
     GHashTable *seen_properties = g_hash_table_new(g_direct_hash, NULL);
     DDMQName *class_id_qname = ddm_qname_get("http://mugshot.org/p/system", "classId");
 
-    stmt  = prepare_sql(cache,
+    stmt  = hippo_sqlite_prepare_sql(cache->db,
                         "SELECT propertyId, type ,defaultChildren, value, itemTimestamp FROM Property WHERE resourceId = :resourceId",
                         "s:resourceId", resource_id,
                         NULL);
@@ -872,7 +627,7 @@ load_resource_from_db(HippoDiskCache   *cache,
         if (sql_result != SQLITE_ROW)
             break;
         
-        if (!get_row_data(stmt, "sss", &property_id, &type_string, &default_children))
+        if (!hippo_sqlite_get_row_data(stmt, "sss", &property_id, &type_string, &default_children))
             goto next;
 
         property_qname = ddm_qname_from_uri(property_id);
@@ -1168,7 +923,6 @@ build_query_uri(DDMDataQuery *query)
     DDMQName *qname = ddm_data_query_get_qname(query);
     return g_strconcat(qname->uri, "#", qname->name, NULL);
 }
-#endif /* HAVE_SQLITE */
 
 void
 _hippo_disk_cache_do_query(HippoDiskCache *cache,
@@ -1184,7 +938,7 @@ _hippo_disk_cache_do_query(HippoDiskCache *cache,
     GSList *l;
     ResourceTracking *tracking;
 
-    if (!execute_sql_single_result(cache,
+    if (!hippo_sqlite_execute_sql_single_result(cache->db,
                                   "SELECT id from Query WHERE uri = :uri AND params = :params",
                                    "s:uri", uri,
                                    "s:params", params,
@@ -1197,7 +951,7 @@ _hippo_disk_cache_do_query(HippoDiskCache *cache,
         goto out;
     }
 
-    stmt  = prepare_sql(cache,
+    stmt  = hippo_sqlite_prepare_sql(cache->db,
                         "SELECT resourceId FROM QueryResult WHERE query = :queryId",
                         "l:queryId", query_id,
                         NULL);
@@ -1222,7 +976,7 @@ _hippo_disk_cache_do_query(HippoDiskCache *cache,
         if (sql_result != SQLITE_ROW)
             break;
         
-        if (!get_row_data(stmt, "s", &resource_id))
+        if (!hippo_sqlite_get_row_data(stmt, "s", &resource_id))
             goto out;
 
         resource_ids = g_slist_prepend(resource_ids, resource_id);
@@ -1280,7 +1034,7 @@ _hippo_disk_cache_save_properties_to_disk(HippoDiskCache    *cache,
         char *property_id = g_strdup_printf("%s#%s", qname->uri, qname->name);
         DDMDataProperty *property;
         
-        execute_sql(cache,
+        hippo_sqlite_execute_sql(cache->db,
                     "DELETE FROM Property WHERE resourceId = :resourceId AND propertyId = :propertyId",
                     "s:resourceId", resource_id,
                     "s:propertyId", property_id,
@@ -1366,13 +1120,13 @@ _hippo_disk_cache_save_update_to_disk(HippoDiskCache       *cache,
                                       DDMNotificationSet   *notifications)
 {
 #ifdef HAVE_SQLITE
-    execute_sql(cache,
+    hippo_sqlite_execute_sql(cache->db,
                 "BEGIN TRANSACTION",
                 NULL);
 
     save_notifications_to_disk_without_transaction(cache, notifications, get_current_timestamp());
     
-    execute_sql(cache,
+    hippo_sqlite_execute_sql(cache->db,
                 "END TRANSACTION",
                 NULL);
 #endif
@@ -1391,7 +1145,7 @@ _hippo_disk_cache_save_query_to_disk(HippoDiskCache       *cache,
     GSList *l;
     gint64 timestamp = get_current_timestamp();
     
-    execute_sql(cache,
+    hippo_sqlite_execute_sql(cache->db,
                 "BEGIN TRANSACTION",
                 NULL);
 
@@ -1400,14 +1154,14 @@ _hippo_disk_cache_save_query_to_disk(HippoDiskCache       *cache,
     uri = build_query_uri(query); 
     params = build_param_string(query);
 
-    execute_sql(cache,
+    hippo_sqlite_execute_sql(cache->db,
                 "DELETE FROM Query WHERE uri = :uri AND params = :params",
                 "s:uri", uri,
                 "s:params", params,
                 NULL);
 
     
-    execute_sql(cache,
+    hippo_sqlite_execute_sql(cache->db,
                 "INSERT INTO Query (session, timestamp, uri, params) VALUES (:session, :timestamp, :uri, :params)",
                 "l:session", cache->db_session,
                 "l:timestamp", timestamp,
@@ -1420,14 +1174,14 @@ _hippo_disk_cache_save_query_to_disk(HippoDiskCache       *cache,
     for (l = resources; l; l = l->next) {
         DDMDataResource *resource = l->data;
 
-        execute_sql(cache,
+        hippo_sqlite_execute_sql(cache->db,
                     "INSERT INTO QueryResult (query, resourceId) VALUES (:query, :resourceId)",
                     "l:query", query_id,
                     "s:resourceId", ddm_data_resource_get_resource_id(resource),
                     NULL);
     }
     
-    execute_sql(cache,
+    hippo_sqlite_execute_sql(cache->db,
                 "END TRANSACTION",
                 NULL);
     
