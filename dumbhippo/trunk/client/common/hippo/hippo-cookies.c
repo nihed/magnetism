@@ -5,6 +5,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef HAVE_SQLITE
+#include "hippo-sqlite-utils.h"
+#endif
+
 struct HippoCookie {
     int refcount;
     HippoBrowserKind origin_browser;
@@ -407,6 +411,134 @@ hippo_load_cookies_file(HippoBrowserKind browser,
     return g_slist_reverse(cookies);
 }
 
+#ifdef HAVE_SQLITE
+static int 
+read_cookie_cb(void *data, int argc, char **argv, char **azColName){
+  GSList **listptr = data;
+  
+  *listptr = g_slist_prepend(*listptr, argv[0]);
+  return 0;
+}
+#endif
+
+/* Sigh. */
+static GString *
+join_gstring(GSList *strs, const char *sep)
+{
+	GString *ret = g_string_new("");
+	
+	while (strs != NULL) {
+		g_string_append(ret, strs->data);
+		if (strs->next)
+			g_string_append(ret, sep);
+		strs = strs->next;
+	}
+	return ret;
+}
+
+/* Takes the same argument style as hippo_load_cookies_file */
+static GSList*
+hippo_load_cookies_file_sqlite(HippoBrowserKind browser,
+                                    const char *filename,
+                                    const char *domain,
+                                    int         port,
+                                    const char *name,
+                                    GError    **error)
+{
+    GSList *cookies = NULL;
+#if HAVE_SQLITE
+    sqlite3 *db = NULL;
+    sqlite3_stmt *stmt;
+    int rc;
+    GSList *clauses = NULL;
+    GString *query;
+    GValue val = {0,};
+   
+    rc = sqlite3_open(filename, &db);
+    if (rc) {
+        g_set_error(error, HIPPO_ERROR, HIPPO_ERROR_FAILED, "Can't open database: %s\n", sqlite3_errmsg(db));
+        return NULL;
+    }    
+    
+    if (domain != NULL) {
+    	clauses = g_slist_prepend(clauses, "host = :host");
+    }
+    if (port == 80) {
+    	clauses = g_slist_prepend(clauses, "isSecure = FALSE");
+    } else if (port == 443) {
+    	clauses = g_slist_prepend(clauses, "isSecure = TRUE");
+    }
+    if (name != NULL) {
+    	clauses = g_slist_prepend(clauses, "name = :name");
+    }
+    
+    query = join_gstring(clauses, " AND ");
+    g_string_prepend(query, "SELECT * from moz_cookies WHERE ");
+    
+    if (sqlite3_prepare(db, query->str, -1, &stmt, NULL) != SQLITE_OK) {
+        g_warning("Failed to prepare SQL command %s: %s\n", query->str, sqlite3_errmsg(db));
+        return NULL;
+    }
+    
+    g_string_free(query, TRUE);
+    
+    if (domain != NULL) {
+    	g_value_init(&val, G_TYPE_STRING);
+    	g_value_set_string(&val, domain);
+        hippo_sqlite_bind_parameter(db, stmt, ":host", &val);
+        g_value_unset(&val);
+    }
+    if (name != NULL) {
+    	g_value_init(&val, G_TYPE_STRING);
+    	g_value_set_string(&val, name);
+        hippo_sqlite_bind_parameter(db, stmt, ":name", &val);
+        g_value_unset(&val);    	
+    }
+    
+    while (TRUE) {
+         HippoCookie *cookie;
+         int sql_result;
+         int cookie_id;
+         char *cookie_name, *cookie_value, *cookie_host, *cookie_path;
+         int cookie_expiry, cookie_secure, cookie_httponly, cookie_lastaccess;
+         gboolean all_hosts_match;
+         
+         sql_result = sqlite3_step(stmt);
+         if (sql_result != SQLITE_DONE && sql_result != SQLITE_ROW) {
+             g_warning("Failed to execute SQL command: %s\n", sqlite3_errmsg(db));
+             goto out;
+         }
+         
+         if (sql_result != SQLITE_ROW)
+             break;
+         
+         if (!hippo_sqlite_get_row_data(stmt, "issssiiii", &cookie_id, &cookie_name, &cookie_value, &cookie_host, 
+        		                        &cookie_path, &cookie_expiry, &cookie_secure, &cookie_httponly, &cookie_lastaccess))
+             goto out;
+         all_hosts_match = cookie_host[0] == '.';
+         
+         cookie = hippo_cookie_new(browser,
+        		                   cookie_host,
+                                   cookie_secure ? 443 : 80,
+                                   all_hosts_match,
+                                   cookie_path,
+                                   cookie_httponly, cookie_lastaccess,
+                                   cookie_name,
+                                   cookie_value);
+         g_free(cookie_name);
+         g_free(cookie_value);
+         g_free(cookie_host);
+         g_free(cookie_path);
+         cookies = g_slist_prepend(cookies, cookie);
+     }    
+   
+    out:
+    sqlite3_close(db);    
+#endif
+    /* we've been prepending, so reverse */
+    return g_slist_reverse(cookies);
+}
+
 typedef enum {
     HIPPO_COOKIE_FILE,
     HIPPO_COOKIE_DIRECTORY
@@ -542,6 +674,7 @@ find_files_for_directory(const char       *path,
     while ((subdir = g_dir_read_name(dir)) != NULL) {
         char *subdirfull;
         char *cookie_file;
+        gboolean found_sqlite = FALSE;
         
         /* g_debug("Reading firefox subdir/file '%s'", subdir); */
         
@@ -551,15 +684,20 @@ find_files_for_directory(const char       *path,
             continue;
         }
         
-        cookie_file = g_build_filename(path, subdir, "cookies.txt", NULL);
-        /* g_debug("Checking for cookies file '%s'\n", cookie_file); */
-        
+        cookie_file = g_build_filename(path, subdir, "cookies.sqlite", NULL);
         if (g_file_test(cookie_file, G_FILE_TEST_EXISTS)) {
             *result = g_slist_prepend(*result, hippo_cookie_file_new(cookie_file, browser));
+            found_sqlite = TRUE;
         }
-        
-        g_free(cookie_file);
-        
+        g_free(cookie_file); 
+        if (!found_sqlite) {
+        	cookie_file = g_build_filename(path, subdir, "cookies.txt", NULL);
+        	if (g_file_test(cookie_file, G_FILE_TEST_EXISTS)) {
+        		*result = g_slist_prepend(*result, hippo_cookie_file_new(cookie_file, browser));
+        	}
+        	g_free(cookie_file);	
+        }
+    
         /* Also check for salted directories in the mozilla profile
            directories and discover the joy of recursion. */
         subdirfull = g_build_filename(path, subdir, NULL);
@@ -635,7 +773,10 @@ hippo_cookie_locator_load_cookies(HippoCookieLocator *locator,
         GError *error;
         
         error = NULL;
-        cookies = hippo_load_cookies_file(browser, filename, domain, port, name, &error);
+        if (g_str_has_suffix(filename, ".sqlite"))
+        	cookies = hippo_load_cookies_file_sqlite(browser, filename, domain, port, name, &error);
+        else
+        	cookies = hippo_load_cookies_file(browser, filename, domain, port, name, &error);
         if (error != NULL) {
             /* g_printerr("Failed to load '%s': %s\n", filename, error->message); */
             g_error_free(error); 
