@@ -30,6 +30,13 @@ typedef enum {
     HIPPO_WINDOW_STATE_ACTIVE /* the window the user is actively working with */
 } HippoWindowState;
 
+/* if content_type == NULL then we failed to get any content and the string is an error
+ * message. If content_type != NULL then the string is the content.
+ */
+typedef void (* HippoHttpFunc) (const char *content_type,
+                                GString    *content_or_error,
+                                void       *data);
+
 struct _HippoStackerPlatformClass {
     GTypeInterface base_iface;
 
