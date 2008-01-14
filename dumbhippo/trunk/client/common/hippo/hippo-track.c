@@ -215,11 +215,11 @@ track_ended(gpointer data)
 
 /* === HippoTrack exported API === */
 
+#if 0
 HippoTrack *
 hippo_track_new_from_xml(HippoDataCache *cache,
                          LmMessageNode  *node)
 {
-#if 0
     GSList *downloads = NULL;
     const char *artist;
     const char *album;
@@ -311,9 +311,8 @@ hippo_track_new_from_xml(HippoDataCache *cache,
     track->now_playing = now_playing;
 
     return track;
-#endif
-    return NULL;
 }
+#endif
 
 const char*
 hippo_track_get_artist (HippoTrack *track)

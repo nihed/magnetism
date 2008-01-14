@@ -18,7 +18,7 @@
 #include "hippo-dbus-http.h"
 #include "hippo-distribution.h"
 #include <hippo/hippo-endpoint-proxy.h>
-#include <hippo/hippo-stack-manager.h>
+#include <stacker/hippo-stack-manager.h>
 #include "main.h"
 
 /* rhythmbox messages */

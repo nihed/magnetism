@@ -4,7 +4,7 @@
 
 /* Implementation of HippoWindow for GTK+ */
 
-#include <hippo/hippo-window.h>
+#include <stacker/hippo-window.h>
 
 G_BEGIN_DECLS
 

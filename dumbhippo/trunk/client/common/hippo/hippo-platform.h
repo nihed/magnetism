@@ -3,9 +3,6 @@
 #define __HIPPO_PLATFORM_H__
 
 #include <hippo/hippo-basics.h>
-#include <hippo/hippo-post.h>
-#include <hippo/hippo-graphics.h>
-#include <hippo/hippo-track.h>
 
 G_BEGIN_DECLS
 

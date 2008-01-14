@@ -66,8 +66,6 @@ HippoChatMessage* hippo_chat_message_new           (HippoPerson      *person,
                                                     HippoSentiment    sentiment,
                                                     GTime             timestamp,
                                                     int               serial);
-HippoChatMessage *hippo_chat_message_new_from_xml  (HippoDataCache   *cache,
-                                                    LmMessageNode    *node);
 
 void              hippo_chat_message_free          (HippoChatMessage *message);
 HippoChatMessage* hippo_chat_message_copy          (HippoChatMessage *message);

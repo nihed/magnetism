@@ -3,7 +3,7 @@
 #include "hippo-status-icon.h"
 #include <gtk/gtkstatusicon.h>
 #include "main.h"
-#include <hippo/hippo-stack-manager.h>
+#include <stacker/hippo-stack-manager.h>
 
 static void      hippo_status_icon_init                (HippoStatusIcon       *icon);
 static void      hippo_status_icon_class_init          (HippoStatusIconClass  *klass);

@@ -2882,40 +2882,6 @@ hippo_connection_open_maybe_relative_url(HippoConnection *connection,
     g_free(url);
 }
 
-void
-hippo_connection_visit_post(HippoConnection *connection,
-                            HippoPost       *post)
-{
-    hippo_connection_visit_post_id(connection,
-                                   hippo_post_get_guid(post));
-}
-
-void
-hippo_connection_visit_post_id(HippoConnection *connection,
-                               const char      *guid)
-{
-    char *relative;
-    relative = g_strdup_printf("/visit?post=%s", guid);
-    hippo_connection_open_maybe_relative_url(connection, relative);
-    g_free(relative);
-}
-
-void
-hippo_connection_visit_entity(HippoConnection *connection,
-                              HippoEntity     *entity)
-{
-
-    const char *home_url;
-
-    home_url = hippo_entity_get_home_url(entity);
-    if (home_url) {
-        hippo_connection_open_maybe_relative_url(connection, home_url);
-    } else {
-        g_warning("Don't know how to go to the home page for entity '%s'",
-                  hippo_entity_get_guid(entity));
-    }
-}
-
 #ifdef HIPPO_LOUDMOUTH_IS_10
 typedef struct {
         gchar *key;

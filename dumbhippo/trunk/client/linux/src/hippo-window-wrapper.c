@@ -1,7 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <config.h>
 #include <glib/gi18n-lib.h>
-#include <hippo/hippo-window.h>
+#include <stacker/hippo-window.h>
 #include "hippo-window-gtk.h"
 #include "hippo-window-wrapper.h"
 #include <gtk/gtkwindow.h>

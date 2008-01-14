@@ -4,7 +4,6 @@
 #include <string.h>
 #include "hippo-basics.h"
 #include "hippo-data-cache.h"
-#include "hippo-group.h"
 #include "hippo-xml-utils.h"
 
 GQuark
@@ -93,8 +92,6 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
                               const char      *value,
                               GError         **error)
 {
-    HippoEntity *entity;
-    
     switch (info->flags & HIPPO_SPLIT_TYPE_MASK) {
     case HIPPO_SPLIT_NODE:
         g_assert_not_reached();
@@ -146,47 +143,6 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
             return FALSE;
         }
         *(const char **)info->location = value;
-        break;
-    case HIPPO_SPLIT_ENTITY:
-    case HIPPO_SPLIT_GROUP:
-    case HIPPO_SPLIT_PERSON:
-        if (!cache)
-            g_error("HIPPO_SPLIT_ENTITY used without passing in a HippoDataCache");
-
-        CHECK_NULL_IF_OPTIONAL(info, HippoEntity*);
-        
-        if (!hippo_verify_guid(value)) {
-            g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
-                        "Value '%s' for attribute '%s' of node <%s/> is not a GUID",
-                        value, info->attribute_name, node_name);
-            return FALSE;
-        }
-
-        entity = NULL; /* hippo_data_cache_lookup_entity(cache, value); */
-        if (!entity) {
-            g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
-                        "Value '%s' for attribute '%s' of node <%s/> is not a entity we know about",
-                        value, info->attribute_name, node_name);
-            return FALSE;
-        }
-
-        if ((info->flags & HIPPO_SPLIT_TYPE_MASK) == HIPPO_SPLIT_PERSON) {
-            if (!HIPPO_IS_PERSON(entity)) {
-                g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
-                            "Value '%s' for attribute '%s' of node <%s/> doesn't point to a user",
-                            value, info->attribute_name, node_name);
-                return FALSE;
-            }
-        } else if ((info->flags & HIPPO_SPLIT_TYPE_MASK) == HIPPO_SPLIT_GROUP) {
-            if (!HIPPO_IS_GROUP(entity)) {
-                g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
-                            "Value '%s' for attribute '%s' of node <%s/> doesn't point to a group",
-                            value, info->attribute_name, node_name);
-                return FALSE;
-            }
-        }
-        
-        *(HippoEntity **)info->location = entity;
         break;
     case HIPPO_SPLIT_URI_ABSOLUTE:
         CHECK_NULL_IF_OPTIONAL(info, char*);

@@ -4,7 +4,7 @@
 /* Implementation of HippoWindow for Windows */
 class HippoUI;
 
-#include <hippo/hippo-window.h>
+#include <stacker/hippo-window.h>
 #include <cairo.h>
 
 G_BEGIN_DECLS

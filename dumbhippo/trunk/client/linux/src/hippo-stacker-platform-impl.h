@@ -3,7 +3,7 @@
 #define __HIPPO_STACKER_PLATFORM_IMPL_H__
 
 #include <hippo/hippo-common.h>
-#include <hippo/hippo-stacker-platform.h>
+#include <stacker/hippo-stacker-platform.h>
 
 G_BEGIN_DECLS
 

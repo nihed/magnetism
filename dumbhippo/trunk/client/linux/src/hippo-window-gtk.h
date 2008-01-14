@@ -4,7 +4,7 @@
 
 /* GtkWindow (via HippoCanvasWindow) subclass used by HippoWindowWrapper */
 
-#include <hippo/hippo-window.h>
+#include <stacker/hippo-window.h>
 #include <cairo.h>
 
 G_BEGIN_DECLS

@@ -6,7 +6,6 @@
 #include <hippo/hippo-connection.h>
 #include <ddm/ddm.h>
 #include <hippo/hippo-person.h>
-#include <hippo/hippo-post.h>
 #include <hippo/hippo-chat-room.h>
 
 G_BEGIN_DECLS
@@ -34,23 +33,6 @@ HippoDataCache*  hippo_data_cache_new                    (HippoConnection *conne
 
 HippoConnection* hippo_data_cache_get_connection         (HippoDataCache  *cache);
 
-HippoEntity*     hippo_data_cache_lookup_entity          (HippoDataCache  *cache,
-                                                          const char      *guid);
-                                                          
-/* A convenience method like ensure_entity() doesn't work well because we want to be 
- * able to init the properties of an post before adding it and thus emitting the 
- * post-added signal
- */
-void             hippo_data_cache_add_entity             (HippoDataCache *cache,
-                                                          HippoEntity    *entity);
-/* but sometimes we want an entity with no properties anyhow */
-HippoEntity*     hippo_data_cache_ensure_bare_entity     (HippoDataCache *cache,
-                                                          HippoEntityType type,
-                                                          const char     *guid);
-
-gboolean         hippo_data_cache_update_from_xml        (HippoDataCache *cache,
-                                                          LmMessageNode  *node);
-                                                          
 HippoChatRoom*   hippo_data_cache_lookup_chat_room       (HippoDataCache  *cache,
                                                           const char      *chat_id,
                                                           HippoChatKind   *kind_p);
