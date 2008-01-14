@@ -13,6 +13,12 @@ G_BEGIN_DECLS
 #ifdef HAVE_SQLITE
 
 gboolean
+hippo_sqlite_bind_parameter(sqlite3      *db,
+		                    sqlite3_stmt *stmt,
+		                    const char  *name,
+		                    GValue       *val);
+
+gboolean
 hippo_sqlite_bind_sql_parameters(sqlite3        *db,
                                  sqlite3_stmt   *stmt,
                                  va_list        *vap);
