@@ -64,10 +64,6 @@ gboolean hippo_app_get_pointer_position (HippoApp *app,
                                          int      *x_p,
                                          int      *y_p);
 
-/* FIXME just change all references to have the HIPPO_ */
-#define ADD_WEAK(ptr)    HIPPO_ADD_WEAK(ptr)
-#define REMOVE_WEAK(ptr) HIPPO_REMOVE_WEAK(ptr)
-
 G_END_DECLS
 
 #endif /* __HIPPO_MAIN_H__ */
