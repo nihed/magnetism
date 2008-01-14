@@ -64,14 +64,13 @@ static const int HOTNESS_BLINK_TIME = 150;
 
 static void quitAndWait(IHippoUI *ui);
 
-HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool initialDebugShare) 
+HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting) 
 {
     HippoConnection *connection;
 
     refCount_ = 1;
     instanceType_ = instanceType;
     replaceExisting_ = replaceExisting;
-    initialShowDebugShare_ = initialDebugShare;
 
     hippoLoadTypeInfo(L"HippoUtil.dll",
                       &IID_IHippoUI, &uiTypeInfo_,
@@ -2170,7 +2169,7 @@ WinMain(HINSTANCE hInstance,
     registerFirefoxComponent();
     migrateCookie();
 
-    ui = new HippoUI(options.instance_type, options.replace_existing, options.initial_debug_share);
+    ui = new HippoUI(options.instance_type, options.replace_existing);
     if (!ui->create(hInstance)) {
         g_debug("Failed to create UI");
         return 0;
