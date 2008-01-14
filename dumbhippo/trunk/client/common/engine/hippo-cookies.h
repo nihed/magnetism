@@ -3,7 +3,7 @@
 #define __HIPPO_COOKIES_H__
 
 #include <glib-object.h>
-#include <hippo/hippo-basics.h>
+#include <engine/hippo-engine-basics.h>
 
 G_BEGIN_DECLS
 

@@ -2,7 +2,7 @@
 
 #include <stdarg.h>
 #include <string.h>
-#include "hippo-basics.h"
+#include <hippo/hippo-basics.h>
 #include "hippo-data-cache.h"
 #include "hippo-xml-utils.h"
 

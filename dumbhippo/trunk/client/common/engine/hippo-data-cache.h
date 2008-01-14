@@ -3,14 +3,12 @@
 #define __HIPPO_DATA_CACHE_H__
 
 #include <loudmouth/loudmouth.h>
-#include <hippo/hippo-connection.h>
 #include <ddm/ddm.h>
 #include <hippo/hippo-person.h>
-#include <hippo/hippo-chat-room.h>
+#include <engine/hippo-chat-room.h>
+#include <engine/hippo-connection.h>
 
 G_BEGIN_DECLS
-
-/* HippoDataCache forward-declared in hippo-basics.h */
 
 typedef struct
 {

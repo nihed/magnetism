@@ -15,7 +15,6 @@
  */
 
 #include <hippo/hippo-canvas-box.h>
-#include <hippo/hippo-chat-room.h>
 
 G_BEGIN_DECLS
 

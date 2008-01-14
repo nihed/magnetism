@@ -3,7 +3,6 @@
 #define __HIPPO_DATA_MODEL_BACKEND_H__
 
 #include <ddm/ddm.h>
-#include <hippo/hippo-data-cache.h>
 
 G_BEGIN_DECLS
 

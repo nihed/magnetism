@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-endpoint-proxy.h"
-#include "hippo-common-marshal.h"
+#include "hippo-engine-marshal.h"
 
 static void hippo_endpoint_proxy_finalize(GObject *object);
 
@@ -55,7 +55,7 @@ hippo_endpoint_proxy_class_init(HippoEndpointProxyClass *klass)
              G_SIGNAL_RUN_LAST,
              0,
              NULL, NULL,
-             hippo_common_marshal_VOID__OBJECT_OBJECT_BOOLEAN,
+             hippo_engine_marshal_VOID__OBJECT_OBJECT_BOOLEAN,
              G_TYPE_NONE, 3, G_TYPE_OBJECT, G_TYPE_OBJECT, G_TYPE_BOOLEAN);
     signals[USER_LEAVE] = 
     g_signal_new("user-leave",
@@ -63,7 +63,7 @@ hippo_endpoint_proxy_class_init(HippoEndpointProxyClass *klass)
              G_SIGNAL_RUN_LAST,
              0,
              NULL, NULL,
-             hippo_common_marshal_VOID__OBJECT_OBJECT,
+             hippo_engine_marshal_VOID__OBJECT_OBJECT,
              G_TYPE_NONE, 2, G_TYPE_OBJECT, G_TYPE_OBJECT);
     signals[MESSAGE] = 
     g_signal_new("message",
@@ -71,7 +71,7 @@ hippo_endpoint_proxy_class_init(HippoEndpointProxyClass *klass)
              G_SIGNAL_RUN_LAST,
              0,
              NULL, NULL,
-             hippo_common_marshal_VOID__OBJECT_POINTER,
+             hippo_engine_marshal_VOID__OBJECT_POINTER,
              G_TYPE_NONE, 2, G_TYPE_OBJECT, G_TYPE_POINTER);
     signals[ENTITY_INFO] = 
     g_signal_new("entity-info",
@@ -79,7 +79,7 @@ hippo_endpoint_proxy_class_init(HippoEndpointProxyClass *klass)
              G_SIGNAL_RUN_LAST,
              0,
              NULL, NULL,
-             hippo_common_marshal_VOID__OBJECT,
+             hippo_engine_marshal_VOID__OBJECT,
              G_TYPE_NONE, 1, G_TYPE_OBJECT);
 
     object_class->finalize = hippo_endpoint_proxy_finalize;

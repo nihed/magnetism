@@ -2,11 +2,18 @@
 #ifndef __HIPPO_CONNECTION_H__
 #define __HIPPO_CONNECTION_H__
 
-#include <hippo/hippo-platform.h>
-#include <hippo/hippo-chat-room.h>
+#include <engine/hippo-platform.h>
+#include <engine/hippo-chat-room.h>
 #include <ddm/ddm.h>
 
 G_BEGIN_DECLS
+
+typedef struct _HippoConnection      HippoConnection;
+typedef struct _HippoConnectionClass HippoConnectionClass;
+
+/* Forward declaration to avoid a circular include */
+typedef struct _HippoDataCache      HippoDataCache;
+typedef struct _HippoDataCacheClass HippoDataCacheClass;
 
 typedef enum {
     HIPPO_STATE_SIGNED_OUT,     // User hasn't asked to connect

@@ -13,7 +13,7 @@
  * that the change has taken effect.
  */
 
-#include <hippo/hippo-data-cache.h>
+#include "hippo-data-cache.h"
 
 G_BEGIN_DECLS
 

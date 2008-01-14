@@ -2,7 +2,7 @@
 #ifndef __HIPPO_SETTINGS_H__
 #define __HIPPO_SETTINGS_H__
 
-#include <hippo/hippo-basics.h>
+#include <engine/hippo-connection.h>
 
 G_BEGIN_DECLS
 

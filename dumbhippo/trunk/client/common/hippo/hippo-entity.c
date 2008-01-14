@@ -3,7 +3,6 @@
 #include "hippo-feed.h"
 #include "hippo-group.h"
 #include "hippo-person.h"
-#include "hippo-chat-room.h"
 #include <string.h>
 
 /* === HippoEntity implementation === */
