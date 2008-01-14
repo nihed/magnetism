@@ -28,12 +28,12 @@
 #include "HippoPlatformImpl.h"
 #include "HippoUIUtil.h"
 #include "HippoImageFactory.h"
-#include <hippo/hippo-stack-manager.h>
+#include <stacker/hippo-stack-manager.h>
+#include <stacker/hippo-window.h>
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-text.h>
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-widgets.h>
-#include <hippo/hippo-window.h>
 #include <hippo/hippo-canvas-test.h>
 
 #include <glib.h>

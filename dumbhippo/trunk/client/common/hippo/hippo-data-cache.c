@@ -2,7 +2,6 @@
 #include "hippo-data-cache-internal.h"
 #include <ddm/ddm.h>
 #include "hippo-connection.h"
-#include "hippo-group.h"
 #include "hippo-title-pattern.h"
 #include "hippo-xml-utils.h"
 #include "hippo-data-model-backend.h"

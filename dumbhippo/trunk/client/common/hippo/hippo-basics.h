@@ -7,9 +7,6 @@
 
 G_BEGIN_DECLS
 
-typedef struct _HippoWindow      HippoWindow;
-typedef struct _HippoWindowClass HippoWindowClass;
-
 typedef struct _HippoDataCache      HippoDataCache;
 typedef struct _HippoDataCacheClass HippoDataCacheClass;
 
@@ -18,8 +15,6 @@ typedef struct _HippoConnectionClass HippoConnectionClass;
 
 typedef struct _HippoChatRoom      HippoChatRoom;
 typedef struct _HippoChatRoomClass HippoChatRoomClass;
-
-typedef struct _HippoStackManager HippoStackManager;
 
 /* Having a single error enum for everything is pretty crazy */
 typedef enum {
@@ -98,17 +93,6 @@ typedef enum {
     HIPPO_URI_ACTION_BROKEN,
     HIPPO_URI_ACTION_JOIN_CHAT
 } HippoUriAction;
-
-/* Used currently for chat windows, but probably should also be used
- * to replace HippoWindow::active HippoWindow::onscreen with
- * HippoWindow::window-state.
- */
-typedef enum {
-    HIPPO_WINDOW_STATE_CLOSED, /* nonexistent, or "withdrawn" */
-    HIPPO_WINDOW_STATE_HIDDEN, /* iconified, on another desktop, or obscured */
-    HIPPO_WINDOW_STATE_ONSCREEN, /* some portion of the window is visible */
-    HIPPO_WINDOW_STATE_ACTIVE /* the window the user is actively working with */
-} HippoWindowState;
 
 #define HIPPO_URI_SCHEME     "mugshot"
 #define HIPPO_URI_SCHEME_LEN 7

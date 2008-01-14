@@ -4,7 +4,8 @@
 
 #include <config.h>
 #include <hippo/hippo-common.h>
-#include <hippo/hippo-stacker-platform.h>
+#include <stacker/hippo-stacker-platform.h>
+#include <stacker/hippo-stack-manager.h>
 
 /* avoiding gtk/gtk.h because of the internal gtk/ copy stuff,
  * this plays it safer. maybe it speeds up compilation a tiny 

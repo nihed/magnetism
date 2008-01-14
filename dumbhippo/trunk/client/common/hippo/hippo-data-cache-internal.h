@@ -14,23 +14,8 @@
  */
 
 #include <hippo/hippo-data-cache.h>
-#include <hippo/hippo-myspace.h>
 
 G_BEGIN_DECLS
-
-/* A convenience method like ensure_post() doesn't work well because we want to be
- * able to init the properties of a post before adding it and thus emitting the
- * post-added signal
- */
-void             hippo_data_cache_add_post               (HippoDataCache *cache,
-                                                          HippoPost      *post);
-void             hippo_data_cache_add_entity             (HippoDataCache *cache,
-                                                          HippoEntity    *entity);
-/* but sometimes we want an entity with no properties anyhow */
-HippoEntity*     hippo_data_cache_ensure_bare_entity     (HippoDataCache *cache,
-                                                          HippoEntityType type,
-                                                          const char     *guid);
-
 
 HippoChatRoom*   hippo_data_cache_ensure_chat_room       (HippoDataCache  *cache,
                                                           const char      *chat_id,

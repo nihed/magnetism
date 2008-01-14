@@ -123,12 +123,6 @@ char* hippo_connection_make_absolute_url       (HippoConnection *connection,
                                                 const char      *relative_url);
 void  hippo_connection_open_maybe_relative_url (HippoConnection *connection,
                                                 const char      *relative_url);
-void  hippo_connection_visit_post              (HippoConnection *connection,
-                                                HippoPost       *post);
-void  hippo_connection_visit_post_id           (HippoConnection *connection,
-                                                const char      *guid);
-void  hippo_connection_visit_entity            (HippoConnection *connection,
-                                                HippoEntity     *entity);
 
 /* Functions for setting/storing desktop state on Mugshot; distinct from "prefs" which are
  * prefs for Mugshot itself

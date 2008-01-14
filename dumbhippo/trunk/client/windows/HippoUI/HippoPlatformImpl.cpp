@@ -11,7 +11,7 @@
 #include <Windows.h>
 #include <mshtml.h>
 #include <hippo/hippo-basics.h>
-#include <hippo/hippo-stacker-impl.h>
+#include <stacker/hippo-stacker-platform.h>
 
 static void      hippo_platform_impl_init                (HippoPlatformImpl       *impl);
 static void      hippo_platform_impl_class_init          (HippoPlatformImplClass  *klass);

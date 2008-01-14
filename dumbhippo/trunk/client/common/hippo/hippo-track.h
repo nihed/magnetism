@@ -3,7 +3,6 @@
 #define __HIPPO_TRACK_H__
 
 #include <hippo/hippo-entity.h>
-#include <loudmouth/loudmouth.h>
 
 G_BEGIN_DECLS
 
@@ -18,9 +17,6 @@ typedef struct _HippoTrackClass HippoTrackClass;
 #define HIPPO_TRACK_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_TRACK, HippoTrackClass))
 
 GType hippo_track_get_type(void) G_GNUC_CONST;
-
-HippoTrack* hippo_track_new_from_xml   (HippoDataCache *cache,
-                                        LmMessageNode  *node);
 
 const char* hippo_track_get_artist           (HippoTrack *track);
 const char* hippo_track_get_name             (HippoTrack *track);

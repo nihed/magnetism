@@ -3,7 +3,7 @@
 #include <glib.h>
 #include <glib/gi18n-lib.h>
 #include "hippo-ui.h"
-#include <hippo/hippo-stack-manager.h>
+#include <stacker/hippo-stack-manager.h>
 #include "hippo-status-icon.h"
 #include "hippo-embedded-image.h"
 #include "hippo-stacker-platform-impl.h"

@@ -3,7 +3,6 @@
 #include "hippo-feed.h"
 #include "hippo-group.h"
 #include "hippo-person.h"
-#include "hippo-resource.h"
 #include "hippo-chat-room.h"
 #include <string.h>
 
@@ -155,9 +154,6 @@ hippo_entity_new(HippoEntityType  type,
     }
     
     switch (type) {
-    case HIPPO_ENTITY_RESOURCE:
-        entity = g_object_new(HIPPO_TYPE_RESOURCE, NULL);
-        break;
     case HIPPO_ENTITY_GROUP:
         entity = g_object_new(HIPPO_TYPE_GROUP, NULL);
         break;
@@ -233,13 +229,6 @@ hippo_entity_get_photo_url(HippoEntity    *entity)
 {
     g_return_val_if_fail(HIPPO_IS_ENTITY(entity), NULL);
     return entity->photo_url;
-}
-
-gboolean
-hippo_entity_get_in_network(HippoEntity    *entity)
-{
-    g_return_val_if_fail(HIPPO_IS_ENTITY(entity), FALSE);
-    return entity->in_network;
 }
 
 void
