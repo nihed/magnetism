@@ -1,9 +1,11 @@
 package com.dumbhippo.server;
 
+import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.Thumbnail;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Sentiment;
@@ -69,6 +71,9 @@ public interface ExternalAccountSystem extends AccountStatusListener {
 	public ExternalAccountView getExternalAccountView(Viewpoint viewpoint, User user, ExternalAccountType externalAccountType) throws NotFoundException;
 	
 	public void loadThumbnails(Viewpoint viewpoint, Set<ExternalAccountView> accountViews);
+	
+	// NOTE: returns null if external account doesn't have thumbnails
+	public List<? extends Thumbnail> getThumbnails(ExternalAccount externalAccount);
 
 	public void setSentiment(ExternalAccount externalAccount, Sentiment sentiment);
 	

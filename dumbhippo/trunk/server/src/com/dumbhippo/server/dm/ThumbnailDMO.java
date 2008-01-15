@@ -6,7 +6,12 @@ import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.MetaConstruct;
 import com.dumbhippo.dm.annotations.PropertyType;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.services.FacebookPhotoDataView;
+import com.dumbhippo.services.FlickrPhotoView;
+import com.dumbhippo.services.PicasaAlbum;
+import com.dumbhippo.services.YouTubeVideo;
 
 @DMO(classId="http://mugshot.org/p/o/thumbnail", resourceBase="/o/thumbnail")
 public abstract class ThumbnailDMO extends DMObject<ThumbnailKey> {
@@ -77,5 +82,18 @@ public abstract class ThumbnailDMO extends DMObject<ThumbnailKey> {
 	@DMProperty(defaultInclude=true)
 	public int getHeight() {
 		return thumbnail.getThumbnailHeight();
+	}
+	
+	public static ThumbnailKey getKey(User user, Thumbnail thumbnail) {
+		if (thumbnail instanceof FacebookPhotoDataView)
+			return FacebookPhotoThumbnailDMO.getKey(user, (FacebookPhotoDataView)thumbnail);
+		else if (thumbnail instanceof FlickrPhotoView)
+			return FlickrPhotoThumbnailDMO.getKey(user, (FlickrPhotoView)thumbnail);
+		else if (thumbnail instanceof PicasaAlbum)
+			return PicasaAlbumThumbnailDMO.getKey(user, (PicasaAlbum)thumbnail);
+		else if (thumbnail instanceof YouTubeVideo)
+			return YouTubeThumbnailDMO.getKey(user, (YouTubeVideo)thumbnail);
+		else
+			throw new RuntimeException("Unknown type of thumbnail");
 	}
 }

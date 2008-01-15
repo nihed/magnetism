@@ -39,6 +39,7 @@ import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FlickrPhotoSize;
+import com.dumbhippo.services.FlickrPhotoView;
 import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.PicasaAlbum;
 import com.dumbhippo.services.YouTubeVideo;
@@ -161,9 +162,7 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		return getExternalAccountView(viewpoint, externalAccount);
 	}
 
-	private void loadFlickrThumbnails(Viewpoint viewpoint, ExternalAccountView accountView) {
-		ExternalAccount account = accountView.getExternalAccount();
-		
+	private FlickrPhotosView getFlickrPhotosView(ExternalAccount account) {
 		if (account.getAccountType() != ExternalAccountType.FLICKR)
 			throw new IllegalArgumentException("should be a flickr account here");
 	
@@ -171,9 +170,24 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			throw new IllegalArgumentException("Flickr account is unloved");
 		
 		if (account.getHandle() == null)
-			return;
+			return null;
 		
-		FlickrPhotosView photos = flickrUserPhotosCache.getSync(account.getHandle());
+		return flickrUserPhotosCache.getSync(account.getHandle());
+	}
+	
+	private List<? extends FlickrPhotoView> getFlickrThumbnails(ExternalAccount account) {
+		FlickrPhotosView photos = getFlickrPhotosView(account);
+		if (photos == null) {
+			logger.debug("No public photos for {}", account);
+			return null;
+		}
+		
+		return photos.getPhotos();
+	}
+
+	private void loadFlickrThumbnails(Viewpoint viewpoint, ExternalAccountView accountView) {
+		ExternalAccount account = accountView.getExternalAccount();
+		FlickrPhotosView photos = getFlickrPhotosView(account);
 		if (photos == null) {
 			logger.debug("No public photos for {}", account);
 			return;
@@ -184,9 +198,7 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	}
 	
 
-	private void loadYouTubeThumbnails(Viewpoint viewpoint, ExternalAccountView accountView) {
-		ExternalAccount account = accountView.getExternalAccount();
-		
+	private List<? extends YouTubeVideo> getYouTubeThumbnails(ExternalAccount account) {
 		if (account.getAccountType() != ExternalAccountType.YOUTUBE)
 			throw new IllegalArgumentException("should be a YouTube account here");
 	
@@ -194,28 +206,34 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			throw new IllegalArgumentException("YouTube account is unloved =(");
 		
 		if (account.getHandle() == null)
-			return;
+			return null;
 		
 		try {
 			youTubeUpdater.getCachedStatus(account);
 		} catch (NotFoundException e) {
 			logger.debug("No cached YouTube status for {}", account);
-			return;
+			return null;
 		}
 		
 		List<? extends YouTubeVideo> videos = youTubeVideosCache.getSync(account.getHandle());
 		if (videos.isEmpty()) {
 			logger.debug("Empty list of videos for {}", account);
-			return;
+			return null;
 		}
 		
-		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, videos), videos.size(), 
-					videos.get(0).getThumbnailWidth(), videos.get(0).getThumbnailHeight());
+		return videos;
 	}	
-
-	private void loadPicasaThumbnails(Viewpoint viewpoint, ExternalAccountView accountView) {
-		ExternalAccount account = accountView.getExternalAccount();
+	
+	private void loadYouTubeThumbnails(Viewpoint viewpoint, ExternalAccountView accountView) {
+		ExternalAccount externalAccount = accountView.getExternalAccount();
 		
+		List<? extends YouTubeVideo> videos = getYouTubeThumbnails(externalAccount);
+
+		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, videos), videos.size(), 
+				videos.get(0).getThumbnailWidth(), videos.get(0).getThumbnailHeight());
+	}
+
+	private List<? extends PicasaAlbum> getPicasaThumbnails(ExternalAccount account) {
 		if (account.getAccountType() != ExternalAccountType.PICASA)
 			throw new IllegalArgumentException("should be a Picasa account here");
 	
@@ -223,25 +241,52 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			throw new IllegalArgumentException("Picasa account is unloved =(");
 		
 		if (account.getHandle() == null)
-			return;
+			return null;
 		
 		try {
 			picasaUpdater.getCachedStatus(account);
 		} catch (NotFoundException e) {
 			logger.debug("No cached Picasa status for {}", account);
-			return;
+			return null;
 		}
 		
 		List<? extends PicasaAlbum> albums = picasaAlbumsCache.getSync(account.getHandle());
 		if (albums.isEmpty()) {
 			logger.debug("Empty list of albums for {}", account);
-			return;
+			return null;
 		}
 		
-		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, albums), albums.size(), 
-					albums.get(0).getThumbnailWidth(), albums.get(0).getThumbnailHeight());
+		return albums;
 	}		
 	
+	private void loadPicasaThumbnails(Viewpoint viewpoint, ExternalAccountView accountView) {
+		ExternalAccount externalAccount = accountView.getExternalAccount();
+		
+		List<? extends PicasaAlbum> videos = getPicasaThumbnails(externalAccount);
+
+		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, videos), videos.size(), 
+				videos.get(0).getThumbnailWidth(), videos.get(0).getThumbnailHeight());
+	}
+
+	public List<? extends Thumbnail> getThumbnails(ExternalAccount externalAccount) {
+		ExternalAccountType type = externalAccount.getAccountType();
+		// you only have thumbnails for accounts you like
+		if (externalAccount.getSentiment() != Sentiment.LOVE)
+			return null;
+		
+		switch (type) {
+		case FLICKR:
+			return getFlickrThumbnails(externalAccount);
+		case YOUTUBE:
+			return getYouTubeThumbnails(externalAccount);
+		case PICASA:
+			return getPicasaThumbnails(externalAccount);
+		default:
+			// most accounts lack thumbnails
+			return null;
+		}
+	}
+
 	private void loadThumbnails(Viewpoint viewpoint, ExternalAccountView externalAccountView) {
 		ExternalAccount externalAccount = externalAccountView.getExternalAccount();
 		ExternalAccountType type = externalAccount.getAccountType();
@@ -262,7 +307,7 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		default:
 			// most accounts lack thumbnails
 			break;
-		}		
+		}
 	}
 	
 	public void loadThumbnails(Viewpoint viewpoint, Set<ExternalAccountView> accountViews) {
