@@ -582,37 +582,6 @@ on_auth_failed(HippoConnection *connection,
     /* Ignore this - we display as a disconnected icon */
 }
 
-static void
-on_has_auth_changed(HippoConnection *connection,
-                    void            *data)
-{
-    HippoApp *app = data;
-
-    hippo_dbus_notify_auth_changed(app->dbus);
-}
-
-static void
-on_pref_changed(HippoConnection *connection,
-                const char      *key,
-                gboolean         value,
-                void            *data)
-{
-    HippoApp *app = data;
-
-    hippo_dbus_notify_pref_changed(app->dbus, key, value);
-}
-
-static void
-on_external_iq_return(HippoConnection      *connection,
-                      guint                 id,
-                      const char           *content,
-                      void                 *data)
-{
-    HippoApp *app = data;
-    
-    hippo_dbus_notify_external_iq_return(app->dbus, id, content);
-}
-
 static HippoApp*
 hippo_app_new(HippoInstanceType  instance_type,
               HippoPlatform     *platform,
@@ -648,19 +617,11 @@ hippo_app_new(HippoInstanceType  instance_type,
                      G_CALLBACK(on_client_info_available), app);
     g_signal_connect(G_OBJECT(app->connection), "auth-failed",
                      G_CALLBACK(on_auth_failed), app);                     
-    g_signal_connect(G_OBJECT(app->connection), "has-auth-changed",
-                     G_CALLBACK(on_has_auth_changed), app);                     
     g_signal_connect(G_OBJECT(app->connection), "connected-changed",
                      G_CALLBACK(on_connected_changed), app);
     g_signal_connect(G_OBJECT(app->connection), "initial-application-burst",
                      G_CALLBACK(on_initial_application_burst), app);
-    g_signal_connect(G_OBJECT(app->connection), "pref-changed", 
-                     G_CALLBACK(on_pref_changed), app);   
                      
-    /* Hook up D-BUS reflectors */
-    g_signal_connect(G_OBJECT(app->connection), "external-iq-return",
-                     G_CALLBACK(on_external_iq_return), app);
-    
     /* initially be sure we are the latest installed, though it's 
      * tough to imagine this happening outside of testing 
      * in a local source tree (which is why it's here...)
@@ -699,13 +660,9 @@ hippo_app_free(HippoApp *app)
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
                                          G_CALLBACK(on_auth_failed), app);
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
-                                         G_CALLBACK(on_has_auth_changed), app);
-    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
                                          G_CALLBACK(on_connected_changed), app);
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
                                          G_CALLBACK(on_initial_application_burst), app);
-    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
-                                         G_CALLBACK(on_external_iq_return), app);
 
     if (app->upgrade_dialog)
         gtk_object_destroy(GTK_OBJECT(app->upgrade_dialog));

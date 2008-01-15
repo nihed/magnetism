@@ -279,8 +279,6 @@ struct _HippoConnection {
     unsigned int too_old : 1;
     unsigned int upgrade_available : 1;
     unsigned int last_auth_failed : 1;
-    
-    guint external_iq_serial;
 };
 
 struct _HippoConnectionClass {
@@ -314,8 +312,6 @@ enum {
     /* Emitted to signal that we should temporarily rapidly upload application
      * activity instead of just once an hour */
     INITIAL_APPLICATION_BURST,
-    EXTERNAL_IQ_RETURN,
-    PREF_CHANGED,
     LAST_SIGNAL
 };
 
@@ -446,24 +442,6 @@ hippo_connection_class_init(HippoConnectionClass *klass)
                       g_cclosure_marshal_VOID__VOID,
                       G_TYPE_NONE, 0);        
                       
-    signals[PREF_CHANGED] =
-        g_signal_new ("pref-changed",
-                      G_TYPE_FROM_CLASS (object_class),
-                      G_SIGNAL_RUN_LAST,
-                      0,
-                      NULL, NULL,
-                      hippo_engine_marshal_VOID__STRING_BOOLEAN,
-                      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);   
-                      
-    signals[EXTERNAL_IQ_RETURN] =
-        g_signal_new ("external-iq-return",
-                      G_TYPE_FROM_CLASS (object_class),
-                      G_SIGNAL_RUN_LAST,
-                      0,
-                      NULL, NULL,
-                      g_cclosure_marshal_VOID__UINT_POINTER,
-                      G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_POINTER);    
-    
     object_class->finalize = hippo_connection_finalize;
 }
 
@@ -1691,7 +1669,6 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
     for (child = prefs_node->children; child != NULL; child = child->next) {
         const char *key = lm_message_node_get_attribute(child, "key");
         const char *value = lm_message_node_get_value(child);
-        gboolean emit;
         gboolean value_parsed;
         
         if (key == NULL) {
@@ -1702,7 +1679,6 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
 
         value_parsed = value != NULL && parse_bool(value);
         
-        emit = TRUE;
         if (strcmp(key, "musicSharingEnabled") == 0) {
             music_sharing_enabled = value_parsed;
             saw_music_sharing_enabled = TRUE;
@@ -1735,11 +1711,7 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
             
         } else {
             g_debug("Unknown pref '%s'", key);
-            emit = FALSE;
         }
-        if (emit)
-        	g_signal_emit(G_OBJECT(connection), signals[PREF_CHANGED], 0,
-        	              key, value_parsed);
     }
     
     /* Important to set primed then enabled, so when the signal is emitted from the 
@@ -2944,77 +2916,8 @@ copied_lm_message_node_to_string(LmMessageNode *node)
     
     return g_string_free (ret, FALSE);
 }
+
 #endif
-
-static LmHandlerResult
-on_external_iq_reply(LmMessageHandler *handler,
-                     LmConnection     *lconnection,
-                     LmMessage        *message,
-                     gpointer          data)
-{
-    MessageContext *context = (MessageContext*) data;
-    HippoConnection *connection = context->connection;
-    LmMessageNode *node = message->node->children;
-    guint external_id = GPOINTER_TO_UINT(context->data);
-    char *content = NULL;
-    
-    g_debug("got external IQ reply (id=%u)", external_id);
-
-    if (node) {
-        lm_message_node_set_raw_mode(node, FALSE);        
-#ifdef HIPPO_LOUDMOUTH_IS_10    
-        content = copied_lm_message_node_to_string(node);
-#else
-        content = lm_message_node_to_string(node);
-#endif
-    } else {
-        content = g_strdup("");
-    }
-    
-    g_signal_emit(G_OBJECT(connection), signals[EXTERNAL_IQ_RETURN], 0, external_id, content);
-                  
-    g_free(content);
-    
-    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-}   
-
-guint 
-hippo_connection_send_external_iq(HippoConnection *connection,
-                                  gboolean         is_set,
-                                  const char      *element,
-                                  int              attrs_count,
-                                  char           **attrs,
-                                  const char      *content)
-{
-    LmMessage *message;
-    LmMessageNode *node;
-    LmMessageNode *child;
-    int i;
-    
-    g_return_val_if_fail(attrs_count % 2 == 0, 0);
-    
-    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
-                                           is_set ? LM_MESSAGE_SUB_TYPE_SET : LM_MESSAGE_SUB_TYPE_GET);
-    node = lm_message_get_node(message);
-    
-    child = lm_message_node_add_child (node, element, NULL);
-    for (i = 0; i < attrs_count; i += 2) {
-		lm_message_node_set_attribute(child, attrs[i], attrs[i+1]);	
-    }
-    lm_message_node_set_raw_mode(child, TRUE);    
-    lm_message_node_set_value(child, content);
-    
-    connection->external_iq_serial++;
-    
-    hippo_connection_send_message_with_reply_full(connection, message, on_external_iq_reply, SEND_MODE_AFTER_AUTH,
-                                                  GUINT_TO_POINTER(connection->external_iq_serial), NULL);
-
-    lm_message_unref(message);
-
-    g_debug("Sent external IQ: %s (%d content characters)", element, (int)strlen(content));
-    return connection->external_iq_serial;
-}
-
 
 /**********************************************************************
  * Handling of DataModel IQ's and messages.

@@ -10,7 +10,6 @@
 #include "hippo-dbus-client.h"
 #include "hippo-dbus-cookies.h"
 #include "hippo-dbus-model.h"
-#include "hippo-dbus-mugshot.h"
 #include "hippo-dbus-pidgin.h"
 #include "hippo-dbus-local.h"
 #include "hippo-dbus-settings.h"
@@ -395,9 +394,6 @@ hippo_dbus_init_services(HippoDBus   *dbus)
 
     dbus_error_init(&derror);
     
-    /* Grab ownership of the Mugshot bus name */
-    hippo_dbus_try_acquire_mugshot(connection, FALSE);
-
     /* Acquire online prefs manager; we continue even if this
      * fails. If another Mugshot had it, we should have replaced that
      * Mugshot above synchronously. So we don't pass replace=TRUE to
@@ -1933,32 +1929,6 @@ handle_message(DBusConnection     *connection,
                 dbus_connection_send(dbus->connection, reply, NULL);
                 dbus_message_unref(reply);
             }
-        } else if (path && member &&
-                   strcmp(path, HIPPO_DBUS_MUGSHOT_PATH) == 0) {
-            DBusMessage *reply;
-            
-            reply = NULL;
-            result = DBUS_HANDLER_RESULT_HANDLED;
-
-            if (strcmp(member, "GetConnectionStatus") == 0) {
-                reply = hippo_dbus_handle_mugshot_get_connection_status(dbus, message);
-            } else if (strcmp(member, "NotifyAllWhereim") == 0) {
-                reply = hippo_dbus_handle_mugshot_send_external_iq(dbus, message);                       
-            } else if (strcmp(member, "GetBaseProperties") == 0) {
-                reply = hippo_dbus_handle_mugshot_get_baseprops(dbus, message);                   
-            } else if (strcmp(member, "GetSelf") == 0) {
-            	reply = hippo_dbus_handle_mugshot_get_self(dbus, message);                
-            } else if (strcmp(member, "Introspect") == 0) {
-                reply = hippo_dbus_handle_mugshot_introspect(dbus, message);                
-            } else {
-                /* Set this back so the default handler can return an error */
-                result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-            }
-
-            if (reply != NULL) {
-                dbus_connection_send(dbus->connection, reply, NULL);
-                dbus_message_unref(reply);
-            }        
         }        
     } else if (type == DBUS_MESSAGE_TYPE_SIGNAL) {
         const char *sender = dbus_message_get_sender(message);
@@ -2032,37 +2002,15 @@ handle_message(DBusConnection     *connection,
 }
 
 void
-hippo_dbus_notify_auth_changed(HippoDBus   *dbus)
-{
-	DBusMessage *message;
-	message = hippo_dbus_mugshot_signal_connection_changed(dbus);
-    dbus_connection_send(dbus->connection, message, NULL);
-    dbus_message_unref(message);	
-}                               
-
-void
-hippo_dbus_notify_contacts_loaded(HippoDBus   *dbus)
-{
-	DBusMessage *message;
-	message = hippo_dbus_mugshot_signal_connection_changed(dbus);
-    dbus_connection_send(dbus->connection, message, NULL);
-    dbus_message_unref(message);	
-}   
-
-void
 hippo_dbus_notify_xmpp_connected(HippoDBus   *dbus,
                                  gboolean     connected)
 {
-	DBusMessage *message;
+    DBusMessage *message;
     if (dbus->xmpp_connected == (connected != FALSE))
         return;
     
     dbus->xmpp_connected = connected != FALSE;
 
-    message = hippo_dbus_mugshot_signal_connection_changed(dbus);
-    dbus_connection_send(dbus->connection, message, NULL);
-    dbus_message_unref(message);
-        
     if (dbus->xmpp_connected) {
         /* notify all the listeners */
         message = dbus_message_new_signal(HIPPO_DBUS_STACKER_LISTENER_PATH,
@@ -2105,26 +2053,4 @@ hippo_dbus_foreach_chat_window(HippoDBus             *dbus,
                 (*function) (window_id, state, data);
 	}
     }
-}
-
-void
-hippo_dbus_notify_pref_changed(HippoDBus   *dbus,
-                               const char  *key,
-                               gboolean     value)
-{
-    DBusMessage *signal;
-    signal = hippo_dbus_mugshot_signal_pref_changed(dbus, key, value);
-    dbus_connection_send(dbus->connection, signal, NULL);
-    dbus_message_unref(signal);	
-}
-       
-void       
-hippo_dbus_notify_external_iq_return (HippoDBus            *dbus,
-                                      guint                 id,
-                                      const char           *content)
-{
-    DBusMessage *signal;
-    signal = hippo_dbus_mugshot_signal_external_iq_return(dbus, id, content);
-    dbus_connection_send(dbus->connection, signal, NULL);
-    dbus_message_unref(signal);    
 }

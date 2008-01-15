@@ -36,24 +36,9 @@ void hippo_dbus_unwatch_for_disconnect(HippoDBus  *dbus,
                                        const char *name);
 
 
-void       hippo_dbus_notify_auth_changed      (HippoDBus   *dbus);
-
-void       hippo_dbus_notify_contacts_loaded   (HippoDBus   *dbus);
-
-void       hippo_dbus_notify_pref_changed      (HippoDBus   *dbus,
-                                                const char  *key,
-                                                gboolean     value);
-
 void       hippo_dbus_notify_xmpp_connected    (HippoDBus   *dbus,
                                                 gboolean     connected);
                                                 
-void       hippo_dbus_notify_entity_changed    (HippoDBus               *dbus,
-                                                HippoEntity             *entity);
-
-void       hippo_dbus_notify_external_iq_return(HippoDBus            *dbus,
-                                                guint                 id,
-                                                const char           *content);
-
 typedef void (*HippoChatWindowForeach)(guint64 window_id, HippoChatState state, void *data);
 
 void hippo_dbus_foreach_chat_window(HippoDBus             *dbus,
