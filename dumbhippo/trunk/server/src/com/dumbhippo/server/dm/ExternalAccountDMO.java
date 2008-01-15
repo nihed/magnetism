@@ -1,9 +1,15 @@
 package com.dumbhippo.server.dm;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 
+import com.dumbhippo.Thumbnail;
 import com.dumbhippo.dm.DMObject;
+import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
@@ -25,6 +31,9 @@ public abstract class ExternalAccountDMO extends DMObject<ExternalAccountKey> {
 	@Inject
 	EntityManager em;
 			
+	@Inject
+	DMSession session;
+	
 	public ExternalAccountDMO(ExternalAccountKey key) {
 		super(key);
 	}
@@ -76,5 +85,18 @@ public abstract class ExternalAccountDMO extends DMObject<ExternalAccountKey> {
 	@DMProperty(defaultInclude=true, type=PropertyType.URL)
 	public String getIconUrl() {
 		return "/images3/" + externalAccount.getIconName();
+	}
+	
+	@DMProperty
+	public List<ThumbnailDMO> getThumbnails() {
+		List<? extends Thumbnail> thumbnails = externalAccountSystem.getThumbnails(externalAccount);
+		if (thumbnails == null)
+			return Collections.emptyList();
+		
+		List<ThumbnailDMO> result = new ArrayList<ThumbnailDMO>();
+		for (Thumbnail thumbnail : thumbnails)
+			result.add(session.findUnchecked(ThumbnailDMO.class, ThumbnailDMO.getKey(externalAccount.getAccount().getOwner(), thumbnail)));
+		
+		return result;
 	}
 }
