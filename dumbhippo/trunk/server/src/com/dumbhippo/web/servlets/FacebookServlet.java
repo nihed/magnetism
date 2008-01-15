@@ -206,7 +206,7 @@ public class FacebookServlet extends AbstractServlet {
 	        			        "Mugshot allows you to display updates about your Netflix movies, Amazon reviews and wish list items, Digg, Delicious, and Google Reader shared items, Flickr, Picasa, and YouTube uploads, Twitter and blog entries, music and other services in a single place in your profile." +
 	        			        "<fb:req-choice url='http://www.facebook.com/add.php?api_key=" + apiKey + "' label='Add Application!'/>",
 	        			        "invite", "true", "method", "POST");
-	        	xml.appendEmptyNode("fb:multi-friend-selector", "actiontext", "Whom would you like to invite to use Mugshot?", "showborder", "false", "rows", "4", "bypass", "Cancel",
+	        	xml.appendEmptyNode("fb:multi-friend-selector", "actiontext", "Whom would you like to invite to use Mugshot?", "showborder", "false", "rows", "4", "bypass", "cancel",
 	        			             "exclude_ids", StringUtils.join(facebookTracker.getFriendAppUsers(user), ","));
 	        	xml.closeElement();		        
 	        } else {
