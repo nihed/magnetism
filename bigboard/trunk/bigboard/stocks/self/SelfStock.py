@@ -282,10 +282,7 @@ class SelfStock(AbstractMugshotStock):
         self._box.append(self._signin)
         self._signin.connect("button-press-event", lambda signin, event: self.__do_account())
 
-        self._model = DataModel(globals.server_name)
-        
         self.__myself = None
-        self._model.add_ready_handler(self.__on_ready)
 
         self.info_loaded = False
 
@@ -297,9 +294,6 @@ class SelfStock(AbstractMugshotStock):
 
         #TODO: need to make this conditional on knowing firefox has started already somehow
         #gobject.timeout_add(2000, self.__idle_first_time_signin_check)
-
-        if self._model.ready:
-            self.__on_ready()
 
     def __idle_first_time_signin_check(self):
         ws = dbus.SessionBus().get_object('org.freedesktop.od.Engine', '/org/gnome/web_services')
@@ -324,7 +318,7 @@ class SelfStock(AbstractMugshotStock):
             self.info_loaded = True
             self.emit('info-loaded')
 
-    def __on_ready(self):
+    def _on_ready(self):
         try:
             protocol_version = self._model.global_resource.ddmProtocolVersion
         except AttributeError, e:
@@ -358,10 +352,6 @@ class SelfStock(AbstractMugshotStock):
         self.__on_self_changed(myself)
         self.__info_now_loaded()
         
-    def __handle_mugshot_connection_status(self, auth, xmpp, contacts):
-        self._box.set_child_visible(self._whereim_box, not not auth)
-        self._box.set_child_visible(self._signin, not auth)
-            
     def __do_slideout(self, slideout, widget=None):
         widget_src = widget or self._box
         (box_x, box_y) = self._box.get_context().translate_to_screen(self._box)

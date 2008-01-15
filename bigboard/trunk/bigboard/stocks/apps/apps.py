@@ -307,7 +307,7 @@ class AppsRepo(gobject.GObject):
         _logger.debug("Data model now ready")
 
         if self.__model.self_resource != None:
-            query = self.__model.query_resource(self.__model.self_resource, "topApplications[+;description;category;categoryDisplayName;packageNames];pinnedApplications[+;description;category;categoryDisplayName;packageNames];applicationUsageEnabled")
+            query = self.__model.query_resource(self.__model.self_resource, "topApplications[+;description;category;categoryDisplayName;packageNames];pinnedApplications[+;description;category;categoryDisplayName;packageNames];applicationUsageEnabled;applicationUsageStart")
             query.add_handler(self.__on_got_self)
             query.add_error_handler(lambda code, msg: self.__on_query_error("self resource", code, msg))
             query.execute()

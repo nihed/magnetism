@@ -602,11 +602,12 @@ class PeopleTracker(Singleton):
         # we clear everything and start over.
 
         contact_props = '[+;name;user [+;photoUrl;mugshotLocalBuddy];aims;aimBuddies [+;icon;statusMessage];mugshotLocalBuddies [+;icon;user];xmpps;xmppBuddies [+;icon;statusMessage];emails;status]'
-
-        query = self.__model.query_resource(self.__model.self_resource, "contacts %s" % contact_props)
-        query.add_handler(self.__on_got_self)
-        query.execute()
         
+        if self.__model.self_resource != None:
+            query = self.__model.query_resource(self.__model.self_resource, "contacts %s" % contact_props)
+            query.add_handler(self.__on_got_self)
+            query.execute()
+
         query = self.__model.query_resource(self.__model.global_resource,
                                             "aimBuddies [+;icon;statusMessage;contact %s]; xmppBuddies [+;icon;statusMessage;contact %s]; mugshotLocalBuddies [+;icon;user;contact %s]" % (contact_props, contact_props, contact_props))
 

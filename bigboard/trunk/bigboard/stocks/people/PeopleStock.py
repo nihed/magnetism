@@ -1,14 +1,11 @@
 import logging
 
 import hippo
-from ddm import DataModel
 
 import bigboard
 from bigboard.people_tracker import PeopleTracker, sort_people
 from bigboard.stock import AbstractMugshotStock
-import bigboard.globals
 import bigboard.slideout
-import bigboard.profile
 import bigboard.search as search
 import bigboard.libbig as libbig
 import bigboard.scroll_ribbon as scroll_ribbon
@@ -43,8 +40,6 @@ class PeopleStock(AbstractMugshotStock):
         self.__tracker.people.connect("added", self.__on_person_added)
         self.__tracker.people.connect("removed", self.__on_person_removed)
 
-        self.__model = DataModel(bigboard.globals.server_name)
-
         for person in self.__tracker.people:
             self.__on_person_added(self.__tracker.people, person)
             
@@ -69,7 +64,7 @@ class PeopleStock(AbstractMugshotStock):
             self.__set_item_size(i, size)
 
     def __add_person(self, person, box, map):
-        self._logger.debug("person added to people stock %s" % (person.display_name))
+        _logger.debug("person added to people stock %s", person.display_name)
         if map.has_key(person):
             return
         
@@ -91,6 +86,7 @@ class PeopleStock(AbstractMugshotStock):
         item.connect('activated', self.__handle_item_pressed)
 
     def __remove_person(self, person, box, map):
+        _logger.debug("person removed from people stock %s", person.display_name)
         try:
             item = map[person]
         except KeyError:

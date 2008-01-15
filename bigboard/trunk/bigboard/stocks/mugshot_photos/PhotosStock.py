@@ -9,6 +9,8 @@ import bigboard.libbig as libbig
 from bigboard.stock import Stock, AbstractMugshotStock
 from bigboard.big_widgets import CanvasURLImage, CanvasVBox, CanvasHBox, CanvasMugshotURLImage, ActionLink
 
+_logger = logging.getLogger('bigboard.stocks.PhotosStock')
+
 class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
     __gtype_name__ = 'TransitioningURLImage' 
     
@@ -22,9 +24,8 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
     
     TRANSITION_STEPS = 10
 
-    def __init__(self, logger, **kwargs):
+    def __init__(self, **kwargs):
         hippo.CanvasBox.__init__(self, **kwargs)
-        self._logger = logger
         self.set_clickable(True)
         self.__current_url = None
         self.__prev_url = None
@@ -43,7 +44,7 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
         if url != self.__current_url:
             return
         
-        self._logger.debug("loaded url=%s", url)
+        _logger.debug("loaded url=%s", url)
         self.emit("loaded", True)
         
         req_changed = False
@@ -97,7 +98,7 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
         else:
             scale = (1.0*self.__dimension) / img_height       
 
-        self._logger.debug("rendering img width=%s height=%s scale=%s", img_width, img_height, scale)
+        _logger.debug("rendering img width=%s height=%s scale=%s", img_width, img_height, scale)
 
         (x,y,w,h) = self.align(int(img_width*scale), int(img_height*scale))
                 
@@ -176,7 +177,7 @@ class PhotosStock(AbstractMugshotStock):
         self.__displaybox.append(self.__photo_header)
         
         self.__photobox = CanvasHBox(spacing=6)
-        self.__photo = TransitioningURLImage(self._logger, dimension=self.__photosize)
+        self.__photo = TransitioningURLImage(dimension=self.__photosize)
         self.__photo.connect("loaded", lambda photo, loaded: self.__on_image_load(loaded))
         self.__photo.connect("button-press-event", lambda photo, event: self.__visit_photo())
         self.__metabox = CanvasVBox()
@@ -205,44 +206,56 @@ class PhotosStock(AbstractMugshotStock):
         self.__person_accts_len = {} # <Person,int>
         
         self.__bearbox = CanvasVBox()
-        self.__bearphoto = TransitioningURLImage(self._logger, dimension=self.SIZE_BEAR_CONTENT_PX-6)
+        self.__bearphoto = TransitioningURLImage(dimension=self.SIZE_BEAR_CONTENT_PX-6)
         self.__bearphoto.connect("button-press-event", lambda photo, event: self.__visit_photo())        
         self.__bearbox.append(self.__bearphoto)
-        
-        self._mugshot.connect("network-changed", lambda mugshot: self.__handle_network_change())  
-        
-    def _on_mugshot_ready(self):
-        super(PhotosStock, self)._on_mugshot_ready()       
-        self._mugshot.get_network()
-        
+
+    def _on_ready(self):
+        if self._model.self_resource != None:
+            query = self._model.query_resource(self._model.self_resource, "contacts user [+;lovedAccounts [+;thumbnails +]]")
+            query.add_handler(self.__on_got_self)
+            query.execute()
+
+    def __on_got_self(self, myself):
+        self.__reset()
+
     def get_authed_content(self, size):
         return size == self.SIZE_BULL and self.__box or self.__bearbox
     
     def __visit_photo(self):
-        self._logger.debug("visiting photo for %s", self.__current_image)
+        _logger.debug("visiting photo for %s", self.__current_image)
         if not self.__current_image:
             return
         libbig.show_url(self.__current_image[2].get_href())
         
     def __visit_person(self):
-        self._logger.debug("visiting person for %s", self.__current_image)
+        _logger.debug("visiting person for %s", self.__current_image)
         if not self.__current_image:
             return
         libbig.show_url(urlparse.urljoin(globals.get_baseurl(), self.__current_image[0].get_home_url()))
         
     def __thumbnails_generator(self):
         """The infinite photos function.  Cool."""
-        found_one = False
         while True:
-            for entity in self._mugshot.get_network():
-                accts = entity.get_external_accounts()
-                if not accts:
-                    continue
-                for acct in accts:
-                    if acct.get_thumbnails():
-                        for thumbnail in acct.get_thumbnails():
-                            found_one = True
-                            yield (entity, acct, thumbnail)
+            found_one = False
+            # Iterate through all thumbnails for all "loved accounts" for all contacts.
+            # We don't handle change notification ... if something changes we'll pick
+            # it up next time around. Note the use of temporary copies of lists to avoid
+            # problems if a list is mutated by a change notification while we are iterating it.
+            if self._model.self_resource:
+                for contact in list(getattr(self._model.self_resource, "contacts", [])):
+                    user = getattr(contact, "user", None)
+                    if user != None:
+                        lovedAccounts = getattr(user, "lovedAccounts", None)
+                        if lovedAccounts:
+                            for externalAccount in lovedAccounts:
+                                thumbnails = getattr(externalAccount, "thumbnails", None)
+                                if thumbnails:
+                                    for thumbnail in thumbnails:
+                                        yield (user, externalAccount, thumbnail)
+
+            # If we didn't find any photos, we go into a "no photos" state; we'll keep on trying
+            # to restart the iterator in the timeout, so when things appear we'll display them
             if not found_one:
                 return
             
@@ -263,70 +276,43 @@ class PhotosStock(AbstractMugshotStock):
     
     def __set_image(self, imageinfo):
         self.__current_image = imageinfo
-        (entity, acct, thumbnail) = imageinfo
+        (user, account, thumbnail) = imageinfo
         
-        self._logger.debug("starting load of url %s" % (thumbnail.get_src(),))
-        self.__photo.set_url(thumbnail.get_src())
-        self.__bearphoto.set_url(thumbnail.get_src())
+        _logger.debug("starting load of url %s" % (thumbnail.src,))
+        self.__photo.set_url(thumbnail.src)
+        self.__bearphoto.set_url(thumbnail.src)
         
     def __on_image_load(self, success):
         if self.__current_image is None:
-            self._logger.debug("image load complete, but no current image")       
+            _logger.debug("image load complete, but no current image")       
             return
         if not success:
             self.__successive_load_failures = max(self.__successive_load_failures+1, 17)
-            self._logger.debug("image load failed, queueing skip to next")                   
+            _logger.debug("image load failed, queueing skip to next")                   
             gobject.timeout_add(8000 + (2 ** self.__successive_load_failures) * 1000, self.__do_next)
         else:
             self.__successive_load_failures = 0
         
-        self._logger.debug("image load success, syncing metadata")          
-        (entity, acct, thumbnail) = self.__current_image
+        _logger.debug("image load success, syncing metadata")          
+        (user, account, thumbnail) = self.__current_image
 
-        self.__favicon.set_url(acct.get_icon())
-        self.__title.set_property("text", thumbnail.get_title() or "(untitled)")
+        self.__favicon.set_url(account.iconUrl)
+        
+        title = getattr(thumbnail, "title", None)
+        if not title: title = "(untitled)"
+        self.__title.set_property("text", title)
      
-        self.__fromname.set_property("text", entity.get_name())
-        self.__fromphoto.set_url(entity.get_photo_url())        
+        self.__fromname.set_property("text", user.name)
+        self.__fromphoto.set_url(user.photoUrl)
 
     def __idle_display_image(self):
-        self._logger.debug("in idle, doing next image")          
+        _logger.debug("in idle, doing next image")          
         self.__idle_display_id = 0
         self.__do_next()
         return False
     
-    def __handle_person_change(self, person):
-        need_reset = False
-        
-        accts = person.get_external_accounts()
-        if not self.__person_accts_len.has_key(person):
-            need_reset = True
-            self.__person_accts_len[person] = -1
-        elif accts and self.__person_accts_len[person] != len(accts):
-            self.__person_accts_len[person] = len(accts)
-            need_reset = True
-    
-        if need_reset:
-            self.__reset()
-    
-    def __handle_network_change(self):
-        self._logger.debug("handling network change")
-        for person in self._mugshot.get_network():
-            if not self.__person_accts_len.has_key(person):
-                person.connect("changed", self.__handle_person_change)
-            accts = person.get_external_accounts()
-            self.__person_accts_len[person] = accts and len(accts) or 0
-        not_in_network = []
-        for person in self.__person_accts_len.iterkeys():
-            if not person in self._mugshot.get_network():
-                not_in_network.append(person)
-        for person in not_in_network:
-            self._logger.debug("removing not-in-network person %s", person.get_guid())
-            del self.__person_accts_len[person]
-        self.__reset()
-
     def __do_direction(self, is_next):
-        self._logger.debug("skipping to %s" % (is_next and "next" or "prev",))
+        _logger.debug("skipping to %s" % (is_next and "next" or "prev",))
         try:
             self.__set_image(is_next and self.__next_image() or self.__prev_image())
             if self.__displaymode == 'text':
@@ -335,7 +321,7 @@ class PhotosStock(AbstractMugshotStock):
                 self.__box.append(self.__displaybox)
             self.__displaymode = 'photo'
         except StopIteration:
-            self._logger.debug("caught StopIteration, displaying no photos text")            
+            _logger.debug("caught StopIteration, displaying no photos text")            
             if self.__displaymode == 'photo':
                 self.__box.remove(self.__displaybox)
             if self.__displaymode != 'text':
@@ -352,8 +338,9 @@ class PhotosStock(AbstractMugshotStock):
         self.__do_direction(False)
 
     def __reset(self):
-        self._logger.debug("resetting")        
+        _logger.debug("resetting")
         self.__images = self.__thumbnails_generator()
+        self.__images_reverse = []
         self.__box.remove_all()        
         self.__displaymode = 'uninitialized'
         self.__do_next()

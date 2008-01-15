@@ -30,7 +30,6 @@ except:
     import bignative
 import bigboard.globals
 import bigboard.google
-import bigboard.presence
 from bigboard.libbig.gutil import *
 from bigboard.libbig.logutil import log_except
 import bigboard.libbig.dbusutil
@@ -957,7 +956,6 @@ widget "*bigboard-nopad-button" style "bigboard-nopad-button"
     panel = BigBoardPanel(bus_name)
 
     bigboard.google.init()
-    #bigboard.presence.get_presence() # for side effect of creating Presence object
         
     gtk.gdk.threads_enter()
     _logger.debug("Enter mainloop")
