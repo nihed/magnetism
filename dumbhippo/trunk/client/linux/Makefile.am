@@ -34,8 +34,8 @@ distclean-local:
 	  rmdir $(BUILT_SRC_DIR) ;		\
 	fi
 
-dist-hook: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mugshot-dist-hook libddm-dist-hook libengine-dist-hook
-.PHONY: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mugshot-dist-hook libengine-dist-hook
+dist-hook: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mugshot-dist-hook libddm-dist-hook libengine-dist-hook libstacker-dist-hook
+.PHONY: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mugshot-dist-hook libengine-dist-hook libstacker-dist-hook
 
 # These are added to using += in the included files
 bin_PROGRAMS = 

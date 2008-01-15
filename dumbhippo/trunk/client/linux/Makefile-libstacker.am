@@ -138,4 +138,4 @@ libstacker-dist-hook:
 	mkdir $(distdir)/common-dist/stacker
 	mkdir $(distdir)/common-dist/stacker/generated
 	cp $(LIBSTACKER_SOURCEFILES) $(distdir)/common-dist/stacker
-	cp $(COMMONSRCDIR)/hippo/hippo-common-marshal.list $(distdir)/common-dist/stacker
+	cp $(COMMONSRCDIR)/stacker/hippo-stacker-marshal.list $(distdir)/common-dist/stacker
