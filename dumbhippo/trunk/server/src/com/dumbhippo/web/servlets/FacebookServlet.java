@@ -193,9 +193,12 @@ public class FacebookServlet extends AbstractServlet {
 	        Map<ExternalAccountType, CharSequence> mugshotParams = mugshotParamsPair.getFirst();
 	        String tabValue = mugshotParamsPair.getSecond().toString();
 	        Boolean inviteSelected = tabValue.equalsIgnoreCase("invite");
+	        String applicationName = "mugshot";
+	        if (config.getBaseUrlMugshot().toExternalForm().contains("dogfood"))
+	        	applicationName = "mugshot-test";
 	        xml.openElement("fb:tabs");
-	        xml.appendEmptyNode("fb:tab-item", "href", "http://apps.facebook.com/mugshot?mugshot_tab=home", "title", "Edit Accounts", "selected", Boolean.toString(!inviteSelected.booleanValue()));
-	        xml.appendEmptyNode("fb:tab-item", "href", "http://apps.facebook.com/mugshot?mugshot_tab=invite", "title", "Invite Friends", "selected", inviteSelected.toString());
+	        xml.appendEmptyNode("fb:tab-item", "href", "http://apps.facebook.com/" + applicationName + "?mugshot_tab=home", "title", "Edit Accounts", "selected", Boolean.toString(!inviteSelected.booleanValue()));
+	        xml.appendEmptyNode("fb:tab-item", "href", "http://apps.facebook.com/" + applicationName + "?mugshot_tab=invite", "title", "Invite Friends", "selected", inviteSelected.toString());
             xml.closeElement();
 	        if (inviteSelected.booleanValue()) {
 	            FacebookTracker facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
@@ -540,11 +543,13 @@ public class FacebookServlet extends AbstractServlet {
 	        String key = entry.getKey().toString();
 	        if (key.startsWith(mugshotParamPart)) {
 	        	String param = key.substring(mugshotParamPart.length());
-	          	if (param.equals("tab"))
+	          	if (param.equals("tab")) {
 	          		tabValue = entry.getValue()[0];
-	            // we want to preserve the parameter even if entry.getValue()[0] is empty, because that might mean we want to
-	            // unset the external account information
-	            result.put(ExternalAccountType.valueOf(param), entry.getValue()[0]);
+	            } else {
+	                // we want to preserve the parameter even if entry.getValue()[0] is empty, because that might mean we want to
+	                // unset the external account information
+	                result.put(ExternalAccountType.valueOf(param), entry.getValue()[0]);
+	          	}
 	        }  
 	    }
 	    return new Pair<Map<ExternalAccountType, CharSequence>, CharSequence>(result, tabValue);
