@@ -15,7 +15,7 @@ if [ "$1" = "install" ] ; then
 	    fi
 	    link=$d/extensions/firefox@mugshot.org
 	    target=$libdir/mugshot/firefox
-	    if [ -e $target -a -e $d/firefox-bin -a -d $d/extensions -a ! -L $link ] ; then
+	    if [ -e $target -a \( -e $d/firefox-bin -o -e $d/firefox \) -a -d $d/extensions -a ! -L $link ] ; then
 		ln -s $target $link
 	    fi
 	done
