@@ -73,5 +73,5 @@ libengine-dist-hook:
 	-mkdir $(distdir)/common-dist
 	mkdir $(distdir)/common-dist/engine
 	mkdir $(distdir)/common-dist/engine/generated
-	cp $(LIBENGINE_SOURCEFILES) $(distdir)/common-dist/hippo
-	cp $(COMMONSRCDIR)/engine/hippo-engine-marshal.list $(distdir)/common-dist/hippo
+	cp $(LIBENGINE_SOURCEFILES) $(distdir)/common-dist/engine
+	cp $(COMMONSRCDIR)/engine/hippo-engine-marshal.list $(distdir)/common-dist/engine
