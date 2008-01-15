@@ -5,7 +5,7 @@
 #pragma once
 
 #include <glib.h>
-#include <hippo/hippo-common.h>
+#include <engine/hippo-engine.h>
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include <HippoMessageHook.h>

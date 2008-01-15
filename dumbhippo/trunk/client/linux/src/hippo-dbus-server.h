@@ -6,7 +6,6 @@
 
 #include <glib-object.h>
 #include <hippo/hippo-basics.h>
-#include <hippo/hippo-external-account.h>
 #include "main.h"
 
 G_BEGIN_DECLS
@@ -48,10 +47,6 @@ void       hippo_dbus_notify_pref_changed      (HippoDBus   *dbus,
 void       hippo_dbus_notify_xmpp_connected    (HippoDBus   *dbus,
                                                 gboolean     connected);
                                                 
-void       hippo_dbus_notify_whereim_changed   (HippoDBus               *dbus,
-                                                HippoConnection         *xmpp_connection,
-                                                HippoExternalAccount    *acct);                                                
-
 void       hippo_dbus_notify_entity_changed    (HippoDBus               *dbus,
                                                 HippoEntity             *entity);
 

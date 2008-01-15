@@ -17,7 +17,7 @@
 #include "hippo-dbus-web.h"
 #include "hippo-dbus-http.h"
 #include "hippo-distribution.h"
-#include <hippo/hippo-endpoint-proxy.h>
+#include <engine/hippo-endpoint-proxy.h>
 #include <stacker/hippo-stack-manager.h>
 #include "main.h"
 

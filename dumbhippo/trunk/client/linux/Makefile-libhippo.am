@@ -10,70 +10,22 @@ libhippo_la_LIBADD = 			\
 	$(LIBHIPPO_LIBS)		\
 	libddm-1.la
 
-# none of this actually matters since it's just a convenience library, keeping it 
-# for future reference
-# libhippo_la_LDFLAGS= -export-symbols-regex "^[^_].*" -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) -no-undefined
-
-COMMON_MARSHAL_LIST=$(COMMONSRCDIR)/hippo/hippo-common-marshal.list
-COMMON_MARSHAL_HEADER=$(MARSHAL_DIR)/hippo-common-marshal.h
-COMMON_MARSHAL_BODY=$(MARSHAL_DIR)/hippo-common-marshal.c
-
-$(COMMON_MARSHAL_HEADER): $(COMMON_MARSHAL_LIST)
-	mkdir $(MARSHAL_DIR) || true
-	$(GLIB_GENMARSHAL) --prefix=hippo_common_marshal $(COMMON_MARSHAL_LIST) --header > $(COMMON_MARSHAL_HEADER)
-
-$(COMMON_MARSHAL_BODY): $(COMMON_MARSHAL_LIST)
-	mkdir $(MARSHAL_DIR) || true
-	(echo "#include \"hippo-common-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_common_marshal $(COMMON_MARSHAL_LIST) --body) > $(COMMON_MARSHAL_BODY)
-
 LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-basics.c			\
 	$(COMMONSRCDIR)/hippo/hippo-basics.h			\
-	$(COMMONSRCDIR)/hippo/hippo-chat-room.c			\
-	$(COMMONSRCDIR)/hippo/hippo-chat-room.h			\
 	$(COMMONSRCDIR)/hippo/hippo-common.h			\
         $(COMMONSRCDIR)/hippo/hippo-common-internal.h		\
-	$(COMMONSRCDIR)/hippo/hippo-connection.c		\
-	$(COMMONSRCDIR)/hippo/hippo-connection.h		\
-	$(COMMONSRCDIR)/hippo/hippo-cookies.c			\
-	$(COMMONSRCDIR)/hippo/hippo-cookies.h			\
-	$(COMMONSRCDIR)/hippo/hippo-data-cache.c		\
-	$(COMMONSRCDIR)/hippo/hippo-data-cache.h		\
-	$(COMMONSRCDIR)/hippo/hippo-data-cache-internal.h	\
-	$(COMMONSRCDIR)/hippo/hippo-disk-cache.c		\
-	$(COMMONSRCDIR)/hippo/hippo-disk-cache.h		\
-	$(COMMONSRCDIR)/hippo/hippo-data-model-backend.c	\
-	$(COMMONSRCDIR)/hippo/hippo-data-model-backend.h	\
 	$(COMMONSRCDIR)/hippo/hippo-entity.c			\
 	$(COMMONSRCDIR)/hippo/hippo-entity.h			\
 	$(COMMONSRCDIR)/hippo/hippo-entity-protected.h		\
-	$(COMMONSRCDIR)/hippo/hippo-endpoint-proxy.c		\
-	$(COMMONSRCDIR)/hippo/hippo-endpoint-proxy.h		\
 	$(COMMONSRCDIR)/hippo/hippo-feed.c			\
 	$(COMMONSRCDIR)/hippo/hippo-feed.h			\
 	$(COMMONSRCDIR)/hippo/hippo-group.c			\
 	$(COMMONSRCDIR)/hippo/hippo-group.h			\
 	$(COMMONSRCDIR)/hippo/hippo-person.c			\
 	$(COMMONSRCDIR)/hippo/hippo-person.h			\
-	$(COMMONSRCDIR)/hippo/hippo-platform.c			\
-	$(COMMONSRCDIR)/hippo/hippo-platform.h			\
-	$(COMMONSRCDIR)/hippo/hippo-settings.c			\
-	$(COMMONSRCDIR)/hippo/hippo-settings.h			\
-	$(COMMONSRCDIR)/hippo/hippo-sqlite-utils.c     		\
-	$(COMMONSRCDIR)/hippo/hippo-sqlite-utils.h     		\	
-	$(COMMONSRCDIR)/hippo/hippo-title-pattern.c		\
-	$(COMMONSRCDIR)/hippo/hippo-title-pattern.h		\
 	$(COMMONSRCDIR)/hippo/hippo-track.c			\
-	$(COMMONSRCDIR)/hippo/hippo-track.h			\
-	$(COMMONSRCDIR)/hippo/hippo-xml-utils.c			\
-	$(COMMONSRCDIR)/hippo/hippo-xml-utils.h
-
-LIBHIPPO_BUILT_SOURCEFILES =			\
-	$(COMMON_MARSHAL_HEADER)		\
-	$(COMMON_MARSHAL_BODY)
-
-MAINTAINERCLEANFILES +=	$(LIBHIPPO_BUILT_SOURCEFILES)
-BUILT_SOURCES += $(LIBHIPPO_BUILT_SOURCEFILES)	
+	$(COMMONSRCDIR)/hippo/hippo-track.h
 
 ## we need to nodist these because otherwise automake would copy 
 ## ../common to distdir/../common which puts common outside of distdir.
@@ -84,4 +36,3 @@ libhippo-dist-hook:
 	mkdir $(distdir)/common-dist/hippo
 	mkdir $(distdir)/common-dist/hippo/generated
 	cp $(LIBHIPPO_SOURCEFILES) $(distdir)/common-dist/hippo
-	cp $(COMMONSRCDIR)/hippo/hippo-common-marshal.list $(distdir)/common-dist/hippo

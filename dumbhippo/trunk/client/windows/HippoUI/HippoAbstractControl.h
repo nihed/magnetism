@@ -7,7 +7,6 @@
 
 #include "HippoUIUtil.h"
 #include "HippoAbstractWindow.h"
-#include <hippo/hippo-basics.h>
 
 class HippoAbstractControl : public HippoAbstractWindow {
 public:

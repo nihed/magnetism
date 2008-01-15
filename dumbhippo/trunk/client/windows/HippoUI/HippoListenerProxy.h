@@ -4,7 +4,7 @@
  **/
 #pragma once
 
-#include <hippo/hippo-endpoint-proxy.h>
+#include <engine/hippo-endpoint-proxy.h>
 #include <HippoUtil.h>
 
 class HippoListenerProxy {

@@ -3,6 +3,7 @@
 #include "hippo-cookies-linux.h"
 #include <string.h>
 #include <libgnomevfs/gnome-vfs.h>
+#include <engine/hippo-cookies.h>
 
 typedef struct {
     HippoCookiesMonitorFunc func;

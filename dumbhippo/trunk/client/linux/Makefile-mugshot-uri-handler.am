@@ -5,7 +5,7 @@ mugshot_uri_handler_CPPFLAGS =		\
 	$(MUGSHOT_URI_HANDLER_CFLAGS)
 
 mugshot_uri_handler_LDFLAGS=
-mugshot_uri_handler_LDADD= libhippo.la $(MUGSHOT_URI_HANDLER_LIBS)
+mugshot_uri_handler_LDADD= libhippo.la libengine.la $(MUGSHOT_URI_HANDLER_LIBS)
 
 mugshot_uri_handler_SOURCES=			\
 	src/hippo-dbus-client.c			\

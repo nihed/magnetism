@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <config.h>
-#include <hippo/hippo-basics.h>
+#include <engine/hippo-engine-basics.h>
 #include <gtk/gtk.h>
 #include <glib/gi18n-lib.h>
 #include <stdarg.h>

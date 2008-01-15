@@ -7,7 +7,6 @@
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include <glib-object.h>
-#include <hippo/hippo-basics.h>
 #include <hippo/hippo-graphics.h>
 
 class HippoUIUtil

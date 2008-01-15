@@ -67,6 +67,7 @@ endif
 include Makefile-libddm.am
 include Makefile-libhippoipc.am
 include Makefile-libhippo.am
+include Makefile-libengine.am
 include Makefile-libstacker.am
 include Makefile-libgtkcopy.am
 include Makefile-libhippofirefox.am

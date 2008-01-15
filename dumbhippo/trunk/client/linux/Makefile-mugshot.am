@@ -1,4 +1,4 @@
-bin_PROGRAMS += mugshot mugshot-uri-handler
+bin_PROGRAMS += mugshot
 
 mugshot_CPPFLAGS = 			\
 	$(AM_CPPFLAGS)			\
@@ -9,7 +9,7 @@ mugshot_CPPFLAGS = 			\
 	-DDDM_I_KNOW_THIS_IS_UNSTABLE=1
 
 mugshot_LDFLAGS=
-mugshot_LDADD= libhippoipc.la libhippo.la libstacker.la $(MUGSHOT_LIBS) $(CANVAS_LIBADD)
+mugshot_LDADD= libhippoipc.la libhippo.la libengine.la libstacker.la $(MUGSHOT_LIBS) $(CANVAS_LIBADD)
 
 if !HAVE_GTK210
 mugshot_CPPFLAGS += -I$(top_srcdir)/gtkcopy

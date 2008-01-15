@@ -6,7 +6,7 @@
 #define DBUS_API_SUBJECT_TO_CHANGE 1
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
-#include <hippo/hippo-settings.h>
+#include <engine/hippo-settings.h>
 #include "hippo-dbus-server.h"
 #include "hippo-dbus-web.h"
 #include "hippo-dbus-settings.h"

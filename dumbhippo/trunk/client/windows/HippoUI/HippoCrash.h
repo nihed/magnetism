@@ -3,7 +3,7 @@
  * Copyright Red Hat, Inc. 2007
  **/
 
-#include <hippo/hippo-basics.h>
+#include <engine/hippo-engine-basics.h>
 
 // Called when the executable is invoked from a crash handler in reporting
 // mode. Returns true if we should continue on to normal executions

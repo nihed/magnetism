@@ -2,7 +2,7 @@
 #ifndef __HIPPO_STATUS_ICON_H__
 #define __HIPPO_STATUS_ICON_H__
 
-#include <hippo/hippo-common.h>
+#include <engine/hippo-engine.h>
 #include <gtk/gtkstatusicon.h>
 
 G_BEGIN_DECLS
