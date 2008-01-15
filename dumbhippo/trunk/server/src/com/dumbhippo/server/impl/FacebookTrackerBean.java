@@ -271,6 +271,16 @@ public class FacebookTrackerBean implements FacebookTracker {
 		}		
 	}
 	
+	public List<String> getFriendAppUsers(User user) {
+		try {
+		    FacebookAccount facebookAccount = facebookSystem.lookupFacebookAccount(SystemViewpoint.getInstance(), user);
+	        FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
+	        return ws.getFriendAppUsers(facebookAccount);
+	    } catch (NotFoundException e) {
+			return new ArrayList<String>();
+		}
+	}
+	
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public void updateFbmlForUser(final User user) {
 		TxUtils.assertNoTransaction();

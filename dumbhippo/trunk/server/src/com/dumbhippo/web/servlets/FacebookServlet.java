@@ -26,7 +26,9 @@ import org.xml.sax.SAXException;
 
 import com.dumbhippo.ExternalAccountCategory;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.Site;
+import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
@@ -100,7 +102,7 @@ public class FacebookServlet extends AbstractServlet {
 	}
 	
 	// we get a POST request when our application page is loaded on Facebook
-	// input values from the form on that page are passed in along with usuald Facebook parameters when the from has
+	// input values from the form on that page are passed in along with the usual Facebook parameters when the from has
 	// been submitted (the action for the form is to reload the application page on Facebook, but the submitted values
 	// are passed along with the request for page content from us)
 	@Override
@@ -116,11 +118,15 @@ public class FacebookServlet extends AbstractServlet {
       
         @SuppressWarnings("unchecked")
         Map<String, CharSequence> facebookParams = FacebookSignatureUtil.extractFacebookParamsFromArray(request.getParameterMap());
+        String apiKey = null;
         String secret = null;
         try {
-        	secret = config.getPropertyNoDefault(HippoProperty.FACEBOOK_SECRET).trim();
+        	apiKey = config.getPropertyNoDefault(HippoProperty.FACEBOOK_API_KEY).trim();
+			if (apiKey.length() == 0)
+				apiKey = null;	
+        	secret = config.getPropertyNoDefault(HippoProperty.FACEBOOK_SECRET).trim();      	
 			if (secret.length() == 0)
-				secret = null;				
+				secret = null;			
 		} catch (PropertyNotFoundException e) {
 			secret = null;
 		}
@@ -128,7 +134,10 @@ public class FacebookServlet extends AbstractServlet {
 		String errorMessage = null;
 		User user = null;
 		UserViewpoint userViewpoint = null;
-		if (secret == null) {
+		if (apiKey == null) {
+			errorMessage = "We could not verify Facebook information due to a missing api key we should have for our Facebook application.";   
+			logger.warn("Facebook api key is not set, can't make requests to Facebook.");
+		} else if (secret == null) {
 			errorMessage = "We could not verify Facebook information due to a missing secret key we should share with Facebook.";   
 			logger.warn("Facebook secret is not set, can't verify requests from Facebook.");
 		} else {        
@@ -180,272 +189,290 @@ public class FacebookServlet extends AbstractServlet {
 		if (user != null && errorMessage == null) {
 			// check if there are mugshot params, process them, and display an appropriate message
 	        @SuppressWarnings("unchecked")
-	        Map<ExternalAccountType, CharSequence> mugshotParams = extractMugshotParamsFromArray(request.getParameterMap());
-	        ExternalAccountSystem externalAccounts = WebEJBUtil.defaultLookup(ExternalAccountSystem.class);
-	        HttpMethods httpMethods =  WebEJBUtil.defaultLookup(HttpMethods.class);
-    		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    		factory.setNamespaceAware(true);
-    		List<ExternalAccountType> accountsSetSuccessful = new ArrayList<ExternalAccountType>();
-    		List<ExternalAccountType> accountsRemoved = new ArrayList<ExternalAccountType>();
-    		Map<ExternalAccountType, String> accountsWithNotes = new HashMap<ExternalAccountType, String>();
-    		Map<ExternalAccountType, String> accountsSetFailed = new HashMap<ExternalAccountType, String>();    		
-	        for (Map.Entry<ExternalAccountType, CharSequence> entry : mugshotParams.entrySet()) {          
-	        	String entryValue = entry.getValue().toString().trim(); 
-			    if (entryValue.length() > 0) {
-			    	logger.debug("processing entry {} for {}", entryValue, entry.getKey());
-			    	try {
-			    		// we could check if the account already exists that has the same info set and is loved,
-			    		// but since we might be updating certain things when the user resets the info (like looking up
-			    		// all Amazon wish lists again), let's just reset all the accounts		
-			    		// if it seems too slow for a user who has a lot of accounts and is just changing one, 
-			    		// we can change this
-				    	if (entry.getKey().equals(ExternalAccountType.FLICKR)) {
-				    		XmlBuilder xmlForFlickr = new XmlBuilder();
-				    		xmlForFlickr.openElement("result");
-				    		httpMethods.doFindFlickrAccount(xmlForFlickr, userViewpoint, entryValue);
-				    		xmlForFlickr.closeElement(); // result
-				    		Document doc = factory.newDocumentBuilder().parse(new ByteArrayInputStream(xmlForFlickr.getBytes()));
-				    		XPath xpath = XPathFactory.newInstance().newXPath();
-				    		String nsid = ((Node)xpath.evaluate("/result/flickrUser/nsid", doc, XPathConstants.NODE)).getTextContent();
-				    		logger.debug("Got nsid {} when setting Flickr account", nsid);
-				    		httpMethods.doSetFlickrAccount(new XmlBuilder(), userViewpoint, nsid, entryValue);
-				    		accountsSetSuccessful.add(ExternalAccountType.FLICKR);
-				    	} else {
-				    		Method setAccount = httpMethods.getClass().getMethod("doSet" + entry.getKey().getDomNodeIdName() + "Account",
-				    				                                             new Class[] {XmlBuilder.class, UserViewpoint.class, String.class});	
-				    		XmlBuilder resultXml = new XmlBuilder();
-				    		resultXml.openElement("result");
-				    		setAccount.invoke(httpMethods, new Object[] {resultXml, userViewpoint, entryValue});
-				    		resultXml.closeElement(); // result
-				    		// we have messages telling the user about certain limitations of their account
-				    		// for MySpace, Twitter, Reddit, and Amazon
-				    		accountsSetSuccessful.add(entry.getKey());
-				    		if (resultXml.getBytes().length > 0) {
-					    		try {
-					    		    Document doc = factory.newDocumentBuilder().parse(new ByteArrayInputStream(resultXml.getBytes()));
-					    		    XPath xpath = XPathFactory.newInstance().newXPath();
-					    		    Node node = (Node)xpath.evaluate("/result/message", doc, XPathConstants.NODE);
-					    		    if (node != null) {
-					    		        String message = node.getTextContent();
-					    		        if (message.trim().length() > 0) {
-					    		    	    accountsWithNotes.put(entry.getKey(), message);
-					    		        }
-					    		    }
-					    		} catch (XPathExpressionException e) {
-					    			logger.error("Error getting a message about an external account for " + entry.getKey() + " with value " + entryValue, e);
-						        	// let's not bother the user with this, since the account must have been set succesfully
-						        }
+	        Pair<Map<ExternalAccountType, CharSequence>, CharSequence> mugshotParamsPair = extractMugshotParamsFromArray(request.getParameterMap());
+	        Map<ExternalAccountType, CharSequence> mugshotParams = mugshotParamsPair.getFirst();
+	        String tabValue = mugshotParamsPair.getSecond().toString();
+	        Boolean inviteSelected = tabValue.equalsIgnoreCase("invite");
+	        xml.openElement("fb:tabs");
+	        xml.appendEmptyNode("fb:tab-item", "href", "http://apps.facebook.com/mugshot?mugshot_tab=home", "title", "Edit Accounts", "selected", Boolean.toString(!inviteSelected.booleanValue()));
+	        xml.appendEmptyNode("fb:tab-item", "href", "http://apps.facebook.com/mugshot?mugshot_tab=invite", "title", "Invite Friends", "selected", inviteSelected.toString());
+            xml.closeElement();
+	        if (inviteSelected.booleanValue()) {
+	            FacebookTracker facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
+	        	xml.openElement("fb:request-form", "type", "Mugshot", "content",
+	        			        "Mugshot allows you to display updates about your Netflix movies, Amazon reviews and wish list items, Digg, Delicious, and Google Reader shared items, Flickr, Picasa, and YouTube uploads, Twitter and blog entries, music and other services in a single place in your profile." +
+	        			        "<fb:req-choice url='http://www.facebook.com/add.php?api_key=" + apiKey + "' label='Add Application!'/>",
+	        			        "invite", "true", "method", "POST");
+	        	xml.appendEmptyNode("fb:multi-friend-selector", "actiontext", "Whom would you like to invite to use Mugshot?", "showborder", "false", "rows", "4", "bypass", "Cancel",
+	        			             "exclude_ids", StringUtils.join(facebookTracker.getFriendAppUsers(user), ","));
+	        	xml.closeElement();		        
+	        } else {
+		        ExternalAccountSystem externalAccounts = WebEJBUtil.defaultLookup(ExternalAccountSystem.class);
+		        HttpMethods httpMethods =  WebEJBUtil.defaultLookup(HttpMethods.class);
+	    		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+	    		factory.setNamespaceAware(true);
+	    		List<ExternalAccountType> accountsSetSuccessful = new ArrayList<ExternalAccountType>();
+	    		List<ExternalAccountType> accountsRemoved = new ArrayList<ExternalAccountType>();
+	    		Map<ExternalAccountType, String> accountsWithNotes = new HashMap<ExternalAccountType, String>();
+	    		Map<ExternalAccountType, String> accountsSetFailed = new HashMap<ExternalAccountType, String>();    		
+		        for (Map.Entry<ExternalAccountType, CharSequence> entry : mugshotParams.entrySet()) {          
+		        	String entryValue = entry.getValue().toString().trim(); 
+				    if (entryValue.length() > 0) {
+				    	logger.debug("processing entry {} for {}", entryValue, entry.getKey());
+				    	try {
+				    		// we could check if the account already exists that has the same info set and is loved,
+				    		// but since we might be updating certain things when the user resets the info (like looking up
+				    		// all Amazon wish lists again), let's just reset all the accounts		
+				    		// if it seems too slow for a user who has a lot of accounts and is just changing one, 
+				    		// we can change this
+					    	if (entry.getKey().equals(ExternalAccountType.FLICKR)) {
+					    		XmlBuilder xmlForFlickr = new XmlBuilder();
+					    		xmlForFlickr.openElement("result");
+					    		httpMethods.doFindFlickrAccount(xmlForFlickr, userViewpoint, entryValue);
+					    		xmlForFlickr.closeElement(); // result
+					    		Document doc = factory.newDocumentBuilder().parse(new ByteArrayInputStream(xmlForFlickr.getBytes()));
+					    		XPath xpath = XPathFactory.newInstance().newXPath();
+					    		String nsid = ((Node)xpath.evaluate("/result/flickrUser/nsid", doc, XPathConstants.NODE)).getTextContent();
+					    		logger.debug("Got nsid {} when setting Flickr account", nsid);
+					    		httpMethods.doSetFlickrAccount(new XmlBuilder(), userViewpoint, nsid, entryValue);
+					    		accountsSetSuccessful.add(ExternalAccountType.FLICKR);
+					    	} else {
+					    		Method setAccount = httpMethods.getClass().getMethod("doSet" + entry.getKey().getDomNodeIdName() + "Account",
+					    				                                             new Class[] {XmlBuilder.class, UserViewpoint.class, String.class});	
+					    		XmlBuilder resultXml = new XmlBuilder();
+					    		resultXml.openElement("result");
+					    		setAccount.invoke(httpMethods, new Object[] {resultXml, userViewpoint, entryValue});
+					    		resultXml.closeElement(); // result
+					    		// we have messages telling the user about certain limitations of their account
+					    		// for MySpace, Twitter, Reddit, and Amazon
+					    		accountsSetSuccessful.add(entry.getKey());
+					    		if (resultXml.getBytes().length > 0) {
+						    		try {
+						    		    Document doc = factory.newDocumentBuilder().parse(new ByteArrayInputStream(resultXml.getBytes()));
+						    		    XPath xpath = XPathFactory.newInstance().newXPath();
+						    		    Node node = (Node)xpath.evaluate("/result/message", doc, XPathConstants.NODE);
+						    		    if (node != null) {
+						    		        String message = node.getTextContent();
+						    		        if (message.trim().length() > 0) {
+						    		    	    accountsWithNotes.put(entry.getKey(), message);
+						    		        }
+						    		    }
+						    		} catch (XPathExpressionException e) {
+						    			logger.error("Error getting a message about an external account for " + entry.getKey() + " with value " + entryValue, e);
+							        	// let's not bother the user with this, since the account must have been set succesfully
+							        }
+					    	    }
+					    	}
+				    	} catch (XmlMethodException e) {
+				    		// in all cases except for the Flickr one, if the XmlMethodException will be thrown, it will be
+				    		// wrapped inside an InvokationTargetException below because of our use of reflection
+				    		logger.warn("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
+				    		accountsSetFailed.put(entry.getKey(), e.getMessage());		    		
+				    	} catch (ParserConfigurationException e) {
+				    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
+				    		accountsSetFailed.put(entry.getKey(), e.getMessage());
+				        } catch (SAXException e) {
+				    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
+				    		accountsSetFailed.put(entry.getKey(), e.getMessage());
+				        } catch (XPathExpressionException e) {
+				    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
+				    		accountsSetFailed.put(entry.getKey(), e.getMessage());
+				        } catch (NoSuchMethodException e) {
+				    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
+				    		accountsSetFailed.put(entry.getKey(), e.getMessage());
+				        } catch (InvocationTargetException e) {
+				    		logger.warn("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
+				    		if (e.getCause() != null)
+				    		    accountsSetFailed.put(entry.getKey(), e.getCause().getMessage());
+				    		else 
+				    			accountsSetFailed.put(entry.getKey(), e.getMessage());
+				        } catch (IllegalAccessException e) {
+			    		    logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
+				    		accountsSetFailed.put(entry.getKey(), e.getMessage());
+				        }
+				    } else {
+				    	try {
+				    	    // do not unset "hate" because we don't have that concept on Facebook application page
+				    		// interface, so "hated" accounts are not populated with values to begin with; only unset "love"
+				    	    ExternalAccount externalAccount = externalAccounts.lookupExternalAccount(userViewpoint, user, entry.getKey());
+				    	    if (externalAccount.getSentiment().equals(Sentiment.LOVE)) {
+				    	    	externalAccounts.setSentiment(externalAccount, Sentiment.INDIFFERENT);
+				    	    	accountsRemoved.add(entry.getKey());
 				    	    }
+				    	} catch (NotFoundException e) {
+				    		// this account did not exist, nothing to do
 				    	}
-			    	} catch (XmlMethodException e) {
-			    		// in all cases except for the Flickr one, if the XmlMethodException will be thrown, it will be
-			    		// wrapped inside an InvokationTargetException below because of our use of reflection
-			    		logger.warn("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			    		accountsSetFailed.put(entry.getKey(), e.getMessage());		    		
-			    	} catch (ParserConfigurationException e) {
-			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			    		accountsSetFailed.put(entry.getKey(), e.getMessage());
-			        } catch (SAXException e) {
-			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			    		accountsSetFailed.put(entry.getKey(), e.getMessage());
-			        } catch (XPathExpressionException e) {
-			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			    		accountsSetFailed.put(entry.getKey(), e.getMessage());
-			        } catch (NoSuchMethodException e) {
-			    		logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			    		accountsSetFailed.put(entry.getKey(), e.getMessage());
-			        } catch (InvocationTargetException e) {
-			    		logger.warn("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			    		if (e.getCause() != null)
-			    		    accountsSetFailed.put(entry.getKey(), e.getCause().getMessage());
-			    		else 
-			    			accountsSetFailed.put(entry.getKey(), e.getMessage());
-			        } catch (IllegalAccessException e) {
-		    		    logger.error("Error updating external account for " + entry.getKey() + " with value " + entryValue, e);
-			    		accountsSetFailed.put(entry.getKey(), e.getMessage());
-			        }
-			    } else {
-			    	try {
-			    	    // do not unset "hate" because we don't have that concept on Facebook application page
-			    		// interface, so "hated" accounts are not populated with values to begin with; only unset "love"
-			    	    ExternalAccount externalAccount = externalAccounts.lookupExternalAccount(userViewpoint, user, entry.getKey());
-			    	    if (externalAccount.getSentiment().equals(Sentiment.LOVE)) {
-			    	    	externalAccounts.setSentiment(externalAccount, Sentiment.INDIFFERENT);
-			    	    	accountsRemoved.add(entry.getKey());
-			    	    }
-			    	} catch (NotFoundException e) {
-			    		// this account did not exist, nothing to do
-			    	}
-			    }
-		    	
-		    }
-	        
-			if (accountsSetSuccessful.size() > 0 || accountsRemoved.size() > 0) {
-				StringBuilder accountsSetSuccessfulBuilder = new StringBuilder();
-				StringBuilder accountsRemovedBuilder = new StringBuilder();
-				String singularOrPlural = "";
-				xml.openElement("fb:success");
-				xml.appendTextNode("fb:message", "Success");
-				xml.openElement("ul");
-				for (ExternalAccountType accountType : accountsSetSuccessful) {
-					accountsSetSuccessfulBuilder.append(accountType.getSiteName() + ", ");
-				}				
-				if (accountsSetSuccessfulBuilder.length() > 2) {
-					if (accountsSetSuccessful.size() > 1)
-						singularOrPlural = " accounts were";
-					else 
-						singularOrPlural = " account was";	
-							
-		    	    xml.appendTextNode("li", accountsSetSuccessfulBuilder.substring(0, accountsSetSuccessfulBuilder.length()-2) + singularOrPlural + " set successfully.");		
-				}
-				
-				for (ExternalAccountType accountType : accountsRemoved) {
-					accountsRemovedBuilder.append(accountType.getSiteName() + ", ");
-				}				
-				if (accountsRemovedBuilder.length() > 2) {
-					if (accountsRemoved.size() > 1)
-						singularOrPlural = " accounts were";
-					else 
-						singularOrPlural = " account was";	
-		    	    xml.appendTextNode("li", accountsRemovedBuilder.substring(0, accountsRemovedBuilder.length()-2) + singularOrPlural + " removed successfully.");		
-				}				
-		    	xml.closeElement();
-		    	xml.closeElement();
-			}
-			
-			if (accountsWithNotes.size() > 0) {
-				xml.openElement("fb:explanation");
-				xml.appendTextNode("fb:message", "Please Note");
-				xml.openElement("ul");
-				for (Map.Entry<ExternalAccountType, String> entry : accountsWithNotes.entrySet()) {
-				    xml.appendTextNode("li", entry.getValue());
-				}
-				xml.closeElement();
-				xml.closeElement();
-			}
-
-			if (accountsSetFailed.size() > 0) {
-				String singularOrPlural = " Account Was";
-				if (accountsSetFailed.size() > 1)
-					singularOrPlural = " Accounts Were";
-				
-				xml.openElement("fb:error");
-				xml.appendTextNode("fb:message", "The Following" + singularOrPlural + " Not Set");
-				xml.openElement("ul");				
-				for (Map.Entry<ExternalAccountType, String> entry : accountsSetFailed.entrySet()) {
-					logger.debug("key {} value {}", entry.getKey().getSiteName(), entry.getValue());
-				    xml.appendTextNode("li", entry.getKey().getSiteName() + ": " + entry.getValue());
-				}
-				xml.closeElement();
-				xml.closeElement();
-			}
-
-			String floatStyle = "";
-			String labelWidth = "180";
-			String leftSideWidth = "width:490px;";
-			String categoryNameLeftMargin = "margin-left:0px;";
-			if (user.getAccount().isPublicPage()) {
-			    xml.appendTextNode("span", "Updates to the information below will be reflected in ",
-				    	           "style", "margin-left:22px;");
-		        xml.appendTextNode("a", "your Mugshot account", "href",
-				                   baseUrl + "/person?who=" + user.getId(), "target", "_blank");
-		        xml.append(".");
-		    } else {
-			    xml.appendTextNode("span", "Fill in the information for accounts you want to display updates from.",
-		    	                   "style", "margin-left:22px;");		
-			    floatStyle="float:left;";
-			    labelWidth="120";
-			    leftSideWidth = "width:430px;";
-			    categoryNameLeftMargin = "margin-left:0px;";
-		    }
-		    ExternalAccountCategory currentCategory = null;
-		    boolean hadInitialInfo = false;
-		    xml.openElement("div", "style", "position:relative;" + leftSideWidth + floatStyle);
-		    xml.openElement("fb:editor", "action", "", "width", "310", "labelwidth", labelWidth);
-		    for (ExternalAccountView externalAccount : getSupportedAccounts(user)) {
-		    	if (currentCategory == null || !currentCategory.equals(externalAccount.getExternalAccountType().getCategory())) {
-				    currentCategory = externalAccount.getExternalAccountType().getCategory();
-		    		xml.openElement("fb:editor-custom");
-				    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", categoryNameLeftMargin);		    	
-				    xml.closeElement();
-		    	}
-			    xml.openElement("fb:editor-custom", "label", externalAccount.getSiteName());
-			    
-			    if (externalAccount.getExternalAccount() != null && externalAccount.getExternalAccount().isLovedAndEnabled()) {
-			        xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name(), "value", externalAccount.getExternalAccount().getAccountInfo());
-			        hadInitialInfo = true;
-			    } else {
-			    	xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name());
-			    }
-			    
-			    xml.openElement("div", "style", "color:#666666;");			    
-			    if (externalAccount.isInfoTypeProvidedBySite()) {
-			        xml.append("Enter your ");
-			        xml.appendTextNode("a", externalAccount.getSiteName(), 
-			        		           "href", externalAccount.getExternalAccountType().getSiteLink(), 
-			        		           "target", "_blank");
-			        xml.append(" " + externalAccount.getSiteUserInfoType());
-				    if (externalAccount.getExternalAccountType().getHelpUrl().trim().length() > 0) {
-				    	xml.append(" (");
-				        xml.appendTextNode("a", "help me find it", 
-		        		           "href", externalAccount.getExternalAccountType().getHelpUrl().trim(), 
-		        		           "target", "_blank");			    	
-				        xml.append(")");
 				    }
-				    xml.append(".");
-			    } else {
-			        xml.append("Enter your " + externalAccount.getSiteUserInfoType() + " ");
-			        xml.appendTextNode("a", externalAccount.getSiteName(), 
-			        		           "href", externalAccount.getExternalAccountType().getSiteLink(), 
-			        		           "target", "_blank");
-			        xml.append(" account.");			    	
+			    	
 			    }
-			    
-			    if (externalAccount.getExternalAccountType().getSupportType().trim().length() > 0) {
-			    	xml.append(" Your activity will be updated when you " + externalAccount.getExternalAccountType().getSupportType() + ".");
+		        
+				if (accountsSetSuccessful.size() > 0 || accountsRemoved.size() > 0) {
+					StringBuilder accountsSetSuccessfulBuilder = new StringBuilder();
+					StringBuilder accountsRemovedBuilder = new StringBuilder();
+					String singularOrPlural = "";
+					xml.openElement("fb:success");
+					xml.appendTextNode("fb:message", "Success");
+					xml.openElement("ul");
+					for (ExternalAccountType accountType : accountsSetSuccessful) {
+						accountsSetSuccessfulBuilder.append(accountType.getSiteName() + ", ");
+					}				
+					if (accountsSetSuccessfulBuilder.length() > 2) {
+						if (accountsSetSuccessful.size() > 1)
+							singularOrPlural = " accounts were";
+						else 
+							singularOrPlural = " account was";	
+								
+			    	    xml.appendTextNode("li", accountsSetSuccessfulBuilder.substring(0, accountsSetSuccessfulBuilder.length()-2) + singularOrPlural + " set successfully.");		
+					}
+					
+					for (ExternalAccountType accountType : accountsRemoved) {
+						accountsRemovedBuilder.append(accountType.getSiteName() + ", ");
+					}				
+					if (accountsRemovedBuilder.length() > 2) {
+						if (accountsRemoved.size() > 1)
+							singularOrPlural = " accounts were";
+						else 
+							singularOrPlural = " account was";	
+			    	    xml.appendTextNode("li", accountsRemovedBuilder.substring(0, accountsRemovedBuilder.length()-2) + singularOrPlural + " removed successfully.");		
+					}				
+			    	xml.closeElement();
+			    	xml.closeElement();
+				}
+				
+				if (accountsWithNotes.size() > 0) {
+					xml.openElement("fb:explanation");
+					xml.appendTextNode("fb:message", "Please Note");
+					xml.openElement("ul");
+					for (Map.Entry<ExternalAccountType, String> entry : accountsWithNotes.entrySet()) {
+					    xml.appendTextNode("li", entry.getValue());
+					}
+					xml.closeElement();
+					xml.closeElement();
+				}
+	
+				if (accountsSetFailed.size() > 0) {
+					String singularOrPlural = " Account Was";
+					if (accountsSetFailed.size() > 1)
+						singularOrPlural = " Accounts Were";
+					
+					xml.openElement("fb:error");
+					xml.appendTextNode("fb:message", "The Following" + singularOrPlural + " Not Set");
+					xml.openElement("ul");				
+					for (Map.Entry<ExternalAccountType, String> entry : accountsSetFailed.entrySet()) {
+						logger.debug("key {} value {}", entry.getKey().getSiteName(), entry.getValue());
+					    xml.appendTextNode("li", entry.getKey().getSiteName() + ": " + entry.getValue());
+					}
+					xml.closeElement();
+					xml.closeElement();
+				}
+	
+				String floatStyle = "";
+				String labelWidth = "180";
+				String leftSideWidth = "width:490px;";
+				String categoryNameLeftMargin = "margin-left:0px;";
+				if (user.getAccount().isPublicPage()) {
+				    xml.appendTextNode("span", "Updates to the information below will be reflected in ",
+					    	           "style", "margin-left:22px;");
+			        xml.appendTextNode("a", "your Mugshot account", "href",
+					                   baseUrl + "/person?who=" + user.getId(), "target", "_blank");
+			        xml.append(".");
 			    } else {
-			    	xml.append(" A link to this account will be included in your profile.");
+				    xml.appendTextNode("span", "Fill in the information for accounts you want to display updates from.",
+			    	                   "style", "margin-left:22px;");		
+				    floatStyle="float:left;";
+				    labelWidth="120";
+				    leftSideWidth = "width:430px;";
+				    categoryNameLeftMargin = "margin-left:0px;";
 			    }
-			    xml.closeElement(); // div
+			    ExternalAccountCategory currentCategory = null;
+			    boolean hadInitialInfo = false;
+			    xml.openElement("div", "style", "position:relative;" + leftSideWidth + floatStyle);
+			    xml.openElement("fb:editor", "action", "", "width", "310", "labelwidth", labelWidth);
+			    for (ExternalAccountView externalAccount : getSupportedAccounts(user)) {
+			    	if (currentCategory == null || !currentCategory.equals(externalAccount.getExternalAccountType().getCategory())) {
+					    currentCategory = externalAccount.getExternalAccountType().getCategory();
+			    		xml.openElement("fb:editor-custom");
+					    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", categoryNameLeftMargin);		    	
+					    xml.closeElement();
+			    	}
+				    xml.openElement("fb:editor-custom", "label", externalAccount.getSiteName());
+				    
+				    if (externalAccount.getExternalAccount() != null && externalAccount.getExternalAccount().isLovedAndEnabled()) {
+				        xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name(), "value", externalAccount.getExternalAccount().getAccountInfo());
+				        hadInitialInfo = true;
+				    } else {
+				    	xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name());
+				    }
+				    
+				    xml.openElement("div", "style", "color:#666666;");			    
+				    if (externalAccount.isInfoTypeProvidedBySite()) {
+				        xml.append("Enter your ");
+				        xml.appendTextNode("a", externalAccount.getSiteName(), 
+				        		           "href", externalAccount.getExternalAccountType().getSiteLink(), 
+				        		           "target", "_blank");
+				        xml.append(" " + externalAccount.getSiteUserInfoType());
+					    if (externalAccount.getExternalAccountType().getHelpUrl().trim().length() > 0) {
+					    	xml.append(" (");
+					        xml.appendTextNode("a", "help me find it", 
+			        		           "href", externalAccount.getExternalAccountType().getHelpUrl().trim(), 
+			        		           "target", "_blank");			    	
+					        xml.append(")");
+					    }
+					    xml.append(".");
+				    } else {
+				        xml.append("Enter your " + externalAccount.getSiteUserInfoType() + " ");
+				        xml.appendTextNode("a", externalAccount.getSiteName(), 
+				        		           "href", externalAccount.getExternalAccountType().getSiteLink(), 
+				        		           "target", "_blank");
+				        xml.append(" account.");			    	
+				    }
+				    
+				    if (externalAccount.getExternalAccountType().getSupportType().trim().length() > 0) {
+				    	xml.append(" Your activity will be updated when you " + externalAccount.getExternalAccountType().getSupportType() + ".");
+				    } else {
+				    	xml.append(" A link to this account will be included in your profile.");
+				    }
+				    xml.closeElement(); // div
+				    
+				    xml.closeElement(); // fb:editor-custom	
+			    }
+			    xml.openElement("fb:editor-buttonset");
+			    if (hadInitialInfo)
+			        xml.appendEmptyNode("fb:editor-button", "value", "Update Info!");
+			    else
+			    	xml.appendEmptyNode("fb:editor-button", "value", "Submit Info!");
+			    xml.appendEmptyNode("fb:editor-cancel");
+			    xml.closeElement(); // fb:editor-buttonset
+			    xml.closeElement(); // fb:editor 		    
+			    xml.closeElement(); // div with the form
 			    
-			    xml.closeElement(); // fb:editor-custom	
-		    }
-		    xml.openElement("fb:editor-buttonset");
-		    if (hadInitialInfo)
-		        xml.appendEmptyNode("fb:editor-button", "value", "Update Info!");
-		    else
-		    	xml.appendEmptyNode("fb:editor-button", "value", "Submit Info!");
-		    xml.appendEmptyNode("fb:editor-cancel");
-		    xml.closeElement(); // fb:editor-buttonset
-		    xml.closeElement(); // fb:editor 		    
-		    xml.closeElement(); // div with the form
-		    
-		    if (!user.getAccount().isPublicPage()) {
-		    	xml.openElement("div", "style", "width:184px;float:left;color:#333333;background-color:#EDF2F3;border-style:solid;border-width:1px;border-color:#C2D1D4;margin-top:34px;padding:8px;");
-		    	xml.openElement("span", "style", "font-weight:bold;");
-		    	xml.append("Do you already have a Mugshot account?");
-		    	xml.closeElement();
-			    xml.append(" Don't fill in this stuff, just verify" +
-			    		   " your Mugshot account by following this link.");
-			    xml.openElement("form", "action", baseUrl + "/facebook-add", "target", "_blank", "method", "GET");
-			    // there didn't seem to be a way to get buttons in fb:editor to open in a new window, which is what we want here, so we are using 
-			    // our own form and buttons 
-			    // original top and left border color on facebook is #D8DFEA, but it looks too light to me
-			    String buttonStyle = "background-color:#3B5998;color:#ffffff;border-width:1px;padding-top:2px;padding-bottom:2px;padding-right:6px;padding-left:6px;margin-top:8px;margin-bottom:8px;border-top-color:#728199;border-left-color:#728199;border-right-color:#0E1F5B;border-bottom-color:#0E1F5B;";
-			    xml.appendEmptyNode("input", "type", "submit", "value", "Verify My Mugshot Account", "style", buttonStyle);
-			    xml.closeElement();		
-			    // divider line
-		    	xml.openElement("div", "style", "height:1px;background-color:#C2D1D4;margin-top:8px;margin-bottom:8px;");
-			    xml.closeElement();		
-		    	xml.openElement("span", "style", "font-weight:bold;");
-		    	xml.append("Want to create a Mugshot account?");
-		    	xml.closeElement();
-			    xml.append(" It's free and easy and helps you see all your friends' activities in one place, share links, and read feeds in a social setting.");
-	            xml.openElement("form", "action", baseUrl + "/facebook-signin", "target", "_blank", "method", "GET");
-	            xml.appendEmptyNode("input", "type", "submit", "value", "Create My Mugshot Account", "style", buttonStyle);
-	            xml.closeElement();	
-		    	xml.closeElement();
-		    }
+			    if (!user.getAccount().isPublicPage()) {
+			    	xml.openElement("div", "style", "width:184px;float:left;color:#333333;background-color:#EDF2F3;border-style:solid;border-width:1px;border-color:#C2D1D4;margin-top:34px;padding:8px;");
+			    	xml.openElement("span", "style", "font-weight:bold;");
+			    	xml.append("Do you already have a Mugshot account?");
+			    	xml.closeElement();
+				    xml.append(" Don't fill in this stuff, just verify" +
+				    		   " your Mugshot account by following this link.");
+				    xml.openElement("form", "action", baseUrl + "/facebook-add", "target", "_blank", "method", "GET");
+				    // there didn't seem to be a way to get buttons in fb:editor to open in a new window, which is what we want here, so we are using 
+				    // our own form and buttons 
+				    // original top and left border color on facebook is #D8DFEA, but it looks too light to me
+				    String buttonStyle = "background-color:#3B5998;color:#ffffff;border-width:1px;padding-top:2px;padding-bottom:2px;padding-right:6px;padding-left:6px;margin-top:8px;margin-bottom:8px;border-top-color:#728199;border-left-color:#728199;border-right-color:#0E1F5B;border-bottom-color:#0E1F5B;";
+				    xml.appendEmptyNode("input", "type", "submit", "value", "Verify My Mugshot Account", "style", buttonStyle);
+				    xml.closeElement();		
+				    // divider line
+			    	xml.openElement("div", "style", "height:1px;background-color:#C2D1D4;margin-top:8px;margin-bottom:8px;");
+				    xml.closeElement();		
+			    	xml.openElement("span", "style", "font-weight:bold;");
+			    	xml.append("Want to create a Mugshot account?");
+			    	xml.closeElement();
+				    xml.append(" It's free and easy and helps you see all your friends' activities in one place, share links, and read feeds in a social setting.");
+		            xml.openElement("form", "action", baseUrl + "/facebook-signin", "target", "_blank", "method", "GET");
+		            xml.appendEmptyNode("input", "type", "submit", "value", "Create My Mugshot Account", "style", buttonStyle);
+		            xml.closeElement();	
+			    	xml.closeElement();
+			    }
+	        }
 		} else {
 			if (errorMessage == null)
 				errorMessage = "We could not get an existing or create a new user.";
@@ -503,19 +530,23 @@ public class FacebookServlet extends AbstractServlet {
 		return true;
 	}
 	
-	private static Map<ExternalAccountType, CharSequence> extractMugshotParamsFromArray(Map<CharSequence, CharSequence[]> reqParams) {
+	private static Pair<Map<ExternalAccountType, CharSequence>, CharSequence> extractMugshotParamsFromArray(Map<CharSequence, CharSequence[]> reqParams) {
 	    if (null == reqParams)
 	        return null;
 	    String mugshotParamPart = "mugshot_";
 	    Map<ExternalAccountType, CharSequence> result = new HashMap<ExternalAccountType, CharSequence>(reqParams.size());
+	    CharSequence tabValue = "home";
 	    for (Map.Entry<CharSequence, CharSequence[]> entry : reqParams.entrySet()) {
 	        String key = entry.getKey().toString();
 	        if (key.startsWith(mugshotParamPart)) {
-	          // we want to preserve the parameter even if entry.getValue()[0] is empty, because that might mean we want to
-	          // unset the external account information
-	          result.put(ExternalAccountType.valueOf(key.substring(mugshotParamPart.length())), entry.getValue()[0]);
+	        	String param = key.substring(mugshotParamPart.length());
+	          	if (param.equals("tab"))
+	          		tabValue = entry.getValue()[0];
+	            // we want to preserve the parameter even if entry.getValue()[0] is empty, because that might mean we want to
+	            // unset the external account information
+	            result.put(ExternalAccountType.valueOf(param), entry.getValue()[0]);
 	        }  
 	    }
-	    return result;
+	    return new Pair<Map<ExternalAccountType, CharSequence>, CharSequence>(result, tabValue);
 	}    
 }
