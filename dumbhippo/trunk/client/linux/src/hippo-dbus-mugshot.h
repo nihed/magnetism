@@ -36,8 +36,6 @@
 
 
 #include "hippo-dbus-server.h"
-#include "hippo/hippo-connection.h"
-#include "hippo/hippo-external-account.h"
 
 G_BEGIN_DECLS
 

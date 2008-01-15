@@ -7,7 +7,6 @@
 
 #include "HippoAbstractControl.h"
 #include "HippoUIUtil.h"
-#include <hippo/hippo-basics.h>
 
 class HippoScrollbar : public HippoAbstractControl {
 public:

@@ -7,7 +7,7 @@
 #include <HippoMessageHook.h>
 #include <HippoThreadExecutor.h>
 #include <HippoUtil.h>
-#include <hippo/hippo-basics.h>
+#include <stacker/hippo-window.h>
 
 class HippoChatWindow;
 

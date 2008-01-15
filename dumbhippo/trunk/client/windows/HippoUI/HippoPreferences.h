@@ -5,7 +5,7 @@
 #pragma once
 
 #include <HippoUtil.h>
-#include <hippo/hippo-basics.h>
+#include <engine/hippo-engine-basics.h>
 
 class HippoPreferences
 {

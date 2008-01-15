@@ -6,7 +6,6 @@
 
 #include <HippoMessageHook.h>
 #include <HippoUtil.h>
-#include <hippo/hippo-basics.h>
 #include <hippo/hippo-graphics.h>
 
 class HippoUI;

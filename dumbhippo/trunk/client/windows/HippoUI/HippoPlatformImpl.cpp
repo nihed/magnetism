@@ -10,7 +10,7 @@
 #include <ShlObj.h>
 #include <Windows.h>
 #include <mshtml.h>
-#include <hippo/hippo-basics.h>
+#include <hippo/hippo-engine-basics.h>
 #include <stacker/hippo-stacker-platform.h>
 
 static void      hippo_platform_impl_init                (HippoPlatformImpl       *impl);

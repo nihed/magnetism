@@ -15,7 +15,7 @@
  * API.
  */
 
-#include <hippo/hippo-data-cache.h>
+#include <engine/hippo-data-cache.h>
 
 typedef struct _DataClientId           DataClientId;
 typedef struct _DataClientMap          DataClientMap;

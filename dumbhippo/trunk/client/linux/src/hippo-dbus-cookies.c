@@ -10,6 +10,7 @@
 #include "hippo-dbus-server.h"
 #include "hippo-dbus-web.h"
 #include "hippo-dbus-cookies.h"
+#include <engine/hippo-cookies.h>
 #include "main.h"
 
 /* This is its own file primarily because it likely needs a cache if ever really

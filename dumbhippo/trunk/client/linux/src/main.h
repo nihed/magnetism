@@ -3,7 +3,7 @@
 #define __HIPPO_MAIN_H__
 
 #include <config.h>
-#include <hippo/hippo-common.h>
+#include <engine/hippo-engine.h>
 #include <stacker/hippo-stacker-platform.h>
 #include <stacker/hippo-stack-manager.h>
 
