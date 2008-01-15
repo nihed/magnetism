@@ -6,7 +6,6 @@ import hippo
 
 import gdata.calendar as gcalendar
 import bigboard.libbig as libbig
-import bigboard.global_mugshot as global_mugshot
 import bigboard.stock as stock
 import bigboard.google as google
 import bigboard.slideout as slideout
@@ -409,6 +408,9 @@ class EventDetailsDisplay(hippo.CanvasBox):
 
 class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
     def __init__(self, *args, **kwargs):
+        AbstractMugshotStock.__init__(self, *args, **kwargs)
+        google_stock.GoogleStock.__init__(self, 'calendar', **kwargs)
+
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
         # We keep calendars in a dictionary, referenced by calendar feed links,
         # so that we can get calendar names without updating events that are
@@ -437,10 +439,6 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
         self.__min_event_range_start = self.__event_range_start
         self.__max_event_range_end = self.__event_range_end
 
-        # these are at the end since they have the side effect of calling on_mugshot_ready it seems?
-        AbstractMugshotStock.__init__(self, *args, **kwargs)
-        google_stock.GoogleStock.__init__(self, 'calendar', **kwargs)
-
         bus = dbus.SessionBus()
         o = bus.get_object('org.freedesktop.Notifications', '/org/freedesktop/Notifications')
         self.__notifications_proxy = dbus.Interface(o, 'org.freedesktop.Notifications')
@@ -450,6 +448,7 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
 
     def _on_delisted(self):
         self._delist_google()
+        super(self, CalendarStock)._on_delisted(self)
 
     def __change_day(self):
         self.__close_slideout()
@@ -559,8 +558,8 @@ class CalendarStock(AbstractMugshotStock, google_stock.GoogleStock):
     def update_google_data(self, gobj = None):
         self.__update_calendar_list_and_events(gobj) 
 
-    def _on_mugshot_ready(self):
-        super(CalendarStock, self)._on_mugshot_ready()
+    def _on_ready(self):
+        super(CalendarStock, self)._on_ready()
         self.__update_calendar_list_and_events()
 
     def get_authed_content(self, size):

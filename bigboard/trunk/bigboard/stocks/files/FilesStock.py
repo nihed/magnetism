@@ -4,7 +4,6 @@ import xml.dom, xml.dom.minidom
 import gobject, gtk, pango
 import gconf, gnomevfs
 import gnome.ui
-import dbus, dbus.glib
 import hippo
 
 from pyonlinedesktop.fsutil import VfsMonitor

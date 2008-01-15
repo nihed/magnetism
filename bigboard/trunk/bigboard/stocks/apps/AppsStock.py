@@ -6,7 +6,6 @@ import gmenu, gobject, pango, gnomedesktop, gtk
 import gconf, hippo
 
 import bigboard.globals as globals
-import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.libbig.gutil import *
 import bigboard.apps_directory as apps_directory
@@ -45,8 +44,6 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
 
         search.enable_search_provider('apps')
 
-        self.__model = bigboard.globals.get_data_model()
-
         self.__box = CanvasVBox(spacing=3)
         self.__message = hippo.CanvasText()
         self.__message_link = ActionLink()
@@ -81,13 +78,9 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__repo.connect('global-top-apps-changed', self.__on_global_top_apps_changed)
         self.__repo.connect('app-launched', self.__on_app_launched)
 
-        self.__model.add_ready_handler(self.__on_ready)
-        if self.__model.ready:
-            self.__on_ready()
-
         self.__sync()
 
-    def __on_ready(self):
+    def _on_ready(self):
         # When we disconnect from the server we freeze existing content, then on reconnect
         # we clear everything and start over.
         _logger.debug("Connected to data model")
@@ -201,7 +194,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
                 break
 
             # don't display apps that are not installed if the user is not logged in
-            if not self.__model.self_resource and not app.is_installed():
+            if not self._model.self_resource and not app.is_installed():
                 continue
 
             display = apps_widgets.AppDisplay(apps_widgets.AppLocation.STOCK, app)
@@ -222,7 +215,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
 
         #_logger.debug("usage: %s", usage)
 
-        if usage is False and self.__model.ready and self.__model.global_resource.online:
+        if usage is False and self._model.ready and self._model.global_resource.online:
             self.__set_message("Enable application tracking", 
                                globals.get_baseurl() + "/account")        
 
