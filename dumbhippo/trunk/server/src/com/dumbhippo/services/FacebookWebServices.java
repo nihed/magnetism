@@ -313,6 +313,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	public List<String> getFriendAppUsers(FacebookAccount facebookAccount) {
 		List<String> params = new ArrayList<String>();
 		String methodName = "facebook.friends.getAppUsers";
+        params.add("method=" + methodName);
 		params.add("session_key=" + facebookAccount.getSessionKey());
 		
         String wsUrl = generateFacebookRequest(params);		
