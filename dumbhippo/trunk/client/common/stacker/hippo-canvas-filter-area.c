@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-stacker-internal.h"
-#include "hippo-common-marshal.h"
+#include "hippo-stacker-marshal.h"
 #include "hippo-canvas-filter-area.h"
 #include "hippo-actions.h"
 #include <hippo/hippo-canvas-box.h>
