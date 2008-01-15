@@ -57,6 +57,9 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		old_id,
 		new_id,
 		
+		// friends.getAppUsers
+		friends_getAppUsers_response,
+		
 		// error message
 		error_code,
         error_msg,
@@ -103,6 +106,8 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 	private List<FacebookAlbumData> albums;
 	private boolean gettingAlbums;
 	private List<Pair<String, String>> idPairs;
+	private boolean gettingFriendAppUsers;
+	private List<String> appUsersUids;
 
 	FacebookSaxHandler() {
 		this(null);	
@@ -124,6 +129,8 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		albums = new ArrayList<FacebookAlbumData>();
 		gettingAlbums = false;
 		idPairs = new ArrayList<Pair<String, String>>();
+		gettingFriendAppUsers = false;
+		appUsersUids = new ArrayList<String>();
 	}
 	
 	private FacebookPhotoData currentFacebookPhotoData() {
@@ -164,6 +171,8 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		} else if (c == Element.id_map) {
 			Pair<String, String> idPair = new Pair<String, String>(null, null);
 			idPairs.add(idPair);
+		} else if (c == Element.friends_getAppUsers_response) {
+			gettingFriendAppUsers = true;
 		}
 	}
 	
@@ -202,7 +211,10 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		if (c == Element.session_key) {
 			sessionKey = currentContent;
 		} else if (c == Element.uid) {
-			facebookUserId = currentContent;
+			if (gettingFriendAppUsers)
+				appUsersUids.add(currentContent);
+			else
+			    facebookUserId = currentContent;
 		} else if (c == Element.unread) {
 			if (parent() == Element.messages) {
                 unreadMessageCount = parseFacebookCount(c, currentContent); 
@@ -341,5 +353,9 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 	
 	public List<Pair<String, String>> getIdPairs() {
 		return idPairs;
+	}
+	
+	public List<String> getFriendAppUsers() {
+		return appUsersUids;
 	}
 }

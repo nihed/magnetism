@@ -310,6 +310,23 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		return handler.getTaggedPhotos();		
 	}
 	
+	public List<String> getFriendAppUsers(FacebookAccount facebookAccount) {
+		List<String> params = new ArrayList<String>();
+		String methodName = "facebook.friends.getAppUsers";
+		params.add("session_key=" + facebookAccount.getSessionKey());
+		
+        String wsUrl = generateFacebookRequest(params);		
+		
+		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(facebookAccount), wsUrl);
+		
+		if (handleErrorCode(facebookAccount, handler, methodName)) {
+			logger.warn("Error when getting friends who are also application users.");
+			return new ArrayList<String>();
+		}
+		
+		return handler.getFriendAppUsers();		
+	}
+	
 	public Set<FacebookAlbumData> getModifiedAlbums(FacebookAccount facebookAccount) {
 		// we are temporarily not handling new/modified albums
 		/*
