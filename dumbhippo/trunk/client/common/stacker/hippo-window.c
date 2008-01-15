@@ -1,7 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-stacker-internal.h"
 #include "hippo-window.h"
-#include "hippo-common-marshal.h"
+#include "hippo-stacker-marshal.h"
 
 static void     hippo_window_base_init (void                  *klass);
 
