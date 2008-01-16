@@ -28,10 +28,13 @@
 #include "nsServiceManagerUtils.h"
 #include "nsStringAPI.h"
 #include "hippoControl.h"
+#include "nsIClassInfoImpl.h"
 
 #ifdef HIPPO_OS_LINUX
 // These headers are used for finding the GdkWindow for a DOM window
 #include "nsIBaseWindow.h"
+#include "nsIDocument.h"
+#include "nsPIDOMWindow.h"
 #include "nsIDocShell.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsIWidget.h"
@@ -132,6 +135,22 @@ NS_IMETHODIMP hippoControl::SetListener(hippoIControlListener *listener)
     return NS_OK;
 }
 
+static nsIWidget* GetMainWidget(nsIDOMWindow* aWindow)
+{
+  // get the native window for this instance
+  nsCOMPtr<nsPIDOMWindow> window(do_QueryInterface(aWindow));
+  NS_ENSURE_TRUE(window, nsnull);
+  nsCOMPtr<nsIDocument> doc(do_QueryInterface(window->GetExtantDocument()));
+  NS_ENSURE_TRUE(doc, nsnull);
+  nsCOMPtr<nsISupports> container = doc->GetContainer();
+  nsCOMPtr<nsIBaseWindow> baseWindow(do_QueryInterface(container));
+  NS_ENSURE_TRUE(baseWindow, nsnull);
+ 
+  nsCOMPtr<nsIWidget> mainWidget;
+  baseWindow->GetMainWidget(getter_AddRefs(mainWidget));
+  return mainWidget;
+}
+
 /* void setListener (in hippoIControlListener listener); */
 NS_IMETHODIMP hippoControl::SetWindow(nsIDOMWindow *window)
 {
@@ -152,16 +171,8 @@ NS_IMETHODIMP hippoControl::SetWindow(nsIDOMWindow *window)
      * gdk_window_toplevel() ... much easier than walking up the 
      * Mozilla hierarchy.
      */
-    nsCOMPtr<nsIScriptGlobalObject> global = do_QueryInterface(window);
+    nsCOMPtr<nsIWidget> widget = GetMainWidget(window);
 
-    nsCOMPtr<nsIBaseWindow> baseWindow;
-    if (global)
-        baseWindow = do_QueryInterface(global->GetDocShell());
-    
-    nsCOMPtr<nsIWidget> widget;
-    if (baseWindow)
-        baseWindow->GetMainWidget(getter_AddRefs(widget));
-    
     GdkWindow *nativeWindow = NULL;
     if (widget)
         nativeWindow = (GdkWindow *)widget->GetNativeData(NS_NATIVE_WINDOW);

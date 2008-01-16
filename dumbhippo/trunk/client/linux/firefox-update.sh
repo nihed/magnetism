@@ -5,6 +5,8 @@
 # upgraded, as well as when our package is installed. It is needed because
 # Firefox is installed into versioned directories in /usr/lib[64]/firefox
 #
+
+EXT_ID=firefox@mugshot.org
 if [ "$1" = "install" ] ; then
     for libdir in /usr/lib /usr/lib64 ; do
 	# Add symlinks to any firefox directory that looks like it is part of a
@@ -13,12 +15,16 @@ if [ "$1" = "install" ] ; then
 	    if [ "$d" = "$libdir/firefox*" -o "$d" = "$libdir/iceweasel*" ] ; then
 		continue
 	    fi
-	    link=$d/extensions/firefox@mugshot.org
+	    link=$d/extensions/$EXT_ID
 	    target=$libdir/mugshot/firefox
 	    if [ -e $target -a \( -e $d/firefox-bin -o -e $d/firefox \) -a -d $d/extensions -a ! -L $link ] ; then
 		ln -s $target $link
 	    fi
 	done
+        link="$libdir/mozilla/extensions/$EXT_ID"
+        if [ -d $libdir/mozilla/extensions -a ! -L "$link" ]; then
+            ln -s $libdir/mugshot/firefox "$link"
+        fi
     done
 elif [ "$1" = "remove" ] ; then
     for libdir in /usr/lib /usr/lib64 ; do
@@ -27,12 +33,16 @@ elif [ "$1" = "remove" ] ; then
 	    if [ "$d" = "$libdir/firefox*" -o "$d" = "$libdir/iceweasel*" ] ; then
 		continue
 	    fi
-	    link=$d/extensions/firefox@mugshot.org
+	    link=$d/extensions/$EXT_ID
 	    if [ -L $link ] ; then
 		rm $link
 	    fi
 	done
      done
+     if [ -d $libdir/mozilla/extensions ]; then
+        rm $libdir/mozilla/extensions/$EXT_ID
+     fi
 else
     echo "Usage firefox-update.sh [install/remove]"
 fi
+
