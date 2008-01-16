@@ -687,6 +687,10 @@ public class FacebookTrackerBean implements FacebookTracker {
 	private String createFbmlForUser(Account account, Set<ExternalAccountView> allAccounts) {
 		User user = account.getOwner();
 
+        String applicationName = "mugshot";
+        if (config.getBaseUrlMugshot().toExternalForm().contains("dogfood"))
+        	applicationName = "mugshot-test";
+        
 		StringBuilder fbmlSb = new StringBuilder("");
 		fbmlSb.append("<fb:subtitle>Displaying latest updates.");
 		
@@ -694,18 +698,19 @@ public class FacebookTrackerBean implements FacebookTracker {
 		// <fb:action> tag doesn't work inside <fb:visible-to-owner>,
 		// so we need to use the following barbaric methods to right align the 'Edit Account' action 
 		fbmlSb.append("<fb:wide>");	
-		for (int i=1; i<=63; i++ ) {
+		for (int i=1; i<=33; i++ ) {
 		    fbmlSb.append("&nbsp;");
 		}
 		fbmlSb.append("</fb:wide>");	
-		
+        		
 		fbmlSb.append("<fb:narrow>");	
-		for (int i=1; i<=25; i++ ) {
+		for (int i=1; i<=2; i++ ) {
 		    fbmlSb.append("&nbsp;");
 		}
 		fbmlSb.append("</fb:narrow>");
 	
-		fbmlSb.append("<fb:fbml version='1.1'><fb:visible-to-owner><a href='http://apps.facebook.com/mugshot' style='float:right;'>Edit Accounts</a>" +
+		fbmlSb.append("<fb:fbml version='1.1'><fb:visible-to-owner><a href='http://apps.facebook.com/" + applicationName +"?mugshot_tab=home' style='float:right;'>Edit Accounts</a>" +
+                      "| <a href='http://apps.facebook.com/" + applicationName +"?mugshot_tab=invite' style='float:right;'>Invite Friends</a>" +
 		              "</fb:visible-to-owner></fb:fbml></fb:subtitle>");
 
 		// add the accounts ribbon
