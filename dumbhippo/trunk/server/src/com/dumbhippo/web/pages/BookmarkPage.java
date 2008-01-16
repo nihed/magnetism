@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.web.Browser;
 import com.dumbhippo.web.BrowserBean;
 import com.dumbhippo.web.Signin;

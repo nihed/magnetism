@@ -308,6 +308,11 @@ public enum ExternalAccountType {
 		public String getSupportType() {
 			return " get new messages, wall messages, pokes or when you are tagged in new photos (some updates are only for you to see)";
 		}
+		
+		@Override 
+		public boolean isNew() {
+			return true;
+		}
 	},
 	ORKUT("Orkut")  { // 5
 		@Override
@@ -976,11 +981,6 @@ public enum ExternalAccountType {
 			return handle != null;
 		}
 		
-		@Override 
-		public boolean isNew() {
-			return true;
-		}
-		
 		@Override
 		public ExternalAccountInfoSource getInfoSource() {
 			return ExternalAccountInfoSource.LINK;
@@ -1058,11 +1058,6 @@ public enum ExternalAccountType {
 				return count + " albums";
 		}
 		
-		@Override 
-		public boolean isNew() {
-			return true;
-		}
-		
 		@Override
 		public String getSupportType() {
 			return "add new albums";
@@ -1120,12 +1115,7 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}
-		
-		@Override 
-		public boolean isNew() {
-			return true;
-		}
-		
+
 		@Override
 		public ExternalAccountInfoSource getInfoSource() {
 			return ExternalAccountInfoSource.LINK;
