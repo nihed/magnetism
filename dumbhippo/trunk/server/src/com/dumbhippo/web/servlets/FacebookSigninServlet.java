@@ -96,6 +96,9 @@ public class FacebookSigninServlet extends AbstractServlet {
 			    			sess.invalidate();
 			    		SigninBean.initializeAuthentication(request, response, client);
 			    		ac.getOwner().getAccount().setPublicPage(true);
+			    		String regularCountString = config.getProperty(HippoProperty.NEW_USER_INVITATION_COUNT);
+			    		int regularCount = Integer.parseInt(regularCountString);
+			    		ac.getOwner().getAccount().setInvitations(regularCount);
 			    		// set a better name for a Facebook user, since now the user can edit it, and
 			    		// we won't be needing to get it from Facebook again
 			    		if (ac.getOwner().getNickname().contains("Facebook user")) {
