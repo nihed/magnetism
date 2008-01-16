@@ -228,9 +228,11 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		ExternalAccount externalAccount = accountView.getExternalAccount();
 		
 		List<? extends YouTubeVideo> videos = getYouTubeThumbnails(externalAccount);
-
+		if (videos == null)
+			return;
+		
 		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, videos), videos.size(), 
-				videos.get(0).getThumbnailWidth(), videos.get(0).getThumbnailHeight());
+			     	                  videos.get(0).getThumbnailWidth(), videos.get(0).getThumbnailHeight());
 	}
 
 	private List<? extends PicasaAlbum> getPicasaThumbnails(ExternalAccount account) {
@@ -262,10 +264,12 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	private void loadPicasaThumbnails(Viewpoint viewpoint, ExternalAccountView accountView) {
 		ExternalAccount externalAccount = accountView.getExternalAccount();
 		
-		List<? extends PicasaAlbum> videos = getPicasaThumbnails(externalAccount);
-
-		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, videos), videos.size(), 
-				videos.get(0).getThumbnailWidth(), videos.get(0).getThumbnailHeight());
+		List<? extends PicasaAlbum> albums = getPicasaThumbnails(externalAccount);	
+		if (albums == null)
+			return;
+		
+		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, albums), albums.size(), 
+	             			          albums.get(0).getThumbnailWidth(), albums.get(0).getThumbnailHeight());
 	}
 
 	public List<? extends Thumbnail> getThumbnails(ExternalAccount externalAccount) {
