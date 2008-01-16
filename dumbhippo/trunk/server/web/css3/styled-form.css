@@ -25,6 +25,10 @@
     font-weight: bold;
 }
 
-.dh-form-table .dh-info-cell {
+.dh-form-table .dh-info-cell, .dh-form-table .dh-info-cell a:link, .dh-form-table .dh-info-cell a:visited {
 	color:			#9648BC;
+}
+
+.dh-form-table .dh-info-cell a:hover {
+    color:          #8007BC; /* this looks better than text-decoration: underline; */
 }

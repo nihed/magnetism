@@ -140,6 +140,8 @@
 		</dht2:formTableRow>
 		<c:forEach items="${account.supportedAccounts.list}"
 			var="supportedAccount">
+			<c:set var="facebookAppInfo" value=""/>
+			<c:set var="facebookAppInfoLink" value=""/>
 			<c:if test="${supportedAccount.siteName == 'Facebook'}">
 				<tr valign="top">
 				<td colspan="3">
@@ -153,9 +155,11 @@
 					<c:when test="${account.facebookAuthToken != null}">
 						<div id="dhFacebookNote">Thank you for logging in to Facebook! You will now be getting Facebook updates.</div>
 					</c:when>
-				</c:choose>
+				</c:choose>				
 				</td>
 				</tr>
+				<c:set var="facebookAppInfo" value="Check out Mugshot application on Facebook!"/>
+				<c:set var="facebookAppInfoLink" value="http://www.facebook.com/add.php?api_key=${account.facebookApiKey}"/>
 			</c:if>
 			<c:set var="prefixIcon" value="" />
 			<c:set var="prefixIconWidth" value="" />
@@ -164,10 +168,12 @@
 				<c:set var="prefixIcon" value="/images3/${buildStamp}/new_icon.png" />
 				<c:set var="prefixIconWidth" value="31" />
 				<c:set var="prefixIconHeight" value="10" />
-			</c:if>
+			</c:if>			
 			<dht2:formTableRow controlId="dh${supportedAccount.domNodeIdName}"
-				label="${supportedAccount.siteName}"
+				label="${supportedAccount.siteName}"				
 				icon="/images3/${buildStamp}/${supportedAccount.iconName}"
+				info="${facebookAppInfo}"
+				infoLink ="${facebookAppInfoLink}" 
 				prefixIcon="${prefixIcon}" prefixIconWidth="${prefixIconWidth}"
 				prefixIconHeight="${prefixIconHeight}">
 				<c:choose>

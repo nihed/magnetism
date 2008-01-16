@@ -8,6 +8,7 @@
 <%@ attribute name="prefixIconWidth" required="false" type="java.lang.Integer" %>
 <%@ attribute name="prefixIconHeight" required="false" type="java.lang.Integer" %>
 <%@ attribute name="info" required="false" type="java.lang.String" %>
+<%@ attribute name="infoLink" required="false" type="java.lang.String" %>
 <%@ attribute name="altRow" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="controlId" required="false" type="java.lang.String" %>
 
@@ -41,7 +42,16 @@
 	<c:choose>
 	    <c:when test="${!empty info}">
 	        <td class="dh-control-cell dh-control-cell-next-to-info"><div class="dh-control-cell-div"><jsp:doBody/></div></td>
-	        <td class="dh-info-cell"><c:out value="${info}"/></td>
+	        <td class="dh-info-cell">
+	        <c:choose>
+	            <c:when test="${!empty infoLink}">
+	                <a target="_blank" href="${infoLink}"><c:out value="${info}"/></a>
+	            </c:when>
+	            <c:otherwise>
+	                <c:out value="${info}"/>
+	            </c:otherwise>
+	        </c:choose>    	        
+	        </td>
 	    </c:when>
 	    <c:otherwise>
 	        <td colspan="2" class="dh-control-cell">

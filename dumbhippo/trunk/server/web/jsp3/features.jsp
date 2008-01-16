@@ -5,6 +5,9 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
+
+<dh:bean id="features" class="com.dumbhippo.web.pages.FeaturesPage" scope="page"/>
+
 <head>
 	<title>Mugshot Features</title>
 	<dht3:stylesheet name="site" iefixes="true"/>	
@@ -158,7 +161,7 @@
 								 tipIconWidth="250"
 								 tipIconHeight="180"
 								 tipText="Put the mini on your own website">
-			    On your blog or Web page: using <a href="/badges">Mugshot Mini</a> and <a href="/radar-learnmore">Music Radar</a> widgets								 
+			    On your blog or Web page: using the <a href="/badges">Mugshot Mini</a> widget							 
 			  </dht3:featuresItem>
 			</tr>		
 			<tr>
@@ -177,6 +180,24 @@
 			                     tipIconHeight="267"
 			                     tipText="Get updates on your Google desktop">
 			    On your Google Desktop and home page: using the <a href="/google-stacker">Mugshot Google Gadget</a>
+			  </dht3:featuresItem>
+			</tr>	
+			<tr>
+			  <dht3:featuresItem prefix="Facebook"
+			                     icon="favicon_facebook.png"
+			                     tipIcon="mugshot_on_facebook.png"
+			                     tipIconWidth="396"
+			                     tipIconHeight="208"
+			                     tipText="Show your activity on Facebook">
+			    On Facebook: using the <a target="_blank" href="http://www.facebook.com/add.php?api_key=${features.facebookApiKey}">Mugshot application</a>
+			  </dht3:featuresItem>
+			  <dht3:featuresItem prefix="MusicRadar"
+			                     icon="musicradar_icon.png"
+								 tipIcon="music_radar.png"
+								 tipIconWidth="300"
+								 tipIconHeight="82"
+								 tipText="Display the music you are playing">
+			    On MySpace or any Web page: using the <a href="/radar-learnmore">Music Radar</a> widget								 
 			  </dht3:featuresItem>
 			</tr>	
 			<tr><td colspan="4" class="dh-spacer-row"></td></tr>
