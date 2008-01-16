@@ -10,6 +10,7 @@
 #include "nsIServiceManager.h"
 #include "nsISupportsUtils.h"
 #include "nsServiceManagerUtils.h"
+#include "nsIClassInfoImpl.h"
 
 #include "hippoControl.h"
 #include "hippoExtension.h"
@@ -66,3 +67,4 @@ static const nsModuleComponentInfo components[] = {
 };
 
 NS_IMPL_NSGETMODULE(hippoModule, components)
+

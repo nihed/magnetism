@@ -549,6 +549,19 @@ if test "x$with_xpidl" != x -a "x$with_xpidl" != xyes -a "x$with_xpidl" != xno ;
     XPIDL="$with_xpidl"
 fi
 
+AC_MSG_CHECKING([for libxul-unstable])
+HIPPO_PKG_CHECK_EXISTS(libxul-unstable, have_xulrunner=true, have_xulrunner=false)
+if test "x${have_xulrunner}" = "xtrue"; then
+    AC_MSG_RESULT([yes])
+    AC_DEFINE(HAVE_XULRUNNER, 1, [whether we have XULRunner])
+    idldir=`pkg-config --variable=idldir libxul-unstable`
+    GECKO_IDLDIR="${idldir}"
+    GECKO_INCLUDEDIR=`pkg-config --variable=includedir libxul-unstable`
+    XPIDL=`pkg-config --variable=sdkdir libxul-unstable`/bin/xpidl
+else
+    AC_MSG_RESULT([no])
+fi
+
 # if the firefox-devel RPM is installed, set paths from that
 if test \( x"$GECKO_IDLDIR" = x -o "x$GECKO_INCLUDEDIR" = x -o "x$XPIDL" = x \) -a -x /bin/rpm ; then
    AC_MSG_CHECKING([for Gecko SDK via the firefox-devel package])
@@ -604,16 +617,20 @@ else
     AC_MSG_ERROR([Must either specify --with-gecko-sdk=DIR or --with-gecko-idl=DIR])
 fi
 
+if test "x${have_xulrunner}" != xtrue; then
 if test "x$GECKO_INCLUDEDIR" != x ; then
+   AC_MSG_CHECKING([for "full gecko" style includes])
    if test -f "$GECKO_INCLUDEDIR/caps/nsIScriptSecurityManager.h" ; then
-	have_full_gecko=true
+       have_full_gecko=true
+       AC_MSG_RESULT([yes])
    elif test -f "$GECKO_INCLUDEDIR/nsIURI.h" ; then
-	:
+       AC_MSG_RESULT([no])
    else
        AC_MSG_ERROR([Cannot find Gecko headers in $GECKO_INCLUDEDIR])
    fi
 else
     AC_MSG_ERROR([Must either specify --with-gecko-sdk=DIR or --with-gecko-headers=DIR])
+fi
 fi
 
 # If we are using the cut-and-paste version of nsIXPCSecurityManager.h, we don't
@@ -668,10 +685,17 @@ fi
 
 PKG_CHECK_MODULES(LIBHIPPOFIREFOX, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED $NSPR_PACKAGES $JS_PACKAGES gtk+-2.0)
 
+if test "x${have_xulrunner}"; then
+  LIBHIPPOFIREFOX_CFLAGS="`pkg-config --cflags libxul-unstable` ${LIBHIPPOFIREFOX_CFLAGS}"
+fi
 # Should have -lxpcom here, but that upsets libtool for unknown reasons. Or
 # should we use -lxpcomglue instead? We don't actually link to anything private, though
 # we use some private interfaces
 LIBHIPPOFIREFOX_LIBS="$LIBHIPPOFIREFOX_LIBS $NSPR_LIBS"
+if test "x${have_xulrunner}" = "xtrue"; then
+  # We need to match the mozilla version by compiling with short-wchar
+  LIBHIPPOFIREFOX_LIBS="${LIBHIPPOFIREFOX_LIBS} `pkg-config --libs libxul-unstable`"
+fi
 
 #### define absolute path to srcdir for debugging-only code
 ABSOLUTE_TOP_SRCDIR=`cd ${srcdir} && pwd`
@@ -705,10 +729,12 @@ echo "
         LIBHIPPO_CFLAGS:          ${LIBHIPPO_CFLAGS}
         LIBDDM_CFLAGS:            ${LIBDDM_CFLAGS}
         MUGSHOT_CFLAGS:           ${MUGSHOT_CFLAGS}
+        LIBHIPPOFIREFOX_CFLAGS:   ${LIBHIPPOFIREFOX_CFLAGS}
 
         LIBHIPPO_LIBS:            ${LIBHIPPO_LIBS}
         LIBDDM_LIBS:              ${LIBDDM_LIBS}
         MUGSHOT_LIBS:             ${MUGSHOT_LIBS}
+        LIBHIPPOFIREFOX_LIBS:     ${LIBHIPPOFIREFOX_LIBS}
 
         Now type 'make' to build $PACKAGE
 "
