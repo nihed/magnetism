@@ -484,7 +484,7 @@ public class FacebookServlet extends AbstractServlet {
 				    // there didn't seem to be a way to get buttons in fb:editor to open in a new window, which is what we want here, so we are using 
 				    // our own form and buttons 
 				    // original top and left border color on facebook is #D8DFEA, but it looks too light to me
-				    String buttonStyle = "background-color:#3B5998;color:#ffffff;border-width:1px;padding-top:2px;padding-bottom:2px;padding-right:2px;padding-left:2px;margin-top:8px;margin-bottom:8px;border-top-color:#728199;border-left-color:#728199;border-right-color:#0E1F5B;border-bottom-color:#0E1F5B;";
+				    String buttonStyle = "background-color:#3B5998;color:#ffffff;width:184px;border-width:1px;padding-top:2px;padding-bottom:2px;margin-top:8px;margin-bottom:8px;border-top-color:#728199;border-left-color:#728199;border-right-color:#0E1F5B;border-bottom-color:#0E1F5B;";
 				    xml.appendEmptyNode("input", "type", "submit", "value", "Verify My Mugshot Account", "style", buttonStyle);
 				    xml.closeElement();		
 				    // divider line
