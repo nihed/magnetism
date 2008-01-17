@@ -124,6 +124,9 @@ read_data_attributes(DBusMessageIter    *prop_struct_iter,
     case 'u':
         data_type = DDM_DATA_URL;
         break;
+    case 'F':
+        data_type = DDM_DATA_FEED;
+        break;
     default:
         g_warning("Unknown data type %c", data_type_wire);
         return FALSE;
@@ -231,6 +234,39 @@ read_variant_value(DDMDataModel       *ddm_model,
     return TRUE;
 }
 
+static gboolean
+read_feed_value(DDMDataModel       *ddm_model,
+                DBusMessageIter    *variant_iter,
+                DDMDataResource   **resource,
+                gint64             *timestamp)
+{
+    DBusMessageIter feed_item_iter;
+    const char *resource_id;
+    
+    if (!dbus_message_iter_get_arg_type(variant_iter) == DBUS_TYPE_STRUCT) {
+        g_warning("dbus type does not match expected data type");
+        return FALSE;
+    }
+
+    dbus_message_iter_recurse(variant_iter, &feed_item_iter);
+    
+    g_assert(dbus_message_iter_get_arg_type(&feed_item_iter) == DBUS_TYPE_STRING);
+    dbus_message_iter_get_basic(&feed_item_iter, &resource_id);
+    dbus_message_iter_next(&feed_item_iter);
+    
+    *resource = ddm_data_model_lookup_resource(ddm_model, resource_id);
+    if (*resource == NULL) {
+        g_warning("Unknown resource id '%s'", resource_id);
+        return FALSE;
+    }
+
+    g_assert(dbus_message_iter_get_arg_type(&feed_item_iter) == DBUS_TYPE_INT64);
+    dbus_message_iter_get_basic(&feed_item_iter, &timestamp);
+    dbus_message_iter_next(&feed_item_iter);
+    
+    return TRUE;
+}
+
 static void
 update_property(DBusModel          *dbus_model,
                 DDMDataResource    *resource,
@@ -245,7 +281,6 @@ update_property(DBusModel          *dbus_model,
     DDMDataType data_type = DDM_DATA_NONE;
     DDMDataCardinality cardinality = DDM_DATA_CARDINALITY_1;
     gboolean changed = FALSE;
-    DDMDataValue value;
     
     /* "(ssyyyv)"
      *        Parameter ID namespace uri
@@ -267,25 +302,44 @@ update_property(DBusModel          *dbus_model,
     if (!read_data_attributes(prop_struct_iter, &update_type, &data_type, &cardinality))
         return;
 
-    dbus_message_iter_recurse(prop_struct_iter, &variant_iter);
-    value.type = data_type;
-    if (!read_variant_value(dbus_model->ddm_model, &variant_iter, data_type, &value))
-        return;
-
     property_qname = ddm_qname_get(param_namespace, param_name);
-    
-    /* The defaultInclude and defaultChildren attributes of a property
-     * are not included in the D-Bus protocol because we only need
-     * them when interpreting a fetch string. Here in a client
-     * application, we just set them to FALSE and NULL respectively.
-     */
-    
-    if (update_type == DDM_DATA_UPDATE_CLEAR) {
-        changed = ddm_data_resource_update_property(resource, property_qname, update_type, cardinality,
-                                                    FALSE, NULL, NULL);
+
+    dbus_message_iter_recurse(prop_struct_iter, &variant_iter);
+
+    if (data_type == DDM_DATA_FEED) {
+        DDMDataResource *item_resource;
+        gint64 item_timestamp;
+        
+        if (!read_feed_value(dbus_model->ddm_model, &variant_iter, &item_resource, &item_timestamp))
+            return;
+
+        if (update_type == DDM_DATA_UPDATE_CLEAR) {
+            changed = ddm_data_resource_update_feed_property(resource, property_qname, update_type,
+                                                             FALSE, NULL, item_resource, item_timestamp);
+        } else {
+            changed = ddm_data_resource_update_feed_property(resource, property_qname, update_type,
+                                                             FALSE, NULL, item_resource, item_timestamp);
+        }
     } else {
-        changed = ddm_data_resource_update_property(resource, property_qname, update_type, cardinality,
-                                                    FALSE, NULL, &value);
+        DDMDataValue value;
+        
+        value.type = data_type;
+        if (!read_variant_value(dbus_model->ddm_model, &variant_iter, data_type, &value))
+            return;
+
+        /* The defaultInclude and defaultChildren attributes of a property
+         * are not included in the D-Bus protocol because we only need
+         * them when interpreting a fetch string. Here in a client
+         * application, we just set them to FALSE and NULL respectively.
+         */
+        
+        if (update_type == DDM_DATA_UPDATE_CLEAR) {
+            changed = ddm_data_resource_update_property(resource, property_qname, update_type, cardinality,
+                                                        FALSE, NULL, NULL);
+        } else {
+            changed = ddm_data_resource_update_property(resource, property_qname, update_type, cardinality,
+                                                        FALSE, NULL, &value);
+        }
     }
 
     if (changed) {
