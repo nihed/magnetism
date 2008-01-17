@@ -215,7 +215,12 @@ public class FacebookTrackerBean implements FacebookTracker {
 			}			
 		}
 		
-	    facebookAccount.setSessionKey(sessionKey);
+		// don't reset the session key if the application is being uninstalled,
+		// because we might still be able to use it to get the updates for the user on Mugshot
+		// (not sure if the session key will still be valid though, but if it's not,
+		// we'll just reset it when we try to make a request next time)
+		if (applicationEnabled == null || applicationEnabled)
+	        facebookAccount.setSessionKey(sessionKey);
 	    if (sessionKey != null)
 		    facebookAccount.setSessionKeyValid(true);	
 	    if (applicationEnabled != null)
@@ -706,7 +711,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		fbmlSb.append("</fb:wide>");	
         		
 		fbmlSb.append("<fb:narrow>");	
-		for (int i=1; i<=55; i++ ) {
+		for (int i=1; i<=75; i++ ) {
 		    fbmlSb.append("&nbsp;");
 		}
 		fbmlSb.append("</fb:narrow>");
