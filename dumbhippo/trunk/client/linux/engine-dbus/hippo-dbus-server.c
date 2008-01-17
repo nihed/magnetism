@@ -1036,11 +1036,12 @@ handle_get_chat_window_state(HippoDBus   *dbus,
     state = hippo_engine_app_get_chat_state(hippo_get_engine_app(), chat_id);
     dbus_state = (dbus_int32_t)state;
 
-    dbus_message_append_args(message,
-			     DBUS_TYPE_INT64, &dbus_state,
+    reply = dbus_message_new_method_return(message);
+    
+    dbus_message_append_args(reply,
+			     DBUS_TYPE_INT32, &dbus_state,
 			     DBUS_TYPE_INVALID);
     
-    reply = dbus_message_new_method_return(message);
     return reply;
 }
 
