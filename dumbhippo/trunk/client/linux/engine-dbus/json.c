@@ -44,7 +44,7 @@ hippo_parse_int32(const char *s,
     return TRUE;
 }
 #else /* !BUILD_TESTS */
-#include <hippo/hippo-basics.h>
+#include <engine/hippo-engine-basics.h>
 #endif
 
 

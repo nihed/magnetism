@@ -18,6 +18,7 @@ static void      hippo_status_icon_popup_menu          (GtkStatusIcon           
 struct _HippoStatusIcon {
     GtkStatusIcon parent;
     DDMDataModel *model;
+    DDMDataResource *global_resource;
     GtkWidget *popup_menu;
 };
 
@@ -50,13 +51,60 @@ hippo_status_icon_class_init(HippoStatusIconClass  *klass)
 static const char *
 get_icon_name(DDMDataModel *model)
 {
-#if 0
-    if (hippo_connection_get_connected(connection))
+    if (ddm_data_model_is_online(model))
         return "mugshot_notification";
     else
         return "mugshot_notification_disabled";
-#endif    
-    return "mugshot_notification";
+}
+
+static const char *
+get_icon_tooltip(DDMDataModel *model)
+{
+    return "Mugshot";
+}
+
+static void
+on_online_changed(DDMDataResource *global_resource,
+                  GSList          *changed_properties,
+                  gpointer         data)
+{
+    HippoStatusIcon *icon = data;
+    
+    g_object_set(G_OBJECT(icon), 
+                 "icon-name", get_icon_name(icon->model),
+                 NULL);
+}
+
+static void
+set_global_resource(HippoStatusIcon *icon,
+                    DDMDataResource *global_resource)
+{
+    if (icon->global_resource) {
+        ddm_data_resource_disconnect(icon->global_resource,
+                                     on_online_changed,
+                                     icon);
+        ddm_data_resource_unref(icon->global_resource);
+        icon->global_resource = NULL;
+    }
+
+    icon->global_resource = global_resource;
+
+    if (icon->global_resource) {
+        ddm_data_resource_ref(icon->global_resource);
+        ddm_data_resource_connect(icon->global_resource, "online",
+                                  on_online_changed,
+                                  icon);
+    }
+
+    on_online_changed(icon->global_resource, NULL, icon);
+}
+
+static void
+on_ready(DDMDataModel    *model,
+         HippoStatusIcon *icon)
+{
+    set_global_resource(icon,
+                        ddm_data_model_get_global_resource(model));
 }
 
 HippoStatusIcon*
@@ -70,14 +118,11 @@ hippo_status_icon_new(DDMDataModel *model)
     
     icon->model = g_object_ref(model);
 
-#if 0
-    /* FIXME: get via data model */
-    g_signal_connect(connection, "state-changed",
-                     G_CALLBACK(on_state_changed), icon);
+    g_signal_connect(icon->model, "ready",
+                     G_CALLBACK(on_ready), icon);
 
     gtk_status_icon_set_tooltip(GTK_STATUS_ICON(icon),
-                                hippo_connection_get_tooltip(connection));
-#endif    
+                                get_icon_tooltip(model));
 
     return HIPPO_STATUS_ICON(icon);
 }
@@ -96,7 +141,12 @@ hippo_status_icon_finalize(GObject *object)
 {
     HippoStatusIcon *icon = HIPPO_STATUS_ICON(object);
 
+    set_global_resource(icon, NULL);
     destroy_menu(icon);
+
+    g_signal_handlers_disconnect_by_func(icon->model,
+                                         (gpointer)on_ready,
+                                         icon);
     
     g_object_unref(icon->model);
     
@@ -189,17 +239,3 @@ hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
                     button, activate_time);
     gtk_menu_shell_select_first(GTK_MENU_SHELL(icon->popup_menu), FALSE);                    
 }                             
-
-#if 0
-static void
-on_state_changed(HippoConnection         *connection,
-                 HippoStatusIcon         *icon)
-{
-    g_object_set(G_OBJECT(icon), 
-                 "icon-name", get_icon_name(connection), 
-                 NULL);
-    
-    gtk_status_icon_set_tooltip(GTK_STATUS_ICON(icon),
-                                hippo_connection_get_tooltip(connection));
-}
-#endif

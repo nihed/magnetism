@@ -156,9 +156,9 @@ hippo_dbus_get_chat_window_state_blocking(const char       *server,
         goto out;
     }
 
-    if (dbus_message_get_args(message, &derror,
-                              DBUS_TYPE_INT32, &dbus_state,
-                              DBUS_TYPE_INVALID)) {
+    if (!dbus_message_get_args(reply, &derror,
+                               DBUS_TYPE_INT32, &dbus_state,
+                               DBUS_TYPE_INVALID)) {
         propagate_dbus_error(error, &derror);
         goto out;
     }
