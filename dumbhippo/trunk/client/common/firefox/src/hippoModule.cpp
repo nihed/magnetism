@@ -10,7 +10,7 @@
 #include "nsIServiceManager.h"
 #include "nsISupportsUtils.h"
 #include "nsServiceManagerUtils.h"
-#include "nsIClassInfoImpl.h"
+#include "nsISupportsImpl.h"
 
 #include "hippoControl.h"
 #include "hippoExtension.h"

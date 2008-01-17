@@ -561,7 +561,7 @@ if test "x$with_xpidl" != x -a "x$with_xpidl" != xyes -a "x$with_xpidl" != xno ;
 fi
 
 AC_MSG_CHECKING([for libxul-unstable])
-HIPPO_PKG_CHECK_EXISTS(libxul-unstable, have_xulrunner=true, have_xulrunner=false)
+HIPPO_PKG_CHECK_EXISTS(libxul-unstable >= 1.9, have_xulrunner=true, have_xulrunner=false)
 if test "x${have_xulrunner}" = "xtrue"; then
     AC_MSG_RESULT([yes])
     AC_DEFINE(HAVE_XULRUNNER, 1, [whether we have XULRunner])
@@ -629,6 +629,7 @@ else
 fi
 
 if test "x${have_xulrunner}" != xtrue; then
+   AC_DEFINE(HAVE_PRE_XULRUNNER_SDK, 1, [Define if not using XULRunner])
 if test "x$GECKO_INCLUDEDIR" != x ; then
    AC_MSG_CHECKING([for "full gecko" style includes])
    if test -f "$GECKO_INCLUDEDIR/caps/nsIScriptSecurityManager.h" ; then

@@ -28,16 +28,23 @@
 #include "nsServiceManagerUtils.h"
 #include "nsStringAPI.h"
 #include "hippoControl.h"
+#ifdef HAVE_XULRUNNER
 #include "nsIClassInfoImpl.h"
+#else
+#include "nsISupportsImpl.h"
+#endif
 
 #ifdef HIPPO_OS_LINUX
 // These headers are used for finding the GdkWindow for a DOM window
 #include "nsIBaseWindow.h"
-#include "nsIDocument.h"
-#include "nsPIDOMWindow.h"
 #include "nsIDocShell.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsIWidget.h"
+// For Firefox 2, this is "internal API".
+#ifdef HAVE_XULRUNNER
+#include "nsIDocument.h"
+#include "nsPIDOMWindow.h"
+#endif
 #endif
 
 hippoControl::hippoControl()
@@ -137,18 +144,44 @@ NS_IMETHODIMP hippoControl::SetListener(hippoIControlListener *listener)
 
 static nsIWidget* GetMainWidget(nsIDOMWindow* aWindow)
 {
-  // get the native window for this instance
-  nsCOMPtr<nsPIDOMWindow> window(do_QueryInterface(aWindow));
-  NS_ENSURE_TRUE(window, nsnull);
-  nsCOMPtr<nsIDocument> doc(do_QueryInterface(window->GetExtantDocument()));
-  NS_ENSURE_TRUE(doc, nsnull);
-  nsCOMPtr<nsISupports> container = doc->GetContainer();
-  nsCOMPtr<nsIBaseWindow> baseWindow(do_QueryInterface(container));
-  NS_ENSURE_TRUE(baseWindow, nsnull);
- 
-  nsCOMPtr<nsIWidget> mainWidget;
-  baseWindow->GetMainWidget(getter_AddRefs(mainWidget));
-  return mainWidget;
+    /* The window ID that we want to pass to the Mugshot client is 
+     * the window ID that corresponds to the frame that the chat is
+     * in. If the Mugshot client needs the toplevel, it can walk up
+     * the hierarchy and find it, but passing the inner window allows
+     * more intelligence in knowing if the chat is actually visible.
+     *
+     * To switch to passing the toplevel, simply insert a call to
+     * gdk_window_toplevel() ... much easier than walking up the 
+     * Mozilla hierarchy.
+     */	
+#ifndef WITH_MAEMO	
+#ifdef HAVE_XULRUNNER
+	// get the native window for this instance
+	nsCOMPtr<nsPIDOMWindow> window(do_QueryInterface(aWindow));
+	NS_ENSURE_TRUE(window, nsnull);
+	nsCOMPtr<nsIDocument> doc(do_QueryInterface(window->GetExtantDocument()));
+	NS_ENSURE_TRUE(doc, nsnull);
+	nsCOMPtr<nsISupports> container = doc->GetContainer();
+	nsCOMPtr<nsIBaseWindow> baseWindow(do_QueryInterface(container));
+	NS_ENSURE_TRUE(baseWindow, nsnull);
+	 
+	nsCOMPtr<nsIWidget> mainWidget;
+	baseWindow->GetMainWidget(getter_AddRefs(mainWidget));
+	return mainWidget;	
+#else
+	nsCOMPtr<nsIScriptGlobalObject> global = do_QueryInterface(aWindow);
+	 
+	nsCOMPtr<nsIBaseWindow> baseWindow;
+	if (global)
+	    baseWindow = do_QueryInterface(global->GetDocShell());   
+	nsCOMPtr<nsIWidget> widget;
+	if (baseWindow)
+	    baseWindow->GetMainWidget(getter_AddRefs(widget));
+	return widget;
+#endif /* HAVE_XULRUNNER */
+#else
+  return NULL;
+#endif
 }
 
 /* void setListener (in hippoIControlListener listener); */
@@ -160,17 +193,7 @@ NS_IMETHODIMP hippoControl::SetWindow(nsIDOMWindow *window)
 
 #ifdef HIPPO_OS_LINUX
     HippoWindowId windowId = 0;
-    
-    /* The window ID that we want to pass to the Mugshot client is 
-     * the window ID that corresponds to the frame that the chat is
-     * in. If the Mugshot client needs the toplevel, it can walk up
-     * the hierarchy and find it, but passing the inner window allows
-     * more intelligence in knowing if the chat is actually visible.
-     *
-     * To switch to passing the toplevel, simply insert a call to
-     * gdk_window_toplevel() ... much easier than walking up the 
-     * Mozilla hierarchy.
-     */
+
     nsCOMPtr<nsIWidget> widget = GetMainWidget(window);
 
     GdkWindow *nativeWindow = NULL;

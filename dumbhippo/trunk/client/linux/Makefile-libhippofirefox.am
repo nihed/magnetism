@@ -67,10 +67,12 @@ if HAVE_FULL_GECKO
 libhippofirefox_la_CPPFLAGS +=			\
 	-I $(GECKO_INCLUDEDIR)			\
 	-I $(GECKO_INCLUDEDIR)/caps		\
+    -I $(GECKO_INCLUDEDIR)/content     \	
 	-I $(GECKO_INCLUDEDIR)/docshell		\
 	-I $(GECKO_INCLUDEDIR)/dom		\
 	-I $(GECKO_INCLUDEDIR)/gfx		\
 	-I $(GECKO_INCLUDEDIR)/js		\
+    -I $(GECKO_INCLUDEDIR)/layout     \	
 	-I $(GECKO_INCLUDEDIR)/necko		\
 	-I $(GECKO_INCLUDEDIR)/string		\
 	-I $(GECKO_INCLUDEDIR)/widget		\
