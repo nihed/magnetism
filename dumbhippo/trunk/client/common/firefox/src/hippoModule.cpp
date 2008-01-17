@@ -10,7 +10,11 @@
 #include "nsIServiceManager.h"
 #include "nsISupportsUtils.h"
 #include "nsServiceManagerUtils.h"
+#ifdef HAVE_XULRUNNER
+#include "nsIClassInfoImpl.h"
+#else
 #include "nsISupportsImpl.h"
+#endif
 
 #include "hippoControl.h"
 #include "hippoExtension.h"
