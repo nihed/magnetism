@@ -100,7 +100,7 @@ data_client_map_get_client(DataClientMap *map,
 
     client = g_hash_table_lookup(map->clients, &id);
     if (client == NULL) {
-        DBusConnection *connection = hippo_dbus_get_connection(hippo_app_get_dbus(hippo_get_app()));
+        DBusConnection *connection = hippo_dbus_get_connection(hippo_engine_app_get_dbus(hippo_get_engine_app()));
 
         client = hippo_dbus_model_client_new(connection, map->model, bus_name, path);
         g_hash_table_insert(map->clients, data_client_id_copy(&id), client);
@@ -167,7 +167,7 @@ handle_query (void            *object,
     DataClientMap *client_map;
     HippoDBusModelClient *client;
     
-    model = hippo_app_get_data_model(hippo_get_app());
+    model = hippo_engine_app_get_data_model(hippo_get_engine_app());
 
     dbus_message_iter_init (message, &iter);
 
@@ -242,7 +242,7 @@ handle_update (void            *object,
     GHashTable *params = NULL;
     DBusMessageIter iter;
     
-    model = hippo_app_get_data_model(hippo_get_app());
+    model = hippo_engine_app_get_data_model(hippo_get_engine_app());
 
     dbus_message_iter_init (message, &iter);
     
@@ -266,7 +266,7 @@ handle_update (void            *object,
                                       _("Too many arguments"));
 
     if (!hippo_dbus_model_client_do_update(model,
-                                           hippo_dbus_get_connection(hippo_app_get_dbus(hippo_get_app())),
+                                           hippo_dbus_get_connection(hippo_engine_app_get_dbus(hippo_get_engine_app())),
                                            message, method_uri, params)) {
         /* We've already validated most arguments, so don't worry too much about getting a
          * good error message if something goes wrong at this point
@@ -327,7 +327,7 @@ handle_get_ready(void            *object,
     DDMDataModel *ddm_model;
     dbus_bool_t ready;
     
-    ddm_model = hippo_app_get_data_model(hippo_get_app());
+    ddm_model = hippo_engine_app_get_data_model(hippo_get_engine_app());
 
     ready = ddm_data_model_is_ready(ddm_model);
 
@@ -343,7 +343,7 @@ handle_get_server(void            *object,
                   DBusError       *error)
 {
     char *server;
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoDataCache *cache = hippo_engine_app_get_data_cache(hippo_get_engine_app());
     HippoConnection *hippo_connection = hippo_data_cache_get_connection(cache);
     HippoPlatform *platform = hippo_connection_get_platform(hippo_connection);
 
@@ -434,7 +434,7 @@ hippo_dbus_init_model(DBusConnection *connection)
                                       NULL, HIPPO_DBUS_MODEL_INTERFACE,
                                       NULL);
 
-    ddm_model = hippo_app_get_data_model(hippo_get_app());
+    ddm_model = hippo_engine_app_get_data_model(hippo_get_engine_app());
     
     g_signal_connect(G_OBJECT(ddm_model), "ready",
                      G_CALLBACK(on_ready), connection);
@@ -459,7 +459,7 @@ name_gone_foreach(gpointer key,
 void
 hippo_dbus_model_name_gone(const char *name)
 {
-    DDMDataModel *model = hippo_app_get_data_model(hippo_get_app());
+    DDMDataModel *model = hippo_engine_app_get_data_model(hippo_get_engine_app());
     DataClientMap *client_map = data_client_map_get(model);
 
     g_hash_table_foreach_remove(client_map->clients, name_gone_foreach, (gpointer)name);

@@ -5,11 +5,10 @@ mugshot_CPPFLAGS = 			\
 	-I $(top_srcdir)		\
 	$(MUGSHOT_CFLAGS)		\
 	$(CANVAS_CFLAGS)		\
-       -DHOST_CPU=\"$(host_cpu)\"	\
 	-DDDM_I_KNOW_THIS_IS_UNSTABLE=1
 
 mugshot_LDFLAGS=
-mugshot_LDADD= libhippoipc.la libhippo.la libengine.la libstacker.la $(MUGSHOT_LIBS) $(CANVAS_LIBADD)
+mugshot_LDADD= libhippo.la libstacker.la $(MUGSHOT_LIBS) $(CANVAS_LIBADD)
 
 if !HAVE_GTK210
 mugshot_CPPFLAGS += -I$(top_srcdir)/gtkcopy
@@ -17,61 +16,28 @@ mugshot_LDFLAGS += libgtkcopy.la
 endif
 
 mugshot_SOURCES	=				\
-	src/hippo-cookies-linux.c		\
-	src/hippo-cookies-linux.h		\
-	src/hippo-distribution.c		\
-	src/hippo-distribution.h		\
 	src/hippo-dbus-client.c			\
 	src/hippo-dbus-client.h			\
-	src/hippo-dbus-cookies.c		\
-	src/hippo-dbus-cookies.h		\
-	src/hippo-dbus-helper.c			\
-	src/hippo-dbus-helper.h			\
-	src/hippo-dbus-helper-rename.h		\
-	src/hippo-dbus-http.c			\
-	src/hippo-dbus-http.h			\
-	src/hippo-dbus-im-client.c		\
-	src/hippo-dbus-im-client.h		\
-	src/hippo-dbus-local.c			\
-	src/hippo-dbus-local.h			\
-	src/hippo-dbus-model.c			\
-	src/hippo-dbus-model.h			\
-	src/hippo-dbus-model-client.c		\
-	src/hippo-dbus-model-client.h		\
-	src/hippo-dbus-pidgin.c			\
-	src/hippo-dbus-pidgin.h			\
-	src/hippo-dbus-server.c			\
-	src/hippo-dbus-server.h			\
-	src/hippo-dbus-settings.c		\
-	src/hippo-dbus-settings.h		\
-	src/hippo-dbus-system.c			\
-	src/hippo-dbus-system.h			\
-	src/hippo-dbus-web.h			\
-	src/hippo-dbus-web.c			\
+	src/hippo-dbus-stacker.c		\
+	src/hippo-dbus-stacker.h		\
 	src/hippo-embedded-image.c		\
 	src/hippo-embedded-image.h		\
 	src/hippo-http.c			\
 	src/hippo-http.h			\
 	src/hippo-idle.c                	\
 	src/hippo-idle.h                	\
-	src/hippo-im.c				\
-	src/hippo-im.h				\
-	src/hippo-platform-impl.c		\
-	src/hippo-platform-impl.h		\
-	src/hippo-ui.c				\
-	src/hippo-ui.h				\
 	src/hippo-stacker-platform-impl.c	\
 	src/hippo-stacker-platform-impl.h	\
 	src/hippo-status-icon.c			\
 	src/hippo-status-icon.h			\
+	src/hippo-ui.c				\
+	src/hippo-ui.h				\
 	src/hippo-window-gtk.c			\
 	src/hippo-window-gtk.h			\
 	src/hippo-window-wrapper.c		\
 	src/hippo-window-wrapper.h		\
 	src/main.c				\
-	src/main.h				\
-	src/json.c				\
-	src/json.h
+	src/main.h
 
 ## Also edit Windows Applets/Makefile if changing this
 EMBEDDEDIMAGEDIR=$(COMMONSRCDIR)/images
@@ -163,11 +129,11 @@ desktopfiles_files=$(desktopfiles_in_files:.desktop.in=.desktop)
 desktopfiles_DATA = $(desktopfiles_files)
 
 # Dbus service file
-servicedir = $(datadir)/dbus-1/services
-service_in_files = org.freedesktop.od.Engine.service.in com.dumbhippo.Client.service.in
-service_DATA = $(service_in_files:.service.in=.service)
-$(service_DATA): $(service_in_files) Makefile
-	@sed -e "s|\@bindir\@|$(bindir)|" $< > $@
+#servicedir = $(datadir)/dbus-1/services
+#service_in_files = # org.freedesktop.od.Engine.service.in com.dumbhippo.Client.service.in
+#service_DATA = $(service_in_files:.service.in=.service)
+#$(service_DATA): $(service_in_files) Makefile
+#	@sed -e "s|\@bindir\@|$(bindir)|" $< > $@
 
 # intltool not here until po exists and all that
 #@INTLTOOL_DESKTOP_RULE@
@@ -177,5 +143,5 @@ mugshot-autostart.desktop: mugshot-autostart.desktop.in
 	cat $(srcdir)/mugshot-autostart.desktop.in | sed -e 's/^_//g' > mugshot-autostart.desktop
 
 
-EXTRA_DIST += $(autostart_in_files) $(desktopfiles_in_files) $(service_in_files)
-MAINTAINERCLEANFILES +=	$(autostart_files) $(desktopfiles_files) $(service_DATA)
+EXTRA_DIST += $(autostart_in_files) $(desktopfiles_in_files) #$(service_in_files)
+MAINTAINERCLEANFILES +=	$(autostart_files) $(desktopfiles_files) #$(service_DATA)

@@ -2103,6 +2103,8 @@ WinMain(HINSTANCE hInstance,
         return 1;
     }
 
+    hippo_initialize_logging(&options);
+
     g_strfreev(argv);
 
 	// See if we were run because a previous instance crashed; if so, offer the user

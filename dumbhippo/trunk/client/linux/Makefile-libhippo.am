@@ -15,6 +15,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-basics.h			\
 	$(COMMONSRCDIR)/hippo/hippo-common.h			\
         $(COMMONSRCDIR)/hippo/hippo-common-internal.h		\
+	$(COMMONSRCDIR)/hippo/hippo-dbus-names.c		\
+        $(COMMONSRCDIR)/hippo/hippo-dbus-names.h		\
 	$(COMMONSRCDIR)/hippo/hippo-entity.c			\
 	$(COMMONSRCDIR)/hippo/hippo-entity.h			\
 	$(COMMONSRCDIR)/hippo/hippo-entity-protected.h		\

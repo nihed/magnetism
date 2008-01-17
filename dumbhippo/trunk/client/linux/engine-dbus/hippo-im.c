@@ -67,7 +67,7 @@ hippo_im_get(HippoDataCache *cache)
 void
 hippo_im_init(void)
 {
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoDataCache *cache = hippo_engine_app_get_data_cache(hippo_get_engine_app());
     DDMDataModel *model = hippo_data_cache_get_model(cache);
 
     /* Add user property to buddies */
@@ -192,7 +192,7 @@ hippo_im_update_buddy_icon (const char           *buddy_id,
                             int                   icon_data_len)
 {
     DDMDataValue value;
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoDataCache *cache = hippo_engine_app_get_data_cache(hippo_get_engine_app());
     HippoIm *im = hippo_im_get(cache);
     DDMDataModel *model = hippo_data_cache_get_model(cache);
     HippoImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
@@ -237,7 +237,7 @@ gboolean
 hippo_im_has_icon_hash (const char           *buddy_id,
                         const char           *icon_hash)
 {
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoDataCache *cache = hippo_engine_app_get_data_cache(hippo_get_engine_app());
     HippoIm *im = hippo_im_get(cache);
 
     HippoImBuddy *buddy = g_hash_table_lookup(im->buddies, buddy_id);
@@ -284,7 +284,7 @@ hippo_im_update_buddy(const char           *buddy_id,
                       const char           *status_message,
                       const char           *webdav_url)
 {
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoDataCache *cache = hippo_engine_app_get_data_cache(hippo_get_engine_app());
     HippoIm *im = hippo_im_get(cache);
     DDMDataModel *model = hippo_data_cache_get_model(cache);
     gboolean new_buddy = FALSE;
@@ -466,7 +466,7 @@ hippo_im_update_buddy(const char           *buddy_id,
 void 
 hippo_im_remove_buddy(const char         *buddy_id)
 {
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoDataCache *cache = hippo_engine_app_get_data_cache(hippo_get_engine_app());
     HippoIm *im = hippo_im_get(cache);
     DDMDataModel *model = hippo_data_cache_get_model(cache);
     DDMDataResource *buddy_resource;

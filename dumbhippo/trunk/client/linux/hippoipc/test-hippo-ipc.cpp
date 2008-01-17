@@ -2,7 +2,7 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <stdlib.h>
-#include "src/hippo-dbus-client.h"
+#include <hippo/hippo-dbus-names.h>
 #include "hippo-dbus-ipc-locator.h"
 #define DBUS_API_SUBJECT_TO_CHANGE 1
 #include <dbus/dbus-glib.h>

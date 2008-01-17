@@ -39,6 +39,7 @@ dist-hook: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mu
 
 # These are added to using += in the included files
 bin_PROGRAMS = 
+libexec_PROGRAMS = 
 noinst_PROGRAMS =
 noinst_LTLIBRARIES =
 lib_LTLIBRARIES =
@@ -72,6 +73,7 @@ include Makefile-libstacker.am
 include Makefile-libgtkcopy.am
 include Makefile-libhippofirefox.am
 include Makefile-mugshot.am
+include Makefile-engine-dbus.am
 include Makefile-mugshot-uri-handler.am
 include Makefile-test-hippo-ipc.am
 include Makefile-icons.am

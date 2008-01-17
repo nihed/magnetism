@@ -7,100 +7,53 @@
 #include <errno.h>
 #include "main.h"
 #include <hippo/hippo-group.h>
-#include "hippo-platform-impl.h"
-#include "hippo-dbus-server.h"
 #include "hippo-dbus-client.h"
-#include "hippo-im.h"
+#include "hippo-dbus-stacker.h"
 #include "hippo-idle.h"
 #include "hippo-ui.h"
+#include <ddm/ddm-data-model-dbus.h>
 
 static const char *hippo_version_file = NULL;
 
-/* How often we upload application data to the server */
-#define UPLOAD_APPLICATIONS_TIMEOUT_SEC 3600 /* One hour */
-
-/* How often we upload application data to the server in burst mode */
-#define UPLOAD_APPLICATIONS_BURST_TIMEOUT_SEC 30
-
-/* Length of the initial application burst */
-#define UPLOAD_APPLICATIONS_BURST_LENGTH_SEC 3600 /* One hour */
-
-/* The period of time our collected information about application extends over */
-#define UPLOAD_APPLICATIONS_PERIOD_SEC 24 * 3600  /* One day */
-
-struct HippoApp {
+struct HippoStackerApp {
     GMainLoop *loop;
-    HippoPlatform *platform;
-    HippoConnection *connection;
-    HippoDataCache *cache;
-    HippoDBus *dbus;
+    DDMDataModel *model;
+    char *stacker_server;
+    HippoDBusStacker *dbus;
     HippoUI *ui;
     HippoIdleMonitor *idle_monitor;
     char **restart_argv;
     int restart_argc;
-    /* see join_chat() comment */
-    const char *creating_chat_id;
-    /* upgrade available, go to /upgrade ? */
-    GtkWidget *upgrade_dialog;
-    /* new version installed, should we restart? */
-    GtkWidget *installed_dialog;
     GTime installed_version_timestamp;
     guint check_installed_timeout;
     int check_installed_fast_count;
     guint check_installed_timeout_fast : 1;
-    guint upload_applications_timeout;
-    int upload_applications_burst_count;
 };
 
-static void hippo_app_start_check_installed_timeout(HippoApp *app,
-                                                    gboolean  fast);
+static void hippo_stacker_app_start_check_installed_timeout(HippoStackerApp *app,
+                                                            gboolean         fast);
 
 void
-hippo_app_quit(HippoApp *app)
+hippo_stacker_app_quit(HippoStackerApp *app)
 {
     g_debug("Quitting main loop");
     g_main_loop_quit(app->loop);
 }
 
-HippoDataCache *
-hippo_app_get_data_cache (HippoApp *app)
-{
-    return app->cache;
-}
-
 HippoStackerPlatform *
-hippo_app_get_stacker_platform (HippoApp *app)
+hippo_stacker_app_get_stacker_platform (HippoStackerApp *app)
 {
     return hippo_ui_get_stacker_platform(app->ui);
 }
 
-HippoDBus*
-hippo_app_get_dbus (HippoApp *app)
-{
-    return app->dbus;
-}
-
 DDMDataModel*
-hippo_app_get_data_model (HippoApp *app)
+hippo_stacker_app_get_data_model (HippoStackerApp *app)
 {
-    return hippo_data_cache_get_model(app->cache);
-}
-
-void
-hippo_app_set_show_stacker (HippoApp *app,
-                            gboolean  value)
-{
-    if (value && app->ui == NULL) {
-        app->ui = hippo_ui_new(app->cache, app->dbus);
-        hippo_ui_show(app->ui);
-    } else if (!value && app->ui != NULL) {
-        hippo_ui_free(app->ui);
-        app->ui = NULL;
-    }
+    return app->model;
 }
 
 HippoStackManager*
-hippo_app_get_stack (HippoApp *app)
+hippo_stacker_app_get_stack (HippoStackerApp *app)
 {
     g_return_val_if_fail(app != NULL, NULL);
     g_return_val_if_fail(app->ui != NULL, NULL);
@@ -109,7 +62,7 @@ hippo_app_get_stack (HippoApp *app)
 }
 
 static void
-hippo_app_restart(HippoApp *app)
+hippo_stacker_app_restart(HippoStackerApp *app)
 {
     GError *error;
     
@@ -138,92 +91,8 @@ hippo_app_restart(HippoApp *app)
     }
 }
 
-void
-hippo_app_show_about(HippoApp *app)
-{
-    hippo_ui_show_about(app->ui);
-}
-
-/* use_login_browser uses the browser we've logged in to 
- * the site with; if it's FALSE, we would want to use 
- * the user's default browser instead, which will almost 
- * always be the same presumably.
- * 
- * The idea is that links that go to our site need to 
- * use our login browser, other links should use the
- * user's browser.
- * 
- * Right now only use_login_browser is implemented anyhow
- * though ;-)
- */
-void
-hippo_app_open_url(HippoApp   *app,
-                   gboolean    use_login_browser,
-                   const char *url)
-{
-    hippo_platform_open_url(app->platform,
-                            use_login_browser ?
-                            hippo_connection_get_auth_browser(app->connection) :
-                            HIPPO_BROWSER_UNKNOWN,
-                            url);
-}
-
-void
-hippo_app_show_home(HippoApp *app)
-{
-    hippo_connection_open_maybe_relative_url(app->connection, "/");
-}
-
-void
-hippo_app_join_chat(HippoApp   *app,
-                    const char *chat_id)
-{
-    hippo_ui_join_chat(app->ui, chat_id);
-}
-
-HippoWindowState
-hippo_app_get_chat_state (HippoApp   *app,
-                          const char *chat_id)
-{
-    return hippo_ui_get_chat_state(app->ui, chat_id);
-}
-
-void
-hippo_app_get_screen_info(HippoApp         *app,
-                          HippoRectangle   *monitor_rect_p,
-                          HippoRectangle   *tray_icon_rect_p,
-                          HippoOrientation *tray_icon_orientation_p)
-{
-    hippo_ui_get_screen_info(app->ui, monitor_rect_p, tray_icon_rect_p, tray_icon_orientation_p);
-}
-
-gboolean
-hippo_app_get_pointer_position (HippoApp *app,
-                                int      *x_p,
-                                int      *y_p)
-{
-    return hippo_ui_get_pointer_position(app->ui, x_p, y_p);
-}
-
-#if 0
 static void
-on_new_installed_response(GtkWidget *dialog,
-                          int        response_id,
-                          HippoApp  *app)
-{
-    gtk_object_destroy(GTK_OBJECT(dialog));
-    
-    if (response_id == GTK_RESPONSE_ACCEPT) {
-        hippo_app_restart(app);
-    } else if (response_id == GTK_RESPONSE_REJECT ||
-               response_id == GTK_RESPONSE_DELETE_EVENT) {
-        ; /* nothing to do */
-    }
-}
-#endif
-
-static void
-hippo_app_check_installed(HippoApp *app)
+hippo_stacker_app_check_installed(HippoStackerApp *app)
 {
     struct stat sb;
     GTime current_mtime;
@@ -265,46 +134,7 @@ hippo_app_check_installed(HippoApp *app)
          * and not bother the user with a prompt (as in the commented out code
          * below.)
          */
-        hippo_app_restart(app);
-#if 0
-        gboolean too_old;
-        
-        g_debug("Our version %s is older than installed '%s'", VERSION, version_str);
-    
-        too_old = hippo_connection_get_too_old(app->connection);
-    
-        if (app->installed_dialog == NULL) {
-                app->installed_dialog = 
-                    gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_INFO,
-                        GTK_BUTTONS_NONE,
-                        _("A newer version of Mugshot has been installed."));
-                gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(app->installed_dialog),
-                        _("You can restart Mugshot now to start using the new stuff."));                        
-                if (too_old) {
-                    /* don't give a "later" option; people can still click the close button
-                     * and get in a "useless client running" state, but nobody sane will 
-                     * do it and it's not catastrophic.
-                     */
-                    gtk_dialog_add_buttons(GTK_DIALOG(app->installed_dialog),
-                            _("Restart Mugshot"), GTK_RESPONSE_ACCEPT,
-                            NULL);                
-                } else {
-                    gtk_dialog_add_buttons(GTK_DIALOG(app->installed_dialog),
-                            _("Later"), GTK_RESPONSE_REJECT,
-                            _("Restart Mugshot"), GTK_RESPONSE_ACCEPT,
-                            NULL);
-                }
-                gtk_dialog_set_default_response(GTK_DIALOG(app->installed_dialog),
-                                                GTK_RESPONSE_ACCEPT);
-                g_signal_connect(G_OBJECT(app->installed_dialog), "response", 
-                        G_CALLBACK(on_new_installed_response), app);
-            
-            g_signal_connect(app->installed_dialog, "destroy",
-                G_CALLBACK(gtk_widget_destroyed), &app->installed_dialog);
-        }
-        
-        gtk_window_present(GTK_WINDOW(app->installed_dialog));
-#endif        
+        hippo_stacker_app_restart(app);
     }
     
     g_free(version_str);
@@ -322,9 +152,9 @@ hippo_app_check_installed(HippoApp *app)
 #define CHECK_INSTALLED_SLOW_TIMEOUT (30 * 60 * 1000)
  
 static gboolean
-on_check_installed_timeout(HippoApp *app)
+on_check_installed_timeout(HippoStackerApp *app)
 {    
-    hippo_app_check_installed(app);
+    hippo_stacker_app_check_installed(app);
 
     if (app->check_installed_timeout_fast) {
         app->check_installed_fast_count += 1;
@@ -335,7 +165,7 @@ on_check_installed_timeout(HippoApp *app)
         if (app->check_installed_fast_count >
             (CHECK_INSTALLED_SLOW_TIMEOUT / CHECK_INSTALLED_FAST_TIMEOUT)) {
             g_debug("switching back to slow check installed timeout");
-            hippo_app_start_check_installed_timeout(app, FALSE);
+            hippo_stacker_app_start_check_installed_timeout(app, FALSE);
         }
     }
     
@@ -343,8 +173,8 @@ on_check_installed_timeout(HippoApp *app)
 }
 
 static void
-hippo_app_start_check_installed_timeout(HippoApp *app,
-                                        gboolean  fast)
+hippo_stacker_app_start_check_installed_timeout(HippoStackerApp *app,
+                                                gboolean         fast)
 {
     fast = fast != FALSE;
     
@@ -365,237 +195,96 @@ hippo_app_start_check_installed_timeout(HippoApp *app,
             app);
 }
 
-static void
-open_upgrade_page(HippoApp *app)
+void
+hippo_stacker_app_show_about(HippoStackerApp *app)
 {
-    char *s;
-    
-    s = hippo_connection_make_absolute_url(app->connection,
-                                           "/upgrade?platform=linux");
-    hippo_app_open_url(app, TRUE, s);
-    g_free(s);
-    
-    /* switch to the fast timeout, so we see any new version 
-     * that shows up.
-     */
-    hippo_app_start_check_installed_timeout(app, TRUE);
+    hippo_ui_show_about(app->ui);
 }
 
-static void
-on_too_old_response(GtkWidget *dialog,
-                    int        response_id,
-                    HippoApp  *app)
+void
+hippo_stacker_app_show_home(HippoStackerApp *app)
 {
-    gtk_object_destroy(GTK_OBJECT(dialog));
-    
-    if (response_id == GTK_RESPONSE_ACCEPT) {
-        open_upgrade_page(app);
-    } else if (response_id == GTK_RESPONSE_REJECT ||
-               response_id == GTK_RESPONSE_DELETE_EVENT) {
-        hippo_app_quit(app);
+    ddm_data_model_update(app->model,
+                          "online-desktop:/p/system#openUrl",
+                          "url", "/",
+                          NULL);
+}
+
+void
+hippo_stacker_app_join_chat(HippoStackerApp *app,
+                            const char      *chat_id)
+{
+    GError *error = NULL;
+
+    if (!hippo_dbus_open_chat_blocking(app->stacker_server, HIPPO_CHAT_KIND_UNKNOWN, chat_id, &error)) {
+        g_warning("Failed to open chat window: %s", error->message);
+        g_error_free(error);
     }
 }
 
-static void
-on_upgrade_response(GtkWidget *dialog,
-                    int        response_id,
-                    HippoApp  *app)
+HippoWindowState
+hippo_stacker_app_get_chat_state (HippoStackerApp *app,
+                                  const char      *chat_id)
 {
-    gtk_object_destroy(GTK_OBJECT(dialog));
-    
-    if (response_id == GTK_RESPONSE_ACCEPT) {
-        open_upgrade_page(app);
+    HippoWindowState state;
+    GError *error = NULL;
+     
+    if (!hippo_dbus_get_chat_window_state_blocking(app->stacker_server, chat_id, &state, &error)) {
+        g_warning("Failed to get chat state: %s", error->message);
+        g_error_free(error);
+        state = HIPPO_WINDOW_STATE_HIDDEN;
     }
 
-    /* the REJECT response just means "go away until next connect" 
-     * so nothing to do. Same for DELETE_EVENT
-     */
+    return state;
+}
+
+void
+hippo_stacker_app_get_screen_info(HippoStackerApp  *app,
+                                  HippoRectangle   *monitor_rect_p,
+                                  HippoRectangle   *tray_icon_rect_p,
+                                  HippoOrientation *tray_icon_orientation_p)
+{
+    hippo_ui_get_screen_info(app->ui, monitor_rect_p, tray_icon_rect_p, tray_icon_orientation_p);
+}
+
+gboolean
+hippo_stacker_app_get_pointer_position (HippoStackerApp *app,
+                                        int             *x_p,
+                                        int             *y_p)
+{
+    return hippo_ui_get_pointer_position(app->ui, x_p, y_p);
 }
 
 static void
-on_client_info_available(HippoConnection *connection,
-                         HippoApp        *app)
+on_dbus_disconnected(HippoDBusStacker *dbus,
+                     HippoStackerApp  *app)
 {
-    gboolean too_old;
-    gboolean upgrade_available;
-    
-    too_old = hippo_connection_get_too_old(connection);
-    upgrade_available = hippo_connection_get_upgrade_available(connection);
-
-    if (!(too_old || upgrade_available))
-        return; /* nothing to do */
-
-    /* don't show upgrade stuff it we already aren't running 
-     * the latest locally-installed version. Instead just 
-     * offer to restart.
-     */
-    hippo_app_check_installed(app);
-    if (app->installed_dialog)
-        return;
-
-    /* display dialog (we act like we might try to do so twice, but 
-     * afaik this code runs only once right now)
-     */
-
-    if (app->upgrade_dialog == NULL) {
-        if (too_old) {
-            app->upgrade_dialog = 
-                gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_INFO,
-                    GTK_BUTTONS_NONE,
-                    _("Your Mugshot software is too old to work with the web site."));
-            gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(app->upgrade_dialog),
-                    _("You must upgrade to continue using Mugshot."));
-            gtk_dialog_add_buttons(GTK_DIALOG(app->upgrade_dialog),
-                    _("Exit Mugshot"), GTK_RESPONSE_REJECT,
-                    _("Open Download Page"), GTK_RESPONSE_ACCEPT,
-                    NULL);
-            g_signal_connect(G_OBJECT(app->upgrade_dialog), "response", 
-                    G_CALLBACK(on_too_old_response), app);
-        } else {
-            app->upgrade_dialog = 
-                gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_INFO,
-                    GTK_BUTTONS_NONE,
-                    _("A Mugshot upgrade is available."));
-            gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(app->upgrade_dialog),
-                    _("You can upgrade now or later. We'll remind you each time you connect to Mugshot."));
-            gtk_dialog_add_buttons(GTK_DIALOG(app->upgrade_dialog),
-                    _("Later"), GTK_RESPONSE_REJECT,
-                    _("Open Download Page"), GTK_RESPONSE_ACCEPT,
-                    NULL);
-            g_signal_connect(G_OBJECT(app->upgrade_dialog), "response", 
-                    G_CALLBACK(on_upgrade_response), app); 
-        }
-        
-        gtk_dialog_set_default_response(GTK_DIALOG(app->upgrade_dialog),
-                                GTK_RESPONSE_ACCEPT);
-        
-        g_signal_connect(app->upgrade_dialog, "destroy",
-            G_CALLBACK(gtk_widget_destroyed), &app->upgrade_dialog);
-    }
-    
-    gtk_window_present(GTK_WINDOW(app->upgrade_dialog));
-}
-
-static gboolean
-on_upload_applications_timeout(gpointer data)
-{
-    HippoApp *app = (HippoApp *)data;
-
-    if (app->upload_applications_burst_count > 0) {
-        app->upload_applications_burst_count--;
-        
-        if (app->upload_applications_burst_count == 0) {
-            g_source_remove(app->upload_applications_timeout);
-            g_timeout_add(UPLOAD_APPLICATIONS_TIMEOUT_SEC * 1000,
-                          on_upload_applications_timeout,
-                          app);
-        }
-    }
-
-    if (hippo_data_cache_get_application_usage_enabled(app->cache)) {
-        GSList *app_ids;
-        GSList *wm_classes;
-
-        hippo_idle_get_active_applications(app->idle_monitor,
-                                           UPLOAD_APPLICATIONS_PERIOD_SEC,
-                                           &app_ids, &wm_classes);
-
-        if (app_ids || wm_classes) {
-            hippo_connection_send_active_applications(app->connection,
-                                                      UPLOAD_APPLICATIONS_PERIOD_SEC,
-                                                      app_ids,
-                                                      wm_classes);
-            
-            g_slist_foreach(app_ids, (GFunc)g_free, NULL);
-            g_slist_free(app_ids);
-            g_slist_foreach(wm_classes, (GFunc)g_free, NULL);
-            g_slist_free(wm_classes);
-        }
-    }
-
-    /* There is no change notification when the set of title patterns change,
-     * so we periodically re-request them to stay up-to-date (but don't do
-     * this when burst uploading)
-     */
-    if (app->upload_applications_burst_count == 0)
-        hippo_connection_request_title_patterns(app->connection);
-    
-    return TRUE;
-}
-
-static void
-on_dbus_song_changed(HippoDBus *dbus,
-                     HippoSong *song,
-                     HippoApp  *app)
-{
-    if (!hippo_data_cache_get_music_sharing_enabled(app->cache))
-        return;
-
-    if (song)
-        hippo_connection_notify_music_changed(app->connection, TRUE, song);
-}
-
-static void
-on_dbus_disconnected(HippoDBus *dbus,
-                     HippoApp  *app)
-{
-    hippo_app_quit(app);
+    hippo_stacker_app_quit(app);
 }
 
 static void
 on_idle_changed(gboolean  idle,
                 void      *data)
 {
-    HippoApp *app = data;
+    HippoStackerApp *app = data;
 
     hippo_ui_set_idle(app->ui, idle);
 }
 
-static void
-on_initial_application_burst(HippoConnection *connection,
-                             void            *data)
+static HippoStackerApp*
+hippo_stacker_app_new(HippoInstanceType  instance_type,
+                      const char        *stacker_server,
+                      HippoDBusStacker  *dbus,
+                      char             **restart_argv,
+                      int                restart_argc)
 {
-    HippoApp *app = data;
-
-    app->upload_applications_burst_count = UPLOAD_APPLICATIONS_BURST_LENGTH_SEC / UPLOAD_APPLICATIONS_BURST_TIMEOUT_SEC;
-        
-    g_source_remove(app->upload_applications_timeout);
-    g_timeout_add(UPLOAD_APPLICATIONS_BURST_TIMEOUT_SEC * 1000,
-                  on_upload_applications_timeout,
-                  app);
-}
-
-static void
-on_connected_changed(HippoConnection *connection,
-                     gboolean         connected,
-                     void            *data)
-{
-    HippoApp *app = data;
-
-    hippo_dbus_notify_xmpp_connected(app->dbus, connected);
-}
-
-static void
-on_auth_failed(HippoConnection *connection,
-               void            *data)
-{
-    /* Ignore this - we display as a disconnected icon */
-}
-
-static HippoApp*
-hippo_app_new(HippoInstanceType  instance_type,
-              HippoPlatform     *platform,
-              HippoDBus         *dbus,
-              char             **restart_argv,
-              int                restart_argc)
-{
-    HippoApp *app = g_new0(HippoApp, 1);
+    HippoStackerApp *app = g_new0(HippoStackerApp, 1);
+    char *bus_name;
 
     app->restart_argv = g_strdupv(restart_argv);
     app->restart_argc = restart_argc;
 
-    app->platform = platform;
-    g_object_ref(app->platform);
+    app->stacker_server = g_strdup(stacker_server);
 
     app->loop = g_main_loop_new(NULL, FALSE);
     app->dbus = dbus;
@@ -603,48 +292,31 @@ hippo_app_new(HippoInstanceType  instance_type,
 
     g_signal_connect(G_OBJECT(app->dbus), "disconnected",
                      G_CALLBACK(on_dbus_disconnected), app);
-    g_signal_connect(G_OBJECT(app->dbus), "song-changed",
-                     G_CALLBACK(on_dbus_song_changed), app);
 
-    app->connection = hippo_connection_new(app->platform);
-    g_object_unref(app->platform); /* let connection keep it alive */    
-    app->cache = hippo_data_cache_new(app->connection);
-    g_object_unref(app->connection); /* let the data cache keep it alive */
+    app->idle_monitor = hippo_idle_add(gdk_display_get_default(), on_idle_changed, app);
 
-    /*** If you add handlers here, disconnect them in hipp_app_free() ***/
-    
-    g_signal_connect(G_OBJECT(app->connection), "client-info-available", 
-                     G_CALLBACK(on_client_info_available), app);
-    g_signal_connect(G_OBJECT(app->connection), "auth-failed",
-                     G_CALLBACK(on_auth_failed), app);                     
-    g_signal_connect(G_OBJECT(app->connection), "connected-changed",
-                     G_CALLBACK(on_connected_changed), app);
-    g_signal_connect(G_OBJECT(app->connection), "initial-application-burst",
-                     G_CALLBACK(on_initial_application_burst), app);
-                     
+    bus_name = hippo_dbus_full_bus_name(stacker_server);
+    app->model = ddm_data_model_get_for_bus_name(bus_name);
+    g_free(bus_name);
+
+    app->ui = hippo_ui_new(app->model);
+    hippo_ui_show(app->ui);
+
     /* initially be sure we are the latest installed, though it's 
      * tough to imagine this happening outside of testing 
      * in a local source tree (which is why it's here...)
      */
-    hippo_app_check_installed(app);
+    hippo_stacker_app_check_installed(app);
     
     /* start slow timeout to look for new installed versions */
-    hippo_app_start_check_installed_timeout(app, FALSE);
+    hippo_stacker_app_start_check_installed_timeout(app, FALSE);
  
-    app->idle_monitor = hippo_idle_add(gdk_display_get_default(), app->cache, on_idle_changed, app);
-
-    app->upload_applications_timeout = g_timeout_add(UPLOAD_APPLICATIONS_TIMEOUT_SEC * 1000,
-                                                     on_upload_applications_timeout,
-                                                     app);
-    
     return app;
 }
 
 static void
-hippo_app_free(HippoApp *app)
+hippo_stacker_app_free(HippoStackerApp *app)
 {
-    g_source_remove(app->upload_applications_timeout);
-    
     hippo_idle_free(app->idle_monitor);
 
     if (app->check_installed_timeout != 0)
@@ -652,63 +324,94 @@ hippo_app_free(HippoApp *app)
 
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->dbus),
                                          G_CALLBACK(on_dbus_disconnected), app);
-    g_signal_handlers_disconnect_by_func(G_OBJECT(app->dbus),
-                                         G_CALLBACK(on_dbus_song_changed), app);
     
-    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
-                                         G_CALLBACK(on_client_info_available), app);
-    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
-                                         G_CALLBACK(on_auth_failed), app);
-    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
-                                         G_CALLBACK(on_connected_changed), app);
-    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
-                                         G_CALLBACK(on_initial_application_burst), app);
-
-    if (app->upgrade_dialog)
-        gtk_object_destroy(GTK_OBJECT(app->upgrade_dialog));
-    if (app->installed_dialog)
-        gtk_object_destroy(GTK_OBJECT(app->installed_dialog));
-
     hippo_ui_free(app->ui);
     
-    g_object_unref(app->cache);
     g_object_unref(app->dbus);
     g_main_loop_unref(app->loop);
     
     g_strfreev(app->restart_argv);
+
+    g_free(app->stacker_server);
     
     g_free(app);
 }
 
 /* 
- * Singleton HippoApp and main()
+ * Singleton HippoStackerApp and main()
  */
 
-static HippoApp *the_app;
+static HippoStackerApp *the_app;
 
-HippoApp*
-hippo_get_app(void)
+HippoStackerApp*
+hippo_get_stacker_app(void)
 {
     return the_app;
 }
 
+static gboolean print_debug_level = FALSE;
+
 static void
-print_debug_func(const char *message)
+log_handler(const char    *log_domain,
+            GLogLevelFlags log_level,
+            const char    *message,
+            void          *user_data)
 {
-    g_printerr("%s\n", message);
+    const char *prefix;
+    GString *gstr;
+
+    if (log_level & G_LOG_FLAG_RECURSION) {
+        g_printerr("Mugshot: log recursed\n");
+        return;
+    }
+
+    switch (log_level & G_LOG_LEVEL_MASK) {
+        case G_LOG_LEVEL_DEBUG:
+            if (!print_debug_level)
+                return;
+            prefix = "DEBUG: ";
+            break;
+        case G_LOG_LEVEL_WARNING:
+            prefix = "WARNING: ";
+            break;
+        case G_LOG_LEVEL_CRITICAL:
+            prefix = "CRITICAL: ";
+            break;
+        case G_LOG_LEVEL_ERROR:
+            prefix = "ERROR: ";
+            break;
+        case G_LOG_LEVEL_INFO:
+            prefix = "INFO: ";
+            break;
+        case G_LOG_LEVEL_MESSAGE:
+            prefix = "MESSAGE: ";
+            break;
+        default:
+            prefix = "";
+            break;
+    }
+
+    gstr = g_string_new("Mugshot: ");
+    
+    g_string_append(gstr, prefix);
+    g_string_append(gstr, message);
+
+    /* no newline here, the print_debug_func is supposed to add it */
+    if (gstr->str[gstr->len - 1] == '\n') {
+        g_string_erase(gstr, gstr->len - 1, 1);
+    }
+
+    g_printerr("%s\n", gstr->str);
+    g_string_free(gstr, TRUE);
 }
 
 int
 main(int argc, char **argv)
 {
     HippoOptions options;
-    HippoDBus *dbus;
-    HippoPlatform *platform;
-    char *stacker_server;
-    char *desktop_server;
+    HippoDBusStacker *dbus;
+    const char *stacker_server;
     GError *error;
-     
-    hippo_set_print_debug_func(print_debug_func);
      
     g_thread_init(NULL);
     
@@ -729,6 +432,9 @@ main(int argc, char **argv)
     if (!hippo_parse_options(&argc, &argv, &options))
         return 1;
 
+    g_log_set_default_handler(log_handler, NULL);
+    print_debug_level = options.verbose;
+    
     if (options.debug_updates)
         gdk_window_set_debug_updates(TRUE);
     
@@ -737,9 +443,9 @@ main(int argc, char **argv)
                                           ABSOLUTE_TOP_SRCDIR "/icons");
     }
     
-    platform = hippo_platform_impl_new(options.instance_type);
-    stacker_server = hippo_platform_get_web_server(platform, HIPPO_SERVER_STACKER);
-    desktop_server = hippo_platform_get_web_server(platform, HIPPO_SERVER_DESKTOP);
+    stacker_server = hippo_get_default_server(options.instance_type,
+                                              HIPPO_SERVER_STACKER,
+                                              HIPPO_SERVER_PROTOCOL_WEB);
 
     if (g_file_test(VERSION_FILE, G_FILE_TEST_EXISTS)) {
         hippo_version_file = VERSION_FILE;
@@ -757,9 +463,9 @@ main(int argc, char **argv)
     }
 
     error = NULL;
-    dbus = hippo_dbus_try_to_acquire(desktop_server, stacker_server,
-                                     (options.quit_existing || options.replace_existing),
-                                     &error);
+    dbus = hippo_dbus_stacker_try_to_acquire(stacker_server,
+                                             (options.quit_existing || options.replace_existing),
+                                             &error);
     if (dbus == NULL) {
         g_assert(error != NULL);
 
@@ -792,30 +498,15 @@ main(int argc, char **argv)
         return 1;
     }
 
-    /* Now let HippoApp take over the logic, since we know we 
+    /* Now let HippoStackerApp take over the logic, since we know we 
      * want to exist as a running app
      */
-    the_app = hippo_app_new(options.instance_type, platform, dbus,
-                            options.restart_argv, options.restart_argc);
+    the_app = hippo_stacker_app_new(options.instance_type, stacker_server, dbus,
+                                    options.restart_argv, options.restart_argc);
 
-    hippo_dbus_init_services(dbus);
-    hippo_im_init();
-    
     /* get rid of all this, the app has taken over */
     g_object_unref(dbus);
     dbus = NULL;
-    g_object_unref(platform);
-    platform = NULL;
-    g_free(stacker_server);
-    stacker_server = NULL;
-    g_free(desktop_server);
-    desktop_server = NULL;
-    
-    /* Ignore failure here */
-    hippo_connection_signin(the_app->connection);
-
-    /* enable stacker UI */
-    hippo_app_set_show_stacker(the_app, TRUE);
     
     hippo_options_free_fields(&options);
 
@@ -823,10 +514,10 @@ main(int argc, char **argv)
 
     g_debug("Main loop exited");
 
-    g_debug("Dropping loudmouth connection");
-    hippo_connection_signout(the_app->connection);
-
-    hippo_app_free(the_app);
+    hippo_stacker_app_free(the_app);
 
     return 0;
 }
+
+
+

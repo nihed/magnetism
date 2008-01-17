@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "ddm-data-model-dbus.h"
+#include "ddm-data-model-dbus-internal.h"
 #include "ddm-data-model-backend.h"
 #include "ddm-data-query.h"
 #include "ddm-notification-set.h"
@@ -15,6 +16,7 @@
 
 typedef struct {
     int             refcount;
+    char           *bus_name;
     char           *path;
     DDMDataModel   *ddm_model;
     DBusConnection *connection;
@@ -41,6 +43,7 @@ model_unref(DBusModel *dbus_model)
         g_assert(dbus_model->connection == NULL);
         g_assert(dbus_model->path == NULL);
 
+        g_free(dbus_model->bus_name);
         g_free(dbus_model);
     }
 }
@@ -670,7 +673,7 @@ handle_session_bus_connected(DBusConnection *connection,
                                       NULL);
     
     hippo_dbus_helper_register_service_tracker(connection,
-                                               "org.freedesktop.od.Engine",
+                                               dbus_model->bus_name,
                                                &engine_tracker,
                                                engine_signal_handlers,
                                                dbus_model);                                   
@@ -688,7 +691,7 @@ handle_session_bus_disconnected(DBusConnection *connection,
     g_assert(dbus_model->connection == connection);
 
     hippo_dbus_helper_unregister_service_tracker(connection,
-                                                 "org.freedesktop.od.Engine",
+                                                 dbus_model->bus_name,
                                                  &engine_tracker,
                                                  dbus_model);
 
@@ -718,6 +721,7 @@ ddm_dbus_add_model (DDMDataModel *ddm_model,
     
     dbus_model = g_new0(DBusModel, 1);
     dbus_model->refcount = 1;
+    dbus_model->bus_name = g_strdup(backend_data);
     dbus_model->ddm_model = ddm_model;
     
     g_object_set_data(G_OBJECT(ddm_model), "dbus-data-model", dbus_model);
@@ -1034,16 +1038,34 @@ ddm_data_model_get_dbus_backend(void)
  * Other platforms will have to do something else.
  */
 
+static GHashTable *models = NULL;
 static DDMDataModel *default_model = NULL;
+
+DDMDataModel*
+ddm_data_model_get_for_bus_name(const char *bus_name)
+{
+    DDMDataModel *model;
+    
+    if (models == NULL)
+        models = g_hash_table_new(g_str_hash, g_str_equal);
+
+    model = g_hash_table_lookup(models, bus_name);
+    if (model == NULL) {
+        char *bus_name_copy = g_strdup(bus_name);
+        
+        model = ddm_data_model_new_with_backend(ddm_data_model_get_dbus_backend(),
+                                                bus_name_copy, (GFreeFunc)g_free);
+        g_hash_table_insert(models, bus_name_copy, model);
+    }
+
+    return model;
+}
 
 DDMDataModel*
 ddm_data_model_get_default (void)
 {
-    if (default_model == NULL) {
-        default_model = ddm_data_model_new_with_backend(ddm_data_model_get_dbus_backend(),
-                                                        NULL, NULL);
-    }
+    if (default_model == NULL)
+        default_model = ddm_data_model_get_for_bus_name("org.freedesktop.od.Engine");
 
-    g_object_ref(default_model);
     return default_model;
 }

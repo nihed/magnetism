@@ -19,17 +19,6 @@ typedef struct _HippoStackerPlatformClass HippoStackerPlatformClass;
 #define HIPPO_IS_STACKER_PLATFORM_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_STACKER_PLATFORM))
 #define HIPPO_STACKER_PLATFORM_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_INTERFACE ((obj), HIPPO_TYPE_STACKER_PLATFORM, HippoStackerPlatformClass))
 
-/* Used currently for chat windows, but probably should also be used
- * to replace HippoWindow::active HippoWindow::onscreen with
- * HippoWindow::window-state.
- */
-typedef enum {
-    HIPPO_WINDOW_STATE_CLOSED, /* nonexistent, or "withdrawn" */
-    HIPPO_WINDOW_STATE_HIDDEN, /* iconified, on another desktop, or obscured */
-    HIPPO_WINDOW_STATE_ONSCREEN, /* some portion of the window is visible */
-    HIPPO_WINDOW_STATE_ACTIVE /* the window the user is actively working with */
-} HippoWindowState;
-
 /* if content_type == NULL then we failed to get any content and the string is an error
  * message. If content_type != NULL then the string is the content.
  */
