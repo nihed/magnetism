@@ -178,7 +178,6 @@ public class FacebookServlet extends AbstractServlet {
 	        } else if (facebookParams.get("fb_sig_uninstall") != null && facebookParams.get("fb_sig_uninstall").toString().equals("1")) {
                 // we would get this request if the user uninstalls our application, but Facebook doesn't expect a response for it
 	        	// get the user who owns the related FacebookResource
-	            String sessionKey = facebookParams.get(FacebookParam.SESSION_KEY.toString()).toString();
 	            String facebookUserId = facebookParams.get(FacebookParam.USER.toString()).toString(); 
 	        	IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 	            FacebookTracker facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
@@ -189,7 +188,7 @@ public class FacebookServlet extends AbstractServlet {
     	                if (user != null) {
 		    	            userViewpoint = new UserViewpoint(user, Site.MUGSHOT);
 		    	        	// TODO: can change this into updateExistingFacebookAccount
-		    	            facebookTracker.updateOrCreateFacebookAccount(userViewpoint, sessionKey, facebookUserId, false);		    	            
+		    	            facebookTracker.updateOrCreateFacebookAccount(userViewpoint, null, facebookUserId, false);		    	            
 			            }
     	            } catch (FacebookSystemException e) {
                         errorMessage = e.getMessage();		
