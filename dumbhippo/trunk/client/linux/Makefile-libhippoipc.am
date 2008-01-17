@@ -9,8 +9,8 @@ libhippoipc_la_LIBADD =
 nodist_libhippoipc_la_SOURCES =					\
 	$(COMMONSRCDIR)/hippo/hippo-basics.h			\
 	$(COMMONSRCDIR)/hippo/hippo-basics.c			\
-	$(COMMONSRCDIR)/hippo/hippo-bus-names.h			\
-	$(COMMONSRCDIR)/hippo/hippo-bus-names.c			\
+	$(COMMONSRCDIR)/hippo/hippo-dbus-names.h		\
+	$(COMMONSRCDIR)/hippo/hippo-dbus-names.c		\
 	$(COMMONSRCDIR)/hippoipc/hippo-ipc.h			\
 	$(COMMONSRCDIR)/hippoipc/hippo-ipc-controller.cpp	\
 	$(COMMONSRCDIR)/hippoipc/hippo-ipc-locator.cpp
