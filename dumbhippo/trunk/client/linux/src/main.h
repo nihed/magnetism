@@ -3,7 +3,6 @@
 #define __HIPPO_MAIN_H__
 
 #include <config.h>
-#include <engine/hippo-engine.h>
 #include <stacker/hippo-stacker-platform.h>
 #include <stacker/hippo-stack-manager.h>
 
@@ -27,42 +26,34 @@
 
 G_BEGIN_DECLS
 
-typedef struct _HippoDBus      HippoDBus;
+typedef struct HippoStackerApp HippoStackerApp;
 
-typedef struct HippoApp HippoApp;
+HippoStackerApp* hippo_get_stacker_app(void);
 
-HippoApp* hippo_get_app(void);
+void       hippo_stacker_app_quit           (HippoStackerApp   *app);
 
-void       hippo_app_quit           (HippoApp   *app);
+DDMDataModel   *      hippo_stacker_app_get_data_model       (HippoStackerApp *app);
+HippoStackerPlatform *hippo_stacker_app_get_stacker_platform (HippoStackerApp *app);
+HippoStackManager*    hippo_stacker_app_get_stack            (HippoStackerApp *app);
 
-HippoDataCache *hippo_app_get_data_cache (HippoApp *app);
-HippoDBus      *hippo_app_get_dbus       (HippoApp *app);
-DDMDataModel   *hippo_app_get_data_model (HippoApp *app);
-HippoStackerPlatform *hippo_app_get_stacker_platform (HippoApp *app);
+void hippo_stacker_app_show_about (HippoStackerApp *app);
+void hippo_stacker_app_show_home  (HippoStackerApp *app);
+void hippo_stacker_app_open_url   (HippoStackerApp *app,
+                                   gboolean         use_login_browser,
+                                   const char      *url);
 
-void       hippo_app_set_show_stacker (HippoApp *app,
-                                       gboolean  value);
+void             hippo_stacker_app_join_chat      (HippoStackerApp *app,
+                                                   const char      *chat_id);
+HippoWindowState hippo_stacker_app_get_chat_state (HippoStackerApp *app,
+                                                   const char      *chat_id);
 
-HippoStackManager* hippo_app_get_stack (HippoApp *app);
-
-void       hippo_app_show_about     (HippoApp   *app);
-void       hippo_app_show_home      (HippoApp   *app);
-void       hippo_app_open_url       (HippoApp   *app,
-                                     gboolean    use_login_browser,
-                                     const char *url);
-
-void              hippo_app_join_chat     (HippoApp   *app,
-                                           const char *chat_id);
-HippoWindowState hippo_app_get_chat_state (HippoApp   *app,
-                                           const char *chat_id);
-
-void       hippo_app_get_screen_info   (HippoApp         *app,
-                                        HippoRectangle   *monitor_rect_p,
-                                        HippoRectangle   *tray_icon_rect_p,
-                                        HippoOrientation *tray_icon_orientation_p);
-gboolean hippo_app_get_pointer_position (HippoApp *app,
-                                         int      *x_p,
-                                         int      *y_p);
+void     hippo_stacker_app_get_screen_info      (HippoStackerApp  *app,
+                                                 HippoRectangle   *monitor_rect_p,
+                                                 HippoRectangle   *tray_icon_rect_p,
+                                                 HippoOrientation *tray_icon_orientation_p);
+gboolean hippo_stacker_app_get_pointer_position (HippoStackerApp  *app,
+                                                 int              *x_p,
+                                                 int              *y_p);
 
 G_END_DECLS
 

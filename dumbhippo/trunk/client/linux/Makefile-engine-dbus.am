@@ -1,0 +1,60 @@
+libexec_PROGRAMS += desktop-data-engine
+
+desktop_data_engine_CPPFLAGS = 			\
+	$(AM_CPPFLAGS)				\
+	-I $(top_srcdir)			\
+	$(DESKTOP_DATA_ENGINE_CFLAGS)		\
+       -DHOST_CPU=\"$(host_cpu)\"		\
+	-DDDM_I_KNOW_THIS_IS_UNSTABLE=1
+
+desktop_data_engine_LDFLAGS=
+desktop_data_engine_LDADD= libhippo.la libengine.la $(DESKTOP_DATA_ENGINE_LIBS)
+
+desktop_data_engine_SOURCES	=			\
+	engine-dbus/hippo-application-monitor.c		\
+	engine-dbus/hippo-application-monitor.h		\
+	engine-dbus/hippo-cookies-linux.c		\
+	engine-dbus/hippo-cookies-linux.h		\
+	engine-dbus/hippo-distribution.c		\
+	engine-dbus/hippo-distribution.h		\
+	engine-dbus/hippo-dbus-cookies.c		\
+	engine-dbus/hippo-dbus-cookies.h		\
+	engine-dbus/hippo-dbus-helper.c			\
+	engine-dbus/hippo-dbus-helper.h			\
+	engine-dbus/hippo-dbus-helper-rename.h		\
+	engine-dbus/hippo-dbus-im-client.c		\
+	engine-dbus/hippo-dbus-im-client.h		\
+	engine-dbus/hippo-dbus-local.c			\
+	engine-dbus/hippo-dbus-local.h			\
+	engine-dbus/hippo-dbus-model.c			\
+	engine-dbus/hippo-dbus-model.h			\
+	engine-dbus/hippo-dbus-model-client.c		\
+	engine-dbus/hippo-dbus-model-client.h		\
+	engine-dbus/hippo-dbus-pidgin.c			\
+	engine-dbus/hippo-dbus-pidgin.h			\
+	engine-dbus/hippo-dbus-server.c			\
+	engine-dbus/hippo-dbus-server.h			\
+	engine-dbus/hippo-dbus-settings.c		\
+	engine-dbus/hippo-dbus-settings.h		\
+	engine-dbus/hippo-dbus-system.c			\
+	engine-dbus/hippo-dbus-system.h			\
+	engine-dbus/hippo-dbus-web.h			\
+	engine-dbus/hippo-dbus-web.c			\
+	engine-dbus/hippo-im.c				\
+	engine-dbus/hippo-im.h				\
+	engine-dbus/hippo-platform-impl.c		\
+	engine-dbus/hippo-platform-impl.h		\
+	engine-dbus/main.c				\
+	engine-dbus/main.h				\
+	engine-dbus/json.c				\
+	engine-dbus/json.h
+
+# Dbus service file
+servicedir = $(datadir)/dbus-1/services
+service_in_files = org.freedesktop.od.Engine.service.in
+service_DATA = $(service_in_files:.service.in=.service)
+$(service_DATA): $(service_in_files) Makefile
+	@sed -e "s|\@bindir\@|$(bindir)|" $< > $@
+
+EXTRA_DIST += $(service_in_files)
+MAINTAINERCLEANFILES +=	$(service_DATA)

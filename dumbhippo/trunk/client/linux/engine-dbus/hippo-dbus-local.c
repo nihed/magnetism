@@ -620,7 +620,7 @@ get_self_id(void)
     HippoConnection *hippo_connection;
     const char *self_resource_id;
     
-    cache = hippo_app_get_data_cache(hippo_get_app());
+    cache = hippo_engine_app_get_data_cache(hippo_get_engine_app());
     hippo_connection = hippo_data_cache_get_connection(cache);
 
     self_resource_id = hippo_connection_get_self_resource_id(hippo_connection);
@@ -633,7 +633,7 @@ get_self_name(void)
 {
     DDMDataModel *ddm_model;
     
-    ddm_model = hippo_app_get_data_model(hippo_get_app());
+    ddm_model = hippo_engine_app_get_data_model(hippo_get_engine_app());
     
     if (ddm_model) {
         DDMDataResource *resource;
@@ -840,7 +840,7 @@ hippo_dbus_init_local(DBusConnection *connection)
                                                signal_handlers,
                                                NULL);
 
-    cache = hippo_app_get_data_cache(hippo_get_app());
+    cache = hippo_engine_app_get_data_cache(hippo_get_engine_app());
     hippo_connection = hippo_data_cache_get_connection(cache);
 
     g_signal_connect(G_OBJECT(hippo_connection),
@@ -848,7 +848,7 @@ hippo_dbus_init_local(DBusConnection *connection)
                      G_CALLBACK(connection_has_auth_changed),
                      connection);
 
-    ddm_model = hippo_app_get_data_model(hippo_get_app());
+    ddm_model = hippo_engine_app_get_data_model(hippo_get_engine_app());
     
     g_signal_connect(G_OBJECT(ddm_model), "ready",
                      G_CALLBACK(on_data_model_ready),

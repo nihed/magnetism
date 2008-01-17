@@ -69,7 +69,7 @@ get_and_ref_settings(DBusConnection *dbus_connection)
     HippoConnection *connection;
     HippoSettings *settings;
     
-    cache = hippo_app_get_data_cache(hippo_get_app());
+    cache = hippo_engine_app_get_data_cache(hippo_get_engine_app());
     connection = hippo_data_cache_get_connection(cache);
 
     settings = hippo_settings_get_and_ref(connection);

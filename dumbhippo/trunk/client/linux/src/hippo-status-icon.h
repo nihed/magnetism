@@ -2,7 +2,7 @@
 #ifndef __HIPPO_STATUS_ICON_H__
 #define __HIPPO_STATUS_ICON_H__
 
-#include <engine/hippo-engine.h>
+#include <ddm/ddm.h>
 #include <gtk/gtkstatusicon.h>
 
 G_BEGIN_DECLS
@@ -19,7 +19,7 @@ typedef struct _HippoStatusIconClass HippoStatusIconClass;
 
 GType        	 hippo_status_icon_get_type               (void) G_GNUC_CONST;
 
-HippoStatusIcon* hippo_status_icon_new                    (HippoDataCache *cache);
+HippoStatusIcon* hippo_status_icon_new                    (DDMDataModel *model);
 
 G_END_DECLS
 

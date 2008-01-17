@@ -3,16 +3,14 @@
 #define __HIPPO_UI_H__
 
 #include <glib-object.h>
-#include <hippo/hippo-basics.h>
 #include "main.h"
-#include "hippo-dbus-server.h"
+#include "hippo-dbus-stacker.h"
 
 G_BEGIN_DECLS
 
 typedef struct HippoUI HippoUI;
 
-HippoUI*         hippo_ui_new                  (HippoDataCache           *cache,
-                                                HippoDBus                *dbus);
+HippoUI*         hippo_ui_new                  (DDMDataModel             *model);
 void             hippo_ui_free                 (HippoUI                  *ui);
 void             hippo_ui_show                 (HippoUI                  *ui);
 void             hippo_ui_get_screen_info      (HippoUI                  *ui,
@@ -25,10 +23,6 @@ gboolean         hippo_ui_get_pointer_position (HippoUI                  *ui,
 void             hippo_ui_set_idle             (HippoUI                  *ui,
                                                 gboolean                  idle);
 void             hippo_ui_show_about           (HippoUI                  *ui);
-void             hippo_ui_join_chat            (HippoUI                  *ui,
-                                                const char               *chat_id);
-HippoWindowState hippo_ui_get_chat_state       (HippoUI                  *ui,
-                                                const char               *chat_id);
 
 HippoStackManager*    hippo_ui_get_stack_manager    (HippoUI *ui);
 HippoStackerPlatform *hippo_ui_get_stacker_platform (HippoUI *ui);

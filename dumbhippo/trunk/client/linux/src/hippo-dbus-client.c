@@ -47,83 +47,6 @@ get_connection(GError **error)
     return session_connection;
 }
 
-static char*
-hippo_dbus_full_bus_name_internal(const char *server,
-                                  const char *base_bus_name,
-                                  gboolean    backward_hex)
-{
-    GString *str;
-    const char *p;
-    char *server_with_port;
-    static const char hexdigits[16] =
-        { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-          'A', 'B', 'C', 'D', 'E', 'F' };
-
-    /* we need the "80" canonically in here */
-    if (strchr(server, ':') == NULL)
-        server_with_port = g_strdup_printf("%s:%d", server, 80);
-    else
-        server_with_port = NULL;
-
-    /* 
-     * There some kind of very remote security implications if we map multiple domains
-     * to the same dbus name, or vice versa, I guess, so we try to avoid that.
-     * In practice (at least right now) we don't automatically start a dbus client
-     * to some random server so it probably doesn't matter.
-     *
-     */
-    str = g_string_new(base_bus_name);
-    g_string_append_c(str, '.');
-
-    if (server_with_port)
-        p = server_with_port;
-    else 
-        p = server;
-    while (*p) {
-        /* only [a-z][A-Z][0-9]_ are allowed, not starting with a digit.
-         * We encode any non-alphanumeric as _ followed by 2-digit hex
-         * of the byte.
-         */
-        if ((*p >= 'a' && *p <= 'z') || 
-            (*p >= 'A' && *p <= 'Z') ||
-            (*p >= '0' && *p <= '9')) {
-            g_string_append_c(str, *p);
-        } else {
-            g_string_append_c(str, '_');
-            if (backward_hex) {
-                /* Nibbles backwards */
-                g_string_append_c(str, hexdigits[(*p) & 0xf]);
-                g_string_append_c(str, hexdigits[(*p) >> 4]);
-            } else {
-                g_string_append_c(str, hexdigits[(*p) >> 4]);
-                g_string_append_c(str, hexdigits[(*p) & 0xf]);
-            }
-        }
-        ++p;
-    }
-    g_free(server_with_port);
-
-    return g_string_free(str, FALSE);
-}
-
-char*
-hippo_dbus_full_bus_name(const char *server)
-{
-    return hippo_dbus_full_bus_name_internal(server, HIPPO_DBUS_ENGINE_BASE_BUS_NAME, FALSE);
-}
-
-char*
-hippo_dbus_full_bus_name_com_dumbhippo_with_forward_hex(const char *server)
-{
-    return hippo_dbus_full_bus_name_internal(server, HIPPO_DBUS_STACKER_BASE_BUS_NAME, FALSE);
-}
-
-char*
-hippo_dbus_full_bus_name_com_dumbhippo_with_backward_hex(const char *server)
-{
-    return hippo_dbus_full_bus_name_internal(server, HIPPO_DBUS_STACKER_BASE_BUS_NAME, TRUE);
-}
-
 gboolean
 hippo_dbus_open_chat_blocking(const char   *server,
                               HippoChatKind kind,
@@ -136,7 +59,6 @@ hippo_dbus_open_chat_blocking(const char   *server,
     DBusMessage *message;
     DBusMessage *reply;
     char *bus_name;
-    const char *kind_str;
 
     g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
@@ -157,8 +79,6 @@ hippo_dbus_open_chat_blocking(const char   *server,
         
     /* we don't want to start a client if none is already there */
     dbus_message_set_auto_start(message, FALSE);
-    
-    kind_str = hippo_chat_kind_as_string(kind);
     
     if (!dbus_message_append_args(message,
                                   DBUS_TYPE_STRING, &chat_id,
@@ -187,6 +107,81 @@ hippo_dbus_open_chat_blocking(const char   *server,
 }
 
 gboolean
+hippo_dbus_get_chat_window_state_blocking(const char       *server,
+                                          const char       *chat_id,
+                                          HippoWindowState *state,
+                                          GError          **error)
+{
+    DBusConnection *connection;
+    gboolean result;
+    DBusError derror;
+    DBusMessage *message;
+    DBusMessage *reply = NULL;
+    char *bus_name;
+    dbus_int32_t dbus_state;
+
+    g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+    connection = get_connection(error);
+    if (connection == NULL)
+        return FALSE;
+
+    result = FALSE;
+    
+    bus_name = hippo_dbus_full_bus_name(server);
+    
+    message = dbus_message_new_method_call(bus_name,
+                                           HIPPO_DBUS_STACKER_PATH,
+                                           HIPPO_DBUS_STACKER_INTERFACE,
+                                           "GetChatWindowState");
+    if (message == NULL)
+        g_error("out of memory");
+        
+    /* we don't want to start a client if none is already there */
+    dbus_message_set_auto_start(message, FALSE);
+    
+    if (!dbus_message_append_args(message,
+                                  DBUS_TYPE_STRING, &chat_id,
+                                  DBUS_TYPE_INVALID))
+        g_error("out of memory"); 
+
+    dbus_error_init(&derror);
+    reply = dbus_connection_send_with_reply_and_block(connection, message, -1,
+                                                      &derror);
+
+    dbus_message_unref (message);
+
+    if (reply == NULL) {
+        propagate_dbus_error(error, &derror);
+        goto out;
+    }
+
+    if (dbus_message_get_args(message, &derror,
+                              DBUS_TYPE_INT32, &dbus_state,
+                              DBUS_TYPE_INVALID)) {
+        propagate_dbus_error(error, &derror);
+        goto out;
+    }
+    
+    if (dbus_state < (dbus_int32_t)HIPPO_WINDOW_STATE_CLOSED ||
+        dbus_state > (dbus_int32_t)HIPPO_WINDOW_STATE_ACTIVE) {
+        g_set_error(error, HIPPO_ERROR, HIPPO_ERROR_FAILED,
+                    _("Bad value %d for window state constant"), dbus_state);
+        goto out;
+    }
+    
+    *state = (HippoWindowState)dbus_state;
+    
+    result = TRUE;
+
+  out:
+    if (reply != NULL)
+        dbus_message_unref(reply);
+
+    return result;
+}
+
+gboolean
 hippo_dbus_show_browser_blocking(const char   *server,
                                  GError      **error)
 {
@@ -205,7 +200,7 @@ hippo_dbus_show_browser_blocking(const char   *server,
 
     result = FALSE;
     
-    bus_name = hippo_dbus_full_bus_name(server);
+    bus_name = hippo_dbus_full_bus_name_com_dumbhippo_with_forward_hex(server);
     
     message = dbus_message_new_method_call(bus_name,
                                            HIPPO_DBUS_STACKER_PATH,

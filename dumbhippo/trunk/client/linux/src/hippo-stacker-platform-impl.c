@@ -132,8 +132,8 @@ hippo_stacker_platform_impl_get_screen_info(HippoStackerPlatform    *platform,
                                             HippoRectangle   *tray_icon_rect_p,
                                             HippoOrientation *tray_icon_orientation_p)
 {
-    hippo_app_get_screen_info(hippo_get_app(), monitor_rect_p, tray_icon_rect_p,
-                              tray_icon_orientation_p);
+    hippo_stacker_app_get_screen_info(hippo_get_stacker_app(), monitor_rect_p, tray_icon_rect_p,
+                                      tray_icon_orientation_p);
 }
 
 static gboolean
@@ -141,7 +141,7 @@ hippo_stacker_platform_impl_get_pointer_position (HippoStackerPlatform     *plat
                                                   int               *x_p,
                                                   int               *y_p)
 {
-    return hippo_app_get_pointer_position(hippo_get_app(), x_p, y_p);
+    return hippo_stacker_app_get_pointer_position(hippo_get_stacker_app(), x_p, y_p);
 }
 
 static void
@@ -157,14 +157,14 @@ static void
 hippo_stacker_platform_impl_show_chat_window (HippoStackerPlatform     *platform,
                                               const char        *chat_id)
 {
-    hippo_app_join_chat(hippo_get_app(), chat_id);
+    hippo_stacker_app_join_chat(hippo_get_stacker_app(), chat_id);
 }
 
 HippoWindowState 
-hippo_stacker_platform_impl_get_chat_window_state (HippoStackerPlatform    *platform,
-                                           const char       *chat_id)
+hippo_stacker_platform_impl_get_chat_window_state (HippoStackerPlatform  *platform,
+                                                   const char            *chat_id)
 {
-    return hippo_app_get_chat_state(hippo_get_app(), chat_id);
+    return hippo_stacker_app_get_chat_state(hippo_get_stacker_app(), chat_id);
 }
 
 static gboolean

@@ -490,7 +490,7 @@ hippo_dbus_model_client_dispose (GObject *object)
     if (!dbus_client->disconnected) {
         dbus_client->disconnected = TRUE;
         
-        hippo_dbus_unwatch_for_disconnect(hippo_app_get_dbus(hippo_get_app()),
+        hippo_dbus_unwatch_for_disconnect(hippo_engine_app_get_dbus(hippo_get_engine_app()),
                                           dbus_client->bus_name);
 
         g_hash_table_destroy(dbus_client->connections);
@@ -599,7 +599,7 @@ hippo_dbus_model_client_new (DBusConnection *connection,
     dbus_client->bus_name = g_strdup(bus_name);
     dbus_client->path = g_strdup(path);
 
-    hippo_dbus_watch_for_disconnect(hippo_app_get_dbus(hippo_get_app()),
+    hippo_dbus_watch_for_disconnect(hippo_engine_app_get_dbus(hippo_get_engine_app()),
                                     bus_name);
 
     return dbus_client;

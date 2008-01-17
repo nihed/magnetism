@@ -1,14 +1,12 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#ifndef __HIPPO_DBUS_CLIENT_H__
-#define __HIPPO_DBUS_CLIENT_H__
+#ifndef __HIPPO_DBUS_NAMES_H__
+#define __HIPPO_DBUS_NAMES_H__
 
-/* dbus client-side stuff ... shared between main mugshot client and the uri handler */
+#include <glib.h>
 
-#include <glib-object.h>
-#include <hippo/hippo-basics.h>
-#include <hippo/hippo-dbus-names.h>
-#define DBUS_API_SUBJECT_TO_CHANGE 1
-#include <dbus/dbus.h>
+/* These are the D-BUS bus names we use on Linux. Nothing here actually is dependent
+ * on D-BUS; it's just string manipulation ...  so we can stick it here to share it
+ * between the the data model engine and the Mugshot stacker */
 
 G_BEGIN_DECLS
 
@@ -18,8 +16,7 @@ G_BEGIN_DECLS
 /* combined with host/port the client is connected to, to create full bus name */
 #define HIPPO_DBUS_ENGINE_BASE_BUS_NAME    "org.freedesktop.od.Engine"
 
-/* these are used for operations specific to the stacker, vs. the
- * stuff that belongs to the desktop data model engine
+/* these are used for operations specific to the Mugshot stacker.
  */
 #define HIPPO_DBUS_STACKER_INTERFACE           "com.dumbhippo.Client"
 #define HIPPO_DBUS_STACKER_PATH                "/com/dumbhippo/client"
@@ -51,22 +48,6 @@ char*    hippo_dbus_full_bus_name_com_dumbhippo_with_forward_hex (const char   *
  * few releases after 2007-06-08.
  */
 char*    hippo_dbus_full_bus_name_com_dumbhippo_with_backward_hex (const char   *server);
-
-gboolean hippo_dbus_open_chat_blocking(const char   *server,
-                                       HippoChatKind kind,
-                                       const char   *chat_id,
-                                       GError      **error);
-
-gboolean hippo_dbus_get_chat_window_state_blocking(const char       *server,
-                                                   const char       *chat_id,
-                                                   HippoWindowState *state, /* out */
-                                                   GError      **error);
-
-gboolean hippo_dbus_show_browser_blocking(const char   *server,
-                                          GError      **error);
-
-void     hippo_dbus_debug_log_error   (const char   *where,
-                                       DBusMessage  *message);
 
 G_END_DECLS
 

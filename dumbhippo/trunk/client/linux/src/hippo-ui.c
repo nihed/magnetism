@@ -13,315 +13,14 @@
 #include <X11/Xatom.h>
 
 struct HippoUI {
-    HippoPlatform *platform;
     HippoStackerPlatform *stacker_platform;
-    HippoDataCache *cache;
-    HippoConnection *connection;
-    HippoDBus *dbus;
+    DDMDataModel *model;
 
     HippoStackManager *stack;
     
     HippoStatusIcon *icon;
     GtkWidget *about_dialog;
 };
-
-static void
-activate_window(Display *display, Window window)
-{
-    Window toplevel = window;
-    Atom window_state_atom = gdk_x11_get_xatom_by_name("WM_STATE");
-    Atom active_window_atom = gdk_x11_get_xatom_by_name("_NET_ACTIVE_WINDOW");
-    Window root;
-    XEvent xev;
-    
-    /* The window_id we have is the window ID of a child window. So, we first
-     * need to walk up the window hierarachy until we find the WM_STATE window,
-     * then activate that window. Lots of X roundtrips here, but we only do
-     * this on a user click as an alternative to launching a new firefox 
-     * process, so it doesn't really matter.
-     */
-    gdk_error_trap_push();
-
-    while (TRUE) {
-        Window parent;
-        Window *children;
-        guint n_children;
-        
-        Atom type;
-        int format;
-        gulong n_items;
-        gulong bytes_after;
-        guchar *data;
-
-        if (!XQueryTree(display, toplevel, &root, &parent, &children, &n_children)) {
-            g_debug("XQueryTree failed\n");
-            goto out;
-        }
-
-        XFree(children);
-
-        if (root == parent) /* No window manager or non-reparenting window manager */
-            break;
-        
-        if (XGetWindowProperty(display, toplevel, window_state_atom,
-                               0, G_MAXLONG, False, AnyPropertyType,
-                               &type, &format, &n_items, &bytes_after, &data) != Success) {
-            g_debug("XGetWindowProperty failed\n");
-            goto out;
-        }
-        
-        if (type != None) { /* Found the real client toplevel */
-            XFree(data);
-            break;
-        }
-
-        toplevel = parent;
-    }
-
-    xev.xclient.type = ClientMessage;
-    xev.xclient.window = toplevel;
-    xev.xclient.message_type = active_window_atom;
-    xev.xclient.format = 32;
-    xev.xclient.data.l[0] = 2; /* We're sort of like a pager ... we're activating a window
-                                * from a different app as a response to direct user action
-                                */
-    xev.xclient.data.l[1] = gtk_get_current_event_time();
-    xev.xclient.data.l[2] = None; /* We don't really have an active toplevel */
-    xev.xclient.data.l[3] = 0;
-    xev.xclient.data.l[4] = 0;
-
-    XSendEvent(display, root, False, SubstructureNotifyMask | SubstructureRedirectMask, &xev);
-
- out:
-    gdk_error_trap_pop();
-}
-
-static void
-spawn_chat_window(HippoUI    *ui,
-                  const char *chat_id)
-{
-    char *relative_url = g_strdup_printf("/chatwindow?chatId=%s", chat_id);
-    char *absolute_url = hippo_connection_make_absolute_url(ui->connection, relative_url);
-    char *command = g_strdup_printf("firefox -chrome chrome://mugshot/content/chatWindow.xul?src=%s", absolute_url);
-    GError *error = NULL;
-
-    if (!g_spawn_command_line_async(command, &error)) {
-        GtkWidget *dialog;
-        
-        dialog = gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_ERROR,
-                                        GTK_BUTTONS_CLOSE,
-                                        _("Couldn't start Firefox to show quips and comments"));
-        gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), "%s", error->message);
-        g_signal_connect(dialog, "response", G_CALLBACK(gtk_widget_destroy), NULL);
-        
-        gtk_widget_show(dialog);
-        
-        g_debug("Failed to start Firefox to show quips and comments: %s\n", error->message);
-        g_error_free(error);
-    }
-
-    g_free(relative_url);
-    g_free(absolute_url);
-    g_free(command);
-}
-
-static void 
-join_chat_foreach(guint64 window_id, HippoChatState state, void *data)
-{
-    guint64 *found_id = data;
-
-    if (state == HIPPO_CHAT_STATE_PARTICIPANT)
-        *found_id = window_id;
-}
-
-void
-hippo_ui_join_chat(HippoUI    *ui,
-                   const char *chat_id)
-{
-    guint64 found_window_id = 0;
-    
-    hippo_dbus_foreach_chat_window(ui->dbus, chat_id,
-                                   join_chat_foreach, &found_window_id);
-
-    if (found_window_id != 0)
-        activate_window(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()),
-                        (Window)found_window_id);
-    else
-        spawn_chat_window(ui, chat_id);
-}
-
-/* Doesn't handle HIPPO_WINDOW_STATE_ACTIVE - see comment below */
-static HippoWindowState
-get_window_state(Display *display, Window window)
-{
-    HippoWindowState result =  HIPPO_WINDOW_STATE_HIDDEN;
-    XWindowAttributes window_attributes;
-    GdkRectangle rect;
-    GdkRegion *visible_region = NULL;
-    Window child = None;
-    
-    Window root;
-    Window parent;
-    Window *children = NULL;
-    guint n_children;
-
-    gdk_error_trap_push();
-    
-    /* First check if the window and all ancestors are mapped
-     */
-
-    if (!XGetWindowAttributes(display, window, &window_attributes)) {
-        g_debug("XGetWindowAttributes failed\n");
-        goto out;
-    }
-
-    if (window_attributes.map_state != IsViewable)
-        goto out;
-
-    /* Get the area of the window in parent coordinates
-     */
-    rect.x = window_attributes.x;
-    rect.y = window_attributes.y;
-    rect.width = window_attributes.width;
-    rect.height = window_attributes.height;
-
-    visible_region = gdk_region_rectangle(&rect);
-
-    if (!XQueryTree(display, window, &root, &parent, &children, &n_children)) {
-        g_debug("XQueryTree failed\n");
-        goto out;
-    }
-
-    XFree(children);
-    children = NULL;
-
-    child = window;
-    window = parent;
-
-    /* Walk up the hierarchy, clipping to parents, and subtracting
-     * overlayed siblings (yuck!)
-     */
-    while (TRUE) {
-        GdkRegion *parent_region;
-        gboolean seen_child = FALSE;
-        int x, y;
-        unsigned int width, height, border, depth;
-        unsigned int i;
-
-        gdk_region_get_clipbox(visible_region, &rect);
-        
-        /* Clip to parent */
-        if (!XGetGeometry(display, window, &root, &x, &y, &width, &height, &border, &depth)) {
-            g_debug("XGetGeometry failed\n");
-            goto out;
-        }
-
-        rect.x = 0;
-        rect.y = 0;
-        rect.width = width;
-        rect.height= height;
-
-        parent_region = gdk_region_rectangle(&rect);
-        gdk_region_intersect(visible_region, parent_region);
-        gdk_region_destroy(parent_region);
-
-        if (gdk_region_empty(visible_region))
-            goto out;
-                
-        if (!XQueryTree(display, window, &root, &parent, &children, &n_children)) {
-            g_debug("XQueryTree failed\n");
-            goto out;
-        }
-
-        for (i = 0; i < n_children; i++) {
-            if (seen_child) {
-                /* A sibling above */
-                GdkRegion *child_region;
-                XWindowAttributes child_attributes;
-                
-                if (!XGetWindowAttributes(display, children[i], &child_attributes)) {
-                    g_debug("XGetWindowAttributes failed for child\n");
-                    goto out;
-                }
-
-                if (child_attributes.map_state == IsViewable) {
-                    rect.x = child_attributes.x - child_attributes.border_width;
-                    rect.y = child_attributes.y - child_attributes.border_width;
-                    rect.width = child_attributes.width + 2 * child_attributes.border_width;
-                    rect.height = child_attributes.height + 2 * child_attributes.border_width;
-
-                    child_region = gdk_region_rectangle(&rect);
-                    gdk_region_subtract(visible_region, child_region);
-                    gdk_region_destroy(child_region);
-                    
-                    if (gdk_region_empty(visible_region))
-                        goto out;
-                }
-                
-            } else if (children[i] == child) {
-                seen_child = TRUE;
-            }
-        }
-    
-        XFree(children);
-        children = NULL;
-
-        if (window == root)
-            break;
-        
-        child = window;
-        window = parent;
-
-        /* Translate to parent coordinates */
-        gdk_region_offset(visible_region, x, y);
-    }
-
-    if (!gdk_region_empty(visible_region))
-        result = HIPPO_WINDOW_STATE_ONSCREEN;
-
- out:
-    gdk_error_trap_pop();
-
-    if (children)
-        XFree(children);
-
-    if (visible_region)
-        gdk_region_destroy(visible_region);
-
-    return result;
-}
-
-static void 
-get_chat_state_foreach(guint64 window_id, HippoChatState state, void *data)
-{
-    HippoWindowState *summary_state = data;
-
-    HippoWindowState this_window_state = get_window_state(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()),
-                                                          (Window)window_id);
-    
-    if (this_window_state > *summary_state)
-        *summary_state = this_window_state;
-}
-
-HippoWindowState
-hippo_ui_get_chat_state (HippoUI    *ui,
-                         const char *chat_id)
-{
-    /* The client only uses hippo_platform_get_chat_window_state() to determine
-     * one thing ... should it notify the user with a block when a new chat message
-     * comes in. What we compute here is tuned to that - we don't try to compute
-     * HIPPO_WINDOW_STATE_ACTIVE, but just return HIPPO_WINDOW_STATE_ONSCREEN
-     * if some portion of a window displaying either a visitor or participant
-     * chat is visible to the user.
-     */
-    
-    HippoWindowState summary_state = HIPPO_WINDOW_STATE_CLOSED;
-    
-    hippo_dbus_foreach_chat_window(ui->dbus, chat_id,
-                                   get_chat_state_foreach, &summary_state);
-
-    return summary_state;
-}
 
 /* This is copied from gdk_cairo_set_source_pixbuf()
  * in GDK
@@ -651,8 +350,7 @@ hippo_ui_show_about(HippoUI *ui)
 }
 
 HippoUI*
-hippo_ui_new(HippoDataCache *cache,
-             HippoDBus      *dbus)
+hippo_ui_new(DDMDataModel   *model)
 {
     HippoUI *ui;
 
@@ -660,19 +358,13 @@ hippo_ui_new(HippoDataCache *cache,
     
     ui = g_new0(HippoUI, 1);
 
-    ui->cache = cache;
-    g_object_ref(ui->cache);
+    ui->model = g_object_ref(model);
 
-    ui->connection = hippo_data_cache_get_connection(ui->cache);
-    ui->platform = hippo_connection_get_platform(ui->connection);
     ui->stacker_platform = hippo_stacker_platform_impl_new();
 
-    ui->dbus = dbus;
-    g_object_ref(ui->dbus);
+    ui->stack = hippo_stack_manager_new(model, ui->stacker_platform);
     
-    ui->stack = hippo_stack_manager_new(hippo_data_cache_get_model(cache), ui->stacker_platform);
-    
-    ui->icon = hippo_status_icon_new(ui->cache);
+    ui->icon = hippo_status_icon_new(ui->model);
 
     g_signal_connect(G_OBJECT(ui->icon),
                      "size-changed",
@@ -697,8 +389,7 @@ hippo_ui_free(HippoUI *ui)
                                          ui);
     
     g_object_unref(ui->icon);
-    g_object_unref(ui->dbus);
-    g_object_unref(ui->cache);
+    g_object_unref(ui->model);
     g_free(ui);
 }
 

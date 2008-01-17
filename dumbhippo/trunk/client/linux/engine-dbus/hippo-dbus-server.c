@@ -6,18 +6,16 @@
 #define DBUS_API_SUBJECT_TO_CHANGE 1
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
+#include <hippo/hippo-dbus-names.h>
 #include "hippo-dbus-server.h"
-#include "hippo-dbus-client.h"
 #include "hippo-dbus-cookies.h"
 #include "hippo-dbus-model.h"
 #include "hippo-dbus-pidgin.h"
 #include "hippo-dbus-local.h"
 #include "hippo-dbus-settings.h"
 #include "hippo-dbus-web.h"
-#include "hippo-dbus-http.h"
 #include "hippo-distribution.h"
 #include <engine/hippo-endpoint-proxy.h>
-#include <stacker/hippo-stack-manager.h>
 #include "main.h"
 
 /* rhythmbox messages */
@@ -160,6 +158,28 @@ propagate_dbus_error(GError **error, DBusError *derror)
     }
 }
 
+static void
+debug_log_dbus_error(const char   *where,
+                     DBusMessage  *message)
+{
+    if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
+        const char *error;
+        const char *text;
+        
+        error = dbus_message_get_error_name(message);
+        text = NULL;
+        if (dbus_message_get_args(message, NULL,
+                                  DBUS_TYPE_STRING, &text,
+                                  DBUS_TYPE_INVALID)) {
+            g_debug("Got error reply at %s %s '%s'",
+                    where, error ? error : "NULL", text ? text : "NULL");
+        } else {
+            g_debug("Got error reply at %s %s",
+                    where, error ? error : "NULL");
+        }
+    }
+}
+
 static gboolean
 acquire_bus_name(DBusConnection *connection,
                  const char     *server,
@@ -207,7 +227,6 @@ hippo_dbus_try_to_acquire(const char  *desktop_server,
     DBusConnection *connection;
     char *desktop_bus_name;
     char *stacker_bus_name;
-    char *old_bus_name;
     DBusError derror;
     
     dbus_error_init(&derror);
@@ -256,60 +275,6 @@ hippo_dbus_try_to_acquire(const char  *desktop_server,
         return NULL;
     }
     
-    /* The com.dumbhippo.Client name may be appropriate to keep forever, as the
-     * canonical name of the Stacker-specific stuff, while desktop generic
-     * stuff is accessed via the org.freedesktop.od.Engine name.
-     *
-     * So this is done only for the stacker server name.
-     */
-    old_bus_name = hippo_dbus_full_bus_name_com_dumbhippo_with_forward_hex(stacker_server);
-    if (!acquire_bus_name(connection, stacker_server, replace_existing, old_bus_name, error)) {
-        /* FIXME leak bus connection since unref isn't allowed */
-
-        /* We need to give up the new bus name because we call ShowBrowser on
-         * it in main.c if we fail to get both names, which deadlocks if
-         * we own the new name
-         */
-        dbus_bus_release_name(connection, stacker_bus_name, NULL);
-        dbus_bus_release_name(connection, desktop_bus_name, NULL);
-        
-        g_free(old_bus_name);
-        g_free(stacker_bus_name);
-        g_free(desktop_bus_name);
-        return NULL;
-    }
-
-    g_free(old_bus_name);
-
-    /* We also acquire our old broken bus name for compatibility with old versions
-     * of client apps, and so that when this version is run with --replace
-     * old versions will exit. We *don't* exit if we lose ownership of this
-     * name ourself, since we running the older version with --replace to replace
-     * the new version isn't very interesting
-     *
-     * Since this is compat gunk, it only uses the stacker server.
-     */
-    
-    old_bus_name = hippo_dbus_full_bus_name_com_dumbhippo_with_backward_hex(stacker_server);
-    if (!acquire_bus_name(connection, stacker_server, replace_existing, old_bus_name, error)) {
-        /* FIXME leak bus connection since unref isn't allowed */
-
-        /* We need to give up the new bus name because we call ShowBrowser on
-         * it in main.c if we fail to get both names, which deadlocks if
-         * we own the new name
-         */
-        dbus_bus_release_name(connection, stacker_bus_name, NULL);
-        dbus_bus_release_name(connection, desktop_bus_name, NULL);
-        
-        g_free(old_bus_name);
-
-        g_free(stacker_bus_name);
-        g_free(desktop_bus_name);
-        return NULL;
-    }
-
-    g_free(old_bus_name);
-
     /* Now we acquire the names without the server host/port appended,
      * we only optionally acquire these if nobody else has them.
      * This allows apps to avoid adding the server to the name - 
@@ -404,7 +369,6 @@ hippo_dbus_init_services(HippoDBus   *dbus)
     hippo_dbus_init_local(connection);
     hippo_dbus_init_pidgin(connection);    
     hippo_dbus_init_model(connection);
-    hippo_dbus_init_http(connection);
     
     /* Add Rhythmbox signal match */
     dbus_bus_add_match(connection,
@@ -685,7 +649,7 @@ on_endpoint_message(HippoEndpointProxy *proxy,
 {
     DBusMessage *message;
     
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoDataCache *cache = hippo_engine_app_get_data_cache(hippo_get_engine_app());
     DDMDataModel *model = hippo_data_cache_get_model(cache);
     guint64 endpoint = hippo_endpoint_proxy_get_id(proxy);
     const char *chat_id = hippo_chat_room_get_id(chat_room);
@@ -783,7 +747,7 @@ static DBusMessage*
 handle_register_endpoint(HippoDBus   *dbus,
                          DBusMessage *message)
 {
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoDataCache *cache = hippo_engine_app_get_data_cache(hippo_get_engine_app());
     DBusMessage *reply;
     HippoEndpointProxy *proxy;
     HippoDBusListener *listener;
@@ -1044,7 +1008,37 @@ handle_show_chat_window(HippoDBus   *dbus,
 				      _("Expected one string arg, the chat ID"));
     }
 
-    hippo_app_join_chat(hippo_get_app(), chat_id);
+    hippo_engine_app_join_chat(hippo_get_engine_app(), chat_id);
+    
+    reply = dbus_message_new_method_return(message);
+    return reply;
+}
+
+static DBusMessage*
+handle_get_chat_window_state(HippoDBus   *dbus,
+                             DBusMessage *message)
+{
+    DBusMessage *reply;
+    const char *chat_id;
+    HippoWindowState state;
+    dbus_int32_t dbus_state;
+    
+    chat_id = NULL;
+    
+    if (!dbus_message_get_args(message, NULL,
+			       DBUS_TYPE_STRING, &chat_id,
+			       DBUS_TYPE_INVALID)) {
+        return dbus_message_new_error(message,
+				      DBUS_ERROR_INVALID_ARGS,
+				      _("Expected one string arg, the chat ID"));
+    }
+
+    state = hippo_engine_app_get_chat_state(hippo_get_engine_app(), chat_id);
+    dbus_state = (dbus_int32_t)state;
+
+    dbus_message_append_args(message,
+			     DBUS_TYPE_INT64, &dbus_state,
+			     DBUS_TYPE_INVALID);
     
     reply = dbus_message_new_method_return(message);
     return reply;
@@ -1063,7 +1057,7 @@ handle_send_chat_message(HippoDBus   *dbus,
     dbus_int32_t sentiment;
     HippoSentiment hippoSentiment;
 
-    cache = hippo_app_get_data_cache(hippo_get_app());
+    cache = hippo_engine_app_get_data_cache(hippo_get_engine_app());
     connection = hippo_data_cache_get_connection(cache);
     
     chat_id = NULL;
@@ -1376,12 +1370,8 @@ handle_show_browser(HippoDBus   *dbus,
 				      _("Expected no arguments"));
     }
 
-    cache = hippo_app_get_data_cache(hippo_get_app());
+    cache = hippo_engine_app_get_data_cache(hippo_get_engine_app());
 
-    hippo_app_set_show_stacker(hippo_get_app(), TRUE);
-    hippo_stack_manager_show_browser(hippo_app_get_stack(hippo_get_app()),
-                                     FALSE);
-    
     reply = dbus_message_new_method_return(message);
     return reply;
 }
@@ -1562,7 +1552,7 @@ on_get_song_props_reply(DBusPendingCall *pending,
             emit_song_changed_from_rb_message(dbus, reply);
         }
     } else if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_ERROR) {
-        hippo_dbus_debug_log_error("getSongProperties", reply);
+        debug_log_dbus_error("getSongProperties", reply);
     } else {
         g_warning("weird unknown reply type %d to get_song_props_reply",
             dbus_message_get_type(reply));
@@ -1855,7 +1845,7 @@ handle_message(DBusConnection     *connection,
     result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     dbus->in_dispatch = TRUE;
 
-    cache = hippo_app_get_data_cache(hippo_get_app());
+    cache = hippo_engine_app_get_data_cache(hippo_get_engine_app());
     xmpp_connection = hippo_data_cache_get_connection(cache);
 
     if (type == DBUS_MESSAGE_TYPE_METHOD_CALL) {
@@ -1892,6 +1882,8 @@ handle_message(DBusConnection     *connection,
                        /* JoinChat is the legacy name until we have an rpm built with new url handler */
                        strcmp(member, "JoinChat") == 0) {
                 reply = handle_show_chat_window(dbus, message);
+	    } else if (strcmp(member, "GetChatWindowState") == 0) {
+                reply = handle_get_chat_window_state(dbus, message);
 	    } else if (strcmp(member, "GetApplicationInfo") == 0) {
                 reply = handle_get_application_info(dbus, message);
 	    } else if (strcmp(member, "InstallApplication") == 0) {
@@ -1988,7 +1980,7 @@ handle_message(DBusConnection     *connection,
             handle_ql_song_started(dbus, message);
         }
     } else if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
-        hippo_dbus_debug_log_error("main connection handler", message);
+        debug_log_dbus_error("main connection handler", message);
     } else {
         /* g_debug("got message type %s\n", 
            dbus_message_type_to_string(type));    */

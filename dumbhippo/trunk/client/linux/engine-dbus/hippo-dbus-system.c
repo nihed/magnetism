@@ -7,7 +7,6 @@
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
 #include "hippo-dbus-system.h"
-#include "hippo-dbus-client.h"
 #include "main.h"
 
 static void      hippo_system_dbus_init                (HippoSystemDBus       *dbus);
@@ -84,6 +83,28 @@ propagate_dbus_error(GError **error, DBusError *derror)
         return FALSE;
     } else {
         return TRUE;
+    }
+}
+
+static void
+debug_log_dbus_error(const char   *where,
+                     DBusMessage  *message)
+{
+    if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
+        const char *error;
+        const char *text;
+        
+        error = dbus_message_get_error_name(message);
+        text = NULL;
+        if (dbus_message_get_args(message, NULL,
+                                  DBUS_TYPE_STRING, &text,
+                                  DBUS_TYPE_INVALID)) {
+            g_debug("Got error reply at %s %s '%s'",
+                    where, error ? error : "NULL", text ? text : "NULL");
+        } else {
+            g_debug("Got error reply at %s %s",
+                    where, error ? error : "NULL");
+        }
     }
 }
 
@@ -180,7 +201,7 @@ handle_message(DBusConnection     *connection,
             dbus = NULL;
         }
     } else if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
-        hippo_dbus_debug_log_error("main connection handler", message);
+        debug_log_dbus_error("main connection handler", message);
     } else {
         /* g_debug("got message type %s\n", 
            dbus_message_type_to_string(type));    */
