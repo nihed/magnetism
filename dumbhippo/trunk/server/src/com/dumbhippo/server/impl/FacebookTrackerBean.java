@@ -220,7 +220,9 @@ public class FacebookTrackerBean implements FacebookTracker {
 		    facebookAccount.setSessionKeyValid(true);	
 	    if (applicationEnabled != null)
 	        facebookAccount.setApplicationEnabled(applicationEnabled);
-	    if (applicationEnabled)
+	    // if you enabled Mugshot application on Facebook, you must have agreed to the Mugshot
+	    // terms of use there
+	    if (applicationEnabled != null && applicationEnabled)
 	    	facebookAccount.getExternalAccount().getAccount().setHasAcceptedTerms(true);
 	    
 		// make sure the sentiment is LOVE; there is currently no way to unset it from the user interface,
@@ -698,19 +700,19 @@ public class FacebookTrackerBean implements FacebookTracker {
 		// <fb:action> tag doesn't work inside <fb:visible-to-owner>,
 		// so we need to use the following barbaric methods to right align the 'Edit Account' action 
 		fbmlSb.append("<fb:wide>");	
-		for (int i=1; i<=37; i++ ) {
+		for (int i=1; i<=38; i++ ) {
 		    fbmlSb.append("&nbsp;");
 		}
 		fbmlSb.append("</fb:wide>");	
         		
 		fbmlSb.append("<fb:narrow>");	
-		for (int i=1; i<=9; i++ ) {
+		for (int i=1; i<=13; i++ ) {
 		    fbmlSb.append("&nbsp;");
 		}
 		fbmlSb.append("</fb:narrow>");
 	
 		fbmlSb.append("<fb:fbml version='1.1'><fb:visible-to-owner><a href='http://apps.facebook.com/" + applicationName +"?mugshot_tab=home' style='float:right;'>Edit Accounts</a>" +
-                      "| <a href='http://apps.facebook.com/" + applicationName +"?mugshot_tab=invite' style='float:right;'>Invite Friends</a>" +
+                      " | <a href='http://apps.facebook.com/" + applicationName +"?mugshot_tab=invite' style='float:right;'>Invite Friends</a>" +
 		              "</fb:visible-to-owner></fb:fbml></fb:subtitle>");
 
 		// add the accounts ribbon
