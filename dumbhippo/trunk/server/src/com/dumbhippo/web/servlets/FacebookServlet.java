@@ -144,7 +144,7 @@ public class FacebookServlet extends AbstractServlet {
 	        boolean signatureValid = FacebookSignatureUtil.verifySignature(facebookParams, secret);
 	        if (!signatureValid) {
 				errorMessage = "We could not verify Facebook information because the signature supplied for Facebook parameters was not valid.";           	
-	        } else if (facebookParams.get(FacebookParam.ADDED.toString()).toString().equals("1")) {
+	        } else if (facebookParams.get(FacebookParam.ADDED.toString()) != null && facebookParams.get(FacebookParam.ADDED.toString()).toString().equals("1")) {
 	        	// get the user who owns the related FacebookResource
 	            String sessionKey = facebookParams.get(FacebookParam.SESSION_KEY.toString()).toString();
 	            String facebookUserId = facebookParams.get(FacebookParam.USER.toString()).toString(); 
@@ -175,6 +175,31 @@ public class FacebookServlet extends AbstractServlet {
                         errorMessage = e.getMessage();		
     	            }
 		        }
+	        } else if (facebookParams.get("fb_sig_uninstall") != null && facebookParams.get("fb_sig_uninstall").toString().equals("1")) {
+                // we would get this request if the user uninstalls our application, but Facebook doesn't expect a response for it
+	        	// get the user who owns the related FacebookResource
+	            String sessionKey = facebookParams.get(FacebookParam.SESSION_KEY.toString()).toString();
+	            String facebookUserId = facebookParams.get(FacebookParam.USER.toString()).toString(); 
+	        	IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+	            FacebookTracker facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
+
+	            try {
+	        	    user = identitySpider.lookupUserByFacebookUserId(SystemViewpoint.getInstance(), facebookUserId);
+    	            try {
+    	                if (user != null) {
+		    	            userViewpoint = new UserViewpoint(user, Site.MUGSHOT);
+		    	        	// TODO: can change this into updateExistingFacebookAccount
+		    	            facebookTracker.updateOrCreateFacebookAccount(userViewpoint, sessionKey, facebookUserId, false);		    	            
+			            }
+    	            } catch (FacebookSystemException e) {
+                        errorMessage = e.getMessage();		
+    	            }
+		        } catch (NotFoundException e) {
+		        	// this means we did not have a resource for this Facebook user id in the system
+		        	logger.warn("Facebook tells us user {} uninstalled our application, but we did not have a resource for that user.", facebookUserId);
+		        }
+		        
+		        return null;
 	        }
 		}
 		
