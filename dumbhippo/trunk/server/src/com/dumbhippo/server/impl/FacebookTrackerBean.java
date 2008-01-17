@@ -706,7 +706,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		fbmlSb.append("</fb:wide>");	
         		
 		fbmlSb.append("<fb:narrow>");	
-		for (int i=1; i<=15; i++ ) {
+		for (int i=1; i<=55; i++ ) {
 		    fbmlSb.append("&nbsp;");
 		}
 		fbmlSb.append("</fb:narrow>");
