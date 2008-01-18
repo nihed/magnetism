@@ -9,13 +9,13 @@ typedef struct _DataClientQueryClosure DataClientQueryClosure;
 
 static void hippo_dbus_model_client_iface_init(DDMClientIface *iface);
 
-static void add_resource_to_message (HippoDBusModelClient *client,
-                                     DBusMessageIter      *resource_array_iter,
-                                     DDMDataResource      *resource,
-                                     DDMDataFetch         *fetch,
-                                     gboolean              indirect,
-                                     gboolean              is_notification,
-                                     GSList               *changed_properties);
+static void add_resource_to_message (HippoDBusModelClient     *client,
+                                     DDMClientNotificationSet *notification_set,
+                                     DBusMessageIter          *resource_array_iter,
+                                     DDMDataResource          *resource,
+                                     DDMDataFetch             *fetch,
+                                     gboolean                  indirect,
+                                     GSList                   *changed_properties);
 
 struct _HippoDBusModelClient {
     GObject parent;
@@ -303,35 +303,47 @@ add_feed_property_value_to_message(DBusMessageIter    *property_array_iter,
 }
 
 static void
-add_property_children_to_message(HippoDBusModelClient *client,
-                                 DBusMessageIter      *resource_array_iter,
-                                 DDMDataProperty      *property,
-                                 DDMDataFetch         *children)
+add_property_children_to_message(HippoDBusModelClient     *client,
+                                 DDMClientNotificationSet *notification_set,
+                                 DBusMessageIter          *resource_array_iter,
+                                 DDMDataProperty          *property,
+                                 DDMDataFetch             *children)
 {
     DDMDataValue value;
             
     ddm_data_property_get_value(property, &value);
     
     if (value.type == DDM_DATA_RESOURCE) {
-        add_resource_to_message(client, resource_array_iter, value.u.resource, children, TRUE, FALSE, NULL);
+        add_resource_to_message(client, notification_set, resource_array_iter, value.u.resource, children, TRUE, NULL);
     } else if (value.type == (DDM_DATA_RESOURCE | DDM_DATA_LIST)) {
         GSList *l;
         for (l = value.u.list; l; l = l->next)
-            add_resource_to_message(client, resource_array_iter, l->data, children, TRUE, FALSE, NULL);
+            add_resource_to_message(client, notification_set, resource_array_iter, l->data, children, TRUE, NULL);
     } else if (value.type == DDM_DATA_FEED && value.u.feed != NULL) {
         DDMFeedIter feed_iter;
         DDMDataResource *item_resource;
+        gint64 min_timestamp;
+        gint64 item_timestamp;
+
+        if (notification_set != NULL)
+            min_timestamp = ddm_client_notification_set_get_feed_timestamp(notification_set, value.u.feed);
+        else
+            min_timestamp = 0;
 
         ddm_feed_iter_init(&feed_iter, value.u.feed);
-        while (ddm_feed_iter_next(&feed_iter, &item_resource, NULL)) {
-            add_resource_to_message(client, resource_array_iter, item_resource, children, TRUE, FALSE, NULL);
+        while (ddm_feed_iter_next(&feed_iter, &item_resource, &item_timestamp)) {
+            if (item_timestamp < min_timestamp)
+                break;
+                
+            add_resource_to_message(client, notification_set, resource_array_iter, item_resource, children, TRUE, NULL);
         }
     }
 }
 
 static void
-add_property_to_message(DBusMessageIter *property_array_iter,
-                        DDMDataProperty *property)
+add_property_to_message(DBusMessageIter          *property_array_iter,
+                        DDMDataProperty          *property,
+                        DDMClientNotificationSet *notification_set)
 {
     DDMDataCardinality cardinality;
     DDMDataValue value;
@@ -361,11 +373,20 @@ add_property_to_message(DBusMessageIter *property_array_iter,
             DDMFeedIter feed_iter;
             DDMDataResource *item_resource;
             gint64 item_timestamp;
+            gint64 min_timestamp;
             gboolean first;
 
+            if (notification_set != NULL)
+                min_timestamp = ddm_client_notification_set_get_feed_timestamp(notification_set, value.u.feed);
+            else
+                min_timestamp = 0;
+
             ddm_feed_iter_init(&feed_iter, value.u.feed);
-            first = TRUE;
+            first = min_timestamp == 0;
             while (ddm_feed_iter_next(&feed_iter, &item_resource, &item_timestamp)) {
+                if (item_timestamp < min_timestamp)
+                    break;
+                
                 add_feed_property_value_to_message(property_array_iter, property_qname,
                                                    first ? DDM_DATA_UPDATE_REPLACE : DDM_DATA_UPDATE_ADD,
                                                    item_resource, item_timestamp);
@@ -380,13 +401,13 @@ add_property_to_message(DBusMessageIter *property_array_iter,
 }
 
 static void
-add_resource_to_message(HippoDBusModelClient *client,
-                        DBusMessageIter      *resource_array_iter,
-                        DDMDataResource      *resource,
-                        DDMDataFetch         *fetch,
-                        gboolean              indirect,
-                        gboolean              is_notification,
-                        GSList               *changed_properties)
+add_resource_to_message(HippoDBusModelClient     *client,
+                        DDMClientNotificationSet *notification_set,
+                        DBusMessageIter          *resource_array_iter,
+                        DDMDataResource          *resource,
+                        DDMDataFetch             *fetch,
+                        gboolean                  indirect,
+                        GSList                   *changed_properties)
 {
     DDMDataFetchIter fetch_iter;
     DataClientConnection *connection;
@@ -404,7 +425,7 @@ add_resource_to_message(HippoDBusModelClient *client,
         g_hash_table_insert(client->connections, (char *)ddm_data_resource_get_resource_id(resource), connection);
     }
 
-    if (is_notification) {
+    if (notification_set != NULL && !indirect) {
         new_fetch = ddm_data_fetch_ref(fetch);
     } else {
         if (connection->fetch)
@@ -438,10 +459,10 @@ add_resource_to_message(HippoDBusModelClient *client,
             if (!children)
                 continue;
             
-            if (is_notification && g_slist_find(changed_properties, ddm_data_property_get_qname(property)) == NULL)
+            if (notification_set != NULL && !indirect && g_slist_find(changed_properties, ddm_data_property_get_qname(property)) == NULL)
                 continue;
             
-            add_property_children_to_message(client, resource_array_iter, property, children);
+            add_property_children_to_message(client, notification_set, resource_array_iter, property, children);
         }
         ddm_data_fetch_iter_clear(&fetch_iter);
     }
@@ -464,10 +485,10 @@ add_resource_to_message(HippoDBusModelClient *client,
 
             ddm_data_fetch_iter_next(&fetch_iter, &property, NULL);
 
-            if (is_notification && g_slist_find(changed_properties, ddm_data_property_get_qname(property)) == NULL)
+            if (notification_set != NULL && !indirect && g_slist_find(changed_properties, ddm_data_property_get_qname(property)) == NULL)
                 continue;
             
-            add_property_to_message(&property_array_iter, property);
+            add_property_to_message(&property_array_iter, property, notification_set);
         }
         
         ddm_data_fetch_iter_clear(&fetch_iter);
@@ -531,10 +552,11 @@ hippo_dbus_model_client_begin_notification (DDMClient *client)
 }
 
 static void
-hippo_dbus_model_client_notify (DDMClient       *client,
-                                DDMDataResource *resource,
-                                GSList          *changed_properties,
-                                gpointer         notification_data)
+hippo_dbus_model_client_notify (DDMClient                *client,
+                                DDMClientNotificationSet *notification_set,
+                                DDMDataResource          *resource,
+                                GSList                   *changed_properties,
+                                gpointer                  notification_data)
 {
     HippoDBusModelClient *dbus_client = HIPPO_DBUS_MODEL_CLIENT(client);
     DataClientConnection *client_connection = g_hash_table_lookup(dbus_client->connections,
@@ -550,10 +572,10 @@ hippo_dbus_model_client_notify (DDMClient       *client,
 
     dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "(ssba(ssyyyv))", &array_iter);
 
-    add_resource_to_message(dbus_client, &array_iter,
+    add_resource_to_message(dbus_client, notification_set, &array_iter,
                             resource, client_connection->fetch,
                             FALSE,
-                            TRUE, changed_properties);
+                            changed_properties);
     
     dbus_message_iter_close_container(&iter, &array_iter);
 
@@ -639,7 +661,7 @@ on_query_success (GSList  *results,
     dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "(ssba(ssyyyv))", &array_iter);
 
     for (l = results; l; l = l->next) {
-        add_resource_to_message(closure->client, &array_iter, l->data, closure->fetch, FALSE, FALSE, NULL);
+        add_resource_to_message(closure->client, NULL, &array_iter, l->data, closure->fetch, FALSE, NULL);
     }
     
     dbus_message_iter_close_container(&iter, &array_iter);

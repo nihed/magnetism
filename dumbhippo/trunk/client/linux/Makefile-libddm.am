@@ -46,6 +46,7 @@ LIBDDM_SOURCEFILES =						\
 	$(COMMONSRCDIR)/ddm/ddm-client.c			\
 	$(COMMONSRCDIR)/ddm/ddm-client-notification.c		\
 	$(COMMONSRCDIR)/ddm/ddm-client-notification.h		\
+	$(COMMONSRCDIR)/ddm/ddm-client-notification-internal.h  \
 	$(COMMONSRCDIR)/ddm/ddm-condition-parser.c		\
 	$(COMMONSRCDIR)/ddm/ddm-condition.c			\
 	$(COMMONSRCDIR)/ddm/ddm-data-fetch.c			\

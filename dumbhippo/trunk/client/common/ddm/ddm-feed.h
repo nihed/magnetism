@@ -58,6 +58,27 @@ gboolean ddm_feed_remove_item (DDMFeed         *feed,
 void     ddm_feed_clear       (DDMFeed         *feed);
 gboolean ddm_feed_is_empty    (DDMFeed          *feed);
 
+/* We handle keeping track of what feed items need to be notified to
+ * downstream clients very simply ... we just keep a single item
+ * timestamp to track what items might not have been sent to
+ * clients. This means that we'll occasionally oversend updates (in
+ * particular, we have to resend the entire feed on any removal) but
+ * we expects to have mostly adds at the end of the feed, and keeping
+ * a log is a) more complicated b) and poses a problem if nobody is
+ * consuming and clearing the log. (Which will be the case for the
+ * data model when used in an application instead of in the
+ * engine... there is no "downstream' to the applications.)
+ */
+
+/* Gets the minimum timestamp for items that need to be resent for a
+ * notification. A timestamp of 0 means "resend everything", so the
+ * first property update should be sent as a REPLACE not an ADD.
+ */
+gint64 ddm_feed_get_notify_timestamp   (DDMFeed *feed);
+
+/* Call when all notifications have been sent out */
+void   ddm_feed_reset_notify_timestamp (DDMFeed *feed);
+
 void     ddm_feed_iter_init   (DDMFeedIter      *iter,
                                DDMFeed          *feed);
 gboolean ddm_feed_iter_next   (DDMFeedIter      *iter,

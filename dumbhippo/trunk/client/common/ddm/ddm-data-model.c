@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "ddm-client-notification-internal.h"
 #include "ddm-data-model-internal.h"
 #include "ddm-data-model-backend.h"
 #include "ddm-data-resource-internal.h"
@@ -276,10 +277,12 @@ debug_dump_query(DDMDataQuery *query)
 {
     const char *id_string = ddm_data_query_get_id_string(query);
     DDMQName *qname = ddm_data_query_get_qname(query);
+    const char *fetch = ddm_data_query_get_fetch_string(query);
     
     g_debug("%s: Sending to server", id_string);
     g_debug("%s: uri=%s#%s", id_string, qname->uri, qname->name);
-    g_debug("%s: fetch=%s", id_string, ddm_data_query_get_fetch_string(query));
+    if (fetch != NULL)
+        g_debug("%s: fetch=%s", id_string, ddm_data_query_get_fetch_string(query));
     g_hash_table_foreach(ddm_data_query_get_params(query), dump_param_foreach, query);
 }
 
@@ -762,7 +765,7 @@ data_model_flush_notifications(DDMDataModel *model)
     g_hash_table_remove_all(model->changed_resources);
 
     _ddm_client_notification_set_add_work_items(notification_set);
-    _ddm_client_notification_set_unref(notification_set);
+    ddm_client_notification_set_unref(notification_set);
 }
 
 static void

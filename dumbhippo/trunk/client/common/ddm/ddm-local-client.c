@@ -53,10 +53,11 @@ ddm_local_client_begin_notification (DDMClient *client)
 }
 
 static void
-ddm_local_client_notify (DDMClient       *client,
-                         DDMDataResource *resource,
-                         GSList          *changed_properties,
-                         gpointer         notification_data)
+ddm_local_client_notify (DDMClient                *client,
+                         DDMClientNotificationSet *notification_set,
+                         DDMDataResource          *resource,
+                         GSList                   *changed_properties,
+                         gpointer                  notification_data)
 {
     _ddm_data_resource_send_local_notifications(resource, changed_properties);
 }

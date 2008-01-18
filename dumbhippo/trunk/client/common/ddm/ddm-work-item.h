@@ -4,6 +4,7 @@
 #define __DDM_WORK_ITEM_H__
 
 #include "ddm-client.h"
+#include "ddm-client-notification.h"
 #include "ddm-data-fetch.h"
 #include "ddm-data-model.h"
 
@@ -21,8 +22,9 @@ G_BEGIN_DECLS
 
 typedef struct _DDMWorkItem DDMWorkItem;
 
-DDMWorkItem *_ddm_work_item_notify_client_new (DDMDataModel    *model,
-					       DDMClient       *client);
+DDMWorkItem *_ddm_work_item_notify_client_new (DDMDataModel             *model,
+                                               DDMClientNotificationSet *notification_set,
+					       DDMClient                *client);
 
 void _ddm_work_item_notify_client_add (DDMWorkItem     *item,
 				       DDMDataResource *resource,
