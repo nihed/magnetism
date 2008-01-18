@@ -84,10 +84,18 @@ public class XmppFetchVisitor implements FetchVisitor {
 	
 	private Element addPropertyElement(DMPropertyHolder propertyHolder, boolean incremental) {
 		Element element = currentResourceElement.addElement(createQName(propertyHolder.getName(), propertyHolder.getNameSpace()));
+		boolean seen = seenProperties.contains(propertyHolder);
 		
-		if (incremental || seenProperties.contains(propertyHolder)) {
+		if (incremental || seen) {
 			element.addAttribute(UPDATE_QNAME, "add");
-		} else {
+		} 
+		
+		if (!seen) {
+			// In the 'incremental' case, where we are sending additional feed items, we already
+			// sent the type with the initial 'clear', but we may not have sent the default children
+			// yet. For simplicity, we just send both for the first time we reference a property
+			// within a single resource.
+			
 			element.addAttribute(TYPE_QNAME, propertyHolder.getTypeString());
 			if (propertyHolder.getDefaultInclude()) {
 				String defaultChildren = propertyHolder.getDefaultChildrenString();
