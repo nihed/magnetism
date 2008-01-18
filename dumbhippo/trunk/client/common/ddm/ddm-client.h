@@ -10,6 +10,7 @@
 #define __DDM_CLIENT_H__
 
 #include <ddm/ddm-data-resource.h>
+#include <ddm/ddm-client-notification.h>
 #include <glib-object.h>
 
 G_BEGIN_DECLS
@@ -38,10 +39,11 @@ struct _DDMClientIface
 
     /* Called for each resource that has changed
      */
-    void     (* notify)             (DDMClient       *client,
-                                     DDMDataResource *resource,
-                                     GSList          *changed_properties,
-                                     gpointer         notification_data);
+    void     (* notify)             (DDMClient                *client,
+                                     DDMClientNotificationSet *notification_set,
+                                     DDMDataResource          *resource,
+                                     GSList                   *changed_properties,
+                                     gpointer                  notification_data);
 
     /* This notification is all done, send it off
      */
@@ -53,6 +55,7 @@ GType ddm_client_get_type(void) G_GNUC_CONST;
 
 gpointer ddm_client_begin_notification (DDMClient       *client);
 void     ddm_client_notify             (DDMClient       *client,
+                                        DDMClientNotificationSet *notification_set,
                                         DDMDataResource *resource,
                                         GSList          *changed_properties,
                                         gpointer         notification_data);

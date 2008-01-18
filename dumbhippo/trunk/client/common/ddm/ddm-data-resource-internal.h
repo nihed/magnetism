@@ -37,6 +37,8 @@ void _ddm_data_resource_update_rule_properties(DDMDataResource *resource);
 void _ddm_data_resource_resolve_notifications (DDMDataResource          *resource,
                                                DDMClientNotificationSet *notification_set);
 
+void _ddm_data_resource_reset_notify_timestamps (DDMDataResource *resource);
+
 void _ddm_data_resource_dump(DDMDataResource *resource);
 
 G_END_DECLS

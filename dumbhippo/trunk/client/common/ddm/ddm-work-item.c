@@ -26,6 +26,7 @@ struct _DDMWorkItem {
 
     union {
         struct {
+            DDMClientNotificationSet *notification_set;
             DDMClient *client;
             GHashTable *resources;
         } notify;
@@ -63,8 +64,9 @@ work_item_notify_resource_free (WorkItemNotifyResource *notify_resource)
 }
 
 DDMWorkItem *
-_ddm_work_item_notify_client_new (DDMDataModel *model,
-                                  DDMClient    *client)
+_ddm_work_item_notify_client_new (DDMDataModel             *model,
+                                  DDMClientNotificationSet *notification_set,
+                                  DDMClient                *client)
 {
     DDMWorkItem *item = g_new0(DDMWorkItem, 1);
     item->refcount = 1;
@@ -72,6 +74,7 @@ _ddm_work_item_notify_client_new (DDMDataModel *model,
     item->type = ITEM_NOTIFY;
     item->min_serial = -1;
 
+    item->u.notify.notification_set = ddm_client_notification_set_ref(notification_set);
     item->u.notify.client = g_object_ref(client);
     item->u.notify.resources = g_hash_table_new_full(g_direct_hash, NULL,
                                                      NULL,
@@ -148,6 +151,7 @@ _ddm_work_item_unref (DDMWorkItem *item)
         case ITEM_NOTIFY:
             g_object_unref(item->u.notify.client);
             g_hash_table_destroy(item->u.notify.resources);
+            ddm_client_notification_set_unref(item->u.notify.notification_set);
             break;
         case ITEM_QUERY_RESPONSE:
             break;
@@ -304,6 +308,7 @@ notify_process_foreach(gpointer key,
     NotifyProcessClosure *closure = data;
 
     ddm_client_notify(closure->item->u.notify.client,
+                      closure->item->u.notify.notification_set,
                       notify_resource->resource,
                       notify_resource->changed_properties,
                       closure->notification_data);

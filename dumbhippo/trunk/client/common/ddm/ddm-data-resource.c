@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "ddm-client-notification-internal.h"
 #include "ddm-data-fetch.h"
 #include "ddm-feed.h"
 #include "ddm-data-model-internal.h"
@@ -2233,20 +2234,44 @@ _ddm_data_resource_update_rule_properties(DDMDataResource *resource)
     }
 }
 
+static void
+add_to_notification_set(DDMDataResource          *resource,
+                        DDMClientNotificationSet *notification_set,
+                        DDMClient                *client,
+                        DDMDataFetch             *fetch,
+                        GSList                   *changed_properties)
+{
+    GSList *l;
+    
+    _ddm_client_notification_set_add(notification_set,
+                                     resource,
+                                     client,
+                                     fetch,
+                                     changed_properties);
+
+    for (l = resource->properties; l; l = l->next) {
+        DDMDataProperty *property = l->data;
+        if (property->value.type == DDM_DATA_FEED && property->value.u.feed != NULL &&
+            g_slist_find(changed_properties, property->qname) != NULL)
+            _ddm_client_notification_set_add_feed_timestamp(notification_set, property->value.u.feed,
+                                                            ddm_feed_get_notify_timestamp(property->value.u.feed));
+    }
+}
+
 void
 _ddm_data_resource_resolve_notifications (DDMDataResource          *resource,
                                           DDMClientNotificationSet *notification_set)
 {
     GSList *l;
     
+    
     for (l = resource->clients; l; l = l->next) {
         DataClient *data_client = l->data;
 
-        _ddm_client_notification_set_add(notification_set,
-                                         resource,
-                                         data_client->client,
-                                         data_client->fetch,
-                                         resource->changed_properties);
+        add_to_notification_set(resource, notification_set,
+                                data_client->client,
+                                data_client->fetch,
+                                resource->changed_properties);
     }
 
     if (data_resource_needs_local_notifications(resource, resource->changed_properties)) {
@@ -2257,13 +2282,19 @@ _ddm_data_resource_resolve_notifications (DDMDataResource          *resource,
          *
          * See also comment in ddm-data-query.c:mark_received_fetches()
          */
-        _ddm_client_notification_set_add(notification_set,
-                                         resource,
-                                         _ddm_data_model_get_local_client(resource->model),
-                                         resource->received_fetch,
-                                         resource->changed_properties);
+        add_to_notification_set(resource, notification_set,
+                                _ddm_data_model_get_local_client(resource->model),
+                                resource->received_fetch,
+                                resource->changed_properties);
+        
     }
 
     g_slist_free(resource->changed_properties);
     resource->changed_properties = NULL;
+    
+    for (l = resource->properties; l; l = l->next) {
+        DDMDataProperty *property = l->data;
+        if (property->value.type == DDM_DATA_FEED && property->value.u.feed != NULL)
+            ddm_feed_reset_notify_timestamp(property->value.u.feed);
+    }
 }

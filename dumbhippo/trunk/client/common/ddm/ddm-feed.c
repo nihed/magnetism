@@ -16,6 +16,7 @@ struct _DDMFeed {
 
     GList *items;
     GHashTable *nodes_by_resource;
+    gint notify_timestamp;
 };
 
 struct _DDMFeedClass {
@@ -47,6 +48,7 @@ ddm_feed_init(DDMFeed *feed)
 {
     feed->items = NULL;
     feed->nodes_by_resource = g_hash_table_new(g_direct_hash, NULL);
+    feed->notify_timestamp = 0;
 }
 
 static void
@@ -167,6 +169,8 @@ ddm_feed_add_item (DDMFeed         *feed,
         g_signal_emit(feed, signals[ITEM_ADDED], 0, resource, timestamp);
     }
 
+    feed->notify_timestamp = MIN(feed->notify_timestamp, timestamp);
+
     return TRUE;
 }
 
@@ -192,6 +196,8 @@ ddm_feed_remove_item (DDMFeed         *feed,
     g_signal_emit(feed, signals[ITEM_REMOVED], 0, item->resource);
     ddm_data_resource_unref(item->resource);
     g_slice_free(DDMFeedItem, item);
+
+    feed->notify_timestamp = 0;
 
     return TRUE;
 }
@@ -227,6 +233,8 @@ ddm_feed_clear (DDMFeed *feed)
     g_return_if_fail(DDM_IS_FEED(feed));
 
     ddm_feed_clear_internal(feed, TRUE);
+    
+    feed->notify_timestamp = 0;
 }
 
 gboolean
@@ -235,6 +243,22 @@ ddm_feed_is_empty (DDMFeed *feed)
     g_return_val_if_fail(DDM_IS_FEED(feed), TRUE);
 
     return feed->items == NULL;
+}
+
+gint64
+ddm_feed_get_notify_timestamp (DDMFeed *feed)
+{
+    g_return_val_if_fail(DDM_IS_FEED(feed), G_MAXINT64);
+    
+    return feed->notify_timestamp;
+}
+
+void
+ddm_feed_reset_notify_timestamp (DDMFeed *feed)
+{
+    g_return_if_fail(DDM_IS_FEED(feed));
+    
+    feed->notify_timestamp = G_MAXINT64;
 }
 
 void

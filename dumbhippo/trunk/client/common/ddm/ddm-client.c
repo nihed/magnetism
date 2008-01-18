@@ -24,14 +24,15 @@ ddm_client_begin_notification (DDMClient *client)
 }
 
 void
-ddm_client_notify (DDMClient       *client,
-		   DDMDataResource *resource,
-		   GSList          *changed_properties,
-		   gpointer         notification_data)
+ddm_client_notify (DDMClient                *client,
+                   DDMClientNotificationSet *notification_set,
+		   DDMDataResource          *resource,
+		   GSList                   *changed_properties,
+		   gpointer                  notification_data)
 {
     g_return_if_fail(DDM_IS_CLIENT(client));
 
-    DDM_CLIENT_GET_IFACE(client)->notify(client, resource, changed_properties, notification_data);
+    DDM_CLIENT_GET_IFACE(client)->notify(client, notification_set, resource, changed_properties, notification_data);
 }
 
 void
