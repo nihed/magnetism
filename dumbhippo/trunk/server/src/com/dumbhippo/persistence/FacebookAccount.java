@@ -36,7 +36,7 @@ public class FacebookAccount extends DBUnique {
 	private Set<FacebookAlbumData> albums;
 	// with this timestamp, we don't need to have an albumsPrimed flag
 	private long albumsModifiedTimestamp;
-	private boolean applicationEnabled;
+	private Boolean applicationEnabled;
 	
 	protected FacebookAccount() {}
 	
@@ -59,7 +59,7 @@ public class FacebookAccount extends DBUnique {
 		this.taggedPhotosPrimed = false;
 		this.albums = new HashSet<FacebookAlbumData>();	
 		this.albumsModifiedTimestamp = -1;
-		this.applicationEnabled = false;
+		this.applicationEnabled = null;
 	}
 	
 	@Column(nullable=false, unique=true)
@@ -281,12 +281,12 @@ public class FacebookAccount extends DBUnique {
 		this.albumsModifiedTimestamp = albumsModifiedTimestamp;
 	}
 
-	@Column(nullable=false)
-	public boolean isApplicationEnabled() {
+	@Column(nullable=true)
+	public Boolean isApplicationEnabled() {
 		return applicationEnabled;
 	}
 
-	public void setApplicationEnabled(boolean applicationEnabled) {
+	public void setApplicationEnabled(Boolean applicationEnabled) {
 		this.applicationEnabled = applicationEnabled;
 	}
 	

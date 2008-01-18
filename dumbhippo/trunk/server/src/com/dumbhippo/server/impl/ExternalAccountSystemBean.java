@@ -365,6 +365,10 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	public void onApplicationUsageToggled(UserViewpoint viewpoint) {
 		// We aren't interested in this, just part of a listener iface we're using
 	}
+
+	public void onFacebookApplicationEnabled(UserViewpoint viewpoint) {
+		// We aren't interested in this, just part of a listener iface we're using
+	}
 	
 	public void validateAll() {
 		logger.info("Administrator kicked off validation of all ExternalAccount rows in the database");

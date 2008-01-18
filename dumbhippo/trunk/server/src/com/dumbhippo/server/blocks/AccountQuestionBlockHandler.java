@@ -16,6 +16,8 @@ public interface AccountQuestionBlockHandler extends BlockHandler, AccountStatus
 	
 	public void createApplicationUsageBlocks() throws RetryException;
 	
+	public void createFacebookApplicationBlocks() throws RetryException;
+	
 	public class BadResponseCodeException extends Exception {
 		private static final long serialVersionUID = 1L;
 

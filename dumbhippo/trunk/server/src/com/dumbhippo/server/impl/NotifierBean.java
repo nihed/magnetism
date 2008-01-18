@@ -222,6 +222,12 @@ public class NotifierBean implements Notifier {
 		}
 	}
 
+	public void onFacebookApplicationEnabled(UserViewpoint viewpoint) {
+		for (AccountStatusListener l : getListeners(AccountStatusListener.class)) {
+			l.onFacebookApplicationEnabled(viewpoint);
+		}
+	}
+	
 	public void onGroupCreated(Group group) {
 		for (GroupCreationListener l : getListeners(GroupCreationListener.class)) {
 			l.onGroupCreated(group);
