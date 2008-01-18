@@ -16,11 +16,13 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.dm.BlockDMO;
 import com.dumbhippo.server.dm.BlockDMOKey;
@@ -39,6 +41,9 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 
 	@EJB
 	protected AccountSystem accountSystem;
+	
+	@EJB
+	protected FacebookSystem facebookSystem;
 	
 	public BlockKey getKey(User user, AccountQuestion question) {
 		return new BlockKey(BlockType.ACCOUNT_QUESTION, user.getGuid(), null, question.ordinal());
@@ -63,10 +68,31 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 			return "no";
 	}
 
+	private String getFacebookApplicationAnswer(AccountQuestionBlockView blockView) {
+		Viewpoint viewpoint = blockView.getViewpoint();
+		Boolean applicationEnabled = null;
+		
+		if (viewpoint instanceof UserViewpoint)	
+			try {
+			    applicationEnabled = 
+				    facebookSystem.lookupFacebookAccount(viewpoint, ((UserViewpoint)viewpoint).getViewer()).isApplicationEnabled();
+			} catch (NotFoundException e) {
+				logger.warn("Did not find a FacebookAccount for user {} when checking their applicationEnabled status");
+			}
+
+		if (applicationEnabled == null)
+			return null;
+		else if (applicationEnabled)
+			return "yes";
+		else
+			return "no";
+	}
+	
 	@Override
 	protected void populateBlockViewImpl(AccountQuestionBlockView blockView) throws BlockNotVisibleException {
 		Viewpoint viewpoint = blockView.getViewpoint();
 		String answer = null;
+		String moreParam = null;
 		
 		if (!(viewpoint instanceof SystemViewpoint || viewpoint.isOfUser(getData1User(blockView.getBlock()))))
 			throw new BlockNotVisibleException("AccountQuestion block only visible to the user it was sent to");
@@ -74,10 +100,15 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 		switch (blockView.getQuestion()) {
 		case APPLICATION_USAGE:
 			answer = getApplicationUsageAnswer(blockView);
+			moreParam = "";
 			break;
-		}
+		case FACEBOOK_APPLICATION:
+			answer = getFacebookApplicationAnswer(blockView);
+			moreParam = facebookSystem.getApiKey();
+			break;
+	    }
 		
-		blockView.populate(answer);
+		blockView.populate(answer, moreParam);
 	}
 
 	public Set<Group> getInterestedGroups(Block block) {
@@ -103,6 +134,15 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 		}
 	}
 	
+	public void createFacebookApplicationBlocks() throws RetryException {
+		long when = System.currentTimeMillis();
+		for (FacebookAccount facebookAccount : facebookSystem.getAllAccounts()) {
+			if (facebookAccount.isApplicationEnabled() == null) {
+			    Block block = stacker.getOrCreateBlock(getKey(facebookAccount.getExternalAccount().getAccount().getOwner(), AccountQuestion.FACEBOOK_APPLICATION));
+			    stacker.stack(block, when, null, false, StackReason.BLOCK_UPDATE);
+			}
+		}
+	}
 
 	public void onAccountAdminDisabledToggled(Account account) {
 		// Don't care
@@ -121,6 +161,15 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 			// No block, nothing to do
 		}
 	}
+	
+	public void onFacebookApplicationEnabled(UserViewpoint viewpoint) {
+		try {
+			Block block = stacker.queryBlock(getKey(viewpoint.getViewer(), AccountQuestion.FACEBOOK_APPLICATION));
+			questionAnswered(viewpoint, block);
+		} catch (NotFoundException e) {
+			// No block, nothing to do
+		}		
+	}
 
 	public void onMusicSharingToggled(UserViewpoint viewpoint) {
 		// Don't care
@@ -133,6 +182,18 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 			identitySpider.setApplicationUsageEnabled(viewpoint, false);
 		else
 			throw new BadResponseCodeException("Bad response code in response to APPLICATION_USAGE question");
+	}
+	
+	private void handleFacebookApplicationResponse(UserViewpoint viewpoint, String response) throws BadResponseCodeException {
+		// we handle a positive response in FacebookTrackerBean when the person adds the application
+		if (response.equals("no"))
+			try {
+				facebookSystem.lookupFacebookAccount(viewpoint, ((UserViewpoint)viewpoint).getViewer()).setApplicationEnabled(false);
+			} catch (NotFoundException e) {
+				logger.warn("Did not find a FacebookAccount for user {} when trying to set their applicationEnabled status to false");
+			}
+		else
+			throw new BadResponseCodeException("Bad response code in response to FACEBOOK_APPLICATION question");
 	}
 	
 	public void handleResponse(UserViewpoint viewpoint, Guid blockId, String response) throws NotFoundException, BadResponseCodeException {
@@ -160,6 +221,8 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 		case APPLICATION_USAGE:
 			handleApplicationUsageResponse(viewpoint, response);
 			break;
+		case FACEBOOK_APPLICATION:
+			handleFacebookApplicationResponse(viewpoint, response);
 		}
 	}
 	

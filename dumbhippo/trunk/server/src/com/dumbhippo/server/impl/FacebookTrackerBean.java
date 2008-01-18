@@ -227,8 +227,10 @@ public class FacebookTrackerBean implements FacebookTracker {
 	        facebookAccount.setApplicationEnabled(applicationEnabled);
 	    // if you enabled Mugshot application on Facebook, you must have agreed to the Mugshot
 	    // terms of use there
-	    if (applicationEnabled != null && applicationEnabled)
+	    if (applicationEnabled != null && applicationEnabled) {
 	    	facebookAccount.getExternalAccount().getAccount().setHasAcceptedTerms(true);
+	        notifier.onFacebookApplicationEnabled(viewpoint);
+	    }
 	    
 		// make sure the sentiment is LOVE; there is currently no way to unset it from the user interface,
 		// but we should allow changing the sentiment to HATE or at least INDIFFERENT in the future
@@ -241,7 +243,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		// even if applicationEnabled is null, which means the user logged in to Facebook on the Mugshot account
 		// or person page, we might as well update the FBML in case they added new accounts
 		// TODO: call updateFbmlForUser when new external accounts are added
-		if (facebookAccount.isApplicationEnabled()) {
+		if (facebookAccount.isApplicationEnabled() != null && facebookAccount.isApplicationEnabled()) {
 			final User user = viewpoint.getViewer();
 		    TxUtils.runOnCommit(new Runnable() {
 			    public void run() {

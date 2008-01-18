@@ -138,6 +138,10 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 	public void onApplicationUsageToggled(UserViewpoint viewpoint) {
 		// We aren't interested in this, just part of a listener iface we're using
 	}
+
+	public void onFacebookApplicationEnabled(UserViewpoint viewpoint) {
+		// We aren't interested in this, just part of a listener iface we're using
+	}
 	
 	public void onTrackPlayed(User user, Track track, Date when) {
 		Block block = stacker.stack(getKey(user), when.getTime(), user, false, StackReason.BLOCK_UPDATE);

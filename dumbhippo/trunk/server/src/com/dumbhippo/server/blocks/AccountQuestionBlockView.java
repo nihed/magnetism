@@ -8,6 +8,7 @@ import com.dumbhippo.server.views.Viewpoint;
 public class AccountQuestionBlockView extends BlockView {
 	private AccountQuestion question;
 	String answer;
+	String moreParam;
 	
 	public AccountQuestionBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
 		super(viewpoint, block, ubd, participated);
@@ -24,8 +25,9 @@ public class AccountQuestionBlockView extends BlockView {
 		}
 	}
 	
-	public void populate(String answer) {
+	public void populate(String answer, String moreParam) {
 		this.answer = answer;
+		this.moreParam = moreParam;
 		
 		setPopulated(true);
 	}
@@ -46,7 +48,7 @@ public class AccountQuestionBlockView extends BlockView {
 
 	@Override
 	public String getBlockSummaryLink() {
-		return getQuestion().getMoreLink();
+		return getQuestion().getMoreLink(moreParam);
 	}
 
 	@Override
@@ -63,7 +65,7 @@ public class AccountQuestionBlockView extends BlockView {
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.openElement("accountQuestion",
 							"answer", answer,
-							"moreLink", question.getMoreLink());
+							"moreLink", question.getMoreLink(moreParam));
 		builder.appendTextNode("title", question.getTitle());
 		builder.appendTextNode("description", question.getDescription(answer));
 		
@@ -87,5 +89,14 @@ public class AccountQuestionBlockView extends BlockView {
 
 	public String getAnswer() {
 		return answer;
+	}
+	
+	public String getMoreParam() {
+		return moreParam;
+	}
+	
+	@Override
+	public String getPrivacyTip() {
+		return "Private: This update can only be seen by you.";
 	}
 }

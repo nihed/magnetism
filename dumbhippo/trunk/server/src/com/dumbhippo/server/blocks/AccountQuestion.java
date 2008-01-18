@@ -35,13 +35,46 @@ public enum AccountQuestion {
 		}
 		
 		@Override
-		public String getMoreLink() {
+		public String getMoreLink(String moreParam) {
 			return "/applications";
+		}
+	},
+	FACEBOOK_APPLICATION {
+		@Override
+		public String getTitle() {
+			return "Check out Mugshot Application on Facebook";
+		}
+		
+		@Override
+		public String getDescription(String answer) {
+			if ("yes".equals(answer))
+				return 
+					"Thank you for adding Mugshot application on Facebook!";		
+			else if ("no".equals(answer))
+				return 
+					"You can find the Mugshot application on Facebook in the future by browsing " +
+					"for it in the Facebook application directory.";
+			else
+				return 
+					"We now have a Mugshot application for Facebook that displays your public Mugshot " +
+					"activity on your Facebook profile page.";
+		}
+		
+		@Override
+		public AccountQuestionButton[] getButtons() {
+			return new AccountQuestionButton[] {
+				new AccountQuestionButton("No, thanks", "no")
+			};
+		}
+		
+		@Override
+		public String getMoreLink(String moreParam) {
+			return "http://www.facebook.com/add.php?api_key=" + moreParam;
 		}
 	};
 	
 	abstract public String getTitle();
 	abstract public String getDescription(String answer);
 	abstract public AccountQuestionButton[] getButtons();
-	abstract public String getMoreLink();
+	abstract public String getMoreLink(String moreParam);
 }
