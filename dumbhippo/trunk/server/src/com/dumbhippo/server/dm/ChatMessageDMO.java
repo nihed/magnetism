@@ -44,7 +44,7 @@ public abstract class ChatMessageDMO extends DMObject<ChatMessageKey> {
 		return null;
 	}
 
-	@DMProperty(defaultInclude=true)
+	@DMProperty(defaultInclude=true, defaultChildren="+")
 	public UserDMO getSender() {
 		return session.findUnchecked(UserDMO.class, message.getFromUser().getGuid());
 	}
