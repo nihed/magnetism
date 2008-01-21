@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
@@ -40,6 +41,7 @@ import com.dumbhippo.services.caches.FlickrPhotosetPhotosCache;
 import com.dumbhippo.services.caches.FlickrUserPhotosCache;
 import com.dumbhippo.services.caches.FlickrUserPhotosetsCache;
 import com.dumbhippo.services.caches.WebServiceCache;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateStatus> implements FlickrUpdater {
@@ -287,16 +289,20 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 
 		@Override
 		protected PollResult execute() throws Exception {
-			boolean changed = false;
-			FlickrUpdater proxy = EJBUtil.defaultLookup(FlickrUpdater.class);
 			FlickrUserPhotosCache userPhotosCache = CacheFactoryBean.defaultLookup(FlickrUserPhotosCache.class);
 			FlickrUserPhotosetsCache userPhotosetsCache = CacheFactoryBean.defaultLookup(FlickrUserPhotosetsCache.class);
 			
-			FlickrPhotosView photosView = userPhotosCache.getSync(flickrId, true);
-			FlickrPhotosetsView photosetsView = userPhotosetsCache.getSync(flickrId, true);
-			
-			changed = proxy.saveUpdatedStatus(flickrId, photosView, photosetsView); 
-			return new PollResult(changed, false);
+			final FlickrPhotosView photosView = userPhotosCache.getSync(flickrId, true);
+			final FlickrPhotosetsView photosetsView = userPhotosetsCache.getSync(flickrId, true);
+
+			return TxUtils.runInTransaction(new Callable<PollResult>() {
+				public PollResult call() {
+					FlickrUpdater proxy = EJBUtil.defaultLookup(FlickrUpdater.class);
+					boolean changed = proxy.saveUpdatedStatus(flickrId, photosView, photosetsView);
+					
+					return new PollResult(changed, false);
+				}
+			});
 		}
 
 		@Override
