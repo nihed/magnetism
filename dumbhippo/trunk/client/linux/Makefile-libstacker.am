@@ -9,9 +9,7 @@ libstacker_la_CPPFLAGS =			\
 
 libstacker_la_LIBADD = 			\
 	$(LIBSTACKER_LIBS)		\
-	libhippo.la			\
-	libddm-1.la			\
-	libddm-1.la
+	libhippo.la
 
 # none of this actually matters since it's just a convenience library, keeping it 
 # for future reference

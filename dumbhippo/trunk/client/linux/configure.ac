@@ -47,27 +47,6 @@ m4_ifvaln([$3], [else
   $3])dnl
 fi])
 
-# libtool versioning for libddm
-#
-# See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details
-#
-
-## increment if the interface has additions, changes, removals.
-DDM_LT_CURRENT=0
-
-## increment any time the source changes; set to
-##  0 if you increment CURRENT
-DDM_LT_REVISION=0
-
-## increment if any interfaces have been added; set to 0
-## if any interfaces have been changed or removed. removal has
-## precedence over adding, so set to 0 if both happened.
-DDM_LT_AGE=0
-
-AC_SUBST(DDM_LT_CURRENT)
-AC_SUBST(DDM_LT_REVISION)
-AC_SUBST(DDM_LT_AGE)
-
 AC_PROG_CC
 AM_PROG_CC_C_O
 # This disables building a static library for the firefox plugin, while having
@@ -295,18 +274,12 @@ AC_ARG_WITH(maemo,
 
 GLIB2_REQUIRED=2.6.0
 GTK2_REQUIRED=2.6.0
-LOUDMOUTH_REQUIRED=1.2.2
 # unfortunately this breaks us on FC4
 DBUS_REQUIRED=0.60
 DBUS_GLIB_REQUIRED=0.60
 # earlier might work, but this is what's been tested
 CURL_REQUIRED=7.13.1
-# earlier might work, but this is what's been tested
-PCRE_REQUIRED=6.3
-# earlier might work, but this is what's been tested
-SQLITE_REQUIRED=3.3
-# 2.10 for gnome_desktop_item_set_launch_time()
-GNOME_DESKTOP_REQUIRED=2.10.0
+DDM_REQUIRED=1.2.0
 
 ## We don't just use PKG_CHECK_MODULES because libcurl.pc has all kinds of crap in it like openssl and kerberos
 ## on the link line... we don't want to link to all that stuff. So just do -lcurl
@@ -382,48 +355,6 @@ else
     fi
 fi
 
-# PCRE checks
-AC_MSG_CHECKING([for PCRE])
-HIPPO_PKG_CHECK_EXISTS(libpcre >= $PCRE_REQUIRED, found_pcre=yes, found_pcre=no)
-AC_MSG_RESULT([$found_pcre])
-if test $found_pcre = yes ; then
-   PCRE_MODULES=libpcre
-   AC_DEFINE(HAVE_PCRE, 1, [Define if you have the PCRE regular expression library])
-else 
-   # We currently only use autoconf on platforms where we need PCRE (PCRE is used
-   # in the application-tracking support to convert titles to application IDs). If
-   # that changed, then this error could be removed.
-   AC_MSG_ERROR([PCRE is required])
-fi
-
-# SQLite checks
-
-AC_ARG_WITH(sqlite,
-	    AC_HELP_STRING([--with-sqlite=[yes/no/auto]],
-		           [Whether to use SQLite for offline caching]),
-	    ,
-	    with_sqlite=auto)
-	    
-AC_MSG_CHECKING([for sqlite3])
-if test x"$with_sqlite" = xno ; then
-   found_sqlite=no
-   AC_MSG_RESULT(disabled)
-else
-   HIPPO_PKG_CHECK_EXISTS(sqlite3 >= $SQLITE_REQUIRED, found_sqlite=yes, found_sqlite=no)
-   AC_MSG_RESULT([$found_sqlite])
-fi
-
-if test $found_sqlite = yes ; then
-   SQLITE_MODULES=sqlite3
-   AC_DEFINE(HAVE_SQLITE, 1, [Define if you have SQLite database library])
-else
-   if test x"$with_sqlite" = xyes ; then
-      AC_MSG_ERROR([SQLite >= $SQLITE_REQUIRED not found])
-   else
-      AC_MSG_WARN([*** SQLite >= $SQLITE_REQUIRED not found, offline caching will be disabled])
-   fi
-fi
-
 #
 # Check if hippo-canvas is installed or we need to build our included version
 # (canvas be forces with --with-included-canvas/--without-included-canvas
@@ -453,36 +384,22 @@ fi
 AM_CONDITIONAL(USE_INCLUDED_CANVAS, test "x$with_included_canvas" = xyes)
 
 extra_mugshot_packages=""
-extra_engine_packages=""
 
 if test "x$with_maemo" != xno ; then
    extra_mugshot_packages="libosso >= 0.9.19"
-else
-   extra_engine_packages="gnome-desktop-2.0 >= $GNOME_DESKTOP_REQUIRED"
 fi
 
-PKG_CHECK_MODULES(LIBDDM, gobject-2.0 >= $GLIB2_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(LIBHIPPOCANVAS, gtk+-2.0 >= $GTK2_REQUIRED gobject-2.0 >= $GLIB2_REQUIRED cairo pango)
-PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0)
-PKG_CHECK_MODULES(LIBENGINE, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED $PCRE_MODULES $SQLITE_MODULES)
-PKG_CHECK_MODULES(LIBSTACKER, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 cairo pango $CANVAS_MODULES)
-AC_DEFINE(HIPPO_LOUDMOUTH_IS_10, 1, [Define if Loudmouth is version 1.0 or below])
+PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 ddm-1 >= $DDM_REQUIRED)
+PKG_CHECK_MODULES(LIBSTACKER, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 cairo pango $CANVAS_MODULES ddm-1 >= $DDM_REQUIRED)
 PKG_CHECK_MODULES(LIBHIPPOIPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
-PKG_CHECK_MODULES(DESKTOP_DATA_ENGINE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED gnome-vfs-2.0 $XSCREENSAVER_PACKAGES $CANVAS_MODULES $extra_engine_packages)
-PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED $XSCREENSAVER_PACKAGES $CANVAS_MODULES $extra_mugshot_packages)
+PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED $XSCREENSAVER_PACKAGES $CANVAS_MODULES  ddm-1 >= $DDM_REQUIRED $extra_mugshot_packages)
 
-# If we're building the Maemo client, we don't need gnome-desktop
-   
 MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $XSCREENSAVER_LIBS $CURL_LIBS $JPEG_LIBS $RESOLV_LIBS"
 MUGSHOT_CFLAGS="$MUGSHOT_BASE_CFLAGS $XSCREENSAVER_CFLAGS $CURL_CFLAGS"
 AC_SUBST(MUGSHOT_LIBS)
 AC_SUBST(MUGSHOT_CFLAGS)
-
-DESKTOP_DATA_ENGINE_LIBS="$DESKTOP_DATA_ENGINE_LIBS $XSCREENSAVER_LIBS $JPEG_LIBS $RESOLV_LIBS"
-DESKTOP_DATA_ENGINE_CFLAGS="$DESKTOP_DATA_ENGINE_CFLAGS $XSCREENSAVER_CFLAGS"
-AC_SUBST(DESKTOP_DATA_ENGINE_LIBS)
-AC_SUBST(DESKTOP_DATA_ENGINE_CFLAGS)
 
 PKG_CHECK_MODULES(MUGSHOT_URI_HANDLER, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 dbus-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(TEST_HIPPO_IPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
@@ -722,7 +639,6 @@ AC_DEFINE_UNQUOTED(HIPPO_ABOUT_MESSAGE, "$with_about_message", [additional messa
 AC_OUTPUT([
 Makefile
 version
-ddm-1.pc
 ])
 
 dnl ==========================================================================
@@ -739,12 +655,10 @@ echo "
 	Full Gecko:	  	  ${have_full_gecko}
 
         LIBHIPPO_CFLAGS:          ${LIBHIPPO_CFLAGS}
-        LIBDDM_CFLAGS:            ${LIBDDM_CFLAGS}
         MUGSHOT_CFLAGS:           ${MUGSHOT_CFLAGS}
         LIBHIPPOFIREFOX_CFLAGS:   ${LIBHIPPOFIREFOX_CFLAGS}
 
         LIBHIPPO_LIBS:            ${LIBHIPPO_LIBS}
-        LIBDDM_LIBS:              ${LIBDDM_LIBS}
         MUGSHOT_LIBS:             ${MUGSHOT_LIBS}
         LIBHIPPOFIREFOX_LIBS:     ${LIBHIPPOFIREFOX_LIBS}
 
