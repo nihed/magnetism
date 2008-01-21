@@ -1,7 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import static com.dumbhippo.server.impl.FeedSystemBean.logger;
-
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
