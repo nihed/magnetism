@@ -88,7 +88,7 @@ public abstract class AnnotatedIQMethod {
 							DataModel model = DataService.getModel();
 							DMSession session;
 								
-							if (annotation.type() == IQ.Type.get)
+							if (annotation.type() == IQ.Type.get && !annotation.forceReadWrite())
 								session = model.initializeReadOnlySession(client);
 							else
 								session = model.initializeReadWriteSession(client);

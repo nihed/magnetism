@@ -2264,7 +2264,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void setUserStackFilterPrefs(User user, String filter) {
-		user.getAccount().setStackFilter(filter);
-		DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "stackFilter");
+		String oldFilter = getUserStackFilterPrefs(user);
+		if ((filter == null && oldFilter != null) ||
+			(filter != null && !filter.equals(oldFilter))) 
+		{
+			user.getAccount().setStackFilter(filter);
+			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "stackFilter");
+		}
 	}
 }
