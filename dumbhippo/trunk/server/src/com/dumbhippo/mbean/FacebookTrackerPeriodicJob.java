@@ -11,7 +11,10 @@ import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.FacebookTracker;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.tx.TxUtils;
 
 public class FacebookTrackerPeriodicJob implements PeriodicJob {
 	static private final Logger logger = GlobalSetup.getLogger(FacebookTrackerPeriodicJob.class);
@@ -50,15 +53,28 @@ public class FacebookTrackerPeriodicJob implements PeriodicJob {
 		    threadPool.execute(new Runnable() {
 				public void run() {
 					final FacebookTracker facebookTracker = EJBUtil.defaultLookup(FacebookTracker.class);
-					// even if we find out that the session key is expired in updateMessageCount,
-					// we still want to call updateTaggedPhotos, because it removes the cached
-					// photos that we can't keep anymore when the session key is expired
-					facebookTracker.updateMessageCount(facebookAccount.getId());
+
+					// updateMessageCount expects to run in a transaction, but updateTaggedPhotos
+					// is TransactionAttributeType.NEVER, so we need to handle them differently.. 
+					
+					TxUtils.runInTransaction(new Runnable() {
+						public void run() {
+							DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
+							
+							// even if we find out that the session key is expired in updateMessageCount,
+							// we still want to call updateTaggedPhotos, because it removes the cached
+							// photos that we can't keep anymore when the session key is expired
+							facebookTracker.updateMessageCount(facebookAccount.getId());
+
+							// don't do anything about albums for now, since we aren't showing
+							// facebook updates to anyone but the album owner, so it's not interesting,
+							// and we don't have a system for clearing the cached facebook info about albums
+							
+							// facebookTracker.updateAlbums(facebookAccount.getId());
+						}
+					});
+					
 					facebookTracker.updateTaggedPhotos(facebookAccount.getId());
-					// don't do anything about albums for now, since we aren't showing
-					// facebook updates to anyone but the album owner, so it's not interesting,
-					// and we don't have a system for clearing the cached facebook info about albums
-					// facebookTracker.updateAlbums(facebookAccount.getId());
 				}
 			});
 		}
