@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?><!-- -*- sgml-indent-step: 4; fill-column: 120 -*- -->
-<m:model xmlns:m="http://mugshot.org/p/system" m:resourceBase="online-desktop:/o/">
-    <resource xmlns="online-desktop:/p/o/buddy" m:resourceId="pidgin-buddy/AIM.JohnDoe1">
-	<name m:type="s">JohnDoe1</name>
-	<protocol m:type="s">aim</protocol>
-        <!-- This is for testing multipart fetches without rules -->
-	<fixedUser m:type="r?" m:resourceId="http://mugshot.org/o/user/USER1"/>
-    </resource>
-</m:model>

@@ -1,5 +1,0 @@
-[D-BUS Service]
-## This is the Online Desktop Engine, a D-Bus service that proxies to an Internet server
-Name=org.freedesktop.od.Engine
-Exec=@libexecdir@/desktop-data-engine
-
