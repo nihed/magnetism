@@ -34,8 +34,8 @@ distclean-local:
 	  rmdir $(BUILT_SRC_DIR) ;		\
 	fi
 
-dist-hook: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mugshot-dist-hook libddm-dist-hook libengine-dist-hook libstacker-dist-hook
-.PHONY: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mugshot-dist-hook libengine-dist-hook libstacker-dist-hook
+dist-hook: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mugshot-dist-hook libstacker-dist-hook
+.PHONY: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mugshot-dist-hook libstacker-dist-hook
 
 # These are added to using += in the included files
 bin_PROGRAMS = 
@@ -65,15 +65,12 @@ else
 EXTRA_DIST += $(CANVASSRCDIR)/common/hippo/hippo-canvas-marshal.list
 endif
 
-include Makefile-libddm.am
 include Makefile-libhippoipc.am
 include Makefile-libhippo.am
-include Makefile-libengine.am
 include Makefile-libstacker.am
 include Makefile-libgtkcopy.am
 include Makefile-libhippofirefox.am
 include Makefile-mugshot.am
-include Makefile-engine-dbus.am
 include Makefile-mugshot-uri-handler.am
 include Makefile-test-hippo-ipc.am
 include Makefile-icons.am

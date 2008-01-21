@@ -295,9 +295,17 @@ hippo_stacker_app_new(HippoInstanceType  instance_type,
 
     app->idle_monitor = hippo_idle_add(gdk_display_get_default(), on_idle_changed, app);
 
-    bus_name = hippo_dbus_full_bus_name(stacker_server);
-    app->model = ddm_data_model_get_for_bus_name(bus_name);
-    g_free(bus_name);
+    /* We use ddm_data_model_get_default() when possible because the name for that
+     * has a D-BUS server file and will activate the data-model-engine, while a
+     * server-specific name won't activate.
+     */
+    if (strcmp(stacker_server, HIPPO_DEFAULT_STACKER_WEB_SERVER) == 0) {
+        app->model = ddm_data_model_get_default();
+    } else {
+        char *bus_name = hippo_dbus_full_bus_name(stacker_server);
+        app->model = ddm_data_model_get_for_bus_name(bus_name);
+        g_free(bus_name);
+    }
 
     app->ui = hippo_ui_new(app->model);
     hippo_ui_show(app->ui);
