@@ -65,7 +65,9 @@ public class LegacyBlocksIQHandler extends AnnotatedIQHandler {
         	throw IQException.createBadRequest("Unrecognized boolean value '" + value + "'");
 	}
 	
-	@IQMethod(name="blocks", type=IQ.Type.get)
+	// The method both gets the current blocks and stores the new filter, so we need
+	// to force a readwrite session
+	@IQMethod(name="blocks", type=IQ.Type.get, forceReadWrite=true)
 	public void getBlocks(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
 		Element child = request.getChildElement();
 		

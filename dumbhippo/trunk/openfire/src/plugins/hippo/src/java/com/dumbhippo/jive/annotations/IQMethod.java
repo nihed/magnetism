@@ -33,4 +33,10 @@ public @interface IQMethod {
 	 *   of the IQ
 	 */
 	public boolean needsTransaction() default true;
+	
+	/**
+	 * @return if true, create a ReadWrite transaction even for a get method
+	 * (don't use this except for compatibility with broken interfaces) 
+	 */
+	public boolean forceReadWrite() default true;
 }
