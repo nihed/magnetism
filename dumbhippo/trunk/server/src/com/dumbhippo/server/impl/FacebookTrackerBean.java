@@ -303,7 +303,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 					}
 				}	
 			});
-		    if (facebookAccount != null && facebookAccount.isApplicationEnabled()) {
+		    if (facebookAccount != null && facebookAccount.isApplicationEnabled() != null && facebookAccount.isApplicationEnabled()) {
 				Pair<Account, Set<ExternalAccountView>> accountsPair = TxUtils.runInTransaction(new Callable<Pair<Account, Set<ExternalAccountView>>>() {
 					public Pair<Account, Set<ExternalAccountView>> call() {
 						    Account account = accounts.lookupAccountByUser(user);
@@ -336,7 +336,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 					}
 				}	
 			});
-			if (facebookAccount != null && facebookAccount.isApplicationEnabled()) {
+			if (facebookAccount != null && facebookAccount.isApplicationEnabled() != null && facebookAccount.isApplicationEnabled()) {
 				BlockView blockView = TxUtils.runInTransaction(new Callable<BlockView>() {
 					public BlockView call() {
 						try {
