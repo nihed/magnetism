@@ -53,7 +53,7 @@ import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.blocks.BlockView;
-import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.SystemViewpoint;
@@ -460,15 +460,21 @@ public class FacebookTrackerBean implements FacebookTracker {
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
 		
 		int newPhotoCount = ws.getTaggedPhotosCount(facebookAccount);
-			
-		FacebookTracker proxy = EJBUtil.defaultLookup(FacebookTracker.class);
+
 		if (newPhotoCount == -1) {
 			if (!facebookAccount.isSessionKeyValid()) {
 				// delete cache because the photo data is not storable past the end of the session				
 				taggedPhotosCache.deleteCache(user.getGuid().toString());
-				// that was a detached copy of facebookAccount, we need to set isSessionKeyValid on an attached copy
-				proxy.handleExpiredSessionKey(facebookAccountId);
-		    }
+
+				TxUtils.runInTransaction(new Runnable() {
+					public void run() {
+						DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
+						handleExpiredSessionKey(facebookAccountId);
+				    }
+				});
+				
+			}
+			
 			return;			
 		}
 	
@@ -490,9 +496,14 @@ public class FacebookTrackerBean implements FacebookTracker {
 				taggedPhotosCache.expireCache(user.getGuid().toString());
 			}
 			
-			List<? extends FacebookPhotoDataView> cachedPhotos = taggedPhotosCache.getSync(user.getGuid().toString());
+			final List<? extends FacebookPhotoDataView> cachedPhotos = taggedPhotosCache.getSync(user.getGuid().toString());
 			
-			proxy.saveUpdatedTaggedPhotos(facebookAccountId, cachedPhotos);
+			TxUtils.runInTransaction(new Runnable() {
+				public void run() {
+					DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
+					saveUpdatedTaggedPhotos(facebookAccountId, cachedPhotos);
+				}
+			});
 		}	
 	}
 	
