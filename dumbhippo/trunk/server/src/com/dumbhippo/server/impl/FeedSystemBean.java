@@ -1,5 +1,7 @@
 package com.dumbhippo.server.impl;
 
+import static com.dumbhippo.server.impl.FeedSystemBean.logger;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
@@ -940,6 +942,7 @@ public class FeedSystemBean implements FeedSystem {
 			changed = TxUtils.runInTransaction(new Callable<Boolean>() {
 				public Boolean call() throws PollingTaskNormalExecutionException {
 					try {
+						DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
 						return feedSystem.storeRawUpdatedFeed(feed.getId(), result.getFeed());
 					} catch (FeedLinkUnknownException e) {
 						feedSystem.markFeedFailedLastUpdate(feed);
