@@ -30,7 +30,9 @@ import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.FlickrUpdater;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.services.FlickrPhotoView;
 import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.FlickrPhotosetView;
@@ -297,6 +299,8 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 
 			return TxUtils.runInTransaction(new Callable<PollResult>() {
 				public PollResult call() {
+					DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
+					
 					FlickrUpdater proxy = EJBUtil.defaultLookup(FlickrUpdater.class);
 					boolean changed = proxy.saveUpdatedStatus(flickrId, photosView, photosetsView);
 					
