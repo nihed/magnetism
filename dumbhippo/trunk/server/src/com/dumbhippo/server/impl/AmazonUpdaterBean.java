@@ -407,8 +407,18 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 					// and getting the results only if the wish list items count changed or the results in cache expired	
 					// we also get the results if the list name changed
 				    AmazonListView newList = ws.getListDetails(list.getListId());
-                    if (newList.getTotalItems() != list.getTotalItems() ||
-                        !newList.getListName().equals(list.getListName())) {
+				    // If newList is null or doesn't contain the name information, it likely means
+				    // that it is not accessible to us at the time, and we should not try to update it.
+				    // There currently seems to be a bug with Amazon Web services, where 
+				    // Operation=CustomerContentLookup&ResponseGroup=CustomerLists returns a list id
+				    // for which Operation=ListLookup returns that the list is not accessible. The request
+				    // for CustomerLists fails to return the updates lists for the customer.
+				    // For example, for Amazon user "A3OT23RTSWVTNU", the CustomerLists request returns list 
+				    // id "PFM223QGUIDV" which is not accessible and fails to return list id "2BRM5JKMES3FN"
+				    // which is this person's actual public wish list.
+                    if (newList != null && newList.getListName() != null && 
+                    	(newList.getTotalItems() != list.getTotalItems() ||
+                         !newList.getListName().equals(list.getListName()))) {
                     	needListCacheUpdate = true;
                     }
 				}
