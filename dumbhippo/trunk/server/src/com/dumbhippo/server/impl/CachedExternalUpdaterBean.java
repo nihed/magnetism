@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.ejb.EJB;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -29,7 +27,6 @@ import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PollingTaskPersistence;
-import com.dumbhippo.tx.TxUtils;
 
 public abstract class CachedExternalUpdaterBean<Status> implements CachedExternalUpdater<Status> {
 
@@ -113,15 +110,6 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 		q.setParameter("handle", handle);
 		return TypeUtils.castList(User.class, q.getResultList());
 	}	
-	
-	protected abstract void doPeriodicUpdate(String handle);
-	
-	// avoid log messages in here that will happen on every call, or it could get noisy
-	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public void periodicUpdate(String handle) {
-		TxUtils.assertNoTransaction();
-		doPeriodicUpdate(handle);
-	}
 	
 	protected abstract Class<? extends CachedExternalUpdater<Status>> getUpdater();
 	

@@ -10,8 +10,6 @@ import java.util.concurrent.Callable;
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -55,12 +53,6 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 	private Notifier notifier;
 
 	@WebServiceCache
-	private FlickrUserPhotosCache userPhotosCache;
-	
-	@WebServiceCache
-	private FlickrUserPhotosetsCache userPhotosetsCache;
-	
-	@WebServiceCache
 	private FlickrPhotosetPhotosCache photosetPhotosCache;
 
 	@EJB
@@ -92,22 +84,6 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 				" photosetStatus.ownerId = :ownerId");
 		q.setParameter("ownerId", flickrUserId);
 		return TypeUtils.castList(FlickrPhotosetStatus.class, q.getResultList());
-	}
-	
-	@Override
-	@TransactionAttribute(TransactionAttributeType.NEVER)	
-	public void doPeriodicUpdate(String flickrId) {
-		FlickrUpdater proxy = EJBUtil.defaultLookup(FlickrUpdater.class);
-
-		FlickrPhotosView photosView = userPhotosCache.getSync(flickrId, true);
-		FlickrPhotosetsView photosetsView = userPhotosetsCache.getSync(flickrId, true);
-		
-		if (photosView == null || photosetsView == null) {
-			logger.debug("one of two flickr requests failed, not saving new flickr status for " + flickrId);
-			return;
-		}
-		
-		proxy.saveUpdatedStatus(flickrId, photosView, photosetsView);
 	}
 	
 	private void updateUserPhotosetStatuses(String ownerId, List<? extends FlickrPhotosetView> allPhotosets) {

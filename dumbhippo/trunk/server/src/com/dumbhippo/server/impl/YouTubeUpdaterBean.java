@@ -1,12 +1,11 @@
 package com.dumbhippo.server.impl;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -22,11 +21,12 @@ import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.YouTubeUpdater;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.services.YouTubeVideo;
 import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.CacheFactoryBean;
-import com.dumbhippo.services.caches.WebServiceCache;
 import com.dumbhippo.services.caches.YouTubeVideosCache;
 import com.dumbhippo.tx.TxUtils;
 
@@ -39,26 +39,12 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 	@EJB
 	private Notifier notifier;
 
-	@WebServiceCache
-	private YouTubeVideosCache videosCache;	
-	
 	@EJB
 	private CacheFactory cacheFactory;	
 	
 	@PostConstruct
 	public void init() {
 		cacheFactory.injectCaches(this);
-	}
-	
-	@Override
-	@TransactionAttribute(TransactionAttributeType.NEVER)	
-	public void doPeriodicUpdate(String username) {
-		TxUtils.assertNoTransaction();
-		
-		YouTubeUpdater proxy = EJBUtil.defaultLookup(YouTubeUpdater.class);
-		
-		List<? extends YouTubeVideo> videos = videosCache.getSync(username, true);
-		proxy.saveUpdatedStatus(username, videos);
 	}
 	
 	//TODO: Identify the unique part of youtube urls instead of using the whole thing
@@ -147,13 +133,20 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 
 		@Override
 		protected PollResult execute() throws Exception {
-			boolean changed = false;
-			YouTubeUpdater proxy = EJBUtil.defaultLookup(YouTubeUpdater.class);
 			YouTubeVideosCache cache = CacheFactoryBean.defaultLookup(YouTubeVideosCache.class);
 			
-			List<? extends YouTubeVideo> videos = cache.getSync(username, true);
-			changed = proxy.saveUpdatedStatus(username, videos);			
-			return new PollResult(changed, false);
+			final List<? extends YouTubeVideo> videos = cache.getSync(username, true);
+			
+			return TxUtils.runInTransaction(new Callable<PollResult>() {
+				public PollResult call() {
+					DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
+					
+					YouTubeUpdater proxy = EJBUtil.defaultLookup(YouTubeUpdater.class);
+					boolean changed = proxy.saveUpdatedStatus(username, videos);
+					
+					return new PollResult(changed, false);
+				}
+			});
 		}
 
 		@Override
