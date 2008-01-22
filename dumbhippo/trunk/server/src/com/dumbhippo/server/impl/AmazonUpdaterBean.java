@@ -10,8 +10,6 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -32,7 +30,9 @@ import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.services.AmazonItem;
 import com.dumbhippo.services.AmazonItemLookupWebServices;
 import com.dumbhippo.services.AmazonList;
@@ -51,6 +51,7 @@ import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.CacheFactoryBean;
 import com.dumbhippo.services.caches.NotCachedException;
 import com.dumbhippo.services.caches.WebServiceCache;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateStatus> implements AmazonUpdater {
@@ -97,12 +98,6 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 				" activityStatus.amazonUserId = :amazonUserId");
 		q.setParameter("amazonUserId", amazonUserId);
 		return TypeUtils.castList(AmazonActivityStatus.class, q.getResultList());
-	}
-	
-	@Override
-	@TransactionAttribute(TransactionAttributeType.NEVER)	
-	public void doPeriodicUpdate(String amazonUserId) {
-	    logger.warn("Not doing anything for Amazon periodic update for {}, a polling task is expected to be used", amazonUserId);	
 	}
 	
 	// compute a "hash" (relies on the most recent reviews being first, 
@@ -366,7 +361,6 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 		protected PollResult execute() throws Exception {
 			AmazonUpdater proxy = EJBUtil.defaultLookup(AmazonUpdater.class);
 			Configuration config = EJBUtil.defaultLookup(Configuration.class);
-			Notifier notifier = EJBUtil.defaultLookup(Notifier.class);
 			AmazonReviewsCache reviewsCache = CacheFactoryBean.defaultLookup(AmazonReviewsCache.class);
 			AmazonListsCache listsCache = CacheFactoryBean.defaultLookup(AmazonListsCache.class);
 			AmazonListItemsCache listItemsCache = CacheFactoryBean.defaultLookup(AmazonListItemsCache.class);
@@ -434,7 +428,7 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 			
 			// the returned list will be null if we were saving something because it 
 			// expired, but nothing really changed
-			List<AmazonActivityStatus> statuses = proxy.saveUpdatedStatus(amazonUserId, reviewsView, refreshedListsView);
+			final List<AmazonActivityStatus> statuses = proxy.saveUpdatedStatus(amazonUserId, reviewsView, refreshedListsView);
 			
 			if (statuses == null) 
 				return new PollResult(false, false);
@@ -467,9 +461,16 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 			    proxy.saveItemsInCache(items);				
 			}
 			
-			for (AmazonActivityStatus status : statuses) {
-			    notifier.onAmazonActivityCreated(status);
-			}
+			TxUtils.runInTransaction(new Runnable() {
+				public void run() {
+					DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
+					
+					Notifier notifier = EJBUtil.defaultLookup(Notifier.class);
+					for (AmazonActivityStatus status : statuses) {
+					    notifier.onAmazonActivityCreated(status);
+					}
+				}
+			});
 			
 			return new PollResult(true, false);
 		}

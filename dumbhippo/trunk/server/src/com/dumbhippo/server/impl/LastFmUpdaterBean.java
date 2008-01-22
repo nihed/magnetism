@@ -7,8 +7,6 @@ import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -45,21 +43,6 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 	@EJB
 	private MusicSystem musicSystem;
 
-	@Override
-	@TransactionAttribute(TransactionAttributeType.NEVER)	
-	public void doPeriodicUpdate(String username) {
-		LastFmUpdater proxy = EJBUtil.defaultLookup(LastFmUpdater.class);
-		
-		List<LastFmTrack> tracks;
-		try {
-			tracks = LastFmWebServices.getTracksForUser(username);
-		} catch (TransientServiceException e) {
-			logger.warn("Exception from LastFmWebServices", e);
-			return;
-		}
-		proxy.saveUpdatedStatus(username, tracks);
-	}
-	
 	private String computeTrackHash(LastFmTrack track) {
 		return track.getUrl() + " " + track.getListenTime();		
 	}

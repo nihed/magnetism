@@ -1,12 +1,11 @@
 package com.dumbhippo.server.impl;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -23,12 +22,13 @@ import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.PicasaUpdater;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.services.PicasaAlbum;
 import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.CacheFactoryBean;
 import com.dumbhippo.services.caches.PicasaAlbumsCache;
-import com.dumbhippo.services.caches.WebServiceCache;
 import com.dumbhippo.tx.TxUtils;
 
 @Stateless
@@ -40,26 +40,12 @@ public class PicasaUpdaterBean extends CachedExternalUpdaterBean<PicasaUpdateSta
 	@EJB
 	private Notifier notifier;
 
-	@WebServiceCache
-	private PicasaAlbumsCache albumsCache;	
-	
 	@EJB
 	private CacheFactory cacheFactory;	
 	
 	@PostConstruct
 	public void init() {
 		cacheFactory.injectCaches(this);
-	}
-	
-	@Override
-	@TransactionAttribute(TransactionAttributeType.NEVER)	
-	public void doPeriodicUpdate(String username) {
-		TxUtils.assertNoTransaction();
-		
-		PicasaUpdater proxy = EJBUtil.defaultLookup(PicasaUpdater.class);
-		
-		List<? extends PicasaAlbum> albums = albumsCache.getSync(username, true);
-		proxy.saveUpdatedStatus(username, albums);
 	}
 	
 	//TODO: Identify the unique part of picasa urls instead of using the whole thing,
@@ -152,13 +138,20 @@ public class PicasaUpdaterBean extends CachedExternalUpdaterBean<PicasaUpdateSta
 
 		@Override
 		protected PollResult execute() throws Exception {
-			boolean changed = false;
-			PicasaUpdater proxy = EJBUtil.defaultLookup(PicasaUpdater.class);
 			PicasaAlbumsCache cache = CacheFactoryBean.defaultLookup(PicasaAlbumsCache.class);
 			
-			List<? extends PicasaAlbum> albums = cache.getSync(username, true);
-			changed = proxy.saveUpdatedStatus(username, albums);			
-			return new PollResult(changed, false);
+			final List<? extends PicasaAlbum> albums = cache.getSync(username, true);
+			
+			return TxUtils.runInTransaction(new Callable<PollResult>() {
+				public PollResult call() {
+					DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
+					
+					PicasaUpdater proxy = EJBUtil.defaultLookup(PicasaUpdater.class);
+					boolean changed = proxy.saveUpdatedStatus(username, albums);
+					
+					return new PollResult(changed, false);
+				}
+			});
 		}
 
 		@Override

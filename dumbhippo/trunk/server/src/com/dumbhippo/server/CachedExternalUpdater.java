@@ -15,6 +15,4 @@ public interface CachedExternalUpdater<Status> extends ExternalAccountsListener 
 	public Status getCachedStatus(User user) throws NotFoundException;
 	public Status getCachedStatus(ExternalAccount external) throws NotFoundException;
 	public Status getCachedStatus(String key) throws NotFoundException;
-
-	public void periodicUpdate(String key);
 }
