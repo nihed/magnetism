@@ -361,7 +361,7 @@ public class FacebookTrackerBean implements FacebookTracker {
                         } else {
                         	where = " on " + blockView.getBlockType().getExternalAccountSource().getSiteName();                        	
                         }
-                    } else if (!blockView.getBlockType().equals(BlockType.MUSIC_PERSON)) {
+                    } else if (!blockView.getBlockType().equals(BlockType.MUSIC_PERSON) && !blockView.getBlockType().equals(BlockType.BLOG_ENTRY)) {
                         // There are multiple options for how we know about someone's music (Rhapsody, Last.fm, 
                     	// iTunes, Yahoo Music Player, Rhythmbox). It'd be nice to be able to identify this here,
                     	// but for now, let's just not say anything. All other actions, like sharing a link,
