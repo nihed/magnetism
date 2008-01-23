@@ -39,6 +39,9 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(SwarmPollingSystem.class);
 	
+	// The intent of this variable is to be tweaked from the admin shell at runtime.
+	private double THROTTLE_FACTOR = 1.0;
+	
 	private static final int MIN_TASK_PERIODICITY_SEC = 7 * 60; // 7 minutes
 	private static final int MAX_TASK_PERIODICITY_SEC = 2 * 60 * 60; // 2 hours
 	
@@ -177,6 +180,7 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 					scheduleSecs = task.rescheduleSeconds(result, scheduleSecs);
 					scheduleSecs = Math.max(scheduleSecs, MIN_TASK_PERIODICITY_SEC);
 					scheduleSecs = Math.min(scheduleSecs, MAX_TASK_PERIODICITY_SEC);
+					scheduleSecs = (long) (THROTTLE_FACTOR * scheduleSecs);
 
 					logger.debug("Rescheduling task {} in {} seconds (+ 0-10% fuzz)", task, scheduleSecs);
 					long scheduleOffsetMs = (long) (Math.random() * scheduleSecs * 1000.0 * 0.1);
