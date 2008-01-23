@@ -310,11 +310,6 @@ public enum BlockType {
 		public boolean isDirectlyChattable() {
 			return true;
 		}
-		
-		@Override
-		public ExternalAccountType getExternalAccountSource() {
-			return ExternalAccountType.BLOG;
-		}
 	},
 	DELICIOUS_PUBLIC_BOOKMARK { // 15
 		@Override
