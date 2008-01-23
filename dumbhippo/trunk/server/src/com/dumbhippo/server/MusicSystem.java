@@ -174,9 +174,12 @@ public interface MusicSystem extends ExternalAccountFeedListener {
 	 * @param user who listened
 	 * @param properties props of the track
 	 * @param listenDate milliseconds since the epoch
+	 * @param isNative indicates if we got the track natively through the client or from some feed/web services
+	 * @param isNewest indicates if the track is newest or if we know that we are processing a newer track in
+	 *                 the same batch, so should not stack an update based in the one
 	 * @throws RetryException 
 	 */	
-	public void addHistoricalTrack(User user, Map<String,String> properties, long listenDate, boolean isNative) throws RetryException;
+	public void addHistoricalTrack(User user, Map<String,String> properties, long listenDate, boolean isNative, boolean isNewest) throws RetryException;
 	
 	/**
 	 * 

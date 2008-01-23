@@ -207,7 +207,7 @@ public class MusicSystemBean implements MusicSystem {
 		});
 	}
 
-	private void addTrackHistory(final User user, final Track track, final Date now, final boolean isNative) throws RetryException {
+	private void addTrackHistory(final User user, final Track track, final Date playedDate, final boolean isNative, final boolean isNewest) throws RetryException {
 		TxUtils.runNeedsRetry(new TxRunnable() {				
 			public void run() {
 				User u = em.find(User.class, user.getId());					
@@ -229,11 +229,11 @@ public class MusicSystemBean implements MusicSystem {
 				TrackHistory res;
 				try {
 					res = (TrackHistory) q.getSingleResult();
-					res.setLastUpdated(now);
+					res.setLastUpdated(playedDate);
 					res.setTimesPlayed(res.getTimesPlayed() + 1);
 				} catch (NoResultException e) {
 					res = new TrackHistory(user, track);
-					res.setLastUpdated(now);
+					res.setLastUpdated(playedDate);
 					res.setTimesPlayed(1);
 					em.persist(res);
 				}
@@ -241,16 +241,16 @@ public class MusicSystemBean implements MusicSystem {
 		});
 		
 		// update the stack with this new listen event
-		if (track != null) {
+		if (track != null && isNewest) {
 			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "currentTrack");
 			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "currentTrackPlayTime");
-			notifier.onTrackPlayed(user, track, now);
+			notifier.onTrackPlayed(user, track, playedDate);
 		}
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
 	public void setCurrentTrack(final User user, final Track track, final boolean isNative) throws RetryException {
-		addTrackHistory(user, track, new Date(), isNative);
+		addTrackHistory(user, track, new Date(), isNative, true);
 	}
 	 
 	// Although this is marked as SUPPORTS - you should never invoke this
@@ -276,8 +276,8 @@ public class MusicSystemBean implements MusicSystem {
 	// method from any code holding a transaction that could have potentially
 	// modified a Track		
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void addHistoricalTrack(final User user, final Map<String,String> properties, final long listenDate, final boolean isNative) throws RetryException {
-		addTrackHistory(user, getTrack(properties), new Date(listenDate), isNative);
+	public void addHistoricalTrack(final User user, final Map<String,String> properties, final long listenDate, final boolean isNative, final boolean isNewest) throws RetryException {
+		addTrackHistory(user, getTrack(properties), new Date(listenDate), isNative, isNewest);
 	}
 	
 	public TrackHistory getCurrentTrack(Viewpoint viewpoint, User user) throws NotFoundException {
@@ -1295,7 +1295,14 @@ public class MusicSystemBean implements MusicSystem {
 			public void run() throws RetryException {
 				User attached = em.find(User.class, userId);
 				DataService.getModel().initializeReadWriteSession(new UserViewpoint(attached, Site.NONE));
-				addTrackHistory(attached, getTrack(properties), new Date(virtualPlayTime), false);
+				// We could use entryPosition == 0 to determine if the track is actually newest.
+				// However, since we add track histories in separate transactions, we need to make sure all 
+				// track histories are added when we last stack the block that corresponds to this update,
+				// so for now, let's pass true for isNewest, which will result in the stacking of the block
+				// each time. Hopefully, because the track histories are added in separate transactions, the 
+				// block timestamp will be updated before we need to decide if we want to publish multiple
+				// user actions for each new track.
+				addTrackHistory(attached, getTrack(properties), new Date(virtualPlayTime), false, true);
 			}
 		});
 	}

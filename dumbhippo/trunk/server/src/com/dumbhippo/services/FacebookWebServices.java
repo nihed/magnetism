@@ -389,8 +389,18 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	        facebookClient.feed_publishTemplatizedAction(Integer.valueOf(facebookAccount.getFacebookUserId()), titleTemplate, 
 	        		                                     titleData, null, null, null, null, null);
 		} catch (FacebookException e) {
-			logger.error("FacebookException when publishing user action for {}: {}",
-					     facebookAccount.getFacebookUserId(), e.toString());
+			if (e.getCode() == FacebookSaxHandler.FacebookErrorCode.API_EC_TOO_MANY_CALLS.getCode()) {
+				// We are allowed to publish up to 10 user actions in a rolling 48-hours window on Facebook.
+				// Trying to publish additional actions should be harmless, but if necessary, we can add two
+				// more fields to FacebookAccount: publishTime and publishCount. We would update the publishTime
+				// to now and reset the count if publishTime <= now - 48 hours. If publishCount = 10 and 
+				// publishTime > now - 48 hours, we would not publish the user action.
+				logger.warn("The maximum number of actions allowed has been published for {} on Facebook",
+					        facebookAccount.getFacebookUserId());
+		    } else {
+			    logger.error("FacebookException when publishing user action for {}: {}",
+					         facebookAccount.getFacebookUserId(), e.toString());
+		    }
 		} catch (IOException e) {
 			logger.error("IOException when converting {} to an integer", facebookAccount.getFacebookUserId());
 		}

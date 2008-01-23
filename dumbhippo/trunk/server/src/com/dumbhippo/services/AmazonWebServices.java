@@ -227,7 +227,7 @@ public class AmazonWebServices extends AbstractXmlRequest<AmazonSaxHandler> {
 		return amazonList;	
 	}
 	
-	// This methos will return null of the list is no longer accessible through
+	// This method will return null of the list is no longer accessible through
 	// ECS (perhaps it was made private).
 	public AmazonList getListDetails(String listId) {
 	    String wsUrl = createListRequest(listId, false, -1);	

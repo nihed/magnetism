@@ -733,7 +733,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			public void run() throws RetryException {
 				DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
 				
-				Pair<Long, StackReason> previousParticipation = new Pair<Long, StackReason>(Long.valueOf(-1), null);;
+				Pair<Long, StackReason> previousParticipation = new Pair<Long, StackReason>(Long.valueOf(-1), null);
 				
 				Block attached = em.find(Block.class, block.getId());
 				if (updateAllUserBlockDatas) {
