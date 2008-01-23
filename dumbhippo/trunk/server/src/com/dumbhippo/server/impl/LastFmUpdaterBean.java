@@ -99,7 +99,7 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 				long trackListenTime = lastFmTrack.getListenTime() * 1000;
 				long listenTime = trackListenTime <= now ? trackListenTime : now;
 				
-				musicSystem.addHistoricalTrack(user, props, listenTime, false);
+				musicSystem.addHistoricalTrack(user, props, listenTime, false, mostRecentListenTimeSeconds == lastFmTrack.getListenTime());
 			}
 		}
 	}
