@@ -48,7 +48,9 @@
    	<c:when test="${(dh:enumIs(block.blockType, 'AMAZON_REVIEW') || dh:enumIs(block.blockType, 'AMAZON_WISH_LIST_ITEM')) && !oneLine}">
 	   	<dht3:amazonBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" chatHeader="${chatHeader}"/>
    	</c:when>   	
-   	
+   	<c:when test="${dh:enumIs(block.blockType, 'ACCOUNT_QUESTION')}">
+	   	<dht3:accountQuestionBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
+   	</c:when>   	   	
    	<%-- These next instanceof tests have to be in order of most to least specific, so we use the most elaborate display engine
    		 we know how to use for a block --%>  	
    	

@@ -85,7 +85,7 @@ public class BlocksIQHandler extends AnnotatedIQHandler {
 		} catch (NotFoundException e) {
 			throw IQException.createBadRequest("blockId attribute doesn't point to a question for this user");
 		} catch (BadResponseCodeException e) {
-			throw IQException.createBadRequest("response attribute had an expected value");
+			throw IQException.createBadRequest("response attribute had an unexpected value");
 		}
 	}
 }

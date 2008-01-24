@@ -92,7 +92,7 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 	protected void populateBlockViewImpl(AccountQuestionBlockView blockView) throws BlockNotVisibleException {
 		Viewpoint viewpoint = blockView.getViewpoint();
 		String answer = null;
-		String moreParam = null;
+		String linkParam = null;
 		
 		if (!(viewpoint instanceof SystemViewpoint || viewpoint.isOfUser(getData1User(blockView.getBlock()))))
 			throw new BlockNotVisibleException("AccountQuestion block only visible to the user it was sent to");
@@ -100,15 +100,15 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 		switch (blockView.getQuestion()) {
 		case APPLICATION_USAGE:
 			answer = getApplicationUsageAnswer(blockView);
-			moreParam = "";
+			linkParam = "";
 			break;
 		case FACEBOOK_APPLICATION:
 			answer = getFacebookApplicationAnswer(blockView);
-			moreParam = facebookSystem.getApiKey();
+			linkParam = facebookSystem.getApiKey();
 			break;
 	    }
 		
-		blockView.populate(answer, moreParam);
+		blockView.populate(answer, linkParam);
 	}
 
 	public Set<Group> getInterestedGroups(Block block) {

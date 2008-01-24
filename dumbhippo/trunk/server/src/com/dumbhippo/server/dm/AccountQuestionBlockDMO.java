@@ -29,7 +29,7 @@ public abstract class AccountQuestionBlockDMO extends BlockDMO {
 	
 	@DMProperty(defaultInclude=true, type=PropertyType.URL)
 	public String getMoreLink() {
-		return ((AccountQuestionBlockView)blockView).getQuestion().getMoreLink(((AccountQuestionBlockView)blockView).getMoreParam());
+		return ((AccountQuestionBlockView)blockView).getQuestion().getMoreLink(((AccountQuestionBlockView)blockView).getLinkParam());
 	}
 	
 	@DMProperty(defaultInclude=true)

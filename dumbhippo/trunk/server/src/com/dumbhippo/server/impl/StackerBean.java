@@ -1148,7 +1148,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		    	expectedHitFactor = blocks.size() / resultItemCount + 1;
 		}
 		
-		List<BlockView> blockViewsToReturn;
+		List<BlockView> blockViewsToReturn;				
 		if (stack.size() < targetedNumberOfItems) {
 			// this will readjust the position, so pageable.getStart() will be readjusted too
 			pageable.setTotalCount(stack.size());
@@ -1165,7 +1165,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		for (BlockView blockView : blockViewsToReturn) {
 			populateBlockView(blockView);
 		}
-		
+
 		pageable.setResults(blockViewsToReturn);
 	}
 
@@ -1189,7 +1189,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageStack(viewpoint, new BlockSource<UserBlockData>() {
 			public List<Pair<Block, UserBlockData>> get(int start, int count) {
 				List<Pair<Block, UserBlockData>> results = new ArrayList<Pair<Block, UserBlockData>>();
-				for (UserBlockData ubd : getBlocks(viewpoint, user, lastTimestamp, -1, start, count, filter, participantOnly)) {
+				for (UserBlockData ubd : getBlocks(viewpoint, user, lastTimestamp, -1, start, count, filter, participantOnly)) {                 
 					results.add(new Pair<Block, UserBlockData>(ubd.getBlock(), ubd));
 				}
 				return results;
@@ -1198,6 +1198,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				return prepareBlockView(viewpoint, block, ubd, participantOnly);
 			}
 		}, pageable, expectedHitFactor);
+		
+		if (pageable.getPosition() == 0 && !participantOnly && viewpoint.isOfUser(user))
+		    pageable.getResults().addAll(0, getUnansweredQuestions((UserViewpoint)viewpoint, System.currentTimeMillis()));
 	}	
 	
 	private static abstract class ItemSource<T> {
