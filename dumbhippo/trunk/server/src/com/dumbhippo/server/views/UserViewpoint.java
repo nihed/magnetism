@@ -159,7 +159,7 @@ public class UserViewpoint extends Viewpoint {
 				return true;
 			
 			@SuppressWarnings("unchecked")
-			Set<Guid> members = (Set<Guid>)session.getRawProperty(PostDMO.class, groupId, "canSeeMembers");
+			Set<Guid> members = (Set<Guid>)session.getRawProperty(GroupDMO.class, groupId, "canSeeMembers");
 			return members.contains(viewerId);
 		} catch (NotFoundException e) {
 			return false;
