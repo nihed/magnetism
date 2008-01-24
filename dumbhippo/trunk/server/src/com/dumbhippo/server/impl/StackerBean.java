@@ -66,6 +66,7 @@ import com.dumbhippo.server.SimpleServiceMBean;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.blocks.AccountQuestionBlockHandler;
+import com.dumbhippo.server.blocks.AccountQuestionBlockView;
 import com.dumbhippo.server.blocks.AmazonActivityBlockHandler;
 import com.dumbhippo.server.blocks.BlockHandler;
 import com.dumbhippo.server.blocks.BlockNotVisibleException;
@@ -1195,7 +1196,20 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				return results;
 			}
 			public BlockView prepareView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws BlockNotVisibleException {
-				return prepareBlockView(viewpoint, block, ubd, participantOnly);
+				BlockView blockView = prepareBlockView(viewpoint, block, ubd, participantOnly);
+		        if (block.getBlockType() == BlockType.ACCOUNT_QUESTION) { 
+		        	// ACCOUNT_QUESTION blocks should be populated anyway, since they are not public, and we
+		        	// populate all blocks that are not public when preparing the blockView, but let's do
+		        	// it here just in case
+		        	// We could have also used clickedTimestamp to check if the question has been answered, because
+		        	// we assign this meaning to it for this block type (see AccountQuestionBlockHandlerBean::questionAnswered()),
+		        	// but since we should have the block populated anyway, we might as well check the answer directly.
+		        	getHandler(block).populateBlockView(blockView);
+		        	if (((AccountQuestionBlockView)blockView).getAnswer() == null) {
+		        		throw new BlockNotVisibleException("We don't include unanswered account questions in the regular stack.");
+		        	}
+		        }
+		        return blockView;
 			}
 		}, pageable, expectedHitFactor);
 		
@@ -1631,6 +1645,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	private List<UserBlockData> getUnansweredQuestionsBlockData(UserViewpoint viewpoint, long stackedBefore) {
+		// clickedTimestamp is NULL for unanswered blocks
 		Query q = em.createQuery("   SELECT ubd FROM UserBlockData ubd " +
                 "    WHERE ubd.user = :user " +
                 "      AND ubd.block.blockType = " + BlockType.ACCOUNT_QUESTION.ordinal() + " " +

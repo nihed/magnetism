@@ -120,9 +120,11 @@ import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.applications.AppinfoUploadView;
 import com.dumbhippo.server.applications.ApplicationSystem;
 import com.dumbhippo.server.applications.ApplicationView;
+import com.dumbhippo.server.blocks.AccountQuestionBlockHandler;
 import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.blocks.TitleBlockView;
 import com.dumbhippo.server.blocks.TitleDescriptionBlockView;
+import com.dumbhippo.server.blocks.AccountQuestionBlockHandler.BadResponseCodeException;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.ExternalAccountDMO;
 import com.dumbhippo.server.dm.ExternalAccountKey;
@@ -237,6 +239,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private OnlineDesktopSystem onlineDesktopSystem;
+	
+	@EJB
+	private AccountQuestionBlockHandler accountQuestionBlockHandler;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -2526,6 +2531,23 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		out.write(rss.getBytes());
+	}
+
+	public void doAnswerAccountQuestion(UserViewpoint viewpoint, String blockId, String response) throws IOException, HumanVisibleException {
+        Guid blockGuid;
+	    try {
+	        blockGuid = new Guid(blockId);
+	    } catch (ParseException e) {
+	        throw new RuntimeException("invalid blockId " + blockId);
+	    }
+	    
+	    try {
+		    accountQuestionBlockHandler.handleResponse(viewpoint, blockGuid, response);
+	    } catch (NotFoundException e) {
+		    throw new RuntimeException("blockId " + blockId + " doesn't point to a question for this user", e);
+		} catch (BadResponseCodeException e) {
+			throw new RuntimeException("response '" + response +"' had an unexpected value", e);
+		}
 	}
 
 	public void doSetApplicationUsageEnabled(UserViewpoint viewpoint, boolean enabled) throws IOException, HumanVisibleException {

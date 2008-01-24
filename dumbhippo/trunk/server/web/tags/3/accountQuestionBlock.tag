@@ -25,10 +25,12 @@
 
 <c:set var="hasDescription" value="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.TitleDescriptionBlockView') && block.description != ''}"/>
 
-<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" title="${block.title}" expandable="false">
-	<dht3:blockLeft block="${block}">
+<dht3:blockContainer cssClass="${block.answer == null ? 'dh-box-account-question' : (offset ? 'dh-box-grey2' : 'dh-box-grey1')}" blockId="${blockId}" title="${block.title}" expandable="false">
+	<dht3:blockLeft block="${block}" showFrom="false">
 		<dht3:simpleBlockTitle block="${block}" oneLine="${oneLine}" homeStack="false" spanClass="dh-stacker-block-title-generic"/>
-		<dht3:blockDescription blockId="${blockId}">${block.descriptionAsHtml}</dht3:blockDescription>
+		<div class="dh-stacker-block-header-description">
+			${block.descriptionAsHtml}
+		</div>    
         <c:if test="${block.moreLink != null}"> 
 		    <div class="dh-thumbnail-block-more">
 	            <jsp:element name="a">
@@ -44,10 +46,12 @@
 				<dht3:chatPreview block="${block}" blockId="${blockId}"/>
 			</dht3:blockContent>		    
 		</c:if>
-		<form>
-		    <c:forEach items="${block.question.buttons}" var="button">
-		        <input type="button" value="${button.text}" onclick="dhAnswerAccountQuestion(${blockId},${button.response})"></input>
-		    </c:forEach>    
-		</form>
+        <c:if test="${block.answer == null}"> 
+		    <form class="dh-account-question-buttons">
+		        <c:forEach items="${block.question.buttons}" var="button">
+		            <input type="button" value="${button.text}" onclick="javascript:dhAnswerAccountQuestion('${block.identifyingGuid}', '${button.response}')"></input>
+		        </c:forEach>    
+		    </form>
+		</c:if>
 	</dht3:blockLeft>
 </dht3:blockContainer>

@@ -612,6 +612,11 @@ div.dh-async-action-link-complete {
 	font-size:			12px;
 }
 
+.dh-box-account-question {
+	background-color:	#fbfadc;
+	border:				1px solid #cccc99;
+}
+
 .dh-account-status-primary {
 	font-size:			16px;
 	font-weight:		bold;

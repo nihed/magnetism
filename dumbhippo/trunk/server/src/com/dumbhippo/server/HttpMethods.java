@@ -446,7 +446,11 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "email", "enabled" })
 	public void doSetGoogleServicedEmail(UserViewpoint viewpoint, String email, boolean enabled) throws IOException, RetryException, ValidationException;
-	
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "blockId", "response" })
+	public void doAnswerAccountQuestion(UserViewpoint viewpoint, String blockId, String response) throws IOException, HumanVisibleException;
+
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "enabled" })
 	public void doSetApplicationUsageEnabled(UserViewpoint viewpoint, boolean enabled) throws IOException, HumanVisibleException;

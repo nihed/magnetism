@@ -188,7 +188,10 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 		// we handle a positive response in FacebookTrackerBean when the person adds the application
 		if (response.equals("no"))
 			try {
-				facebookSystem.lookupFacebookAccount(viewpoint, ((UserViewpoint)viewpoint).getViewer()).setApplicationEnabled(false);
+				FacebookAccount facebookAccount = facebookSystem.lookupFacebookAccount(viewpoint, ((UserViewpoint)viewpoint).getViewer());
+				// only set applicationEnabled to false based on this if it was not previously true
+                if (facebookAccount.isApplicationEnabled() == null)
+                	facebookAccount.setApplicationEnabled(false);
 			} catch (NotFoundException e) {
 				logger.warn("Did not find a FacebookAccount for user {} when trying to set their applicationEnabled status to false");
 			}
