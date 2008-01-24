@@ -35,7 +35,12 @@ public enum AccountQuestion {
 		}
 		
 		@Override
-		public String getMoreLink(String moreParam) {
+		public String getTitleLink(String linkParam) {
+			return null;
+		}
+		
+		@Override
+		public String getMoreLink(String linkParam) {
 			return "/applications";
 		}
 	},
@@ -68,13 +73,19 @@ public enum AccountQuestion {
 		}
 		
 		@Override
-		public String getMoreLink(String moreParam) {
-			return "http://www.facebook.com/add.php?api_key=" + moreParam;
+		public String getTitleLink(String linkParam) {
+			return "http://www.facebook.com/add.php?api_key=" + linkParam;
+		}
+		
+		@Override
+		public String getMoreLink(String linkParam) {
+			return null;
 		}
 	};
 	
 	abstract public String getTitle();
 	abstract public String getDescription(String answer);
 	abstract public AccountQuestionButton[] getButtons();
-	abstract public String getMoreLink(String moreParam);
+	abstract public String getTitleLink(String linkParam);
+	abstract public String getMoreLink(String linkParam);
 }
