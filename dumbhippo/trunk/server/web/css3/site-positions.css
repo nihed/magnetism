@@ -757,6 +757,14 @@ in-bottom:  5px;
 }
 
 .dh-account-status-secondary input {
+
+.dh-account-question-buttons {
+    margin-top:         5px;
+}
+
+.dh-account-question-buttons input {
+    margin-right:       5px;
+}
 	margin-left:		0px;
 }
 

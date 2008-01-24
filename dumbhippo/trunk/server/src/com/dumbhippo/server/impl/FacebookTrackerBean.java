@@ -27,6 +27,8 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.Site;
+import com.dumbhippo.StringUtils;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
@@ -279,12 +281,44 @@ public class FacebookTrackerBean implements FacebookTracker {
 			return null;
 		}		
 	}
+
+	public List<FacebookAccount> getFacebookAccounts(List<String> facebookUserIds) {		
+		if (facebookUserIds.isEmpty())
+			return new ArrayList<FacebookAccount>();
+        Query q = em.createQuery("from FacebookAccount f where f.facebookUserId IN (" + StringUtils.join(facebookUserIds, ",") + ")");	
+        return TypeUtils.castList(FacebookAccount.class, q.getResultList());	
+	}
 	
-	public List<String> getFriendAppUsers(User user) {
+	// This method returns a list of people who we know have installed our application on their Facebook profile
+	// page. Those people can be excluded on the application invitation page on Facebook.
+	public List<String> getFriendAppUsers(User user) {	
 		try {
 		    FacebookAccount facebookAccount = facebookSystem.lookupFacebookAccount(SystemViewpoint.getInstance(), user);
 	        FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
-	        return ws.getFriendAppUsers(facebookAccount);
+	        List<String> allFriendAppUsers = ws.getFriendAppUsers(facebookAccount);
+	        // We now need to filter out people from this list who don't actually have the application installed.
+	        // (Those people have only registered their Facebook acount with Mugshot.)
+	        List<String> friendInstalledAppUsers = new ArrayList<String>();
+	        List<FacebookAccount> friendFacebookAccounts = getFacebookAccounts(allFriendAppUsers);
+	        
+	        // this really shouldn't happen == paranoia
+	        if (allFriendAppUsers.size() != friendFacebookAccounts.size()) {
+	        	StringBuilder sb = new StringBuilder("Found FacebookAccounts for: ");
+	        	for (FacebookAccount friendFacebookAccount : friendFacebookAccounts ) {
+	        		sb.append(friendFacebookAccount.getFacebookUserId());
+	        		sb.append(",");
+	        	}
+	    		sb.setLength(sb.length() - 1); // chop comma or the last space if we didn't find any accounts	    		
+	        	logger.error("Facebook thinks that Facebook users " + StringUtils.join(allFriendAppUsers, ",") + " use Mugshot application, but we don't have FacebookAccounts for all of them. \n" + 
+	        			     sb.toString());
+	        }
+	        
+	        for (FacebookAccount friendFacebookAccount : friendFacebookAccounts) {
+	        	if (friendFacebookAccount.isApplicationEnabled() != null && friendFacebookAccount.isApplicationEnabled()) {
+	        	    friendInstalledAppUsers.add(friendFacebookAccount.getFacebookUserId());
+	        	}        		
+	        }
+	        return friendInstalledAppUsers;		      
 	    } catch (NotFoundException e) {
 			return new ArrayList<String>();
 		}

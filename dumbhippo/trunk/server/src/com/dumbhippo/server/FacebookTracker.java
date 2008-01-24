@@ -21,6 +21,8 @@ public interface FacebookTracker {
 
 	public FacebookAccount getFacebookAccount(String facebookUserId);
 	
+	public List<FacebookAccount> getFacebookAccounts(List<String> facebookUserIds);
+	
 	public List<String> getFriendAppUsers(User user);
 	
 	public void updateFbmlForUser(User user);
