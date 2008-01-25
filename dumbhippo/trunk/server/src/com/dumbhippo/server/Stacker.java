@@ -118,7 +118,7 @@ public interface Stacker {
 	
 	public List<PersonMugshotView> getContactActivity(Viewpoint viewpoint, User user, int start, int count, int blocksPerUser);
 	
-	public List<GroupMugshotView> getMugshotViews(Viewpoint viewpoint, List<Group> groups, int blockPerGroup, boolean publicOnly);
+	public List<GroupMugshotView> getGroupMugshotViews(Viewpoint viewpoint, List<Group> groups, int blockPerGroup, boolean publicOnly);
 	
 	public void pageContactActivity(Viewpoint viewpoint, User viewedUser, int blocksPerUser, Pageable<PersonMugshotView> contactMugshots);
 
