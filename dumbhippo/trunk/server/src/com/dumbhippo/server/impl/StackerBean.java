@@ -1264,12 +1264,35 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return returnItems;
 	}
 	
-	private List<User> getRecentActivityUsers(int start, int count, String groupUpdatesFilter) {
+	private List<User> getRecentActivityUsers(int start, int count, boolean includeGroupUpdates) {
+		// The convulated way we do this is to convince MySQL to not get smart on us and
+		// reorder the joins. If we could pass the MySQL STRAIGHT_JOIN hint through MySQL
+		// the simpler:
+		//
+		// SELECT STRAIGHT_JOIN ubd.u FROM UserBlockData ubd JOIN Block b on ubd.block = b 
+		//    WHERE b.publicBlock = 1 [AND group update check on blockType]
+		//
+		// Would work fine, but I don't know any way of doing that short of a native query,
+		// which is it's own pain
+		
+		String blockFilter;
+		if (includeGroupUpdates) {
+			blockFilter = " AND NOT EXISTS (SELECT b from Block b " + 
+			" WHERE b = ubd.block AND b.publicBlock = 0) "; 
+		} else {
+			blockFilter = " AND NOT EXISTS (SELECT b from Block b " + 
+			" WHERE b = ubd.block AND " + 
+			"  (b.publicBlock = 0 " + 
+			"   OR b.blockType = " + BlockType.GROUP_MEMBER.ordinal() +
+			"   OR b.blockType = " + BlockType.GROUP_CHAT.ordinal() + ")) ";
+		}
+		
 		// we expect the anonymous viewpoint here, so we only get public blocks
-		Query q = em.createQuery("SELECT ubd.user FROM UserBlockData ubd, Block block " + 
-                " WHERE ubd.deleted = 0 AND ubd.block = block " +
+		Query q = em.createQuery("SELECT u FROM UserBlockData ubd " + 
+                " LEFT JOIN User u ON u.id = ubd.user.id " +
+                " WHERE ubd.deleted = 0 " +
                 " AND ubd.participatedTimestamp IS NOT NULL " +
-                " AND block.publicBlock = true " + groupUpdatesFilter +
+                " AND " + blockFilter +
                 " ORDER BY ubd.participatedTimestamp DESC");
 		q.setFirstResult(start);
 		q.setMaxResults(count);
@@ -1277,13 +1300,21 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return TypeUtils.castList(User.class, q.getResultList());
 	}
 	
-	private List<PersonMugshotView> getMugshotViews(Viewpoint viewpoint, List<User> users, int blockPerUser, String queryExtra) {
+	private List<PersonMugshotView> getUserMugshotViews(Viewpoint viewpoint, List<User> users, int blockPerUser, boolean includeGroupUpdates) {
+		final String groupUpdatesFilter;
+		if (!includeGroupUpdates) {
+	        groupUpdatesFilter = " AND block.blockType != " + BlockType.GROUP_MEMBER.ordinal() + 
+	                             " AND block.blockType != " + BlockType.GROUP_CHAT.ordinal(); 
+		} else {
+			groupUpdatesFilter = "";
+		}
+		
 		List<PersonMugshotView> mugshots = new ArrayList<PersonMugshotView>();		
 		for (User user : users) {
 			Query qu = em.createQuery("Select ubd FROM UserBlockData ubd, Block block " + 
                 " WHERE ubd.user = :user AND ubd.deleted = 0 AND ubd.block = block " +
                 " AND ubd.participatedTimestamp IS NOT NULL " +
-                " AND block.publicBlock = true " + queryExtra +
+                " AND block.publicBlock = true " + groupUpdatesFilter +
                 " ORDER BY ubd.participatedTimestamp DESC");
 			qu.setParameter("user", user);
 		    qu.setMaxResults(blockPerUser);
@@ -1305,27 +1336,19 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
         return mugshots; 
 	}
 	
-	public List<PersonMugshotView> getRecentUserActivity(Viewpoint viewpoint, int startUser, int userCount, int blockPerUser, boolean includeGroupUpdates) {
+	public List<PersonMugshotView> getRecentUserActivity(Viewpoint viewpoint, int startUser, int userCount, int blockPerUser, final boolean includeGroupUpdates) {
 		
 		// select distinct most recently active users		
        	int expectedHitFactor = 2;
 		
-		final String groupUpdatesFilter;
-		if (!includeGroupUpdates) {
-	        groupUpdatesFilter = " AND block.blockType != " + BlockType.GROUP_MEMBER.ordinal() + 
-	                             " AND block.blockType != " + BlockType.GROUP_CHAT.ordinal(); 
-		} else {
-			groupUpdatesFilter = "";
-		}
-		
 		List<User> distinctUsers = getDistinctItems(new ItemSource<User>() {
 			@Override
 			public Collection<User> get(int start, int count) {
-				return getRecentActivityUsers(start, count, groupUpdatesFilter);
+				return getRecentActivityUsers(start, count, includeGroupUpdates);
 			}
 		}, startUser, userCount, expectedHitFactor);
 		
-		return getMugshotViews(viewpoint, distinctUsers, blockPerUser, groupUpdatesFilter);		
+		return getUserMugshotViews(viewpoint, distinctUsers, blockPerUser, includeGroupUpdates);		
 	}
 	
 	public void pageRecentUserActivity(Viewpoint viewpoint, Pageable<PersonMugshotView> pageable, int blocksPerUser) {
@@ -1336,7 +1359,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public User getRandomActiveUser(Viewpoint viewpoint) {
-		List<User> list = getRecentActivityUsers(0, 1, "");
+		List<User> list = getRecentActivityUsers(0, 1, true);
 		if (!list.isEmpty())
 			return list.get(0);
 		else {
@@ -1500,7 +1523,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			}
 		}, start, count, 4);		
 		
-		return getMugshotViews(viewpoint, distinctUsers, blocksPerUser, "");
+		return getUserMugshotViews(viewpoint, distinctUsers, blocksPerUser, true);
 	}
 
 	public void pageContactActivity(Viewpoint viewpoint, User viewedUser, int blocksPerUser, Pageable<PersonMugshotView> pageable) {
@@ -1508,7 +1531,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageable.setTotalCount(LiveState.getInstance().getLiveUser(viewedUser.getGuid()).getUserContactsCount());
 	}
 	
-	public List<GroupMugshotView> getMugshotViews(final Viewpoint viewpoint, List<Group> distinctGroups, final int blocksPerGroup, final boolean publicOnly) {
+	public List<GroupMugshotView> getGroupMugshotViews(final Viewpoint viewpoint, List<Group> distinctGroups, final int blocksPerGroup, final boolean publicOnly) {
 		List<GroupMugshotView> mugshots = new ArrayList<GroupMugshotView>();		
 		for (final Group group : distinctGroups) {
 			// Lazy initialization
@@ -1589,7 +1612,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			}
 		}, start, count, expectedHitFactor);
 		
-		return getMugshotViews(viewpoint, distinctGroups, blocksPerGroup, false);			
+		return getGroupMugshotViews(viewpoint, distinctGroups, blocksPerGroup, false);			
 	}
 	
 	public void pageUserGroupActivity(Viewpoint viewpoint, User user, int blocksPerGroup, GroupQueryType groupType, Pageable<GroupMugshotView> pageable) {
@@ -1636,7 +1659,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			}
 		}, startGroup, groupCount, expectedHitFactor);
 		
-		return getMugshotViews(viewpoint, distinctGroups, blockPerGroup, true);	
+		return getGroupMugshotViews(viewpoint, distinctGroups, blockPerGroup, true);	
 	}
 
 	public void pageRecentGroupActivity(Viewpoint viewpoint, Pageable<GroupMugshotView> pageable, int blocksPerGroup) {
