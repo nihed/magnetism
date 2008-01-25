@@ -212,7 +212,7 @@ public enum BlockType {
 		
 		@Override
 		public ExternalAccountType getExternalAccountSource() {
-			return ExternalAccountType.FACEBOOK;
+			return ExternalAccountType.FLICKR;
 		}
 	},
 	FLICKR_PHOTOSET { // 10
