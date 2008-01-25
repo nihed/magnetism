@@ -77,7 +77,8 @@ on_online_changed(DDMDataResource *global_resource,
 
 static void
 set_global_resource(HippoStatusIcon *icon,
-                    DDMDataResource *global_resource)
+                    DDMDataResource *global_resource,
+                    gboolean         in_finalization)
 {
     if (icon->global_resource) {
         ddm_data_resource_disconnect(icon->global_resource,
@@ -96,7 +97,8 @@ set_global_resource(HippoStatusIcon *icon,
                                   icon);
     }
 
-    on_online_changed(icon->global_resource, NULL, icon);
+    if (!in_finalization)
+        on_online_changed(icon->global_resource, NULL, icon);
 }
 
 static void
@@ -104,7 +106,8 @@ on_ready(DDMDataModel    *model,
          HippoStatusIcon *icon)
 {
     set_global_resource(icon,
-                        ddm_data_model_get_global_resource(model));
+                        ddm_data_model_get_global_resource(model),
+                        FALSE);
 }
 
 HippoStatusIcon*
@@ -141,7 +144,7 @@ hippo_status_icon_finalize(GObject *object)
 {
     HippoStatusIcon *icon = HIPPO_STATUS_ICON(object);
 
-    set_global_resource(icon, NULL);
+    set_global_resource(icon, NULL, TRUE);
     destroy_menu(icon);
 
     g_signal_handlers_disconnect_by_func(icon->model,
