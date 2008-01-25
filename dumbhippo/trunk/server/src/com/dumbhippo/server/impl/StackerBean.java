@@ -1265,35 +1265,26 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	private List<User> getRecentActivityUsers(int start, int count, boolean includeGroupUpdates) {
-		// The convulated way we do this is to convince MySQL to not get smart on us and
-		// reorder the joins. If we could pass the MySQL STRAIGHT_JOIN hint through MySQL
-		// the simpler:
-		//
-		// SELECT STRAIGHT_JOIN ubd.u FROM UserBlockData ubd JOIN Block b on ubd.block = b 
-		//    WHERE b.publicBlock = 1 [AND group update check on blockType]
-		//
-		// Would work fine, but I don't know any way of doing that short of a native query,
-		// which is it's own pain
+		// Use a native query so we can pass the MySQL STRAIGHT_JOIN hint; if we don't MySQL
+		// creatively reorders things and creates a 5 minute query.
 		
-		String blockFilter;
-		if (includeGroupUpdates) {
-			blockFilter = " AND NOT EXISTS (SELECT b from Block b " + 
-			" WHERE b = ubd.block AND b.publicBlock = 0) "; 
-		} else {
-			blockFilter = " AND NOT EXISTS (SELECT b from Block b " + 
-			" WHERE b = ubd.block AND " + 
-			"  (b.publicBlock = 0 " + 
-			"   OR b.blockType = " + BlockType.GROUP_MEMBER.ordinal() +
-			"   OR b.blockType = " + BlockType.GROUP_CHAT.ordinal() + ")) ";
-		}
-		
-		// we expect the anonymous viewpoint here, so we only get public blocks
-		Query q = em.createQuery("SELECT u FROM UserBlockData ubd " + 
-                " LEFT JOIN User u ON u.id = ubd.user.id " +
-                " WHERE ubd.deleted = 0 " +
-                " AND ubd.participatedTimestamp IS NOT NULL " +
-                " AND " + blockFilter +
-                " ORDER BY ubd.participatedTimestamp DESC");
+		String blockTypeClause;
+		if (!includeGroupUpdates)
+			blockTypeClause = 
+				"      AND b.blockType <> " + BlockType.GROUP_MEMBER.ordinal() +
+				"      AND b.blockType <> " + BlockType.GROUP_CHAT.ordinal();
+		else
+			blockTypeClause = "";
+			
+		Query q = em.createNativeQuery(
+				"SELECT STRAIGHT_JOIN u.* " +
+				"     FROM UserBlockData ubd " +
+				"     JOIN HippoUser u on ubd.user_id = u.id " +
+				"     JOIN Block b on ubd.block_id = b.id " +
+				"    WHERE ubd.deleted = 0 AND ubd.participatedTimestamp IS NOT NULL" +
+				"      AND b.publicBlock = 1 " +
+				blockTypeClause +
+				" ORDER BY ubd.participatedTimestamp DESC", User.class);
 		q.setFirstResult(start);
 		q.setMaxResults(count);
 		
@@ -1303,8 +1294,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	private List<PersonMugshotView> getUserMugshotViews(Viewpoint viewpoint, List<User> users, int blockPerUser, boolean includeGroupUpdates) {
 		final String groupUpdatesFilter;
 		if (!includeGroupUpdates) {
-	        groupUpdatesFilter = " AND block.blockType != " + BlockType.GROUP_MEMBER.ordinal() + 
-	                             " AND block.blockType != " + BlockType.GROUP_CHAT.ordinal(); 
+	        groupUpdatesFilter = " AND block.blockType <> " + BlockType.GROUP_MEMBER.ordinal() + 
+	                             " AND block.blockType <> " + BlockType.GROUP_CHAT.ordinal(); 
 		} else {
 			groupUpdatesFilter = "";
 		}
