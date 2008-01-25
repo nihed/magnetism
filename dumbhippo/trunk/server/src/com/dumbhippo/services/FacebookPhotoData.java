@@ -88,9 +88,10 @@ public class FacebookPhotoData implements FacebookPhotoDataView {
 	}
 	
 	static public String getPhotoIdFromLink(String link) {
-		if (link == null)
-            return null;
-		
+		// link can be empty if we are getting a photoId for a no results marker
+		if (link == null || link.trim().length() == 0)
+            return link;
+				
 		int startOfPid = link.indexOf("pid=");
 		
 		if (startOfPid < 0)
