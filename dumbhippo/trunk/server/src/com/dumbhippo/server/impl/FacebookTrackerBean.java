@@ -387,7 +387,18 @@ public class FacebookTrackerBean implements FacebookTracker {
 					Map<String, CharSequence> titleData = new HashMap<String, CharSequence>();
 					
 					String action = blockView.getSummaryHeading().toLowerCase();
-					String link = "<a target='_blank' href='" + getAbsoluteUrl(blockView.getSummaryLink()) + "'>" + blockView.getSummaryLinkText() + "</a>";
+					String link;
+					if (blockView.getSummaryLink() != null) {
+					    link = "<a target='_blank' href='" + getAbsoluteUrl(blockView.getSummaryLink()) + "'>" + blockView.getSummaryLinkText() + "</a>";
+					} else {
+						// This happens when we don't get information about a track someone played that we can link to,
+						// but it should happen rarely or never in other cases. When we have a MUSIC_CHAT block, it should
+						// normally link to the page of the person who chatted on it.
+						if (blockView.getBlockType() != BlockType.MUSIC_PERSON) {
+							 logger.warn("Link was null for block {} with block summary text {}", blockView, blockView.getSummaryLinkText());
+						}
+						link = blockView.getSummaryLinkText();
+					}
                     String where = "";
 					if (blockView.getBlockType().getExternalAccountSource() != null) {
                         if (blockView.getSummaryHeading().contains("Chatted about")) {
@@ -829,12 +840,25 @@ public class FacebookTrackerBean implements FacebookTracker {
 			}
 			backgroundColor = (resultsCount % 2 == 0 ? "#FFFFFF" : "#EEEEEE");
 			resultsCount++;
+			String link;
+			if (blockView.getSummaryLink() != null) {
+				link = "<a target='_blank' href='" + getAbsoluteUrl(blockView.getSummaryLink()) + "'>" + blockView.getSummaryLinkText() + "</a>";
+			} else {				
+				// This happens when we don't get information about a track someone played that we can link to,
+				// but it should happen rarely or never in other cases. When we have a MUSIC_CHAT block, it should
+				// normally link to the page of the person who chatted on it.
+				if (blockView.getBlockType() != BlockType.MUSIC_PERSON) {
+				    logger.warn("Link was null for block {} with block summary text {}", blockView, blockView.getSummaryLinkText());
+				}
+				link = blockView.getSummaryLinkText();
+			}
+			
 			String updateTable = "<table cellspacing='0' cellpadding='0'>" +
 		                         "<tbody><tr><td style='width:18px;padding-left:8px;'>" +
                                  "<img src='http://mugshot.org" + blockView.getIcon() + "' title='" + blockView.getTypeTitle() + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
 		                         "</td><td align='left'>" +
 		                         blockView.getSummaryHeading() +
-	                             ": <a target='_blank' href='" + getAbsoluteUrl(blockView.getSummaryLink()) + "'>" + blockView.getSummaryLinkText() + "</a>" +
+	                             ": " + link +
 		                         "</td></tr></table>";
 			String updateStyle = "background-color: " + backgroundColor + ";margin-left:-8px;padding-top:2px;padding-bottom:2px;";
 			
@@ -879,6 +903,11 @@ public class FacebookTrackerBean implements FacebookTracker {
 	}
 	
 	private String getAbsoluteUrl(String link)  {
+		if (link == null) {
+			logger.warn("A null link was passed in to FacebookTrackerBean::getAbsoluteUrl()");
+			return "";
+		}
+		
 		if (link.startsWith("/")) {
 			String baseurl = config.getBaseUrlMugshot().toExternalForm();
 			return baseurl + link;
