@@ -1277,9 +1277,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			blockTypeClause = "";
 			
 		Query q = em.createNativeQuery(
-				"SELECT STRAIGHT_JOIN u.* " +
+				"SELECT STRAIGHT_JOIN u.*, p.nickname " +
 				"     FROM UserBlockData ubd " +
 				"     JOIN HippoUser u on ubd.user_id = u.id " +
+				"     JOIN Person p on ubd.user_id = p.id " +
 				"     JOIN Block b on ubd.block_id = b.id " +
 				"    WHERE ubd.deleted = 0 AND ubd.participatedTimestamp IS NOT NULL" +
 				"      AND b.publicBlock = 1 " +
