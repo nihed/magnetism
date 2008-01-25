@@ -1,0 +1,2 @@
+db_module=firehose.model
+history_dir=$base/firehose/sqlobject-history
