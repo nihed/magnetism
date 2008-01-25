@@ -424,6 +424,8 @@ public abstract class BlockView implements ObjectView {
 	// it in some sort of a badge, the block is likely going to be on the 
 	// first page there. Otherwise, we provide a link to the person who was 
 	// the source of the original block.
+	// Note, block summary link can be null, if, for example, we didn't find any 
+	// information about a track someone played that we can link to.
 	public String getSummaryLink() {
 	    if (getUserBlockData() != null && getUserBlockData().getParticipatedReason().equals(StackReason.CHAT_MESSAGE))
 	    	return "/person?who=" + getUserBlockData().getUser().getId();
