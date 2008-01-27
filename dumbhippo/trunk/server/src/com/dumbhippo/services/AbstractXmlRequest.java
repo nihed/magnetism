@@ -40,7 +40,13 @@ class AbstractXmlRequest<SaxHandlerT extends DefaultHandler> {
 				logger.debug("normal/expected error from web service: {}", e.getMessage());
 			return null;
 		} catch (SAXException e) {
-			logger.warn("parse error on web server reply", e);
+			// The Yahoo search services in particular sometimes send empty documents
+			// for "no results"; special case this to avoid cluttering the logs with
+			// backtraces.
+			if (e.getMessage() != null && e.getMessage().indexOf("Premature end of file") >= 0)
+				logger.warn("Web service sent an incomplete XML document");
+			else
+				logger.warn("parse error on web server reply", e);
 			return null;
 		} catch (IOException e) {
 			logger.debug("IO error talking to web server: {}", e.getMessage());
