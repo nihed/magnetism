@@ -191,32 +191,6 @@ hippo_dbus_stacker_try_to_acquire(const char  *stacker_server,
     g_free(stacker_bus_name);
     g_free(old_bus_name);
 
-    /* Now we acquire the names without the server host/port appended,
-     * we only optionally acquire these if nobody else has them.
-     * This allows apps to avoid adding the server to the name - 
-     * they can just use the "normal" name
-     */
-    {
-    	DBusError tmp_derror;
-        dbus_uint32_t flags;
-        
-    	dbus_error_init(&tmp_derror);        
-        
-        /* We do want to be queued if we don't get this right away */
-        flags = DBUS_NAME_FLAG_ALLOW_REPLACEMENT;
-        if (replace_existing)
-            flags |= DBUS_NAME_FLAG_REPLACE_EXISTING;
-        
-        /* we just ignore errors on this */
-        dbus_bus_request_name(connection, HIPPO_DBUS_ENGINE_BASE_BUS_NAME,
-                              flags,
-                              &tmp_derror);
-        if (dbus_error_is_set(&tmp_derror))
-        	g_debug("Failed to get bus name %s: %s", HIPPO_DBUS_ENGINE_BASE_BUS_NAME, tmp_derror.message);
-       	else
-       		g_debug("Acquired bus name %s", HIPPO_DBUS_ENGINE_BASE_BUS_NAME);       	
-    }
-
     {
     	DBusError tmp_derror;    
         dbus_uint32_t flags;
