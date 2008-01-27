@@ -168,7 +168,7 @@ public abstract class ContactDMO extends DMObject<Guid> {
 		return results;
 	}		
 	
-	@DMProperty(defaultInclude=true)
+	@DMProperty(defaultInclude=true, defaultChildren="+")
 	public UserDMO getUser() {
 		for (ContactClaim cc : contact.getResources()) {
 			Resource r = cc.getResource();
