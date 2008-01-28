@@ -18,6 +18,9 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.FeedSystem.NoFeedEntryException;
+import com.dumbhippo.server.dm.BlockDMO;
+import com.dumbhippo.server.dm.BlockDMOKey;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
@@ -100,7 +103,10 @@ public abstract class AbstractSingleBlockForFeedBlockHandlerBean<ViewType extend
 		// entry.getDate().getTime() creates a timestamp that is too old, at least with blogspot
 		// so it is unreliable, because we update blocks based on timestamps
 		long now = System.currentTimeMillis();
-		stacker.stack(getKey(user), now, user, false, StackReason.BLOCK_UPDATE);
+		Block block = stacker.stack(getKey(user), now, user, false, StackReason.BLOCK_UPDATE);
+		DataService.currentSessionRW().changed(BlockDMO.class, new BlockDMOKey(block), "title");
+		DataService.currentSessionRW().changed(BlockDMO.class, new BlockDMOKey(block), "description");
+		DataService.currentSessionRW().changed(BlockDMO.class, new BlockDMOKey(block), "link");
 	}
 
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
