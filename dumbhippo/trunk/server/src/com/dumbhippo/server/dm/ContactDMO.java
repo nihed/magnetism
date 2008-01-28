@@ -13,25 +13,28 @@ import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.NotFoundException;
 
 /** 
- * ContactDMO is not quite a straight wrapper of a Contact in the database, because 
- * we go ahead and merge the info from the User a contact refers to. This is done 
- * on the server side because if we had a web view of contacts, we'd want it to 
- * be consistent with the client.
+ * Currently ContactDMO is pretty much a straight wrapper of Contact and doesn't
+ * try to pull in information from the user, if the Contact can be resolved to
+ * a user. This has two advantages: first, it facilitates creating editing
+ * interfaces for a Contact since the editing interface can distinguish editable
+ * information from not-editable information. It also simplifies our work in
+ * creating the appropriate notifications and cache invalidations.
  * 
- * There are several downsides to this approach, though; the change notification 
- * is busted right now, i.e. changing the User won't update the Contact. In addition 
- * this approach means sending some info to the client twice, once in the User object
- * and once as part of the Contact.
- *
+ * The disadvantage is that every user who wants to display a contact with
+ * information merged in has to do the merge themselves. If we didn't mind
+ * doing the notification/invalidation work, we could duplicate properties
+ * with both merged and unmerged versions.
  */
 @DMO(classId="http://online.gnome.org/p/o/contact", resourceBase="/o/contact")
 @DMFilter("viewer.canSeeContact(this)")
@@ -58,49 +61,12 @@ public abstract class ContactDMO extends DMObject<Guid> {
 
 	@DMProperty(defaultInclude=true)
 	public String getName() {
-		String nick = contact.getNickname();
-		if (nick == null) {
-			UserDMO user = getUser();
-			if (user != null)
-				nick = user.getName();
-		}
-		
-		// It should be safe to fall back to a full address of 
-		// some kind, since the contact is only visible to 
-		// the person who added the contact
-		
-		if (nick == null) {
-			Set<String> emails = getEmails();
-			if (!emails.isEmpty())
-				nick = emails.iterator().next();
-		}
-		
-		if (nick == null) {
-			Set<String> xmpps = getXmpps();
-			if (!xmpps.isEmpty())
-				nick = xmpps.iterator().next();
-		}		
-		
-		if (nick == null) {
-			Set<String> aims = getAims();
-			if (!aims.isEmpty())
-				nick = aims.iterator().next();
-		}
-		
-		if (nick == null) {
-			nick = "NO NAME"; // should not happen
-		}
-		
-		return nick;
-	}
-	
-	private UserDMO getUserDMOFromAccount(Account account) {
-		return session.findUnchecked(UserDMO.class, account.getOwner().getGuid());
+		return contact.getNickname();
 	}
 	
 	@DMProperty(defaultInclude=true)
 	public UserDMO getOwner() {
-		return getUserDMOFromAccount(contact.getAccount());
+		return session.findUnchecked(UserDMO.class, contact.getAccount().getOwner().getGuid());
 	}
 	
 	@DMProperty(defaultInclude=true)
@@ -118,13 +84,6 @@ public abstract class ContactDMO extends DMObject<Guid> {
 				results.add(((EmailResource)r).getEmail());
 		}
 		
-		// merge in any email from the User if we can see them
-		UserDMO user = getUser();
-		if (user != null) {
-			// user.getEmails() should be filtered to our viewpoint already
-			results.addAll(user.getEmails());
-		}
-		
 		return results;
 	}
 
@@ -136,13 +95,6 @@ public abstract class ContactDMO extends DMObject<Guid> {
 			Resource r = cc.getResource();
 			if (r instanceof AimResource)
 				results.add(((AimResource)r).getScreenName());
-		}
-		
-		// merge in any screen names from the User if we can see them
-		UserDMO user = getUser();
-		if (user != null) {
-			// user.getAims() should be filtered to our viewpoint already
-			results.addAll(user.getAims());
 		}
 		
 		return results;
@@ -158,24 +110,27 @@ public abstract class ContactDMO extends DMObject<Guid> {
 				results.add(((XmppResource)r).getJid());
 		}
 		
-		// merge in any xmpps from the User if we can see them
-		UserDMO user = getUser();
-		if (user != null) {
-			// user.getXmpps() should be filtered to our viewpoint already
-			results.addAll(user.getXmpps());
-		}
-		
 		return results;
 	}		
 	
 	@DMProperty(defaultInclude=true, defaultChildren="+")
 	public UserDMO getUser() {
+		User bestUser = null;
+		
 		for (ContactClaim cc : contact.getResources()) {
 			Resource r = cc.getResource();
-			if (r instanceof Account)
-				return getUserDMOFromAccount((Account)r);
+			AccountClaim ac = r.getAccountClaim();
+			
+			if (ac != null) {
+				// Always prefer claims directly on Account resources
+				if (r instanceof Account || bestUser == null);
+					bestUser = ac.getOwner();
+			}
 		}
 		
-		return null;
+		if (bestUser != null)
+			return session.findUnchecked(UserDMO.class, bestUser.getGuid());
+		else
+			return null;
 	}
 }
