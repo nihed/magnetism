@@ -391,6 +391,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			new UserClientMatcher(contacterUserId));
 	}
 	
+	public void invalidateContactUser(Contact contact) {
+		DataService.currentSessionRW().changed(ContactDMO.class, contact.getGuid(), "user");
+	}
+	
 	public void addVerifiedOwnershipClaim(User claimedOwner, Resource res) {
 
 		// first be sure it isn't a dup - the db constraints check this too,
@@ -430,20 +434,24 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "facebook");
 		
 		// People may have listed the newly claimed resource as a contact
-		Collection<Guid> newContacters = findResourceContacters(res);
-		if (!newContacters.isEmpty()) {
+		Collection<Contact> newContacts = findResourceContacts(res);
+		if (!newContacts.isEmpty()) {
 			LiveState.getInstance().invalidateContacters(claimedOwner.getGuid());
 			
-			for (Guid contacter : newContacters) {
-				invalidateContactStatus(contacter, claimedOwner.getGuid());
-				LiveState.getInstance().invalidateContacts(contacter);
+			for (Contact contact : newContacts) {
+				Guid contacterId = contact.getAccount().getOwner().getGuid();
+				
+				invalidateContactStatus(contacterId, claimedOwner.getGuid());
+				LiveState.getInstance().invalidateContacts(contacterId);
+				
+				invalidateContactUser(contact);
 			}
 		}						
 	}
 
 	public void removeVerifiedOwnershipClaim(UserViewpoint viewpoint,
 			User owner, Resource res) {
-		Collection<Guid> oldContacters = findResourceContacters(res);
+		Collection<Contact> oldContacts = findResourceContacts(res);
 		
 		if (!viewpoint.isOfUser(owner)) {
 			throw new RuntimeException(
@@ -473,12 +481,16 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 					DataService.currentSessionRW().changed(UserDMO.class, owner.getGuid(), "facebook");
 				
 				// People may have listed resource as a contact
-				if (!oldContacters.isEmpty()) {
+				if (!oldContacts.isEmpty()) {
 					LiveState.getInstance().invalidateContacters(owner.getGuid());
 					
-					for (Guid contacter : oldContacters) {
-						invalidateContactStatus(contacter, owner.getGuid());
-						LiveState.getInstance().invalidateContacts(contacter);
+					for (Contact contact : oldContacts) {
+						Guid contacterId = contact.getAccount().getOwner().getGuid();
+
+						invalidateContactStatus(contacterId, owner.getGuid());
+						LiveState.getInstance().invalidateContacts(contacterId);
+						
+						invalidateContactUser(contact);
 					}
 				}						
 				
@@ -491,22 +503,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		claimVerifier.cancelClaimToken(owner, res);
 	}
 
-	private Collection<Guid> findResourceContacters(Resource res) {
-		Query q = em.createQuery("SELECT cc.account.owner.id " +
+	private Collection<Contact> findResourceContacts(Resource res) {
+		Query q = em.createQuery("SELECT cc.contact " +
 		 		                 "  FROM ContactClaim cc " +
 				                 "  WHERE cc.resource = :resource");
 		q.setParameter("resource", res);
 
-		Set<Guid> result = new HashSet<Guid>();
-		for (String id : TypeUtils.castList(String.class, q.getResultList())) {
-			try {
-				result.add(new Guid(id));
-			} catch (ParseException e) {
-				logger.error("Bad GUID in database: {}", id);
-			}
-		}
-		
-		return result;
+		return TypeUtils.castList(Contact.class, q.getResultList());
 	}
 
 	private Contact findContactByUser(User owner, User contactUser) throws NotFoundException {
@@ -607,6 +610,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			
 			invalidateContactStatus(contactOwner.getGuid(), resourceOwner.getGuid());			
 			liveState.invalidateContacters(resourceOwner.getGuid());
+			
+			invalidateContactUser(contact);
 		}
 	}
 		
@@ -630,6 +635,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		if (removedUser != null) {
 			invalidateContactStatus(contact.getAccount().getOwner().getGuid(), removedUser.getGuid());
 			liveState.invalidateContacters(removedUser.getGuid());
+			
+			invalidateContactUser(contact);
 		}
 		
 		// we could now have a 'bare' Contact with an empty set of resources
