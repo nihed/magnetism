@@ -416,7 +416,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		} else if (resource instanceof AimResource) {
 			DataService.currentSessionRW().changed(ContactDMO.class, contact.getGuid(), "aims");
 		} else if (resource instanceof XmppResource) {
-			DataService.currentSessionRW().changed(UserDMO.class, contact.getGuid(), "xmpps");
+			DataService.currentSessionRW().changed(ContactDMO.class, contact.getGuid(), "xmpps");
 		}
 	}
 	
