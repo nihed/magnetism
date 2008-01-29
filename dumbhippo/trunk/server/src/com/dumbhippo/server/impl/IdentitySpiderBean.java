@@ -395,6 +395,31 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		DataService.currentSessionRW().changed(ContactDMO.class, contact.getGuid(), "user");
 	}
 	
+	public void invalidateUserResource(User user, Resource resource) {
+		if (resource instanceof EmailResource) {
+			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "email");
+			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "emails");
+		} else if (resource instanceof AimResource) {
+			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "aim");
+			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "aims");
+		} else if (resource instanceof XmppResource) {
+			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "xmpp");
+			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "xmpps");
+		} else if (resource instanceof FacebookResource) {
+			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "facebook");
+		}
+	}
+	
+	public void invalidateContactResource(Contact contact, Resource resource) {
+		if (resource instanceof EmailResource) {
+			DataService.currentSessionRW().changed(ContactDMO.class, contact.getGuid(), "emails");
+		} else if (resource instanceof AimResource) {
+			DataService.currentSessionRW().changed(ContactDMO.class, contact.getGuid(), "aims");
+		} else if (resource instanceof XmppResource) {
+			DataService.currentSessionRW().changed(UserDMO.class, contact.getGuid(), "xmpps");
+		}
+	}
+	
 	public void addVerifiedOwnershipClaim(User claimedOwner, Resource res) {
 
 		// first be sure it isn't a dup - the db constraints check this too,
@@ -424,14 +449,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		// fix up group memberships
 		groupSystem.fixupGroupMemberships(claimedOwner);
 		
-		if (res instanceof EmailResource)
-			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "email");
-		else if (res instanceof AimResource)
-			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "aim");
-		else if (res instanceof XmppResource)
-			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "xmpp");
-		else if (res instanceof FacebookResource)
-			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "facebook");
+		invalidateUserResource(claimedOwner, res);
 		
 		// People may have listed the newly claimed resource as a contact
 		Collection<Contact> newContacts = findResourceContacts(res);
@@ -470,15 +488,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				res.setAccountClaim(null);
 				claims.remove(claim);
 				em.remove(claim);
-				
-				if (res instanceof EmailResource)
-					DataService.currentSessionRW().changed(UserDMO.class, owner.getGuid(), "email");
-				else if (res instanceof AimResource)
-					DataService.currentSessionRW().changed(UserDMO.class, owner.getGuid(), "aim");
-				else if (res instanceof XmppResource)
-					DataService.currentSessionRW().changed(UserDMO.class, owner.getGuid(), "xmpp");
-				else if (res instanceof FacebookResource)
-					DataService.currentSessionRW().changed(UserDMO.class, owner.getGuid(), "facebook");
+		
+				invalidateUserResource(owner, res);
 				
 				// People may have listed resource as a contact
 				if (!oldContacts.isEmpty()) {
@@ -613,6 +624,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			
 			invalidateContactUser(contact);
 		}
+		
+		invalidateContactResource(contact, resource);
 	}
 		
 	public void removeContactResource(Contact contact, Resource resource) {
@@ -639,6 +652,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			invalidateContactUser(contact);
 		}
 		
+		invalidateContactResource(contact, resource);
+
 		// we could now have a 'bare' Contact with an empty set of resources
 	}
 	
