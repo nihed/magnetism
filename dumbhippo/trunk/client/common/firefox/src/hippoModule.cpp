@@ -1,4 +1,7 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+
+#include "config.h"
+
 #include "nspr.h"
 #include "nsCOMPtr.h"
 #include "nsEmbedString.h"
