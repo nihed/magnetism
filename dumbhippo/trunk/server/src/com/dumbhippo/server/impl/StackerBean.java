@@ -397,6 +397,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				Pair<Long, StackReason> previousParticipation = new Pair<Long, StackReason>(Long.valueOf(-1), null);
 				User participant = em.find(User.class, participantId.toString());
 				UserBlockData userData = queryUserBlockData(block, participant);
+				boolean reasonChanged = false;
 				if (userData != null) {
 					userData.setDeleted(false);
 					
@@ -407,13 +408,26 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 					userData.setParticipatedReason(reason);
 					if (!userData.isIgnored())
 						userData.setStackTimestamp(block.getTimestamp());
-					userData.setStackReason(reason);
+					
+					if (reason != userData.getStackReason()) {
+						userData.setStackReason(reason);
+						reasonChanged = true;
+					}
 				} else {
 					UserBlockData data = new UserBlockData(participant, block, true, reason);
 					em.persist(data);
 				}
 				
-				DataService.currentSessionRW().feedChanged(UserDMO.class, participantId, "stack", block.getTimestampAsLong());
+				ReadWriteSession session = DataService.currentSessionRW();
+				
+				// The stackReason is actually viewer dependent, and currently comes
+				// from the UserBlockData of the viewer, so notifying just userData.getUser()
+				// would work, but long-term we sometimes want to use another UserBlockData;
+				// to be forward-looking, we just notify the stackReason globally.
+				if (reasonChanged)
+					session.changed(BlockDMO.class, new BlockDMOKey(block), "stackReason");		
+				
+				session.feedChanged(UserDMO.class, participantId, "stack", block.getTimestampAsLong());
 				
 				return previousParticipation;
 			}
@@ -427,6 +441,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 
 		int addCount;
 		int removeCount;
+		boolean reasonChanged = false; // For any user
 		
 		Set<Guid> affectedGuids = new HashSet<Guid>();
 		
@@ -471,7 +486,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				}
 				if (!old.isIgnored())
 					old.setStackTimestamp(block.getTimestamp());
-				old.setStackReason(reason);
+				if (reason != old.getStackReason()) {
+					old.setStackReason(reason);
+					reasonChanged = true;
+				}
 			} else {
 				UserBlockData data = new UserBlockData(u, block, u.getGuid().equals(participantId), reason);
 				em.persist(data);
@@ -494,6 +512,11 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 		
 		logger.debug("block {}, {} affected users notified, {} added {} removed", new Object[] { block, affectedGuids.size(), addCount, removeCount } );
+		
+		// The stackReason is actually viewer dependent, but usually changes for
+		// all users at once, so notifying globally is reasonably efficient
+		if (reasonChanged)
+			session.changed(BlockDMO.class,new BlockDMOKey(block), "stackReason");		
 		
 		BlockEvent event = new BlockEvent(block.getGuid(), block.getTimestampAsLong(), affectedGuids);
 		LiveState.getInstance().queueUpdate(event);
