@@ -21,5 +21,8 @@ else:
     update_config(configfile="prod.cfg",modulename="firehose.config")
 config.update(dict(package="firehose"))
 
+from firehose.jobs.master import MasterPoller
+MasterPoller.get().start()
+
 from firehose.controllers import Root
 start_server(Root())
