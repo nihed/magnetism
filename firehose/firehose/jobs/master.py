@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os,sys,re,heapq,time,httplib
+import os,sys,re,heapq,time,httplib,logging,threading
 
 if sys.version_info[0] < 2 or sys.version_info[1] < 5:
     from pysqlite2 import dbapi2 as sqlite3
@@ -13,7 +13,7 @@ from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 
 from turbogears import config
-import turbogears.jsonify
+import turbojson.jsonify
 
 from tasks import TaskKey
 
@@ -27,6 +27,14 @@ MIN_POLL_TIME_SECS = 15
 TASKSET_TIMEOUT_SECS = 7 * 60 # 7 minutes
 MAX_TASKSET_SIZE = 30
 MAX_TASKSET_WORKERS = 1
+
+class TaskStatusHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+    def do_POST(self):
+        _logger.debug("handling POST")
+        data = self.rfile.read()
+        taskset_results = simplejson.load(data)
+        poller = MasterPoller.get()
+        poller.taskset_status(taskset_results)
 
 class QueuedTask(object):
     __slots__ = ['eligibility', 'task']
@@ -60,13 +68,19 @@ class MasterPoller(object):
             self.__task_lock.release()
     
     def add_task(self, taskkey):
-        cursor = self.__conn.cursor()
-        cursor.execute('''INSERT INTO Tasks VALUES (?)''',
-                       taskkey)
-        self.__add_task_for_key(taskkey)        
+        cursor = self.__conn.cursor()         
+        self.__set_task_status(cursor, taskkey, None, None)
+        self.__add_task_for_key(taskkey)
         
-    def taskset_status(self, status_str):
-        pass
+    def __set_task_status(self, cursor, taskkey, hashcode, timestamp):
+        cursor.execute('''INSERT INTO Tasks VALUES (?, ?, ?)''',
+                       taskkey, hashcode, timestamp)
+        
+    def taskset_status(self, results):
+        _logger.debug("got %d results", len(results))
+        cursor = self.__conn.cursor()        
+        for (taskkey,hashcode,timestamp) in results:
+            self.__set_task_status(cursor, taskkey, hashcode, timestamp)
 
     def __init__(self):
         self.__tasks = []
@@ -74,19 +88,25 @@ class MasterPoller(object):
         self.__task_lock = threading.Lock()
         
         # Default to one slave on localhost
-        self.__worker_urls = ['localhost:%d' + int(config.get('firehose.slaveport'))]
+        self.__worker_urls = ['localhost:%d' % (int(config.get('firehose.slaveport')),)]
+        _logger.debug("worker urls are %r", self.__worker_urls)
         
         path = config.get('firehose.taskdbpath')
+        _logger.debug("connecting to %r", path)
         self.__conn = sqlite3.connect(path, isolation_level=None)
         cursor = self.__conn.cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS Tasks (tid INTEGER PRIMARY KEY AUTOINCREMENT, 
-                                                            key TEXT UNIQUE IGNORE)''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS Tasks (key TEXT UNIQUE ON CONFLICT IGNORE,
+                                                            resulthash TEXT,
+                                                            resulttime DATETIME)''')
         cursor.execute('''CREATE INDEX IF NOT EXISTS TasksIdx on Tasks (key)''')
         
         curtime = time.time()
         for v in cursor.execute('''SELECT key from Tasks'''):
             task = QueuedTask(curtime, TaskKey(v))
             heapq.heappush(self.__tasks, task)
+            
+    def start(self):
+        self.__requeue_poll()
 
     def __unset_poll(self):
         try:

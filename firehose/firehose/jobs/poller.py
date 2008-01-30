@@ -64,7 +64,7 @@ class FeedTaskHandler(object):
 class TaskRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_POST(self):
         _logger.debug("handling POST")
-        data = rfile.read()
+        data = self.rfile.read()
         taskids = simplejson.load(data)
         poller = TaskPoller.get()
         poller.poll_tasks(taskids)
@@ -76,18 +76,23 @@ class TaskPoller(SimpleHTTPServer.BaseHTTPServer):
     def get():
         global _instance
         if _instance is None:
-            _instance = MasterPoller()
+            _instance = TaskPoller()
         return _instance
         
     def __init__(self):
         bindport = int(config.get('firehose.slaveport'))
         self.__server = BaseHTTPServer.HTTPServer(('', bindport), TaskRequestHandler)
         self.__active_collectors = set()
+        self.__master_hostport = (config.get('firehose.masterhost'), 8080)
         
     def run(self):
         self.__server.serve_forever()
         
-    def __send_results(self, ):
+    def __send_results(self, results):
+        dumped_results = simplejson.dumps(results)
+        connection = httplib.HTTPConnection(*(self.__master_hostport))
+        connection.request('POST', '/taskset-status', dumped_results,
+                           headers={'Content-Type': 'text/javascript'})
         
     def __run_collect_tasks(self, taskqueue, resultqueue):
         _logger.debug("doing join on taskqueue")
