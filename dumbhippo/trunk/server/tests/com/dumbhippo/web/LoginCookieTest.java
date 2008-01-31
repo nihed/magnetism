@@ -2,6 +2,7 @@ package com.dumbhippo.web;
 
 import javax.servlet.http.Cookie;
 
+import com.dumbhippo.persistence.AccountType;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Account;
@@ -12,7 +13,7 @@ public class LoginCookieTest extends TestCase {
 
 	public void testCookieRoundtrip() throws Exception {
 		User h = new User();
-		Account acct = new Account(h);
+		Account acct = new Account(h, AccountType.MUGSHOT);
 		Client c = new Client(acct);
 		acct.authorizeNewClient(c);
 		String host = "test.mugshot.org";

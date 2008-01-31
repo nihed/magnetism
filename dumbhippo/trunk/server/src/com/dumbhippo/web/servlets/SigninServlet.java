@@ -58,7 +58,7 @@ public class SigninServlet extends AbstractServlet {
 		if (password == null)
 			password = ""; // if you click send password but don't put one in
 		
-		Client client = signinSystem.authenticatePassword(address, password, SigninBean.computeClientIdentifier(request));
+		Client client = signinSystem.authenticatePassword(SigninBean.getSiteForRequest(request), address, password, SigninBean.computeClientIdentifier(request));
 
 		HttpSession sess = request.getSession(false);
 		if (sess != null)

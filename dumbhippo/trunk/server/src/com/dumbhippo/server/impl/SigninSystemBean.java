@@ -9,6 +9,7 @@ import javax.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
@@ -197,7 +198,7 @@ public class SigninSystemBean implements SigninSystem {
 		mailer.sendMessage(message);
 	}
 
-	public Client authenticatePassword(Guid userGuid, String password, String clientIdentifier) throws HumanVisibleException {
+	public Client authenticatePassword(Site site, Guid userGuid, String password, String clientIdentifier) throws HumanVisibleException {
 		User user = identitySpider.lookupUser(userGuid);
 		if (user == null)
 			throw new HumanVisibleException("No such user " + userGuid);
@@ -205,7 +206,7 @@ public class SigninSystemBean implements SigninSystem {
 		return authenticatePassword(user, password, clientIdentifier);
 	}
 		
-	public Client authenticatePassword(String address, String password, String clientIdentifier) throws HumanVisibleException {
+	public Client authenticatePassword(Site site, String address, String password, String clientIdentifier) throws HumanVisibleException {
 		Resource resource;
 		
 		boolean noAuthentication = configuration.getProperty(HippoProperty.DISABLE_AUTHENTICATION).equals("true"); 
@@ -248,7 +249,7 @@ public class SigninSystemBean implements SigninSystem {
 		User user = identitySpider.lookupUserByResource(SystemViewpoint.getInstance(), resource);
 		if (user == null && noAuthentication) {
 			logger.warn("Creating new account for resource: {}", resource);
-			Account account = accountSystem.createAccountFromResource(resource);
+			Account account = accountSystem.createAccountFromResource(resource, site.getAccountType());
 			user = account.getOwner();
 		}
 		

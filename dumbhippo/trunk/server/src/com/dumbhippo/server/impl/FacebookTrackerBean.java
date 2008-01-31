@@ -31,6 +31,7 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
+import com.dumbhippo.persistence.AccountType;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccount;
@@ -265,7 +266,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 			res = new FacebookResource(facebookUserId);
 			em.persist(res);
 		}
-		Account account = accounts.createAccountFromResource(res);
+		Account account = accounts.createAccountFromResource(res, AccountType.MUGSHOT);
 		User user = account.getOwner();
 		// updateOrCreateExternalAccount takes care of setting hasAcceptedTerms to true if the application was enabled 
 		updateOrCreateFacebookAccount(new UserViewpoint(user, Site.MUGSHOT), sessionKey, facebookUserId, applicationEnabled);

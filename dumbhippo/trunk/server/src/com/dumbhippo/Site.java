@@ -1,5 +1,7 @@
 package com.dumbhippo;
 
+import com.dumbhippo.persistence.AccountType;
+
 /**
  * 
  * The server can have multiple "flavors" or "skins" with different 
@@ -11,22 +13,28 @@ package com.dumbhippo;
  *
  */
 public enum Site {
-	GNOME("GNOME Online"),
-	MUGSHOT("Mugshot"),
-	XMPP("Mugshot"),
+	GNOME("GNOME Online", AccountType.GNOME),
+	MUGSHOT("Mugshot", AccountType.MUGSHOT),
+	XMPP("Mugshot", AccountType.MUGSHOT),
 	// this means the code is running from a cron job for example, so 
 	// we don't have a meaningful "site" it's coming from. DO NOT just 
 	// use this because you're too lazy to pass the GNOME/MUGSHOT 
 	// thing down through the call stack.
-	NONE("Mugshot");
+	NONE("Mugshot", AccountType.MUGSHOT);
 	
 	private String siteName;
+	private AccountType accountType;
 	
-	private Site(String siteName) {
+	private Site(String siteName, AccountType accountType) {
 		this.siteName = siteName;
+		this.accountType = accountType;
 	}
 	
 	public String getSiteName() {
 		return siteName;
+	}
+	
+	public AccountType getAccountType() {
+		return accountType;
 	}
 }
