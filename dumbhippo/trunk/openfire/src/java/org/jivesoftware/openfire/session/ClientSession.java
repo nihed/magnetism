@@ -281,11 +281,13 @@ public class ClientSession extends Session {
         sb.append(session.getStreamID().toString());
         sb.append("\" xml:lang=\"");
         sb.append(language);
-        // Don't include version info if the version is 0.0.
-        if (majorVersion != 0) {
-            sb.append("\" version=\"");
-            sb.append(majorVersion).append(".").append(minorVersion);
-        }
+        // HIPPO: If we report a version of 1.0, loudmouth-1.3 and newer try to use SASL, and it would
+	// be very hard for use to support DIGEST-MD5 + SASL. So, always omit the version
+//         // Don't include version info if the version is 0.0.
+//         if (majorVersion != 0) {
+//             sb.append("\" version=\"");
+//             sb.append(majorVersion).append(".").append(minorVersion);
+//         }
         sb.append("\">");
         connection.deliverRawText(sb.toString());
 
