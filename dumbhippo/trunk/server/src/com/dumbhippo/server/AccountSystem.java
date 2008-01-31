@@ -9,6 +9,7 @@ import javax.ejb.Local;
 import com.dumbhippo.Site;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.AccountType;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -28,9 +29,10 @@ public interface AccountSystem {
 	 * resource)
 	 * 
 	 * @param email
+	 * @param accountType
 	 * @return a new Person
 	 */
-	public Account createAccountFromResource(Resource res);
+	public Account createAccountFromResource(Resource res, AccountType accountType);
 	
 	/**
 	 * Associate a new client with an account, with its own 

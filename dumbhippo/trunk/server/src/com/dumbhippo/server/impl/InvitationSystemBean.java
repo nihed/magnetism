@@ -618,7 +618,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 
 		EmailResource invitationResource = (EmailResource) invite.getInvitee();
 		
-		Account acct = accounts.createAccountFromResource(invitationResource);
+		Account acct = accounts.createAccountFromResource(invitationResource, site.getAccountType());
 		if (disable) {
 			identitySpider.setAccountDisabled(acct.getOwner(), true);
 		}

@@ -63,7 +63,7 @@ public class HttpAuthentication {
 		
 		Client client;
 		try {
-			client = signinSystem.authenticatePassword(guid, password, SigninBean.computeClientIdentifier(request));
+			client = signinSystem.authenticatePassword(SigninBean.getSiteForRequest(request), guid, password, SigninBean.computeClientIdentifier(request));
 		} catch (HumanVisibleException e) {
 			throw new NotLoggedInException(e.getMessage(), e);
 		}

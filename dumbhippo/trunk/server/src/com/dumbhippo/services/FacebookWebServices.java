@@ -375,6 +375,9 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	        FacebookXmlRestClient facebookClient = new FacebookXmlRestClient(apiKey, secret, facebookAccount.getSessionKey());	
 	        facebookClient.profile_setFBML(profileFbml, Integer.valueOf(facebookAccount.getFacebookUserId()));
 		} catch (FacebookException e) {
+			// TODO: can do e.getCode() here and set applicationEnabled and sessionKey valid appropriately
+			// if the error is that the session key is no longer valid
+			// Normally, we should catch this though when the application is removed. 
 			logger.error("FacebookException when setting profile FBML for {}: {}",
 					     facebookAccount.getFacebookUserId(), e.toString());
 		} catch (IOException e) {
@@ -398,7 +401,10 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 				logger.warn("The maximum number of actions allowed has been published for {} on Facebook",
 					        facebookAccount.getFacebookUserId());
 		    } else {
-			    logger.error("FacebookException when publishing user action for {}: {}",
+				// TODO: can do e.getCode() here and set applicationEnabled and sessionKey valid appropriately
+				// if the error is that the session key is no longer valid
+				// Normally, we should catch this though when the application is removed. 
+		    	logger.error("FacebookException when publishing user action for {}: {}",
 					         facebookAccount.getFacebookUserId(), e.toString());
 		    }
 		} catch (IOException e) {

@@ -23,6 +23,7 @@ import com.dumbhippo.Site;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.AccountType;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Resource;
@@ -61,10 +62,10 @@ public class AccountSystemBean implements AccountSystem {
 	@EJB
 	private Notifier notifier;
 	
-	public Account createAccountFromResource(Resource res) {
+	public Account createAccountFromResource(Resource res, AccountType accountType) {
 		User user = new User();
 		user.setNickname(res.getDerivedNickname());
-		Account account = new Account(user);
+		Account account = new Account(user, accountType);
 		em.persist(user);
 		em.persist(account);
 		// Important to add the account first here so other code
@@ -172,7 +173,7 @@ public class AccountSystemBean implements AccountSystem {
 						// this code. We don't want to start doing "if (character) ; else ;" all
 						// over the place.
 						logger.info("Creating special user " + c);
-						Account account = createAccountFromResource(email);
+						Account account = createAccountFromResource(email, c.getAccountType());
 						user = account.getOwner();
 						user.setNickname(c.getDefaultNickname());
 					}

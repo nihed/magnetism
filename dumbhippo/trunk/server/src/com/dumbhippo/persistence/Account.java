@@ -98,6 +98,8 @@ public class Account extends Resource {
 	
 	private String stackFilter;
 	
+	private AccountType accountType;
+	
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever
@@ -114,10 +116,10 @@ public class Account extends Resource {
 	 * Used only for Hibernate 
 	 */
 	protected Account() {
-		this(null);
+		this(null, AccountType.MUGSHOT);
 	}
 	
-	public Account(User owner) {			
+	public Account(User owner, AccountType accountType) {			
 		clients = new HashSet<Client>();
 		externalAccounts = new HashSet<ExternalAccount>();
 		creationDate = -1;
@@ -140,6 +142,7 @@ public class Account extends Resource {
 			this.owner = owner;
 			owner.setAccount(this);
 		}
+		this.accountType = accountType;
 	}
 	
 	@Override
@@ -682,5 +685,14 @@ public class Account extends Resource {
 
 	public void setApplicationUsageEnabled(Boolean enabled) {
 		this.applicationUsageEnabled = enabled;
+	}
+	
+	@Column(nullable=false)
+	public AccountType getAccountType() {
+		return accountType;
+	}
+	
+	public void setAccountType(AccountType type) {
+		this.accountType = type;
 	}
 }

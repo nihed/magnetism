@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.AccountType;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.User;
@@ -84,7 +85,7 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 				throw new Error("null resource");
 			}
 
-			Account account = accountSystem.createAccountFromResource(resource);
+			Account account = accountSystem.createAccountFromResource(resource, AccountType.MUGSHOT);
 			if (account == null) {
 				System.err.println("Account is null");
 				throw new Error("null account");
