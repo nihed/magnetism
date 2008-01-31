@@ -438,7 +438,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		boolean needToInviteFollowers = (group.getAccess() != GroupAccess.PUBLIC && open);
 		
 		group.setAccess(open ? GroupAccess.PUBLIC : GroupAccess.PUBLIC_INVITE);
-		DataService.currentSessionRW().changed(GroupDMO.class, group.getGuid(), "isPublic");
+		DataService.currentSessionRW().changed(GroupDMO.class, group.getGuid(), "public");
 		
 		int followers = -1;
 		int invitedFollowers = -1;
