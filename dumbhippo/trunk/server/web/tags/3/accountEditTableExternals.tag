@@ -6,8 +6,9 @@
 <%@ attribute name="account" required="true" type="com.dumbhippo.web.pages.AccountPage" %>
 
 <dht2:formTable tableId="dhAccounts" hasInfoCells="true">
-	<dht2:formTableRowStatus controlId='dhEmailEntry'></dht2:formTableRowStatus>
-	<dht2:formTableRow label="Email"
+    <c:if test="${dh:enumIs(site, 'GNOME') || dh:enumIs(signin.user.account.accountType, 'MUGSHOT')}">
+	    <dht2:formTableRowStatus controlId='dhEmailEntry'></dht2:formTableRowStatus>
+	    <dht2:formTableRow label="Email"
 		icon="/images3/${buildStamp}/mail_icon.png"
 		info='${dh:enumIs(site, "MUGSHOT") ? "Only your Mugshot friends see this." : ""}'>
 		<table cellpadding="0" cellspacing="0" class="dh-address-table">
@@ -45,9 +46,9 @@
 		</tr>
 		</tbody>
 		</table>
-	</dht2:formTableRow>
-	<dht2:formTableRowStatus controlId='dhXmppEntry'></dht2:formTableRowStatus>
-	<dht2:formTableRow label="IM"
+	    </dht2:formTableRow>
+	    <dht2:formTableRowStatus controlId='dhXmppEntry'></dht2:formTableRowStatus>
+	    <dht2:formTableRow label="IM"
 		icon="/images3/${buildStamp}/chat16x16.png"
 		info='${dh:enumIs(site, "MUGSHOT") ? "Only your Mugshot friends see this." : ""}'>
 		<table id="dhImTable" cellpadding="0" cellspacing="0" class="dh-address-table">
@@ -125,7 +126,8 @@
 		</tbody>
 		</table>
 		<dht3:addImAccount/>
-	</dht2:formTableRow>
+	    </dht2:formTableRow>
+	</c:if>    
 	<c:if test="${dh:enumIs(site, 'MUGSHOT')}">
 		<dht2:formTableRow label="Website"
 			icon="/images3/${buildStamp}/homepage_icon.png"
@@ -211,5 +213,5 @@
 				</c:choose>
 			</dht2:formTableRow>
 		</c:forEach>
-	</c:if><%-- End of !GNOME site --%>
+	</c:if><%-- End of if MUGSHOT site --%>
 </dht2:formTable>

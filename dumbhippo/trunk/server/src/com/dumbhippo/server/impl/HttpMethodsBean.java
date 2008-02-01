@@ -55,6 +55,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveGroup;
 import com.dumbhippo.live.LiveState;
+import com.dumbhippo.persistence.AccountType;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Application;
 import com.dumbhippo.persistence.ApplicationCategory;
@@ -1240,8 +1241,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// TODO: we can check if we are accepting terms of use from online.gnome.org here
 		// and not set publicPage to true, but we would also need a different place where
 		// we would set it to true (possibly when the person visits there Mugshot account
-		// page for the first time.
-		viewpoint.getViewer().getAccount().setPublicPage(true);
+		// page for the first time).
+		if (viewpoint.getViewer().getAccount().getAccountType() == AccountType.MUGSHOT) {
+		    viewpoint.getViewer().getAccount().setPublicPage(true);
+		}
 	}
 	
 	public void doSetNeedsDownload(UserViewpoint viewpoint, boolean needsDownload) {

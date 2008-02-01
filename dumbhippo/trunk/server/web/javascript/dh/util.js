@@ -1093,5 +1093,9 @@ dh.util.ellipseNodeWithChildrenPlus = function (element, width, originalElement)
             }                 
         }
     }                          
+}    
+    
+dh.util.exists = function(id) {
+    return document.getElementById(id) != null;
 }
         

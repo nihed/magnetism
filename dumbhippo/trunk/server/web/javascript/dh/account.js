@@ -134,8 +134,10 @@ dh.account.removeClaimXmpp = function(address) {
 }
 
 dh.account.createImEntry = function() {
-    dh.account.imEntry = new dh.textinput.Entry(document.getElementById('dhXmppEntry'), 'your.name@example.com', '');
-   	dh.account.imAccountType = 'aim';
+    if (dh.util.exists('dhXmppEntry')) {
+        dh.account.imEntry = new dh.textinput.Entry(document.getElementById('dhXmppEntry'), 'your.name@example.com', '');
+   	    dh.account.imAccountType = 'aim';
+   	}
 }
 
 dh.account.showImAccountPopup = function() {
@@ -818,47 +820,50 @@ dh.account.createAmazonEntry = function() {
 }
 
 dhAccountInit = function() {
-	function exists(id) {
-		return document.getElementById(id) != null;
-	}
-
 	if (!dh.account.active) {
 	    // we want to disable editing, but still display all the data we have
 		dh.dom.disableChildren(document.getElementById("dhAccountContents"));
 	}
-	var usernameEntry = new dh.formtable.ExpandableTextInput('dhUsernameEntry', "J. Doe");
-	usernameEntry.setDescription("The name you appear to others as.");
-	usernameEntry.setChangedPost('renameperson', 'name');
+	
+	if (dh.util.exists('dhUsernameEntry')) {
+	    var usernameEntry = new dh.formtable.ExpandableTextInput('dhUsernameEntry', "J. Doe");
+	    usernameEntry.setDescription("The name you appear to others as.");
+	    usernameEntry.setChangedPost('renameperson', 'name');
+    }
 
-    if (exists('dhBioEntry')) {
+    if (dh.util.exists('dhBioEntry')) {
 	    var bioEntry = new dh.formtable.ExpandableTextInput('dhBioEntry', "I grew up in Kansas.");
 	    bioEntry.setChangedPost('setbio', 'bio');
 	}
 	
-	if (exists('dhWebsiteEntry')) {
+	if (dh.util.exists('dhWebsiteEntry')) {
 		var websiteEntry = new dh.formtable.ExpandableTextInput('dhWebsiteEntry', 'Your website URL');
 		websiteEntry.setDescription("Your website will be linked from your Mugshot page.");
 		websiteEntry.setChangedXmlMethod('setwebsiteaccount', 'url');
 	}
 	
-	if (exists('dhBlogEntry')) {
+	if (dh.util.exists('dhBlogEntry')) {
 		var blogEntry = new dh.formtable.ExpandableTextInput('dhBlogEntry', 'Your blog URL');
 		blogEntry.setDescription("Your friends will get updates when you post to your blog.")
 		blogEntry.setChangedXmlMethod('setblogaccount', 'url');
 	}
 	
-	// add some event handlers on the file input
-	dh.account.photoEntry = new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));
-	// the div below could be null
-	dh.account.photoEntry.setBrowseButtonDiv(document.getElementById('dhStyledPictureEntry'));
+	if (dh.util.exists('dhPictureEntry')) {
+	    // add some event handlers on the file input
+	    dh.account.photoEntry = new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));
+	    // the div below could be null
+	    dh.account.photoEntry.setBrowseButtonDiv(document.getElementById('dhStyledPictureEntry'));
+	}
 	
-	// make pressing enter submit the email verify
-	var emailEntryNode = document.getElementById('dhEmailEntry');
-	emailEntryNode.onkeydown = function(ev) {
-		var key = dh.event.getKeyCode(ev);
-		if (key == ENTER) {
-			dh.account.verifyEmail();
-		}
+	if (dh.util.exists('dhEmailEntry')) {
+	    // make pressing enter submit the email verify
+	    var emailEntryNode = document.getElementById('dhEmailEntry');
+	    emailEntryNode.onkeydown = function(ev) {
+		    var key = dh.event.getKeyCode(ev);
+		    if (key == ENTER) {
+			    dh.account.verifyEmail();
+		    }
+	    }
 	}
 	
     dh.account.createImEntry();
@@ -868,7 +873,7 @@ dhAccountInit = function() {
 	// We assume if one of these exists, they all exist. If the division between the
 	// online.gnome.org and mugshot version of the account page changes, then this needs
 	// to be adjusted
-	if (exists('dhMySpaceFormContainer')) {
+	if (dh.util.exists('dhMySpaceFormContainer')) {
 	    dh.account.createMyspaceEntry();
 		dh.account.createYouTubeEntry();
 		dh.account.createLastFmEntry();
