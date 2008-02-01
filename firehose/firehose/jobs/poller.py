@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
-import os,sys,re,heapq,time,Queue,sha
-import BaseHTTPServer,httplib,urlparse
-from email.Utils import formatdate,parsedate
+import os,sys,re,heapq,time,Queue,sha,threading
+import BaseHTTPServer,httplib,urlparse,urllib
+from email.utils import formatdate,parsedate
+import logging
 
 import boto
 
@@ -19,6 +20,9 @@ _logger = logging.getLogger('firehose.Poller')
 aws_config_path = os.path.expanduser('~/.aws')
 execfile(aws_config_path)
 
+# Global hash mapping family to class
+_task_families = {}
+
 class TaskHandler(object):
     FAMILY = None
     
@@ -28,25 +32,26 @@ Should compute a new result (newhash, newtimestamp)"""
         raise NotImplementedError() 
 
 class FeedTaskHandler(object):
-    FAMILY = 'http-feed'
+    FAMILY = 'feed'
     
     def run(self, id, prev_hash, prev_timestamp):
         targeturl = urllib.unquote(id)
         parsedurl = urlparse.urlparse(targeturl)
         try:
-            connection = httplib.HTTPConnection(parsedurl.host, parsedurl.port)
+            _logger.info('Connecting to %r', targeturl)
+            connection = httplib.HTTPConnection(parsedurl.hostname, parsedurl.port)
             connection.request('GET', parsedurl.path,
                                headers={'If-Modified-Since':
                                         formatdate(prev_timestamp)})
             response = connection.getresponse()
             if response.status == 304:
+                _logger.info("Got 304 Unmodified for %r", targeturl)
                 return (prev_hash, prev_timestamp) 
             data = response.read()
-            new_timestamp = resp_headers
             hash = sha.new()
             hash.update(data)
             hash_hex = hash.hexdigest()
-            timestamp_str = response.getheader('Last-Modified')
+            timestamp_str = response.getheader('Last-Modified', None)
             if timestamp_str is not None:
                 timestamp = parsedate(timestamp_str)
             else:
@@ -60,22 +65,22 @@ class FeedTaskHandler(object):
                 connection.close()
             except:
                 pass
+_task_families[FeedTaskHandler.FAMILY] = FeedTaskHandler
 
 class TaskRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_POST(self):
         _logger.debug("handling POST")
-        data = self.rfile.read()
-        taskids = simplejson.load(data)
+        taskids = simplejson.load(self.rfile)
         poller = TaskPoller.get()
         poller.poll_tasks(taskids)
         
 _instance = None
-class TaskPoller(SimpleHTTPServer.BaseHTTPServer):
-    
+class TaskPoller(object):   
     @staticmethod
     def get():
         global _instance
         if _instance is None:
+            _logger.debug("constructing task poller")
             _instance = TaskPoller()
         return _instance
         
@@ -85,13 +90,18 @@ class TaskPoller(SimpleHTTPServer.BaseHTTPServer):
         self.__active_collectors = set()
         self.__master_hostport = (config.get('firehose.masterhost'), 8080)
         
+    def run_async(self):
+        thr = threading.Thread(target=self.run)
+        thr.setDaemon(True)
+        thr.start()
+        
     def run(self):
         self.__server.serve_forever()
         
     def __send_results(self, results):
         dumped_results = simplejson.dumps(results)
         connection = httplib.HTTPConnection(*(self.__master_hostport))
-        connection.request('POST', '/taskset-status', dumped_results,
+        connection.request('POST', '/taskset_status', dumped_results,
                            headers={'Content-Type': 'text/javascript'})
         
     def __run_collect_tasks(self, taskqueue, resultqueue):
@@ -107,15 +117,25 @@ class TaskPoller(SimpleHTTPServer.BaseHTTPServer):
                 break 
         self.__send_results(results)
         
-    def poll_tasks(self, taskids):
+    def __run_task(self, taskid, prev_hash, prev_timestamp, taskqueue, resultqueue):
+        (family, tid) = taskid.split('/', 1)
+        try:
+            fclass = _task_families[family]
+        except KeyError, e:
+            _logger.exception("Failed to find family for task %r", taskid)
+            return
+        inst = fclass()
+        (new_hash, new_timestamp) = inst.run(tid, prev_hash, prev_timestamp)
+        _logger.info("Result hash:%r ts:%r", new_hash, new_timestamp)
+        resultqueue.put((taskid, new_hash, new_timestamp))     
+        taskqueue.task_done()   
+        
+    def poll_tasks(self, tasks):
         taskqueue = Queue.Queue()
         resultqueue = Queue.Queue()
-        for task in taskids:
-            taskqueue.put(task)
-            thread = threading.Thread(target=self.__run_task, args=(task,resultqueue))
+        for (taskid, prev_hash, prev_timestamp) in tasks:
+            taskqueue.put(taskid)
+            thread = threading.Thread(target=self.__run_task, args=(taskid, prev_hash, prev_timestamp, taskqueue, resultqueue))
             thread.start()
         collector = threading.Thread(target=self.__run_collect_tasks, args=(taskqueue,resultqueue))
         collector.start()
-    
-    def run(self):
-        pass
