@@ -13,6 +13,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Site;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.AccountType;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
@@ -180,12 +181,23 @@ public abstract class SigninBean  {
 	public static String initializeAuthentication(HttpServletRequest request, HttpServletResponse response, Client client) {
 		Account account = client.getAccount();
 		User user = account.getOwner();
+		Site site = getSiteForRequest(request);
+		
+		// If the user is ever authenticated at the GNOME site, we can transfer their
+		// account to be a GNOME account. 
+		// If the user is ever authenticated at the Mugshot site and they have accepted
+		// terms of use, we should make their page public.
+		if (site.getAccountType() == AccountType.GNOME)
+			account.setAccountType(AccountType.GNOME);
+		else if (site.getAccountType() == AccountType.MUGSHOT && account.getHasAcceptedTerms())
+			account.setPublicPage(true);
+		
 		if (account.isActive()) {
-			setCookie(getSiteForRequest(request), response, user.getGuid(), client.getAuthKey());
+			setCookie(site, response, user.getGuid(), client.getAuthKey());
 		} else {
 			SigninBean.storeGuid(request.getSession(), user.getGuid());
 			request.getSession().setAttribute(CLIENT_ID_KEY, client.getId());
-			setAuthenticatedCookie(getSiteForRequest(request), response);
+			setAuthenticatedCookie(site, response);
 		}		
 
 		return "/";
@@ -201,6 +213,20 @@ public abstract class SigninBean  {
 	public static void initializeAuthenticationNoCookie(HttpServletRequest request, Client client) {
 		Account account = client.getAccount();
 		User user = account.getOwner();
+		Site site = getSiteForRequest(request);
+		
+		// If the user is ever authenticated at the GNOME site, we can transfer their
+		// account to be a GNOME account. 
+		// If the user is ever authenticated at the Mugshot site and they have accepted
+		// terms of use, we should make their page public.
+		// TODO: make sure this method doesn't get called in situations when the user is
+		// not using mugshot.org explicitly; this only gets called from HttpAuthentication
+		// as "a hack to use DAV with apps that don't use the browser cookies"
+		if (site.getAccountType() == AccountType.GNOME)
+			account.setAccountType(AccountType.GNOME);
+		else if (site.getAccountType() == AccountType.MUGSHOT && account.getHasAcceptedTerms())
+			account.setPublicPage(true);
+		
 		if (account.isActive()) {
 			;
 		} else {
@@ -223,11 +249,24 @@ public abstract class SigninBean  {
 			try {
 				Client client = accountSystem.getExistingClient(userId, clientId);
 				Account account = client.getAccount();
+				Site site = getSiteForRequest(request);
+				
+				// If the user is ever authenticated at the GNOME site, we can transfer their
+				// account to be a GNOME account. 
+				// If the user is ever authenticated at the Mugshot site and they have accepted
+				// terms of use, we should make their page public.
+				// TODO: make sure this method doesn't get called in situations when the user is
+				// not using mugshot.org explicitly; this is only called from HttpMethodsServlet2
+				if (site.getAccountType() == AccountType.GNOME)
+					account.setAccountType(AccountType.GNOME);
+				else if (site.getAccountType() == AccountType.MUGSHOT && account.getHasAcceptedTerms())
+					account.setPublicPage(true);
+				
 				if (account.isActive())
-					setCookie(getSiteForRequest(request), response, userId, client.getAuthKey());
+					setCookie(site, response, userId, client.getAuthKey());
 				else {
 					unsetCookie(response);
-					setAuthenticatedCookie(getSiteForRequest(request), response);
+					setAuthenticatedCookie(site, response);
 				}
 			} catch (NotFoundException e) {
 				// Client must have been deleted since we first authorized the session, do nothing

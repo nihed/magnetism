@@ -34,16 +34,27 @@
 </c:choose>
 
 <dht2:formTable tableId="dhAccountInfoForm">
-	<dht3:formTableRowSeparator>
-	    <div class="dh-section-header">Public Info</div>
-	    <div class="dh-section-explanation">This information will be visible on your <a href="/person">Home</a> page.</div>
-    </dht3:formTableRowSeparator>
-	<dht2:formTableRow label="My name" controlId='dhUsernameEntry'>
-		<dht2:textInput id="dhUsernameEntry" extraClass="dh-name-input"/>
-		<div id="dhUsernameEntryDescription" style="display: none"></div>
-	</dht2:formTableRow>
+    <c:if test="${dh:enumIs(site, 'MUGSHOT')}">	
+	    <dht3:formTableRowSeparator>
+	        <div class="dh-section-header">Public Info</div>
+	        <div class="dh-section-explanation">
+	            This information will be visible on your <a href="/person">Home</a> page.
+	            <c:if test="${dh:enumIs(signin.user.account.accountType, 'GNOME')}">
+	                You can modify your name, picture, and other information on your <a href="${account.baseUrlGnome}/account">GNOME Online</a> account page.
+	            </c:if>
+	        </div>
+        </dht3:formTableRowSeparator>    
+    </c:if>
+    <!-- we have name, picture, e-mail and IM inputs on the GNOME site if the person has GNOME account type,
+         but have those inputs on the Mugshot site if their account is of type Mugshot -->
+    <c:if test="${dh:enumIs(site, 'GNOME') || !dh:enumIs(signin.user.account.accountType, 'GNOME')}">
+	    <dht2:formTableRow label="My name" controlId='dhUsernameEntry'>
+		    <dht2:textInput id="dhUsernameEntry" extraClass="dh-name-input"/>
+		    <div id="dhUsernameEntryDescription" style="display: none"></div>
+	    </dht2:formTableRow>
+	</c:if>    
 	<c:if test="${dh:enumIs(site, 'MUGSHOT')}">	
-		<dht2:formTableRow label="About me" altRow="true" controlId="dhBioEntry">
+		<dht2:formTableRow label="About me" altRow="${dh:enumIs(signin.user.account.accountType, 'MUGSHOT')}" controlId="dhBioEntry">
 			<div>
 				<dht2:textInput id="dhBioEntry" multiline="true"/>
 				<div id="dhBioEntryDescription" style="display: none"></div>
@@ -58,33 +69,35 @@
 		</div>
 	</dht2:formTableRow>
 	-->
-	<dht2:formTableRow label="My picture">
-		<div id="dhHeadshotImageContainer" class="dh-image">
-			<dht2:headshot person="${account.person}" size="60" customLink="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" />
-		</div>
-		<div class="dh-next-to-image">
-			<div class="dh-picture-instructions">Upload new picture:</div>
-			<c:set var="location" value="/headshots" scope="page"/>
-			<c:url value="/upload${location}" var="posturl"/>
-			<form id='dhPictureForm' enctype="multipart/form-data" action="${posturl}" method="post">
-				<input id='dhPictureEntry' class="${browseInputClass}" type="file" name="photo" size="${browseInputSize}"/>
-				<c:if test="${browseInputClass == 'dh-hidden-file-upload'}">
-				    <div id='dhStyledPictureEntry' class="dh-styled-file-upload">
-				        <img src="${browseButton}">
-				    </div>
-				</c:if>
-				<input type="hidden" name="groupId" value=""/>
-				<input type="hidden" name="reloadTo" value="/account"/>
-			</form>
-			<div class="dh-picture-more-instructions">
-			    or <a href="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" title="Choose from a library of pictures">choose a stock picture</a>						
-			</div>
-			<div id="dhChooseStockLinkContainer">
-			</div>
-		</div>
-		<div class="dh-grow-div-around-floats"><div></div></div>
-	</dht2:formTableRow>
-	<dht2:formTableRow label="Accounts" altRow="true">
+	<c:if test="${dh:enumIs(site, 'GNOME') || dh:enumIs(signin.user.account.accountType, 'MUGSHOT')}">
+	    <dht2:formTableRow label="My picture" altRow="${dh:enumIs(site, 'GNOME')}">
+		    <div id="dhHeadshotImageContainer" class="dh-image">
+			    <dht2:headshot person="${account.person}" size="60" customLink="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" />
+		    </div>
+		    <div class="dh-next-to-image">
+			    <div class="dh-picture-instructions">Upload new picture:</div>
+			    <c:set var="location" value="/headshots" scope="page"/>
+			    <c:url value="/upload${location}" var="posturl"/>
+			    <form id='dhPictureForm' enctype="multipart/form-data" action="${posturl}" method="post">
+				    <input id='dhPictureEntry' class="${browseInputClass}" type="file" name="photo" size="${browseInputSize}"/>
+				    <c:if test="${browseInputClass == 'dh-hidden-file-upload'}">
+				        <div id='dhStyledPictureEntry' class="dh-styled-file-upload">
+				            <img src="${browseButton}">
+				        </div>
+				    </c:if>
+				    <input type="hidden" name="groupId" value=""/>
+				    <input type="hidden" name="reloadTo" value="/account"/>
+			    </form>
+			    <div class="dh-picture-more-instructions">
+			        or <a href="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" title="Choose from a library of pictures">choose a stock picture</a>						
+			    </div>
+			    <div id="dhChooseStockLinkContainer">
+			    </div>
+		    </div>
+		    <div class="dh-grow-div-around-floats"><div></div></div>
+	    </dht2:formTableRow>
+	</c:if>    
+	<dht2:formTableRow label="Accounts" altRow="${dh:enumIs(site, 'MUGSHOT')}">
 		<dht3:accountEditTableExternals account="${account}"/>
 	</dht2:formTableRow>
 	<c:if test="${dh:enumIs(site, 'MUGSHOT')}">	
@@ -117,11 +130,12 @@
 			</div>
 			</div>
 		</dht2:formTableRow>
-	</c:if><%-- End of !GNOME site --%>
-	<dht2:formTableRow label="GNOME Online services" altRow="true">
+	</c:if><%-- End of MUGSHOT site --%>
+	<c:if test="${dh:enumIs(site, 'GNOME')}">	
+  	    <dht2:formTableRow label="GNOME Online services" altRow="true">
 		<div id="dhApplicationUsagePreferences"
 			class="dh-account-preferences-row">
-		    Save application usage statistics (<a href="/applications">Read more</a>)
+		    Save application usage statistics (<a href="/applications">Learn more</a>)
 		    <c:choose>
 			<c:when
 				test="${signin.user.account.applicationUsageEnabledWithDefault}">
@@ -148,9 +162,8 @@
 			</c:otherwise>
 		</c:choose>
 		</div>
-	</dht2:formTableRow>
-	<c:if test="${dh:enumIs(site, 'GNOME')}">
-	<dht2:formTableRow label="Google services" altRow="true">
+	    </dht2:formTableRow>
+	    <dht2:formTableRow label="Google services">
 		<div id="dhGoogleServices"
 			class="dh-account-preferences-row">
 			<table>
@@ -178,12 +191,27 @@
 				</c:forEach>
 			</table>
 		</div>
-	</dht2:formTableRow>	
-	</c:if>	
-	<dht3:formTableRowSeparator>
-	    <div class="dh-section-header">Private Info</div>
-	    <div class="dh-section-explanation">Nobody sees this stuff but you.</div>
-    </dht3:formTableRowSeparator>
+	    </dht2:formTableRow>	
+	    <dht2:formTableRow label="Mugshot" icon="/images3/${buildStamp}/mugshot_icon.png" altRow="true">
+	    <div class="dh-account-preferences-row">
+			<c:choose>
+			    <c:when test="${signin.user.account.publicPage}">
+			        Enabled <a href="${account.baseUrlMugshot}/account">Visit Your Account</a>    
+			    </c:when>
+			    <c:otherwise>
+			        Disabled <a href="${account.baseUrlMugshot}/account">Log in to Enable</a>  
+			    </c:otherwise>
+			</c:choose>    
+			(<a href="${account.baseUrlMugshot}/features">Learn more</a>)
+		</div>	
+	    </dht2:formTableRow>
+	</c:if>
+    <c:if test="${dh:enumIs(site, 'MUGSHOT')}">		
+	    <dht3:formTableRowSeparator>
+	        <div class="dh-section-header">Private Info</div>
+	        <div class="dh-section-explanation">Nobody sees this stuff but you.</div>
+        </dht3:formTableRowSeparator>
+    </c:if>    
 	<dht2:formTableRowStatus controlId='dhPasswordEntry'></dht2:formTableRowStatus>
 	<dht2:formTableRow label="Set a password">
 	    <div class="dh-explanation">
@@ -205,9 +233,23 @@
 	</dht2:formTableRow>
 	<dht2:formTableRow label="Disable account" altRow="true">
 	    <div class="dh-explanation">
-		Disabling your account means we won't show any information on your
-		public Home page, and we will never send you email for any reason.
-		You can enable your account again at any time.
+	    <c:choose>	    
+	        <c:when test="${dh:enumIs(site, 'GNOME')}">
+	            Disabling your account means that we will not use any information about you
+	            for any of the GNOME Online services, and we will never send you email for any reason.
+	            <c:if test="${signin.user.account.publicPage}">	            
+		            This will also disable your Mugshot account.
+		        </c:if>	     	            	        
+	        </c:when>
+	        <c:otherwise>
+	            Disabling your account means we won't show any information on your
+		        public Home page, and we will never send you email for any reason.
+		        You can enable your account again at any time.		            	
+	            <c:if test="${dh:enumIs(signin.user.account.accountType, 'GNOME')}">	            
+		            This will not disable your GNOME Online account.
+		        </c:if>	        
+	        </c:otherwise>
+        </c:choose>     
 		</div>
 		<a name="accountStatus"></a>
 		<c:if test="${termsOfUseNote=='true'}">
