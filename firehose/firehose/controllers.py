@@ -1,8 +1,11 @@
+import logging
+
+import simplejson
 from turbogears import controllers, expose, flash
 import cherrypy
 # from model import *
-# import logging
-# log = logging.getLogger("firehose.controllers")
+
+_logger = logging.getLogger("firehose.controllers")
 
 class Root(controllers.RootController):
     @expose(template="firehose.templates.welcome")
@@ -13,22 +16,33 @@ class Root(controllers.RootController):
         return dict(now=time.ctime())
 
     @expose("json")
-    def addtask(self, taskid=None):
+    def addfeed(self, feedurl=None):
         if cherrypy.request.method != 'POST':
             raise Exception("Must invoke this method using POST")
-        if taskid is None:
+        if feedurl is None:
+            _logger.debug("no feed url specified")
             return {}
         
         from firehose.jobs.master import MasterPoller        
         master = MasterPoller.get()
-        master.add_task(taskid)
+        master.add_feed(feedurl)
         return {}
     
     @expose("json")
-    def taskset_status(self, results=None):
+    def requeue(self):
         if cherrypy.request.method != 'POST':
             raise Exception("Must invoke this method using POST")
         from firehose.jobs.master import MasterPoller        
         master = MasterPoller.get()
-        master.taskset_status(results)
+        master.requeue()
+        return {}        
+    
+    @expose("json")
+    def taskset_status(self):
+        if cherrypy.request.method != 'POST':
+            raise Exception("Must invoke this method using POST")
+        from firehose.jobs.master import MasterPoller        
+        master = MasterPoller.get()
+        status = simplejson.load(cherrypy.request.body)
+        master.taskset_status(status)
         return {}                
