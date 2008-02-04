@@ -106,8 +106,8 @@ public abstract class AbstractSingleBlockForFeedBlockHandlerBean<ViewType extend
 		Block block = stacker.stack(getKey(user), now, user, false, StackReason.BLOCK_UPDATE);
 		BlockDMOKey key = new BlockDMOKey(block);
 		DataService.currentSessionRW().changed(BlockDMO.class, key, "title");
+		DataService.currentSessionRW().changed(BlockDMO.class, key, "titleLink");
 		DataService.currentSessionRW().changed(BlockDMO.class, key, "description");
-		DataService.currentSessionRW().changed(BlockDMO.class, key, "link");
 	}
 
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
