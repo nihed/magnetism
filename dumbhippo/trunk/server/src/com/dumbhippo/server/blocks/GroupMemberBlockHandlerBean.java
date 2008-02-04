@@ -20,6 +20,7 @@ import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.GroupMemberBlockDMO;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.tx.RetryException;
@@ -114,6 +115,8 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 		// Do async after commit since we need the retry
 		TxUtils.runInTransactionOnCommit(new TxRunnable() {
 			public void run() throws RetryException {
+				DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
+				
 				GroupMember attached = em.find(GroupMember.class, memberId);
 				
 				// Blocks only exist for group members which correspond to accounts in the
