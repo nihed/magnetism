@@ -189,8 +189,6 @@ public abstract class SigninBean  {
 		// terms of use, we should make their page public.
 		if (site.getAccountType() == AccountType.GNOME)
 			account.setAccountType(AccountType.GNOME);
-		else if (site.getAccountType() == AccountType.MUGSHOT && account.getHasAcceptedTerms())
-			account.setPublicPage(true);
 		
 		if (account.isActive()) {
 			setCookie(site, response, user.getGuid(), client.getAuthKey());
@@ -224,8 +222,6 @@ public abstract class SigninBean  {
 		// as "a hack to use DAV with apps that don't use the browser cookies"
 		if (site.getAccountType() == AccountType.GNOME)
 			account.setAccountType(AccountType.GNOME);
-		else if (site.getAccountType() == AccountType.MUGSHOT && account.getHasAcceptedTerms())
-			account.setPublicPage(true);
 		
 		if (account.isActive()) {
 			;
@@ -259,8 +255,6 @@ public abstract class SigninBean  {
 				// not using mugshot.org explicitly; this is only called from HttpMethodsServlet2
 				if (site.getAccountType() == AccountType.GNOME)
 					account.setAccountType(AccountType.GNOME);
-				else if (site.getAccountType() == AccountType.MUGSHOT && account.getHasAcceptedTerms())
-					account.setPublicPage(true);
 				
 				if (account.isActive())
 					setCookie(site, response, userId, client.getAuthKey());
@@ -328,6 +322,16 @@ public abstract class SigninBean  {
 		return server;
 	}
 	
+    public String getBaseUrlGnome() {
+		Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
+    	return config.getBaseUrlGnome().toExternalForm();
+    }
+    
+    public String getBaseUrlMugshot() {
+		Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
+    	return config.getBaseUrlMugshot().toExternalForm();
+    }
+    
 	public Site getSite() {
 		return site;
 	}

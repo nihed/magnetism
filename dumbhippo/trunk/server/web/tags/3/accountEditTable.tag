@@ -40,7 +40,7 @@
 	        <div class="dh-section-explanation">
 	            This information will be visible on your <a href="/person">Home</a> page.
 	            <c:if test="${dh:enumIs(signin.user.account.accountType, 'GNOME')}">
-	                You can modify your name, picture, and other information on your <a href="${account.baseUrlGnome}/account">GNOME Online</a> account page.
+	                You can modify your name, picture, and other information on your <a href="${signin.baseUrlGnome}/account">GNOME Online</a> account page.
 	            </c:if>
 	        </div>
         </dht3:formTableRowSeparator>    
@@ -195,14 +195,17 @@
 	    <dht2:formTableRow label="Mugshot" icon="/images3/${buildStamp}/mugshot_icon.png" altRow="true">
 	    <div class="dh-account-preferences-row">
 			<c:choose>
+			    <c:when test="${signin.user.account.disabled && signin.user.account.publicPage}">
+			        Disabled because your GNOME Online account is disabled
+			    </c:when>
 			    <c:when test="${signin.user.account.publicPage}">
-			        Enabled <a href="${account.baseUrlMugshot}/account">Visit Your Account</a>    
+			        Enabled <a href="${signin.baseUrlMugshot}/account">Visit Your Account</a>    
 			    </c:when>
 			    <c:otherwise>
-			        Disabled <a href="${account.baseUrlMugshot}/account">Log in to Enable</a>  
+			        Disabled <a href="${signin.baseUrlMugshot}/account">Log in to Enable</a>  
 			    </c:otherwise>
 			</c:choose>    
-			(<a href="${account.baseUrlMugshot}/features">Learn more</a>)
+			(<a href="${signin.baseUrlMugshot}/features">Learn more</a>)
 		</div>	
 	    </dht2:formTableRow>
 	</c:if>

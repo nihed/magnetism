@@ -7,6 +7,7 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import com.dumbhippo.Pair;
+import com.dumbhippo.Site;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveUser;
@@ -389,7 +390,7 @@ public interface IdentitySpider {
 	
 	public boolean getAccountDisabled(User user);
 	
-	public void setAccountDisabled(User user, boolean disabled);
+	public void setAccountDisabled(User user, Site site, boolean disabled);
 	
 	public boolean getAccountAdminDisabled(User user);
 	

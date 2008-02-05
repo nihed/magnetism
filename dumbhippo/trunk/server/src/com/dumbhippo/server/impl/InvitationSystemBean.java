@@ -620,7 +620,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		
 		Account acct = accounts.createAccountFromResource(invitationResource, site.getAccountType());
 		if (disable) {
-			identitySpider.setAccountDisabled(acct.getOwner(), true);
+			identitySpider.setAccountDisabled(acct.getOwner(), site, true);
 		}
 
 		Client client = null;

@@ -696,7 +696,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	public void doSetAccountDisabled(UserViewpoint viewpoint, boolean disabled)
 			throws IOException, HumanVisibleException {
-		identitySpider.setAccountDisabled(viewpoint.getViewer(), disabled);
+		identitySpider.setAccountDisabled(viewpoint.getViewer(), viewpoint.getSite(), disabled);
 	}
 
 	public void doSetPassword(UserViewpoint viewpoint, String password) throws IOException,
@@ -1238,10 +1238,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	public void doAcceptTerms(UserViewpoint viewpoint) {
 		viewpoint.getViewer().getAccount().setHasAcceptedTerms(true);	
-		// TODO: we can check if we are accepting terms of use from online.gnome.org here
-		// and not set publicPage to true, but we would also need a different place where
-		// we would set it to true (possibly when the person visits there Mugshot account
-		// page for the first time).
 		if (viewpoint.getViewer().getAccount().getAccountType() == AccountType.MUGSHOT) {
 		    viewpoint.getViewer().getAccount().setPublicPage(true);
 		}
