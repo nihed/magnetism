@@ -111,12 +111,22 @@ class MasterPoller(object):
         self.add_task(taskkey)
     
     def add_task(self, taskkey):
-        _logger.debug("adding task key=%r", taskkey)
-        self.__add_task_for_key(taskkey)
+        self.add_tasks([taskkey])
+        
+    def set_tasks(self, taskkeys):
+        # For now we don't support resetting the list; just append
+        self.add_tasks(taskkeys)
+    
+    def add_tasks(self, taskkeys):
+        _logger.debug("adding %d task keys", len(taskkeys))
+        for taskkey in taskkeys:
+            self.__add_task_for_key(taskkey)
         try:
             conn = sqlite3.connect(self.__path, isolation_level=None)        
             cursor = conn.cursor()
-            self.__set_task_status(cursor, taskkey, None, None)
+            for taskkey in taskkeys:
+                cursor.execute('''INSERT OR IGNORE INTO Tasks VALUES (?, ?, ?)''',
+                       (taskkey, None, None))
         finally:
             conn.close()
         

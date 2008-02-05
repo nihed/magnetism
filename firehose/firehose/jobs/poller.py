@@ -32,10 +32,10 @@ Should compute a new result (newhash, newtimestamp)"""
         raise NotImplementedError() 
 
 class FeedTaskHandler(object):
-    FAMILY = 'feed'
+    FAMILY = 'FEED'
     
     def run(self, id, prev_hash, prev_timestamp):
-        targeturl = urllib.unquote(id)
+        targeturl = id
         parsedurl = urlparse.urlparse(targeturl)
         try:
             _logger.info('Connecting to %r', targeturl)
