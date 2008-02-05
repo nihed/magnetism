@@ -822,7 +822,11 @@ dh.account.createAmazonEntry = function() {
 dhAccountInit = function() {
 	if (!dh.account.active) {
 	    // we want to disable editing, but still display all the data we have
-		dh.dom.disableChildren(document.getElementById("dhAccountContents"));
+	    if (dh.util.exists('dhAccountContents'))
+		    dh.dom.disableChildren(document.getElementById('dhAccountContents'));
+		
+		if (dh.util.exists('gnomeAccountContents'))    
+		    dh.dom.disableChildren(document.getElementById('gnomeAccountContents'));
 	}
 	
 	if (dh.util.exists('dhUsernameEntry')) {

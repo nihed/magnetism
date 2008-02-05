@@ -99,7 +99,7 @@ public class UserSigninBean extends SigninBean {
 	
 	@Override
 	public boolean isActive() {
-		return getUser().getAccount().isActive();
+		return getUser().getAccount().isActive() && (getSite() == Site.GNOME || getUser().getAccount().isPublicPage());
 	}
 	
 	@Override

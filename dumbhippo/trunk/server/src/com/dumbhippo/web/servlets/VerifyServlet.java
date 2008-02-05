@@ -67,7 +67,7 @@ public class VerifyServlet extends AbstractServlet {
 				if (signin.isValid()) {
 					UserViewpoint viewpoint = (UserViewpoint)signin.getViewpoint();
 					IdentitySpider spider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-					spider.setAccountDisabled(viewpoint.getViewer(), true);
+					spider.setAccountDisabled(viewpoint.getViewer(), viewpoint.getSite(), true);
 					// now on to /account as normal
 				} else {
 					// just send them to the /account page where they can disable, not

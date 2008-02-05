@@ -27,11 +27,21 @@
 		<div id="dhAccountDisabled">
 			<span class="dh-account-disabled-header">Your account is currently disabled.</span>  
 			<c:choose>
+			    <c:when test="${dh:enumIs(site, 'MUGSHOT') && dh:enumIs(signin.user.account.accountType, 'GNOME')}">
+			        Got to your <a href="${signin.baseUrlGnome}/account">GNOME Online</a> account page to reenable it.
+			    </c:when> 
 				<c:when test="${!enableControl}">
 					Go to <a href="/account">My Account</a> to reenable it.
 				</c:when>
 				<c:otherwise>
-					The information on your <c:out value="${site.siteName}"/> pages is not visible to anybody else. 
+				    <c:choose>
+			            <c:when test="${dh:enumIs(site, 'GNOME')}">
+					        The information on your <c:out value="${site.siteName}"/> page is not visible to anybody else. 
+                        </c:when>
+					    <c:otherwise>
+					        The information on your <c:out value="${site.siteName}"/> pages is not visible to anybody else. 
+					    </c:otherwise>
+					</c:choose>    
 					Reenable your account to use all of <c:out value="${site.siteName}"/>'s features. 
                     <p>
                     	<a href="javascript:dh.actions.enableAccount()">Reenable my account</a>
@@ -40,6 +50,23 @@
 			</c:choose>
 		</div>
 	</c:when>	
+	<c:when test="${!signin.needsTermsOfUse && !signin.user.account.publicPage && dh:enumIs(site, 'MUGSHOT')}">
+		<div id="dhAccountDisabled">
+			<span class="dh-account-disabled-header">Your Mugshot account is currently disabled.</span>  
+			<c:choose>
+				<c:when test="${!enableControl}">
+					Go to <a href="/account">My Account</a> to reenable it.
+				</c:when>
+				<c:otherwise>
+					The information on your Mugshot pages is not visible to anybody else. 
+					Enable your account to use all of Mugshot's features. 
+                    <p>
+                    	<a href="javascript:dh.actions.enableAccount()">Enable my Mugshot account</a>
+                    </p>
+                </c:otherwise>
+			</c:choose>
+		</div>	
+	</c:when>
 	<c:when test="${signin.needsTermsOfUse || (includeDownload && signin.user.account.needsDownload)}">
 	<c:set scope="request" var="accountStatusShowing" value="true"/>
 		<div id="dhAccountStatus">

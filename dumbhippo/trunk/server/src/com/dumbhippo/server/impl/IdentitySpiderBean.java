@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
+import com.dumbhippo.Site;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -31,6 +32,7 @@ import com.dumbhippo.live.UserChangedEvent;
 import com.dumbhippo.live.UserPrefChangedEvent;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
+import com.dumbhippo.persistence.AccountType;
 import com.dumbhippo.persistence.Administrator;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
@@ -988,9 +990,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return user.getAccount().isDisabled();
 	}
 
-	public void setAccountDisabled(User user, boolean disabled) {
+	public void setAccountDisabled(User user, Site site, boolean disabled) {
 		Account account = getAttachedAccount(user);
-		if (account.isDisabled() != disabled) {
+		if (site == Site.MUGSHOT && account.getAccountType() == AccountType.GNOME) {
+			if (account.isPublicPage() == disabled) {
+			    account.setPublicPage(!disabled);
+			    logger.debug("Public page flag toggled to {} on account {}", !disabled,
+					         account);
+			}
+		} else if (account.isDisabled() != disabled) {
 			account.setDisabled(disabled);
 			logger.debug("Disabled flag toggled to {} on account {}", disabled,
 					account);

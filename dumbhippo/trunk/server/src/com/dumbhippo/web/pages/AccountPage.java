@@ -406,12 +406,4 @@ public class AccountPage {
     public List<XmppResource> getClaimedXmppResources() {
     	return claimVerifier.getPendingClaimedResources(signin.getUser(), XmppResource.class);
     }
-    
-    public String getBaseUrlGnome() {
-    	return config.getBaseUrlGnome().toExternalForm();
-    }
-    
-    public String getBaseUrlMugshot() {
-    	return config.getBaseUrlMugshot().toExternalForm();
-    }
 }
