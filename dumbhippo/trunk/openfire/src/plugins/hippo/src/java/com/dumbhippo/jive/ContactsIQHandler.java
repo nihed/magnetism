@@ -9,6 +9,7 @@ import com.dumbhippo.persistence.ContactStatus;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
+import com.dumbhippo.server.ContactConflictException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PermissionDeniedException;
@@ -125,7 +126,11 @@ public class ContactsIQHandler extends AnnotatedIQHandler {
 		
 		AddressType a = parseAddressType(addressType);
 		Resource resource = getResourceFromAddress(identitySpider, a, address);
-		identitySpider.addContactResource(contact, resource);
+		try {
+			identitySpider.addContactResource(contact, resource);
+		} catch (ContactConflictException e) {
+			throw IQException.createBadRequest(e.getMessage());
+		}
 	}
 	
 	@IQMethod(name="removeContactAddress", type=IQ.Type.set)

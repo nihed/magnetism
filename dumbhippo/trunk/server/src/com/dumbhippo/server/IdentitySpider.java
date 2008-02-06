@@ -220,7 +220,7 @@ public interface IdentitySpider {
 	 */
 	public Contact createContact(User user, Resource resource);
 	
-	public void addContactResource(Contact contact, Resource resource);
+	public void addContactResource(Contact contact, Resource resource) throws ContactConflictException;
 	
 	/** 
 	 * Removes a resource from a Contact; notably, does not delete the contact if the contact becomes empty... maybe it should, 

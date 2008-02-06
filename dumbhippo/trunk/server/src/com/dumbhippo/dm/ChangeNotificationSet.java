@@ -73,6 +73,11 @@ public class ChangeNotificationSet implements Serializable {
 		notification.addFeedProperty(model, propertyName, itemTimestamp);
 	}
 
+	public <K, T extends DMObject<K>> void removed(DataModel model, Class<T> clazz, K key) {
+		ChangeNotification<K,T> notification = getNotification(model, clazz, key, null);
+		notification.removed();
+	}
+
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}

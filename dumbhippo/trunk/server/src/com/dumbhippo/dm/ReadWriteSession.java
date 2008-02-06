@@ -102,6 +102,22 @@ public class ReadWriteSession extends CachedSession {
 		
 		// FIXME: invalidate the property in the session-local cached object if one exists
 	}
+	
+	/**
+	 * Indicates that a resource has been deleted. This currently doesn't send a notification
+	 * to clients, it just cleans up internal data structures that cache information about
+	 * that object, so that future requests for that information will not fetch the
+	 * cached information. (It is in fact hooked up to infrastructure for notifying of
+	 * an 'eviction' from the data model, but we don't send those out over XMPP, and
+	 * even if we did, there would be no indication that the resource is actually gone,
+	 * and not just no longer cache.d)
+	 * 
+	 * @param clazz the class of the resource that was deleted
+	 * @param key the key of the resource that was deleted
+	 */
+	public <K, T extends DMObject<K>> void removed(Class<T> clazz, K key) {
+		notificationSet.removed(model, clazz, key);
+	}
 
 	@Override
 	public void afterCompletion(int status) {

@@ -20,7 +20,6 @@ import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.dm.store.DMStore;
 import com.dumbhippo.dm.store.StoreClient;
-import com.dumbhippo.dm.store.StoreKey;
 
 /**
  * A DataModel is a central object holding information about entire data model; this 
