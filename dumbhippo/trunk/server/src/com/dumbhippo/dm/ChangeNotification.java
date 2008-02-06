@@ -20,7 +20,7 @@ import com.dumbhippo.dm.schema.FeedPropertyHolder;
  * @param <T>
  */
 public class ChangeNotification<K, T extends DMObject<K>> implements Serializable {
-	private static final long serialVersionUID = 3460039660076438219L;
+	private static final long serialVersionUID = 806610205806333057L;
 
 	private static Logger logger = GlobalSetup.getLogger(ChangeNotification.class);
 
@@ -30,6 +30,8 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 	private ClientMatcher matcher;
 	
 	private long[] feedTimestamps;
+	
+	private boolean removed;
 
 	/**
 	 * DO NOT USE THIS CONSTRUCTOR DIRECTLY. Instead use model.makeChangeNotification(),
@@ -120,11 +122,18 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 		}
 	}
 
+	public void removed() {
+		removed = true;
+	}
+	
 	public void resolveNotifications(DataModel model, ClientNotificationSet result) {
 		@SuppressWarnings("unchecked")
 		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
 
-		model.getStore().resolveNotifications(classHolder, key, propertyMask, result, matcher);
+		if (removed)
+			model.getStore().evict(classHolder, key);			
+		else
+			model.getStore().resolveNotifications(classHolder, key, propertyMask, result, matcher);
 	}
 	
 	@Override

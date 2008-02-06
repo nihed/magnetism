@@ -10,6 +10,7 @@ import com.dumbhippo.dm.schema.DMPropertyHolder;
 import com.dumbhippo.dm.schema.FeedPropertyHolder;
 import com.dumbhippo.dm.store.StoreClient;
 import com.dumbhippo.dm.store.StoreKey;
+import com.dumbhippo.server.NotFoundException;
 
 /**
  * ClientNotification stores information about notifications that need to be sent to 
@@ -78,7 +79,13 @@ public class ClientNotification {
 		}
 		
 		public void visitNotification(DMSession session, FetchVisitor visitor) {
-			T object = session.findUnchecked(key);
+			T object;
+			try {
+				object = session.find(key);
+			} catch (NotFoundException e) {
+				// Object is gone or no longer visible to the user, don't send notifications
+				return;
+			}
 			DMClassHolder<K,T> classHolder = key.getClassHolder();
 			DMPropertyHolder<K,T,?>[] classProperties = classHolder.getProperties();
 			long feedMinTimestamps[] = null;

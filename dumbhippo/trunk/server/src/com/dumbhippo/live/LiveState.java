@@ -602,10 +602,6 @@ public class LiveState {
 	 * @param userId the user to invalidate the cache entry for
 	 */
 	public void invalidateContacts(final Guid userId) {
-		// The new way of doing things, will eventually replace all of this
-		DataService.currentSessionRW().changed(UserDMO.class, userId, "contacts");
-		DataService.currentSessionRW().changed(UserDMO.class, userId, "userContacts");
-		
 		// Invalidate locally synchronously on commit
 		runTaskOnTransactionComplete(new Runnable() {
 			public void run() {
@@ -631,14 +627,6 @@ public class LiveState {
 	 * @param userId the user to invalidate the cache entry for
 	 */
 	public void invalidateContacters(final Guid userId) {
-		// The new way of doing things, will eventually replace all of this
-		ReadWriteSession session = DataService.currentSessionRW();
-		
-		session.changed(UserDMO.class, userId, "contacters");
-		session.changed(UserDMO.class, userId, "blockingContacters");
-		session.changed(UserDMO.class, userId, "coldContacters");
-		session.changed(UserDMO.class, userId, "hotContacters");
-		
 		// Invalidate locally synchronously on commit
 		runTaskOnTransactionComplete(new Runnable() {
 			public void run() {

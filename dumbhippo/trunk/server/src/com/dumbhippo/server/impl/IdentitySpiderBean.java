@@ -24,6 +24,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.Site;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.dm.ReadWriteSession;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveState;
@@ -57,6 +58,7 @@ import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.ContactConflictException;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.GroupSystem;
@@ -388,9 +390,39 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 
-	private void invalidateContactStatus(Guid contacterUserId, Guid contactUserId) {
-		DataService.currentSessionRW().changed(UserDMO.class, contactUserId, "contactStatus",
-			new UserClientMatcher(contacterUserId));
+	private void invalidateContacters(User user) {
+		ReadWriteSession session = DataService.currentSessionRW();
+		Guid userId = user.getGuid();
+		
+		session.changed(UserDMO.class, userId, "contacters");
+		session.changed(UserDMO.class, userId, "blockingContacters");
+		session.changed(UserDMO.class, userId, "coldContacters");
+		session.changed(UserDMO.class, userId, "hotContacters");
+		
+		// Legacy contacters cache
+		LiveState.getInstance().invalidateContacts(user.getGuid());
+	}
+	
+	private void invalidateUserContacts(User user) {
+		ReadWriteSession session = DataService.currentSessionRW();
+		Guid userId = user.getGuid();
+		
+		session.changed(UserDMO.class, userId, "userContacts");
+
+		// Legacy user contact cache
+		LiveState.getInstance().invalidateContacts(userId);
+	}
+	
+	private void invalidateContacts(User user) {
+		ReadWriteSession session = DataService.currentSessionRW();
+		Guid userId = user.getGuid();
+		
+		session.changed(UserDMO.class, userId, "contacts");
+	}
+	
+	private void invalidateContactStatus(User contacter, User contactUser) {
+		DataService.currentSessionRW().changed(UserDMO.class, contactUser.getGuid(), "contactStatus",
+			new UserClientMatcher(contacter.getGuid()));
 	}
 	
 	public void invalidateContactUser(Contact contact) {
@@ -437,6 +469,77 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			}
 		}
 
+		// People may have listed the newly claimed resource as a contact
+		//
+		// Various possibilities:
+		//
+		//  - The same Contact object also already listed another resource pointing
+		//    to the same user, nothing to do.
+		//  - A different Contact object also already another resource for the
+		//    the same contact. We need to merge the contacts
+		//  - The same Contact object listed a resource owned by a different
+		//    user, we need to split the contact
+		//  - The owner was not already a contact, we need to invalidate 
+		//    user <=> contacter relationships
+		//
+		// (Plus certain combinations of the above)
+		//
+		// We handle these things *before* creating the account claim, since we
+		// logically have the invariants that each (contactOwner,resourceOwner) 
+		// pair has no more than one Contact and each Contact has no more than
+		// one resourceOwner
+		// 
+		Collection<Contact> newContacts = findResourceContacts(res);
+		if (!newContacts.isEmpty()) {
+			// We'll keep things simple and just always invalidate the contacters
+			// for the user
+			invalidateContacters(claimedOwner);
+			
+			for (Contact contact : newContacts) {
+				User contacter = contact.getAccount().getOwner();
+				
+				Contact oldContact;
+				try {
+					oldContact = findContactByUser(contacter, claimedOwner);
+				} catch (NotFoundException e) {
+					oldContact = null;
+				}
+
+				if (oldContact != null && oldContact != contact) {
+					// The contacter had another Contact pointing to the new
+					// owner, move the resource
+					removeContactResource(contact, res);
+					try {
+						addContactResource(contacter, oldContact, res);
+					} catch (ContactConflictException e) {
+						throw new RuntimeException("Unexpected ContactConflict", e); 
+					}
+					contact = oldContact;
+				}
+				
+				User oldContactUser = getUserForContact(contact); 
+				
+				if (oldContactUser == null) {
+					// User is a contact for the first time
+					User contactOwner = contact.getAccount().getOwner();
+					
+					invalidateContactStatus(contactOwner, claimedOwner);
+					invalidateUserContacts(contactOwner);
+					
+					invalidateContactUser(contact);
+				} else if (oldContactUser != claimedOwner) {
+					// Ooops, our newly added account claim caused a conflict and a single
+					// contact points to two resources pointing to two different users.
+					// Split the contact.
+				
+					ContactStatus status = contact.getStatus();
+					removeContactResource(contact, res);
+					Contact newContact = createContact(contact.getAccount().getOwner(), res);
+					newContact.setStatus(status);
+				}
+			}
+		}						
+
 		// Now create the new db claim
 		
 		res.prepareToSetAccountClaim();
@@ -452,21 +555,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		groupSystem.fixupGroupMemberships(claimedOwner);
 		
 		invalidateUserResource(claimedOwner, res);
-		
-		// People may have listed the newly claimed resource as a contact
-		Collection<Contact> newContacts = findResourceContacts(res);
-		if (!newContacts.isEmpty()) {
-			LiveState.getInstance().invalidateContacters(claimedOwner.getGuid());
-			
-			for (Contact contact : newContacts) {
-				Guid contacterId = contact.getAccount().getOwner().getGuid();
-				
-				invalidateContactStatus(contacterId, claimedOwner.getGuid());
-				LiveState.getInstance().invalidateContacts(contacterId);
-				
-				invalidateContactUser(contact);
-			}
-		}						
 	}
 
 	public void removeVerifiedOwnershipClaim(UserViewpoint viewpoint,
@@ -495,14 +583,12 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				
 				// People may have listed resource as a contact
 				if (!oldContacts.isEmpty()) {
-					LiveState.getInstance().invalidateContacters(owner.getGuid());
+					invalidateContacters(owner);
 					
 					for (Contact contact : oldContacts) {
-						Guid contacterId = contact.getAccount().getOwner().getGuid();
-
-						invalidateContactStatus(contacterId, owner.getGuid());
-						LiveState.getInstance().invalidateContacts(contacterId);
-						
+						User contactOwner = contact.getAccount().getOwner();
+						invalidateUserContacts(contactOwner);
+						invalidateContactStatus(contactOwner, owner);
 						invalidateContactUser(contact);
 					}
 				}						
@@ -558,39 +644,98 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 
-	private Contact doCreateContact(User user, Resource resource) {
-
-		logger.debug("Creating contact for user {} with resource {}", user,
-				resource);
-
-		Account account = user.getAccount();
-		Contact contact = new Contact(account);
-
-		em.persist(contact);
-
-		addContactResource(contact, resource);
-
-		return contact;
-	}
-	
 	public Contact createContact(User user, Resource resource) {
-		if (user == null)
+		try {
+			return addContactResource(user, null, resource);
+		} catch (ContactConflictException e) {
+			throw new RuntimeException("ContactConflict exception not expected when contact not passed in", e);
+		}
+	}
+
+	private Contact addContactResource(User contacter, Contact contact, Resource resource) throws ContactConflictException {
+		// This is the central place where we handle adding contact claims; we put
+		// everything through here to avoid duplication of (somewhat complex) logic
+		
+		if (contacter == null)
 			throw new IllegalArgumentException("null contact owner");
 		if (resource == null)
 			throw new IllegalArgumentException("null contact resource");
+		if (contact != null && contact.getAccount() != contacter.getAccount())
+			throw new IllegalArgumentException("Contact does not match owner");
 
-		Contact contact;
+		if (contact != null)
+			logger.debug("Adding resource {} to existing contact {}", resource, contact);
+		else
+			logger.debug("Adding contact resource {} for user {}", resource, contacter);
 		
+		Contact oldContact = null;
+		
+		// If adding the resource would cause conflicts (two contacts pointing to the 
+		// same user, a single contact pointing to multiple users) then we raise a
+		// ContactConflictException, but maybe it would be better to just merge/split
+		// contacts and do a best-effort jobs? (We do that when adding AccountClaims,
+		// since the person adding the AccountClaim has no control over what contacts
+		// exist.)
+		//
+		// Certainly merge/splits would make for a confusing user interface, but that
+		// basically has to be handled with pre-checks, since we only provide a
+		// text string back to the client side.
+		//
+		// FIXME: At a minimum, make the exception more user friendly
+
+		// First check if we already have a contact that claims this resource
 		try {
-			contact = findContactByResource(user, resource);
+			oldContact = findContactByResource(contacter, resource);
+			if (contact == null || contact == oldContact) {
+				logger.debug("Contact resource was already present, nothing to do");
+				return oldContact;
+			}
+				
+			throw new ContactConflictException("Resource " + resource.getId() + " already part of another contact");
 		} catch (NotFoundException e) {
-			contact = doCreateContact(user, resource);
 		}
 
-		return contact;
-	}
+		// Now check if the contact already points to a different user or we have a 
+		// contact that claims another resource with the same owner 
+		User resourceOwner = getUser(resource);
+		if (resourceOwner != null) {
+			if (contact != null) {
+				User contactUser = getUserForContact(contact);
+				if (contactUser != null && contactUser != resourceOwner) {
+					throw new ContactConflictException("Contact already points to user " + contactUser.getId() + " but resource is owned by user " + resourceOwner.getGuid());
+				}
+			}
+			
+			try {
+				oldContact = findContactByUser(contacter, resourceOwner);
+				if (contact == null) {
+					contact = oldContact;
+					logger.debug("Found existing contact {} pointing to resource's owner {}",
+							     contact, resourceOwner);
+				} else if (contact != oldContact) {
+					throw new ContactConflictException("Owner " + contacter.getGuid() + " of resource " + resource.getId() + " already part of another contact");
+				}
+			} catch (NotFoundException e) {
+			}
+		}
+		
+		if (contact == null) {
+			Account account = contacter.getAccount();
+			contact = new Contact(account);
 
-	public void addContactResource(Contact contact, Resource resource) {
+			em.persist(contact);
+			invalidateContacts(contacter);
+
+			logger.debug("Created new contact {}", contact);
+		}
+
+		boolean foundAccount = false;
+		
+		for (ContactClaim cc : contact.getResources()) {
+			if (resourceOwner != null && cc.getResource().equals(resourceOwner.getAccount()))
+				foundAccount = true;
+		}
+		
 		// Updating the inverse mappings is essential since they are cached;
 		// if we don't update them the second-level cache will contain stale
 		// data.
@@ -600,37 +745,43 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		//
 		ContactClaim cc = new ContactClaim(contact, resource);
 		em.persist(cc);
-
 		contact.getResources().add(cc);
-		
-		User contactOwner = contact.getAccount().getOwner();		
-		User resourceOwner = getUser(resource);
-		
-		LiveState liveState = LiveState.getInstance();
-		liveState.invalidateContacts(contactOwner.getGuid());
-		if (resourceOwner != null) {
-			// Things work better (especially for now, when we don't fully
-			// implement spidering) if contacts own the account resource for
-			// users, and not just the EmailResource
-			if (!(resource instanceof Account)) {
-				cc = new ContactClaim(contact, resourceOwner.getAccount());
-				em.persist(cc);
-				contact.getResources().add(cc);
-				logger.debug(
-						"Added contact resource {} pointing to account {}",
-						cc.getContact(), cc.getAccount());
-			}
+		logger.debug("Added resource to contact"); 
+
+		// Things work better (especially for now, when we don't fully
+		// implement spidering) if contacts own the account resource for
+		// users, and not just the EmailResource
+		if (resourceOwner != null && !(resource instanceof Account) && !foundAccount) {
+			cc = new ContactClaim(contact, resourceOwner.getAccount());
+			em.persist(cc);
+			contact.getResources().add(cc);
+			logger.debug("Also added resource owner's account resource {} to contact", resourceOwner.getAccount()); 
+		}
+
+		if (resourceOwner != null && oldContact == null) {
+			// If the resource is owned by somebody, and we didn't already have a contact
+			// for them, then cached contacter <=> contactee relationships need to
+			// be invalidated.
 			
-			invalidateContactStatus(contactOwner.getGuid(), resourceOwner.getGuid());			
-			liveState.invalidateContacters(resourceOwner.getGuid());
-			
+			invalidateUserContacts(contacter);
+			invalidateContactStatus(contacter, resourceOwner);			
+			invalidateContacters(resourceOwner);
+				
 			invalidateContactUser(contact);
 		}
 		
 		invalidateContactResource(contact, resource);
+		
+		return contact;
+	}
+
+	public void addContactResource(Contact contact, Resource resource) throws ContactConflictException {
+		addContactResource(contact.getAccount().getOwner(), contact, resource);
 	}
 		
 	public void removeContactResource(Contact contact, Resource resource) {
+		User contacter = contact.getAccount().getOwner();
+
 		User removedUser = null;
 		
 		for (ContactClaim cc : contact.getResources()) {
@@ -645,18 +796,31 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			}
 		}
 
-		LiveState liveState = LiveState.getInstance();
-		liveState.invalidateContacts(contact.getAccount().getOwner().getGuid());
 		if (removedUser != null) {
-			invalidateContactStatus(contact.getAccount().getOwner().getGuid(), removedUser.getGuid());
-			liveState.invalidateContacters(removedUser.getGuid());
+			invalidateUserContacts(contacter);
+			invalidateContactStatus(contacter, removedUser);
+			invalidateContacters(removedUser);
 			
 			invalidateContactUser(contact);
 		}
 		
 		invalidateContactResource(contact, resource);
 
-		// we could now have a 'bare' Contact with an empty set of resources
+		// allowing a 'bare' contact with no resources might make sense in
+		// some circumstances (explicitly removing the last address from a 
+		// contact), and in other circumstances (automatic merge of contacts)
+		// would be strange. It might make sense to pass in whether to keep
+		// the contact as an option. Also, whether the contact has been
+		// customized (if we allowed notes, setting a headshot, etc) would
+		// matter.
+		//
+		// For now, we always delete empty resources
+		
+		if (contact.getResources().isEmpty()) {
+			em.remove(contact);
+			DataService.currentSessionRW().removed(ContactDMO.class, contact.getGuid());
+			invalidateContacts(contacter);
+		}
 	}
 	
 	public void addContactPerson(User user, Person contactPerson) {
@@ -672,7 +836,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			try {
 				findContactByUser(user, contactUser);
 			} catch (NotFoundException e) { 
-				doCreateContact(user, contactUser.getAccount());
+				createContact(user, contactUser.getAccount());
 			}
 		}
 	}
@@ -723,8 +887,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		LiveState liveState = LiveState.getInstance();
 		liveState.invalidateContacts(user.getGuid());
 		for (User removedUser : removedUsers) {
-			invalidateContactStatus(user.getGuid(), removedUser.getGuid());
-			liveState.invalidateContacters(removedUser.getGuid());
+			invalidateContactStatus(user, removedUser);
+			invalidateContacters(removedUser);
 		}
 	}
 	
@@ -739,7 +903,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			try {
 				contact = findContactByUser(viewer, contactUser);
 			} catch (NotFoundException e) { 
-				contact = doCreateContact(viewer, contactUser.getAccount());
+				contact = createContact(viewer, contactUser.getAccount());
 			}
 			
 			setContactStatus(viewpoint, contact, status);
@@ -759,8 +923,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				
 				User contactUser = getUser(contact);
 				if (contactUser != null) {
-					invalidateContactStatus(viewer.getGuid(), contactUser.getGuid());
-					LiveState.getInstance().invalidateContacters(contactUser.getGuid());
+					invalidateContactStatus(viewer, contactUser);
+					invalidateContacters(contactUser);
 				}
 			}
 		}
