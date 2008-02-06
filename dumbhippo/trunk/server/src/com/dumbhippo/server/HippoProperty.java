@@ -42,7 +42,9 @@ public enum HippoProperty {
 	FACEBOOK_SECRET("dumbhippo.server.facebook.secret", null),	
 	BIND_HOST("dumbhippo.server.bind.host", null),
 	GOOGLE_ANALYTICS_KEY("dumbhippo.server.googleanalytics.key", ""), 
-	DDM_PROTOCOL_VERSION("dumbhippo.server.ddmProtocolVersion", null);
+	DDM_PROTOCOL_VERSION("dumbhippo.server.ddmProtocolVersion", null),
+	FIREHOSE_SERVICE_ID("dumbhippo.server.firehoseServiceId", null),
+	EXTERNAL_SERVICE_KEY("dumbhippo.server.externalServiceKey", null);
 	
 	private String key;
 	private String def;

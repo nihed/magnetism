@@ -964,6 +964,16 @@ public class FeedSystemBean implements FeedSystem {
 		public String getIdentifier() {
 			return linkId.toString();
 		}
+
+		@Override
+		public boolean isExternallyPolled() {
+			return true;
+		}
+		
+		@Override
+		public String getExternalId() {
+			return getFamily().getName() + "/" + source.getUrl();
+		}
 	}
 
 	public PollingTask loadTask(PollingTaskEntry entry) throws NotFoundException {
