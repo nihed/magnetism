@@ -75,7 +75,7 @@ class MasterPoller(object):
         self.__client_url = config.get('firehose.clienturl')
         
         # Default to one slave on localhost
-        self.__worker_endpoints = ['localhost:%d' % (int(config.get('firehose.slaveport')),)]
+        self.__worker_endpoints = ['localhost:%d' % (int(config.get('firehose.localslaveport')),)]
         _logger.debug("worker endpoints are %r", self.__worker_endpoints)
         for bind in self.__worker_endpoints:
             (host,port) = bind.split(':')
@@ -156,6 +156,7 @@ class MasterPoller(object):
     
     @log_except(_logger)
     def __push_changed(self):
+        extkey = config.get('firehose.externalServiceKey')
         try:
             self.__task_lock.acquire()
             self.__changed_thread_queued = False
@@ -166,7 +167,9 @@ class MasterPoller(object):
         jsonstr = simplejson.dumps(changed)
         parsed = urlparse.urlparse(self.__client_url)
         conn = httplib.HTTPConnection(parsed.hostname, parsed.port)
-        conn.request('POST', parsed.path or '/', jsonstr)
+        path = parsed.path or '/'
+        path += '?esk=' + extkey
+        conn.request('POST', path, jsonstr)
         conn.close()        
 
     def __append_changed(self, changed):
