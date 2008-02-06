@@ -90,7 +90,7 @@ class TaskPoller(object):
         return _instance
         
     def __init__(self):
-        bindport = int(config.get('firehose.slaveport'))
+        bindport = int(config.get('firehose.localslaveport'))
         self.__server = BaseHTTPServer.HTTPServer(('', bindport), TaskRequestHandler)
         self.__active_collectors = set()
         self.__master_hostport = config.get('firehose.masterhost')
