@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import os,sys,re,heapq,time,httplib,logging,threading
-import traceback
+import traceback,urlparse
 import BaseHTTPServer,urllib
 
 if sys.version_info[0] < 2 or sys.version_info[1] < 5:
@@ -17,8 +17,9 @@ from boto.s3.key import Key
 import turbogears
 from turbogears import config
 
-from tasks import TaskEntry
+from firehose.jobs.tasks import TaskEntry
 from firehose.jobs.poller import TaskPoller
+from firehose.jobs.logutil import log_except
 
 _logger = logging.getLogger('firehose.Master')
 _logger.debug("hello master!")
@@ -64,9 +65,14 @@ class MasterPoller(object):
     def __init__(self):
         global _instance
         assert _instance is None
-        self.__tasks = []
+        self.__tasks_queue = [] # priority queue
+        self.__tasks_map = {} # maps id -> task
+        self.__changed_buffer = []
+        self.__changed_thread_queued = False
         self.__poll_task = None        
         self.__task_lock = threading.Lock()
+        
+        self.__client_url = config.get('firehose.clienturl')
         
         # Default to one slave on localhost
         self.__worker_endpoints = ['localhost:%d' % (int(config.get('firehose.slaveport')),)]
@@ -90,19 +96,31 @@ class MasterPoller(object):
         curtime = time.time()
         for key,prev_hash,prev_time in cursor.execute('''SELECT key,prev_hash,prev_time from Tasks'''):
             task = QueuedTask(curtime, TaskEntry(key, prev_hash, prev_time))
-            heapq.heappush(self.__tasks, task)
+            heapq.heappush(self.__tasks_queue, task)
+            self.__tasks_map[key] = task
         conn.close()
-        _logger.debug("%d queued tasks", len(self.__tasks))
+        _logger.debug("%d queued tasks", len(self.__tasks_queue))
+    
+    def __add_task_keys_unlocked(self, keys):
+        for key in keys:
+            if key in self.__tasks_map:
+                continue 
+            task = TaskEntry(key, None, None)
+            qtask = QueuedTask(time.time(), task)
+            self.__tasks_queue.append(qtask)
+            self.__tasks_map[key] = task
+            
+    def __add_task_keys(self, keys):
+        try:
+            self.__task_lock.acquire()
+            self.__add_task_keys_unlocked(keys)
+        finally:
+            self.__task_lock.release()
     
     def __add_task_for_key(self, key):
         try:
-            self.__task_lock.acquire()        
-            task = TaskEntry(key, None, None)
-            for qtask in self.__tasks:
-                if qtask.task == task:
-                    return qtask
-            qtask = QueuedTask(time.time(), task)
-            self.__tasks.append(qtask)
+            self.__task_lock.acquire()
+            self.__add_task_keys_unlocked([key])
         finally:
             self.__task_lock.release()
             
@@ -119,8 +137,9 @@ class MasterPoller(object):
     
     def add_tasks(self, taskkeys):
         _logger.debug("adding %d task keys", len(taskkeys))
-        for taskkey in taskkeys:
-            self.__add_task_for_key(taskkey)
+        # Append them to the in-memory state
+        self.__add_task_keys(taskkeys)
+        # Persist them
         try:
             conn = sqlite3.connect(self.__path, isolation_level=None)        
             cursor = conn.cursor()
@@ -135,9 +154,51 @@ class MasterPoller(object):
         cursor.execute('''INSERT OR REPLACE INTO Tasks VALUES (?, ?, ?)''',
                        (taskkey, hashcode, timestamp))
     
+    @log_except(_logger)
+    def __push_changed(self):
+        try:
+            self.__task_lock.acquire()
+            self.__changed_thread_queued = False
+            changed = self.__changed_buffer
+            self.__changed_buffer = []
+        finally:
+            self.__task_lock.release()
+        jsonstr = simplejson.dumps(changed)
+        parsed = urlparse.urlparse(self.__client_url)
+        conn = httplib.HTTPConnection(parsed.hostname, parsed.port)
+        conn.request('POST', parsed.path or '/', jsonstr)
+        conn.close()        
+
+    def __append_changed(self, changed):
+        try:
+            self.__task_lock.acquire()
+            self.__changed_buffer.extend(changed)
+            if not self.__changed_thread_queued:
+                thr = threading.Thread(target=self.__push_changed)
+                thr.setDaemon(True)
+                thr.start()
+                self.__changed_thread_queued = True
+        finally:
+            self.__task_lock.release()
+
     def taskset_status(self, results):
         _logger.info("got %d results", len(results))
-        _logger.debug("results: %r", results    )
+        changed = []
+        try:
+            self.__task_lock.acquire()
+            for (taskkey, hashcode, timestamp) in results:
+                try:
+                    curtask = self.__tasks_map[taskkey]
+                except KeyError, e:
+                    _logger.exception("failed to find task key %r", taskkey)
+                    continue
+                if curtask.task.prev_hash != hashcode:
+                    _logger.debug("task %r: new hash for %r differs from prev %r", 
+                                  taskkey, hashcode, curtask.task.prev_hash)
+                    changed.append(taskkey)
+        finally:
+            self.__task_lock.release()
+        self.__append_changed(changed)            
         try:
             conn = sqlite3.connect(self.__path, isolation_level=None)
             cursor = conn.cursor()
@@ -164,6 +225,7 @@ class MasterPoller(object):
     def __activate_workers(self):
         raise NotImplementedError()
     
+    @log_except(_logger)
     def __enqueue_taskset(self, worker, taskset):
         jsonstr = simplejson.dumps(taskset)
         conn = httplib.HTTPConnection(worker)
@@ -182,7 +244,7 @@ class MasterPoller(object):
             i = 0 
             while True:          
                 try:
-                    task = heapq.heappop(self.__tasks)
+                    task = heapq.heappop(self.__tasks_queue)
                 except IndexError, e:
                     break
                 if i >= MAX_TASKSET_SIZE:
@@ -195,7 +257,7 @@ class MasterPoller(object):
                     i += 1
                 eligible = task.eligibility < taskset_limit
                 task.eligibility = curtime + DEFAULT_POLL_TIME_SECS
-                heapq.heappush(self.__tasks, task)                 
+                heapq.heappush(self.__tasks_queue, task)                 
                 if eligible:
                     taskset.append((str(task.task), task.task.prev_hash, task.task.prev_timestamp))
                 else:
@@ -226,11 +288,11 @@ class MasterPoller(object):
             self.__task_lock.acquire()
                     
             assert self.__poll_task is None
-            if len(self.__tasks) == 0:
+            if len(self.__tasks_queue) == 0:
                 _logger.debug("no tasks")
                 return
             curtime = time.time()
-            next_timeout = self.__tasks[0].eligibility - curtime
+            next_timeout = self.__tasks_queue[0].eligibility - curtime
             if immediate:
                 next_timeout = 1
             elif (next_timeout < MIN_POLL_TIME_SECS):

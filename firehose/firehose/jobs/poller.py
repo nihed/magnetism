@@ -2,7 +2,7 @@
 
 import os,sys,re,heapq,time,Queue,sha,threading
 import BaseHTTPServer,httplib,urlparse,urllib
-from email.utils import formatdate,parsedate
+from email.utils import formatdate,parsedate_tz,mktime_tz
 import logging
 
 import boto
@@ -14,6 +14,8 @@ from boto.sqs.connection import SQSConnection
 
 import simplejson
 from turbogears import config
+
+from firehose.jobs.logutil import log_except
 
 _logger = logging.getLogger('firehose.Poller')
 
@@ -40,20 +42,23 @@ class FeedTaskHandler(object):
         try:
             _logger.info('Connecting to %r', targeturl)
             connection = httplib.HTTPConnection(parsedurl.hostname, parsedurl.port)
-            connection.request('GET', parsedurl.path,
-                               headers={'If-Modified-Since':
-                                        formatdate(prev_timestamp)})
+            headers = {}
+            if prev_timestamp is not None:
+                headers['If-Modified-Since'] = formatdate(prev_timestamp)            
+            connection.request('GET', parsedurl.path, headers=headers)
             response = connection.getresponse()
             if response.status == 304:
                 _logger.info("Got 304 Unmodified for %r", targeturl)
-                return (prev_hash, prev_timestamp) 
-            data = response.read()
-            hash = sha.new()
-            hash.update(data)
+                return (prev_hash, prev_timestamp)
+            hash = sha.new()            
+            buf = response.read(8192)
+            while buf:
+                hash.update(buf)
+                buf = response.read(8192)
             hash_hex = hash.hexdigest()
             timestamp_str = response.getheader('Last-Modified', None)
             if timestamp_str is not None:
-                timestamp = parsedate(timestamp_str)
+                timestamp = mktime_tz(parsedate_tz(timestamp_str))
             else:
                 _logger.debug("no last-modified for %r", targeturl)
                 timestamp = time.time()
@@ -88,22 +93,24 @@ class TaskPoller(object):
         bindport = int(config.get('firehose.slaveport'))
         self.__server = BaseHTTPServer.HTTPServer(('', bindport), TaskRequestHandler)
         self.__active_collectors = set()
-        self.__master_hostport = (config.get('firehose.masterhost'), 8080)
+        self.__master_hostport = config.get('firehose.masterhost')
         
     def run_async(self):
         thr = threading.Thread(target=self.run)
         thr.setDaemon(True)
         thr.start()
         
+    @log_except(_logger)        
     def run(self):
         self.__server.serve_forever()
         
     def __send_results(self, results):
         dumped_results = simplejson.dumps(results)
-        connection = httplib.HTTPConnection(*(self.__master_hostport))
+        connection = httplib.HTTPConnection(self.__master_hostport)
         connection.request('POST', '/taskset_status', dumped_results,
                            headers={'Content-Type': 'text/javascript'})
         
+    @log_except(_logger)        
     def __run_collect_tasks(self, taskqueue, resultqueue):
         _logger.debug("doing join on taskqueue")
         taskqueue.join()
@@ -114,9 +121,11 @@ class TaskPoller(object):
                 result = resultqueue.get(False)
                 results.append(result)
             except Queue.Empty:
-                break 
+                break
+        _logger.debug("sending %d results", len(results))            
         self.__send_results(results)
         
+    @log_except(_logger)        
     def __run_task(self, taskid, prev_hash, prev_timestamp, taskqueue, resultqueue):
         (family, tid) = taskid.split('/', 1)
         try:
