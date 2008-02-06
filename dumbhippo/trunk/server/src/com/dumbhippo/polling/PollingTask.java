@@ -37,7 +37,7 @@ public abstract class PollingTask implements Callable<PollingTaskExecutionResult
 	
 	// Whether or not we have been executed since the last persist
 	private boolean dirty;
-
+	
 	public PollingTask() {
 	}
 	
@@ -182,5 +182,13 @@ public abstract class PollingTask implements Callable<PollingTaskExecutionResult
 	public long getDefaultPeriodicitySeconds() {
 		// return getFamily().getDefaultPeriodicitySeconds();
 		return GLOBAL_DEFAULT_PERIODICITY_SECONDS;
+	}
+
+	public boolean isExternallyPolled() {
+		return false;
+	}
+
+	public String getExternalId() {
+		throw new IllegalArgumentException("Not an externally polled task");
 	}
 }

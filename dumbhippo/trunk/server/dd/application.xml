@@ -21,6 +21,9 @@
     	<java>commons-fileupload-1.1.1.jar</java>
     </module>    
     <module>
+    	<java>commons-httpclient-3.0.1.jar</java>
+    </module> 
+    <module>
     	<java>dom4j-1.6.1.jar</java>
     </module>
     <module>

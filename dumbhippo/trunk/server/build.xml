@@ -18,7 +18,7 @@
 	<property name="jboss.root" value="/opt/jboss" />
 	<property name="buildjar.dir" location="${target}/classes" />
 	<!-- *** stuff in bundled-classpath.external has to be added to application.xml also *** -->
-	<property name="bundled-classpath.external" value="smack-svn-local-build-2005-09-30.jar smackx-svn-local-build-2005-09-30.jar commons-fileupload-1.1.1.jar commons-io-1.2.jar dom4j*.jar slf4j-*.jar rome-*.jar jdom-1.0.jar mediarss.jar taste.jar tagsoup-1.0.jar ICOReader-1.04.jar"/>
+	<property name="bundled-classpath.external" value="smack-svn-local-build-2005-09-30.jar smackx-svn-local-build-2005-09-30.jar commons-fileupload-1.1.1.jar commons-httpclient-3.0.1.jar commons-io-1.2.jar dom4j*.jar slf4j-*.jar rome-*.jar jdom-1.0.jar mediarss.jar taste.jar tagsoup-1.0.jar ICOReader-1.04.jar"/>
 	<!-- We also "bundle" open of the jars from the openfire distribution and use it in the server code for JID manipulation; 
              this also needs to be in application.xml; this jar will be in the classpath twice in the end, but that shouldn't
 	     cause problems (for this particular jar, anyways, other jars, like dom4j are touchy -->

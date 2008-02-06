@@ -114,6 +114,11 @@
       <servlet-name>SendInviteServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.servlets.SendInviteServlet</servlet-class>
     </servlet>    
+    
+    <servlet>
+      <servlet-name>ExternalServiceServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.ExternalServiceServlet</servlet-class>
+    </servlet>      
 
 	<!--  I can't figure out how to handle "all error codes" - "*" doesn't work afaict -->
 	<error-page>
@@ -290,6 +295,11 @@
       <servlet-name>SigninServlet</servlet-name>
       <url-pattern>/signinpost</url-pattern>
    </servlet-mapping>
+   
+   <servlet-mapping>
+      <servlet-name>ExternalServiceServlet</servlet-name>
+      <url-pattern>/extservice/*</url-pattern>
+   </servlet-mapping>     
 
    <!-- Map everything else to our URL-Rewriting servlet -->  
 

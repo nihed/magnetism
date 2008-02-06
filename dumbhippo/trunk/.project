@@ -2,28 +2,23 @@
 <projectDescription>
 	<name>trunk</name>
 	<comment></comment>
-	<projects>
-	</projects>
+	<projects></projects>
 	<buildSpec>
 		<buildCommand>
 			<name>org.antlr.eclipse.core.antlrbuilder</name>
-			<arguments>
-			</arguments>
+			<arguments></arguments>
 		</buildCommand>
 		<buildCommand>
 			<name>org.eclipse.jdt.core.javabuilder</name>
-			<arguments>
-			</arguments>
+			<arguments></arguments>
 		</buildCommand>
 		<buildCommand>
 			<name>org.antlr.eclipse.core.warningcleanerbuilder</name>
-			<arguments>
-			</arguments>
+			<arguments></arguments>
 		</buildCommand>
 		<buildCommand>
 			<name>org.antlr.eclipse.core.smapbuilder</name>
-			<arguments>
-			</arguments>
+			<arguments></arguments>
 		</buildCommand>
 	</buildSpec>
 	<natures>
