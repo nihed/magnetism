@@ -95,8 +95,9 @@ class MasterPoller(object):
         
         curtime = time.time()
         for key,prev_hash,prev_time in cursor.execute('''SELECT key,prev_hash,prev_time from Tasks'''):
-            task = QueuedTask(curtime, TaskEntry(key, prev_hash, prev_time))
-            heapq.heappush(self.__tasks_queue, task)
+            task = TaskEntry(key, prev_hash, prev_time)
+            qtask = QueuedTask(curtime, task)
+            heapq.heappush(self.__tasks_queue, qtask)
             self.__tasks_map[key] = task
         conn.close()
         _logger.debug("%d queued tasks", len(self.__tasks_queue))
@@ -107,7 +108,7 @@ class MasterPoller(object):
                 continue 
             task = TaskEntry(key, None, None)
             qtask = QueuedTask(time.time(), task)
-            self.__tasks_queue.append(qtask)
+            heapq.heappush(self.__tasks_queue, qtask)
             self.__tasks_map[key] = task
             
     def __add_task_keys(self, keys):
@@ -133,9 +134,9 @@ class MasterPoller(object):
         
     def set_tasks(self, taskkeys):
         # For now we don't support resetting the list; just append
-        self.add_tasks(taskkeys)
+        self.add_tasks(taskkeys, immediate=False)
     
-    def add_tasks(self, taskkeys):
+    def add_tasks(self, taskkeys, immediate=True):
         _logger.debug("adding %d task keys", len(taskkeys))
         # Append them to the in-memory state
         self.__add_task_keys(taskkeys)
@@ -148,7 +149,7 @@ class MasterPoller(object):
                        (taskkey, None, None))
         finally:
             conn.close()
-        self.__requeue_poll()
+        self.__requeue_poll(immediate=immediate)
         
     def __set_task_status(self, cursor, taskkey, hashcode, timestamp):
         _logger.debug("updating task %r values (%r %r)", taskkey, hashcode, timestamp)
@@ -189,6 +190,7 @@ class MasterPoller(object):
         finally:
             self.__task_lock.release()
 
+    @log_except(_logger)
     def taskset_status(self, results):
         _logger.info("got %d results", len(results))
         changed = []
@@ -200,10 +202,12 @@ class MasterPoller(object):
                 except KeyError, e:
                     _logger.exception("failed to find task key %r", taskkey)
                     continue
-                if curtask.task.prev_hash != hashcode:
+                if curtask.prev_hash != hashcode:
                     _logger.debug("task %r: new hash %r differs from prev %r", 
-                                  taskkey, hashcode, curtask.task.prev_hash)
+                                  taskkey, hashcode, curtask.prev_hash)
                     changed.append(taskkey)
+                    curtask.prev_hash = hashcode
+                    curtask.prev_timestamp = timestamp
         finally:
             self.__task_lock.release()
         self.__append_changed(changed)            
@@ -252,7 +256,7 @@ class MasterPoller(object):
             i = 0 
             while True:          
                 try:
-                    task = heapq.heappop(self.__tasks_queue)
+                    qtask = heapq.heappop(self.__tasks_queue)
                 except IndexError, e:
                     break
                 if i >= MAX_TASKSET_SIZE:
@@ -263,11 +267,11 @@ class MasterPoller(object):
                     i = 0                    
                 else:
                     i += 1
-                eligible = task.eligibility < taskset_limit
-                task.eligibility = curtime + DEFAULT_POLL_TIME_SECS
-                heapq.heappush(self.__tasks_queue, task)                 
+                eligible = qtask.eligibility < taskset_limit
+                qtask.eligibility = curtime + DEFAULT_POLL_TIME_SECS
+                heapq.heappush(self.__tasks_queue, qtask)                 
                 if eligible:
-                    taskset.append((str(task.task), task.task.prev_hash, task.task.prev_timestamp))
+                    taskset.append((str(qtask.task), qtask.task.prev_hash, qtask.task.prev_timestamp))
                 else:
                     break
             if len(taskset) > 0:

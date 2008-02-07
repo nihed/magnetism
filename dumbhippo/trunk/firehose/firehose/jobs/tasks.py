@@ -3,10 +3,22 @@
 import os,sys,re
 
 class TaskEntry(object):
-    family = property(lambda self: self._family)
-    id = property(lambda self: self._id)
-    prev_hash = property(lambda self: self._prev_hash)
-    prev_timestamp = property(lambda self: self._prev_timestamp)    
+    def set_family(self, v):
+        self._family = v
+    family = property(lambda self: self._family, set_family)
+    
+    def set_id(self, v):
+        self._id = v
+    id = property(lambda self: self._id, set_id)
+    
+    def set_hash(self, v):
+        self._hash = v
+    prev_hash = property(lambda self: self._prev_hash, set_hash)
+    
+    def set_timestamp(self, v):
+        self._timestamp = v        
+    prev_timestamp = property(lambda self: self._prev_timestamp, set_timestamp)
+        
     def __init__(self, keystr, prev_hash, prev_ts):
         super(TaskEntry, self).__init__()
         (self._family, self._id) = keystr.split('/', 1)
