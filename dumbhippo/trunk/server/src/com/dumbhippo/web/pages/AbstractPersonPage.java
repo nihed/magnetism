@@ -386,22 +386,23 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		return pageableFollowers;
 	}
 	
-	private ListBean<PersonView> convertToPersonViews(List<InvitationView> invitationViews) {
+	private List<PersonView> convertToPersonViews(List<InvitationView> invitationViews) {
 		List<PersonView> personViewsList = new ArrayList<PersonView>();
 		for (InvitationView invitation : invitationViews) {
 			PersonView personView = 
 				personViewer.getPersonView(getUserSignin().getViewpoint(), invitation.getInvite().getInvitee());
+			logger.debug("invitee: {} personView: {}", invitation.getInvite().getInvitee(), personView);
 			personView.setInvitationView(invitation);
 			personViewsList.add(personView);
 		}
-		return new ListBean<PersonView>(personViewsList);
+		return personViewsList;
 	}
 	
 	public ListBean<PersonView> getOutstandingInvitations() {
 		if (outstandingInvitations == null) {
 			outstandingInvitations = 
-				convertToPersonViews(invitationSystem.findInvitations(getUserSignin().getViewpoint(), 
-                                                                      0, -1, false));
+				new ListBean<PersonView>(convertToPersonViews(invitationSystem.findInvitations(getUserSignin().getViewpoint(), 
+                                                                      0, -1, false)));
 		}
 		return outstandingInvitations;
 	}
@@ -418,10 +419,13 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	
 	public ListBean<PersonView> getInvitedContacts() {
-		if (invitedContacts == null) {
-			invitedContacts = 
+		if (invitedContacts == null) {			
+			List<PersonView> invitedContactsList = 
 				convertToPersonViews(invitationSystem.findInvitations(getUserSignin().getViewpoint(), 
 						                                              0, -1, true));
+			invitedContactsList.addAll(personViewer.getUserContactsWithDisabledAccounts(getUserSignin().getViewpoint(), 
+						                 getViewedUser()));
+		    invitedContacts = new ListBean<PersonView>(invitedContactsList);	
 		}
 		return invitedContacts;
 	}

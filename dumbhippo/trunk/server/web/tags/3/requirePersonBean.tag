@@ -31,7 +31,7 @@
 		</c:choose>
 		
 		<c:if test="${!person.valid}">
-			<dht:errorPage>Person not found (log in?)</dht:errorPage>
+			<dht:errorPage>Person not found. Possibly their account was disabled.</dht:errorPage>
 		</c:if>
 	</c:when>
 	<c:when test="${!dh:myInstanceOf(person, beanClass)}">

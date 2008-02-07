@@ -9,6 +9,7 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -445,15 +446,33 @@ public class PersonViewerBean implements PersonViewer {
 						"SELECT "
 								+ (forCount ? "COUNT(DISTINCT owner.id)"
 										: "DISTINCT owner")
-								+ " FROM Contact c, ContactClaim cc, AccountClaim acctClaim, User owner WHERE "
+								+ " FROM Contact c, ContactClaim cc, AccountClaim acctClaim, User owner, Account a WHERE "
 								+ " c.account = :startAccount AND cc.contact = c AND cc.resource = acctClaim.resource "
-								+ " AND acctClaim.owner = owner AND acctClaim.owner != :startOwner"
+								+ " AND acctClaim.owner = owner AND acctClaim.owner != :startOwner AND a.owner = owner"
+							    + " AND a.disabled = 0 AND a.adminDisabled = 0 AND a.hasAcceptedTerms = 1 AND a.publicPage = 1"
 								+ (forCount ? ""
 										: " ORDER BY upper(owner.nickname) ASC"))
 				.setParameter("startOwner", user).setParameter("startAccount",
 						user.getAccount());
 	}
 
+	
+	private Query getUserContactsWithDisabledAccountsQuery(User user, boolean forCount) {
+		return em
+				.createQuery(
+						"SELECT "
+								+ (forCount ? "COUNT(DISTINCT owner.id)"
+										: "DISTINCT owner")
+								+ " FROM Contact c, ContactClaim cc, AccountClaim acctClaim, User owner, Account a WHERE "
+								+ " c.account = :startAccount AND cc.contact = c AND cc.resource = acctClaim.resource "
+								+ " AND acctClaim.owner = owner AND acctClaim.owner != :startOwner AND a.owner = owner"
+							    + " AND (a.disabled = 1 OR a.adminDisabled = 1 OR a.hasAcceptedTerms = 0 OR a.publicPage = 0)"
+								+ (forCount ? ""
+										: " ORDER BY upper(owner.nickname) ASC"))
+				.setParameter("startOwner", user).setParameter("startAccount",
+						user.getAccount());
+	}
+	
 	private Query getContactsWithoutInvitesQuery(User user) {
 		return em.createQuery(
 						"SELECT DISTINCT cc.resource "
@@ -578,6 +597,45 @@ public class PersonViewerBean implements PersonViewer {
 		pageable.setResults(getUserContactsAlphaSorted(viewpoint, user,
 				pageable.getStart(), pageable.getCount()));
 		pageable.setTotalCount(getUserContactCount(viewpoint, user));
+	}
+
+	private Contact getEmailContactForUser(User contacter, User user) {
+		Query q = em.createQuery("SELECT cc.contact " +
+				                 "  FROM ContactClaim cc, AccountClaim ac " +
+				                 "  WHERE cc.account = :contacterAccount" +
+				                 "  AND cc.resource = ac.resource "+
+				                 "  AND ac.owner = :user " +
+				                 "  AND EXISTS (SELECT id FROM EmailResource er WHERE er = cc.resource)");
+        q.setParameter("contacterAccount", contacter.getAccount());
+        q.setParameter("user", user);
+        q.setMaxResults(1);
+
+        try {
+            return (Contact)q.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+	}
+	
+	public List<PersonView> getUserContactsWithDisabledAccounts(Viewpoint viewpoint, User user) {
+
+		if (!(viewpoint instanceof SystemViewpoint) && !viewpoint.isOfUser(user))
+			return Collections.emptyList();
+		
+		Query q = getUserContactsWithDisabledAccountsQuery(user, false);		
+		List<PersonView> viewedContacts = new ArrayList<PersonView>();
+		for (User result : TypeUtils.castList(User.class, q.getResultList())) {
+			Contact contact = getEmailContactForUser(user, result);
+			// We are just going to omit the contact if the person never claimed to know their e-mail 
+			// address.
+			if (contact != null) {
+				PersonView pv = constructPersonView(viewpoint, contact, null, PersonView.class);
+				addPersonViewExtras(viewpoint, pv, null);
+			    viewedContacts.add(pv);
+			}
+		}
+		
+		return viewedContacts;				
 	}
 
 	public List<PersonView> getContactsWithoutInvites(Viewpoint viewpoint, User user) {

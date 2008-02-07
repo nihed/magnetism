@@ -68,6 +68,8 @@ public interface PersonViewer {
 	
 	public void pageUserContactsAlphaSorted(Viewpoint viewpoint, User user, Pageable<PersonView> pageable);
 	
+	public List<PersonView> getUserContactsWithDisabledAccounts(Viewpoint viewpoint, User user);
+	
 	/**
 	 * Get the contacts of the user who do not have accounts associated with them,
 	 * and have not received invitations to the system from the user.
