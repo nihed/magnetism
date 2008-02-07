@@ -41,12 +41,12 @@ import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GuidPersistable;
-import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.postinfo.NodeName;
@@ -292,7 +292,7 @@ public class PostingBoardBean implements PostingBoard {
 					// or already has an account (it's also very cheap if bestResource is an Account)
 					// this does not send out an e-mail to invitee, but prepares an invite
 					// to be sent out with the post, if applicable
-					Pair<CreateInvitationResult,InvitationToken> result = invitationSystem.createInvitation(poster, null, bestResource, "", "");
+					Pair<CreateInvitationResult,Token> result = invitationSystem.createInvitation(poster, null, bestResource, "", "");
 					if (result.getFirst() == CreateInvitationResult.INVITE_WAS_NOT_CREATED && inviteRecipients == InviteRecipients.MUST_INVITE) {
 						// It probably would be better to throw an exception and propagate that
 						// back into a nice message to the user, but just avoiding sending the

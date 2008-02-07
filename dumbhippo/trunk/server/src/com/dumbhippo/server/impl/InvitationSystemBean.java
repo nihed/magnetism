@@ -26,12 +26,15 @@ import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.email.MessageContent;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.AccountType;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.InviterData;
+import com.dumbhippo.persistence.LoginToken;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
@@ -40,9 +43,11 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.CreateInvitationResult;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.InvitationSystemRemote;
+import com.dumbhippo.server.LoginVerifier;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.NotFoundException;
@@ -92,6 +97,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private LoginVerifier loginVerifier;
 
 	private InvitationToken lookupInvitationFor(Resource invitee) {
 		List<InvitationToken> invites = lookupInvitationsFor(invitee, true);
@@ -419,7 +427,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return iv;
 	}
 	
-	public Pair<CreateInvitationResult,InvitationToken> 
+	public Pair<CreateInvitationResult,Token> 
 	    createInvitation(User inviter, PromotionCode promotionCode, Resource invitee, 
 	    		         String subject, String message) {
 		// be sure the invitee is our contact (even if we 
@@ -429,8 +437,19 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		// sending mail to disabled accounts 
 		User user = spider.lookupUserByResource(SystemViewpoint.getInstance(), invitee);
 		if (user != null) {
-			logger.debug("not inviting '{}' due to existing user {}", invitee, user);
-			return new Pair<CreateInvitationResult,InvitationToken>(CreateInvitationResult.ALREADY_HAS_ACCOUNT, null);
+			if (user.getAccount().isActive() && user.getAccount().isPublicPage()) {
+			    logger.debug("not inviting '{}' due to existing user {}", invitee, user);
+			    return new Pair<CreateInvitationResult,Token>(CreateInvitationResult.ALREADY_HAS_ACCOUNT, null);
+			} else {
+			    logger.debug("not inviting '{}' due to existing user {}, but sending them a login link since their account is disabled", invitee, user);
+			    try {
+			        return new Pair<CreateInvitationResult,Token>(CreateInvitationResult.ALREADY_HAS_INACTIVE_ACCOUNT, loginVerifier.getLoginToken(invitee));				
+			    } catch (HumanVisibleException e) {
+			    	throw new RuntimeException("could not create a login link for " + invitee, e);			    					
+			    } catch (RetryException e) {
+			    	throw new RuntimeException("could not create a login link for " + invitee, e);			    							    	
+			    }
+			}
 		}
 
 		CreateInvitationResult result = CreateInvitationResult.REPEAT_INVITE;
@@ -442,7 +461,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 				account.deductInvitations(1);
 			} else {
 				result = CreateInvitationResult.INVITE_WAS_NOT_CREATED;
-				return new Pair<CreateInvitationResult,InvitationToken>(result, null);
+				return new Pair<CreateInvitationResult,Token>(result, null);
 			}
 			
 			// renewing an expiration counts as creating (causes us to send new email)
@@ -481,7 +500,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			if (promotionCode != null && iv.getPromotion() == null)
 				iv.setPromotionCode(promotionCode);
 		}
-	    return new Pair<CreateInvitationResult,InvitationToken>(result, iv);
+	    return new Pair<CreateInvitationResult,Token>(result, iv);
 	}
 	
 	/**
@@ -556,15 +575,19 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	private String sendInvitation(final UserViewpoint viewpoint, final PromotionCode promotionCode, 
 			                      final Resource invitee, final String subject, final String message) {
 		User inviter = viewpoint.getViewer();
-		Pair<CreateInvitationResult,InvitationToken> p = createInvitation(inviter, promotionCode, invitee, subject, message);
+		Pair<CreateInvitationResult,Token> p = createInvitation(inviter, promotionCode, invitee, subject, message);
 		CreateInvitationResult result = p.getFirst();
-		final InvitationToken iv = p.getSecond();
+		final Token token = p.getSecond();
 		String note = null;
+		User user = null;
+		
 		if (result == CreateInvitationResult.INVITE_WAS_NOT_CREATED) {
 			return "Your invitation was not sent because you are out of invitation vouchers."; 
 		} else if (result == CreateInvitationResult.ALREADY_HAS_ACCOUNT) {
-			User user = spider.lookupUserByResource(viewpoint, invitee);
+			user = spider.lookupUserByResource(viewpoint, invitee);
 			String hasAccount = invitee.getHumanReadableString() + " already has an account '" + user.getNickname() + "'";
+			if (accounts.isSpecialCharacter(inviter) && viewpoint.getSite().getAccountType() != user.getAccount().getAccountType())
+				hasAccount= hasAccount + ". This " + user.getAccount().getAccountType().getName() + " account can be used to log in to " + viewpoint.getSite().getSiteName();
 			
 			// special character invites you on the /signup page if you have no account
 			if (!accounts.isSpecialCharacter(inviter))
@@ -575,9 +598,11 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			// note should be null or contain INVITATION_SUCCESS_STRING to indicate a successful invitation
 			if (result == CreateInvitationResult.REPEAT_INVITE) {
 				note = INVITATION_SUCCESS_STRING + ", another invitation was sent to " + invitee.getHumanReadableString() + ".";				
-			} else if (result == CreateInvitationResult.NEW_INVITER) {
+			} else if (result == CreateInvitationResult.NEW_INVITER || result == CreateInvitationResult.ALREADY_HAS_INACTIVE_ACCOUNT) {
 				note = INVITATION_SUCCESS_STRING + ", an invitation was sent to " + invitee.getHumanReadableString() + "."
-				       + " You didn't have to spend an invitation because they were already invited by someone else."; 			
+				       + " You didn't have to spend an invitation because they were already invited by someone else."; 		
+				if (result == CreateInvitationResult.ALREADY_HAS_INACTIVE_ACCOUNT)
+				    user = spider.lookupUserByResource(viewpoint, invitee);
 			} else if (result == CreateInvitationResult.INVITE_CREATED) {
 				note = INVITATION_SUCCESS_STRING + ", an invitation was sent to " + invitee.getHumanReadableString() + ".";
 			} else {
@@ -587,7 +612,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			
 			// In all the three of the above cases, we want to send a notification		
 			if (invitee instanceof EmailResource) {
-				sendEmailNotification(viewpoint, iv, subject, message);			
+				sendEmailNotification(viewpoint, token, user, subject, message);			
 			} else {
 				throw new RuntimeException("no way to send this invite! unhandled resource type " + invitee.getClass().getName());
 			}
@@ -784,14 +809,16 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	static private class InviteMessageContent extends MessageContent {
 
 		private Site site;
+		private User user;
 		private String subject;
 		private String message;
 		private String inviteUrl;
 		private String inviterName;
 		private String inviterPageUrl;
 		
-		InviteMessageContent(Site site, String subject, String message, String inviteUrl, String inviterName, String inviterPageUrl) {
+		InviteMessageContent(Site site, User user, String subject, String message, String inviteUrl, String inviterName, String inviterPageUrl) {
 			this.site = site;
+			this.user = user;
 			this.subject = subject;
 			this.message = message != null ? message.trim() : "";
 			this.inviteUrl = inviteUrl;
@@ -823,7 +850,29 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 				appendBlockquote(messageText, messageHtml, message);
 			}
 			
-			appendParagraph(messageText, messageHtml, "Follow this link to get started:");
+			if (user != null && (user.getAccount().isDisabled() || user.getAccount().isAdminDisabled())) {
+				if (user.getAccount().getAccountType() == AccountType.GNOME)
+			        appendParagraph(messageText, messageHtml, "Your online.gnome.org account is currently disabled and is not visible publicly." +
+			    		                                      " Follow this link if you want to reenable it and start using Mugshot: ");
+				else 
+					appendParagraph(messageText, messageHtml, "Your Mugshot account is currently disabled and is not visible publicly." +
+                                                              " Follow this link if you want to reenable it: ");				
+			} else if (user != null && (!user.getAccount().getHasAcceptedTerms())) {
+				if (user.getAccount().getAccountType() == AccountType.GNOME)
+			        appendParagraph(messageText, messageHtml, "Your online.gnome.org account is currently disabled and is not visible publicly because you did not accept terms of use." +
+                                                              " Follow this link if you want to enable it and start using Mugshot: ");	
+				else 
+			        appendParagraph(messageText, messageHtml, "Your Mugshot account is currently disabled and is not visible publicly because you did not accept terms of use." +
+                                                              " Follow this link if you want to enable it: ");						
+			} else if (user != null && (!user.getAccount().isPublicPage() && user.getAccount().getAccountType() == AccountType.GNOME)) {
+				  appendParagraph(messageText, messageHtml, "You can log in to Mugshot using your online.gnome.org account." +
+                                                            " Follow this link to enable your Mugshot account: ");
+			} else if (user != null) {
+				logger.warn("Sending an e-mail to an invitee who is a Mugshot user {} in an unexpected situation.", user);
+				appendParagraph(messageText, messageHtml, "Follow this link to log in to your Mugshot account:");
+			} else {
+			    appendParagraph(messageText, messageHtml, "Follow this link to get started:");
+			}
 			
 			appendLinkAsBlock(messageText, messageHtml, null, inviteUrl);
 			
@@ -840,9 +889,37 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 	}
 	
-	private void sendEmailNotification(UserViewpoint viewpoint, InvitationToken invite, String subject, String message) {
-		User inviter = viewpoint.getViewer();
-		EmailResource invitee = (EmailResource) invite.getInvitee();
+	private void sendEmailNotification(UserViewpoint viewpoint, Token invite, User user, String subject, String message) {
+		User inviter = viewpoint.getViewer();	
+		EmailResource invitee;
+		String inviteUrl;
+		
+		String baseurl;
+		URL baseurlObject;
+		try {
+			baseurl = configuration.getBaseUrl(viewpoint);
+			baseurlObject = new URL(baseurl);
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+		
+		if (invite instanceof InvitationToken) {
+	        invitee = (EmailResource)((InvitationToken)invite).getInvitee();
+		    inviteUrl = invite.getAuthURL(baseurlObject);
+		} else if (invite instanceof LoginToken) {
+			invitee = (EmailResource)((LoginToken)invite).getResource();
+			if (user.getAccount().getAccountType() == AccountType.GNOME && !user.getAccount().isActive()) {
+				// If invitee's account is not active (i.e. if it is disabled or they have not accepted terms of use,
+				// we need to send them to the GNOME Online site first. They can then enable Mugshot from there. 
+			    inviteUrl = invite.getAuthURL(configuration.getBaseUrlGnome()) + "&next=account";
+			} else {
+				// If a GNOME Online user never enabled Mugshot (publicPage == false), we can send them directly to
+				// the Mugshot site. We send people to the Mugshot site in all other cases too.
+				inviteUrl = invite.getAuthURL(configuration.getBaseUrlMugshot()) + "&next=account";
+			}
+		} else {
+			throw new RuntimeException("Unexpected subclass of Token in sendEmailNotification " + invite.getClass());
+		}
 		
 		if (!noMail.getMailEnabled(invitee)) {
 			logger.debug("Mail is disabled to {} not sending invitation", invitee);
@@ -858,15 +935,6 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		PersonView viewedInviter = personViewer.getPersonView(viewpoint, inviter);
 		String inviterName = viewedInviter.getName();
 		
-		String baseurl;
-		URL baseurlObject;
-		try {
-			baseurl = configuration.getBaseUrl(viewpoint);
-			baseurlObject = new URL(baseurl);
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
-		
 		User mugshot = accounts.getSiteCharacter(viewpoint.getSite());
 		boolean isMugshotInvite = (viewedInviter.getUser().equals(mugshot));
 		
@@ -876,12 +944,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			else
 				subject = "Invitation from " + inviterName + " to join " + viewpoint.getSite().getSiteName();				
 		}
-				
-		String inviteUrl = invite.getAuthURL(baseurlObject);
+						
 		// Only set the inviter for non-mugshot invitations; the download
 		// page assumes the absence of this parameter implies the invitation
 		// was from mugshot, which we handle specially.
 		if (!isMugshotInvite) {
+			// this parameter is not used when it is a pasrt of the login link, but we might as well keep it
 			inviteUrl += "&inviter=";
 			inviteUrl += inviter.getId();
 		}
@@ -891,7 +959,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			inviterPageUrl = baseurl + viewedInviter.getHomeUrl();
 		
 		mailer.setMessageContent(msg, viewpoint.getSite(),
-				new InviteMessageContent(viewpoint.getSite(), subject, message, inviteUrl,
+				new InviteMessageContent(viewpoint.getSite(), user, subject, message, inviteUrl,
 						isMugshotInvite ? null : inviterName,
 						inviterPageUrl));
 		

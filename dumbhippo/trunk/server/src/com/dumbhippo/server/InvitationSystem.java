@@ -11,6 +11,7 @@ import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.views.InvitationView;
@@ -119,7 +120,10 @@ public interface InvitationSystem {
 	/**
 	 * Ensure the invitation from inviter to invitee exists, if it makes sense. 
 	 * Returns the current status of that invitation, and the created invitation token 
-	 * if any (this will be null if none was created or exists).
+	 * if any (this will be null if none was created or exists). Returns the current status
+	 * of the account, and a login token for the invitee if there account is not public
+	 * or disabled.
+	 * 
 	 * Does not send out any invitation emails or anything.
 	 * 
 	 * Use this for "implicit invitation" when sharing something with someone.
@@ -132,7 +136,7 @@ public interface InvitationSystem {
 	 * @param message message to send (from the inviter to invitee), text format
 	 * @return the outcome
 	 */
-	public Pair<CreateInvitationResult,InvitationToken> 
+	public Pair<CreateInvitationResult, Token> 
 	    createInvitation(User inviter, PromotionCode promotionCode, Resource invitee,
 			             String subject, String message);
 	
