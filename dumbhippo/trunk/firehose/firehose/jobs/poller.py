@@ -63,7 +63,9 @@ class FeedTaskHandler(object):
                 _logger.debug("no last-modified for %r", targeturl)
                 timestamp = time.time()
             if prev_hash != hash_hex:
+                _logger.info("Got new hash:%r (prev:%r) ts:%r for url %r", hash_hex, prev_hash, timestamp, targeturl)                
                 return (hash_hex, timestamp)
+            _logger.info("Fetched full unmodified content for %r", targeturl)             
             return (prev_hash, prev_timestamp)
         finally:
             try:
@@ -135,7 +137,6 @@ class TaskPoller(object):
             return
         inst = fclass()
         (new_hash, new_timestamp) = inst.run(tid, prev_hash, prev_timestamp)
-        _logger.info("Result hash:%r ts:%r", new_hash, new_timestamp)
         resultqueue.put((taskid, new_hash, new_timestamp))     
         taskqueue.task_done()   
         
