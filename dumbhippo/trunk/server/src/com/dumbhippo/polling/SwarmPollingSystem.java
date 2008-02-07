@@ -324,14 +324,14 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 	private void notifyExternalTasks(Collection<PollingTask> newExternalTasks, boolean overwrite) {
 		Configuration config = EJBUtil.defaultLookup(Configuration.class);
 					
-		String firehoseId = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_SERVICE_ID);
-		if (firehoseId.equals("")) {
-			logger.warn("FIREHOSE_SERVICE_ID not set, not updating firehose");
+		String firehoseHost = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_MASTER_HOST);
+		if (firehoseHost.equals("")) {
+			logger.warn("FIREHOSE_MASTER_HOST not set, not updating firehose");
 			return;
 		}
 		URL firehoseUrl;
 		try {
-			firehoseUrl = new URL(firehoseId);
+			firehoseUrl = new URL("http://" + firehoseHost);
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
