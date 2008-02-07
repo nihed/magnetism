@@ -48,10 +48,11 @@ public class ExternalServiceServlet extends AbstractServlet {
 
         logRequest(request, "POST");
   
-        String key = request.getParameter("eak");
-        if (key == null || !key.equals(accessKey))
-        	throw new HttpException(HttpResponseCode.FORBIDDEN, "Invalid or unspecified access key");
-        
+        String key = request.getParameter("esk");
+        if (key == null || accessKey.equals(""))
+        	throw new HttpException(HttpResponseCode.FORBIDDEN, "Unspecified access key");
+        if (!key.equals(accessKey))
+        	throw new HttpException(HttpResponseCode.FORBIDDEN, "Invalid access key");        	
         if (request.getPathInfo().equals("/notify-polling-tasks")) {
 			MBeanServer server = MBeanServerLocator.locateJBoss();
 			SwarmPollingSystemMBean swarm;			
@@ -62,11 +63,12 @@ public class ExternalServiceServlet extends AbstractServlet {
 			}
 			
         	String json = IOUtils.toString(request.getInputStream());
+        	logger.debug("got updated tasks: {}", json);
         	JSONObject obj;
         	JSONArray tasksProp;
         	try {
 				obj = new JSONObject(json);
-				tasksProp = obj.getJSONArray("tasks");
+				tasksProp = obj.getJSONArray("updated_keys");
 			} catch (JSONException e) {
 				throw new ServletException(e);
 			}
@@ -80,7 +82,9 @@ public class ExternalServiceServlet extends AbstractServlet {
 				}
         	}
         	swarm.runExternalTasks(tasks);
-        }     
+        } else {
+        	throw new HttpException(HttpResponseCode.NOT_FOUND, "Unknown service");
+        }
         
 		response.setContentType("text/plain");
 		response.getOutputStream().write("".getBytes());

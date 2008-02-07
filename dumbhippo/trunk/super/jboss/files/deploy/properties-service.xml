@@ -26,7 +26,7 @@
         dumbhippo.server.http.port=@@tomcatHttpPort:properties@@
 		dumbhippo.server.baseurl=@@baseurl:properties@@
 		dumbhippo.server.baseurlGnome=@@baseurlGnome:properties@@
-        dumbhippo.server.externalServiceKey=@@externalServiceKey::properties@@
+        dumbhippo.server.externalServiceKey=@@externalServiceKey:properties@@
         dumbhippo.server.firehoseMasterHost=@@firehoseMasterHost:properties@@
         dumbhippo.server.firehoseMasterPort=@@firehoseMasterPort:properties@@
 		dumbhippo.server.adminjid.mugshot=@@adminJid:properties@@

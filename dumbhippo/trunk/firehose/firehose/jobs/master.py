@@ -148,6 +148,7 @@ class MasterPoller(object):
                        (taskkey, None, None))
         finally:
             conn.close()
+        self.__requeue_poll()
         
     def __set_task_status(self, cursor, taskkey, hashcode, timestamp):
         _logger.debug("updating task %r values (%r %r)", taskkey, hashcode, timestamp)
@@ -156,6 +157,7 @@ class MasterPoller(object):
     
     @log_except(_logger)
     def __push_changed(self):
+        _logger.debug("doing change push")
         extkey = config.get('firehose.externalServiceKey')
         try:
             self.__task_lock.acquire()
@@ -164,7 +166,8 @@ class MasterPoller(object):
             self.__changed_buffer = []
         finally:
             self.__task_lock.release()
-        jsonstr = simplejson.dumps(changed)
+        update_obj = {'updated_keys': changed}
+        jsonstr = simplejson.dumps(update_obj)
         parsed = urlparse.urlparse(self.__client_url)
         conn = httplib.HTTPConnection(parsed.hostname, parsed.port)
         path = parsed.path or '/'
@@ -173,6 +176,8 @@ class MasterPoller(object):
         conn.close()        
 
     def __append_changed(self, changed):
+        if len(changed) == 0:
+            return
         try:
             self.__task_lock.acquire()
             self.__changed_buffer.extend(changed)
@@ -196,7 +201,7 @@ class MasterPoller(object):
                     _logger.exception("failed to find task key %r", taskkey)
                     continue
                 if curtask.task.prev_hash != hashcode:
-                    _logger.debug("task %r: new hash for %r differs from prev %r", 
+                    _logger.debug("task %r: new hash %r differs from prev %r", 
                                   taskkey, hashcode, curtask.task.prev_hash)
                     changed.append(taskkey)
         finally:
