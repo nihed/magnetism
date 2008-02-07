@@ -246,16 +246,25 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		// get only the InvitationTokens for which ResultingPerson is null,
 		// sorted by date in descending order, filter out older invitations 
 		// to the same recipient
+		// Sometimes we have invitations that do not have a resulting person
+		// set, even though there is a user who is claiming the invitee resource
+		// in the system. We only set resulting person when a particular invitation
+		// token is viewed (getResultingPerson on InvitationToken is OneToOne). 
+		// So there might be other (expired) invitations that still have resultingPerson
+		// set to null. A user might also bypass viewing an invitation if they already
+		// have an account and add the e-mail address an invitation was sent to to
+		// that account.
 		Query q = em.createQuery(
 			"SELECT ivd.invitation FROM InviterData ivd " +
 			"    WHERE ivd.inviter = :inviter AND " +
 			"       ivd.deleted = FALSE AND " +
-			"       ivd.invitation.resultingPerson = NULL AND " +
+			"       ivd.invitation.resultingPerson IS NULL AND " +
 			"       NOT EXISTS (SELECT it.id FROM InvitationToken it, InviterData ivd2 " +
 			"                   WHERE it.invitee = ivd.invitation.invitee AND" +
 			"                         ivd2.inviter = :inviter AND" +
 			"                         it.creationDate > ivd.invitation.creationDate AND" +
-			"                         ivd2.invitation = it)" +		
+			"                         ivd2.invitation = it) AND " +		
+			"       NOT EXISTS (SELECT ac.id from AccountClaim ac where ac.resource = ivd.invitation.invitee)" +
 			"    ORDER BY ivd.invitation.creationDate DESC");
 		
 		q.setParameter("inviter", inviter);
