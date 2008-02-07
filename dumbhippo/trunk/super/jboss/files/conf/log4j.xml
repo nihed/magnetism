@@ -165,6 +165,12 @@
    <category name="org.jgroups">
       <priority value="WARN"/>
    </category>
+   
+   <!-- This one prints a line for every transaction, which is a bit annoying with
+        the polling of the database some of our systems do. -->
+   <category name="org.jboss.ejb3.entity">
+      <priority value="INFO"/>
+   </category>   
 
    <!-- Limit jboss axis to INFO as its DEBUG is even more verbose -->
    <!-- (does nothing right now as root logger defaults to INFO) -->
