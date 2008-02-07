@@ -59,6 +59,10 @@
 							text = "Something went wrong... (2)";
 						else
 							text = messageElement ? dojo.dom.textContent(messageElement) : "Something went wrong... (3)";
+							if (text.indexOf(" already has an account") > 0 && dh.util.exists('dhLoginAddressEntry')) {
+							    email = text.substring(0, text.indexOf(" already has an account"));
+							    document.getElementById('dhLoginAddressEntry').value = email;    
+							}
 					}
 					dhSelfInviteComplete${N}(text);
 	  	    	 },

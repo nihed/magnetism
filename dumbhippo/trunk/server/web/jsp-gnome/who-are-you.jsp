@@ -42,10 +42,6 @@
 			</form>
 			
 			<div>
-				<c:if test="${!empty whoareyou.aimBotScreenName}">
-					<%-- c:if on one line here to avoid weird link text spacing --%>
-					<a href="aim:GoIM?screenname=${whoareyou.aimBotScreenName}&message=Hey+Bot!+Send+me+a+login+link!"><c:if test="${!empty whoareyou.aimPresenceKey}"><img src="http://api.oscar.aol.com/SOA/key=${whoareyou.aimPresenceKey}/presence/${whoareyou.aimBotScreenName}" border="0"/> </c:if>AIM log in</a> |
-				</c:if>
 				<a id="dhLoginTogglePasswordLink" href="javascript:dh.login.togglePasswordBox()"><%-- filled in by javascript --%></a>&nbsp; [alt-p]
 			</div>
 		</div>
@@ -59,7 +55,7 @@
 		                <dht2:selfInvite promotion="${landing.openSignupPromotion}" invitesAvailable="${landing.selfInvitations}"/>
 				    </c:when>
 				    <c:otherwise>
-			            <p><strong>Enter your email address and we'll let you know when GNOME Online has more room.
+			            <p><strong>Enter your email address and we'll let you know when GNOME Online has more room. If you have a Mugshot account you can use it to log in.
 			            </strong></p>
 		                <dht2:wantsIn buttonText="Sign Me Up!"/>
 		            </c:otherwise>
