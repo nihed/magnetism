@@ -7,6 +7,11 @@
 	margin-bottom:		10px;
 }
 
+.dh-text-input, #dhWantsInEmailEntry {
+    margin-top:         3px;
+	margin-bottom:		10px;
+}
+
 #dhSelfInviteButton {
 	background-color: #5cc400;
 	border: 2px outset #57e925;

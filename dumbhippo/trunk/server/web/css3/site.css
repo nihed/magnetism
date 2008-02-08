@@ -139,13 +139,11 @@ a.dh-underlined-link-visited:link, a.dh-underlined-link-visited:hover, a.dh-unde
 }
 
 .dh-special-subtitle {
-	color: rgb(145,50,92);
-	font-size: 16px;
-	font-weight: bold;
+	font-size: 14px;
 }
 
 .dh-disclaimer {
-	font-size: 10px;
+	font-size: 12px;
 }
 
 .dh-disclaimer-own-section {
@@ -721,4 +719,12 @@ div.dh-section-explanation {
 
 .dh-separator-invisible {
 	background-color:	white;
+}
+
+.dh-landing-result {
+	color: red;
+}
+
+.dh-landing-explanatory {
+	font-size: 13px;
 }
