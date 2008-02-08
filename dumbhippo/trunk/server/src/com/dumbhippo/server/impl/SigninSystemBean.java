@@ -68,7 +68,7 @@ public class SigninSystemBean implements SigninSystem {
 		try {
 			resource = identitySpider.lookupEmail(address);
 		} catch (NotFoundException e) {
-			throw new HumanVisibleException("That isn't an email address we know about");
+			throw new HumanVisibleException("This isn't an email address we know about.");
 		}
 		String link = getLoginLink(viewpoint, resource);
 		MimeMessage message = mailer.createMessage(viewpoint, Mailer.SpecialSender.LOGIN, resource.getEmail());
@@ -94,7 +94,7 @@ public class SigninSystemBean implements SigninSystem {
 		try {
 			resource = identitySpider.lookupAim(address);
 		} catch (NotFoundException e) {
-			throw new HumanVisibleException("That isn't an AIM screen name we know about");
+			throw new HumanVisibleException("This isn't an AIM screen name we know about.");
 		}
 		
 		String link = getLoginLink(viewpoint, resource);

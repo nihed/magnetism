@@ -1,0 +1,16 @@
+@CHARSET "UTF-8";
+@IMPORT url("who-are-you-positions.css");
+
+#dhLoginForm {
+	font-size: 12px; /* for inheritance by text inside the form */
+	background-color:   #fbf3fe;
+}
+
+#dhLoginNotification {
+	font-weight: bold;
+	color: 		 #cc0033;
+}
+
+#dhPasswordHelp {
+	display:	none;
+}

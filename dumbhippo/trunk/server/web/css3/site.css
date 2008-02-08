@@ -711,3 +711,14 @@ div.dh-section-explanation {
 .dh-amazon-description {
 	font-style:		  italic;
 }
+
+.dh-separator {
+	background-color:	#cccccc;
+	height:				1px;
+	margin-top:         7px;
+	margin-bottom:      7px;
+}
+
+.dh-separator-invisible {
+	background-color:	white;
+}

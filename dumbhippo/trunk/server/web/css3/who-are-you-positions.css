@@ -1,0 +1,41 @@
+@CHARSET "UTF-8";
+
+/* Override the 500px width that's normal for a zone box */
+
+.dh-shiny-box-content-body {
+    position:           relative;
+	text-align:         center;
+}
+
+#dhLoginForm {
+    position:           relative;
+	width:				310px;	
+	border:				1px solid #cccccc;
+	margin-top:         20px;
+	margin-bottom:      5px;   
+	/* this centers us in firefox, the text-align: center on 
+	   our parent centers us in IE */
+	margin-left:		auto;
+	margin-right:		auto;
+	padding-top:        20px;
+	padding-bottom:     10px;
+	padding-right:      10px;
+	padding-left:       10px;
+	text-align:         left; /* don't inherit text-align: center; */
+}
+
+#dhLoginForm .dh-text-input {
+	margin-bottom:		7px;
+	width:				100%;
+}
+
+#dhSignupLink {
+	position:	absolute;
+	top:        5px;
+	right:      10px;
+}
+
+#dhPasswordHelp {
+    position:   absolute;
+	right:		0px;
+}
