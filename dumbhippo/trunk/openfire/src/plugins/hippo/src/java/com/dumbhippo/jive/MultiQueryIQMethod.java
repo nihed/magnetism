@@ -34,10 +34,16 @@ public class MultiQueryIQMethod<K, T extends DMObject<K>> extends QueryIQMethod 
 		this.classHolder = classHolder;
 	}
 
+	@SuppressWarnings("unchecked")
+	private T reattachInSession(T object, DMSession session) {
+		return (T)session.findUnchecked(object.getStoreKey());
+		
+	}
+	
 	@Override
-	public void doIQ(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException {
+	public void doIQPhase2(UserViewpoint viewpoint, IQ request, IQ reply, Object resultObject) throws IQException, RetryException {
 		@SuppressWarnings("unchecked")
-		Collection<? extends T> resultObjects = (Collection)invokeMethod(getParams(viewpoint, request));
+		Collection<? extends T> resultObjects = (Collection)resultObject;
 		
 		DMSession session = DataService.currentSessionRO();
 		Element root = reply.setChildElement(annotation.name(), handler.getInfo().getNamespace());
@@ -57,6 +63,9 @@ public class MultiQueryIQMethod<K, T extends DMObject<K>> extends QueryIQMethod 
 		XmppFetchVisitor visitor = new XmppFetchVisitor(root, session.getModel());
 		
 		for (T object : resultObjects) {
+			if (annotation.type() == IQ.Type.set)
+				object = reattachInSession(object, session);
+			
 			session.visitFetch(object, fetch, visitor);
 		}
 		

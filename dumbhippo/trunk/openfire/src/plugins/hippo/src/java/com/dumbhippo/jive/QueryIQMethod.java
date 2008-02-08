@@ -22,6 +22,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
 
 public abstract class QueryIQMethod extends AnnotatedIQMethod {
 	static final QName FETCH_QNAME = QName.get("fetch", Namespace.get("http://mugshot.org/p/system"));
@@ -89,6 +90,15 @@ public abstract class QueryIQMethod extends AnnotatedIQMethod {
 		}
 	}
 	
+	/* An update method requires one transaction to update the data in the database,
+	 * and a second transaction to fetch the data. (We'll override this in a 
+	 * VoidIQMethod to avoid the unnecessary second transaction.)  
+	 */
+	@Override
+	public boolean needsFetchTransaction() {
+		return annotation.type() == IQ.Type.set;
+	}
+	
 	public FetchNode getFetchNode(IQ request) throws IQException {
 		String fetchString = request.getChildElement().attributeValue(FETCH_QNAME, "+");
 
@@ -116,6 +126,11 @@ public abstract class QueryIQMethod extends AnnotatedIQMethod {
 		}
 		
 		return params;
+	}
+	
+	@Override
+	public Object doIQPhase1(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException {
+		return invokeMethod(getParams(viewpoint, request));
 	}
 	
 	private static abstract class ParamInfo {

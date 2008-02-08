@@ -11,9 +11,11 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
 import com.dumbhippo.Site;
+import com.dumbhippo.dm.ChangeNotificationSet;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DataModel;
+import com.dumbhippo.dm.ReadWriteSession;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jive.annotations.IQMethod;
@@ -40,8 +42,27 @@ public abstract class AnnotatedIQMethod {
 	public String getName() {
 		return annotation.name();
 	}
+
+	// We split IQ processing into two phases
+	//
+	//  - Phase1 makes updates and computes what data model objects to return
+	//  - Phase2 fetches data to return to the user
+	//
+	// In the case of an update (set) method, we run the phases in separate
+	// transactions, and we generate any change notifications from the update
+	// before phase2.
+	//
+	// The downside of generating the change notifications synchronously
+	// is that we are generating them for *all* users on the local server, 
+	// not just the notification we need (for this user). With a bit more
+	// coding we could split things so that we do the resolution of the
+	// change set for all users synchronously, but only do the notification
+	// fetch synchronously for *this* user and do the notifications for other
+	// users asynchronously. The speed of returning from the IQ may determine 
+	// the quality of the user interaction on the client.
 	
-	public abstract void doIQ(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException;
+	public abstract Object doIQPhase1(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException;
+	public abstract void doIQPhase2(UserViewpoint viewpoint, IQ request, IQ reply, Object resultObject) throws IQException, RetryException;
 	
 	protected Object invokeMethod(Object... params) throws IQException, RetryException {
 		try {
@@ -75,46 +96,111 @@ public abstract class AnnotatedIQMethod {
 		Log.debug("handling IQ packet " + request);
 
 		try {
+			final DataModel model = DataService.getModel();
 			final XmppClient client = XmppClientManager.getInstance().getClient(request.getFrom());
-			long serial = client.getStoreClient().allocateSerial();
+			boolean readWrite = (annotation.type() == IQ.Type.set || annotation.forceReadWrite());
+			final IQ reply = IQ.createResultIQ(request);
 			boolean success = false;
 			
-			try {
-				final IQ reply = IQ.createResultIQ(request);
+			if (readWrite && annotation.needsTransaction()) {
+				final ChangeNotificationSet[] notifications = new ChangeNotificationSet[1];
 				
-				if (annotation.needsTransaction()) {
-					TxUtils.runInTransaction(new Callable<Boolean>() {
-						public Boolean call() throws IQException, RetryException {
-							DataModel model = DataService.getModel();
-							DMSession session;
-								
-							if (annotation.type() == IQ.Type.get && !annotation.forceReadWrite())
-								session = model.initializeReadOnlySession(client);
-							else
-								session = model.initializeReadWriteSession(client);
-							
-							doIQ((UserViewpoint)session.getViewpoint(), request, reply);
-							return true;
-						}
-					});
-				} else {
-					doIQ(new UserViewpoint(getUserId(request), Site.XMPP), request, reply);
+				final Object resultObject = TxUtils.runInTransaction(new Callable<Object>() {
+					public Object call() throws IQException, RetryException {
+						ReadWriteSession session = model.initializeReadWriteSession(client);
+						
+						// We want to order things so that the notifications get sent
+						// back *before* our response to the update IQ
+						notifications[0] = session.getNotifications();
+						notifications[0].setAutoNotify(false);
+
+						// Passing in the request to "phase 1" is for GenericIQMethod
+						// wherethe IQ might return "plain old data", not fetched
+						// from the data model
+						return doIQPhase1((UserViewpoint)session.getViewpoint(), request, reply);
+					}
+				});
+				
+				model.sendNotifications(notifications[0]);
+				
+				long serial = client.getStoreClient().allocateSerial();
+				
+				try {
+					if (needsFetchTransaction()) {
+						TxUtils.runInTransaction(new Callable<Boolean>() {
+							public Boolean call() throws IQException, RetryException {
+								DataModel model = DataService.getModel();
+								DMSession session = model.initializeReadOnlySession(client);
+								doIQPhase2((UserViewpoint)session.getViewpoint(), request, reply, resultObject);
+								return true;
+							}
+						});
+					}
+					
+					success = true;
+				} finally {
+					if (success)
+						client.queuePacket(reply, serial);
+					else
+						client.nullNotification(serial);
 				}
-	
-				client.queuePacket(reply, serial);
-				success = true;
-			} finally {
-				if (!success)
-					client.nullNotification(serial);
-			}
 				
+			} else {
+				long serial = client.getStoreClient().allocateSerial();
+				
+				try {
+					if (annotation.needsTransaction()) {
+						TxUtils.runInTransaction(new Callable<Boolean>() {
+							public Boolean call() throws IQException, RetryException {
+								DMSession session;
+									
+								session = model.initializeReadOnlySession(client);
+								
+								Object resultObject = doIQPhase1((UserViewpoint)session.getViewpoint(), request, reply);
+								doIQPhase2((UserViewpoint)session.getViewpoint(), request, reply, resultObject);
+								
+								return true;
+							}
+						});
+					} else {
+						UserViewpoint viewpoint = new UserViewpoint(getUserId(request), Site.XMPP);
+						Object resultObject = doIQPhase1(viewpoint, request, reply);
+						doIQPhase2(viewpoint, request, reply, resultObject);
+					}
+					
+					success = true;
+				} finally {
+					if (success)
+						client.queuePacket(reply, serial);
+					else
+						client.nullNotification(serial);
+				}
+			}
 		} catch (IQException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException("Unexpected exception running IQ method in transaction", e);
 		}
 	}
-	
+
+	/**
+	 * We don't want to fetch data from the data model within a ReadWrite transaction
+	 * because:
+	 * 
+	 *  - Caching is disabled within a ReadWrite transaction
+	 *  - If the transaction is rolled back on commit, then we'll have an incorrect
+	 *    view of what data the client has received
+	 *    
+	 * So in order to return a result from an IQ method, we first do the update in
+	 * a read-write transaction, and then use a separate read-only transaction to
+	 * fetch the requested data.
+	 * 
+	 * @return whether there should be separate transactions for update and fetch 
+	 */
+	protected boolean needsFetchTransaction() {
+		return false;
+	}
+
 	public static AnnotatedIQMethod getForMethod(AnnotatedIQHandler handler, Method method) {
 		IQMethod annotation = method.getAnnotation(IQMethod.class);
 		if (annotation == null)
@@ -134,18 +220,12 @@ public abstract class AnnotatedIQMethod {
 			       parameterTypes[2].equals(IQ.class)) {
 			return new GenericIQMethod(handler, method, annotation, true);
 		} else if (DMObject.class.isAssignableFrom(method.getReturnType())) {
-			if (annotation.type() != IQ.Type.get)
-				throw new RuntimeException("Update IQ methods cannot have a return");
-			
 			return new SingleQueryIQMethod(handler, method, annotation);
 		} else if (Collection.class.isAssignableFrom(method.getReturnType())) {
-			if (annotation.type() != IQ.Type.get)
-				throw new RuntimeException("Update IQ methods cannot have a return");
-			
 			return MultiQueryIQMethod.getForMethod(handler, method, annotation);
 		} else if (method.getReturnType().equals(void.class) &&
 				   annotation.type() == IQ.Type.set) {
-			return new UpdateIQMethod(handler, method, annotation);
+			return new VoidIQMethod(handler, method, annotation);
 		} else {
 			throw new RuntimeException(method + ": Unexpected signature for IQ handler method");
 		}

@@ -119,6 +119,18 @@ public class ReadWriteSession extends CachedSession {
 		notificationSet.removed(model, clazz, key);
 	}
 
+	/**
+	 * Get the change notification set that holds information about notifications
+	 * that need to be sent out after this transaction commits. See the docs for
+	 * {@link ChangeNotificationSet#setAutoNotify(boolean)} for more information
+	 * about manually controlling when notifications are sent out.
+	 * 
+	 * @return the change notification set for the session.
+	 */
+	public ChangeNotificationSet getNotifications() {
+		return notificationSet;
+	}
+
 	@Override
 	public void afterCompletion(int status) {
 		if (status == Status.STATUS_COMMITTED)

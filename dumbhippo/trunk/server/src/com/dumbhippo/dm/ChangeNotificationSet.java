@@ -28,6 +28,7 @@ public class ChangeNotificationSet implements Serializable {
 	private Map<ChangeNotification<?,?>, ChangeNotification<?,?>> notifications;
 	private List<ChangeNotification<?,?>> matchedNotifications;
 	private long timestamp;
+	private boolean autoNotify = true;
 	
 	public ChangeNotificationSet(DataModel model) {
 	}
@@ -116,6 +117,25 @@ public class ChangeNotificationSet implements Serializable {
 		return notifications == null && matchedNotifications == null;
 	}
 
+	public boolean getAutoNotify() {
+		return autoNotify;
+	}
+
+	/**
+	 * Normally notifications are sent out to local clients asynchronously
+	 * at some point after the transaction commits. If you set autoNotify
+	 * to false, then this doesn't happen and you must call DataModel.sendNotifications()
+	 * manually to trigger the local notifications. (invalidations and notifications 
+	 * on other cluster nodes will happen as per normal.) This is useful in the
+	 * case where you want to control the order that notifications are sent out
+	 * with respect to some other event. 
+	 * 
+	 * @param autoNotify whether to automatically send out local notifications
+	 */
+	public void setAutoNotify(boolean autoNotify) {
+		this.autoNotify = autoNotify;
+	}
+	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

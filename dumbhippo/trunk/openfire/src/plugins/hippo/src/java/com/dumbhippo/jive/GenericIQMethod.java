@@ -18,10 +18,16 @@ public class GenericIQMethod extends AnnotatedIQMethod {
 	}
 
 	@Override
-	public void doIQ(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException {
+	public Object doIQPhase1(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException {
 		if (needsViewpoint)
 			invokeMethod(viewpoint, request, reply);
 		else
 			invokeMethod(request, reply);
+		
+		return null;
+	}
+	
+	@Override
+	public void doIQPhase2(UserViewpoint viewpoint, IQ request, IQ reply, Object resultObject) throws IQException, RetryException {
 	}
 }
