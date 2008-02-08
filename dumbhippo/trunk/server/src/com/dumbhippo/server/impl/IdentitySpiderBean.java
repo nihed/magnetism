@@ -884,11 +884,16 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		em.remove(contact);
 		logger.debug("contact deleted");
 
-		LiveState liveState = LiveState.getInstance();
-		liveState.invalidateContacts(user.getGuid());
-		for (User removedUser : removedUsers) {
-			invalidateContactStatus(user, removedUser);
-			invalidateContacters(removedUser);
+		DataService.currentSessionRW().removed(ContactDMO.class, contact.getGuid());
+		invalidateContacts(user);
+		
+		if (!removedUsers.isEmpty()) {
+			invalidateUserContacts(user);
+
+			for (User removedUser : removedUsers) {
+				invalidateContactStatus(user, removedUser);
+				invalidateContacters(removedUser);
+			}
 		}
 	}
 	

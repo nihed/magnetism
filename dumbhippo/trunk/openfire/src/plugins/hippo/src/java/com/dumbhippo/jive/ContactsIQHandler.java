@@ -2,6 +2,7 @@ package com.dumbhippo.jive;
 
 import org.xmpp.packet.IQ;
 
+import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.jive.annotations.IQHandler;
 import com.dumbhippo.jive.annotations.IQMethod;
 import com.dumbhippo.persistence.Contact;
@@ -14,6 +15,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PermissionDeniedException;
 import com.dumbhippo.server.dm.ContactDMO;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -154,27 +156,28 @@ public class ContactsIQHandler extends AnnotatedIQHandler {
 	
 	@IQMethod(name="createContact", type=IQ.Type.set)
 	@IQParams({ "addressType", "address" })
-	public void createContact(UserViewpoint viewpoint, String addressType, String address) throws IQException, RetryException {
+	public ContactDMO createContact(UserViewpoint viewpoint, String addressType, String address) throws IQException, RetryException {
 		IdentitySpider identitySpider = EJBUtil.defaultLookup(IdentitySpider.class);
 		
 		AddressType a = parseAddressType(addressType);
 		Resource resource = getResourceFromAddress(identitySpider, a, address);
 		
 		Contact contact = identitySpider.createContact(viewpoint.getViewer(), resource);
-		// FIXME we aren't allowed to return a value, but it will be hard for the caller to figure out 
-		// what contact was created
 		
+		DMSession session = DataService.currentSessionRW();
+		return session.findUnchecked(ContactDMO.class, contact.getGuid());
 	}
 	
 	@IQMethod(name="createUserContact", type=IQ.Type.set)
 	@IQParams({ "user" })
-	public void createUserContact(UserViewpoint viewpoint, UserDMO userDMO) throws IQException, RetryException {
+	public ContactDMO createUserContact(UserViewpoint viewpoint, UserDMO userDMO) throws IQException, RetryException {
 		IdentitySpider identitySpider = EJBUtil.defaultLookup(IdentitySpider.class);
 		
 		User user = identitySpider.lookupUser(userDMO.getKey());
 		Contact contact = identitySpider.createContact(viewpoint.getViewer(), user.getAccount());
-		// FIXME we aren't allowed to return a value, but it will be hard for the caller to figure out 
-		// what contact was created
+
+		DMSession session = DataService.currentSessionRW();
+		return session.findUnchecked(ContactDMO.class, contact.getGuid());
 	}
 	
 	@IQMethod(name="deleteContact", type=IQ.Type.set)
