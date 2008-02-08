@@ -15,6 +15,9 @@
 	<c:when test="${currentPageLink == 'main' && !signin.valid}">
 		<c:set var="disableHomeLink" value="true"/>
 	</c:when>
+	<c:when test="${currentPageLink == 'who-are-you'}">
+		<c:set var="disableLoginLink" value="true"/>
+	</c:when>
 	<c:when test="${currentPageLink == 'signup'}">
 		<c:set var="disableSignupLink" value="true"/>
 	</c:when>
@@ -56,7 +59,7 @@
 				<div id="dhPageHeaderWelcomeOptions"><dht:actionLinkLogout oneLine="true" underline="true"/></div>
 			</c:when>
 			<c:otherwise>	
-			    <span id="dhPageHeaderWelcomeOptions"><a class="dh-underlined-link" href="/who-are-you">Log in</a><c:if test="${!disableSignupLink}"> | <a class="dh-underlined-link" href="/signup">Sign up</a></c:if></span>
+			    <span id="dhPageHeaderWelcomeOptions"><c:if test="${!disableLoginLink}"><a class="dh-underlined-link" href="/who-are-you">Log in</a></c:if><c:if test="${!disableSignupLink}"><c:if test="${!disableLoginLink}"> | </c:if><a class="dh-underlined-link" href="/signup">Sign up</a></c:if></span>
 			</c:otherwise>
 		</c:choose>
 		</div>

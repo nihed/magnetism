@@ -30,7 +30,7 @@
 		<table class="dh-shiny-box-spacer-table" cellspacing="0" cellpadding="0">
 		<tr>
 		<td class="dh-shiny-box-content-side-spacer">&nbsp;</td>
-		<td><jsp:doBody/></td>
+		<td class="dh-shiny-box-content-body"><jsp:doBody/></td>
 		<td class="dh-shiny-box-content-side-spacer">&nbsp;</td>
 		</tr>
 		</table>		
