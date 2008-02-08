@@ -255,7 +255,15 @@ public class DataModel {
 		return (ChangeNotification<K, T>) classHolder.makeChangeNotification(key, matcher);
 	}
 
-	private void sendNotifications(ChangeNotificationSet notifications) {
+	/**
+	 * Send out local notifications resulting from a ReadWriteSession. Normally this 
+	 * happens automatically and you must not call this function automatically, but
+	 * the automatic sending can be disabled with {@link ChangeNotificationSet#setAutoNotify(boolean)}
+	 * if you want explicit control over ordering.	
+	 * 
+	 * @param notifications the change notification set created in a ReadWriteSession
+	 */
+	public void sendNotifications(ChangeNotificationSet notifications) {
 		logger.debug("Sending notifications for {}", notifications);
 		ClientNotificationSet clientNotifications = notifications.resolveNotifications(this);
 		
@@ -281,11 +289,13 @@ public class DataModel {
 			
 			notifications.doInvalidations(this);
 			
-			notificationExecutor.execute(new Runnable() {
-				public void run() {
-					sendNotifications(notifications);
-				}
-			});
+			if (notifications.getAutoNotify()) {
+				notificationExecutor.execute(new Runnable() {
+					public void run() {
+						sendNotifications(notifications);
+					}
+				});
+			}
 		} catch (Exception e) {
 			// Since we are running afterCompletion, exceptions get swallowed
 			// so trap and log here

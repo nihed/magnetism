@@ -29,18 +29,20 @@ public class SingleQueryIQMethod extends QueryIQMethod {
 	}
 	
 	@Override
-	public void doIQ(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException {
+	public void doIQPhase2(UserViewpoint viewpoint, IQ request, IQ reply, Object resultObject) throws IQException, RetryException {
 		DMSession session = DataService.currentSessionRO();
 		Element root = reply.setChildElement(annotation.name(), handler.getInfo().getNamespace());
 		
 		FetchNode fetchNode = getFetchNode(request);
 		
-		DMObject<?> resultObject = (DMObject<?>)invokeMethod(getParams(viewpoint, request));
+		DMObject<?> resultDMObject;
 		
-		resultObject.getClassHolder();
+		resultDMObject = (DMObject<?>)resultObject;
+		if (annotation.type() == IQ.Type.set)
+			resultDMObject = session.findUnchecked(resultDMObject.getStoreKey());
 		
 		XmppFetchVisitor visitor = new XmppFetchVisitor(root, session.getModel());
-		fetchAndVisit(session, resultObject, fetchNode, visitor);
+		fetchAndVisit(session, resultDMObject, fetchNode, visitor);
 		visitor.finish();
 	}
 }
