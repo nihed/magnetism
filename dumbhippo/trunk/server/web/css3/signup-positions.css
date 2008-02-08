@@ -1,0 +1,36 @@
+@CHARSET "UTF-8";
+
+
+.dh-shiny-box-content-body {
+    position:           relative;
+	text-align:         center;
+}
+
+#dhSignupContent {
+    position:           relative;
+	width:				360px;	
+	border:				1px solid #cccccc;
+	margin-top:         20px;
+	margin-bottom:      5px;   
+	/* this centers us in firefox, the text-align: center on 
+	   our parent centers us in IE */
+	margin-left:		auto;
+	margin-right:		auto;
+	padding-top:        10px;
+	padding-bottom:     10px;
+	padding-right:      10px;
+	padding-left:       10px;
+	text-align:         left; /* don't inherit text-align: center; */
+}
+
+#dhSignupContent .dh-text-input, #dhWantsInEmailEntry {
+    margin-top:         3px;
+	margin-bottom:		7px;
+	width:				100%;
+}
+
+#dhLoginLink {
+	position:	absolute;
+	top:        5px;
+	right:      10px;
+}

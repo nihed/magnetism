@@ -9,6 +9,8 @@
 
 <dh:script module="dh.actions"/>
 <form method="post" action="/wantsin" onsubmit="return dh.actions.validateEmailInput('dhWantsInEmailEntry');">
-    <input type="text" id="dhWantsInEmailEntry" name="address"/>
+    <div>
+        <input type="text" id="dhWantsInEmailEntry" name="address"/>
+    </div>
     <input type="submit" value="${buttonText}"/>
 </form>

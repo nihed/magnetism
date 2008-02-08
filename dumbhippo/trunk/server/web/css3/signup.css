@@ -1,0 +1,16 @@
+@CHARSET "UTF-8";
+@IMPORT url("signup-positions.css");
+
+#dhSignupContent {
+	font-size: 12px; /* for inheritance by text inside the form */
+	background-color:   #fbf3fe;
+}
+
+.dh-landing-result {
+	font-weight: bold;
+	color: 		 #cc0033;
+}
+
+.dh-landing-explanatory {
+	font-size: 13px;
+}

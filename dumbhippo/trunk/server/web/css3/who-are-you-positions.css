@@ -1,7 +1,5 @@
 @CHARSET "UTF-8";
 
-/* Override the 500px width that's normal for a zone box */
-
 .dh-shiny-box-content-body {
     position:           relative;
 	text-align:         center;

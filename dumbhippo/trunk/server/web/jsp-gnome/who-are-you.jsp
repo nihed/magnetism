@@ -55,8 +55,7 @@
 		                <dht2:selfInvite promotion="${landing.openSignupPromotion}" invitesAvailable="${landing.selfInvitations}"/>
 				    </c:when>
 				    <c:otherwise>
-			            <p><strong>Enter your email address and we'll let you know when GNOME Online has more room. If you have a Mugshot account you can use it to log in.
-			            </strong></p>
+			            Enter your email address and we'll let you know when GNOME Online has more room. If you have a Mugshot account you can use it to log in.
 		                <dht2:wantsIn buttonText="Sign Me Up!"/>
 		            </c:otherwise>
 		        </c:choose>
