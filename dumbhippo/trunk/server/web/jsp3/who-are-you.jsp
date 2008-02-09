@@ -47,7 +47,7 @@
 	        </div>
 	        <dht:zoneBoxSeparator/>
 	        <div>
-	            GNOME Online user? Use your <a href="http://online.gnome.org">online.gnome.org</a> account to log in here.
+	            GNOME Online user? Use your <a href="http://online.gnome.org" target="_blank">online.gnome.org</a> account to log in here.
 	        </div>    
         </form>
     </dht3:shinyBox>

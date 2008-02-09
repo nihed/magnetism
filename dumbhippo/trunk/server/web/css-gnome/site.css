@@ -188,3 +188,8 @@ input.dh-text-input-showing-default {
 .dh-popup .dh-controls {
 	font-size:			12px;
 }
+
+.gnome-learn-more {
+    margin-top:         3px;
+	font-size:			14px;
+}
