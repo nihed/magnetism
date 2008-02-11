@@ -77,11 +77,20 @@
 				<td valign="center">			
 					<div>
 						<div class="dh-account-status-primary">Welcome to <c:out value="${site.siteName}"/>!</div>
-						Activate your account to share updates with friends.
+						<c:choose>
+						    <c:when test="${dh:enumIs(site, 'GNOME')}">	
+						        Activate your account to start using GNOME Online Desktop.
+						    </c:when>
+						    <c:otherwise>
+						        Activate your account to share updates with friends.
+						    </c:otherwise>
+						</c:choose>       
 					</div>
-					<div>
-						<a href="/features">Learn more about <c:out value="${site.siteName}"/>.</a>					
-					</div>
+					<c:if test="${dh:enumIs(site, 'MUGSHOT')}">	
+					    <div>
+						    <a href="/features">Learn more about Mugshot.</a>					
+					    </div>
+					</c:if>    
 					<script type="text/javascript">
 						dh.event.addPageLoadListener(dh.actions.updateGetStarted);
 					</script>
@@ -90,7 +99,7 @@
 					<div class="dh-account-status-secondary">
 						<div>
 			        	<input type="checkbox" id="dhAcceptTerms" onclick="dh.actions.updateGetStarted();">
-		                	<label for="dhAcceptTerms">I agree to the <c:out value="${site.siteName}"/></label> <a href="javascript:window.open('/terms', 'dhTermsOfUse', 'menubar=no,scrollbars=yes,width=700,height=700');void(0);">Terms of Use</a>.
+		                	<label for="dhAcceptTerms">I agree to the <c:out value="${site.siteName}"/> <c:if test="${!dh:enumIs(site, 'MUGSHOT')}">and Mugshot </c:if></label> <a href="javascript:window.open('${signin.baseUrlMugshot}/terms', 'dhTermsOfUse', 'menubar=no,scrollbars=yes,width=700,height=700');void(0);">Terms of Use</a>.
 				        </input>
 				        </div>
 				        <div>

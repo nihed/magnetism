@@ -164,7 +164,10 @@ public class RewriteServlet extends HttpServlet {
     }
     
     private String getVersionedJspPath(Site site, String name) {
-    	if (site == Site.GNOME && jspPagesGnome.contains(name)) {
+    	// Don't display Mugshot pages on the GNOME Online site.
+    	// To avoid duplication, we now use "configjs" and "unknownlink"
+    	// from the Mugshot site, since they don't link to any other pages.
+    	if (site == Site.GNOME && !name.equals("configjs") && !name.equals("unknownlink")) {
     		return "/jsp-gnome/" + name + ".jsp";
     	} else {
 			Integer version = jspPages.get(name);

@@ -32,7 +32,7 @@
 				<div><a class="dh-underlined-link" href="javascript:dh.actions.signOut();" title="Keep others from using your account on this computer">Log out</a></div>
 			</c:when>
 			<c:otherwise>	
-			    <span><a class="dh-underlined-link" href="/who-are-you">Log in</a><c:if test="${!disableSignupLink}"> | <a class="dh-underlined-link" href="/signup">Sign up</a></c:if></span>
+			    <span><a class="dh-underlined-link" href="/who-are-you">Log in</a><c:if test="${!disableSignupLink}"> | <a class="dh-underlined-link" href="/who-are-you">Sign up</a></c:if></span>
 			</c:otherwise>
 		</c:choose>
 	</div>

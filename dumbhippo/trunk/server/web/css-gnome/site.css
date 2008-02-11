@@ -193,3 +193,33 @@ input.dh-text-input-showing-default {
     margin-top:         3px;
 	font-size:			14px;
 }
+
+#dhAccountStatus {
+	background-color:	#fbfadc;
+	border:				1px solid #cccc99;
+	font-size:			12px;
+}
+
+#dhAccountDisabled {
+	background-color:	#fbfadc;
+	border:				1px solid #cc0000;
+	font-size:			14px;
+	font-weight:		bold;
+}
+
+#dhAccountStatus, #dhAccountDisabled {
+	position:			relative;
+	padding-left: 		9px;
+	padding-right: 		9px;
+	padding-top: 		4px;
+	padding-bottom: 	4px;
+	margin-bottom:		15px;
+}
+
+.dh-account-status-secondary {
+	padding-left:		15px;
+}
+
+.dh-account-status-secondary input {
+	margin-left:		0px;
+}

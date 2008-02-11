@@ -10,4 +10,4 @@
 </c:if>
 
 <div class="${disclaimerClass}">We promise not to sell or share your info, spam or scam you,
-	install spyware, or other annoying stuff. <a href="/privacy">See our Privacy Policy.</a></div>
+	install spyware, or other annoying stuff. <c:choose><c:when test="${dh:enumIs(site, 'GNOME')}"><a href="${signin.baseUrlMugshot}/privacy" target="_blank">See GNOME Online and Mugshot Privacy Policy.</a></c:when><c:otherwise><a href="${signin.baseUrlMugshot}/privacy">See our Privacy Policy.</a></c:otherwise></c:choose></div>
