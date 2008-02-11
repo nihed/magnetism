@@ -322,7 +322,7 @@ public class MusicSystemBean implements MusicSystem {
 		q = em.createQuery("FROM TrackHistory h WHERE h.user = :user " + select + order);
 		q.setParameter("user", user);
 		if (minTimestamp > 0)
-			q.setParameter("minTimestamp", minTimestamp);
+			q.setParameter("minTimestamp", new Date(minTimestamp));
 		q.setFirstResult(firstResult);
 		q.setMaxResults(maxResults);
 		
