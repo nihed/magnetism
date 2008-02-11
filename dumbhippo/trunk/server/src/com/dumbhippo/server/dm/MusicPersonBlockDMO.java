@@ -16,7 +16,7 @@ import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.blocks.MusicPersonBlockView;
 import com.dumbhippo.server.views.SystemViewpoint;
 
-@DMO(classId="http://mugshot.org/p/o/musicChatBlock")
+@DMO(classId="http://mugshot.org/p/o/musicPersonBlock")
 public abstract class MusicPersonBlockDMO extends BlockDMO {
 	@EJB
 	private MusicSystem musicSystem;
