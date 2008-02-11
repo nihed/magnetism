@@ -11,13 +11,13 @@ class TaskEntry(object):
         self._id = v
     id = property(lambda self: self._id, set_id)
     
-    def set_hash(self, v):
-        self._hash = v
-    prev_hash = property(lambda self: self._prev_hash, set_hash)
+    def set_prev_hash(self, v):
+        self._prev_hash = v
+    prev_hash = property(lambda self: self._prev_hash, set_prev_hash)
     
-    def set_timestamp(self, v):
-        self._timestamp = v        
-    prev_timestamp = property(lambda self: self._prev_timestamp, set_timestamp)
+    def set_prev_timestamp(self, v):
+        self._prev_timestamp = v        
+    prev_timestamp = property(lambda self: self._prev_timestamp, set_prev_timestamp)
         
     def __init__(self, keystr, prev_hash, prev_ts):
         super(TaskEntry, self).__init__()
