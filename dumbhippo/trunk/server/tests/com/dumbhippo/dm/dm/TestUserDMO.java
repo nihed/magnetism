@@ -113,7 +113,7 @@ public abstract class TestUserDMO extends DMObject<Guid> {
 					);
 
 			q.setParameter("user", user);
-			q.setParameter("minTimestamp", minTimestamp);
+			q.setParameter("minTimestamp", new Date(minTimestamp));
 			
 			q.setFirstResult(start);
 			q.setMaxResults(max);
