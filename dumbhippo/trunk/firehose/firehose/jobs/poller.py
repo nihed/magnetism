@@ -2,7 +2,7 @@
 
 import os,sys,re,heapq,time,Queue,sha,threading
 import BaseHTTPServer,httplib,urlparse,urllib
-from email.utils import formatdate,parsedate_tz,mktime_tz
+from email.Utils import formatdate,parsedate_tz,mktime_tz
 import logging
 
 import boto
