@@ -424,7 +424,7 @@ public class FacebookServlet extends AbstractServlet {
 				        xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name(), "value", externalAccount.getExternalAccount().getAccountInfo(), "style", "width:275px;");
 				        hadInitialInfo = true;
 				    } else {
-				    	xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name(), "style", "style", "width:275px;");
+				    	xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name(), "style", "width:275px;");
 				    }
 				    
 				    xml.openElement("div", "style", "color:#666666;width:275px;");			    
