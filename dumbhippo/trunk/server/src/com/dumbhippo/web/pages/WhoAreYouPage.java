@@ -37,4 +37,11 @@ public class WhoAreYouPage {
 			return null;
 		}
 	}
+	
+	public String getFacebookApplicationName() {
+        String applicationName = "mugshot";
+        if (config.getBaseUrlMugshot().toExternalForm().contains("dogfood"))
+        	applicationName = "mugshot-test";
+        return applicationName;
+	}
 }

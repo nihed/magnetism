@@ -393,9 +393,9 @@ public class FacebookServlet extends AbstractServlet {
 					xml.closeElement();
 				}
 	
-				String floatStyle = "";
-				String labelWidth = "180";
-				String leftSideWidth = "width:490px;";
+				String floatStyle = "float:left;";
+				String labelWidth = "120";
+				String leftSideWidth = "width:430px;";
 				String categoryNameLeftMargin = "margin-left:0px;";
 				if (user.getAccount().isPublicPage()) {
 				    xml.appendTextNode("span", "Updates to the information below will be reflected in ",
@@ -406,10 +406,6 @@ public class FacebookServlet extends AbstractServlet {
 			    } else {
 				    xml.appendTextNode("span", "Fill in the information for accounts you want to display updates from.",
 			    	                   "style", "margin-left:22px;");		
-				    floatStyle="float:left;";
-				    labelWidth="120";
-				    leftSideWidth = "width:430px;";
-				    categoryNameLeftMargin = "margin-left:0px;";
 			    }
 			    ExternalAccountCategory currentCategory = null;
 			    boolean hadInitialInfo = false;
@@ -472,19 +468,27 @@ public class FacebookServlet extends AbstractServlet {
 			    xml.closeElement(); // fb:editor-buttonset
 			    xml.closeElement(); // fb:editor 		    
 			    xml.closeElement(); // div with the form
-			    
-			    if (!user.getAccount().isPublicPage()) {
-			    	xml.openElement("div", "style", "width:184px;float:left;color:#333333;background-color:#EDF2F3;border-style:solid;border-width:1px;border-color:#C2D1D4;margin-top:34px;padding:8px;");
+
+		    	xml.openElement("div", "style", "width:184px;float:left;color:#333333;background-color:#EDF2F3;border-style:solid;border-width:1px;border-color:#C2D1D4;margin-top:34px;padding:8px;");
+			    // there didn't seem to be a way to get buttons in fb:editor to open in a new window, which is what we want here, so we are using 
+			    // our own form and buttons 
+			    // original top and left border color on facebook is #D8DFEA, but it looks too light to me
+			    String buttonStyle = "background-color:#3B5998;color:#ffffff;width:184px;border-width:1px;padding-top:2px;padding-bottom:2px;margin-top:8px;margin-bottom:8px;border-top-color:#728199;border-left-color:#728199;border-right-color:#0E1F5B;border-bottom-color:#0E1F5B;";
+		    	if (user.getAccount().isPublicPage()) {
+			    	xml.openElement("span", "style", "font-weight:bold;");
+			    	xml.append("Want to log in to your Mugshot account?");
+			    	xml.closeElement();
+				    xml.append(" Following this link will log you in.");
+				    xml.openElement("form", "action", baseUrl + "/facebook-signin", "target", "_blank", "method", "GET");
+				    xml.appendEmptyNode("input", "type", "submit", "value", "Log In To My Mugshot Account", "style", buttonStyle);
+				    xml.closeElement();		
+			    } else {
 			    	xml.openElement("span", "style", "font-weight:bold;");
 			    	xml.append("Do you already have a Mugshot account?");
 			    	xml.closeElement();
 				    xml.append(" Don't fill in this stuff, just verify" +
 				    		   " your Mugshot account by following this link.");
 				    xml.openElement("form", "action", baseUrl + "/facebook-add", "target", "_blank", "method", "GET");
-				    // there didn't seem to be a way to get buttons in fb:editor to open in a new window, which is what we want here, so we are using 
-				    // our own form and buttons 
-				    // original top and left border color on facebook is #D8DFEA, but it looks too light to me
-				    String buttonStyle = "background-color:#3B5998;color:#ffffff;width:184px;border-width:1px;padding-top:2px;padding-bottom:2px;margin-top:8px;margin-bottom:8px;border-top-color:#728199;border-left-color:#728199;border-right-color:#0E1F5B;border-bottom-color:#0E1F5B;";
 				    xml.appendEmptyNode("input", "type", "submit", "value", "Verify My Mugshot Account", "style", buttonStyle);
 				    xml.closeElement();		
 				    // divider line
@@ -496,17 +500,16 @@ public class FacebookServlet extends AbstractServlet {
 				    xml.append(" It's free and easy and helps you see all your friends' activities in one place, share links, and read feeds in a social setting.");
 		            xml.openElement("form", "action", baseUrl + "/facebook-signin", "target", "_blank", "method", "GET");
 		            xml.appendEmptyNode("input", "type", "submit", "value", "Create My Mugshot Account", "style", buttonStyle);
-		            xml.closeElement();	
-			    	xml.closeElement();
+		            xml.closeElement();				    				    	
 			    }
+		    	xml.closeElement();
 	        }
 		} else {
-			if (errorMessage == null)
-				errorMessage = "We could not get an existing or create a new user.";
-			logger.error("Displaying a really bad error message on Facebook: {}", errorMessage);
-			xml.openElement("fb:error");
-			xml.appendTextNode("fb:message", "Getting Mugshot Information Failed");			
-			xml.append(errorMessage);
+			// TODO: verify that we didn't get the user information from Facebook, otherwise
+			// log an error
+			xml.openElement("fb:explanation");
+			xml.appendTextNode("fb:message", "Log in to Facebook first");			
+			xml.append("You need to be logged in to Facebook to use the Mugshot application.");
 			xml.closeElement();
 		}		
 		response.setContentType("text/html");
