@@ -421,10 +421,10 @@ public class FacebookServlet extends AbstractServlet {
 				    xml.openElement("fb:editor-custom", "label", externalAccount.getSiteName());
 				    
 				    if (externalAccount.getExternalAccount() != null && externalAccount.getExternalAccount().isLovedAndEnabled()) {
-				        xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name(), "value", externalAccount.getExternalAccount().getAccountInfo());
+				        xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name(), "value", externalAccount.getExternalAccount().getAccountInfo(), "style", "max-width:270px;");
 				        hadInitialInfo = true;
 				    } else {
-				    	xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name());
+				    	xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name(), "style", "max-width:270px;");
 				    }
 				    
 				    xml.openElement("div", "style", "color:#666666;");			    
@@ -480,7 +480,7 @@ public class FacebookServlet extends AbstractServlet {
 			    	xml.closeElement();
 				    xml.append(" Following this link will log you in.");
 				    xml.openElement("form", "action", baseUrl + "/facebook-signin", "target", "_blank", "method", "GET");
-				    xml.appendEmptyNode("input", "type", "submit", "value", "Log In To My Mugshot Account", "style", buttonStyle);
+				    xml.appendEmptyNode("input", "type", "submit", "value", "Log In To Mugshot", "style", buttonStyle);
 				    xml.closeElement();		
 			    } else {
 			    	xml.openElement("span", "style", "font-weight:bold;");
