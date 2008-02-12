@@ -41,7 +41,8 @@
 	        <div>
 		        <c:if test="${!empty whoareyou.aimBotScreenName}">
 			        <%-- c:if on one line here to avoid weird link text spacing --%>
-		            <a href="aim:GoIM?screenname=${whoareyou.aimBotScreenName}&message=Hey+Bot!+Send+me+a+login+link!"><c:if test="${!empty whoareyou.aimPresenceKey}"><img src="http://api.oscar.aol.com/SOA/key=${whoareyou.aimPresenceKey}/presence/${whoareyou.aimBotScreenName}" border="0"/> </c:if>AIM log in</a> |
+		            <a href="aim:GoIM?screenname=${whoareyou.aimBotScreenName}&message=Hey+Bot!+Send+me+a+login+link!" title="Get a log in link via AIM if you have already added AIM to your Mugshot account"><c:if test="${!empty whoareyou.aimPresenceKey}"><img src="http://api.oscar.aol.com/SOA/key=${whoareyou.aimPresenceKey}/presence/${whoareyou.aimBotScreenName}" border="0" style="vertical-align: text-bottom;"/> </c:if>AIM log in</a> |
+		            <a href="http://apps.facebook.com/${whoareyou.facebookApplicationName}" title="Log in through Facebook if you have already added Facebook to your Mugshot account"><dh:png src="images3/${buildStamp}/favicon_facebook.png" style="width: 16; height: 16; vertical-align: text-bottom;"/> Facebook log in</a> |
 	            </c:if>
 		        <a id="dhLoginTogglePasswordLink" href="javascript:dh.login.togglePasswordBox()"><%-- filled in by javascript --%></a>&nbsp; [alt-p]
 	        </div>

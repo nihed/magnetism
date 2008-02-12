@@ -95,24 +95,26 @@ public class FacebookSigninServlet extends AbstractServlet {
 			    		if (sess != null)
 			    			sess.invalidate();
 			    		SigninBean.initializeAuthentication(request, response, client);
-			    		ac.getOwner().getAccount().setPublicPage(true);
-			    		String regularCountString = config.getProperty(HippoProperty.NEW_USER_INVITATION_COUNT);
-			    		int regularCount = Integer.parseInt(regularCountString);
-			    		ac.getOwner().getAccount().setInvitations(regularCount);
-			    		// set a better name for a Facebook user, since now the user can edit it, and
-			    		// we won't be needing to get it from Facebook again
-			    		if (ac.getOwner().getNickname().contains("Facebook user")) {
-				            FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
-			                FacebookAccount facebookAccount = facebookTracker.getFacebookAccount(facebookUserId);                    
-			                if (facebookAccount != null) {
-			                    String name = ws.getName(facebookAccount);
-			                    if (name.trim().length() > 0) {
-			                    	name = name.trim();
-			                    	ac.getOwner().setNickname(name);
-			            		    DataService.currentSessionRW().changed(UserDMO.class, ac.getOwner().getGuid(), "name");
-			            		    revisionControl.persistRevision(new UserNameChangedRevision(ac.getOwner(), new Date(), name));
-			                    }
-			                }		    		
+			    		if (!ac.getOwner().getAccount().isPublicPage()) {
+				    		ac.getOwner().getAccount().setPublicPage(true);
+				    		String regularCountString = config.getProperty(HippoProperty.NEW_USER_INVITATION_COUNT);
+				    		int regularCount = Integer.parseInt(regularCountString);
+				    		ac.getOwner().getAccount().setInvitations(regularCount);
+				    		// set a better name for a Facebook user, since now the user can edit it, and
+				    		// we won't be needing to get it from Facebook again
+				    		if (ac.getOwner().getNickname().contains("Facebook user")) {
+					            FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
+				                FacebookAccount facebookAccount = facebookTracker.getFacebookAccount(facebookUserId);                    
+				                if (facebookAccount != null) {
+				                    String name = ws.getName(facebookAccount);
+				                    if (name.trim().length() > 0) {
+				                    	name = name.trim();
+				                    	ac.getOwner().setNickname(name);
+				            		    DataService.currentSessionRW().changed(UserDMO.class, ac.getOwner().getGuid(), "name");
+				            		    revisionControl.persistRevision(new UserNameChangedRevision(ac.getOwner(), new Date(), name));
+				                    }
+				                }		    		
+				    		}
 			    		}
 			    		return redirectToNextPage(request, response, "/account", null);
 			        } else {

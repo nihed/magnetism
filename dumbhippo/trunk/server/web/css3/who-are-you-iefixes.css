@@ -1,5 +1,9 @@
 @CHARSET "UTF-8";
 
+#dhLoginForm {
+	width:        370px;	
+}	
+
 #dhPasswordHelp {
 	margin-right: 10px;
 }
