@@ -444,6 +444,11 @@ public enum ExternalAccountType {
 		}
 		
 		@Override
+	    public String getSiteUserInfoType() {
+	    	return "URL";
+	    }
+		
+		@Override
 		public String getIconName() {
 		    return "blog_icon.png";	
 		}

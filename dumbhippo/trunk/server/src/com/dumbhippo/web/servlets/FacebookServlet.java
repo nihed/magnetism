@@ -415,24 +415,36 @@ public class FacebookServlet extends AbstractServlet {
 			    	if (currentCategory == null || !currentCategory.equals(externalAccount.getExternalAccountType().getCategory())) {
 					    currentCategory = externalAccount.getExternalAccountType().getCategory();
 			    		xml.openElement("fb:editor-custom");
-					    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", categoryNameLeftMargin);		    	
+					    xml.appendTextNode("h3", currentCategory.getCategoryName(), "style", categoryNameLeftMargin + "width:275px;");		    	
 					    xml.closeElement();
 			    	}
 				    xml.openElement("fb:editor-custom", "label", externalAccount.getSiteName());
 				    
 				    if (externalAccount.getExternalAccount() != null && externalAccount.getExternalAccount().isLovedAndEnabled()) {
-				        xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name(), "value", externalAccount.getExternalAccount().getAccountInfo(), "style", "max-width:270px;");
+				        xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name(), "value", externalAccount.getExternalAccount().getAccountInfo(), "style", "width:275px;");
 				        hadInitialInfo = true;
 				    } else {
-				    	xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name(), "style", "max-width:270px;");
+				    	xml.appendEmptyNode("input", "name", "mugshot_" + externalAccount.getExternalAccountType().name(), "style", "style", "width:275px;");
 				    }
 				    
-				    xml.openElement("div", "style", "color:#666666;");			    
+				    xml.openElement("div", "style", "color:#666666;width:275px;");			    
 				    if (externalAccount.isInfoTypeProvidedBySite()) {
 				        xml.append("Enter your ");
-				        xml.appendTextNode("a", externalAccount.getSiteName(), 
-				        		           "href", externalAccount.getExternalAccountType().getSiteLink(), 
-				        		           "target", "_blank");
+				        if (externalAccount.getExternalAccountType() == ExternalAccountType.BLOG) {
+				        	xml.append(" blog (e.g. ");
+				            xml.appendTextNode("a", "LiveJournal", 
+		        	  	               "href", "http://livejournal.com", 
+		        		               "target", "_blank");
+				            xml.append(", ");
+				            xml.appendTextNode("a", "Blogger", 
+		        	  	               "href", "http://blogger.com", 
+		        		               "target", "_blank");
+				            xml.append(", personal blog)");
+				        } else { 	
+				            xml.appendTextNode("a", externalAccount.getSiteName(), 
+				        	  	               "href", externalAccount.getExternalAccountType().getSiteLink(), 
+				        		               "target", "_blank");
+				        }    
 				        xml.append(" " + externalAccount.getSiteUserInfoType());
 					    if (externalAccount.getExternalAccountType().getHelpUrl().trim().length() > 0) {
 					    	xml.append(" (");
