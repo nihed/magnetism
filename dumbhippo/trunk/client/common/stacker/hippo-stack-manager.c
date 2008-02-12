@@ -532,7 +532,7 @@ manager_send_filter(StackManager *manager)
     char *filter_string = make_filter_string(manager);
 
     query = ddm_data_model_update(manager->model,
-                                  "http://mugshot.org/p/blocks#setStackFilter",
+                                  "http://mugshot.org/p/blocks#setStackFilter", NULL,
                                   "filter", filter_string,
                                   NULL);
     
