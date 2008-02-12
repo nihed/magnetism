@@ -147,7 +147,7 @@ send_quip(HippoQuipWindow *quip_window)
     g_object_get(G_OBJECT(quip_window->entry), "text", &text, NULL);
 
     ddm_data_model_update(quip_window->model,
-                          "http://mugshot.org/p/chatMessages#addMessage",
+                          "http://mugshot.org/p/chatMessages#addMessage", NULL,
                           "chatId", quip_window->chat_id,
                           "text", text,
                           "sentiment", sentiment_str,

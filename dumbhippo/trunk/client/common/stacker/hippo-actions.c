@@ -356,7 +356,7 @@ hippo_actions_open_url(HippoActions *actions,
                        const char   *url)
 {
     ddm_data_model_update(actions->model,
-                          "online-desktop:/p/system#openUrl",
+                          "online-desktop:/p/system#openUrl", NULL,
                           "url", url,
                           NULL);
 }
@@ -367,7 +367,7 @@ set_block_hushed(HippoActions *actions,
                  gboolean      hushed)
 {
     ddm_data_model_update(actions->model,
-                          "http://mugshot.org/p/blocks#setBlockHushed",
+                          "http://mugshot.org/p/blocks#setBlockHushed", NULL,
                           "blockId", hippo_block_get_guid(block),
                           "hushed", hushed ? "true" : "false",
                           NULL);
@@ -408,7 +408,7 @@ hippo_actions_invite_to_group(HippoActions    *actions,
                               HippoPerson     *person)
 {
     ddm_data_model_update(actions->model,
-                          "http://mugshot.org/p/groups#inviteUser",
+                          "http://mugshot.org/p/groups#inviteUser", NULL,
                           "groupId", hippo_entity_get_guid(HIPPO_ENTITY(group)),
                           "userId", hippo_entity_get_guid(HIPPO_ENTITY(person)),
                           NULL);
@@ -444,7 +444,7 @@ hippo_actions_send_account_question_response(HippoActions *actions,
                                              const char   *response)
 {
     ddm_data_model_update(actions->model,
-                          "http://mugshot.org/p/blocks#accountQuestionResponse",
+                          "http://mugshot.org/p/blocks#accountQuestionResponse", NULL,
                           "blockId", block_id,
                           "response", response,
                           NULL);

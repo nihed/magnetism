@@ -205,7 +205,7 @@ void
 hippo_stacker_app_show_home(HippoStackerApp *app)
 {
     ddm_data_model_update(app->model,
-                          "online-desktop:/p/system#openUrl",
+                          "online-desktop:/p/system#openUrl", NULL,
                           "url", "/",
                           NULL);
 }
@@ -279,7 +279,6 @@ hippo_stacker_app_new(HippoInstanceType  instance_type,
                       int                restart_argc)
 {
     HippoStackerApp *app = g_new0(HippoStackerApp, 1);
-    char *bus_name;
 
     app->restart_argv = g_strdupv(restart_argv);
     app->restart_argc = restart_argc;
