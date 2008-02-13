@@ -1,7 +1,6 @@
 package com.dumbhippo.dm.dm;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -114,7 +113,7 @@ public abstract class TestUserDMO extends DMObject<Guid> {
 					);
 
 			q.setParameter("user", user);
-			q.setParameter("minTimestamp", new Date(minTimestamp));
+			q.setParameter("minTimestamp", minTimestamp);
 			
 			q.setFirstResult(start);
 			q.setMaxResults(max);
