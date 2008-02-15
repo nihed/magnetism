@@ -31,7 +31,7 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 	
 	private long[] feedTimestamps;
 	
-	private boolean removed;
+	private boolean deleted;
 
 	/**
 	 * DO NOT USE THIS CONSTRUCTOR DIRECTLY. Instead use model.makeChangeNotification(),
@@ -122,16 +122,16 @@ public class ChangeNotification<K, T extends DMObject<K>> implements Serializabl
 		}
 	}
 
-	public void removed() {
-		removed = true;
+	public void deleted() {
+		deleted = true;
 	}
 	
 	public void resolveNotifications(DataModel model, ClientNotificationSet result) {
 		@SuppressWarnings("unchecked")
 		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
 
-		if (removed)
-			model.getStore().evict(classHolder, key);			
+		if (deleted)
+			model.getStore().delete(classHolder, key, result);			
 		else
 			model.getStore().resolveNotifications(classHolder, key, propertyMask, result, matcher);
 	}

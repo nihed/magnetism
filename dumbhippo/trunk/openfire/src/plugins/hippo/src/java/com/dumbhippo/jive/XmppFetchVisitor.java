@@ -30,6 +30,8 @@ public class XmppFetchVisitor implements FetchVisitor {
 	private static final QName RESOURCE_ID_QNAME = QName.get("resourceId", SYSTEM_NAMESPACE);
 	private static final QName FETCH_QNAME = QName.get("fetch", SYSTEM_NAMESPACE);
 	private static final QName INDIRECT_QNAME = QName.get("indirect", SYSTEM_NAMESPACE);
+	private static final QName EVICTED_QNAME = QName.get("evicted", SYSTEM_NAMESPACE);
+	private static final QName DELETED_QNAME = QName.get("deleted", SYSTEM_NAMESPACE);
 	private static final QName TS_QNAME = QName.get("ts", SYSTEM_NAMESPACE);
 	private static final QName TYPE_QNAME = QName.get("type", SYSTEM_NAMESPACE);
 	private static final QName DEFAULT_CHILDREN_QNAME = QName.get("defaultChildren", SYSTEM_NAMESPACE);
@@ -136,5 +138,17 @@ public class XmppFetchVisitor implements FetchVisitor {
 		
 		element.addAttribute(UPDATE_QNAME, "clear");
 		element.addAttribute(TYPE_QNAME, propertyHolder.getTypeString());
+	}
+		
+	public <K, T extends DMObject<K>> void evictedResource(DMClassHolder<K, T> classHolder, K key) {
+		Element element = rootElement.addElement(createQName("resource", classHolder.getClassId()));
+		element.addAttribute(RESOURCE_ID_QNAME, classHolder.makeRelativeId(key));
+		element.addAttribute(EVICTED_QNAME, "true");
+	}
+
+	public <K, T extends DMObject<K>> void deletedResource(DMClassHolder<K, T> classHolder, K key) {
+		Element element = rootElement.addElement(createQName("resource", classHolder.getClassId()));
+		element.addAttribute(RESOURCE_ID_QNAME, classHolder.makeRelativeId(key));
+		element.addAttribute(DELETED_QNAME, "true");
 	}
 }

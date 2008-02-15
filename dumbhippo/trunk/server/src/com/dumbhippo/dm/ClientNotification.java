@@ -38,6 +38,10 @@ public class ClientNotification {
 		notifications.add(new ObjectNotification<K,T>(key, fetch, propertyMask, childFetches, maxes));
 	}
 	
+	public <K, T extends DMObject<K>> void addDeletion(StoreKey<K,T> key) {
+		notifications.add(new ObjectNotification<K,T>(key));
+	}
+	
 	public StoreClient getClient() {
 		return client;
 	}
@@ -54,6 +58,7 @@ public class ClientNotification {
 
 	private static class ObjectNotification<K,T extends DMObject<K>> {
 		private StoreKey<K,T> key;
+		private boolean deleted;
 		private BoundFetch<K, ? super T> fetch;
 		private long propertyMask;
 		private BoundFetch<?,?>[] childFetches;
@@ -67,6 +72,11 @@ public class ClientNotification {
 			this.maxes = maxes;
 		}
 		
+		public ObjectNotification(StoreKey<K, T> key) {
+			this.key = key;
+			this.deleted = true;
+		}
+
 		private int getMax(FeedPropertyHolder<K,T,?,?> property, int propertyIndex) {
 			int max = -1;
 			if (maxes != null)
@@ -79,6 +89,11 @@ public class ClientNotification {
 		}
 		
 		public void visitNotification(DMSession session, FetchVisitor visitor) {
+			if (deleted) {
+				visitor.deletedResource(key.getClassHolder(), key.getKey());
+				return;
+			}
+			
 			T object;
 			try {
 				object = session.find(key);

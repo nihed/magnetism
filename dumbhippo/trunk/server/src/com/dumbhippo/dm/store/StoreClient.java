@@ -6,10 +6,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.dumbhippo.dm.DMClient;
-import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.dm.fetch.FetchVisitor;
-import com.dumbhippo.dm.schema.DMClassHolder;
 
 public class StoreClient implements DMClient {
 	private DMClient client;
@@ -73,10 +71,6 @@ public class StoreClient implements DMClient {
 
 	public void endNotification(FetchVisitor visitor, long serial) {
 		client.endNotification(visitor, serial);
-	}
-
-	public <K, T extends DMObject<K>> void notifyEviction(DMClassHolder<K,T> classHolder, K key, long serial) {
-		client.notifyEviction(classHolder, key, serial);
 	}
 
 	public void nullNotification(long serial) {

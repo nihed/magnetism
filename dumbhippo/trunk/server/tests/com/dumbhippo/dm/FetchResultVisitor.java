@@ -56,4 +56,12 @@ public class FetchResultVisitor implements FetchVisitor {
 	public void emptyProperty(DMPropertyHolder propertyHolder) {
 		// FIXME: test this
 	}
+	
+	public <K,T extends DMObject<K>> void evictedResource(DMClassHolder<K,T> classHolder, K key) {
+		// FIXME: test this
+	}
+
+	public <K,T extends DMObject<K>> void deletedResource(DMClassHolder<K,T> classHolder, K key) {
+		// FIXME: test this
+	}
 }

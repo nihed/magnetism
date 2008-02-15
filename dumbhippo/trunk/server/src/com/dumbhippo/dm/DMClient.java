@@ -1,7 +1,6 @@
 package com.dumbhippo.dm;
 
 import com.dumbhippo.dm.fetch.FetchVisitor;
-import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.dm.store.StoreClient;
 
 /**
@@ -31,8 +30,6 @@ public interface DMClient {
 	DMViewpoint createViewpoint();
 	
 	void endNotification(FetchVisitor visitor, long serial);
-	
-	<K,T extends DMObject<K>> void notifyEviction(DMClassHolder<K,T> classHolder, K key, long serial);
 	
 	void nullNotification(long serial);
 }
