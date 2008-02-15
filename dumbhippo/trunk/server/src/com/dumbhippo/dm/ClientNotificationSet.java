@@ -24,8 +24,8 @@ public class ClientNotificationSet {
 	static final private Logger logger = GlobalSetup.getLogger(ClientNotificationSet.class);
 	
 	private Map<StoreClient, ClientNotification> notifications;
-	
-	public <K, T extends DMObject<K>> void addNotification(StoreClient client, StoreKey<K,T> key, BoundFetch<K,? super T> fetch, long propertyMask, BoundFetch<?,?>[] childFetches, int[] maxes) {
+
+	private ClientNotification getNotification(StoreClient client) {
 		ClientNotification notification = null;
 		
 		if (notifications == null)
@@ -37,8 +37,18 @@ public class ClientNotificationSet {
 			notification = new ClientNotification(client);
 			notifications.put(client, notification);
 		}
-		
+
+		return notification;
+	}
+	
+	public <K, T extends DMObject<K>> void addNotification(StoreClient client, StoreKey<K,T> key, BoundFetch<K,? super T> fetch, long propertyMask, BoundFetch<?,?>[] childFetches, int[] maxes) {
+		ClientNotification notification = getNotification(client);
 		notification.addObjectProperties(key, fetch, propertyMask, childFetches, maxes);
+	}
+	
+	public <K, T extends DMObject<K>> void addDeletion(StoreClient client, StoreKey<K,T> key) {
+		ClientNotification notification = getNotification(client);
+		notification.addDeletion(key);
 	}
 	
 	public Collection<ClientNotification> getNotifications() {

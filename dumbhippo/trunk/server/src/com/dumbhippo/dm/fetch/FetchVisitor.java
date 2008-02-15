@@ -15,4 +15,8 @@ public interface FetchVisitor {
 	<KP,TP extends DMObject<KP>> void feedProperty(ResourcePropertyHolder<?,?,KP,TP> propertyHolder, KP key, long timestamp, boolean incremental);
 	<K,T extends DMObject<K>> void emptyProperty(DMPropertyHolder<K,T,?> propertyHolder);
 	void endResource();
+	
+	// These are used only for notifications
+	<K,T extends DMObject<K>> void evictedResource(DMClassHolder<K,T> classHolder, K key);	
+	<K,T extends DMObject<K>> void deletedResource(DMClassHolder<K,T> classHolder, K key);	
 }

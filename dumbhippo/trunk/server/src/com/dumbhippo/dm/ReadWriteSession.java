@@ -116,7 +116,7 @@ public class ReadWriteSession extends CachedSession {
 	 * @param key the key of the resource that was deleted
 	 */
 	public <K, T extends DMObject<K>> void removed(Class<T> clazz, K key) {
-		notificationSet.removed(model, clazz, key);
+		notificationSet.deleted(model, clazz, key);
 	}
 
 	/**

@@ -15,6 +15,7 @@ import com.dumbhippo.dm.DMKey;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.NotCachedException;
 import com.dumbhippo.dm.fetch.BoundFetch;
+import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.schema.DMClassHolder;
 
 public class DMStore {
@@ -228,7 +229,7 @@ public class DMStore {
 		}
 	}
 	
-	public <K, T extends DMObject<K>> void evict(DMClassHolder<K,T> classHolder, K key) {
+	private <K, T extends DMObject<K>> void evictOrDelete(DMClassHolder<K,T> classHolder, K key, ClientNotificationSet notifications, boolean isDeletion) {
 		StoreNode<K,T> node = getNode(classHolder, key);
 		if (node == null)
 			return;
@@ -243,28 +244,46 @@ public class DMStore {
 			
 			client.removeRegistration(registration);
 			
-			// Note that allocating the serial at this point can allow late 
-			// eviction notices to happen. 
-			//
-			// 1. Node is evicted
-			// 2. Node is resurrected by a different thread, serial allocated
-			// 3. Eviction notice is sent with a later serial
-			//
-			// Which will cause clients to think that their registration was
-			// evicted when it wasn't. That's pretty harmless though - if the 
-			// client recovers as if the eviction really happened, it will 
-			// be a no-op, and if the client choooses not to recover, it should
-			// be able to handle the unexpected notifications later... clients
-			// should never count on *not* getting notifications.
-			//
-			// Allocating the serial before the eviction is worse, since the
-			// eviction happens but the client doesn't get notified. And allocating
-			// serials for all the clients atomically with the eviction would
-			// require some earth-spanning reader-writer lock which we don't
-			// want.
-			
-			client.notifyEviction(classHolder, key, client.allocateSerial());
+			if (isDeletion) {
+				notifications.addDeletion(client, node);
+			} else {
+				// Note that allocating the serial at this point can allow late 
+				// eviction notices to happen. 
+				//
+				// 1. Node is evicted
+				// 2. Node is resurrected by a different thread, serial allocated
+				// 3. Eviction notice is sent with a later serial
+				//
+				// Which will cause clients to think that their registration was
+				// evicted when it wasn't. That's pretty harmless though - if the 
+				// client recovers as if the eviction really happened, it will 
+				// be a no-op, and if the client choooses not to recover, it should
+				// be able to handle the unexpected notifications later... clients
+				// should never count on *not* getting notifications.
+				//
+				// Allocating the serial before the eviction is worse, since the
+				// eviction happens but the client doesn't get notified. And allocating
+				// serials for all the clients atomically with the eviction would
+				// require some earth-spanning reader-writer lock which we don't
+				// want.
+				
+				FetchVisitor visitor = client.beginNotification();
+				visitor.evictedResource(classHolder, key);
+				client.endNotification(visitor, client.allocateSerial());
+			}
+	
 			registration.getClient().removeRegistration(registration);
 		}
+	}
+	
+	public <K, T extends DMObject<K>> void evict(DMClassHolder<K,T> classHolder, K key) {
+		evictOrDelete(classHolder, key, null, false);
+	}
+	
+	public <K, T extends DMObject<K>> void delete(DMClassHolder<K,T> classHolder, K key, ClientNotificationSet notifications) {
+		if (notifications == null)
+			throw new NullPointerException("ClientNotificationSet must be provided");
+		
+		evictOrDelete(classHolder, key, notifications, true);
 	}
 }
