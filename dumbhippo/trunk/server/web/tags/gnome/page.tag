@@ -13,5 +13,7 @@
 	</div>
 	<div class="gnome-learn-more">
         <a href="http://live.gnome.org/OnlineDesktop" target="_blank">Learn about GNOME Online</a>
+        <a href="${signin.baseUrlMugshot}/privacy" target="_blank">Privacy Policy</a>
+        <a href="${signin.baseUrlMugshot}/terms" target="_blank">Terms of Use</a>
     </div>    
 </div>
