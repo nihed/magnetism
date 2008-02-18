@@ -194,6 +194,10 @@ input.dh-text-input-showing-default {
 	font-size:			14px;
 }
 
+.gnome-learn-more a {
+    margin-right:       7px;
+}
+
 #dhAccountStatus {
 	background-color:	#fbfadc;
 	border:				1px solid #cccc99;
