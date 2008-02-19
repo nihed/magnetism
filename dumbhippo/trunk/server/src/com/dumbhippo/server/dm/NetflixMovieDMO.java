@@ -38,7 +38,7 @@ public abstract class NetflixMovieDMO extends DMObject<NetflixMovieKey> {
 		super(key);
 	}
 
-	private static Pattern NETFLIX_URL_PATTERN = Pattern.compile("http://www.netflix.com/Movie/(?:[A-Za-z0-9_-]+)/([0-9]+)(?:\\?.*)?");
+	private static Pattern NETFLIX_URL_PATTERN = Pattern.compile("http://www.netflix.com/Movie/(?:[^/]+)/([0-9]+)(?:\\?.*)?");
 	
 	private static String extractExtra(String url) {
 		Matcher m = NETFLIX_URL_PATTERN.matcher(url);
