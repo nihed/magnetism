@@ -84,7 +84,7 @@ HippoAbstractIEWindow::HippoAbstractWindowIECallback::isOurServer(const HippoBST
     HippoPlatform *platform;
 
     platform = abstractWindow_->ui_->getPlatform();
-    hippo_platform_get_web_host_port(platform, &serverHostU, &port);
+    hippo_platform_get_web_host_port(platform, HIPPO_SERVER_STACKER, &serverHostU, &port);
 
     HippoBSTR serverHost = HippoBSTR::fromUTF8(serverHostU);
     g_free(serverHostU);

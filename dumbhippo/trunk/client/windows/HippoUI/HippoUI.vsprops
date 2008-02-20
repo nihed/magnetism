@@ -7,8 +7,8 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		AdditionalIncludeDirectories="../HippoUtil;../../common/glib;../../common/glib/glib;../libglib;../cairo;../../common/cairo/src;../../common/pango;../../common/loudmouth;../../common;../../common/canvas;../../common/airbag/src/client/windows"
-		PreprocessorDefinitions="NOMINMAX"
+		AdditionalIncludeDirectories="../HippoUtil;../../common/glib;../../common/glib/glib;../libglib;../cairo;../../common/cairo/src;../../common/pango;../../common/loudmouth;&quot;../../../desktop-data-model&quot;;../../common;../../canvas/common;../../common/airbag/src/client/windows"
+		PreprocessorDefinitions="NOMINMAX;DDM_I_KNOW_THIS_IS_UNSTABLE"
 	/>
 	<Tool
 		Name="VCLinkerTool"

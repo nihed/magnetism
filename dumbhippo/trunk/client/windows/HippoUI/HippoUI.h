@@ -6,6 +6,7 @@
 
 #include <glib.h>
 #include <engine/hippo-engine.h>
+#include <stacker/hippo-stack-manager.h>
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include <HippoMessageHook.h>
@@ -13,6 +14,7 @@
 #include "HippoListenerProxy.h"
 #include "HippoLogWindow.h"
 #include "HippoUpgrader.h"
+#include "HippoPlatformImpl.h"
 #include "HippoRemoteWindow.h"
 #include "HippoMusic.h"
 #include "HippoUIUtil.h"
@@ -90,8 +92,6 @@ public:
     void launchBrowser(BSTR url);
     void displaySharedLink(BSTR postId, BSTR url);
 
-    void groupInvite(BSTR groupId, BSTR userId);
-
     HippoWindowState getChatWindowState(BSTR chatId);
 
     void debugLogW(const WCHAR *format, ...); // UTF-16
@@ -146,8 +146,6 @@ private:
     void launchNewBrowserOldIE(BSTR url);
     void launchNewBrowserGeneric(BSTR url);
 
-    static int idleHotnessBlink(gpointer data);
-
     bool processMessage(UINT   message,
                         WPARAM wParam,
                         LPARAM lParam);
@@ -174,12 +172,10 @@ private:
 
     //// Idles and timeouts
 
-    bool timeoutShowDebugShare();
     bool timeoutCheckIdle();
 
     //// Signal handlers 
 
-    void onHotnessChanged(int oldHotness);
     void onConnectedChanged(gboolean connected);
     void onHasAuthChanged();
     void onAuthFailed();
@@ -195,7 +191,6 @@ private:
     // If true, then on startup if another instance is already running,
     // tell it to exit rather than erroring out.
     bool replaceExisting_;
-    bool initialShowDebugShare_;
 
     // Whether we are registered as the active HippoUI object
     bool registered_; 
@@ -213,17 +208,15 @@ private:
 
     HippoBSTR currentURL_;
 
-    HippoGObjectPtr<HippoPlatform> platform_;
+    HippoGObjectPtr<HippoPlatformImpl> platform_;
     HippoGObjectPtr<HippoDataCache> dataCache_;
     HippoStackManager *stack_;
 
-    GConnection1<void,int> hotnessChanged_;
     GConnection1<void,gboolean> connectedChanged_;
     GConnection0<void> authFailed_;
     GConnection0<void> authSucceeded_;
     GConnection0<void> hasAuthChanged_;
 
-    GTimeout showDebugShareTimeout_;
     GTimeout checkIdleTimeout_;
 
     HippoLogWindow logWindow_;
@@ -250,10 +243,6 @@ private:
     bool rememberPassword_;
     bool passwordRemembered_;
 
-    int idleHotnessBlinkId_;
-    int hotnessBlinkCount_;
-
     bool idle_; // is the user idle
-    bool haveMissedBubbles_; // has the user not seen bubbles
     bool screenSaverRunning_; // is the screen saver running
 };

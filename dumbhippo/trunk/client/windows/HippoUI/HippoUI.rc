@@ -57,9 +57,6 @@ IDR_NOTIFY MENU
 BEGIN
     POPUP "Dummy"
     BEGIN
-        MENUITEM "Missed Links...",             IDM_MISSED
-        MENUITEM "&Recent links...",            IDM_RECENT
-        MENUITEM SEPARATOR
         MENUITEM "E&xit",                       IDM_EXIT
     END
 END
