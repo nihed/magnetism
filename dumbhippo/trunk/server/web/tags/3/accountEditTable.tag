@@ -241,7 +241,7 @@
 	            Disabling your account means that we will not use any information about you
 	            for any of the GNOME Online services, and we will never send you email for any reason.
 	            <c:if test="${signin.user.account.publicPage}">	            
-		            This will also disable your Mugshot account.
+		            This will also disable your <b>Mugshot</b> account.
 		        </c:if>	     	            	        
 	        </c:when>
 	        <c:otherwise>
@@ -249,7 +249,7 @@
 		        public Home page, and we will never send you email for any reason.
 		        You can enable your account again at any time.		            	
 	            <c:if test="${dh:enumIs(signin.user.account.accountType, 'GNOME')}">	            
-		            This will not disable your GNOME Online account.
+		            This will <b>not</b> disable your <b>GNOME Online</b> account.
 		        </c:if>	        
 	        </c:otherwise>
         </c:choose>     

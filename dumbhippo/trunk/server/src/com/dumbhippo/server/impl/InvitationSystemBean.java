@@ -596,8 +596,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			user = spider.lookupUserByResource(viewpoint, invitee);
 			String hasAccount = invitee.getHumanReadableString() + " already has an account '" + user.getNickname() + "'";
 			if (accounts.isSpecialCharacter(inviter) && viewpoint.getSite().getAccountType() != user.getAccount().getAccountType())
-				hasAccount= hasAccount + ". This " + user.getAccount().getAccountType().getName() + " account can be used to log in to " + viewpoint.getSite().getSiteName();
-			
+				hasAccount = hasAccount + ". This " + user.getAccount().getAccountType().getName() + " account can be used to log in to " + viewpoint.getSite().getSiteName();
+			else if (accounts.isSpecialCharacter(inviter) && viewpoint.getSite() == Site.GNOME) 
+				hasAccount = hasAccount + ". Use the form to the left to log in";				
 			// special character invites you on the /signup page if you have no account
 			if (!accounts.isSpecialCharacter(inviter))
 				return hasAccount + "(now added to your friends list).";
@@ -608,8 +609,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			if (result == CreateInvitationResult.REPEAT_INVITE) {
 				note = INVITATION_SUCCESS_STRING + ", another invitation was sent to " + invitee.getHumanReadableString() + ".";				
 			} else if (result == CreateInvitationResult.NEW_INVITER || result == CreateInvitationResult.ALREADY_HAS_INACTIVE_ACCOUNT) {
-				note = INVITATION_SUCCESS_STRING + ", an invitation was sent to " + invitee.getHumanReadableString() + "."
-				       + " You didn't have to spend an invitation because they were already invited by someone else."; 		
+				note = INVITATION_SUCCESS_STRING + ", an invitation was sent to " + invitee.getHumanReadableString() + ".";
+				if (!accounts.isSpecialCharacter(inviter))
+				    note = note + " You didn't have to spend an invitation because they were already invited by someone else."; 		
 				if (result == CreateInvitationResult.ALREADY_HAS_INACTIVE_ACCOUNT)
 				    user = spider.lookupUserByResource(viewpoint, invitee);
 			} else if (result == CreateInvitationResult.INVITE_CREATED) {
