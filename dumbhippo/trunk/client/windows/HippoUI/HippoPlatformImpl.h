@@ -18,7 +18,7 @@ typedef struct _HippoPlatformImplClass HippoPlatformImplClass;
 
 GType             hippo_platform_impl_get_type               (void) G_GNUC_CONST;
 
-HippoPlatform*    hippo_platform_impl_new                    (HippoInstanceType  instance);
+HippoPlatformImpl*hippo_platform_impl_new                    (HippoInstanceType  instance);
 void              hippo_platform_impl_set_ui                 (HippoPlatformImpl *impl,
                                                               HippoUI           *ui); 
 HippoPreferences* hippo_platform_impl_get_preferences        (HippoPlatformImpl *impl);

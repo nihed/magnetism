@@ -6,7 +6,8 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		AdditionalIncludeDirectories=".;../HippoUtil;../cairo;../../common/cairo/src;../../common/glib;../../common/glib/glib;../../common/pango;../libglib;../dependencies/gettext/include;../dependencies/jpeg/include;../../common;../../common/loudmouth;../../common/canvas;../../common/hippo/generated"
+		AdditionalIncludeDirectories=".;../HippoUtil;../cairo;../../common/cairo/src;../../common/glib;../../common/glib/glib;../../common/pango;../libglib;../dependencies/gettext/include;../dependencies/jpeg/include;&quot;../../../desktop-data-model&quot;;../../common;../../common/loudmouth;../../canvas/common;../../common/hippo/generated"
+		PreprocessorDefinitions="DDM_I_KNOW_THIS_IS_UNSTABLE"
 		DisableSpecificWarnings="4311;4244;4267"
 	/>
 </VisualStudioPropertySheet>

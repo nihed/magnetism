@@ -59,9 +59,6 @@ static const int USER_IDLE_TIME = 30 * 1000;
 // How often to check if the user is idle (in ms)
 static const int CHECK_IDLE_TIME = 5 * 1000;
 
-// Time between icon blinks (in ms)
-static const int HOTNESS_BLINK_TIME = 150;
-
 static void quitAndWait(IHippoUI *ui);
 
 HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting) 
@@ -79,14 +76,13 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting)
     platform_ = hippo_platform_impl_new(instanceType);
     g_object_unref(G_OBJECT(platform_)); // remove extra ref
 
-    connection = hippo_connection_new(platform_);
+    connection = hippo_connection_new(HIPPO_PLATFORM(platform_));
     dataCache_ = hippo_data_cache_new(connection);
 
     g_object_unref(connection); // owned now by data cache
     g_object_unref(G_OBJECT(dataCache_)); // remove extra ref
 
     // Set up connections
-    hotnessChanged_.connect(dataCache_, "hotness-changed", slot(this, &HippoUI::onHotnessChanged));
     connectedChanged_.connect(G_OBJECT(connection), "connected-changed", slot(this, &HippoUI::onConnectedChanged));
     hasAuthChanged_.connect(G_OBJECT(connection), "has-auth-changed", slot(this, &HippoUI::onHasAuthChanged));
     authFailed_.connect(G_OBJECT(connection), "auth-failed", slot(this, &HippoUI::onAuthFailed));
@@ -97,9 +93,6 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting)
     upgrader_.setUI(this);
     music_.setUI(this);
     hippo_image_factory_set_ui(this);
-
-    hotnessBlinkCount_ = 0;
-    idleHotnessBlinkId_ = 0;
 
     chatManager_ = NULL;
     preferencesDialog_ = NULL;
@@ -117,7 +110,6 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting)
     tooltip_ = L"Initializing General Purpose Architecture";  // thanks jboss
 
     idle_ = FALSE;
-    haveMissedBubbles_ = FALSE;
     screenSaverRunning_ = FALSE;
 
     currentShare_ = NULL;
@@ -297,42 +289,6 @@ HippoUI::Quit(DWORD *processId)
 
 ////////////////////////////////////////////////////////////////////////////
 
-//HICON
-//HippoUI::loadWithOverlay(int width, int height, TCHAR *icon)
-//{
-//    HICON icon;
-//    HDC memcontext = CreateCompatibleDC(NULL);
-//    ICONINFO iconInfo;
-//    HBITMAP bitmap = CreateCompatibleBitmap(memcontext, width, height);
-//    icon = (HICON)LoadImage(instance_, icon,
-//                            IMAGE_ICON, width, height, LR_DEFAULTCOLOR);
-//    GetIconInfo(icon, &iconInfo);
-//    DrawIcon(memcontext, 0, 0, icon);
-//
-//    DestroyIcon(icon);
-//    if (haveMissedBubbles_) {
-//        // Draw a white rectangle
-//        TRIVERTEX bounds[2]
-//        GRADIENT_RECT rect;
-//        bounds[0].x = width * .75;
-//        bounds[0].y = height * .75;
-//        bounds[0].Red = 0x0000;
-//        bounds[0].Green = 0x0000;
-//        bounds[0].Blue = 0x0000;
-//        bounds[0].Alpha = 0x0000;
-//        bounds[1].x = width;
-//        bounds[1].y = height; 
-//        bounds[1].Red = 0xFF00;
-//        bounds[1].Green = 0xFF00;
-//        bounds[1].Blue = 0xFF00;
-//        bounds[1].Alpha = 0x0000;
-//        rect.UpperLeft = 0;
-//        rect.LowerRight = 1;
-//        GradientFill(memcontext, bounds, 2, &rect, 1, GRADIENT_FILL_RECT_H);
-//    }
-//
-//}
-
 void
 HippoUI::setIcons(void)
 {
@@ -350,9 +306,6 @@ HippoUI::setIcons(void)
     // And always load the notification icon
     if (!hippo_connection_get_connected(getConnection())) {
         icon = MAKEINTRESOURCE(IDI_NOTIFICATION_DISCONNECTED);
-    } else if (hotnessBlinkCount_ % 2 == 1) {
-        // Currently unused
-        icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_BLANK); // need blank/outlined icon?
     } else {
         icon = MAKEINTRESOURCE(IDI_NOTIFICATION);
     }
@@ -384,75 +337,11 @@ HippoUI::updateIcon()
     notificationIcon_.updateTip(tooltip_.m_str);
 }
 
-// takes int and not HippoHotness to avoid any possible 
-// issues with signal marshaling through GObject ... 
-// (the callback connected to GObject is generated with the
-// arg type in the GConnection)
-void
-HippoUI::onHotnessChanged(int oldHotnessInt)
-{
-    HippoHotness oldHotness = (HippoHotness) oldHotnessInt;
-    HippoHotness hotness;
-
-    hotness = hippo_data_cache_get_hotness(dataCache_);
-
-    if (hotness == oldHotness)
-        return; /* should never happen though */
-
-    if (idleHotnessBlinkId_ > 0)
-        g_source_remove(idleHotnessBlinkId_);
-    idleHotnessBlinkId_ = 0;
-    hotnessBlinkCount_ = 0;
-    
-    debugLogU("hotness changing from %d to %d", oldHotness, hotness);
-
-    if (oldHotness != HIPPO_HOTNESS_UNKNOWN) {
-        idleHotnessBlinkId_ = g_idle_add(HippoUI::idleHotnessBlink, this);
-    } else {
-        // If we're transitioning from UNKNOWN, don't do blink
-        updateIcon();
-    }
-}
-
-int
-HippoUI::idleHotnessBlink(gpointer data)
-{
-    HippoUI *ui = (HippoUI*) data;
-
-    ui->debugLogU("doing blink, count=%d", ui->hotnessBlinkCount_);
-    if (ui->hotnessBlinkCount_ > 4) {
-        ui->hotnessBlinkCount_ = 0;
-        ui->idleHotnessBlinkId_ = 0;
-        return FALSE;
-    }
-    ui->updateIcon();
-    ui->hotnessBlinkCount_++;
-    ui->idleHotnessBlinkId_ = g_timeout_add(HOTNESS_BLINK_TIME, HippoUI::idleHotnessBlink, ui);
-    
-    return FALSE;
-}
-
 static void
 testStatusCallback(HINTERNET ictx, DWORD_PTR uctx, DWORD status, LPVOID statusInfo, 
                   DWORD statusLength)
 {
     HippoUI *ui = (HippoUI*) uctx;
-}
-
-bool
-HippoUI::timeoutShowDebugShare()
-{
-    hippo_data_cache_add_debug_data(dataCache_);
-
-    return false; // remove idle
-}
-
-void 
-HippoUI::groupInvite(BSTR groupId, BSTR userId)
-{
-    HippoUStr groupIdU(groupId);
-    HippoUStr userIdU(userId);
-    hippo_connection_do_invite_to_group(getConnection(), groupIdU.c_str(), userIdU.c_str());
 }
 
 bool
@@ -496,7 +385,7 @@ HippoUI::create(HINSTANCE instance)
     }
 
 #if 1
-    if (hippo_platform_get_signin(platform_)) {
+    if (hippo_platform_get_signin(HIPPO_PLATFORM(platform_))) {
         if (hippo_connection_signin(getConnection()))
             showSignInWindow();
     }
@@ -508,7 +397,7 @@ HippoUI::create(HINSTANCE instance)
 
 #if 1
     // and very last once we're all ready, fire up the stacker
-    stack_ = hippo_stack_manager_new(hippo_data_cache_get_model(dataCache_), platform_);
+    stack_ = hippo_stack_manager_new(hippo_data_cache_get_model(dataCache_), HIPPO_STACKER_PLATFORM(platform_));
 #endif
 
 #if 0
@@ -519,10 +408,6 @@ HippoUI::create(HINSTANCE instance)
     hippo_window_set_contents(window, root);
     hippo_window_set_visible(window, TRUE);
 #endif
-
-    if (initialShowDebugShare_) {
-        showDebugShareTimeout_.add(3000, slot(this, &HippoUI::timeoutShowDebugShare));
-    }
 
     return true;
 }
@@ -550,7 +435,7 @@ HippoUI::destroy()
 HippoPlatform *
 HippoUI::getPlatform()
 {
-    return platform_;
+    return HIPPO_PLATFORM(platform_);
 }
 
 HippoConnection*
@@ -795,7 +680,7 @@ HippoUI::GetServerName(BSTR *serverName)
 
     char *hostU;
     int port;
-    hippo_platform_get_web_host_port(platform_, &hostU, &port);
+    hippo_platform_get_web_host_port(HIPPO_PLATFORM(platform_), HIPPO_SERVER_STACKER, &hostU, &port);
 
     HippoBSTR result = HippoBSTR::fromUTF8(hostU, -1);
     result.Append(L":");
@@ -867,9 +752,7 @@ HippoUI::showMenu(UINT buttonFlag)
 
         connection = hippo_data_cache_get_connection(dataCache_);
         if (!hippo_connection_get_connected(connection)) {
-            HippoPlatform *platform;
-            platform = hippo_connection_get_platform(connection);
-            hippo_platform_show_disconnected_window(platform, connection);
+            /* FIXME: show user some explanation? */
         } else {
             hippo_stack_manager_show_browser(stack_, TRUE);
         }
@@ -903,7 +786,7 @@ getWebHostPort(HippoPlatform *platform,
 {
     char *host;
     int port;
-    hippo_platform_get_web_host_port(platform, &host, &port);
+    hippo_platform_get_web_host_port(platform, HIPPO_SERVER_STACKER, &host, &port);
     HippoBSTR hostBSTR = HippoBSTR::fromUTF8(host, -1);
     g_free(host);
     hostBSTR.CopyTo(hostReturn);
@@ -922,7 +805,7 @@ HippoUI::isFramedPost(BSTR url, BSTR postId)
     
     HippoBSTR host;
     unsigned int port;
-    getWebHostPort(platform_, &host, &port);
+    getWebHostPort(HIPPO_PLATFORM(platform_), &host, &port);
 
     if (components.dwHostNameLength != host.Length() ||
         wcsncmp(components.lpszHostName, host.m_str, components.dwHostNameLength) != 0 ||
@@ -952,7 +835,7 @@ HippoUI::isSiteURL(BSTR url)
 
     HippoBSTR host;
     unsigned int port;
-    getWebHostPort(platform_, &host, &port);
+    getWebHostPort(HIPPO_PLATFORM(platform_), &host, &port);
 
     if (components.dwHostNameLength != host.Length() ||
         wcsncmp(components.lpszHostName, host.m_str, components.dwHostNameLength) != 0 ||
@@ -982,7 +865,7 @@ HippoUI::isNoFrameURL(BSTR url)
 
     HippoBSTR host;
     unsigned int port;
-    getWebHostPort(platform_, &host, &port);
+    getWebHostPort(HIPPO_PLATFORM(platform_), &host, &port);
     if (components.dwHostNameLength != host.Length() ||
         wcsncmp(components.lpszHostName, host, components.dwHostNameLength) != 0 ||
         port != components.nPort)
@@ -1544,8 +1427,6 @@ HippoUI::updateMenu()
             
         InsertMenuItem(popupMenu, pos++, TRUE, &info);
     }
-
-    EnableMenuItem(popupMenu, IDM_MISSED, haveMissedBubbles_ ? MF_ENABLED : MF_GRAYED);
 }
 
 HippoBSTR
@@ -1634,9 +1515,6 @@ HippoUI::processMessage(UINT   message,
         case IDM_SIGN_OUT:
             hippo_connection_signout(getConnection());
             return true;
-        case IDM_RECENT:
-            ShowRecent();
-            return true;
         case IDM_PREFERENCES:
             showPreferences();
             return true;
@@ -1702,14 +1580,14 @@ HippoUI::preferencesProc(HWND   dialog,
             GetDlgItemText(dialog, IDC_MESSAGE_SERVER, 
                            messageServer, sizeof(messageServer) / sizeof(messageServer[0]));
             HippoUStr messageServerU(messageServer);
-            hippo_platform_set_message_server(ui->platform_, messageServerU.c_str());
+            hippo_platform_set_message_server(HIPPO_PLATFORM(ui->platform_), messageServerU.c_str());
 
             WCHAR webServer[128];
             webServer[0] = '\0';
             GetDlgItemText(dialog, IDC_WEB_SERVER, 
                            webServer, sizeof(webServer) / sizeof(webServer[0]));
             HippoUStr webServerU(webServer);
-            hippo_platform_set_web_server(ui->platform_, webServerU.c_str());
+            hippo_platform_set_web_server(HIPPO_PLATFORM(ui->platform_), webServerU.c_str());
 
             EndDialog(dialog, TRUE);
         }

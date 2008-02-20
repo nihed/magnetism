@@ -287,7 +287,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\canvas\common\hippo\hippo-canvas-marshal.list"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-marshal.list"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -787,7 +787,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\desktop-data-model\engine\hippo-engine.h"
+				RelativePath="..\..\..\desktop-data-model\engine\hippo-engine-basics.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\desktop-data-model\engine\hippo-engine-internal.h"
 				>
 			</File>
 			<File
@@ -795,11 +799,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\desktop-data-model\engine\hippo-engine-basics.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\desktop-data-model\engine\hippo-engine-internal.h"
+				RelativePath="..\..\..\desktop-data-model\engine\hippo-engine.h"
 				>
 			</File>
 			<File

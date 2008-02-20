@@ -10,7 +10,7 @@
 #include <ShlObj.h>
 #include <Windows.h>
 #include <mshtml.h>
-#include <hippo/hippo-engine-basics.h>
+#include <engine/hippo-engine-basics.h>
 #include <stacker/hippo-stacker-platform.h>
 
 static void      hippo_platform_impl_init                (HippoPlatformImpl       *impl);
@@ -23,6 +23,7 @@ static void      hippo_platform_impl_finalize            (GObject               
 static void      hippo_platform_impl_get_platform_info   (HippoPlatform           *platform,
                                                           HippoPlatformInfo       *info);
 static gboolean  hippo_platform_impl_read_login_cookie   (HippoPlatform           *platform,
+                                                          HippoServerType          server_type,
                                                           HippoBrowserKind        *origin_browser_p,
                                                           char                   **username_p,
                                                           char                   **password_p);
@@ -31,8 +32,10 @@ static const char* hippo_platform_impl_get_jabber_resource (HippoPlatform       
 
 static HippoInstanceType hippo_platform_impl_get_instance_type (HippoPlatform *platform);
 
-static char*     hippo_platform_impl_get_message_server  (HippoPlatform           *platform); 
-static char*     hippo_platform_impl_get_web_server      (HippoPlatform           *platform); 
+static char*     hippo_platform_impl_get_message_server  (HippoPlatform           *platform,
+                                                          HippoServerType          server_type); 
+static char*     hippo_platform_impl_get_web_server      (HippoPlatform           *platform,
+                                                          HippoServerType          server_type); 
 static gboolean  hippo_platform_impl_get_signin          (HippoPlatform           *platform);
 static void      hippo_platform_impl_set_message_server  (HippoPlatform           *platform,
                                                           const char              *value); 
@@ -40,29 +43,30 @@ static void      hippo_platform_impl_set_web_server      (HippoPlatform         
                                                           const char              *value); 
 static void      hippo_platform_impl_set_signin          (HippoPlatform           *platform,
                                                           gboolean                 value);
-static HippoWindow* hippo_platform_impl_create_window       (HippoPlatform     *platform);
-static void         hippo_platform_impl_get_screen_info     (HippoPlatform     *platform,
-                                                             HippoRectangle    *monitor_rect_p,
-                                                             HippoRectangle    *tray_icon_rect_p,
-                                                             HippoOrientation  *tray_icon_orientation_p);
-static gboolean     hippo_platform_impl_get_pointer_position (HippoPlatform    *platform,
-                                                              int              *x_p,
-                                                              int              *y_p);
+
+static HippoWindow* hippo_platform_impl_create_window        (HippoStackerPlatform *platform);
+static void         hippo_platform_impl_get_screen_info      (HippoStackerPlatform *platform,
+                                                              HippoRectangle       *monitor_rect_p,
+                                                              HippoRectangle       *tray_icon_rect_p,
+                                                              HippoOrientation     *tray_icon_orientation_p);
+static gboolean     hippo_platform_impl_get_pointer_position (HippoStackerPlatform *platform,
+                                                              int                  *x_p,
+                                                              int                  *y_p);
 static void         hippo_platform_impl_open_url            (HippoPlatform     *platform,
                                                              HippoBrowserKind   browser,
                                                              const char        *url);
-static void         hippo_platform_impl_http_request        (HippoPlatform     *platform,
-                                                             const char        *url,
-                                                             HippoHttpFunc      func,
-                                                             void              *data);
 
-static void             hippo_platform_impl_show_chat_window    (HippoPlatform  *platform,
-                                                                 const char     *chat_id);
-static HippoWindowState hippo_platform_impl_get_chat_window_state(HippoPlatform *platform,
-                                                                  const char    *chat_id);
+static void             hippo_platform_impl_http_request        (HippoStackerPlatform *platform,
+                                                                 const char           *url,
+                                                                 HippoHttpFunc         func,
+                                                                 void                  *data);
+static void             hippo_platform_impl_show_chat_window    (HippoStackerPlatform  *platform,
+                                                                 const char            *chat_id);
+static HippoWindowState hippo_platform_impl_get_chat_window_state(HippoStackerPlatform *platform,
+                                                                  const char           *chat_id);
 
-static gboolean     hippo_platform_impl_can_play_song_download (HippoPlatform     *platform,
-                                                                HippoSongDownload *song_download);
+static gboolean     hippo_platform_impl_can_play_song_download (HippoStackerPlatform   *platform,
+                                                                HippoSongDownload      *song_download);
 
 
 struct _HippoPlatformImpl {
@@ -81,7 +85,7 @@ struct _HippoPlatformImplClass {
 
 G_DEFINE_TYPE_WITH_CODE(HippoPlatformImpl, hippo_platform_impl, G_TYPE_OBJECT,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_PLATFORM, hippo_platform_impl_iface_init);
-                        G_IMPLEMENT_INTERFACE(HIPPO_TYPE_STACKER_PLATFORM, hippo_stacker_platform_impl_iface_init));
+                        G_IMPLEMENT_INTERFACE(HIPPO_TYPE_STACKER_PLATFORM, hippo_platform_impl_stacker_iface_init));
 
 static void
 hippo_platform_impl_iface_init(HippoPlatformClass *klass)
@@ -126,7 +130,7 @@ hippo_platform_impl_class_init(HippoPlatformImplClass  *klass)
     object_class->finalize = hippo_platform_impl_finalize;
 }
 
-HippoPlatform*
+HippoPlatformImpl*
 hippo_platform_impl_new(HippoInstanceType  instance)
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(g_object_new(HIPPO_TYPE_PLATFORM_IMPL, NULL));
@@ -134,7 +138,7 @@ hippo_platform_impl_new(HippoInstanceType  instance)
 
     impl->preferences = new HippoPreferences(instance);
 
-    return HIPPO_PLATFORM(impl);
+    return impl;
 }
 
 static void
@@ -203,7 +207,7 @@ getAuthUrl(HippoPlatform *platform,
     char *web_host;
     int web_port;
 
-    hippo_platform_get_web_host_port(platform, &web_host, &web_port);
+    hippo_platform_get_web_host_port(platform, HIPPO_SERVER_STACKER, &web_host, &web_port);
     makeAuthUrl(web_host, authUrl);
 
     g_free(web_host);
@@ -346,6 +350,7 @@ read_firefox_login_cookie(const char       *web_host,
 
 static gboolean
 hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
+                                      HippoServerType   server_type,
                                       HippoBrowserKind *origin_browser_p,
                                       char            **username_p,
                                       char            **password_p)
@@ -353,7 +358,7 @@ hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
     char *web_host;
     int web_port;
 
-    hippo_platform_get_web_host_port(platform, &web_host, &web_port);
+    hippo_platform_get_web_host_port(platform, server_type, &web_host, &web_port);
     
     g_debug("Looking for login to %s:%d", web_host, web_port);
 
@@ -489,7 +494,8 @@ hippo_platform_impl_get_instance_type(HippoPlatform *platform)
 }
 
 static char*
-hippo_platform_impl_get_message_server(HippoPlatform *platform)
+hippo_platform_impl_get_message_server(HippoPlatform  *platform,
+                                       HippoServerType server_type)
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
     
@@ -502,7 +508,8 @@ hippo_platform_impl_get_message_server(HippoPlatform *platform)
 }
 
 static char*
-hippo_platform_impl_get_web_server(HippoPlatform *platform)
+hippo_platform_impl_get_web_server(HippoPlatform  *platform,
+                                   HippoServerType server_type)
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
 
@@ -548,7 +555,7 @@ hippo_platform_impl_set_signin(HippoPlatform  *platform,
 }
 
 static HippoWindow*
-hippo_platform_impl_create_window(HippoPlatform     *platform)
+hippo_platform_impl_create_window(HippoStackerPlatform *platform)
 {
     return hippo_window_win_new(HIPPO_PLATFORM_IMPL(platform)->ui);
 }
@@ -618,10 +625,10 @@ find_icon_tray_rect(RECT            *iconTrayRect,
 }
 
 static void
-hippo_platform_impl_get_screen_info(HippoPlatform     *platform,
-                                    HippoRectangle    *monitor_rect_p,
-                                    HippoRectangle    *tray_icon_rect_p,
-                                    HippoOrientation  *tray_icon_orientation_p)
+hippo_platform_impl_get_screen_info(HippoStackerPlatform *platform,
+                                    HippoRectangle       *monitor_rect_p,
+                                    HippoRectangle       *tray_icon_rect_p,
+                                    HippoOrientation     *tray_icon_orientation_p)
 {
     APPBARDATA abd;
     abd.cbSize = sizeof(abd);
@@ -679,9 +686,9 @@ hippo_platform_impl_get_screen_info(HippoPlatform     *platform,
 }
 
 static gboolean
-hippo_platform_impl_get_pointer_position (HippoPlatform *platform,
-                                          int           *x_p,
-                                          int           *y_p)
+hippo_platform_impl_get_pointer_position (HippoStackerPlatform *platform,
+                                          int                  *x_p,
+                                          int                  *y_p)
 {
     POINT point = { 0, 0 };
 
@@ -768,10 +775,10 @@ private:
 };
 
 static void
-hippo_platform_impl_http_request(HippoPlatform     *platform,
-                                 const char        *url,
-                                 HippoHttpFunc      func,
-                                 void              *data)
+hippo_platform_impl_http_request(HippoStackerPlatform *platform,
+                                 const char           *url,
+                                 HippoHttpFunc         func,
+                                 void                 *data)
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
 
@@ -788,8 +795,8 @@ hippo_platform_impl_http_request(HippoPlatform     *platform,
 }
 
 static void
-hippo_platform_impl_show_chat_window(HippoPlatform   *platform,
-                                     const char      *chat_id)
+hippo_platform_impl_show_chat_window(HippoStackerPlatform   *platform,
+                                     const char             *chat_id)
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
     if (!impl->ui) {
@@ -801,8 +808,8 @@ hippo_platform_impl_show_chat_window(HippoPlatform   *platform,
 }
 
 static HippoWindowState 
-hippo_platform_impl_get_chat_window_state(HippoPlatform *platform,
-                                          const char    *chat_id)
+hippo_platform_impl_get_chat_window_state(HippoStackerPlatform *platform,
+                                          const char           *chat_id)
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
     if (!impl->ui) {
@@ -815,8 +822,8 @@ hippo_platform_impl_get_chat_window_state(HippoPlatform *platform,
 
 
 static gboolean
-hippo_platform_impl_can_play_song_download(HippoPlatform     *platform,
-                                           HippoSongDownload *song_download)
+hippo_platform_impl_can_play_song_download(HippoStackerPlatform *platform,
+                                           HippoSongDownload    *song_download)
 {
     switch (hippo_song_download_get_source(song_download)) {
     case HIPPO_SONG_DOWNLOAD_ITUNES:
