@@ -34,19 +34,16 @@ class Root(controllers.RootController):
             raise Exception("Must invoke this method using POST")        
         from firehose.jobs.master import MasterPoller        
         master = MasterPoller.get()        
-        tasks = simplejson.load(cherrypy.request.body)
-        _logger.debug("got tasks: %r", tasks)
-        master.set_tasks(tasks['tasks'])
+        master.set_tasks(cherrypy.request.body)
         return {}
         
     @expose("json")
     def addtasks(self):
         if cherrypy.request.method != 'POST':
             raise Exception("Must invoke this method using POST")        
-        from firehose.jobs.master import MasterPoller        
+        from firehose.jobs.master import MasterPoller
         master = MasterPoller.get()        
-        tasks = simplejson.load(cherrypy.request.body)
-        master.add_tasks(tasks['tasks']) 
+        master.add_tasks(cherrypy.request.body) 
         return {}        
     
     @expose("json")

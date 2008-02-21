@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import os,sys,re,heapq,time,httplib,logging,threading
-import traceback,urlparse
+import traceback,urlparse,StringIO
 import BaseHTTPServer,urllib
 
 if sys.version_info[0] < 2 or sys.version_info[1] < 5:
@@ -101,11 +101,27 @@ class MasterPoller(object):
             self.__tasks_map[key] = task
         conn.close()
         _logger.debug("%d queued tasks", len(self.__tasks_queue))
+        
+        aws_accessid = config.get('firehose.awsAccessKeyId')
+        if aws_accessid is not None:
+            aws_secretkey = config.get('firehose.awsSecretAccessKey')            
+            sqs_base_conn = SQSConnection(aws_accessid, aws_secretkey)
+            self.__sqs_conn = sqs_base_conn.get_query_connection(api_version=SQSConnection.Version20080101)         
+            self.__s3_conn = S3Connection(aws_accessid, aws_secretkey)
+            
+            self.__sqs_incoming_q = self.__sqs_conn.create_queue(config.get('firehose.awsSqsIncomingName'))
+            self.__sqs_outgoing_q = self.__sqs_conn.create_queue(config.get('firehose.awsSqsOutgoingName'))                
+            t = threading.Thread(target=self.__poll_sqs)
+            t.setDaemon(True)
+            t.start()
+        else:
+            self.__sqs_conn = None        
     
     def __add_task_keys_unlocked(self, keys):
         for key in keys:
             if key in self.__tasks_map:
                 continue 
+            key = key.strip()
             task = TaskEntry(key, None, None)
             qtask = QueuedTask(time.time(), task)
             heapq.heappush(self.__tasks_queue, qtask)
@@ -137,6 +153,8 @@ class MasterPoller(object):
         self.add_tasks(taskkeys, immediate=False)
     
     def add_tasks(self, taskkeys, immediate=True):
+        # Convert to a list, be sure to strip any trailing newlines
+        taskkeys = map(lambda x: x.strip(), taskkeys)
         _logger.debug("adding %d task keys", len(taskkeys))
         # Append them to the in-memory state
         self.__add_task_keys(taskkeys)
@@ -156,6 +174,36 @@ class MasterPoller(object):
         cursor.execute('''INSERT OR REPLACE INTO Tasks VALUES (?, ?, ?)''',
                        (taskkey, hashcode, timestamp))
     
+    @log_except(_logger)
+    def __poll_sqs(self):
+        isfirst = True
+        while True:
+            if isfirst:
+                isfirst = False
+                time.sleep(3)
+            else:
+                time.sleep(30)
+            _logger.debug("checking for messages")
+            message = self.__sqs_incoming_q.read()
+            if message is not None:
+                _logger.debug("got message: %s", message.id)
+                body = message.get_body()
+                if body.startswith('load '):
+                    (bucket_name, key_name) = body[5:].split(' ', 1)
+                    self.__do_load_from_s3(bucket_name, key_name)
+                elif body.startswith('add\n'):
+                    self.add_tasks(body[4:].split('\n'))
+                else:
+                    _logger.error("invalid message: content %r", message.get_body())
+                self.__sqs_incoming_q.delete_message(message)
+            
+    def __do_load_from_s3(self, bucket_name, key_name):
+        bucket = self.__s3_conn.get_bucket(bucket_name)
+        key = bucket.get_key(key_name)
+        # FIXME should stream this
+        f = StringIO.StringIO(key.get_contents_as_string())
+        self.set_tasks(f)
+
     @log_except(_logger)
     def __push_changed(self):
         _logger.debug("doing change push")
@@ -291,23 +339,26 @@ class MasterPoller(object):
             self.__requeue_poll()
 
     def requeue(self):
-        self.__requeue_poll()
+        self.__requeue_poll(immediate=True)
 
     def __requeue_poll(self, immediate=False):
         _logger.debug("doing poll requeue")
-        self.__unset_poll()
         try:
             self.__task_lock.acquire()
                     
-            assert self.__poll_task is None
+            if self.__poll_task is not None:
+                _logger.debug("polling task is already queued")
+                return
             if len(self.__tasks_queue) == 0:
                 _logger.debug("no tasks")
                 return
             curtime = time.time()
-            next_timeout = self.__tasks_queue[0].eligibility - curtime
             if immediate:
                 next_timeout = 1
-            elif (next_timeout < MIN_POLL_TIME_SECS):
+            else:
+                # next_timeout = self.__tasks_queue[0].eligibility - curtime
+                # The turbogears scheduler doesn't let us easily do this in a racy way.
+                # Instead, just poll every 2m.
                 next_timeout = MIN_POLL_TIME_SECS
             _logger.debug("requeuing check for %r secs (%r mins)", next_timeout, next_timeout/60.0)
             self.__poll_task = turbogears.scheduler.add_interval_task(action=self.__do_poll, taskname='FirehoseMasterPoll', 
