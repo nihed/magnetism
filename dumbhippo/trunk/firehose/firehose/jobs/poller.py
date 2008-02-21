@@ -136,8 +136,13 @@ class TaskPoller(object):
             _logger.exception("Failed to find family for task %r", taskid)
             return
         inst = fclass()
-        (new_hash, new_timestamp) = inst.run(tid, prev_hash, prev_timestamp)
-        resultqueue.put((taskid, new_hash, new_timestamp))     
+        try:
+            (new_hash, new_timestamp) = inst.run(tid, prev_hash, prev_timestamp)            
+        except:
+            _logger.exception("Failed task id %r", tid)
+            (new_hash, new_timestamp) = (None, None)
+        if new_hash is not None:
+            resultqueue.put((taskid, new_hash, new_timestamp))                 
         taskqueue.task_done()   
         
     def poll_tasks(self, tasks):

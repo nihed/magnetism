@@ -1,14 +1,13 @@
 package com.dumbhippo.polling;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -20,13 +19,16 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.jboss.system.ServiceMBeanSupport;
-import org.json.JSONException;
-import org.json.JSONStringer;
-import org.json.JSONWriter;
+import org.jets3t.service.S3Service;
+import org.jets3t.service.S3ServiceException;
+import org.jets3t.service.impl.rest.httpclient.RestS3Service;
+import org.jets3t.service.model.S3Bucket;
+import org.jets3t.service.model.S3Object;
+import org.jets3t.service.security.AWSCredentials;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -39,6 +41,8 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoadResult;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.services.AmazonSQS;
+import com.dumbhippo.services.TransientServiceException;
 
 /** 
  *  This polling system executes polling tasks, optimizing the polling
@@ -285,7 +289,7 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 				}
 				
 				if (!newExternalTasks.isEmpty())
-					notifyExternalTasks(newExternalTasks, isFirst);
+					notifyExternalTasks(isFirst);
 				
 				lastSeenTaskDatabaseId = loadResult.getLastDbId();
 				long totalLoaded = loadResult.getTasks().size();
@@ -313,50 +317,101 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 	}
 	
 	public void resyncAllExternalTasks() {
-		List<PollingTask> externals = new ArrayList<PollingTask>();
-		for (PollingTask task : tasks.values()) {
-			if (task.isExternallyPolled())
-				externals.add(task);
-		}
-		notifyExternalTasks(externals, true);
+		notifyExternalTasks(true);
 	}
 	
-	private void notifyExternalTasks(Collection<PollingTask> newExternalTasks, boolean overwrite) {
-		Configuration config = EJBUtil.defaultLookup(Configuration.class);
-					
-		String firehoseHost = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_MASTER_HOST);
-		if (firehoseHost.equals("")) {
-			logger.warn("FIREHOSE_MASTER_HOST not set, not updating firehose");
-			return;
+	private String tasksToStream(Collection<PollingTask> tasks) {
+		StringBuilder builder = new StringBuilder();
+		for (PollingTask task: tasks) {
+			builder.append(task.getExternalId());
+			builder.append('\n');
 		}
+		return builder.toString();
+	}
+	
+	private void storeExternalTaskSetsS3(Collection<PollingTask> externalTasks, boolean overwrite) throws TransientServiceException {
+		Configuration config = EJBUtil.defaultLookup(Configuration.class);
+				
+		AWSCredentials creds = new AWSCredentials(config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_AWS_ACCESSKEY_ID),
+				                                   config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_AWS_SECRET_KEY));
+		String bucketName = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_AWS_S3_BUCKET);
+		String keyName = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_AWS_S3_KEY);		
+		String queueName = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_AWS_SQS_INCOMING_NAME);
+		
+		String queueUrl = AmazonSQS.createQueue(creds, queueName);
+		
+		/* If we're overwriting, we just store the entire task list as one big value in S3. */
+		if (overwrite) {
+			S3Service s3;		
+			try {
+				s3 = new RestS3Service(creds);
+			} catch (S3ServiceException e) {
+				throw new RuntimeException(e);
+			}
+			
+			S3Bucket bucket = new S3Bucket(bucketName);
+			S3Object object;
+			try {
+				object = new S3Object(bucket, keyName, tasksToStream(externalTasks));
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException(e);
+			}
+			try {
+				s3.putObject(bucket, object);
+			} catch (S3ServiceException e) {
+				throw new RuntimeException(e);
+			}
+
+			String msg = "load " + bucketName + " " + keyName;
+			logger.debug("sending msg: {}", msg);
+			AmazonSQS.sendMessage(creds, queueUrl, msg);
+		} else {
+			/* We're not doing a full update - split the updates into SQS messages */
+			
+			final int MAX_CHARS_PER_MSG = 8*1024;
+			int remaining_bytes = MAX_CHARS_PER_MSG;
+			int taskcount = 0;
+			StringBuilder builder = new StringBuilder("add\n");
+			logger.debug("splitting {} tasks into messages", externalTasks.size());			
+			for (PollingTask task: externalTasks) {
+				String id = task.getExternalId();
+				builder.append(id);
+				builder.append('\n');
+				taskcount++;
+				int new_remaining_bytes = remaining_bytes - (id.length()+1);
+				if (new_remaining_bytes < 0) {
+					AmazonSQS.sendMessage(creds, queueUrl, builder.toString());
+					remaining_bytes = MAX_CHARS_PER_MSG;
+					taskcount = 0;
+					builder = new StringBuilder("add\n");						
+				} else {
+					remaining_bytes = new_remaining_bytes;
+				}
+			}
+			if (taskcount > 0) {
+				AmazonSQS.sendMessage(creds, queueUrl, builder.toString());
+			}
+		}
+	}
+	
+	private void updateExternalTaskSetsLocal(Collection<PollingTask> externalTasks, boolean overwrite) {
+		Configuration config = EJBUtil.defaultLookup(Configuration.class);
+
+		String firehoseHost = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_MASTER_HOST);
 		URL firehoseUrl;
 		try {
 			firehoseUrl = new URL("http://" + firehoseHost);
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
-					
-		JSONWriter writer = new JSONStringer();
-		try {
-			writer.object();
-			writer.key("tasks");
-			writer.array();
-			for (PollingTask task : newExternalTasks) {
-				writer.value(task.getExternalId());
-			}
-			writer.endArray();
-			writer.endObject();
-		} catch (JSONException e) {
-			throw new RuntimeException(e);
-		}
 		
 		try {
 			String method = overwrite ? "settasks" : "addtasks";
 			URL addTaskUrl = new URL(firehoseUrl, method);
-			logger.debug("updating firehose with {} tasks", newExternalTasks.size());
+			logger.debug("updating firehose with {} tasks", externalTasks.size());
 			
 			PostMethod post = new PostMethod(addTaskUrl.toString());
-			RequestEntity entity = new ByteArrayRequestEntity(writer.toString().getBytes("UTF-8"), "text/javascript");
+			RequestEntity entity = new StringRequestEntity(tasksToStream(externalTasks));
 			post.setRequestEntity(entity);
 			
 			HttpClient client = new HttpClient();
@@ -368,8 +423,28 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 			}
 		} catch (IOException e) {
 			logger.error("Failed to update firehose with new tasks", e);
-		}
-	}	
+		}		
+	}
+	
+	private void notifyExternalTasks(final boolean overwrite) {
+		Configuration config = EJBUtil.defaultLookup(Configuration.class);
+					
+		final String firehoseHost = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_MASTER_HOST);
+		Thread t = new Thread(new Runnable() {
+			public void run() {
+				if (firehoseHost.equals("")) {
+					try {
+						storeExternalTaskSetsS3(externalTasks.values(), overwrite);
+					} catch (TransientServiceException e) {
+						logger.error("Failed to update S3", e);
+					}
+				} else {
+					updateExternalTaskSetsLocal(externalTasks.values(), overwrite);	
+				}
+			}
+		});
+		t.start();
+	}
 	
 	public synchronized void startSingleton() {
 		logger.info("Starting SwarmPollingSystem singleton");

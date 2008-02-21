@@ -44,7 +44,13 @@ public enum HippoProperty {
 	GOOGLE_ANALYTICS_KEY("dumbhippo.server.googleanalytics.key", ""), 
 	DDM_PROTOCOL_VERSION("dumbhippo.server.ddmProtocolVersion", null),
 	EXTERNAL_SERVICE_KEY("dumbhippo.server.externalServiceKey", null), 
-	FIREHOSE_MASTER_HOST("dumbhippo.server.firehoseMasterHost", null);
+	FIREHOSE_MASTER_HOST("dumbhippo.server.firehoseMasterHost", null), 
+	FIREHOSE_AWS_ACCESSKEY_ID("dumbhippo.server.firehoseAwsAccessKeyId", null),
+	FIREHOSE_AWS_SECRET_KEY("dumbhippo.server.firehoseAwsSecretKey", null), 
+	FIREHOSE_AWS_S3_BUCKET("dumbhippo.server.firehoseAwsS3Bucket", null), 
+	FIREHOSE_AWS_S3_KEY("dumbhippo.server.firehoseAwsS3Key", null), 
+	FIREHOSE_AWS_SQS_INCOMING_NAME("dumbhippo.server.firehoseAwsSqsIncomingName", null),
+	FIREHOSE_AWS_SQS_OUTGOING_NAME("dumbhippo.server.firehoseAwsSqsOutgoingName", null); 	
 	
 	private String key;
 	private String def;

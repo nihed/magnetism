@@ -29,6 +29,12 @@
         dumbhippo.server.externalServiceKey=@@externalServiceKey:properties@@
         dumbhippo.server.firehoseMasterHost=@@firehoseMasterHost:properties@@
         dumbhippo.server.firehoseMasterPort=@@firehoseMasterPort:properties@@
+        dumbhippo.server.firehoseAwsAccessKeyId=@@firehoseAwsAccessKeyId@@
+        dumbhippo.server.firehoseAwsSecretKey=@@firehoseAwsSecretKey@@
+        dumbhippo.server.firehoseAwsS3Bucket=@@firehoseAwsS3Bucket@@
+        dumbhippo.server.firehoseAwsS3Key=@@firehoseAwsS3Key@@
+        dumbhippo.server.firehoseAwsSqsIncomingName=@@firehoseAwsSqsIncomingName@@
+        dumbhippo.server.firehoseAwsSqsOutgoingName=@@firehoseAwsSqsOutgoingName@@
 		dumbhippo.server.adminjid.mugshot=@@adminJid:properties@@
 		dumbhippo.server.adminjid.gnome=@@adminJidGnome:properties@@
 		dumbhippo.server.web.version=@@webVersion:properties@@

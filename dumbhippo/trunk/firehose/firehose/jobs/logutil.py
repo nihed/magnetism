@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import logging
+
 def log_except(logger=None, text=''):
     def annotate(func):
         def _exec_cb(*args, **kwargs):

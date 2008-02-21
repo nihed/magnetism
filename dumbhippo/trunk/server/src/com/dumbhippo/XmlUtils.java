@@ -54,7 +54,7 @@ public class XmlUtils {
 			throw new IllegalArgumentException("Invalid mapping arrray literal; must have an even number of items");
 		Map<String,String> map = new HashMap<String, String>();
 		for (int i = 0; i < array.length; i+=2) {
-			map.put(array[i], array[i]+1);
+			map.put(array[i], array[i+1]);
 		}
 		return map;
 	}
