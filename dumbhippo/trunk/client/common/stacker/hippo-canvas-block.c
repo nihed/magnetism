@@ -189,12 +189,13 @@ static void
 update_time(HippoCanvasBlock *canvas_block)
 {
     if (canvas_block->age_item) {
-        gboolean nonempty;
-        nonempty = set_timestamp_item(canvas_block, canvas_block->age_parent, canvas_block->age_item, 
-                                      (GTime) (hippo_block_get_timestamp(canvas_block->block) / 1000));
+        canvas_block->age_set = set_timestamp_item(canvas_block, canvas_block->age_parent, canvas_block->age_item, 
+                                                   (GTime) (hippo_block_get_timestamp(canvas_block->block) / 1000));
         
-        hippo_canvas_item_set_visible(canvas_block->age_item,
-                                      nonempty);
+        hippo_canvas_item_set_visible(canvas_block->age_separator_item,
+                                      canvas_block->age_set);
+        hippo_canvas_item_set_visible(canvas_block->age_separator_item,
+                                      canvas_block->expanded && canvas_block->age_set);
     }
 }
 
@@ -206,6 +207,8 @@ update_original_age(HippoCanvasBlock *canvas_block)
             set_timestamp_item(canvas_block,
                                canvas_block->original_age_box, 
                                canvas_block->original_age_item, canvas_block->original_age);
+        hippo_canvas_item_set_visible(HIPPO_CANVAS_ITEM(canvas_block->original_age_box),
+                                      canvas_block->expanded && canvas_block->original_age_set);
     }
 }
 
@@ -924,7 +927,7 @@ hippo_canvas_block_update_item_expansion(HippoCanvasBlock *canvas_block)
                                       canvas_block->expanded && canvas_block->sent_to_set);
     if (canvas_block->age_prefix_item)
         hippo_canvas_item_set_visible(canvas_block->age_prefix_item,
-                                      canvas_block->expanded);
+                                      canvas_block->expanded && canvas_block->age_set);
     if (canvas_block->original_age_box)
         hippo_canvas_item_set_visible(HIPPO_CANVAS_ITEM(canvas_block->original_age_box),
                                       canvas_block->expanded && canvas_block->original_age_set);
