@@ -60,6 +60,7 @@ struct _HippoCanvasBlock {
     unsigned int expanded : 1;
     unsigned int hushed : 1;
     unsigned int sent_to_set : 1;
+    unsigned int age_set : 1;
     unsigned int original_age_set : 1;
     unsigned int child_changed_pointer : 1;
 };
