@@ -853,11 +853,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void blockClicked(UserBlockData ubd, long clickedTime) {
+		Block block = ubd.getBlock();
+		
 		// if we weren't previously clicked on, then increment the count.
 		// (FIXME this is not a reliable way of incrementing a count, since two transactions
 		// can read the same value and write the same value + 1)
 		if (!ubd.isClicked())
-			ubd.getBlock().setClickedCount(ubd.getBlock().getClickedCount() + 1);
+			block.setClickedCount(block.getClickedCount() + 1);
 		
 		if (ubd.getClickedTimestampAsLong() < clickedTime) {
 			ubd.setClickedTimestampAsLong(clickedTime);
@@ -868,15 +870,23 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (ubd.isIgnored())
 			setBlockHushed(ubd, false);
 		
-		if (!BlockView.clickedCountIsSignificant(ubd.getBlock().getClickedCount()))
+		// We call blockClicked for ACCOUNT_QUESTION blocks as well, but 
+		// the idea of a "significant clicked count" is specific to post blocks
+		
+		if (block.getBlockType() != BlockType.POST)
+			return;
+
+		if (!BlockView.clickedCountIsSignificant(block.getClickedCount()))
 			return;
 		
 		logger.debug("due to click, restacking block {} with new time {}",
-				ubd.getBlock(), clickedTime);
+				block, clickedTime);
+		
+		DataService.currentSessionRW().changed(BlockDMO.class, new BlockDMOKey(block), "significantClickedCount");
 		
 		// now update the timestamp in the block (if it's newer)
 		// and update user caches for all users
-		stack(ubd.getBlock(), clickedTime, StackReason.VIEWER_COUNT);
+		stack(block, clickedTime, StackReason.VIEWER_COUNT);
 	}
 
 	// FIXME this function should die since block-type-specific code should not 
