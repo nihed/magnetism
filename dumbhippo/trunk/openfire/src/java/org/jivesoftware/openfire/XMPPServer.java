@@ -515,7 +515,7 @@ public class XMPPServer {
         loadModule(MediaProxyService.class.getName());
         loadModule(STUNService.class.getName());
         loadModule(PubSubModule.class.getName());
-        loadModule(UpdateManager.class.getName());
+        //loadModule(UpdateManager.class.getName());
         loadModule(InternalComponentManager.class.getName());
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
