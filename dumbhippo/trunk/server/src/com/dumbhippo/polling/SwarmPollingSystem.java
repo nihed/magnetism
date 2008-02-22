@@ -260,6 +260,11 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 		
 		public void run() throws InterruptedException {
 			
+			Configuration config = EJBUtil.defaultLookup(Configuration.class);
+			
+			String firehoseAccessKey = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_AWS_ACCESSKEY_ID);
+			boolean firehoseEnabled = !firehoseAccessKey.equals("");
+
 			logger.info("Waiting 1 minute to load tasks");
 			// Wait a minute after startup to check for tasks
 			Thread.sleep(1 * 60 * 1000);
@@ -275,7 +280,7 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 				Random r = new Random();
 				Set<PollingTask> newExternalTasks = new HashSet<PollingTask>();
 				for (PollingTask task : loadResult.getTasks()) {
-					if (task.isExternallyPolled()) {
+					if (firehoseEnabled && task.isExternallyPolled()) {
 						externalTasks.put(task.getExternalId(), task);
 						newExternalTasks.add(task);
 						continue;
@@ -426,20 +431,13 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 		}		
 	}
 	
-	private void notifyExternalTasks(final boolean overwrite) {
-		Configuration config = EJBUtil.defaultLookup(Configuration.class);
-					
-		final String firehoseHost = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_MASTER_HOST);
+	private void notifyExternalTasks(final boolean overwrite) {		
 		Thread t = new Thread(new Runnable() {
 			public void run() {
-				if (firehoseHost.equals("")) {
-					try {
-						storeExternalTaskSetsS3(externalTasks.values(), overwrite);
-					} catch (TransientServiceException e) {
-						logger.error("Failed to update S3", e);
-					}
-				} else {
-					updateExternalTaskSetsLocal(externalTasks.values(), overwrite);	
+				try {
+					storeExternalTaskSetsS3(externalTasks.values(), overwrite);
+				} catch (TransientServiceException e) {	
+					throw new RuntimeException(e);
 				}
 			}
 		});
