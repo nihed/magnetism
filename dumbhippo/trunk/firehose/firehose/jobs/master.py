@@ -74,6 +74,9 @@ class MasterPoller(object):
         
         self.__client_url = config.get('firehose.clienturl')
         
+        import socket
+        self.__hostport = '%s:%s' % (socket.gethostname(), config.get('server.socket_port'))
+        
         # Default to one slave on localhost
         self.__worker_endpoints = ['localhost:%d' % (int(config.get('firehose.localslaveport')),)]
         _logger.debug("worker endpoints are %r", self.__worker_endpoints)
@@ -207,7 +210,6 @@ class MasterPoller(object):
     @log_except(_logger)
     def __push_changed(self):
         _logger.debug("doing change push")
-        extkey = config.get('firehose.externalServiceKey')
         try:
             self.__task_lock.acquire()
             self.__changed_thread_queued = False
@@ -215,14 +217,26 @@ class MasterPoller(object):
             self.__changed_buffer = []
         finally:
             self.__task_lock.release()
-        update_obj = {'updated_keys': changed}
-        jsonstr = simplejson.dumps(update_obj)
-        parsed = urlparse.urlparse(self.__client_url)
-        conn = httplib.HTTPConnection(parsed.hostname, parsed.port)
-        path = parsed.path or '/'
-        path += '?esk=' + extkey
-        conn.request('POST', path, jsonstr)
-        conn.close()        
+            
+        maxchars = 8*1024
+        remaining_bytes = maxchars
+        taskcount = 0
+        buf = "add\n"
+        _logger.debug("splitting %d tasks into messages", len(changed));            
+        for task in changed:
+            buf += task
+            buf += '\n'
+            taskcount += 1
+            new_remaining_bytes = remaining_bytes - (len(task)+1);
+            if new_remaining_bytes < 0:
+                self.__sqs_outgoing_q.write(self.__sqs_outgoing_q.new_message(buf))
+                remaining_bytes = maxchars
+                taskcount = 0
+                buf = "add\n"                        
+            else:
+                remaining_bytes = new_remaining_bytes
+        if taskcount > 0:
+            self.__sqs_outgoing_q.write(self.__sqs_outgoing_q.new_message(buf))
 
     def __append_changed(self, changed):
         if len(changed) == 0:
@@ -289,7 +303,7 @@ class MasterPoller(object):
     def __enqueue_taskset(self, worker, taskset):
         jsonstr = simplejson.dumps(taskset)
         conn = httplib.HTTPConnection(worker)
-        conn.request('POST', '/', jsonstr)
+        conn.request('POST', '/?masterhost=%s' % (self.__hostport,), jsonstr)
         conn.close()
             
     def __do_poll(self):
