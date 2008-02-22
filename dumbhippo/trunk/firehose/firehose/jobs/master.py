@@ -322,11 +322,11 @@ class MasterPoller(object):
                 except IndexError, e:
                     break
                 if i >= MAX_TASKSET_SIZE:
-                    if len(tasksets) >= MAX_TASKSET_WORKERS:
-                        break
-                    tasksets.append(taskset)
+                    tasksets.append(taskset)                    
                     taskset = []
-                    i = 0                    
+                    i = 0
+                    if len(tasksets) >= MAX_TASKSET_WORKERS:
+                        break                    
                 else:
                     i += 1
                 eligible = qtask.eligibility < taskset_limit
