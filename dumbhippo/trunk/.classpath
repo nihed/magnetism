@@ -113,7 +113,6 @@
 	<classpathentry kind="lib" path="openfire/src/plugins/userImportExport/lib/isorelax.jar"/>
 	<classpathentry kind="lib" path="lib/server/json-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/server/jets3t-0.6.0.jar"/>
-	<classpathentry kind="lib" path="lib/server/typica.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/dom4j-1.6.1.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/facebook.jar"/>
 	<classpathentry kind="output" path="eclipse-build2"/>
