@@ -50,7 +50,7 @@ class FeedTaskHandler(object):
             headers = {}
             if prev_timestamp is not None:
                 headers['If-Modified-Since'] = formatdate(prev_timestamp)            
-            connection.request('GET', parsedurl.path, headers=headers)
+            connection.request('GET', parsedurl[2], headers=headers)
             response = connection.getresponse()
             if response.status == 304:
                 _logger.info("Got 304 Unmodified for %r", targeturl)
