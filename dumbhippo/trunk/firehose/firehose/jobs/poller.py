@@ -77,9 +77,13 @@ _task_families[FeedTaskHandler.FAMILY] = FeedTaskHandler
 class TaskRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_POST(self):
         _logger.debug("handling POST")
+        def parsequery(s):
+            args = s.split('&')
+            return dict(map(lambda x: map(urllib.unquote, x.split('=',1)), args))
+        masterhost = parsequery(urlparse.urlparse(self.path).query)['masterhost']
         taskids = simplejson.load(self.rfile)
         poller = TaskPoller.get()
-        poller.poll_tasks(taskids)
+        poller.poll_tasks(taskids, masterhost)
         
 _instance = None
 class TaskPoller(object):   
@@ -95,7 +99,6 @@ class TaskPoller(object):
         bindport = int(config.get('firehose.localslaveport'))
         self.__server = BaseHTTPServer.HTTPServer(('', bindport), TaskRequestHandler)
         self.__active_collectors = set()
-        self.__master_hostport = config.get('firehose.masterhost')
         
     def run_async(self):
         thr = threading.Thread(target=self.run)
@@ -106,29 +109,26 @@ class TaskPoller(object):
     def run(self):
         self.__server.serve_forever()
         
-    def __send_results(self, results):
+    def __send_results(self, results, masterhost):
         dumped_results = simplejson.dumps(results)
-        connection = httplib.HTTPConnection(self.__master_hostport)
+        _logger.debug("opening connection to %r" % (masterhost,))
+        connection = httplib.HTTPConnection(masterhost)
         connection.request('POST', '/taskset_status', dumped_results,
                            headers={'Content-Type': 'text/javascript'})
         
     @log_except(_logger)        
-    def __run_collect_tasks(self, taskqueue, resultqueue):
-        _logger.debug("doing join on taskqueue")
-        taskqueue.join()
-        _logger.debug("all tasks complete")
+    def __run_collect_tasks(self, resultcount, resultqueue, masterhost):
         results = []
-        while True:
-            try:
-                result = resultqueue.get(False)
-                results.append(result)
-            except Queue.Empty:
-                break
+        _logger.debug("expecting %r results", resultcount)
+        while len(results) < resultcount:
+            result = resultqueue.get()
+            if result is not None:
+                results.append(result)     
         _logger.debug("sending %d results", len(results))            
-        self.__send_results(results)
+        self.__send_results(results, masterhost)
         
     @log_except(_logger)        
-    def __run_task(self, taskid, prev_hash, prev_timestamp, taskqueue, resultqueue):
+    def __run_task(self, taskid, prev_hash, prev_timestamp, resultqueue):
         (family, tid) = taskid.split('/', 1)
         try:
             fclass = _task_families[family]
@@ -142,15 +142,15 @@ class TaskPoller(object):
             _logger.exception("Failed task id %r", tid)
             (new_hash, new_timestamp) = (None, None)
         if new_hash is not None:
-            resultqueue.put((taskid, new_hash, new_timestamp))                 
-        taskqueue.task_done()   
+            resultqueue.put((taskid, new_hash, new_timestamp))
+        resultqueue.put(None)
         
-    def poll_tasks(self, tasks):
-        taskqueue = Queue.Queue()
+    def poll_tasks(self, tasks, masterhost):
+        taskcount = 0
         resultqueue = Queue.Queue()
         for (taskid, prev_hash, prev_timestamp) in tasks:
-            taskqueue.put(taskid)
-            thread = threading.Thread(target=self.__run_task, args=(taskid, prev_hash, prev_timestamp, taskqueue, resultqueue))
+            taskcount += 1
+            thread = threading.Thread(target=self.__run_task, args=(taskid, prev_hash, prev_timestamp, resultqueue))
             thread.start()
-        collector = threading.Thread(target=self.__run_collect_tasks, args=(taskqueue,resultqueue))
+        collector = threading.Thread(target=self.__run_collect_tasks, args=(taskcount,resultqueue,masterhost))
         collector.start()
