@@ -80,7 +80,7 @@ class TaskRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         def parsequery(s):
             args = s.split('&')
             return dict(map(lambda x: map(urllib.unquote, x.split('=',1)), args))
-        masterhost = parsequery(urlparse.urlparse(self.path).query)['masterhost']
+        masterhost = parsequery(urlparse.urlparse(self.path)[4])['masterhost']
         taskids = simplejson.load(self.rfile)
         poller = TaskPoller.get()
         poller.poll_tasks(taskids, masterhost)
