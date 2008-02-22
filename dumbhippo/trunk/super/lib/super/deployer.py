@@ -6,6 +6,8 @@ import socket
 import stat
 import tempfile
 import time
+import subprocess
+import shutil
 
 class Deployer:
     """A class that handles writing out an archive file containing super
@@ -59,9 +61,14 @@ class Deployer:
         """Finish writing out the deployement archive"""
         topfiles = self.topfiles.keys()
         topfiles.sort()
-        filestr = " ".join(topfiles)
-        os.spawnl(os.P_WAIT, "/bin/sh", "sh", "-c", "(cd %s && tar cfz - %s) > %s" % (self.outdir, filestr, self.darfile))
-        os.spawnl(os.P_WAIT, "/bin/rm", "rm", "-rf", self.outdir)
+        outf = open(self.darfile, 'w')
+        tarargs = ['tar', 'cf', '-']
+        tarargs.extend(topfiles)
+        tar = subprocess.Popen(tarargs, stdout=subprocess.PIPE, cwd=self.outdir)
+        gzip = subprocess.Popen(['gzip', '-c', '--rsyncable'], stdin=tar.stdout, stdout=outf, cwd=self.outdir)
+        gzip.wait()
+        outf.close()
+        shutil.rmtree(self.outdir, ignore_errors=True)
 
     def _add_directory(self, directory):
         """Make the directory (and parents) in the temporary output dir if we haven't already"""
