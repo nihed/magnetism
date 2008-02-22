@@ -1,9 +1,7 @@
 package com.dumbhippo.polling;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,10 +16,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.RequestEntity;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.jboss.system.ServiceMBeanSupport;
 import org.jets3t.service.S3Service;
 import org.jets3t.service.S3ServiceException;
@@ -43,6 +37,7 @@ import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoadResult;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.AmazonSQS;
 import com.dumbhippo.services.TransientServiceException;
+import com.dumbhippo.services.AmazonSQS.Message;
 
 /** 
  *  This polling system executes polling tasks, optimizing the polling
@@ -91,6 +86,10 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 	
 	private TaskPersistenceWorker taskPersistenceWorker;
 	private Thread taskPersistenceThread;
+
+	private AWSExternalTaskHandler awsExternalTaskHandler;
+
+	private Thread awsExternalTaskThread;
 	
 	public SwarmPollingSystem() {
 	}
@@ -399,36 +398,45 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 		}
 	}
 	
-	private void updateExternalTaskSetsLocal(Collection<PollingTask> externalTasks, boolean overwrite) {
-		Configuration config = EJBUtil.defaultLookup(Configuration.class);
+	private class AWSExternalTaskHandler implements DaemonRunnable {
+		public void run () throws InterruptedException {
+			Configuration config = EJBUtil.defaultLookup(Configuration.class);
 
-		String firehoseHost = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_MASTER_HOST);
-		URL firehoseUrl;
-		try {
-			firehoseUrl = new URL("http://" + firehoseHost);
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
-		
-		try {
-			String method = overwrite ? "settasks" : "addtasks";
-			URL addTaskUrl = new URL(firehoseUrl, method);
-			logger.debug("updating firehose with {} tasks", externalTasks.size());
-			
-			PostMethod post = new PostMethod(addTaskUrl.toString());
-			RequestEntity entity = new StringRequestEntity(tasksToStream(externalTasks));
-			post.setRequestEntity(entity);
-			
-			HttpClient client = new HttpClient();
+			AWSCredentials creds = new AWSCredentials(config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_AWS_ACCESSKEY_ID),
+					config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_AWS_SECRET_KEY));
+			String queueName = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_AWS_SQS_OUTGOING_NAME);
+
+			if (queueName.equals(""))
+				return;
+
+			String queueUrl;
 			try {
-				int resultCode = client.executeMethod(post);
-				logger.debug("got result code {} from firehose", resultCode);
-			} finally {
-				post.releaseConnection();
+				queueUrl = AmazonSQS.createQueue(creds, queueName);
+			} catch (TransientServiceException e1) {
+				throw new RuntimeException("failed to createQueue", e1);
 			}
-		} catch (IOException e) {
-			logger.error("Failed to update firehose with new tasks", e);
-		}		
+
+			while (true) {
+				Thread.sleep(30 * 1000);
+				Message[] msgs;
+				try {
+					msgs = AmazonSQS.receiveMessages(creds, queueUrl);
+				} catch (TransientServiceException e) {
+					logger.error("failed to receieveMessages", e);
+					continue;
+				}
+				for (Message msg: msgs) {
+					String[] taskIds = msg.body.split("\n");
+					logger.info("got {} external tasks updated", taskIds.length);
+					runExternalTasks(Arrays.asList(taskIds));
+					try {
+						AmazonSQS.deleteMessage(creds, queueUrl, msg.receiptId);
+					} catch (TransientServiceException e) {
+						logger.error("failed to delete message", e);
+					}
+				}
+			}
+		}	
 	}
 	
 	private void notifyExternalTasks(final boolean overwrite) {		
@@ -455,6 +463,10 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 		taskCompletionThread = ThreadUtils.newDaemonThread("dynamic task completion", taskCompletionWorker);
 		taskCompletionThread.start();
 		
+		awsExternalTaskHandler = new AWSExternalTaskHandler();
+		awsExternalTaskThread = ThreadUtils.newDaemonThread("AWS Task handler", awsExternalTaskHandler);
+		awsExternalTaskThread.start();		
+		
 		instance = this;
 	}
 	
@@ -467,7 +479,9 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 		} catch (InterruptedException e) {
 			logger.warn("Interrupted trying to join thread {}", taskPersistenceThread.getName());			
 		}
-		taskPersistenceWorker = null;		
+		taskPersistenceWorker = null;	
+		
+		awsExternalTaskThread.interrupt();
 		
 		instance = null;
 		
