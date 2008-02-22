@@ -41,7 +41,12 @@ class FeedTaskHandler(object):
         parsedurl = urlparse.urlparse(targeturl)
         try:
             _logger.info('Connecting to %r', targeturl)
-            connection = httplib.HTTPConnection(parsedurl.hostname, parsedurl.port)
+            hostport = parsedurl[1].split(':', 1)
+            if len(hostport) == 1:
+                (host,port) = (hostport[0], 80)
+            else:
+                (host,port) = hostport
+            connection = httplib.HTTPConnection(host, port)
             headers = {}
             if prev_timestamp is not None:
                 headers['If-Modified-Since'] = formatdate(prev_timestamp)            
