@@ -90,6 +90,8 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 	private AWSExternalTaskHandler awsExternalTaskHandler;
 
 	private Thread awsExternalTaskThread;
+
+	private boolean firehoseEnabled;
 	
 	public SwarmPollingSystem() {
 	}
@@ -198,7 +200,7 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 				}
 				if (result.isObsolete()) {
 					obsoleteTasks(Collections.singleton(task));
-				} else if (task.isExternallyPolled()) {
+				} else if (firehoseEnabled && task.isExternallyPolled()) {
 					logger.debug("Externally-polled task {} complete", task);
 				} else {
 					recalculateTaskStats(task, result);
@@ -258,11 +260,6 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 		}
 		
 		public void run() throws InterruptedException {
-			
-			Configuration config = EJBUtil.defaultLookup(Configuration.class);
-			
-			String firehoseAccessKey = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_AWS_ACCESSKEY_ID);
-			boolean firehoseEnabled = !firehoseAccessKey.equals("");
 
 			logger.info("Waiting 1 minute to load tasks");
 			// Wait a minute after startup to check for tasks
@@ -406,8 +403,7 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 					config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_AWS_SECRET_KEY));
 			String queueName = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_AWS_SQS_OUTGOING_NAME);
 
-			if (queueName.equals(""))
-				return;
+			assert !queueName.equals("");
 
 			String queueUrl;
 			try {
@@ -455,6 +451,11 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 	public synchronized void startSingleton() {
 		logger.info("Starting SwarmPollingSystem singleton");
 
+		Configuration config = EJBUtil.defaultLookup(Configuration.class);
+		
+		String firehoseAccessKey = config.getPropertyFatalIfUnset(HippoProperty.FIREHOSE_AWS_ACCESSKEY_ID);
+		firehoseEnabled = !firehoseAccessKey.equals("");		
+		
 		taskPersistenceWorker = new TaskPersistenceWorker();
 		taskPersistenceThread = ThreadUtils.newDaemonThread("dynamic task persister", taskPersistenceWorker);
 		taskPersistenceThread.start();
@@ -463,9 +464,11 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 		taskCompletionThread = ThreadUtils.newDaemonThread("dynamic task completion", taskCompletionWorker);
 		taskCompletionThread.start();
 		
-		awsExternalTaskHandler = new AWSExternalTaskHandler();
-		awsExternalTaskThread = ThreadUtils.newDaemonThread("AWS Task handler", awsExternalTaskHandler);
-		awsExternalTaskThread.start();		
+		if (firehoseEnabled) {
+			awsExternalTaskHandler = new AWSExternalTaskHandler();
+			awsExternalTaskThread = ThreadUtils.newDaemonThread("AWS Task handler", awsExternalTaskHandler);
+			awsExternalTaskThread.start();
+		}
 		
 		instance = this;
 	}
@@ -481,7 +484,8 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 		}
 		taskPersistenceWorker = null;	
 		
-		awsExternalTaskThread.interrupt();
+		if (firehoseEnabled)
+			awsExternalTaskThread.interrupt();
 		
 		instance = null;
 		
