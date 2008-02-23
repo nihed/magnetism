@@ -124,9 +124,11 @@ class TaskPoller(object):
     @log_except(_logger)        
     def __run_collect_tasks(self, resultcount, resultqueue, masterhost):
         results = []
+        received_count = 0
         _logger.debug("expecting %r results", resultcount)
-        while len(results) < resultcount:
+        while received_count < resultcount:
             result = resultqueue.get()
+            received_count += 1
             if result is not None:
                 results.append(result)     
         _logger.debug("sending %d results", len(results))            
@@ -143,12 +145,13 @@ class TaskPoller(object):
         inst = fclass()
         try:
             (new_hash, new_timestamp) = inst.run(tid, prev_hash, prev_timestamp)            
-        except:
-            _logger.exception("Failed task id %r", tid)
+        except Exception, e:
+            _logger.error("Failed task id %r: %s", tid, e)
             (new_hash, new_timestamp) = (None, None)
         if new_hash is not None:
             resultqueue.put((taskid, new_hash, new_timestamp))
-        resultqueue.put(None)
+        else:
+            resultqueue.put(None)
         
     def poll_tasks(self, tasks, masterhost):
         taskcount = 0
