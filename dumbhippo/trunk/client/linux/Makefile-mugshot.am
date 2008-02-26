@@ -4,11 +4,10 @@ mugshot_CPPFLAGS = 			\
 	$(AM_CPPFLAGS)			\
 	-I $(top_srcdir)		\
 	$(MUGSHOT_CFLAGS)		\
-	$(CANVAS_CFLAGS)		\
 	-DDDM_I_KNOW_THIS_IS_UNSTABLE=1
 
 mugshot_LDFLAGS=
-mugshot_LDADD= libhippo.la libstacker.la $(MUGSHOT_LIBS) $(CANVAS_LIBADD)
+mugshot_LDADD= libhippo.la libstacker.la $(MUGSHOT_LIBS)
 
 if !HAVE_GTK210
 mugshot_CPPFLAGS += -I$(top_srcdir)/gtkcopy

@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(mugshot, 1.1.58)
+AM_INIT_AUTOMAKE(mugshot, 1.1.90)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -355,34 +355,6 @@ else
     fi
 fi
 
-#
-# Check if hippo-canvas is installed or we need to build our included version
-# (canvas be forces with --with-included-canvas/--without-included-canvas
-#
-AC_ARG_WITH(included_canvas,
-	    AC_HELP_STRING([--with-included-canvas=[yes/no/auto]],
-		           [Use copy of HippoCanvas included with the mugshot sources]),
-	    ,
-	    with_included_canvas=auto)
-
-if test "x$with_included_canvas" = xauto ; then
-   AC_MSG_CHECKING([for hippo-canvas library])
-   HIPPO_PKG_CHECK_EXISTS(hippo-canvas-1, with_included_canvas=no, with_included_canvas=yes)
-   if test "x$with_included_canvas" = xyes ; then
-      AC_MSG_RESULT([no: using included version])
-   else
-      AC_MSG_RESULT([yes])
-   fi
-fi
-   
-if test "x$with_included_canvas" = xyes ; then
-   : 
-else
-   CANVAS_MODULES=hippo-canvas-1
-fi
-
-AM_CONDITIONAL(USE_INCLUDED_CANVAS, test "x$with_included_canvas" = xyes)
-
 extra_mugshot_packages=""
 
 if test "x$with_maemo" != xno ; then
@@ -391,10 +363,10 @@ fi
 
 PKG_CHECK_MODULES(LIBHIPPOCANVAS, gtk+-2.0 >= $GTK2_REQUIRED gobject-2.0 >= $GLIB2_REQUIRED cairo pango)
 PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 ddm-1 >= $DDM_REQUIRED)
-PKG_CHECK_MODULES(LIBSTACKER, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 cairo pango $CANVAS_MODULES ddm-1 >= $DDM_REQUIRED)
+PKG_CHECK_MODULES(LIBSTACKER, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 cairo pango hippo-canvas-1 ddm-1 >= $DDM_REQUIRED)
 PKG_CHECK_MODULES(LIBHIPPOIPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
-PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED $XSCREENSAVER_PACKAGES $CANVAS_MODULES  ddm-1 >= $DDM_REQUIRED $extra_mugshot_packages)
+PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED $XSCREENSAVER_PACKAGES hippo-canvas-1  ddm-1 >= $DDM_REQUIRED $extra_mugshot_packages)
 
 MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $XSCREENSAVER_LIBS $CURL_LIBS $JPEG_LIBS $RESOLV_LIBS"
 MUGSHOT_CFLAGS="$MUGSHOT_BASE_CFLAGS $XSCREENSAVER_CFLAGS $CURL_CFLAGS"
