@@ -3,7 +3,6 @@ noinst_LTLIBRARIES += libstacker.la
 libstacker_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)			\
 	-I $(MARSHAL_DIR)		\
-	$(CANVAS_CFLAGS)		\
 	$(LIBSTACKER_CFLAGS)		\
 	-DDDM_I_KNOW_THIS_IS_UNSTABLE=1
 
@@ -124,13 +123,13 @@ LIBSTACKER_BUILT_SOURCEFILES =			\
 	$(STACKER_MARSHAL_HEADER)		\
 	$(STACKER_MARSHAL_BODY)
 
-MAINTAINERCLEANFILES +=	$(LIBSTACKER_BUILT_SOURCEFILES) $(CANVAS_BUILT_SOURCEFILES) $(CANVAS_ENUMS_STAMPS)
-BUILT_SOURCES += $(LIBSTACKER_BUILT_SOURCEFILES) $(CANVAS_BUILT_SOURCEFILES)
+MAINTAINERCLEANFILES +=	$(LIBSTACKER_BUILT_SOURCEFILES)
+BUILT_SOURCES += $(LIBSTACKER_BUILT_SOURCEFILES)
 
 ## we need to nodist these because otherwise automake would copy 
 ## ../common to distdir/../common which puts common outside of distdir.
 ## so we handle the disting manually so the destination is always distdir/common-dist
-nodist_libstacker_la_SOURCES=$(LIBSTACKER_SOURCEFILES) $(LIBSTACKER_BUILT_SOURCEFILES) $(CANVAS_SRCDIR_FILES) $(CANVAS_BUILT_SOURCEFILES)
+nodist_libstacker_la_SOURCES=$(LIBSTACKER_SOURCEFILES) $(LIBSTACKER_BUILT_SOURCEFILES)
 libstacker-dist-hook:
 	-mkdir $(distdir)/common-dist
 	mkdir $(distdir)/common-dist/stacker
