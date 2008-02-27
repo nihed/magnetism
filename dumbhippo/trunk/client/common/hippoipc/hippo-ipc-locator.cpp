@@ -2,6 +2,7 @@
 #include "hippo-ipc.h"
 #include <string>
 #include <vector>
+#include "string.h"
 
 class HippoIpcLocatorMapEntry {
 public:
