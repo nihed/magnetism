@@ -167,22 +167,25 @@
 		<div id="dhGoogleServices"
 			class="dh-account-preferences-row">
 			<table>
-			 	<c:forEach items="${account.person.allEmails}" var="email">
+			 	<c:forEach items="${account.person.allEmails}" var="email" varStatus="loopStatus">
 				<tr>
 					<td><c:out value="${email.email}" /></td>
 					<td>
+					    <c:set var="checkboxId" value="dhGoogleEnabledEmail${loopStatus.count}"/>
 						<c:choose>
 							<c:when test="${dh:containerHas(account.person.dmo.googleEnabledEmails, email.email)}">
 								<jsp:element name="input">
 									<jsp:attribute name="type">checkbox</jsp:attribute>
-									<jsp:attribute name="onclick">dh.actions.setGoogleServicedEmail(<dh:jsString value="${email.email}" />, false)</jsp:attribute>
+									<jsp:attribute name="id"><c:out value="${checkboxId}"/></jsp:attribute>
+									<jsp:attribute name="onclick">dh.actions.setGoogleServicedEmail(<dh:jsString value="${email.email}" />, <dh:jsString value="${checkboxId}" />)</jsp:attribute>
 									<jsp:attribute name="checked">true</jsp:attribute>
 								</jsp:element>
 							</c:when>
 							<c:otherwise>
 								<jsp:element name="input">
 									<jsp:attribute name="type">checkbox</jsp:attribute>
-									<jsp:attribute name="onclick">dh.actions.setGoogleServicedEmail(<dh:jsString value="${email.email}" />, true)</jsp:attribute>
+									<jsp:attribute name="id"><c:out value="${checkboxId}"/></jsp:attribute>
+									<jsp:attribute name="onclick">dh.actions.setGoogleServicedEmail(<dh:jsString value="${email.email}" />, <dh:jsString value="${checkboxId}"/>)</jsp:attribute>
 								</jsp:element>								
 							</c:otherwise>
 						</c:choose>
