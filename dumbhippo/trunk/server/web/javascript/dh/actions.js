@@ -340,7 +340,8 @@ dh.actions.setApplicationUsageEnabled = function(enabled) {
 		  	    	 });
 }
 
-dh.actions.setGoogleServicedEmail = function(email, enabled) {
+dh.actions.setGoogleServicedEmail = function(email, checkboxId) {
+    enabled = document.getElementById(checkboxId).checked
    	dh.server.doPOST("setgoogleservicedemail",
    					 { "email" : email,
 				       "enabled" : enabled ? "true" : "false" },
