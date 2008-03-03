@@ -517,22 +517,15 @@ public class FacebookServlet extends AbstractServlet {
 		    	xml.closeElement();
 	        }
 		} else {
+			if (facebookParams.get(FacebookParam.USER.toString()) != null)
+		    	logger.warn("Failed to find or create a matching Mugshot user even though Facebook supplied a user id {}", 
+		    			    facebookParams.get(FacebookParam.USER.toString()));
+
 			xml.openElement("fb:explanation");
-            if (facebookParams.get(FacebookParam.ADDED.toString()) != null && facebookParams.get(FacebookParam.ADDED.toString()).toString().equals("0") 
-                && facebookParams.get(FacebookParam.USER.toString()) != null) {
-            	// the user is logged in, but that don't have the Mugshot application added
-    			xml.appendTextNode("fb:message", "Add Mugshot application first");			
-			    xml.append("You need to have Mugshot application added on Facebook in order to use it. ");
-		        xml.appendTextNode("a", "Add Mugshot application!", 
-     		           "href", "http://www.facebook.com/add.php?api_key=" + apiKey);		
-		    } else if (facebookParams.get(FacebookParam.USER.toString()) == null) {
-			    xml.appendTextNode("fb:message", "Log in to Facebook first");			
-			    xml.append("You need to be logged in to Facebook to use the Mugshot application.");
-		    } else {
-		    	logger.warn("Unexpected combination of Facebook parameters that caused us to not find a matching Mugshot user");
-			    xml.appendTextNode("fb:message", "Log in to Facebook and add Mugshot first");			
-			    xml.append("You need to be logged in to Facebook and have Mugshot application added in order to use Mugshot on Facebook.");		    	
-		    }          
+    	    xml.appendTextNode("fb:message", "Log in to Facebook and add Mugshot application first");			
+			xml.append("You need to be logged in to Facebook and have Mugshot application added in order to use Mugshot on Facebook. ");
+		    xml.appendTextNode("a", "Add Mugshot application!", 
+     		                   "href", "http://www.facebook.com/add.php?api_key=" + apiKey);		
 			xml.closeElement();
 		}		
 		response.setContentType("text/html");
