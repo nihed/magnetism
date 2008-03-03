@@ -27,10 +27,10 @@ _logger.debug("hello master!")
 aws_config_path = os.path.expanduser('~/.aws')
 execfile(aws_config_path)
 
-DEFAULT_POLL_TIME_SECS = 45 * 60 # 45 minutes
+DEFAULT_POLL_PERIODICITY_SECS = 45 * 60 # 45 minutes
 MIN_POLL_TIME_SECS = 15
 TASKSET_TIMEOUT_SECS = 7 * 60 # 7 minutes
-TASKSET_POLL_CHECK_SECS = 2 * 60 # 2 minutes
+TASKSET_POLL_CHECK_SECS = 15
 MAX_TASKSET_SIZE = 30
 MAX_TASKSET_WORKERS = 1
 
@@ -71,6 +71,10 @@ class MasterPoller(object):
         self.__changed_thread_queued = False
         self.__poll_task = None        
         self.__task_lock = threading.Lock()
+        
+        self.__pending_tasksets = {} # map id => timestamp
+        self.__pending_tasksets_serial = 0
+        self.__pending_tasksets_lock = threading.Lock()
         
         self.__client_url = config.get('firehose.clienturl')
         
@@ -253,9 +257,23 @@ class MasterPoller(object):
             self.__task_lock.release()
 
     @log_except(_logger)
-    def taskset_status(self, results):
-        _logger.info("got %d results", len(results))
+    def taskset_status(self, status):
+        results = status['results']
+        serial = int(status['serial'])
+        time_delta = -1
+        try:
+            self.__pending_tasksets_lock.acquire()
+            try:
+                timestamp = self.__pending_tasksets[serial]
+                del self.__pending_tasksets[serial]
+                time_delta = time.time() - timestamp
+            except KeyError, e:
+                _logger.warn("unknown serial %s received!", serial)
+        finally:
+            self.__pending_tasksets_lock.release()      
+        _logger.info("got status for serial %s; timedelta: %s, %d results", serial, time_delta, len(results))
         changed = []
+
         try:
             self.__task_lock.acquire()
             for (taskkey, hashcode, timestamp) in results:
@@ -302,8 +320,16 @@ class MasterPoller(object):
     @log_except(_logger)
     def __enqueue_taskset(self, worker, taskset):
         jsonstr = simplejson.dumps(taskset)
+        serial = None
+        try:
+            self.__pending_tasksets_lock.acquire()
+            serial = self.__pending_tasksets_serial 
+            self.__pending_tasksets_serial += 1
+            self.__pending_tasksets[serial] = time.time()
+        finally:
+            self.__pending_tasksets_lock.release()
         conn = httplib.HTTPConnection(worker)
-        conn.request('POST', '/?masterhost=%s' % (self.__hostport,), jsonstr)
+        conn.request('POST', '/?masterhost=%s&serial=%s' % (self.__hostport,serial), jsonstr)
         conn.close()
             
     def __do_poll(self):
@@ -330,7 +356,7 @@ class MasterPoller(object):
                 else:
                     i += 1
                 eligible = qtask.eligibility < taskset_limit
-                qtask.eligibility = curtime + DEFAULT_POLL_TIME_SECS
+                qtask.eligibility = curtime + DEFAULT_POLL_PERIODICITY_SECS
                 heapq.heappush(self.__tasks_queue, qtask)                 
                 if eligible:
                     taskset.append((str(qtask.task), qtask.task.prev_hash, qtask.task.prev_timestamp))
@@ -346,11 +372,12 @@ class MasterPoller(object):
         if taskset_count > curworker_count:
             _logger.info("Need worker activation, current=%d, required=%d", curworker_count, taskset_count)
             self.__activate_workers()
-        _logger.info("have %d active tasksets", taskset_count)
+        _logger.info("have %d tasksets to be sent", taskset_count)
         if taskset_count > 0:
             for worker,taskset in zip(self.__worker_endpoints,tasksets):
                 self.__enqueue_taskset(worker, taskset)
             self.__requeue_poll()
+        _logger.debug("%d pending tasksets", len(self.__pending_tasksets))
 
     def requeue(self):
         self.__requeue_poll(immediate=True)

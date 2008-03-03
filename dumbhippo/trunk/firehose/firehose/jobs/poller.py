@@ -85,10 +85,12 @@ class TaskRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         def parsequery(s):
             args = s.split('&')
             return dict(map(lambda x: map(urllib.unquote, x.split('=',1)), args))
-        masterhost = parsequery(urlparse.urlparse(self.path)[4])['masterhost']
+        args = parsequery(urlparse.urlparse(self.path)[4])
+        masterhost = args['masterhost']
+        serial = args['serial']
         taskids = simplejson.load(self.rfile)
         poller = TaskPoller.get()
-        poller.poll_tasks(taskids, masterhost)
+        poller.poll_tasks(taskids, masterhost, serial)
         
 _instance = None
 class TaskPoller(object):   
@@ -114,15 +116,17 @@ class TaskPoller(object):
     def run(self):
         self.__server.serve_forever()
         
-    def __send_results(self, results, masterhost):
-        dumped_results = simplejson.dumps(results)
+    def __send_results(self, results, masterhost, serial):
+        data = {'results': results,
+                'serial': serial}
+        dumped_results = simplejson.dumps(data)
         _logger.debug("opening connection to %r" % (masterhost,))
         connection = httplib.HTTPConnection(masterhost)
         connection.request('POST', '/taskset_status', dumped_results,
                            headers={'Content-Type': 'text/javascript'})
         
     @log_except(_logger)        
-    def __run_collect_tasks(self, resultcount, resultqueue, masterhost):
+    def __run_collect_tasks(self, resultcount, resultqueue, masterhost, serial):
         results = []
         received_count = 0
         _logger.debug("expecting %r results", resultcount)
@@ -131,8 +135,8 @@ class TaskPoller(object):
             received_count += 1
             if result is not None:
                 results.append(result)     
-        _logger.debug("sending %d results", len(results))            
-        self.__send_results(results, masterhost)
+        _logger.debug("sending %d results", len(results)) 
+        self.__send_results(results, masterhost, serial)
         
     @log_except(_logger)        
     def __run_task(self, taskid, prev_hash, prev_timestamp, resultqueue):
@@ -153,12 +157,12 @@ class TaskPoller(object):
         else:
             resultqueue.put(None)
         
-    def poll_tasks(self, tasks, masterhost):
+    def poll_tasks(self, tasks, masterhost, serial):
         taskcount = 0
         resultqueue = Queue.Queue()
         for (taskid, prev_hash, prev_timestamp) in tasks:
             taskcount += 1
             thread = threading.Thread(target=self.__run_task, args=(taskid, prev_hash, prev_timestamp, resultqueue))
             thread.start()
-        collector = threading.Thread(target=self.__run_collect_tasks, args=(taskcount,resultqueue,masterhost))
+        collector = threading.Thread(target=self.__run_collect_tasks, args=(taskcount,resultqueue,masterhost,serial))
         collector.start()
