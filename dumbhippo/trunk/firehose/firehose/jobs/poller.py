@@ -17,6 +17,11 @@ from turbogears import config
 
 from firehose.jobs.logutil import log_except
 
+# This gross hack is the only easy way right now for us to set
+# a timeout on socket connections
+import socket
+socket.setdefaulttimeout(30)
+
 _logger = logging.getLogger('firehose.Poller')
 
 aws_config_path = os.path.expanduser('~/.aws')
