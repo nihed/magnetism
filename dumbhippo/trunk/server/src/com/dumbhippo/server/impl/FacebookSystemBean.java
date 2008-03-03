@@ -167,7 +167,7 @@ public class FacebookSystemBean implements FacebookSystem {
 	public String getProfileLink(ExternalAccount externalAccount) {
 		try {
 		    FacebookAccount facebookAccount = lookupFacebookAccount(externalAccount);
-		    return "http://www.facebook.com/profile.php?uid=" 
+		    return "http://www.facebook.com/profile.php?id=" 
 		           + facebookAccount.getFacebookUserId() + "&api_key=" + getApiKey();
 		} catch (NotFoundException e) {
 			throw new RuntimeException("An ExternalAccount passed to getProfileLink() was not associated with a valid FacebookAccount.", e);
