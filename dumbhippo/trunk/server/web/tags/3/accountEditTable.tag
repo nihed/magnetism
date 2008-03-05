@@ -164,6 +164,10 @@
 		</div>
 	    </dht2:formTableRow>
 	    <dht2:formTableRow label="Google services">
+	    <div class="dh-explanation">
+	    Selecting emails that are supported by <a href="http://www.google.com/a" target="_blank">Google Apps for Your Domain</a> will allow various Online Desktop widgets get updates for 
+	    the corresponding accounts. Your Gmail emails are selected automatically.   
+		</div>
 		<div id="dhGoogleServices"
 			class="dh-account-preferences-row">
 			<table>
@@ -173,12 +177,22 @@
 					<td>
 					    <c:set var="checkboxId" value="dhGoogleEnabledEmail${loopStatus.count}"/>
 						<c:choose>
+						    <%-- we really shouldn't have any Gmail e-mails that are not among google enabled e-mails, --%>
+						    <%-- but if that's the case, we'll let the user fix the error, rather than mask it --%> 
+							<c:when test="${dh:containerHas(account.person.dmo.googleEnabledEmails, email.email) && email.gmail}">
+								<jsp:element name="input">
+									<jsp:attribute name="type">checkbox</jsp:attribute>
+									<jsp:attribute name="id"><c:out value="${checkboxId}"/></jsp:attribute>
+									<jsp:attribute name="checked">true</jsp:attribute>
+									<jsp:attribute name="disabled"/>
+								</jsp:element>
+							</c:when>						
 							<c:when test="${dh:containerHas(account.person.dmo.googleEnabledEmails, email.email)}">
 								<jsp:element name="input">
 									<jsp:attribute name="type">checkbox</jsp:attribute>
 									<jsp:attribute name="id"><c:out value="${checkboxId}"/></jsp:attribute>
 									<jsp:attribute name="onclick">dh.actions.setGoogleServicedEmail(<dh:jsString value="${email.email}" />, <dh:jsString value="${checkboxId}" />)</jsp:attribute>
-									<jsp:attribute name="checked">true</jsp:attribute>
+									<jsp:attribute name="checked">true</jsp:attribute>  
 								</jsp:element>
 							</c:when>
 							<c:otherwise>

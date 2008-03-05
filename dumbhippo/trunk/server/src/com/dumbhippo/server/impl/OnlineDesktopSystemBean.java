@@ -19,6 +19,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.OnlineDesktopSystem;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.UserDMO;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.tx.TxCallable;
@@ -52,6 +53,19 @@ public class OnlineDesktopSystemBean implements OnlineDesktopSystem {
 			}
 		});
 	}
+
+	public EmailDetails lookupEmailDetails(EmailResource email) {
+	    Query q;
+
+		q = em.createQuery("from EmailDetails e where e.id = :email");
+		q.setParameter("email", email.getId());
+
+		try {
+		    return (EmailDetails) q.getSingleResult();
+		} catch (NoResultException e) {
+			return null;
+		}
+	}
 	
 	public List<EmailResource> getGoogleEnabledEmails(Viewpoint viewpoint,
 			User user) {
@@ -65,13 +79,34 @@ public class OnlineDesktopSystemBean implements OnlineDesktopSystem {
 	}
 
 	public void setGoogleServicedEmail(Viewpoint viewpoint, User user, EmailResource email, boolean enabled) throws RetryException {
-		if (!viewpoint.isOfUser(user))
+		if (!(viewpoint instanceof SystemViewpoint) && !viewpoint.isOfUser(user))
 			throw new RuntimeException("can only get your own enabled emails");
-		if (email.getAccountClaim().getOwner() != user)
+		if (!(viewpoint instanceof SystemViewpoint) && !email.getAccountClaim().getOwner().equals(user))
 			throw new RuntimeException("can only set Google state for emails you own");
 		EmailDetails ed = getEmailDetails(email);
 		ed.setGoogleServicesEnabled(enabled);
-		ReadWriteSession session = DataService.currentSessionRW();
-		session.changed(UserDMO.class, user.getGuid(), "googleEnabledEmails");		
+
+		// there is currently no scenario when we'll get a null user, when an account claim exists,
+		// but it's fine to check
+		if (user == null && email.getAccountClaim() != null) {
+			user = email.getAccountClaim().getOwner();
+			if (user != null) {
+				logger.debug("Found a user {} for e-mail {} when originally the user was null", user, email.getEmail());
+			}
+		}
+		
+		if (user != null) {
+			onGoogleServicedEmailChange(viewpoint, user, email);	
+		}
 	} 
+	
+    public void onGoogleServicedEmailChange(Viewpoint viewpoint, User user, EmailResource email) {
+		if (!(viewpoint instanceof SystemViewpoint) && !viewpoint.isOfUser(user))
+			throw new RuntimeException("can only get your own enabled emails");
+		if (!(viewpoint instanceof SystemViewpoint) && !email.getAccountClaim().getOwner().equals(user))
+			throw new RuntimeException("can only set Google state for emails you own");
+		
+	    ReadWriteSession session = DataService.currentSessionRW();
+	    session.changed(UserDMO.class, user.getGuid(), "googleEnabledEmails");		    	
+    }
 }

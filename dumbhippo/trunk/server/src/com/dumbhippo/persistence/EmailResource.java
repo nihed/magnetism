@@ -116,4 +116,9 @@ public class EmailResource extends Resource {
 			return withAt; // something invalid, maybe nothing before the @
 		}
 	}
+	
+	@Transient
+	public boolean isGmail() {
+	    return email.endsWith("@gmail.com");	
+	}
 }
