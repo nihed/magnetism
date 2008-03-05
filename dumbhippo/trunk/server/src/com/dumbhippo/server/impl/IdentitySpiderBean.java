@@ -39,6 +39,7 @@ import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.ContactStatus;
+import com.dumbhippo.persistence.EmailDetails;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
@@ -67,6 +68,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
+import com.dumbhippo.server.OnlineDesktopSystem;
 import com.dumbhippo.server.PermissionDeniedException;
 import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.dm.ContactDMO;
@@ -113,6 +115,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	@EJB
 	private RevisionControl revisionControl;
+	
+	@EJB
+	private OnlineDesktopSystem onlineDesktop;
 	
 	public User lookupUserByEmail(Viewpoint viewpoint, String email) throws NotFoundException {
 		EmailResource res = lookupEmail(email);
@@ -204,6 +209,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				} catch (NoResultException e) {
 					res = new EmailResource(email);
 					em.persist(res);
+					if (res.isGmail()) {
+						try {
+					        onlineDesktop.setGoogleServicedEmail(SystemViewpoint.getInstance(), null, res, true);
+						} catch (RetryException e1) {
+							logger.error("Failed to create a Google serviced e-mail for " + email, e1);							
+						}
+					}
 				}
 
 				return res;
@@ -555,6 +567,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		groupSystem.fixupGroupMemberships(claimedOwner);
 		
 		invalidateUserResource(claimedOwner, res);
+		
+		if (res instanceof EmailResource) {
+		     EmailDetails emailDetails = onlineDesktop.lookupEmailDetails((EmailResource)res);
+		     if (emailDetails != null && emailDetails.getGoogleServicesEnabled()) {
+		    	 // we want to send out a notification for the claimedOwner about a new Google serviced e-mail
+		    	 onlineDesktop.onGoogleServicedEmailChange(SystemViewpoint.getInstance(), claimedOwner, (EmailResource)res);
+		    }						
+		}
 	}
 
 	public void removeVerifiedOwnershipClaim(UserViewpoint viewpoint,
