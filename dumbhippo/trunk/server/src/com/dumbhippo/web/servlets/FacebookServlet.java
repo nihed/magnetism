@@ -524,8 +524,11 @@ public class FacebookServlet extends AbstractServlet {
 			xml.openElement("fb:explanation");
     	    xml.appendTextNode("fb:message", "Log in to Facebook and add Mugshot application first");			
 			xml.append("You need to be logged in to Facebook and have Mugshot application added in order to use Mugshot on Facebook. ");
+			xml.openElement("div");	
 		    xml.appendTextNode("a", "Add Mugshot application!", 
-     		                   "href", "http://www.facebook.com/add.php?api_key=" + apiKey);		
+		    		           "style", "color:blue;",
+     		                   "href", "http://www.facebook.com/add.php?api_key=" + apiKey);
+		    xml.closeElement();
 			xml.closeElement();
 		}		
 		response.setContentType("text/html");
