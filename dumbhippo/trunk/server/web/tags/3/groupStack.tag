@@ -35,7 +35,7 @@
 	            <c:choose>
 	                <c:when test="${who.joinAction != null}">
                         <dh:script module="dh.actions"/>
-						<dht:actionLink oneLine="true" href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="${who.joinTooltip}"><c:out value="${who.joinAction}"/></dht:actionLink>					
+						<dht:actionLink oneLine="true" larger="${who.invited}" href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="${who.joinTooltip}"><c:out value="${who.joinAction}"/></dht:actionLink>					
 	                </c:when>
 	                <c:when test="${who.leaveAction != null}">
                         <dh:script module="dh.actions"/>
