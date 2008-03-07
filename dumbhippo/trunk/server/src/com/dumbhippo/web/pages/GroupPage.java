@@ -96,21 +96,6 @@ public class GroupPage extends AbstractSigninOptionalPage {
 			return;
 		}
 		
-		// Once the user has accepted the terms of use, viewing a group should
-		// implicitly accepts the invitation to the group
-		if (getSignin().isActive() && 
-			(viewedGroup.getStatus() == MembershipStatus.INVITED || viewedGroup.getStatus() == MembershipStatus.INVITED_TO_FOLLOW)) {
-			// Only UserViewpoints can have INVITED or INVITED_TO_FOLLOW membership status
-			UserViewpoint userView = (UserViewpoint) viewpoint;
-			groupSystem.acceptInvitation(userView, viewedGroup.getGroup());
-			// Reload the view so we get the new status
-			try {
-				viewedGroup = groupSystem.loadGroup(viewpoint, groupGuid);
-			} catch (NotFoundException e) {
-				logger.debug("invalid or inaccessible group id {}", groupId);
-				return;
-			}
-		}
 		groupMember = viewedGroup.getGroupMember();
 	}
 

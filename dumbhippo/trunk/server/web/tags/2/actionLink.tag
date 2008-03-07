@@ -8,6 +8,7 @@
 <%@ attribute name="oneLine" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="disabled" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="underline" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="larger" required="false" type="java.lang.Boolean" %>
 
 <c:set var="tagName" value="div"/>
 	
@@ -27,7 +28,11 @@
     <c:set var="underlineClass" value="dh-underlined-link"/>
 </c:if>
 
+<c:if test="${larger}">
+    <c:set var="largerClass" value="dh-larger-link"/>
+</c:if>
+
 <dh:script module="dh.html"/>
 <${tagName} class="dh-action-link">
-    <a ${idAttribute} class="${disabledClass} ${underlineClass}" href="${href}" onclick="return !dh.html.hasClass(this, 'dh-action-link-disabled');" title="${title}"><jsp:doBody/></a>
+    <a ${idAttribute} class="${disabledClass} ${underlineClass} ${largerClass}" href="${href}" onclick="return !dh.html.hasClass(this, 'dh-action-link-disabled');" title="${title}"><jsp:doBody/></a>
 </${tagName}>
