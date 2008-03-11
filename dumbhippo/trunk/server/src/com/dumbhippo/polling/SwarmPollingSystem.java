@@ -412,18 +412,23 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 				throw new RuntimeException("failed to createQueue", e1);
 			}
 
+			boolean lastWasIdle = true;
+			final int IDLE_TIMEOUT = 10*1000;
+			final int ACTIVE_TIMEOUT = 1*1000;
 			while (true) {
-				Thread.sleep(30 * 1000);
+				Thread.sleep(lastWasIdle ? IDLE_TIMEOUT : ACTIVE_TIMEOUT);
 				Message[] msgs;
 				try {
-					msgs = AmazonSQS.receiveMessages(creds, queueUrl);
+					msgs = AmazonSQS.receiveMessages(creds, queueUrl, 5);
 				} catch (TransientServiceException e) {
 					logger.error("failed to receieveMessages", e);
 					continue;
 				}
+				logger.info("received {} SQS messages", msgs.length);
+				lastWasIdle = (msgs.length == 0);
 				for (Message msg: msgs) {
 					String[] taskIds = msg.body.split("\n");
-					logger.info("got {} external tasks updated", taskIds.length);
+					logger.info("got {} external tasks updated in message", taskIds.length);
 					runExternalTasks(Arrays.asList(taskIds));
 					try {
 						AmazonSQS.deleteMessage(creds, queueUrl, msg.receiptId);
