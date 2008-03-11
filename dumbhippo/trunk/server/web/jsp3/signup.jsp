@@ -31,7 +31,7 @@
             </c:choose>		        
         <dht:zoneBoxSeparator/>
 	    <div>
-	        GNOME Online user? Use your <a href="http://online.gnome.org" target="_blank">online.gnome.org</a> account to <a href="/login">log in to Mugshot</a>.
+	        GNOME Online user? Use your <a href="http://online.gnome.org" target="_blank">online.gnome.org</a> account to <a href="/who-are-you">log in to Mugshot</a>.
 	    </div>    	
 	    <dht:zoneBoxSeparator/>
         <dht:notevil/>
