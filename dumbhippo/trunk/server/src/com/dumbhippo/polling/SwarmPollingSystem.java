@@ -201,7 +201,7 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 				if (result.isObsolete()) {
 					obsoleteTasks(Collections.singleton(task));
 				} else if (firehoseEnabled && task.isExternallyPolled()) {
-					logger.debug("Externally-polled task {} complete", task);
+					logger.debug("Externally-polled task {} (id {}) complete", task, task.getExternalId());
 				} else {
 					recalculateTaskStats(task, result);
 					long periodicityScheduleSecs;
