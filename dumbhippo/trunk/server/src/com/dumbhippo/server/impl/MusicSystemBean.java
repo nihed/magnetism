@@ -207,7 +207,20 @@ public class MusicSystemBean implements MusicSystem {
 		});
 	}
 
-	private void addTrackHistory(final User user, final Track track, final Date playedDate, final boolean isNative, final boolean isNewest) throws RetryException {
+	// The database only stores timestamps at second-resolution. Things become more reliable
+	// if we round here, rather than rounding when storing into the database. (If we switch
+	// to a database with high-resolution timestamps, this should be removed.)
+	private long roundTimestamp(long timestamp) {
+		// any thing < 0 is just a flag value
+		if (timestamp < 0)
+			return -1000;
+		else
+			return (timestamp / 1000) * 1000;
+	}
+	
+	private void addTrackHistory(final User user, final Track track, Date playedDate, final boolean isNative, final boolean isNewest) throws RetryException {
+		final Date roundedDate = new Date(roundTimestamp(playedDate.getTime()));
+		
 		TxUtils.runNeedsRetry(new TxRunnable() {				
 			public void run() {
 				User u = em.find(User.class, user.getId());					
@@ -229,11 +242,11 @@ public class MusicSystemBean implements MusicSystem {
 				TrackHistory res;
 				try {
 					res = (TrackHistory) q.getSingleResult();
-					res.setLastUpdated(playedDate);
+					res.setLastUpdated(roundedDate);
 					res.setTimesPlayed(res.getTimesPlayed() + 1);
 				} catch (NoResultException e) {
 					res = new TrackHistory(user, track);
-					res.setLastUpdated(playedDate);
+					res.setLastUpdated(roundedDate);
 					res.setTimesPlayed(1);
 					em.persist(res);
 				}
@@ -244,7 +257,7 @@ public class MusicSystemBean implements MusicSystem {
 		if (track != null && isNewest) {
 			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "currentTrack");
 			DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "currentTrackPlayTime");
-			notifier.onTrackPlayed(user, track, playedDate);
+			notifier.onTrackPlayed(user, track, roundedDate);
 		}
 	}
 	
