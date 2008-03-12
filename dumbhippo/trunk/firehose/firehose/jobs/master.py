@@ -177,7 +177,6 @@ class MasterPoller(object):
         self.__requeue_poll(immediate=immediate)
         
     def __set_task_status(self, cursor, taskkey, hashcode, timestamp):
-        _logger.debug("updating task %r values (%r %r)", taskkey, hashcode, timestamp)
         cursor.execute('''INSERT OR REPLACE INTO Tasks VALUES (?, ?, ?)''',
                        (taskkey, hashcode, timestamp))
     
@@ -336,6 +335,7 @@ class MasterPoller(object):
         _logger.debug("in poll")
         
         tasksets = []
+        eligible_total = 0
         curtime = time.time()
         taskset_limit = curtime + TASKSET_TIMEOUT_SECS
         try:
@@ -365,6 +365,10 @@ class MasterPoller(object):
             if len(taskset) > 0:
                 tasksets.append(taskset)
             taskset = None
+            for qtask in self.__tasks_queue:
+                 eligible = qtask.eligibility < taskset_limit
+                 if eligible:
+                     eligible_total += 1
         finally:
             self.__task_lock.release()
         taskset_count = len(tasksets)
@@ -372,7 +376,7 @@ class MasterPoller(object):
         if taskset_count > curworker_count:
             _logger.info("Need worker activation, current=%d, required=%d", curworker_count, taskset_count)
             self.__activate_workers()
-        _logger.info("have %d tasksets to be sent", taskset_count)
+        _logger.info("have %d tasksets to be sent; %d total next eligible", taskset_count, eligible_total)
         if taskset_count > 0:
             for worker,taskset in zip(self.__worker_endpoints,tasksets):
                 self.__enqueue_taskset(worker, taskset)
