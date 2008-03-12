@@ -412,7 +412,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		session.changed(UserDMO.class, userId, "hotContacters");
 		
 		// Legacy contacters cache
-		LiveState.getInstance().invalidateContacts(user.getGuid());
+		LiveState.getInstance().invalidateContacters(user.getGuid());
 	}
 	
 	private void invalidateUserContacts(User user) {
