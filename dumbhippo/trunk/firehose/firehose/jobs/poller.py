@@ -54,7 +54,8 @@ class FeedTaskHandler(object):
             connection = httplib.HTTPConnection(host, port)
             headers = {}
             if prev_timestamp is not None:
-                headers['If-Modified-Since'] = formatdate(prev_timestamp)            
+                headers['If-Modified-Since'] = formatdate(prev_timestamp)
+            headers['User-Agent'] = 'Mugshot/Firehose (http://developer.mugshot.org/wiki/FirehosePolling)'            
             connection.request('GET', parsedurl[2], headers=headers)
             response = connection.getresponse()
             if response.status == 304:
