@@ -171,7 +171,11 @@ public class RewriteServlet extends HttpServlet {
     		return "/jsp-gnome/" + name + ".jsp";
     	} else {
 			Integer version = jspPages.get(name);
-			String suffix = version.intValue() > 1 ? version.toString() : ""; 	
+			String suffix;
+			if (version != null)
+				suffix = version.intValue() > 1 ? version.toString() : "";
+			else
+				suffix = "";
 			return "/jsp" + suffix + "/" + name + ".jsp";
     	}
     }
