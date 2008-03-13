@@ -284,7 +284,7 @@ public class FeedSystemBean implements FeedSystem {
 			logger.warn("processFeedExternalAccounts called for TrackFeedEntry {}, but no accounts associated with feed", entry);
 		}		
 		
-		logger.debug("Processing external accounts for new feed entry {}", entry);
+		logger.debug("Processing external accounts for new feed entry {} entryPosition {}", entry, entryPosition);
 		
 		for (ExternalAccount external : entry.getFeed().getAccounts()) {
 			
