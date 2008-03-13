@@ -98,7 +98,9 @@ public abstract class AbstractSingleBlockForFeedBlockHandlerBean<ViewType extend
 	}
 
 	public void onExternalAccountFeedEntry(User user, ExternalAccount external, FeedEntry entry, int entryPosition) {
-		if (!external.hasLovedAndEnabledType(getAccountType()))
+		// the newest entry will have entryPosition 0; since we only have a single block for this feed,
+		// we want to restack it only once for each batch of new feed entries 
+		if (!external.hasLovedAndEnabledType(getAccountType()) || entryPosition != 0)
 			return;
 		// entry.getDate().getTime() creates a timestamp that is too old, at least with blogspot
 		// so it is unreliable, because we update blocks based on timestamps
