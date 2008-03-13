@@ -790,7 +790,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 					    	// The time interval can be different for different block types or stack reasons.
 					    	// The downside of this logic is that if someone plays music every 5 hours or comments on
 					    	// a block every 5 hours, we'll never create a new update about it after the first one.
-					    	if (previousParticipationFinal.getSecond() == null || 
+					    	//
+					    	// Exclude Twitter and MySpace blog updates from such logic, since even though we reuse the
+					    	// same block for them, they should not happen too often and each one of them is interesting.
+					    	// The exclusion only applies to BLOCK_UPDATE stack reason, and not others such as CHAT_MESSAGE. 
+					    	// (Though we don't have chatting on Twitter blocks anyway.)
+					    	if (((block.getBlockType() == BlockType.TWITTER_PERSON || block.getBlockType() == BlockType.MYSPACE_PERSON) && reason.equals(StackReason.BLOCK_UPDATE)) ||	
+					    		previousParticipationFinal.getSecond() == null || 
 					            !previousParticipationFinal.getSecond().equals(reason) ||
 								previousParticipationFinal.getFirst() < (new Date().getTime()) - 6 * 60 * 60 * 1000) {
 					    		
