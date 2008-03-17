@@ -3,13 +3,15 @@ package com.dumbhippo.jive;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Date;
 import java.util.concurrent.Callable;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.XMPPServer;
+import org.slf4j.Logger;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Site;
 import com.dumbhippo.dm.ChangeNotificationSet;
 import com.dumbhippo.dm.DMObject;
@@ -25,6 +27,9 @@ import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.tx.TxUtils;
 
 public abstract class AnnotatedIQMethod {
+	@SuppressWarnings("unused")
+	private static final Logger logger = GlobalSetup.getLogger(AnnotatedIQMethod.class);	
+	
 	protected IQMethod annotation;
 	protected AnnotatedIQHandler handler;
 	protected Method method;
@@ -93,8 +98,8 @@ public abstract class AnnotatedIQMethod {
 	}
 	
 	public void runIQ(final IQ request) throws IQException {
-		Log.debug("handling IQ packet " + request);
-
+		logger.debug("Starting IQ request run");
+		long iqStartTime = new Date().getTime();
 		try {
 			final DataModel model = DataService.getModel();
 			final XmppClient client = XmppClientManager.getInstance().getClient(request.getFrom());
@@ -177,10 +182,13 @@ public abstract class AnnotatedIQMethod {
 				}
 			}
 		} catch (IQException e) {
+			logger.error("Failure during IQ request run {}", e.getMessage());			
 			throw e;
 		} catch (Exception e) {
+			logger.error("General failure during IQ request run {}", e);			
 			throw new RuntimeException("Unexpected exception running IQ method in transaction", e);
 		}
+		logger.debug("Completed IQ request run in {}s", (new Date().getTime() - iqStartTime)/1000);		
 	}
 
 	/**
