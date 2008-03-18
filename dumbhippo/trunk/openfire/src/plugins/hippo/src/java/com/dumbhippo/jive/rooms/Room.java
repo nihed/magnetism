@@ -11,12 +11,12 @@ import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.Log;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
-
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import com.dumbhippo.Site;
 import com.dumbhippo.dm.DMObject;
@@ -698,8 +698,13 @@ public class Room implements PresenceListener {
 				processPresenceUnavailable(presence);
 		} else if (packet instanceof Message) {
 			processMessagePacket((Message)packet);
-		} else
-			throw new NotImplementedException();
+		} else if (packet instanceof IQ) {
+			IQ reply = IQ.createResultIQ((IQ) packet);
+			reply.setError(new PacketError(PacketError.Condition.bad_request, 
+					   PacketError.Type.modify, 
+					   "Room does not support IQs"));
+			XMPPServer.getInstance().getPacketRouter().route(reply);		
+		}
 	}
 	
 	/**

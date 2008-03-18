@@ -853,16 +853,9 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		}
 	}
 
-	// This "casts" two classes K and T to be related, note we need a K and a T in order to construct
-	// DMClassHolder without a warning about a bare type
 	@SuppressWarnings("unchecked")
-	private static <K, T extends DMObject<K>> DMClassHolder<K,T> newClassHolderHack(DataModel model, DMClassInfo<?,?> classInfo) {
-		return new DMClassHolder<K,T>(model, (DMClassInfo<K,T>) classInfo);
-	}
-	
-	
 	public static DMClassHolder<?, ? extends DMObject<?>> createForClass(DataModel model, Class<?> clazz) {
-		return newClassHolderHack(model, DMClassInfo.getForClass(clazz));
+		return new DMClassHolder(model, DMClassInfo.getForClass(clazz));
 	}
 	
 	private class PropertyGroup {
