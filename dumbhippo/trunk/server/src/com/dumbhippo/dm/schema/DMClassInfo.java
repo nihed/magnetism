@@ -23,26 +23,20 @@ public class DMClassInfo<K, T extends DMObject<K>> {
 		return objectClass;
 	}
 
-	// This "casts" two classes K and T to be related, note we need a K and a T in order to construct
-	// DMClassInfo without a warning about a bare type
 	@SuppressWarnings("unchecked")
-	private static <K, T extends DMObject<K>> DMClassInfo<K,T> newClassInfoHack(Class<?> kClass, Class<?> tClass) {
-		return new DMClassInfo<K,T>((Class<K>)kClass, (Class<T>)tClass);
-	}
-	
 	public static DMClassInfo<?, ? extends DMObject<?>> getForClass(Class<?> tClass) {
 		if (!DMObject.class.isAssignableFrom(tClass))
 			return null;
 		
 		Constructor<?> constructor = findKeyConstructor(tClass);
 		Class<?> keyClass = constructor.getParameterTypes()[0]; 
-		return newClassInfoHack(keyClass, tClass);
+		return new DMClassInfo(keyClass, tClass);
 	}
 	
 	private static <ConstructedType> Constructor<ConstructedType> findKeyConstructor(Class<ConstructedType> clazz) {
 		Constructor<ConstructedType> keyConstructor = null;
 		
-		for (Constructor<ConstructedType> c : clazz.getDeclaredConstructors()) {
+		for (Constructor<?> c : clazz.getDeclaredConstructors()) {
 			Class<?>[] parameterTypes = c.getParameterTypes();
 			if (parameterTypes.length != 1)
 				continue;
@@ -59,7 +53,10 @@ public class DMClassInfo<K, T extends DMObject<K>> {
 										   keyConstructor.toGenericString() + ", " +
 										   c.toGenericString());
 			
-			keyConstructor = c;
+			@SuppressWarnings("unchecked")
+			Constructor<ConstructedType> castConstructor = (Constructor<ConstructedType>)c; 
+			
+			keyConstructor = castConstructor;
 		}
 
 		if (keyConstructor == null)
