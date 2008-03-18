@@ -5,6 +5,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,8 +16,6 @@ import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
-
-import sun.text.Normalizer;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.URLUtils;
@@ -59,7 +58,7 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheWithStorageBean
 		// We try both of the first two ways.
 		
 		if (canonicalize)
-			s = Normalizer.normalize(s, Normalizer.DECOMP_COMPAT, 0);
+			s = Normalizer.normalize(s, Normalizer.Form.NFKD);
 		
 		return s.replaceAll("[^a-zA-Z0-9]","").toLowerCase();
 	}
