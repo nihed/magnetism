@@ -1,13 +1,11 @@
 package com.dumbhippo.server.impl;
 
-import javax.ejb.ActivationConfigProperty;
 import javax.ejb.EJB;
-import javax.ejb.MessageDriven;
 import javax.jms.JMSException;
 import javax.jms.Message;
-import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
 
+import org.jboss.annotation.ejb.Service;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -16,7 +14,11 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.botcom.BotEvent;
 import com.dumbhippo.botcom.BotEventLogin;
 import com.dumbhippo.botcom.BotEventToken;
+import com.dumbhippo.botcom.BotTask;
 import com.dumbhippo.botcom.BotTaskMessage;
+import com.dumbhippo.jms.JmsConnectionType;
+import com.dumbhippo.jms.JmsConsumer;
+import com.dumbhippo.jms.JmsShutdownException;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.Token;
@@ -26,6 +28,7 @@ import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.SigninSystem;
+import com.dumbhippo.server.SimpleServiceMBean;
 import com.dumbhippo.server.TokenExpiredException;
 import com.dumbhippo.server.TokenSystem;
 import com.dumbhippo.server.TokenUnknownException;
@@ -33,16 +36,14 @@ import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
-@MessageDriven(activationConfig =
- {
-   @ActivationConfigProperty(propertyName="destinationType",
-     propertyValue="javax.jms.Queue"),
-   @ActivationConfigProperty(propertyName="destination",
-     propertyValue=BotEvent.QUEUE_NAME)
-})
-public class AimQueueConsumerBean implements MessageListener {
+@Service
+public class AimQueueConsumerBean implements SimpleServiceMBean {
 	static private final Logger logger = GlobalSetup.getLogger(AimQueueConsumerBean.class);
+	private JmsConsumer consumer;
+	private Thread consumerThread;
 	
 	@EJB
 	private TokenSystem tokenSystem;
@@ -59,6 +60,18 @@ public class AimQueueConsumerBean implements MessageListener {
 	@EJB
 	private AimQueueSender aimQueueSender;
 	
+	public void start() {
+		consumer = new JmsConsumer(BotTask.QUEUE_NAME, JmsConnectionType.NONTRANSACTED_IN_SERVER);
+		consumerThread = new Thread(new AimQueueConsumer(), "AimQueueConsumer");
+		consumerThread.start(); 
+		
+	}
+
+	public void stop() {
+		consumer.close(); // Will stop consumer thread as a side effect
+		consumer = null;
+	}
+
 	private void sendHtmlReplyMessage(BotEvent event, String aimName, String htmlMessage) {
 		BotTaskMessage message = new BotTaskMessage(event.getBotName(), aimName, htmlMessage);
 		aimQueueSender.sendMessage(message);
@@ -120,35 +133,50 @@ public class AimQueueConsumerBean implements MessageListener {
 		}
 	}
 
-	public void onMessage(Message message) {
-		DataService.getModel().initializeReadWriteSession(AnonymousViewpoint.getInstance(Site.NONE));
-		
+	private void handleMessage(ObjectMessage message) throws RetryException {
+		Object obj;
 		try {
-			if (message instanceof ObjectMessage) {
-				ObjectMessage objectMessage = (ObjectMessage) message;
-				Object obj = objectMessage.getObject();
-				
-				logger.debug("Got object in {}: {}", BotEvent.QUEUE_NAME, obj);
-					
-				if (obj instanceof BotEventToken) {
-					BotEventToken event = (BotEventToken) obj;
-					processTokenEvent(event);
-				} else if (obj instanceof BotEventLogin) {
-					BotEventLogin event = (BotEventLogin) obj;
-					processLoginEvent(event);
-				} else {
-					logger.warn("Got unknown object: " + obj);
-				}
-			} else {
-				logger.warn("Got unknown jms message: {}", message);
-			}
-		} catch (RetryException e) {
-			// We hope that the messaging system will redeliver the message and provide
-			// the retry. We can't do the retry ourself since we are already in a 
-			// transaction
-			throw new RuntimeException(e);
+			obj = ((message).getObject());
 		} catch (JMSException e) {
-			logger.warn("JMS exception in bot event queue", e);
+			logger.warn("Error retrieving object from queue.", e);
+			return;
+		}
+		
+		logger.debug("Got object in {}: {}", BotEvent.QUEUE_NAME, obj);
+			
+		if (obj instanceof BotEventToken) {
+			BotEventToken event = (BotEventToken) obj;
+			processTokenEvent(event);
+		} else if (obj instanceof BotEventLogin) {
+			BotEventLogin event = (BotEventLogin) obj;
+			processLoginEvent(event);
+		} else {
+			logger.warn("Got unknown object: " + obj);
+		}
+	}
+	
+	private class AimQueueConsumer implements Runnable {
+		public void run() {
+			while (true) {
+				try {
+					final Message message = consumer.receive();
+					if (!(message instanceof ObjectMessage)) {
+						logger.warn("Got unexpected type of message in queue.");
+						continue;
+					}
+					TxUtils.runInTransaction(new TxRunnable() {
+						public void run() throws RetryException {
+							DataService.getModel().initializeReadWriteSession(AnonymousViewpoint.getInstance(Site.NONE));
+							handleMessage((ObjectMessage)message);
+						}
+					});
+				} catch (JmsShutdownException e) {
+					logger.debug("Queue was shut down, exiting thread");
+					break;
+				} catch (RuntimeException e) {
+					logger.error("Unexpected error receiving AIM queue messages", e);
+				}
+			}
 		}
 	}
 }
