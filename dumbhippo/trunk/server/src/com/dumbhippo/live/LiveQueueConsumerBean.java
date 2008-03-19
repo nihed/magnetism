@@ -1,38 +1,53 @@
 package com.dumbhippo.live;
 
 import javax.annotation.Resource;
-import javax.ejb.ActivationConfigProperty;
-import javax.ejb.MessageDriven;
 import javax.ejb.SessionContext;
 import javax.jms.JMSException;
 import javax.jms.Message;
-import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
 
+import org.jboss.annotation.ejb.Service;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.dm.ChangeNotificationSet;
+import com.dumbhippo.jms.JmsConnectionType;
+import com.dumbhippo.jms.JmsConsumer;
+import com.dumbhippo.jms.JmsShutdownException;
+import com.dumbhippo.server.SimpleServiceMBean;
 import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.views.AnonymousViewpoint;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 //
 // Handles taking events queued via LiveState.queueUpdate and dispatching
 // them to the appropriate "processor bean"
 //
 
-@MessageDriven(activationConfig =
-{
-  @ActivationConfigProperty(propertyName="destinationType",
-    propertyValue="javax.jms.Topic"),
-  @ActivationConfigProperty(propertyName="destination",
-    propertyValue=LiveEvent.TOPIC_NAME)
-})
-public class LiveQueueConsumerBean implements MessageListener {
+@Service
+public class LiveQueueConsumerBean implements SimpleServiceMBean {
 	
 	@Resource SessionContext context;
 
 	static private final Logger logger = GlobalSetup.getLogger(LiveQueueConsumerBean.class);
 	
+	private JmsConsumer consumer;
+	private Thread consumerThread;
+
+	public void start() {
+		consumer = new JmsConsumer(LiveEvent.TOPIC_NAME, JmsConnectionType.NONTRANSACTED_IN_SERVER);
+		consumerThread = new Thread(new LiveTopicConsumer(), "LiveTopicConsumer");
+		consumerThread.start(); 
+	}
+
+	public void stop() {
+		consumer.close(); // Will stop consumer thread as a side effect
+		consumer = null;
+	}
+
 	private void process(LiveEvent event, boolean isLocal) {
 		// To find the right "processor bean" for this event, we have the 
 		// processor beans register themselves in JDNI under their class name
@@ -52,34 +67,56 @@ public class LiveQueueConsumerBean implements MessageListener {
 		LiveState.getInstance().invokeEventListeners(event);
 	}
 
-	public void onMessage(Message message) {
+	private void handleMessage(ObjectMessage message) {
+		Object obj;
+		String sourceAddress;
 		try {
-			// Message.toString() is kind of crap, so this isn't useful debug most of the time
-			//logger.debug("Got message from {}: {}", LiveEvent.QUEUE, message);
-			if (message instanceof ObjectMessage) {
-				ObjectMessage objectMessage = (ObjectMessage) message;
-				Object obj = objectMessage.getObject();
-				String sourceAddress = message.getStringProperty("sourceAddress");
-				String localAddress = System.getProperty("jboss.bind.address");
-				boolean isLocal = localAddress.equals(sourceAddress);
-				
-				logger.debug("Got object in " + LiveEvent.TOPIC_NAME + ": " + obj + " (isLocal=" + isLocal + ")");
-				
-				if (obj instanceof LiveEvent) {
-					process((LiveEvent) obj, isLocal);
-				} else if (obj instanceof ChangeNotificationSet) {
-					if (!isLocal)
-						DataService.getModel().notifyRemoteChange((ChangeNotificationSet)obj);
-				} else {
-					logger.warn("Got unknown object: " + obj);
-				}
-			} else {
-				logger.warn("Got unknown JMS message: " + message);
-			}
+			obj = ((message).getObject());
+			sourceAddress = message.getStringProperty("sourceAddress");
 		} catch (JMSException e) {
-			logger.warn("JMS exception in live event queue onMessage", e);
-		} catch (Exception e) {
-			logger.warn("Exception processing JMS message", e);
+			logger.warn("Error retrieving object from queue.", e);
+			return;
+		}
+		
+		String localAddress = System.getProperty("jboss.bind.address");
+		boolean isLocal = localAddress.equals(sourceAddress);
+		
+		logger.debug("Got object in " + LiveEvent.TOPIC_NAME + ": " + obj + " (isLocal=" + isLocal + ")");
+		
+		if (obj instanceof LiveEvent) {
+			process((LiveEvent) obj, isLocal);
+		} else if (obj instanceof ChangeNotificationSet) {
+			if (!isLocal)
+				DataService.getModel().notifyRemoteChange((ChangeNotificationSet)obj);
+		} else {
+			logger.warn("Got unknown object: " + obj);
+		}
+	}
+	
+	private class LiveTopicConsumer implements Runnable {
+		public void run() {
+			while (true) {
+				try {
+					final Message message = consumer.receive();
+					if (!(message instanceof ObjectMessage)) {
+						logger.warn("Got unexpected type of message in queue.");
+						continue;
+					}
+					TxUtils.runInTransaction(new TxRunnable() {
+						public void run() throws RetryException {
+							// Any database work should have been done on the sending side before sending the
+							// message. Here we are just updating transient state and notifying.
+							DataService.getModel().initializeReadOnlySession(AnonymousViewpoint.getInstance(Site.NONE));
+							handleMessage((ObjectMessage)message);
+						}
+					});
+				} catch (JmsShutdownException e) {
+					logger.debug("Queue was shut down, exiting thread");
+					break;
+				} catch (RuntimeException e) {
+					logger.error("Unexpected error receiving live topic messages", e);
+				}
+			}
 		}
 	}
 }
