@@ -192,10 +192,10 @@ update_time(HippoCanvasBlock *canvas_block)
         canvas_block->age_set = set_timestamp_item(canvas_block, canvas_block->age_parent, canvas_block->age_item, 
                                                    (GTime) (hippo_block_get_timestamp(canvas_block->block) / 1000));
         
-        hippo_canvas_item_set_visible(canvas_block->age_separator_item,
+        hippo_canvas_item_set_visible(canvas_block->age_item,
                                       canvas_block->age_set);
         hippo_canvas_item_set_visible(canvas_block->age_separator_item,
-                                      canvas_block->expanded && canvas_block->age_set);
+                                      canvas_block->age_set);
     }
 }
 
@@ -411,7 +411,6 @@ hippo_canvas_block_constructor (GType                  type,
     g_object_set(block->main_box,
                  "orientation", HIPPO_ORIENTATION_VERTICAL,
                  "padding", 4,
-                 "font", "11px",
                  NULL);
      
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block),
@@ -500,7 +499,6 @@ hippo_canvas_block_constructor (GType                  type,
         
         item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                             "text", "Hush",
-                            "color-cascade", HIPPO_CASCADE_MODE_NONE,
                             "tooltip", "Stop showing me this item",
                             NULL);
         block->toggle_hush_link = item;
@@ -557,8 +555,8 @@ hippo_canvas_block_constructor (GType                  type,
     
     if (!block->skip_heading) {
         box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                           "classes", "block-heading",
                            "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                           "font", "Bold 12px",
                            NULL);
         block->heading_box = box;
         hippo_canvas_box_append(block->main_box, HIPPO_CANVAS_ITEM(box), 0);
@@ -951,7 +949,7 @@ static void
 hippo_canvas_block_hush_impl(HippoCanvasBlock *canvas_block)
 {
     g_object_set(G_OBJECT(canvas_block),
-                 "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
+                 "classes", "block-hushed",
                  NULL);
     g_object_set(G_OBJECT(canvas_block->toggle_hush_link),
                  "text", "Unhush",
@@ -963,7 +961,7 @@ static void
 hippo_canvas_block_unhush_impl(HippoCanvasBlock *canvas_block)
 {
     g_object_set(G_OBJECT(canvas_block),
-                 "color-set", FALSE,
+                 "classes", "",
                  NULL);
     g_object_set(G_OBJECT(canvas_block->toggle_hush_link),
                  "text", "Hush",

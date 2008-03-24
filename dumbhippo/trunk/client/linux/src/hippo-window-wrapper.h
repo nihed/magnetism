@@ -22,7 +22,6 @@ GType        	 hippo_window_wrapper_get_type               (void) G_GNUC_CONST;
 
 HippoWindow* hippo_window_wrapper_new    (void);
 
-
 G_END_DECLS
 
 #endif /* __HIPPO_WINDOW_WRAPPER_H__ */

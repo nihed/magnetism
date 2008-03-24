@@ -1,9 +1,10 @@
 bin_PROGRAMS += mugshot
 
-mugshot_CPPFLAGS = 			\
-	$(AM_CPPFLAGS)			\
-	-I $(top_srcdir)		\
-	$(MUGSHOT_CFLAGS)		\
+mugshot_CPPFLAGS = 			   \
+	$(AM_CPPFLAGS)			   \
+	-I $(top_srcdir)		   \
+	$(MUGSHOT_CFLAGS)		   \
+	-DHIPPO_DATA_DIR=\"$(pkgdatadir)\" \
 	-DDDM_I_KNOW_THIS_IS_UNSTABLE=1
 
 mugshot_LDFLAGS=
@@ -140,7 +141,6 @@ mugshot.desktop: mugshot.desktop.in
 	cat $(srcdir)/mugshot.desktop.in | sed -e 's/^_//g' > mugshot.desktop
 mugshot-autostart.desktop: mugshot-autostart.desktop.in
 	cat $(srcdir)/mugshot-autostart.desktop.in | sed -e 's/^_//g' > mugshot-autostart.desktop
-
 
 EXTRA_DIST += $(autostart_in_files) $(desktopfiles_in_files) #$(service_in_files)
 MAINTAINERCLEANFILES +=	$(autostart_files) $(desktopfiles_files) #$(service_DATA)

@@ -55,10 +55,7 @@ static void
 hippo_canvas_timestamp_class_init(HippoCanvasTimestampClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS(klass);
-    HippoCanvasBoxClass *box_class = HIPPO_CANVAS_BOX_CLASS(klass);
 
-    box_class->default_color = 0x0033ffff;
-    
     object_class->set_property = hippo_canvas_timestamp_set_property;
     object_class->get_property = hippo_canvas_timestamp_get_property;
 

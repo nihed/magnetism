@@ -4,6 +4,7 @@
 #include "hippo-window-wrapper.h"
 #include "hippo-status-icon.h"
 #include "hippo-http.h"
+#include <hippo/hippo-canvas-theme.h>
 #include "main.h"
 #include <string.h>
 #include <errno.h>
@@ -53,6 +54,7 @@ static void     dialogs_update_status              (Dialogs         *dialogs,
 struct _HippoStackerPlatformImpl {
     GObject parent;
     HippoInstanceType instance;
+    HippoCanvasTheme *theme;
 };
 
 struct _HippoStackerPlatformImplClass {
@@ -79,7 +81,14 @@ hippo_stacker_platform_impl_iface_init(HippoStackerPlatformClass *klass)
 static void
 hippo_stacker_platform_impl_init(HippoStackerPlatformImpl       *impl)
 {
+    const char *theme_stylesheet;
 
+    if (hippo_stacker_app_is_uninstalled())
+        theme_stylesheet = ABSOLUTE_TOP_SRCDIR "/../common/stacker/stacker.css";
+    else
+        theme_stylesheet = HIPPO_DATA_DIR "/stacker.css";
+    
+    impl->theme = hippo_canvas_theme_new(NULL, NULL, theme_stylesheet, NULL);
 }
 
 static void
@@ -123,7 +132,11 @@ hippo_stacker_platform_impl_finalize(GObject *object)
 static HippoWindow*
 hippo_stacker_platform_impl_create_window(HippoStackerPlatform *platform)
 {
-    return HIPPO_WINDOW(hippo_window_wrapper_new());
+    HippoStackerPlatformImpl *impl = HIPPO_STACKER_PLATFORM_IMPL(platform);
+    HippoWindow *window = hippo_window_wrapper_new();
+    hippo_window_set_theme(window, impl->theme);
+
+    return window;
 }
 
 static void

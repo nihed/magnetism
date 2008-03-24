@@ -29,9 +29,11 @@ typedef enum {
 
 struct _HippoWindowClass {
     GTypeInterface base_iface;
-    
+
     void (* set_contents)      (HippoWindow     *window,
                                 HippoCanvasItem *item);
+    void (* set_theme)         (HippoWindow      *window,
+                                HippoCanvasTheme *theme);
     void (* set_visible)       (HippoWindow     *window,
                                 gboolean         visible);
     void (* hide_to_icon)      (HippoWindow     *window,
@@ -64,6 +66,8 @@ GType            hippo_window_get_type               (void) G_GNUC_CONST;
 
 void hippo_window_set_contents      (HippoWindow      *window,
                                      HippoCanvasItem  *item);
+void hippo_window_set_theme         (HippoWindow      *window,
+                                     HippoCanvasTheme *theme);
 void hippo_window_set_visible       (HippoWindow      *window,
                                      gboolean          visible);
 void hippo_window_hide_to_icon      (HippoWindow      *window,

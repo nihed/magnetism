@@ -441,11 +441,11 @@ on_queued_movies_changed(DDMDataResource *block_resource,
         
         title = g_object_new(HIPPO_TYPE_CANVAS_URL_LINK, 
                              "actions", hippo_canvas_block_get_actions(canvas_block),
+                             "classes", "netflix-movie-link",
                              "xalign", HIPPO_ALIGNMENT_START,
                              "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                              "text", movie_title,
                              "url", movie_link,
-                             "underline", FALSE,
                              "padding-left", 4,
                              NULL);
         

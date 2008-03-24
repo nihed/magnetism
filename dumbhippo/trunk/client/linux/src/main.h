@@ -32,6 +32,12 @@ HippoStackerApp* hippo_get_stacker_app(void);
 
 void       hippo_stacker_app_quit           (HippoStackerApp   *app);
 
+/* checks HIPPO_UNINSTALLED environment variable; doesn't take
+ * HppoStackerApp *app parameter since we use it in creating the app
+ * and it doesn't need one
+ */
+gboolean hippo_stacker_app_is_uninstalled(void);
+
 DDMDataModel   *      hippo_stacker_app_get_data_model       (HippoStackerApp *app);
 HippoStackerPlatform *hippo_stacker_app_get_stacker_platform (HippoStackerApp *app);
 HippoStackManager*    hippo_stacker_app_get_stack            (HippoStackerApp *app);

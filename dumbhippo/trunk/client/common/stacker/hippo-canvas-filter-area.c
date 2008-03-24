@@ -191,15 +191,13 @@ hippo_canvas_filter_area_constructor (GType                  type,
     HippoCanvasFilterArea *area = HIPPO_CANVAS_FILTER_AREA(object);
     HippoCanvasItem *item;    
     HippoCanvasBox *box;
-    
+
     box = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                        NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(area),
                             HIPPO_CANVAS_ITEM(box), 0);    
 
-    box->background_color_rgba = 0xE4D0EDFF;
-    
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text", "Hide feeds: ",
 #ifdef WITH_MAEMO

@@ -45,8 +45,6 @@ static void hippo_canvas_block_post_stack_reason_changed (HippoCanvasBlock *canv
 
 static void hippo_canvas_block_post_expand   (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_post_unexpand (HippoCanvasBlock *canvas_block);
-static void hippo_canvas_block_post_hush     (HippoCanvasBlock *canvas_block);
-static void hippo_canvas_block_post_unhush   (HippoCanvasBlock *canvas_block);
 
 /* Our own methods */
 static void hippo_canvas_block_post_set_post (HippoCanvasBlockPost *canvas_block_post,
@@ -131,8 +129,6 @@ hippo_canvas_block_post_class_init(HippoCanvasBlockPostClass *klass)
     canvas_block_class->stack_reason_changed = hippo_canvas_block_post_stack_reason_changed;
     canvas_block_class->expand = hippo_canvas_block_post_expand;
     canvas_block_class->unexpand = hippo_canvas_block_post_unexpand;
-    canvas_block_class->hush = hippo_canvas_block_post_hush;
-    canvas_block_class->unhush = hippo_canvas_block_post_unhush;
 }
 
 static void
@@ -553,41 +549,6 @@ hippo_canvas_block_post_unexpand(HippoCanvasBlock *canvas_block)
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_post_parent_class)->unexpand(canvas_block);
     
     hippo_canvas_block_post_update_visibility(block_post);
-}
-
-
-static void
-hippo_canvas_block_post_hush(HippoCanvasBlock *canvas_block)
-{
-    HippoCanvasBlockPost *block_post = HIPPO_CANVAS_BLOCK_POST(canvas_block);
-    
-    HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_post_parent_class)->hush(canvas_block);
-
-#if 0
-    g_object_set(G_OBJECT(block_post->faves_link),
-                 "color-cascade", HIPPO_CASCADE_MODE_INHERIT,
-                 NULL);
-#endif
-    
-    hippo_canvas_chat_preview_set_hushed(HIPPO_CANVAS_CHAT_PREVIEW(block_post->chat_preview),
-                                         TRUE);
-}
-
-static void
-hippo_canvas_block_post_unhush(HippoCanvasBlock *canvas_block)
-{
-    HippoCanvasBlockPost *block_post = HIPPO_CANVAS_BLOCK_POST(canvas_block);
-    
-    HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_post_parent_class)->unhush(canvas_block);
-
-#if 0
-    g_object_set(G_OBJECT(block_post->faves_link),
-                 "color-cascade", HIPPO_CASCADE_MODE_NONE,
-                 NULL);
-#endif
-    
-    hippo_canvas_chat_preview_set_hushed(HIPPO_CANVAS_CHAT_PREVIEW(block_post->chat_preview),
-                                         FALSE);
 }
 
 #if 0
