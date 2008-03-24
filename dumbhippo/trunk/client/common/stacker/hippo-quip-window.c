@@ -21,6 +21,7 @@ struct _HippoQuipWindow {
     GObject parent;
     DDMDataModel *model;
     HippoStackerPlatform *platform;
+    HippoCanvasTheme *theme;
 
     HippoChatKind chat_kind;
     char *chat_id;
@@ -385,38 +386,23 @@ hippo_quip_window_set_chat(HippoQuipWindow *quip_window,
 static void
 hippo_quip_window_update_sentiment(HippoQuipWindow *quip_window)
 {
-    if (quip_window->sentiment == HIPPO_SENTIMENT_INDIFFERENT)
-        g_object_set(quip_window->indifferent_box,
-                     "color",            0xffffffff,
-                     "background-color", 0xac6ac6ff,
-                     NULL);
-    else
-        g_object_set(quip_window->indifferent_box,
-                     "color",            0x000000ff,
-                     "background-color", 0x00000000,
-                     NULL);
-
-    if (quip_window->sentiment == HIPPO_SENTIMENT_LOVE)
-        g_object_set(quip_window->love_box,
-                     "color",            0xffffffff,
-                     "background-color", 0xac6ac6ff,
-                     NULL);
-    else
-        g_object_set(quip_window->love_box,
-                     "color",            0x000000ff,
-                     "background-color", 0x00000000,
-                     NULL);
-
-    if (quip_window->sentiment == HIPPO_SENTIMENT_HATE)
-        g_object_set(quip_window->hate_box,
-                     "color",            0xffffffff,
-                     "background-color", 0xac6ac6ff,
-                     NULL);
-    else
-        g_object_set(quip_window->hate_box,
-                     "color",            0x000000ff,
-                     "background-color", 0x00000000,
-                     NULL);
+    g_object_set(quip_window->indifferent_box,
+                 "classes",
+                 (quip_window->sentiment == HIPPO_SENTIMENT_INDIFFERENT)
+                 ? "quip-sentiment-active" : "quip-sentiment-inactive",
+                 NULL);
+    
+    g_object_set(quip_window->love_box,
+                 "classes",
+                 (quip_window->sentiment == HIPPO_SENTIMENT_LOVE)
+                 ? "quip-sentiment-active" : "quip-sentiment-inactive",
+                 NULL);
+    
+    g_object_set(quip_window->hate_box,
+                 "classes",
+                 (quip_window->sentiment == HIPPO_SENTIMENT_HATE)
+                 ? "quip-sentiment-active" : "quip-sentiment-inactive",
+                 NULL);
 }
 
 void

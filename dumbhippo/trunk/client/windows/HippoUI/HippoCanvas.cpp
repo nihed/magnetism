@@ -1217,6 +1217,9 @@ hippo_canvas_context_win_get_color(HippoCanvasContext *context,
     case HIPPO_STOCK_COLOR_BG_PRELIGHT:
         // FIXME use real system color
         return 0x999999ff;
+    case HIPPO_STOCK_COLOR_FG:
+        // FIXME use real system color
+        return 0x000000ff;
     }
 
     g_warning("unknown stock color %d", color);

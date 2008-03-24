@@ -4,7 +4,7 @@
 
 /* An href-link canvas item. */
 
-#include <hippo/hippo-canvas-text.h>
+#include <hippo/hippo-canvas-link.h>
 #include "hippo-actions.h"
 #include <cairo.h>
 
@@ -21,10 +21,9 @@ typedef struct _HippoCanvasUrlLinkClass HippoCanvasUrlLinkClass;
 #define HIPPO_CANVAS_URL_LINK_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_URL_LINK, HippoCanvasUrlLinkClass))
 
 struct _HippoCanvasUrlLink {
-    HippoCanvasText text;
+    HippoCanvasLink link;
     HippoActions *actions;
     char *url;
-    unsigned int underline : 1;
 };
 
 struct _HippoCanvasUrlLinkClass {

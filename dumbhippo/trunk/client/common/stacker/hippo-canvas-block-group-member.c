@@ -34,8 +34,6 @@ static void hippo_canvas_block_group_member_title_activated (HippoCanvasBlock *c
 
 static void hippo_canvas_block_group_member_expand   (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_group_member_unexpand (HippoCanvasBlock *canvas_block);
-static void hippo_canvas_block_group_member_hush     (HippoCanvasBlock *canvas_block);
-static void hippo_canvas_block_group_member_unhush   (HippoCanvasBlock *canvas_block);
 
 
 struct _HippoCanvasBlockGroupMember {
@@ -99,8 +97,6 @@ hippo_canvas_block_group_member_class_init(HippoCanvasBlockGroupMemberClass *kla
     canvas_block_class->title_activated = hippo_canvas_block_group_member_title_activated;
     canvas_block_class->expand = hippo_canvas_block_group_member_expand;
     canvas_block_class->unexpand = hippo_canvas_block_group_member_unexpand;
-    canvas_block_class->hush = hippo_canvas_block_group_member_hush;
-    canvas_block_class->unhush = hippo_canvas_block_group_member_unhush;
 }
 
 static void
@@ -203,7 +199,6 @@ hippo_canvas_block_group_member_append_content_items (HippoCanvasBlock *block,
     
     canvas_group_member->invite_link = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                                                     "text", "Invite to group",
-                                                    "color-cascade", HIPPO_CASCADE_MODE_NONE,
                                                     NULL);
     hippo_canvas_box_append(invite_parent, canvas_group_member->invite_link, 0);
 
@@ -393,28 +388,4 @@ hippo_canvas_block_group_member_unexpand(HippoCanvasBlock *canvas_block)
     /* HippoCanvasBlockGroupMember *block_group_member = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(canvas_block); */
 
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_group_member_parent_class)->unexpand(canvas_block);
-}
-
-static void
-hippo_canvas_block_group_member_hush(HippoCanvasBlock *canvas_block)
-{
-    HippoCanvasBlockGroupMember *block_group = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(canvas_block);
-    
-    HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_group_member_parent_class)->hush(canvas_block);
-
-    g_object_set(G_OBJECT(block_group->invite_link),
-                 "color-cascade", HIPPO_CASCADE_MODE_INHERIT,
-                 NULL);
-}
-
-static void
-hippo_canvas_block_group_member_unhush(HippoCanvasBlock *canvas_block)
-{
-    HippoCanvasBlockGroupMember *block_group = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(canvas_block);
-    
-    HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_group_member_parent_class)->unhush(canvas_block);
-
-    g_object_set(G_OBJECT(block_group->invite_link),
-                 "color-cascade", HIPPO_CASCADE_MODE_NONE,
-                 NULL);
 }

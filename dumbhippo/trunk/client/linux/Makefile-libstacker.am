@@ -126,6 +126,13 @@ LIBSTACKER_BUILT_SOURCEFILES =			\
 MAINTAINERCLEANFILES +=	$(LIBSTACKER_BUILT_SOURCEFILES)
 BUILT_SOURCES += $(LIBSTACKER_BUILT_SOURCEFILES)
 
+# CSS files
+CSS_STYLESHEETS = \
+	$(COMMONSRCDIR)/stacker/stacker.css
+
+pkgdata_DATA += $(CSS_STYLESHEETS)
+EXTRA_DIST += $(CSS_STYLESHEETS)
+
 ## we need to nodist these because otherwise automake would copy 
 ## ../common to distdir/../common which puts common outside of distdir.
 ## so we handle the disting manually so the destination is always distdir/common-dist

@@ -344,6 +344,16 @@ hippo_stacker_app_free(HippoStackerApp *app)
     g_free(app);
 }
 
+gboolean
+hippo_stacker_app_is_uninstalled()
+{
+    const char *envvar = g_getenv("HIPPO_UNINSTALLED");
+    if (envvar != NULL && strcmp(envvar, "") != 0)
+        return TRUE;
+    else
+        return FALSE;
+}
+
 /* 
  * Singleton HippoStackerApp and main()
  */
@@ -445,7 +455,7 @@ main(int argc, char **argv)
     if (options.debug_updates)
         gdk_window_set_debug_updates(TRUE);
     
-    if (options.instance_type == HIPPO_INSTANCE_DEBUG) {
+    if (hippo_stacker_app_is_uninstalled()) {
         gtk_icon_theme_append_search_path(gtk_icon_theme_get_default(),
                                           ABSOLUTE_TOP_SRCDIR "/icons");
     }

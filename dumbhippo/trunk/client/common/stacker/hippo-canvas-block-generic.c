@@ -40,8 +40,6 @@ static void hippo_canvas_block_generic_stack_reason_changed (HippoCanvasBlock *c
 
 static void hippo_canvas_block_generic_expand   (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_generic_unexpand (HippoCanvasBlock *canvas_block);
-static void hippo_canvas_block_generic_hush     (HippoCanvasBlock *canvas_block);
-static void hippo_canvas_block_generic_unhush   (HippoCanvasBlock *canvas_block);
 
 
 
@@ -118,8 +116,6 @@ hippo_canvas_block_generic_class_init(HippoCanvasBlockGenericClass *klass)
     canvas_block_class->stack_reason_changed = hippo_canvas_block_generic_stack_reason_changed;
     canvas_block_class->expand = hippo_canvas_block_generic_expand;
     canvas_block_class->unexpand = hippo_canvas_block_generic_unexpand;
-    canvas_block_class->hush = hippo_canvas_block_generic_hush;
-    canvas_block_class->unhush = hippo_canvas_block_generic_unhush;
 }
 
 static void
@@ -569,26 +565,3 @@ hippo_canvas_block_generic_set_block(HippoCanvasBlock *canvas_block,
         on_block_chat_id_changed(canvas_block->block, NULL, canvas_block);
     }
 }
-
-static void
-hippo_canvas_block_generic_hush(HippoCanvasBlock *canvas_block)
-{
-    HippoCanvasBlockGeneric *block_generic = HIPPO_CANVAS_BLOCK_GENERIC(canvas_block);
-    
-    HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_generic_parent_class)->hush(canvas_block);
-
-    hippo_canvas_chat_preview_set_hushed(HIPPO_CANVAS_CHAT_PREVIEW(block_generic->chat_preview),
-                                         TRUE);
-}
-
-static void
-hippo_canvas_block_generic_unhush(HippoCanvasBlock *canvas_block)
-{
-    HippoCanvasBlockGeneric *block_generic = HIPPO_CANVAS_BLOCK_GENERIC(canvas_block);
-    
-    HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_generic_parent_class)->unhush(canvas_block);
-
-    hippo_canvas_chat_preview_set_hushed(HIPPO_CANVAS_CHAT_PREVIEW(block_generic->chat_preview),
-                                         FALSE);
-}
-

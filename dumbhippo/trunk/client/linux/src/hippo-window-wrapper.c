@@ -43,6 +43,8 @@ static gboolean hippo_window_wrapper_delete_event            (GtkWidget         
 /* Window methods */
 static void hippo_window_wrapper_set_contents      (HippoWindow      *window,
                                                     HippoCanvasItem  *item);
+static void hippo_window_wrapper_set_theme         (HippoWindow      *window,
+                                                    HippoCanvasTheme *theme);
 static void hippo_window_wrapper_set_visible       (HippoWindow      *window,
                                                     gboolean          visible);
 static void hippo_window_wrapper_hide_to_icon      (HippoWindow      *window,
@@ -109,6 +111,7 @@ static void
 hippo_window_wrapper_iface_init(HippoWindowClass *window_class)
 {
     window_class->set_contents = hippo_window_wrapper_set_contents;
+    window_class->set_theme = hippo_window_wrapper_set_theme;
     window_class->set_visible = hippo_window_wrapper_set_visible;
     window_class->hide_to_icon = hippo_window_wrapper_hide_to_icon;
     window_class->set_position = hippo_window_wrapper_set_position;
@@ -324,6 +327,15 @@ hippo_window_wrapper_set_contents(HippoWindow     *window,
     HippoWindowWrapper *wrapper = HIPPO_WINDOW_WRAPPER(window);
 
     hippo_canvas_window_set_root(HIPPO_CANVAS_WINDOW(wrapper->window), item);
+}
+
+static void
+hippo_window_wrapper_set_theme(HippoWindow      *window,
+                               HippoCanvasTheme *theme)
+{
+    HippoWindowWrapper *wrapper = HIPPO_WINDOW_WRAPPER(window);
+
+    hippo_canvas_window_set_theme(HIPPO_CANVAS_WINDOW(wrapper->window), theme);
 }
 
 static void

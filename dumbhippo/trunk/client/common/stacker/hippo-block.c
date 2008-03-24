@@ -1020,7 +1020,7 @@ hippo_block_create_for_resource(DDMDataResource *resource)
         return NULL;
     }
 
-    guid = g_strndup(slash + 1, type - 1 - slash);
+    guid = g_strndup(slash + 1, type - 1 - (slash + 1));
     
     block_type = HIPPO_BLOCK_TYPE_UNKNOWN;
     

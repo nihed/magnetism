@@ -1,4 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include <hippo/hippo-canvas-theme.h>
+
 #include "hippo-stacker-internal.h"
 #include "hippo-window.h"
 #include "hippo-stacker-marshal.h"
@@ -85,6 +87,17 @@ hippo_window_set_contents(HippoWindow     *window,
     g_return_if_fail(item == NULL || HIPPO_IS_CANVAS_ITEM(item));
 
     HIPPO_WINDOW_GET_CLASS(window)->set_contents(window, item);
+}
+
+void
+hippo_window_set_theme(HippoWindow      *window,
+                       HippoCanvasTheme *theme)
+
+{
+    g_return_if_fail(HIPPO_IS_WINDOW(window));
+    g_return_if_fail(theme == NULL || HIPPO_IS_CANVAS_THEME(theme));
+
+    HIPPO_WINDOW_GET_CLASS(window)->set_theme(window, theme);
 }
 
 void

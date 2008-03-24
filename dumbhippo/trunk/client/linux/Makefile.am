@@ -48,6 +48,7 @@ MAINTAINERCLEANFILES =
 BUILT_SOURCES =
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA =
+pkgdata_DATA =
 TESTS =
 
 include Makefile-libhippoipc.am

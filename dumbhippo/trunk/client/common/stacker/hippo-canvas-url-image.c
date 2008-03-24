@@ -64,10 +64,7 @@ static void
 hippo_canvas_url_image_class_init(HippoCanvasUrlImageClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS(klass);
-    HippoCanvasBoxClass *box_class = HIPPO_CANVAS_BOX_CLASS(klass);
 
-    box_class->default_color = 0x0033ffff;
-    
     object_class->set_property = hippo_canvas_url_image_set_property;
     object_class->get_property = hippo_canvas_url_image_get_property;
 

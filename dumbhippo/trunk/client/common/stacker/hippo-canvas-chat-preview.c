@@ -252,7 +252,6 @@ hippo_canvas_chat_preview_constructor (GType                  type,
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(chat_preview), HIPPO_CANVAS_ITEM(box), 0);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                        "color-cascade", HIPPO_CASCADE_MODE_NONE,
                         "tooltip", "View all quips and comments",
                         NULL);
     chat_preview->chat_link = item;
@@ -473,28 +472,6 @@ hippo_canvas_chat_preview_set_block(HippoCanvasChatPreview *chat_preview,
     on_chat_id_changed(block, NULL, chat_preview);
     
     g_object_notify(G_OBJECT(chat_preview), "block");
-}
-
-void
-hippo_canvas_chat_preview_set_hushed(HippoCanvasChatPreview *chat_preview,
-                                     gboolean                value)
-{
-    value = value != FALSE;
-    
-    if (chat_preview->hushed == value)
-        return;
-
-    chat_preview->hushed = value;
-
-    if (value) {
-        g_object_set(G_OBJECT(chat_preview->chat_link),
-                     "color-cascade", HIPPO_CASCADE_MODE_INHERIT,
-                     NULL);
-    } else {
-        g_object_set(G_OBJECT(chat_preview->chat_link),
-                     "color-cascade", HIPPO_CASCADE_MODE_NONE,
-                     NULL);
-    }
 }
 
 static void

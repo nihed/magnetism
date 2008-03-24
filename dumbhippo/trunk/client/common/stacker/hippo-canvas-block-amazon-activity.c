@@ -330,12 +330,12 @@ hippo_canvas_block_amazon_activity_append_content_items (HippoCanvasBlock *block
 
     block_amazon_activity->list_link = g_object_new(HIPPO_TYPE_CANVAS_URL_LINK, 
                                                     "actions", hippo_canvas_block_get_actions(block),
+                                                    "classes", "amazon-list-link",
                                                     "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD, 
                                                     "xalign", HIPPO_ALIGNMENT_START,
                                                     "yalign", HIPPO_ALIGNMENT_CENTER,
                                                     "font", "Bold 12px",
                                                     "tooltip", "Check out this list",
-                                                    "underline", FALSE,  
                                                     NULL);
     hippo_canvas_box_append(list_item_details_box, block_amazon_activity->list_link, 0);
     hippo_canvas_item_set_visible(block_amazon_activity->list_link,
