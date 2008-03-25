@@ -36,10 +36,10 @@
     	<java>jdom-1.0.jar</java>
     </module>
     <module>
-    	<java>rome-0.8.jar</java>
+    	<java>rome-0.9.jar</java>
     </module>
     <module>
-    	<java>rome-fetcher-0.7.jar</java>
+    	<java>rome-fetcher-0.9.jar</java>
     </module>
     <module>
     	<java>mediarss.jar</java>
