@@ -72,43 +72,6 @@ all_packages = {
     'md5' : '0b431b557399c1b3948c13c803a22c95',
     'excludes' : [ 'contrib/*', 'manifest/*', 'lib/zlib-bcc.lib', 'include/*' ]
     },    
-    'cairo' : {
-    'url' : 'ftp://ftp.gtk.org/pub/gtk/v2.8/win32/cairo-1.2.4.zip',
-    'md5' : 'c4f01404ddfbe802462164be7db57204'
-    },
-    'cairo-dev' : {
-    'url' : 'ftp://ftp.gtk.org/pub/gtk/v2.8/win32/cairo-dev-1.2.4.zip',
-    'md5' : '6fca217180259fb632406d341543d7be',
-    'excludes' : [ 'make/*' ]
-    },
-    'glib' : {
-    'url' : 'ftp://ftp.gtk.org/pub/glib/2.12/win32/glib-2.12.3.zip',
-    'md5' : '13712dc1907f132918a47202961f5070',
-    'excludes' : [ 'bin/gspawn-win32-helper.exe',
-                   'bin/gspawn-win32-helper-console.exe'
-                   ]
-    },
-    'glib-dev' : {
-    'url' : 'ftp://ftp.gtk.org/pub/glib/2.12/win32/glib-dev-2.12.3.zip',
-    'md5' : 'fb4fe8ff215cadbf07ff438b49e66baf',
-    'includes' : [ 'bin/glib-genmarshal.exe' ],
-    'excludes' : [ 'bin/glib-mkenums', 'bin/glib-gettextize',
-                   'bin/gobject-query.exe',
-                   'share/glib-2.0/gettext/*',
-                   'make/*', '*/gobjectnotifyqueue.c'
-                  ]
-    },
-    'pango' : {
-    'url' : 'ftp://ftp.gtk.org/pub/pango/1.14/win32/pango-1.14.3.zip',
-    'md5' : 'f1d87c085e4df22046759a4a2e680dde',
-    'excludes' : [ 'bin/pango-querymodules.exe' ],
-    'includes' : [ '*/pango.aliases', '*/pango.modules' ]
-    },
-    'pango-dev' : {
-    'url' : 'ftp://ftp.gtk.org/pub/pango/1.14/win32/pango-dev-1.14.3.zip',
-    'md5' : '3a307df7ae2a65534d181b23a8fd0a62',
-    'excludes' : [ 'make/*' ]
-    }
 }
 
 
