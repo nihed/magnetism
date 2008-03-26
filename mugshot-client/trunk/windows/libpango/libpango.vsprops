@@ -6,13 +6,13 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		AdditionalIncludeDirectories=".;../dependencies/gettext/include;../../common/glib;../../common/glib/glib;../libglib;../../common/glib/gmodule;../../common/pango/pango;../../common/pango"
+		AdditionalIncludeDirectories=".;../../mugshot-dependencies/windows-binary/gettext/include;../../../mugshot-dependencies/glib;../../../mugshot-dependencies/glib/glib;../libglib;../../../mugshot-dependencies/glib/gmodule;../../../mugshot-dependencies/pango/pango;../../../mugshot-dependencies/pango"
 		PreprocessorDefinitions="PANGO_ENABLE_BACKEND;PANGO_ENABLE_ENGINE"
 		DisableSpecificWarnings="4312;4244;4267"
 	/>
 	<Tool
 		Name="VCLinkerTool"
 		OutputFile="$(OutDir)\libpango-1.0-0.dll"
-		ModuleDefinitionFile="..\..\common\pango\pango\pango.def"
+		ModuleDefinitionFile="..\..\..\mugshot-dependencies\pango\pango\pango.def"
 	/>
 </VisualStudioPropertySheet>

@@ -153,119 +153,119 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\common\pango\pango\break.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\break.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\ellipsize.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\ellipsize.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\fonts.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\fonts.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\mini-fribidi\fribidi.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\mini-fribidi\fribidi.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\mini-fribidi\fribidi_char_type.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\mini-fribidi\fribidi_char_type.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\mini-fribidi\fribidi_types.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\mini-fribidi\fribidi_types.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\glyphstring.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\glyphstring.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\mapping.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\mapping.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\module-defs-lang.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\module-defs-lang.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\modules.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\modules.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-attributes.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-attributes.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-color.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-color.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-context.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-context.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-coverage.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-coverage.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-engine.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-engine.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-enum-types.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-enum-types.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-fontmap.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-fontmap.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-fontset.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-fontset.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-glyph-item.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-glyph-item.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-item.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-item.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-layout.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-layout.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-markup.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-markup.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-matrix.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-matrix.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-renderer.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-renderer.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-script.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-script.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-tabs.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-tabs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-utils.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-utils.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\reorder-items.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\reorder-items.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\shape.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\shape.c"
 				>
 			</File>
 		</Filter>
@@ -279,131 +279,131 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\mini-fribidi\fribidi.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\mini-fribidi\fribidi.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\mini-fribidi\fribidi_config.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\mini-fribidi\fribidi_config.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\mini-fribidi\fribidi_types.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\mini-fribidi\fribidi_types.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\module-defs.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\module-defs.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\modules.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\modules.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-attributes.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-attributes.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-break.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-break.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-color-table.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-color-table.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-context.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-context.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-coverage.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-coverage.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-engine-private.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-engine-private.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-engine.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-engine.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-enum-types.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-enum-types.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-font.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-font.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-fontmap.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-fontmap.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-fontset.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-fontset.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-glyph-item-private.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-glyph-item-private.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-glyph-item.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-glyph-item.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-glyph.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-glyph.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-impl-utils.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-impl-utils.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-item.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-item.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-layout-private.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-layout-private.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-layout.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-layout.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-modules.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-modules.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-renderer.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-renderer.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-script-lang-table.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-script-lang-table.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-script-table.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-script-table.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-script.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-script.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-tabs.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-tabs.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-types.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-types.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango-utils.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango-utils.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pango.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango.h"
 				>
 			</File>
 		</Filter>
@@ -413,7 +413,7 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath="..\..\common\pango\pango\pango.rc"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pango.rc"
 				>
 			</File>
 		</Filter>

@@ -153,7 +153,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\common\pango\modules\basic\basic-win32.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\modules\basic\basic-win32.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -177,15 +177,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pangowin32-fontcache.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pangowin32-fontcache.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pangowin32-fontmap.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pangowin32-fontmap.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pangowin32.c"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pangowin32.c"
 				>
 			</File>
 		</Filter>
@@ -195,11 +195,11 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\common\pango\pango\pangowin32-private.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pangowin32-private.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\pango\pango\pangowin32.h"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pangowin32.h"
 				>
 			</File>
 		</Filter>
@@ -209,7 +209,7 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath="..\..\common\pango\pango\pangowin32.rc"
+				RelativePath="..\..\..\mugshot-dependencies\pango\pango\pangowin32.rc"
 				>
 			</File>
 		</Filter>

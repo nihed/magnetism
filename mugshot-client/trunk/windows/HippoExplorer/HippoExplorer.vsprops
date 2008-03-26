@@ -7,7 +7,7 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		AdditionalIncludeDirectories="../HippoUtil;../../common/hippoipc;../HippoIpc"
+		AdditionalIncludeDirectories="../HippoUtil;../../../mugshot-dependencies/hippoipc;../HippoIpc"
 		PreprocessorDefinitions="NOMINMAX"
 	/>
 	<Tool

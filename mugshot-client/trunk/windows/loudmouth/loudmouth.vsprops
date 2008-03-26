@@ -6,7 +6,7 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		AdditionalIncludeDirectories=".;../dependencies/gettext/include;../../common/glib;../../common/glib/glib;../libglib;../../common/loudmouth"
+		AdditionalIncludeDirectories=".;../../mugshot-dependencies/windows-binary/gettext/include;../../../mugshot-dependencies/glib;../../../mugshot-dependencies/glib/glib;../libglib;../../../mugshot-dependencies/loudmouth"
 		PreprocessorDefinitions="__WIN32__;LM_COMPILATION;HAVE_CONFIG_H;_CRT_SECURE_NO_DEPRECATE"
 		DisableSpecificWarnings="4244;4267"
 	/>
@@ -14,7 +14,7 @@
 		Name="VCLinkerTool"
 		AdditionalDependencies="intl.lib glib-2.0.lib ws2_32.lib"
 		OutputFile="$(OutDir)/loudmouth-1.dll"
-		AdditionalLibraryDirectories="../dependencies/gettext/lib;../dependencies/glib/lib"
-		ModuleDefinitionFile="../../common/loudmouth/loudmouth/loudmouth.def"
+		AdditionalLibraryDirectories="../../mugshot-dependencies/windows-binary/gettext/lib"
+		ModuleDefinitionFile="../../../mugshot-dependencies/loudmouth/loudmouth/loudmouth.def"
 	/>
 </VisualStudioPropertySheet>

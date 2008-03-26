@@ -152,7 +152,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\common\glib\gthread\gthread-impl.c"
+				RelativePath="..\..\..\mugshot-dependencies\glib\gthread\gthread-impl.c"
 				>
 			</File>
 		</Filter>
@@ -168,7 +168,7 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath="..\..\common\glib\gthread\gthread.rc"
+				RelativePath="..\..\..\mugshot-dependencies\glib\gthread\gthread.rc"
 				>
 			</File>
 		</Filter>
