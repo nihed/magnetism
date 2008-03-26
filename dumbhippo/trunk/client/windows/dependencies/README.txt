@@ -1,5 +1,5 @@
 This directory consists of binary builds for windows of some of
-the open-source dependencies of DumboHippo. The reasons for
+the open-source dependencies of the Mugshot client. The reasons for
 checking in the binary builds are:
 
  - To use standard builds, rather than creating a custom
