@@ -7,6 +7,6 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		AdditionalIncludeDirectories="../../common/hippoipc;../HippoUtil"
+		AdditionalIncludeDirectories="../../../mugshot-dependencies/hippoipc;../HippoUtil"
 	/>
 </VisualStudioPropertySheet>

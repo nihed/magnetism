@@ -6,7 +6,7 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		AdditionalIncludeDirectories=".;../HippoUtil;../cairo;../../common/cairo/src;../../common/glib;../../common/glib/glib;../../common/pango;../libglib;../dependencies/gettext/include;../dependencies/jpeg/include;&quot;../../../desktop-data-model&quot;;../../common;../../common/loudmouth;../../canvas/common;../../common/hippo/generated"
+		AdditionalIncludeDirectories=".;../HippoUtil;../cairo;../../../mugshot-dependencies/cairo/src;../../../mugshot-dependencies/glib;../../../mugshot-dependencies/glib/glib;../../../mugshot-dependencies/pango;../libglib;../../mugshot-dependencies/windows-binary/gettext/include;../../mugshot-dependencies/windows-binary/jpeg/include;&quot;../../../desktop-data-model&quot;;../../common;../../../mugshot-dependencies/loudmouth;../../canvas/common;../../../mugshot-dependencies/hippo/generated"
 		PreprocessorDefinitions="DDM_I_KNOW_THIS_IS_UNSTABLE"
 		DisableSpecificWarnings="4311;4244;4267"
 	/>
