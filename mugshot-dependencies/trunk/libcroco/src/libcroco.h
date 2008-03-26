@@ -37,7 +37,9 @@
 #include "cr-stylesheet.h"
 #include "cr-om-parser.h"
 #include "cr-prop-list.h"
+#if 0
 #include "cr-sel-eng.h"
+#endif
 #include "cr-style.h"
 #include "cr-string.h"
 
