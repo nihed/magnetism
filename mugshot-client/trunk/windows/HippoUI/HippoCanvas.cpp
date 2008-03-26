@@ -18,6 +18,8 @@
 #define STRICT
 #include <pango/pangocairo.h>
 
+#include <hippo/hippo-canvas-style.h>
+
 typedef struct _HippoCanvasContextWinClass HippoCanvasContextWinClass;
 
 #define HIPPO_TYPE_CANVAS_CONTEXT_WIN              (hippo_canvas_context_win_get_type ())
@@ -37,6 +39,7 @@ static void                   hippo_canvas_context_win_focus_controls         (H
 static bool                   hippo_canvas_context_win_handle_notification    (HippoCanvasContextWin *context_win,
                                                                                HWND                   controlWindow,
                                                                                UINT                   notification);
+static void                   hippo_canvas_context_win_clear_style            (HippoCanvasContextWin *context_win);
 
 HippoCanvas::HippoCanvas()
     : canvasWidthReq_(0), canvasHeightReq_(0), canvasX_(0), canvasY_(0), hscrollNeeded_(false), vscrollNeeded_(false),
@@ -116,11 +119,22 @@ HippoCanvas::setRoot(HippoCanvasItem *item)
             slot(this, &HippoCanvas::onRootPaintNeeded));
         rootTooltipChanged_.connect(G_OBJECT(item), "tooltip-changed",
             slot(this, &HippoCanvas::onRootTooltipChanged));
-        if (isCreated()) {
-            g_assert(HIPPO_IS_CANVAS_CONTEXT(context_));
-            hippo_canvas_item_set_context(item, HIPPO_CANVAS_CONTEXT(context_));
-        }
+        hippo_canvas_item_set_context(item, HIPPO_CANVAS_CONTEXT(context_));
     }
+    markRequestChanged();
+}
+
+void
+HippoCanvas::setTheme(HippoCanvasTheme *theme)
+{
+    if (theme_ == theme)
+        return;
+
+    theme_ = theme;
+
+    hippo_canvas_context_win_clear_style(context_);
+    hippo_canvas_context_emit_style_changed(HIPPO_CANVAS_CONTEXT(context_), TRUE);
+
     markRequestChanged();
 }
 
@@ -151,13 +165,6 @@ HippoCanvas::createChildren()
 
     tooltip_->setForWindow(window_);
     tooltip_->create();
-
-    // this should register any embedded controls, set their parents,
-    // which as a side effect should create them all
-    if (root_ != (HippoCanvasItem*) NULL) {
-        g_assert(HIPPO_IS_CANVAS_CONTEXT(context_));
-        hippo_canvas_item_set_context(root_, HIPPO_CANVAS_CONTEXT(context_));
-    }
 }
 
 void
@@ -1017,6 +1024,9 @@ static cairo_surface_t* hippo_canvas_context_win_load_image             (HippoCa
                                                                          const char         *image_name);
 static guint32          hippo_canvas_context_win_get_color              (HippoCanvasContext *context,
                                                                          HippoStockColor     color);
+static HippoCanvasStyle *hippo_canvas_context_win_get_style             (HippoCanvasContext *context);
+static double           hippo_canvas_context_win_get_resolution         (HippoCanvasContext *context);
+static PangoFontDescription *hippo_canvas_context_win_get_font          (HippoCanvasContext *context);
 static void             hippo_canvas_context_win_register_widget_item   (HippoCanvasContext *context,
                                                                          HippoCanvasItem    *item);
 static void             hippo_canvas_context_win_unregister_widget_item (HippoCanvasContext *context,
@@ -1033,6 +1043,7 @@ struct _HippoCanvasContextWin {
     HippoCanvasPointer pointer;
     GSList *control_items;
     PangoContext *pango;
+    HippoCanvasStyle *style;
 };
 
 struct _HippoCanvasContextWinClass {
@@ -1096,6 +1107,9 @@ hippo_canvas_context_win_iface_init (HippoCanvasContextIface *klass)
     klass->create_layout = hippo_canvas_context_win_create_layout;
     klass->load_image = hippo_canvas_context_win_load_image;
     klass->get_color = hippo_canvas_context_win_get_color;
+    klass->get_resolution = hippo_canvas_context_win_get_resolution;
+    klass->get_style = hippo_canvas_context_win_get_style;
+    klass->get_font = hippo_canvas_context_win_get_font;
     klass->register_widget_item = hippo_canvas_context_win_register_widget_item;
     klass->unregister_widget_item = hippo_canvas_context_win_unregister_widget_item;
     klass->translate_to_widget = hippo_canvas_context_win_translate_to_widget;
@@ -1110,6 +1124,8 @@ hippo_canvas_context_win_dispose(GObject *object)
         g_object_unref((void*)canvas_win->pango);
         canvas_win->pango = NULL;
     }
+
+    hippo_canvas_context_win_clear_style(canvas_win);
 
     G_OBJECT_CLASS(hippo_canvas_context_win_parent_class)->dispose(object);
 }
@@ -1224,6 +1240,32 @@ hippo_canvas_context_win_get_color(HippoCanvasContext *context,
 
     g_warning("unknown stock color %d", color);
     return 0;
+}
+
+static HippoCanvasStyle *
+hippo_canvas_context_win_get_style(HippoCanvasContext *context)
+{
+    HippoCanvasContextWin *canvas_win = HIPPO_CANVAS_CONTEXT_WIN(context);
+
+    if (canvas_win->style == NULL)
+        canvas_win->style = hippo_canvas_style_new(context, NULL, canvas_win->canvas->getTheme(), G_TYPE_NONE, NULL, NULL);
+    
+    return canvas_win->style;
+}
+
+static double
+hippo_canvas_context_win_get_resolution(HippoCanvasContext *context)
+{
+/*    HippoCanvasContextWin *canvas_win = HIPPO_CANVAS_CONTEXT_WIN(context); */
+    return 96;
+}
+
+static PangoFontDescription *
+hippo_canvas_context_win_get_font(HippoCanvasContext *context)
+{
+    HippoCanvasContextWin *canvas_win = HIPPO_CANVAS_CONTEXT_WIN(context);
+    
+    return pango_context_get_font_description(canvas_win->pango);
 }
 
 static void
@@ -1396,6 +1438,15 @@ hippo_canvas_context_win_update_pango(HippoCanvasContextWin *context_win,
                                       cairo_t               *cr)
 {
     pango_cairo_update_context(cr, context_win->pango);
+}
+
+static void
+hippo_canvas_context_win_clear_style(HippoCanvasContextWin *context_win)
+{
+    if (context_win->style) {
+        g_object_unref((void*)context_win->style);
+        context_win->style = NULL;
+    }
 }
 
 static void

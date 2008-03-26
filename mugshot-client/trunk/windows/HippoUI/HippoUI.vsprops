@@ -14,7 +14,7 @@
 		Name="VCLinkerTool"
 		AdditionalDependencies="shlwapi.lib ws2_32.lib wininet.lib urlmon.lib advapi32.lib gdi32.lib shell32.lib comctl32.lib jpeg.lib"
 		OutputFile="$(OutDir)/Mugshot.exe"
-		AdditionalLibraryDirectories="../debug;../../mugshot-dependencies/windows-binary/jpeg/lib"
+		AdditionalLibraryDirectories="../debug;../../../mugshot-dependencies/windows-binary/jpeg/lib"
 	/>
 	<Tool
 		Name="VCResourceCompilerTool"

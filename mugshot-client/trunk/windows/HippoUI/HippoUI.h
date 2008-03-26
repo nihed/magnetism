@@ -110,6 +110,7 @@ public:
     HWND getWindow() { return window_; }
     HICON getSmallIcon() { return smallIcon_; }
     HICON getBigIcon() { return bigIcon_; }
+    HippoBSTR getBasePath() throw (std::bad_alloc, HResultException);
 
 private:
     class HippoUIUpgradeWindowCallback : public HippoIEWindowCallback
@@ -120,8 +121,6 @@ private:
     private:
         HippoUI *ui_;
     };
-
-    HippoBSTR getBasePath() throw (std::bad_alloc, HResultException);
 
     bool registerActive();
     bool registerClass();

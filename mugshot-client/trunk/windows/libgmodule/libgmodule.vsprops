@@ -6,7 +6,7 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		AdditionalIncludeDirectories=".;..\libglib;..\..\..\mugshot-dependencies\glib;..\..\..\mugshot-dependencies\glib\glib;..\..\mugshot-dependencies\windows-binary\gettext\include;..\..\mugshot-dependencies\windows-binary\libiconv\include"
+		AdditionalIncludeDirectories=".;..\libglib;..\..\..\mugshot-dependencies\glib;..\..\..\mugshot-dependencies\glib\glib;..\..\..\mugshot-dependencies\windows-binary\gettext\include;..\..\..\mugshot-dependencies\windows-binary\libiconv\include"
 		PreprocessorDefinitions="HAVE_CONFIG_H;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;GMODULE_COMPILATION"
 		DisableSpecificWarnings="4312;4267"
 	/>

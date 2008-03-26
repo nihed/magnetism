@@ -14,4 +14,8 @@
 		RuntimeLibrary="1"
 		DebugInformationFormat="4"
 	/>
+	<Tool
+		Name="VCLinkerTool"
+		GenerateDebugInformation="true"
+	/>
 </VisualStudioPropertySheet>

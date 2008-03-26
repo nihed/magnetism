@@ -90,7 +90,8 @@
 		        <File Id="mugshotExe" Name="Mugshot.exe" src="Mugshot.exe" DiskId="1" Vital="yes">
 		            <Shortcut Id="mugshotShortcut" Directory="ProgramMenuFolder" Name="Mugshot"/>
 		        </File>
-		    </Component>
+                        <File Id="stackerCss" Name="stacker.css" src="stacker.css" DiskId="1" Vital="yes"/>
+                    </Component>
 		    
 		    <Directory Id="dhImagesDir" Name="Images">
         		<Component Id="images" Guid="681D6075-3B98-428C-8B73-68D9F15133AD">

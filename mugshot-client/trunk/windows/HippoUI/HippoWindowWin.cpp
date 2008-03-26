@@ -24,6 +24,7 @@ public:
     }
 
     void setContents(HippoCanvasItem *item);
+    void setTheme(HippoCanvasTheme *theme);
     void setVisible(bool visible);
     void hideToIcon(HippoRectangle *iconRect);
     void setRole(HippoWindowRole role);
@@ -223,6 +224,13 @@ hippo_window_win_new(HippoUI *ui)
     return HIPPO_WINDOW(win);
 }
 
+void
+hippo_window_win_set_theme (HippoWindowWin   *window_win,
+                            HippoCanvasTheme *theme)
+{
+    window_win->impl->setTheme(theme);
+}
+
 static void
 hippo_window_win_set_property(GObject         *object,
                               guint            prop_id,
@@ -388,6 +396,12 @@ HippoWindowImpl::setContents(HippoCanvasItem *item)
 {
     contents_ = item;
     contentsControl_->setRoot(item);
+}
+
+void 
+HippoWindowImpl::setTheme(HippoCanvasTheme *theme)
+{
+    contentsControl_->setTheme(theme);
 }
 
 void

@@ -21,11 +21,14 @@ public:
     HippoCanvas(); 
 
     void setRoot(HippoCanvasItem *item);
+    void setTheme(HippoCanvasTheme *theme);
     void setScrollbarPolicy(HippoOrientation     orientation,
                             HippoScrollbarPolicy policy);
 
     void getCanvasOrigin(int *x_p, int *y_p);
     void getViewport(RECT *rect_p);
+
+    HippoCanvasTheme *getTheme() { return theme_; }
 
 protected:
     virtual int getWidthRequestImpl();
@@ -75,6 +78,7 @@ private:
     GConnection0<void> rootRequestChanged_;
     GConnection0<void> rootTooltipChanged_;
     HippoGObjectPtr<HippoCanvasItem> root_;
+    HippoGObjectPtr<HippoCanvasTheme> theme_;
     HippoGObjectPtr<HippoCanvasContextWin> context_;
     HippoPtr<HippoScrollbar> hscroll_;
     HippoPtr<HippoScrollbar> vscroll_;

@@ -10,6 +10,7 @@
 #include <ShlObj.h>
 #include <Windows.h>
 #include <mshtml.h>
+#include <hippo/hippo-canvas-theme.h>
 #include <engine/hippo-engine-basics.h>
 #include <stacker/hippo-stacker-platform.h>
 
@@ -76,6 +77,7 @@ struct _HippoPlatformImpl {
     HippoPreferences *preferences;
     HippoHTTP *http;
     HippoUI *ui;
+    HippoCanvasTheme *theme;
 };
 
 struct _HippoPlatformImplClass {
@@ -119,7 +121,6 @@ hippo_platform_impl_stacker_iface_init(HippoStackerPlatformClass *klass)
 static void
 hippo_platform_impl_init(HippoPlatformImpl       *impl)
 {
-
 }
 
 static void
@@ -145,6 +146,9 @@ static void
 hippo_platform_impl_finalize(GObject *object)
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(object);
+
+    if (impl->theme)
+        g_object_unref(impl->theme);
 
     g_free(impl->jabber_resource);
     delete impl->preferences;
@@ -557,7 +561,21 @@ hippo_platform_impl_set_signin(HippoPlatform  *platform,
 static HippoWindow*
 hippo_platform_impl_create_window(HippoStackerPlatform *platform)
 {
-    return hippo_window_win_new(HIPPO_PLATFORM_IMPL(platform)->ui);
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+
+    HippoWindow *window = hippo_window_win_new(impl->ui);
+
+    if (impl->theme == NULL) {
+        HippoBSTR stylesheet = impl->ui->getBasePath();
+        stylesheet.Append(L"\\stacker.css");
+        HippoUStr stylesheetU(stylesheet);
+
+        impl->theme = hippo_canvas_theme_new(NULL, NULL, stylesheetU.c_str(), NULL);
+    }
+
+    hippo_window_win_set_theme(HIPPO_WINDOW_WIN(window), impl->theme);
+
+    return window;
 }
 
 struct TrayIconInfo {
