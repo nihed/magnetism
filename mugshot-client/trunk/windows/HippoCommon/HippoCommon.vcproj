@@ -294,7 +294,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="genmarshal.bat&#x0D;&#x0A;"
+						CommandLine="genmarshal.bat &quot;$(OutDir)&quot;&#x0D;&#x0A;"
 						Outputs="hippo-canvas-marshal.c;hippo-canvas-marshal.h"
 					/>
 				</FileConfiguration>
@@ -303,7 +303,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="genmarshal.bat&#x0D;&#x0A;"
+						CommandLine="genmarshal.bat &quot;$(OutDir)&quot;&#x0D;&#x0A;"
 						Outputs="hippo-canvas-marshal.c;hippo-canvas-marshal.h"
 					/>
 				</FileConfiguration>
@@ -334,6 +334,14 @@
 			</File>
 			<File
 				RelativePath="..\..\canvas\common\hippo\hippo-canvas-text.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-theme-engine.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-theme.c"
 				>
 			</File>
 			<File
@@ -408,7 +416,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="genmarshal.bat&#x0D;&#x0A;"
+						CommandLine="genmarshal.bat &quot;$(OutDir)&quot;&#x0D;&#x0A;"
 						Outputs="hippo-engine-marshal.c;hippo-engine-marshal.h"
 					/>
 				</FileConfiguration>
@@ -417,7 +425,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="genmarshal.bat&#x0D;&#x0A;"
+						CommandLine="genmarshal.bat &quot;$(OutDir)&quot;&#x0D;&#x0A;"
 						Outputs="hippo-engine-marshal.c;hippo-engine-marshal.h"
 					/>
 				</FileConfiguration>
@@ -486,7 +494,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="genmarshal.bat&#x0D;&#x0A;"
+						CommandLine="genmarshal.bat &quot;$(OutDir)&quot;&#x0D;&#x0A;"
 						Outputs="hippo-stacker-marshal.c;hippo-stacker-marshal.h"
 					/>
 				</FileConfiguration>
@@ -495,7 +503,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="genmarshal.bat&#x0D;&#x0A;"
+						CommandLine="genmarshal.bat &quot;$(OutDir)&quot;&#x0D;&#x0A;"
 						Outputs="hippo-stacker-marshal.c;hippo-stacker-marshal.h"
 					/>
 				</FileConfiguration>
@@ -523,6 +531,28 @@
 			<File
 				RelativePath="..\..\..\desktop-data-model\engine\hippo-xml-utils.c"
 				>
+			</File>
+			<File
+				RelativePath="..\..\common\stacker\stacker.css"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="copy ..\..\common\stacker\stacker.css &quot;$(OutDir)\stacker.css&quot;"
+						Outputs="$(OutDir)\stacker.css"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="copy ..\..\common\stacker\stacker.css &quot;$(OutDir)\stacker.css&quot;"
+						Outputs="$(OutDir)\stacker.css"
+					/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
@@ -712,6 +742,18 @@
 			</File>
 			<File
 				RelativePath="..\..\canvas\common\hippo\hippo-canvas-text.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-theme-engine.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-theme-internal.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-theme.h"
 				>
 			</File>
 			<File

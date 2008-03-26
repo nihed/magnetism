@@ -22,7 +22,8 @@ typedef struct _HippoWindowWinClass HippoWindowWinClass;
 GType            hippo_window_win_get_type               (void) G_GNUC_CONST;
 
 HippoWindow*     hippo_window_win_new (HippoUI *ui);
-
+void             hippo_window_win_set_theme (HippoWindowWin   *window_win,
+                                             HippoCanvasTheme *theme);
 
 G_END_DECLS
 

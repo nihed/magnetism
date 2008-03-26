@@ -6,7 +6,7 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		AdditionalIncludeDirectories="../libpango;../../mugshot-dependencies/windows-binary/gettext/include;../../../mugshot-dependencies/glib;../../../mugshot-dependencies/glib/glib;../libglib;../cairo;../../../mugshot-dependencies/cairo/src;../../../mugshot-dependencies/glib/gmodule;../../../mugshot-dependencies/pango/pango;../../../mugshot-dependencies/pango"
+		AdditionalIncludeDirectories="../libpango;../../../mugshot-dependencies/windows-binary/gettext/include;../../../mugshot-dependencies/glib;../../../mugshot-dependencies/glib/glib;../libglib;../cairo;../../../mugshot-dependencies/cairo/src;../../../mugshot-dependencies/glib/gmodule;../../../mugshot-dependencies/pango/pango;../../../mugshot-dependencies/pango"
 		PreprocessorDefinitions="PANGO_ENABLE_BACKEND;PANGO_ENABLE_ENGINE"
 		DisableSpecificWarnings="4312;4244"
 	/>

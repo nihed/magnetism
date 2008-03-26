@@ -6,7 +6,7 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		AdditionalIncludeDirectories=".;../HippoUtil;../cairo;../../../mugshot-dependencies/cairo/src;../../../mugshot-dependencies/glib;../../../mugshot-dependencies/glib/glib;../../../mugshot-dependencies/pango;../libglib;../../mugshot-dependencies/windows-binary/gettext/include;../../mugshot-dependencies/windows-binary/jpeg/include;&quot;../../../desktop-data-model&quot;;../../common;../../../mugshot-dependencies/loudmouth;../../canvas/common;../../../mugshot-dependencies/hippo/generated"
+		AdditionalIncludeDirectories=".;../HippoUtil;../cairo;&quot;../../../mugshot-dependencies/cairo/src&quot;;&quot;../../../mugshot-dependencies/glib&quot;;&quot;../../../mugshot-dependencies/glib/glib&quot;;&quot;../../../mugshot-dependencies/pango&quot;;&quot;../../../mugshot-dependencies/libcroco/src&quot;;../libglib;&quot;../../../mugshot-dependencies/windows-binary/gettext/include&quot;;&quot;../../../mugshot-dependencies/windows-binary/jpeg/include&quot;;&quot;../../../desktop-data-model&quot;;../../common;&quot;../../../mugshot-dependencies/loudmouth&quot;;../../canvas/common;&quot;../../../mugshot-dependencies/hippo/generated&quot;"
 		PreprocessorDefinitions="DDM_I_KNOW_THIS_IS_UNSTABLE"
 		DisableSpecificWarnings="4311;4244;4267"
 	/>

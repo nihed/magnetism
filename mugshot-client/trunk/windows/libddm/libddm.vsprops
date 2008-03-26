@@ -6,7 +6,7 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		AdditionalIncludeDirectories=".;../HippoUtil;../../../mugshot-dependencies/glib;../../../mugshot-dependencies/glib/glib;../libglib;../../mugshot-dependencies/windows-binary/gettext/include;../../common;&quot;../../../desktop-data-model&quot;"
+		AdditionalIncludeDirectories=".;../HippoUtil;../../../mugshot-dependencies/glib;../../../mugshot-dependencies/glib/glib;../libglib;../../../mugshot-dependencies/windows-binary/gettext/include;../../common;&quot;../../../desktop-data-model&quot;"
 		PreprocessorDefinitions="DDM_COMPILATION"
 		DisableSpecificWarnings="4311;4244;4267"
 	/>

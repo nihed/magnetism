@@ -1,6 +1,6 @@
 @echo off
 PATH=%PATH%;..\dependencies
-set genmarshal=..\dependencies\glib\bin\glib-genmarshal
+set genmarshal=%1\glib-genmarshal
 set source=..\..\..\desktop-data-model\ddm\ddm-marshal.list
 
 %genmarshal%  --prefix=ddm_marshal --header %source% > ddm-marshal.h

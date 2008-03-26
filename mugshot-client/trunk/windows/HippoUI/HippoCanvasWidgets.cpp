@@ -16,9 +16,7 @@
     struct _HippoCanvas##Camel { HippoCanvasControl parent; };                          \
     struct _HippoCanvas##Camel##Class { HippoCanvasControlClass parent; };              \
     static void hippo_canvas_##lower##_init(HippoCanvas##Camel *lower) {}               \
-    static void hippo_canvas_##lower##_class_init(HippoCanvas##Camel##Class *lower) {}  \
     G_DEFINE_TYPE(HippoCanvas##Camel, hippo_canvas_##lower, HIPPO_TYPE_CANVAS_CONTROL)
-
 
 HIPPO_DEFINE_CONTROL_ITEM(scrollbars, Scrollbars);
 
@@ -170,6 +168,22 @@ scrollbars_get_control(HippoCanvasScrollbars *scrollbars)
     return (HippoCanvas *)control;
 }
 
+static void
+hippo_canvas_scrollbars_theme_changed(HippoCanvasControl *control_item)
+{
+    HippoCanvas *canvas = scrollbars_get_control(HIPPO_CANVAS_SCROLLBARS(control_item));
+
+    canvas->setTheme(control_item->theme);
+}
+
+static void
+hippo_canvas_scrollbars_class_init(HippoCanvasScrollbarsClass *klass)
+{
+    HippoCanvasControlClass *control_class = HIPPO_CANVAS_CONTROL_CLASS(klass);
+
+    control_class->theme_changed = hippo_canvas_scrollbars_theme_changed;
+}
+
 HippoCanvasItem*
 hippo_canvas_scrollbars_new(void)
 {
@@ -183,6 +197,7 @@ hippo_canvas_scrollbars_new(void)
     item = HIPPO_CANVAS_ITEM(g_object_new(HIPPO_TYPE_CANVAS_SCROLLBARS,
                             "control", canvas,
                             NULL));
+
     canvas->Release();
 
     return item;

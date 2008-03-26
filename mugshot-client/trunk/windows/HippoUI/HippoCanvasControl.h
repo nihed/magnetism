@@ -24,10 +24,13 @@ typedef struct _HippoCanvasControlClass HippoCanvasControlClass;
 struct _HippoCanvasControl {
     HippoCanvasBox box;
     HippoAbstractControl *control;
+    HippoCanvasTheme *theme;
 };
 
 struct _HippoCanvasControlClass {
     HippoCanvasBoxClass parent_class;
+
+    void (*theme_changed) (HippoCanvasControl *control);
 };
 
 GType            hippo_canvas_control_get_type               (void) G_GNUC_CONST;

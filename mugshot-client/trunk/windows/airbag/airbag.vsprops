@@ -6,6 +6,6 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		AdditionalIncludeDirectories="..\..\common\airbag\src"
+		AdditionalIncludeDirectories="..\..\..\mugshot-dependencies\airbag\src"
 	/>
 </VisualStudioPropertySheet>

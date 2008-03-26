@@ -210,6 +210,27 @@ hippo_canvas_control_position(HippoCanvasControl *control)
 }
 
 static void
+on_context_style_changed(HippoCanvasContext   *context,
+                         gboolean              resize_needed,
+                         HippoCanvasControl   *control)
+{
+    HippoCanvasStyle *style = NULL;
+    HippoCanvasTheme *theme = NULL;
+
+    if (context != NULL)
+        style = hippo_canvas_context_get_style(context);
+    if (style != NULL)
+        theme = hippo_canvas_style_get_theme(style);
+
+    if (theme != control->theme) {
+        control->theme = theme;
+
+        if (HIPPO_CANVAS_CONTROL_GET_CLASS(control)->theme_changed)
+            HIPPO_CANVAS_CONTROL_GET_CLASS(control)->theme_changed(control);
+    }
+}
+
+static void
 hippo_canvas_control_set_context(HippoCanvasItem    *item,
                                  HippoCanvasContext *context)
 {
@@ -218,15 +239,25 @@ hippo_canvas_control_set_context(HippoCanvasItem    *item,
     if (context == box->context)
         return;
 
-    if (box->context)
+    if (box->context) {
         hippo_canvas_context_unregister_widget_item(box->context, item);
+
+        g_signal_handlers_disconnect_by_func(box->context,
+                                             (gpointer)on_context_style_changed,
+                                             context);
+    }
 
     /* chain up, which invalidates our old context */
     item_parent_class->set_context(item, context);
 
     if (box->context) {
         hippo_canvas_context_register_widget_item(box->context, item);
+
+        g_signal_connect(box->context, "style-changed",
+                         G_CALLBACK(on_context_style_changed), item);
     }
+
+    on_context_style_changed(context, TRUE, HIPPO_CANVAS_CONTROL(item));
 }
 
 static void

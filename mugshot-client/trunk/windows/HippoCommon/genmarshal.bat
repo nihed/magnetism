@@ -1,6 +1,6 @@
 @echo off
 PATH=%PATH%;..\dependencies
-set genmarshal=..\dependencies\glib\bin\glib-genmarshal
+set genmarshal=%1\glib-genmarshal
 
 set source=..\..\..\desktop-data-model\engine\hippo-engine-marshal.list
 

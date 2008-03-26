@@ -1,6 +1,8 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #ifdef HIPPO_OS_LINUX
 #include <glib.h>
@@ -142,6 +144,7 @@ NS_IMETHODIMP hippoControl::SetListener(hippoIControlListener *listener)
     return NS_OK;
 }
 
+#ifdef HIPPO_OS_LINUX
 static nsIWidget* GetMainWidget(nsIDOMWindow* aWindow)
 {
     /* The window ID that we want to pass to the Mugshot client is 
@@ -183,6 +186,7 @@ static nsIWidget* GetMainWidget(nsIDOMWindow* aWindow)
   return NULL;
 #endif
 }
+#endif
 
 /* void setListener (in hippoIControlListener listener); */
 NS_IMETHODIMP hippoControl::SetWindow(nsIDOMWindow *window)
