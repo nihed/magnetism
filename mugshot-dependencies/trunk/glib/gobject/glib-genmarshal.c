@@ -35,6 +35,8 @@
 
 #ifdef G_OS_WIN32
 #include <io.h>
+/* HIPPO: Passing stdout to glib causes a crash */
+#define g_fprintf fprintf
 #endif
 
 /* --- defines --- */
@@ -652,11 +654,14 @@ main (int   argc,
   for (slist = files; slist; slist = slist->next)
     {
       gchar *file = slist->data;
-      gint fd = open (file, O_RDONLY);
-
-      if (fd < 0)
+      GError *error = NULL;
+      gchar *contents;
+      gsize length;
+      /* HIPPO: Passing a fd to libglib causes a crash */
+      if(!g_file_get_contents(file, &contents, &length, &error))
 	{
-	  g_warning ("failed to open \"%s\": %s", file, g_strerror (errno));
+	  g_warning ("failed to open \"%s\": %s", file, error->message);
+      g_error_free(error);
 	  result = 1;
 	  continue;
 	}
@@ -665,7 +670,7 @@ main (int   argc,
       scanner->input_name = file;
 
       /* parse & process file */
-      g_scanner_input_file (scanner, fd);
+      g_scanner_input_text (scanner, contents, length);
       
       /* scanning loop, we parse the input untill it's end is reached,
        * or our sub routine came across invalid syntax
@@ -724,7 +729,7 @@ main (int   argc,
 	}
       while (scanner->next_token != G_TOKEN_EOF);
 
-      close (fd);
+      g_free(contents);
     }
 
   /* put out trailer */
