@@ -169,8 +169,11 @@ public class FeedSystemBean implements FeedSystem {
 			if (content.getType().equals("text/plain"))
 				isDefinitelyText = true;
 		} else if (feed.getFeedType().equals("atom_1.0")) {
-			if (content.getType().equals("text") || content.getType().equals("text/plain"))
-				isDefinitelyText = true;
+			String contentType = content.getType();
+			if (contentType != null) {
+				if (contentType.equals("text") || contentType.equals("text/plain"))
+					isDefinitelyText = true;
+			}
 		}
 		
 		if (isDefinitelyText)
