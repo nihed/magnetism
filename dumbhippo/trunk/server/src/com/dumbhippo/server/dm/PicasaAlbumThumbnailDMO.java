@@ -36,7 +36,7 @@ public abstract class PicasaAlbumThumbnailDMO extends ThumbnailDMO {
 	// Although album names can have arbitrary Unicode in them, everything but ascii letters
 	// and digits is stripped out in creating the URL (with upper casing of the beginning
 	// of ascii letter sequences ... "test bourrée" => "TestBourrE")
-	private static Pattern PICASA_URL_PATTERN = Pattern.compile("http://picasaweb.google.com/([A-Za-z0-9]+)/([A-Za-z0-9]+)");
+	private static Pattern PICASA_URL_PATTERN = Pattern.compile("http://picasaweb.google.com/([A-Za-z0-9.]+)/([A-Za-z0-9]+)");
 
 	private static String extractExtra(String url) {
 		Matcher m = PICASA_URL_PATTERN.matcher(url);
