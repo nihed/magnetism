@@ -453,14 +453,9 @@ fi
 
 AC_MSG_CHECKING([for libxul])
 
-# Gecko folks screwed up their .pc files ...Firefox betas
-# ship with a version of 1.9pre, which pkg-config can't
-# do anything with, so we omit >= 1.9 version check here
-# that we should add back later
-
 have_xulrunner=false
 for p in libxul libxul-instable ; do
-    if $PKG_CONFIG --exists $p ; then
+    if $PKG_CONFIG --exists $p '>=' 1.9 ; then
        have_xulrunner=true
        xulrunner_package=$p
     fi
