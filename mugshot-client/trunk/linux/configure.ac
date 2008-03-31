@@ -449,15 +449,40 @@ if test "x$with_xpidl" != x -a "x$with_xpidl" != xyes -a "x$with_xpidl" != xno ;
     XPIDL="$with_xpidl"
 fi
 
-AC_MSG_CHECKING([for libxul-unstable])
-HIPPO_PKG_CHECK_EXISTS(libxul-unstable >= 1.9, have_xulrunner=true, have_xulrunner=false)
+# Look for libxul or libxul-unstable
+
+AC_MSG_CHECKING([for libxul])
+
+# Gecko folks screwed up their .pc files ...Firefox betas
+# ship with a version of 1.9pre, which pkg-config can't
+# do anything with, so we omit >= 1.9 version check here
+# that we should add back later
+
+have_xulrunner=false
+for p in libxul libxul-instable ; do
+    if $PKG_CONFIG --exists $p ; then
+       have_xulrunner=true
+       xulrunner_package=$p
+    fi
+done
+
 if test "x${have_xulrunner}" = "xtrue"; then
     AC_MSG_RESULT([yes])
     AC_DEFINE(HAVE_XULRUNNER, 1, [whether we have XULRunner])
-    idldir=`pkg-config --variable=idldir libxul-unstable`
+    idldir=`$PKG_CONFIG --variable=idldir $xulrunner_package`
     GECKO_IDLDIR="${idldir}"
-    GECKO_INCLUDEDIR=`pkg-config --variable=includedir libxul-unstable`
-    XPIDL=`pkg-config --variable=sdkdir libxul-unstable`/bin/xpidl
+    GECKO_INCLUDEDIR=`$PKG_CONFIG --variable=includedir $xulrunner_package`
+    # This needs rethinking on the Gecko end.... I'm not sure that
+    # both of these are still relevant, but we need a real way to find
+    # xpidl from the .pc file
+    for i in `$PKG_CONFIG --variable=sdkdir $xulrunner_package`/bin/xpidl `$PKG_CONFIG --variable=libdir $xulrunner_package`/xpidl ; do
+       if test -x $i ; then
+           XPIDL=$i
+       fi
+    done         
+    if test x"XPIDL" = x ; then 
+       AC_MSG_ERROR([Can't find xpidl based on libxulrunner .pc file])
+    fi
 else
     AC_MSG_RESULT([no])
 fi
@@ -519,6 +544,8 @@ fi
 
 if test "x${have_xulrunner}" != xtrue; then
    AC_DEFINE(HAVE_PRE_XULRUNNER_SDK, 1, [Define if not using XULRunner])
+fi
+
 if test "x$GECKO_INCLUDEDIR" != x ; then
    AC_MSG_CHECKING([for "full gecko" style includes])
    if test -f "$GECKO_INCLUDEDIR/caps/nsIScriptSecurityManager.h" ; then
@@ -531,7 +558,6 @@ if test "x$GECKO_INCLUDEDIR" != x ; then
    fi
 else
     AC_MSG_ERROR([Must either specify --with-gecko-sdk=DIR or --with-gecko-headers=DIR])
-fi
 fi
 
 # If we are using the cut-and-paste version of nsIXPCSecurityManager.h, we don't
@@ -587,7 +613,7 @@ fi
 PKG_CHECK_MODULES(LIBHIPPOFIREFOX, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED $NSPR_PACKAGES $JS_PACKAGES gtk+-2.0)
 
 if test "x${have_xulrunner}"; then
-  LIBHIPPOFIREFOX_CFLAGS="`pkg-config --cflags libxul-unstable` ${LIBHIPPOFIREFOX_CFLAGS}"
+  LIBHIPPOFIREFOX_CFLAGS="`$PKG_CONFIG --cflags $xulrunner_package` ${LIBHIPPOFIREFOX_CFLAGS}"
 fi
 # Should have -lxpcom here, but that upsets libtool for unknown reasons. Or
 # should we use -lxpcomglue instead? We don't actually link to anything private, though
@@ -595,7 +621,7 @@ fi
 LIBHIPPOFIREFOX_LIBS="$LIBHIPPOFIREFOX_LIBS $NSPR_LIBS"
 if test "x${have_xulrunner}" = "xtrue"; then
   # We need to match the mozilla version by compiling with short-wchar
-  LIBHIPPOFIREFOX_LIBS="${LIBHIPPOFIREFOX_LIBS} `pkg-config --libs libxul-unstable`"
+  LIBHIPPOFIREFOX_LIBS="${LIBHIPPOFIREFOX_LIBS} `$PKG_CONFIG --libs $xulrunner_package`"
 fi
 
 #### define absolute path to srcdir for debugging-only code
