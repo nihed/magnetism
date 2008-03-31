@@ -28,7 +28,7 @@
 <c:when test="${mode == 'shell'}">
 <div><a href="?mode=live">Live State Dump</a></div>
 <div><a href="?mode=users">All User Controls</a></div>
-<h2>Shell</h2>
+<h2>Shell on <c:out value="${pageContext.request.localAddr}" escapeXml="true"/></h2>
 <div id="dhAdminSamples">
 Important variables:<br/>
 <i>server</i> - Object with a few handy methods (see reflection)<br/>
