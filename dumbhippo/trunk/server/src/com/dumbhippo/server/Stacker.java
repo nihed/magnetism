@@ -41,6 +41,8 @@ public interface Stacker {
 	public void stack(Block block, long activity, User participant, boolean isGroupParticipation, StackReason reason);
 	public void stack(Block block, long activity, StackReason reason);
 
+	public Block stackIfFound(BlockKey key, long activity, User participant, boolean isGroupParticipation, StackReason reason, boolean updateAllUserBlockDatas) throws NotFoundException;
+
 	/**
 	 * Re-requests the desired user/group block datas from the block handler, 
 	 * and toggles the deleted flag on any ubd/gdb that already 
