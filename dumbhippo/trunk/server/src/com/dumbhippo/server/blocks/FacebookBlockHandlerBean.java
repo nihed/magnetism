@@ -25,7 +25,6 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
-import com.dumbhippo.server.util.NotFoundUncheckedException;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.caches.CacheFactory;
@@ -165,8 +164,8 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 		StackInclusion stackInclusion = event.getEventType().getDisplayToOthers() ? StackInclusion.IN_ALL_STACKS : StackInclusion.ONLY_WHEN_VIEWING_SELF;
 		BlockKey key = getKey(user, event, stackInclusion);
 		try {
-		    stacker.stack(key, event.getEventTimestampAsLong(), user, false, StackReason.BLOCK_UPDATE);
-		} catch (NotFoundUncheckedException e) {
+		    stacker.stackIfFound(key, event.getEventTimestampAsLong(), user, false, StackReason.BLOCK_UPDATE, true);
+		} catch (NotFoundException e) {
 			// This can happen if the FacebookAccount was transferred to a new user, and while old 
 			// "recyclable" Facebook Events exist, the Blocks for the new user do not exist
 			onFacebookEventCreated(user, event);
