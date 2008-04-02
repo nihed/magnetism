@@ -96,6 +96,7 @@ import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.UserClientMatcher;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.util.NotFoundUncheckedException;
 import com.dumbhippo.server.views.GroupMugshotView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonMugshotView;
@@ -823,7 +824,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		try {
 			block = queryBlock(key);
 		} catch (NotFoundException e) {
-			throw new RuntimeException("stack() called on block that doesn't exist; probably means a migration is needed. key=" + key, e);
+			throw new NotFoundUncheckedException("stack() called on block that doesn't exist; probably means a migration is needed. key=" + key, e);
 		}
         stack(block, activity, participant, isGroupParticipation, reason, updateAllUserBlockDatas);
         return block;
