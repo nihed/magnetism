@@ -130,7 +130,8 @@ BUILT_SOURCES += $(LIBSTACKER_BUILT_SOURCEFILES)
 CSS_STYLESHEETS = \
 	$(COMMONSRCDIR)/stacker/stacker.css
 
-pkgdata_DATA += $(CSS_STYLESHEETS)
+cssdir=$(pkgdatadir)
+css_DATA = $(CSS_STYLESHEETS)
 EXTRA_DIST += $(CSS_STYLESHEETS)
 
 ## we need to nodist these because otherwise automake would copy 
@@ -143,3 +144,4 @@ libstacker-dist-hook:
 	mkdir $(distdir)/common-dist/stacker/generated
 	cp $(LIBSTACKER_SOURCEFILES) $(distdir)/common-dist/stacker
 	cp $(COMMONSRCDIR)/stacker/hippo-stacker-marshal.list $(distdir)/common-dist/stacker
+	cp $(COMMONSRCDIR)/stacker/stacker.css $(distdir)/common-dist/stacker
