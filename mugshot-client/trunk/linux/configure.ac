@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(mugshot, 1.1.90)
+AM_INIT_AUTOMAKE(mugshot, 1.1.93)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -461,6 +461,7 @@ for p in libxul libxul-instable ; do
     fi
 done
 
+AM_CONDITIONAL(USE_XULRUNNER, test "x${have_xulrunner}" = "xtrue")
 if test "x${have_xulrunner}" = "xtrue"; then
     AC_MSG_RESULT([yes])
     AC_DEFINE(HAVE_XULRUNNER, 1, [whether we have XULRunner])

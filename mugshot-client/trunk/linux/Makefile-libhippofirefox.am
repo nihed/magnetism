@@ -1,7 +1,13 @@
 FIREFOX_SRCDIR = $(COMMONSRCDIR)/firefox
 GECKO_PRIVATE_INCLUDEDIR=$(FIREFOX_SRCDIR)/gecko-private/include
+EXTENSION_ID = firefox@mugshot.org
+FIREFOX_APPID = {ec8030f7-c20a-464f-9b0e-13a3a9e97384}
 
+if USE_XULRUNNER
+extensiondir=$(libdir)/mozilla/extensions/$(FIREFOX_APPID)/$(EXTENSION_ID)
+else
 extensiondir=$(pkglibdir)/firefox
+endif
 EXTENSION_SRCDIR=$(FIREFOX_SRCDIR)/extension
 extension_DATA =				\
 	$(EXTENSION_SRCDIR)/chrome.manifest	\
