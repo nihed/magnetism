@@ -70,8 +70,8 @@
 	<classpathentry kind="src" path="server/tests"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/hungry/httpunit-1.6.2.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/bsh-2.0b4.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/rome-0.8.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/rome-fetcher-0.7.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/rome-0.9.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/rome-fetcher-0.9.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/tagsoup-1.0.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/jdom-1.0.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/client/javax.servlet.jar"/>
