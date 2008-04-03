@@ -290,7 +290,7 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 				}
 				
 				if (!newExternalTasks.isEmpty())
-					notifyExternalTasks(isFirst);
+					notifyExternalTasks(newExternalTasks, isFirst);
 				
 				lastSeenTaskDatabaseId = loadResult.getLastDbId();
 				long totalLoaded = loadResult.getTasks().size();
@@ -440,11 +440,15 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 		}	
 	}
 	
-	private void notifyExternalTasks(final boolean overwrite) {		
+	private void notifyExternalTasks(final boolean overwrite) {
+		notifyExternalTasks(externalTasks.values(), overwrite);	
+	}
+	
+	private void notifyExternalTasks(final Collection<PollingTask> tasks, final boolean overwrite) {		
 		Thread t = new Thread(new Runnable() {
 			public void run() {
 				try {
-					storeExternalTaskSetsS3(externalTasks.values(), overwrite);
+					storeExternalTaskSetsS3(tasks, overwrite);
 				} catch (TransientServiceException e) {	
 					throw new RuntimeException(e);
 				}
