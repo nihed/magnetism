@@ -718,6 +718,8 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		for (InviterData inviterData : invite.getInviters()) {
 			if (!inviterData.isDeleted()) {
 			    Account inviterAccount = inviterData.getInviter().getAccount();
+			    if (accounts.isSpecialCharacter(inviterAccount.getOwner()))
+			    	continue;
 			    spider.createContact(newUser, inviterAccount);
 			}
 		}
