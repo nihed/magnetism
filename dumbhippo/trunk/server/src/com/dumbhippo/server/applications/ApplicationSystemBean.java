@@ -37,6 +37,7 @@ import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.dm.ReadWriteSession;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AppinfoUpload;
 import com.dumbhippo.persistence.Application;
@@ -674,6 +675,17 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		for (ApplicationUsageProperties props : usages) {
 			recordApplicationUsage(viewpoint, props, now);
 		}
+
+		/* This is somewhat expensive since if the user is listening for changes to topApplications
+		 * it will result in topApplications immediately being recomputed and sent to the user
+		 * each time the use uploads new application stats (basically once an hour.)
+		 * If it proves that computing topApplications once an hour for everybody is too much
+		 * work we might want to consider keeping track of when we last computed it and only
+		 * notify changes once a day.
+		 */
+		ReadWriteSession session = DataService.currentSessionRW(); 
+		session.changed(UserDMO.class, viewpoint.getViewer().getGuid(), "topApplications");
+		session.changed(UserDMO.class, viewpoint.getViewer().getGuid(), "applicationUsageStart");
 	}
 
 	private void recordApplicationUsage(UserViewpoint viewpoint, ApplicationUsageProperties props, Date date) {
