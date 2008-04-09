@@ -34,6 +34,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
@@ -119,7 +120,7 @@ public class FacebookSystemBean implements FacebookSystem {
 		// facebook blocks to their owners; later we can return it if the viewpoint is for someone
 		// who is the owner's facebook friend or is in the same network with the owner and
 		// facebookEvent.getEventType().getDisplayToOthers() is true
-		if (viewpoint.isOfUser(facebookEvent.getFacebookAccount().getExternalAccount().getAccount().getOwner())) {
+		if (viewpoint.isOfUser(facebookEvent.getFacebookAccount().getExternalAccount().getAccount().getOwner()) || (viewpoint instanceof SystemViewpoint)) {
 			return facebookEvent;
 		} else {
 			throw new NotFoundException("Viewpoint " + viewpoint + " can't view facebook event " + facebookEvent);

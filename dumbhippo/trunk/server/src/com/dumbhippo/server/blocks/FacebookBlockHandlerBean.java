@@ -26,6 +26,7 @@ import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.FacebookPhotoDataCache;
@@ -80,7 +81,7 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 		
 		// before we implement getting info about one's friends and network, we can only show
 		// facebook blocks to their owners
-		if (!viewpoint.isOfUser(user))
+		if (!viewpoint.isOfUser(user) && !(viewpoint instanceof SystemViewpoint))
 		    throw new BlockNotVisibleException("external facebook account for block " + block + " is not visible to " + viewpoint);
 		
 		// no extras needed, we just need user.getName
