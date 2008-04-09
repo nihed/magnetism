@@ -103,8 +103,10 @@
     		</div>
 	    </td>
 	    <td id="dhApplicationsRight">
+	    	<%-- FIXME this is too slow right now - change to periodic map/reduce
 			<div class="dh-applications-subheading">Popular applications among <c:out value="${appView.application.name}"/> users:</div>
 			<dht3:miniApplicationList apps="${application.relatedApplications}"/>
+			--%>
 	    </td>
 	    </tr>
 	    </table>
