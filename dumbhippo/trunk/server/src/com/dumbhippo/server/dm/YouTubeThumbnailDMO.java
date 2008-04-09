@@ -33,8 +33,8 @@ public abstract class YouTubeThumbnailDMO extends ThumbnailDMO {
 		super(key);
 	}
 	
-	static private Pattern YOUTUBE_URL_PATTERN = Pattern.compile("http://youtube.com/?v=([A-Za-z0-9_-]+)");
-
+	static private Pattern YOUTUBE_URL_PATTERN = Pattern.compile("http://youtube.com/\\?v=([A-Za-z0-9_-]+)");
+	                                                             
 	private static String extractExtra(String url) {
 		Matcher m = YOUTUBE_URL_PATTERN.matcher(url);
 		if (m.matches())
