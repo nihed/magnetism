@@ -171,7 +171,7 @@ remove_extra_children(HippoCanvasStack *canvas_stack)
             children = g_list_reverse(children);
         while (count > canvas_stack->max_blocks) {
             g_assert(children != NULL);
-            hippo_canvas_box_remove(HIPPO_CANVAS_BOX(canvas_stack), children->data);
+            hippo_canvas_item_destroy(children->data);
             children = g_list_remove(children, children->data);
             --count;
         }
@@ -369,12 +369,8 @@ hippo_canvas_stack_remove_block(HippoCanvasStack *canvas_stack,
 
     item = find_block_item(canvas_stack, block);
 
-    if (item != NULL) {
-        g_object_set(G_OBJECT(item),
-                     "block", NULL,
-                     NULL);
-        hippo_canvas_box_remove(HIPPO_CANVAS_BOX(canvas_stack), item);
-    }
+    if (item != NULL)
+        hippo_canvas_item_destroy(item);
 }
 
 typedef struct {
@@ -459,7 +455,7 @@ foreach_update_min_timestamp(HippoCanvasItem *child,
 
     sort_timestamp = hippo_block_get_sort_timestamp(child_block);
     if (sort_timestamp < stack->min_timestamp)
-        hippo_canvas_box_remove(HIPPO_CANVAS_BOX(stack), child);
+        hippo_canvas_item_destroy(HIPPO_CANVAS_ITEM(child));
 
     g_object_unref(child_block);
 }

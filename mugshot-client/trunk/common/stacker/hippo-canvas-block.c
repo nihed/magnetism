@@ -168,9 +168,6 @@ set_timestamp_item(HippoCanvasBlock *canvas_block,
     char *when;
     gboolean nonempty;
 
-    if (canvas_block->block == NULL)
-        return FALSE;
-
     server_time_now = hippo_current_time_ms() + hippo_actions_get_server_time_offset(canvas_block->actions);
     
     when = hippo_format_time_ago((GTime) (server_time_now / 1000), age);
@@ -189,8 +186,11 @@ static void
 update_time(HippoCanvasBlock *canvas_block)
 {
     if (canvas_block->age_item) {
-        canvas_block->age_set = set_timestamp_item(canvas_block, canvas_block->age_parent, canvas_block->age_item, 
-                                                   (GTime) (hippo_block_get_timestamp(canvas_block->block) / 1000));
+        if (canvas_block->block == NULL)
+            canvas_block->age_set = FALSE;
+        else
+            canvas_block->age_set = set_timestamp_item(canvas_block, canvas_block->age_parent, canvas_block->age_item, 
+                                                       (GTime) (hippo_block_get_timestamp(canvas_block->block) / 1000));
         
         hippo_canvas_item_set_visible(canvas_block->age_item,
                                       canvas_block->age_set);
@@ -203,10 +203,14 @@ static void
 update_original_age(HippoCanvasBlock *canvas_block)
 {
     if (canvas_block->original_age_item) {
-        canvas_block->original_age_set =
-            set_timestamp_item(canvas_block,
-                               canvas_block->original_age_box, 
-                               canvas_block->original_age_item, canvas_block->original_age);
+        if (canvas_block->block == NULL)
+            canvas_block->original_age_set = FALSE;
+        else
+            canvas_block->original_age_set =
+                set_timestamp_item(canvas_block,
+                                   canvas_block->original_age_box, 
+                                   canvas_block->original_age_item, canvas_block->original_age);
+        
         hippo_canvas_item_set_visible(HIPPO_CANVAS_ITEM(canvas_block->original_age_box),
                                       canvas_block->expanded && canvas_block->original_age_set);
     }
