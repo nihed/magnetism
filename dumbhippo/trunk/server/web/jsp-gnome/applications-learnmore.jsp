@@ -8,8 +8,8 @@
 
 <head>
 	<title>Application Statistics</title>
-	<dht3:stylesheet name="site" iefixes="true"/>	
-	<dht3:stylesheet name="applications"/>	
+	<gnome:stylesheet name="site" iefixes="true"/>	
+	<gnome:stylesheet name="applications"/>	
 	<dh:script module="dh.actions"/>
 </head>
 

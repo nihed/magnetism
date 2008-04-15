@@ -64,6 +64,7 @@ table, tr, td, th {
 
 #gnomePage {
 	min-height: 			600px;
+	text-align:			left;
 }
 
 #gnomeContent {	
