@@ -1,6 +1,8 @@
 #!/bin/sh
 
 targetdir=@@targetdir@@
+serverHost=@@serverHost@@
+bindHost=@@bindHost@@
 
 echo "Starting MySQL..."
 
@@ -43,6 +45,8 @@ if $started ; then
 	eval `grep 'password=' $targetdir/conf/my.cnf`
 	/usr/bin/mysqladmin -S $targetdir/run/mysql.sock -u root password $password
 	# Belt-and-suspenders; only one of these is needed on a particular host, but it all depends on what 
+	echo "grant all on *.* to root@'$bindHost' identified by '$password'" | /usr/bin/mysql -S $targetdir/run/mysql.sock -u root --password=$password mysql
+	echo "grant all on *.* to root@'$serverHost' identified by '$password'" | /usr/bin/mysql -S $targetdir/run/mysql.sock -u root --password=$password mysql
 	# reverse lookup on 127.0.0.1 gives.
 	echo "grant all on *.* to root@'$hostname' identified by '$password'" | /usr/bin/mysql -S $targetdir/run/mysql.sock -u root --password=$password mysql
 	echo "grant all on *.* to root@'127.0.0.1' identified by '$password'" | /usr/bin/mysql -S $targetdir/run/mysql.sock -u root --password=$password mysql
