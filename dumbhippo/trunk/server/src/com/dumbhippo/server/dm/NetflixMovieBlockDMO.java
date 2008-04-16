@@ -9,6 +9,7 @@ import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.blocks.NetflixBlockView;
 import com.dumbhippo.services.NetflixMovieView;
+import com.dumbhippo.services.NetflixMoviesView;
 
 @DMO(classId="http://mugshot.org/p/o/netflixMovieBlock")
 public abstract class NetflixMovieBlockDMO extends BlockDMO {
@@ -23,11 +24,15 @@ public abstract class NetflixMovieBlockDMO extends BlockDMO {
 	
 	@DMProperty(defaultInclude=true, defaultChildren="+")
 	public List<NetflixMovieDMO> getQueuedMovies() {
-		User user = ((NetflixBlockView)blockView).getPersonSource().getUser();
+		NetflixBlockView netflixBlockView = (NetflixBlockView)blockView;
+		User user = netflixBlockView.getPersonSource().getUser();
 		List<NetflixMovieDMO> result = new ArrayList<NetflixMovieDMO>();
 		
-		for (NetflixMovieView movie : ((NetflixBlockView)blockView).getQueuedMovies().getMovies()) {
-			result.add(session.findUnchecked(NetflixMovieDMO.class, NetflixMovieDMO.getKey(user, movie)));
+		NetflixMoviesView queuedMovies = netflixBlockView.getQueuedMovies();
+		if (queuedMovies != null) {
+			for (NetflixMovieView movie : queuedMovies.getMovies()) {
+				result.add(session.findUnchecked(NetflixMovieDMO.class, NetflixMovieDMO.getKey(user, movie)));
+			}
 		}
 		
 		return result;
