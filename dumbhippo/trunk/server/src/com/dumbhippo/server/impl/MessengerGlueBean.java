@@ -213,35 +213,6 @@ public class MessengerGlueBean implements MessengerGlue {
 	
 		return user;
 	}
-	
-	private void doShareLinkTutorial(UserViewpoint newUser) throws RetryException {
-		logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
-
-		Account account = newUser.getViewer().getAccount();
-		
-		InvitationToken invite = invitationSystem.getCreatingInvitation(account);
-		
-		// see what feature the user was sold on originally, and share the right thing 
-		// with them accordingly
-		
-		User owner = newUser.getViewer();
-		if (invite != null && invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602)
-			postingBoard.doNowPlayingTutorialPost(newUser, owner);
-		else {
-			Set<Group> invitedToGroups = groupSystem.findRawGroups(newUser, owner, MembershipStatus.INVITED);
-			Set<Group> invitedToFollowGroups = groupSystem.findRawGroups(newUser, owner, MembershipStatus.INVITED_TO_FOLLOW);
-			invitedToGroups.addAll(invitedToFollowGroups);
-			if (invitedToGroups.size() == 0) {
-				postingBoard.doShareLinkTutorialPost(newUser, owner);
-			} else {
-				for (Group group : invitedToGroups) {
-					postingBoard.doGroupInvitationPost(newUser, owner, group);
-				}
-			}
-		}
-
-		account.setWasSentShareLinkTutorial(true);
-	}
 
 	public void updateLoginDate(Guid userId, Date timestamp) {
 		// account could be missing due to debug users or our own
@@ -272,19 +243,7 @@ public class MessengerGlueBean implements MessengerGlue {
 	}
 	
 	public void sendConnectedResourceNotifications(Guid userId, boolean wasAlreadyConnected) throws RetryException {
-		Account account;
-		try {
-			account = accountFromUserId(userId);
-		} catch (JabberUserNotFoundException e) {
-			logger.warn("username signed on that we don't know: {}", userId);
-			return;
-		}
-
-		UserViewpoint viewpoint = new UserViewpoint(account.getOwner(), Site.XMPP);
-		
-		if (!account.getWasSentShareLinkTutorial()) {
-			doShareLinkTutorial(viewpoint);
-		}
+		// This used to send a share link tutorial, now we always do it when the account is enabled
 	}
 	
 	private User getUserFromGuid(Guid guid) {

@@ -12,6 +12,7 @@ import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.FacebookAccount;
@@ -28,6 +29,7 @@ import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.UserDMO;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.services.FacebookWebServices;
 import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.web.SigninBean;
@@ -96,7 +98,7 @@ public class FacebookSigninServlet extends AbstractServlet {
 			    			sess.invalidate();
 			    		SigninBean.initializeAuthentication(request, response, client);
 			    		if (!ac.getOwner().getAccount().isPublicPage()) {
-				    		ac.getOwner().getAccount().setPublicPage(true);
+			    			identitySpider.setPublicPage(new UserViewpoint(ac.getOwner(), Site.MUGSHOT), true);
 				    		String regularCountString = config.getProperty(HippoProperty.NEW_USER_INVITATION_COUNT);
 				    		int regularCount = Integer.parseInt(regularCountString);
 				    		ac.getOwner().getAccount().setInvitations(regularCount);

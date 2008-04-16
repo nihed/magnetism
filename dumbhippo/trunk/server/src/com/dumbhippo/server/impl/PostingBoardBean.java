@@ -32,6 +32,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.GroupEvent;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.PostCreatedEvent;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.FeedEntry;
@@ -41,6 +42,7 @@ import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GuidPersistable;
+import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
@@ -69,6 +71,7 @@ import com.dumbhippo.server.PostInfoSystem;
 import com.dumbhippo.server.PostSearchResult;
 import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.RecommenderSystem;
 import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.dm.DataService;
@@ -388,11 +391,37 @@ public class PostingBoardBean implements PostingBoard {
 		logger.debug("Tutorial post done: {}", post);
 	}
 	
+	public void doInitialShare(UserViewpoint newUser) throws RetryException {
+		logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
+
+		Account account = newUser.getViewer().getAccount();
+		
+		InvitationToken invite = invitationSystem.getCreatingInvitation(account);
+		
+		// see what feature the user was sold on originally, and share the right thing 
+		// with them accordingly
+		
+		User owner = newUser.getViewer();
+		if (invite != null && invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602)
+			doNowPlayingTutorialPost(newUser, owner);
+		else {
+			doShareLinkTutorialPost(newUser, owner);			
+			Set<Group> invitedToGroups = groupSystem.findRawGroups(newUser, owner, MembershipStatus.INVITED);
+			Set<Group> invitedToFollowGroups = groupSystem.findRawGroups(newUser, owner, MembershipStatus.INVITED_TO_FOLLOW);
+			invitedToGroups.addAll(invitedToFollowGroups);
+			for (Group group : invitedToGroups) {
+				doGroupInvitationPost(newUser, owner, group);
+			}
+		}
+
+		account.setWasSentShareLinkTutorial(true);
+	}	
+	
 	public void doShareLinkTutorialPost(Viewpoint viewpoint, User recipient) throws RetryException {
 		doTutorialPost(viewpoint, recipient, Character.LOVES_ACTIVITY, 
 				configuration.getBaseUrl(viewpoint) + "/account",
-				"What is this Mugshot thing?",
-				"Set up your account and learn to use Mugshot by visiting this link");
+				"Welcome to Mugshot!",
+				"Learn how you can create shares like this to send to your friends, and see what other features Mugshot offers.");
 	}
 
 	public void doNowPlayingTutorialPost(Viewpoint viewpoint, User recipient) throws RetryException {

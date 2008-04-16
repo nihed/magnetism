@@ -70,6 +70,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.OnlineDesktopSystem;
 import com.dumbhippo.server.PermissionDeniedException;
+import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.dm.ContactDMO;
 import com.dumbhippo.server.dm.DataService;
@@ -118,6 +119,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	@EJB
 	private OnlineDesktopSystem onlineDesktop;
+	
+	@EJB
+	@IgnoreDependency
+	private PostingBoard postingBoard;	
 	
 	public User lookupUserByEmail(Viewpoint viewpoint, String email) throws NotFoundException {
 		EmailResource res = lookupEmail(email);
@@ -1373,5 +1378,12 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			iterator.remove();
 		}
 		return contacts;
+	}
+	
+	public void setPublicPage(UserViewpoint view, boolean enabled) throws RetryException {
+		view.getViewer().getAccount().setPublicPage(enabled);
+		if (enabled && !view.getViewer().getAccount().getWasSentShareLinkTutorial()) {
+			postingBoard.doInitialShare(view);
+		}			
 	}
 }
