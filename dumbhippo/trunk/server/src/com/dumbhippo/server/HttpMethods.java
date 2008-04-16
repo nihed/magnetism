@@ -148,7 +148,7 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "disabled" })
 	@HttpOptions( allowDisabledAccount = true )
-	public void doSetAccountDisabled(UserViewpoint viewpoint, boolean disabled) throws IOException, HumanVisibleException;
+	public void doSetAccountDisabled(UserViewpoint viewpoint, boolean disabled) throws IOException, HumanVisibleException, RetryException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "password" })

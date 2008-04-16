@@ -42,7 +42,7 @@ public class VerifyServlet extends AbstractServlet {
 	static final long serialVersionUID = 1;
 
 	private String doInvitationToken(HttpServletRequest request, HttpServletResponse response, InvitationToken invite) 
-	    throws HumanVisibleException, HttpException, ServletException, IOException {
+	    throws HumanVisibleException, HttpException, ServletException, IOException, RetryException {
 		
 		logger.debug("Processing invitation token {}", invite);
 		

@@ -647,7 +647,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		//}
 	}
 	
-	public Client viewInvitation(Site site, InvitationToken invite, String firstClientName, boolean disable) {
+	public Client viewInvitation(Site site, InvitationToken invite, String firstClientName, boolean disable) throws RetryException {
 		if (invite.isViewed()) {
 			throw new IllegalArgumentException("InvitationToken " + invite + " has already been viewed");
 		}
