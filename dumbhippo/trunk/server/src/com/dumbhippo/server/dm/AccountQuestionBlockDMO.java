@@ -1,6 +1,7 @@
 package com.dumbhippo.server.dm;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.dumbhippo.dm.annotations.DMO;
@@ -39,11 +40,17 @@ public abstract class AccountQuestionBlockDMO extends BlockDMO {
 	
 	@DMProperty(defaultInclude=true)
 	public List<String> getButtons() {
-		List<String> result = new ArrayList<String>();
-		for (AccountQuestionButton button : ((AccountQuestionBlockView)blockView).getQuestion().getButtons()) {
-			result.add(button.getResponse() + ":" + button.getText());
+		AccountQuestionBlockView questionBlockView = (AccountQuestionBlockView)blockView;
+
+		if (questionBlockView.getAnswer() == null) {
+			List<String> result = new ArrayList<String>();
+			for (AccountQuestionButton button : questionBlockView.getQuestion().getButtons()) {
+				result.add(button.getResponse() + ":" + button.getText());
+			}
+			
+			return result;
+		} else {
+			return Collections.emptyList();
 		}
-		
-		return result;
 	}
 }
