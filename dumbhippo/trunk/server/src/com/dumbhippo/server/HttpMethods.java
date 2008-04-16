@@ -245,7 +245,7 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( {} )
 	@HttpOptions( allowDisabledAccount = true )
-	public void doAcceptTerms(UserViewpoint viewpoint);
+	public void doAcceptTerms(UserViewpoint viewpoint) throws RetryException;
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "needsDownload" } )

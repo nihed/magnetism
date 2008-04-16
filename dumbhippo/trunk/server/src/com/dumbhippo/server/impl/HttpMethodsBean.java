@@ -1236,10 +1236,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		out.flush();
 	}
 	
-	public void doAcceptTerms(UserViewpoint viewpoint) {
+	public void doAcceptTerms(UserViewpoint viewpoint) throws RetryException {
 		viewpoint.getViewer().getAccount().setHasAcceptedTerms(true);	
 		if (viewpoint.getViewer().getAccount().getAccountType() == AccountType.MUGSHOT) {
-		    viewpoint.getViewer().getAccount().setPublicPage(true);
+		    identitySpider.setPublicPage(viewpoint, true);	    
 		}
 	}
 	

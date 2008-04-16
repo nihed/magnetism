@@ -376,6 +376,12 @@ public interface IdentitySpider {
 	 */
 	public User getUser(Resource resource);
 	
+	/** 
+	 * Enable Mugshot features for user, and send them the initial share.
+	 * @throws RetryException 
+	 */
+	public void setPublicPage(UserViewpoint view, boolean enabled) throws RetryException;
+	
 	/**
 	 * Tries to find a good resource to use to represent person.
 	 * If person is a User, returns the user's account. If the

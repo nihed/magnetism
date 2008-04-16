@@ -76,6 +76,8 @@ public interface PostingBoard {
 
 	public void doGroupInvitationPost(Viewpoint viewpoint, User owner, Group group) throws RetryException;	
 	
+	public void doInitialShare(UserViewpoint newUser) throws RetryException;
+	
 	public void doShareLinkTutorialPost(Viewpoint viewpoint, User recipient) throws RetryException;
 	
 	public void doNowPlayingTutorialPost(Viewpoint viewpoint, User recipient) throws RetryException;
