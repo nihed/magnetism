@@ -54,11 +54,8 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 	}
 	
 	private String getApplicationUsageAnswer(AccountQuestionBlockView blockView) {
-		Viewpoint viewpoint = blockView.getViewpoint();
-		Boolean applicationUsageEnabled = null;
-		
-		if (viewpoint instanceof UserViewpoint)
-			applicationUsageEnabled = ((UserViewpoint)viewpoint).getViewer().getAccount().isApplicationUsageEnabled();
+		User user = getData1User(blockView.getBlock());
+		Boolean applicationUsageEnabled = user.getAccount().isApplicationUsageEnabled();
 
 		if (applicationUsageEnabled == null)
 			return null;
@@ -69,16 +66,15 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 	}
 
 	private String getFacebookApplicationAnswer(AccountQuestionBlockView blockView) {
-		Viewpoint viewpoint = blockView.getViewpoint();
+		User user = getData1User(blockView.getBlock());
 		Boolean applicationEnabled = null;
 		
-		if (viewpoint instanceof UserViewpoint)	
-			try {
-			    applicationEnabled = 
-				    facebookSystem.lookupFacebookAccount(viewpoint, ((UserViewpoint)viewpoint).getViewer()).isApplicationEnabled();
-			} catch (NotFoundException e) {
-				logger.warn("Did not find a FacebookAccount for user {} when checking their applicationEnabled status");
-			}
+		try {
+		    applicationEnabled = 
+			    facebookSystem.lookupFacebookAccount(blockView.getViewpoint(), user).isApplicationEnabled();
+		} catch (NotFoundException e) {
+			logger.warn("Did not find a FacebookAccount for user {} when checking their applicationEnabled status");
+		}
 
 		if (applicationEnabled == null)
 			return null;
@@ -188,7 +184,7 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 		// we handle a positive response in FacebookTrackerBean when the person adds the application
 		if (response.equals("no"))
 			try {
-				FacebookAccount facebookAccount = facebookSystem.lookupFacebookAccount(viewpoint, ((UserViewpoint)viewpoint).getViewer());
+				FacebookAccount facebookAccount = facebookSystem.lookupFacebookAccount(viewpoint, viewpoint.getViewer());
 				// only set applicationEnabled to false based on this if it was not previously true
                 if (facebookAccount.isApplicationEnabled() == null)
                 	facebookAccount.setApplicationEnabled(false);
@@ -246,6 +242,7 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 		BlockDMOKey dmoKey = new BlockDMOKey(block); 
 		DataService.currentSessionRW().changed(BlockDMO.class, dmoKey, "answer");
 		DataService.currentSessionRW().changed(BlockDMO.class, dmoKey, "buttons");
+		DataService.currentSessionRW().changed(BlockDMO.class, dmoKey, "description");
 		
 		// The call to blockClicked wont restack block since the clicked count 
 		// can only ever be 1, so we need restack the block ourselves to change
