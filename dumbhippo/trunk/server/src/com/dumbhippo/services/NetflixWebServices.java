@@ -39,7 +39,11 @@ public class NetflixWebServices {
 		}
 		NetflixMovies movies = new NetflixMovies();
 		for (Object o : fetchResult.getFeed().getEntries()) {
-			SyndEntry entry = (SyndEntry) o;	
+			SyndEntry entry = (SyndEntry) o;
+			// An empty queue has exactly one entry saying "Your Queue is Empty" 
+			// with this link
+			if ("http://www.netflix.com/Default".equals(entry.getLink()))
+				continue;
 			int priority = getPriorityFromEntryTitle(entry.getTitle());
 			String title = getTitleFromEntryTitle(entry.getTitle());
             String description = entry.getDescription().getValue().trim();
