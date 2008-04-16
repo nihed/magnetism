@@ -133,11 +133,11 @@
 			                     tipIconWidth="450"
 			                     tipIconHeight="70"
 			                     tipText="Get updates when people in your Mugshot network share and swarm around links">
-			      <a href="/links-learnmore">Web Swarm</a> notifications of new and popular content
+			      <a href="/links-learnmore">Web Swarm</a> lets you share new and popular content
 			  </dht3:featuresItem>                       
 			  <dht3:featuresItem prefix="Quips"
 			                     icon="quips_16x16.png"
-			                     text="Quips to rate and comment on anything shared on Mugshot"
+			                     text="Quips let you comment on and rate anything shared on Mugshot"
 			                     tipIcon="quip.png"
 			                     tipIconWidth="243"
 			                     tipIconHeight="116"
