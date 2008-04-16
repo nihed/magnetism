@@ -166,6 +166,8 @@ class MasterPoller(object):
     
     def __add_task_keys_unlocked(self, keys):
         for key in keys:
+            if key == '':
+                continue
             if key in self.__tasks_map:
                 continue 
             key = key.strip()
@@ -232,8 +234,8 @@ class MasterPoller(object):
             _logger.debug("checking for messages")
             message = self.__sqs_incoming_q.read()
             if message is not None:
-                _logger.debug("got message: %s", message.id)
                 body = message.get_body()
+                _logger.debug("got message: %s body: %s", message.id, body)                
                 if body.startswith('load '):
                     (bucket_name, key_name) = body[5:].split(' ', 1)
                     self.__do_load_from_s3(bucket_name, key_name)
