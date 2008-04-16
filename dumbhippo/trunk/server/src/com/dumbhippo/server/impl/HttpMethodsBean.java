@@ -695,7 +695,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	public void doSetAccountDisabled(UserViewpoint viewpoint, boolean disabled)
-			throws IOException, HumanVisibleException {
+			throws IOException, HumanVisibleException, RetryException {
 		identitySpider.setAccountDisabled(viewpoint.getViewer(), viewpoint.getSite(), disabled);
 	}
 

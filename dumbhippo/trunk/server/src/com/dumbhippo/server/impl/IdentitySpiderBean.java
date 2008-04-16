@@ -1184,11 +1184,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return user.getAccount().isDisabled();
 	}
 
-	public void setAccountDisabled(User user, Site site, boolean disabled) {
+	public void setAccountDisabled(User user, Site site, boolean disabled) throws RetryException {
 		Account account = getAttachedAccount(user);
 		if (site == Site.MUGSHOT && account.getAccountType() == AccountType.GNOME) {
 			if (account.isPublicPage() == disabled) {
-			    account.setPublicPage(!disabled);
+				setPublicPage(new UserViewpoint(user, site), !disabled);
 			    logger.debug("Public page flag toggled to {} on account {}", !disabled,
 					         account);
 			}

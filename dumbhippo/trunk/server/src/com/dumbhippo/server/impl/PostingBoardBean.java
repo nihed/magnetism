@@ -419,7 +419,7 @@ public class PostingBoardBean implements PostingBoard {
 	
 	public void doShareLinkTutorialPost(Viewpoint viewpoint, User recipient) throws RetryException {
 		doTutorialPost(viewpoint, recipient, Character.LOVES_ACTIVITY, 
-				configuration.getBaseUrl(viewpoint) + "/account",
+				configuration.getBaseUrl(viewpoint) + "/features",
 				"Welcome to Mugshot!",
 				"Learn how you can create shares like this to send to your friends, and see what other features Mugshot offers.");
 	}

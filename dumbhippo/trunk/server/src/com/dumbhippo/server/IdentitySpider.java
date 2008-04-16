@@ -396,7 +396,7 @@ public interface IdentitySpider {
 	
 	public boolean getAccountDisabled(User user);
 	
-	public void setAccountDisabled(User user, Site site, boolean disabled);
+	public void setAccountDisabled(User user, Site site, boolean disabled) throws RetryException;
 	
 	public boolean getAccountAdminDisabled(User user);
 	

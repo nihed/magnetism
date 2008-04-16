@@ -171,8 +171,9 @@ public interface InvitationSystem {
 	 * @param disable true if the user wants to disable the account
 	 * 
 	 * @return initial client authorized to access the account
+	 * @throws RetryException 
 	 */
-	public Client viewInvitation(Site site, InvitationToken invite, String firstClientName, boolean disable);
+	public Client viewInvitation(Site site, InvitationToken invite, String firstClientName, boolean disable) throws RetryException;
 	
 	/**
 	 * Return the names (from the system viewpoint) of the inviting
