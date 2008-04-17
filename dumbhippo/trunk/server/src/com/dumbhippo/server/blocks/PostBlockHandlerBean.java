@@ -25,6 +25,9 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.dm.BlockDMO;
+import com.dumbhippo.server.dm.BlockDMOKey;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PostView;
@@ -126,6 +129,7 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 			return;
 		}
 		block.setPublicBlock(post.isPublic() && !post.isDisabled());
+		DataService.currentSessionRW().changed(BlockDMO.class, new BlockDMOKey(block), "public");	
 	}
 
 	public void onPostClicked(Post post, User user, long clickedTime) {
