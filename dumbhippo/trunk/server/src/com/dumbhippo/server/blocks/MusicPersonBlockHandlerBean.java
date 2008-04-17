@@ -109,7 +109,10 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 			// happens if someone has never played anything
 			publicBlock = musicSystem.hasTrackHistory(AnonymousViewpoint.getInstance(Site.NONE), user);
 		}
-		block.setPublicBlock(publicBlock);
+		if (block.isPublicBlock() != publicBlock) {
+			block.setPublicBlock(publicBlock);
+			DataService.currentSessionRW().changed(BlockDMO.class, new BlockDMOKey(block), "public");
+		}
 	}
 
 	private void updatePublicFlag(Account account, boolean knownToHaveTracks) {
@@ -146,7 +149,10 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 	public void onTrackPlayed(User user, Track track, Date when) {
 		Block block = stacker.stack(getKey(user), when.getTime(), user, false, StackReason.BLOCK_UPDATE);
 		
-		DataService.currentSessionRW().feedChanged(BlockDMO.class, new BlockDMOKey(block), "tracks", when.getTime());
+		BlockDMOKey blockKey = new BlockDMOKey(block);
+		DataService.currentSessionRW().feedChanged(BlockDMO.class, blockKey, "tracks", when.getTime());
+		// The chatId is the track history ID of the most-recently played track for the user
+		DataService.currentSessionRW().changed(BlockDMO.class, blockKey, "chatId");
 
 		// if we weren't public we might be now. Playing a track won't 
 		// ever un-public us though.
