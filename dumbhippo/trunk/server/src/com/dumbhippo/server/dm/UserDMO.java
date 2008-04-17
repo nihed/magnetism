@@ -114,6 +114,11 @@ public abstract class UserDMO extends DMObject<Guid> {
 	}
 	
 	@DMProperty(defaultInclude=true)
+	public boolean getMugshotPublicPage() {
+		return user.getAccount().isPublicPage();
+	}
+	
+	@DMProperty(defaultInclude=true)
 	public String getName() {
 		return user.getNickname();
 	}
