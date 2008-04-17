@@ -1381,8 +1381,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 	
 	public void setPublicPage(UserViewpoint view, boolean enabled) throws RetryException {
-		view.getViewer().getAccount().setPublicPage(enabled);
-		if (enabled && !view.getViewer().getAccount().getWasSentShareLinkTutorial()) {
+		User viewer = view.getViewer();
+		Account account = viewer.getAccount();
+		account.setPublicPage(enabled);
+		DataService.currentSessionRW().changed(UserDMO.class, viewer.getGuid(), "mugshotPublicPage");		
+		if (enabled && !account.getWasSentShareLinkTutorial()) {
 			postingBoard.doInitialShare(view);
 		}			
 	}
