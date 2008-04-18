@@ -2,6 +2,7 @@ package com.dumbhippo.server.blocks;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -13,6 +14,21 @@ public class AccountQuestionBlockView extends BlockView implements TitleBlockVie
 	public AccountQuestionBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
 		super(viewpoint, block, ubd, participated);
 		
+		for (AccountQuestion q : AccountQuestion.values()) {
+			if (q.ordinal() == block.getData3()) {
+				question = q;
+				break;
+			}
+		}
+		
+		if (question == null) {
+			throw new RuntimeException("Unknown question value " + block.getData3());
+		}
+	}
+	
+	public AccountQuestionBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {
+		super(viewpoint, block, gbd, participated);
+
 		for (AccountQuestion q : AccountQuestion.values()) {
 			if (q.ordinal() == block.getData3()) {
 				question = q;
