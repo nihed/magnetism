@@ -32,9 +32,11 @@ import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
@@ -59,6 +61,9 @@ public class FacebookSystemBean implements FacebookSystem {
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private Notifier notifier;
 	
 	public List<FacebookAccount> getAllAccounts() {
 		List<?> list = em.createQuery("SELECT fa FROM FacebookAccount fa").getResultList();
@@ -163,6 +168,15 @@ public class FacebookSystemBean implements FacebookSystem {
 		});
 		
 		return list.subList(0, Math.min(eventsCount, list.size()));
+	}
+	
+	public void setApplicationEnabled(UserViewpoint viewpoint, FacebookAccount facebookAccount, Boolean applicationEnabled) {
+		if ((facebookAccount.isApplicationEnabled() != null && !facebookAccount.isApplicationEnabled().equals(applicationEnabled)) ||
+			(facebookAccount.isApplicationEnabled() == null && applicationEnabled != null))	
+		{ 
+	        facebookAccount.setApplicationEnabled(applicationEnabled);
+            notifier.onFacebookApplicationEnabledToggled(viewpoint);
+		}
 	}
 	
 	public String getProfileLink(ExternalAccount externalAccount) {

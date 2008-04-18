@@ -228,12 +228,11 @@ public class FacebookTrackerBean implements FacebookTracker {
 	    if (sessionKey != null)
 		    facebookAccount.setSessionKeyValid(true);	
 	    if (applicationEnabled != null)
-	        facebookAccount.setApplicationEnabled(applicationEnabled);
+	        facebookSystem.setApplicationEnabled(viewpoint, facebookAccount, applicationEnabled);
 	    // if you enabled Mugshot application on Facebook, you must have agreed to the Mugshot
 	    // terms of use there
 	    if (applicationEnabled != null && applicationEnabled) {
 	    	facebookAccount.getExternalAccount().getAccount().setHasAcceptedTerms(true);
-	        notifier.onFacebookApplicationEnabled(viewpoint);
 	    }
 	    
 		// make sure the sentiment is LOVE; there is currently no way to unset it from the user interface,

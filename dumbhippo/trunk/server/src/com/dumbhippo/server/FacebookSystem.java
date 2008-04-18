@@ -9,6 +9,7 @@ import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
 /**
@@ -41,6 +42,8 @@ public interface FacebookSystem {
 	public FacebookEvent lookupFacebookEvent(Viewpoint viewpoint, long eventId) throws NotFoundException;
 	
 	public List<FacebookEvent> getLatestEvents(Viewpoint viewpoint, FacebookAccount facebookAccount, int eventsCount);
+	
+	public void setApplicationEnabled(UserViewpoint viewpoint, FacebookAccount facebookAccount, Boolean applicationEnabled);
 	
 	public String getProfileLink(ExternalAccount externalAccount);
 	

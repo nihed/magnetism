@@ -366,7 +366,7 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		// We aren't interested in this, just part of a listener iface we're using
 	}
 
-	public void onFacebookApplicationEnabled(UserViewpoint viewpoint) {
+	public void onFacebookApplicationEnabledToggled(UserViewpoint viewpoint) {
 		// We aren't interested in this, just part of a listener iface we're using
 	}
 	
