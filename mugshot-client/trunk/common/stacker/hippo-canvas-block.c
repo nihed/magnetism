@@ -385,6 +385,45 @@ hippo_canvas_block_get_property(GObject         *object,
 #define PRELIGHT_GRADIENT_END 0xffffbbff
 #define MESSAGE_BLOCK_COLOR 0xffffddff
 
+static void
+update_title_item(HippoCanvasBlock *block)
+{
+    char *old_title = NULL;
+    
+    if (block->title_item)  {
+        g_object_get(G_OBJECT(block->title_item),
+                     "text", &old_title,
+                     NULL);
+        hippo_canvas_item_destroy(block->title_item);
+        block->title_item = NULL;
+    }
+    
+    if (block->linkify_title) {
+        block->title_item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                                         "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                                         "xalign", HIPPO_ALIGNMENT_START,
+                                         "yalign", HIPPO_ALIGNMENT_START,
+                                         NULL);
+        g_signal_connect(G_OBJECT(block->title_item), "activated",
+                         G_CALLBACK(on_title_activated), block);
+    } else {
+        block->title_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                         "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                                         "xalign", HIPPO_ALIGNMENT_START,
+                                         "yalign", HIPPO_ALIGNMENT_START,
+                                         NULL);
+    }
+
+    if (old_title) {
+        g_object_set(G_OBJECT(block->title_item),
+                     "text", old_title,
+                     NULL);
+        g_free(old_title);
+    }
+    
+    hippo_canvas_box_append(block->heading_box, block->title_item, 0);
+}
+
 static GObject*
 hippo_canvas_block_constructor (GType                  type,
                                 guint                  n_construct_properties,
@@ -594,26 +633,7 @@ hippo_canvas_block_constructor (GType                  type,
         hippo_canvas_box_append(box, block->heading_text_item, 0);
 #endif
 
-        if (block->linkify_title) {
-            block->title_link_item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                                                  "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                                                  "xalign", HIPPO_ALIGNMENT_START,
-                                                  "yalign", HIPPO_ALIGNMENT_START,
-                                                  "text", NULL,
-                                                  NULL);
-            g_signal_connect(G_OBJECT(block->title_link_item), "activated",
-                             G_CALLBACK(on_title_activated), block);
-        } else {
-            block->title_link_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                                  "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                                                  "xalign", HIPPO_ALIGNMENT_START,
-                                                  "yalign", HIPPO_ALIGNMENT_START,
-                                                  "text", NULL,
-                                                  NULL);
-        }
-        
-        hippo_canvas_box_append(box, block->title_link_item, 0);
-        
+        update_title_item(block);
     }
 
     if (klass->append_content_items)
@@ -1067,11 +1087,24 @@ hippo_canvas_block_set_title(HippoCanvasBlock *canvas_block,
         return;
     
     /* keep in mind that title and tooltip may be NULL */
-    g_object_set(G_OBJECT(canvas_block->title_link_item),
+    g_object_set(G_OBJECT(canvas_block->title_item),
                  "text", text,
                  "tooltip", tooltip,
                  canvas_block->linkify_title ? "visited" : NULL, visited,
                  NULL);
+}
+
+void
+hippo_canvas_block_set_linkify_title(HippoCanvasBlock *canvas_block,
+                                     gboolean          linkify_title)
+{
+    linkify_title = linkify_title != FALSE;
+    
+    if (canvas_block->linkify_title != linkify_title) {
+        canvas_block->linkify_title = linkify_title;
+        if (canvas_block->title_item) /* we might not be constructed yet */
+            update_title_item(canvas_block);
+    }
 }
 
 void
