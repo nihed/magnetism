@@ -8,5 +8,5 @@ public interface AccountStatusListener {
 	public void onAccountAdminDisabledToggled(Account account);
 	public void onMusicSharingToggled(UserViewpoint viewpoint);
 	public void onApplicationUsageToggled(UserViewpoint viewpoint);
-	public void onFacebookApplicationEnabled(UserViewpoint viewpoint);
+	public void onFacebookApplicationEnabledToggled(UserViewpoint viewpoint);
 }

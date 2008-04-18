@@ -222,9 +222,9 @@ public class NotifierBean implements Notifier {
 		}
 	}
 
-	public void onFacebookApplicationEnabled(UserViewpoint viewpoint) {
+	public void onFacebookApplicationEnabledToggled(UserViewpoint viewpoint) {
 		for (AccountStatusListener l : getListeners(AccountStatusListener.class)) {
-			l.onFacebookApplicationEnabled(viewpoint);
+			l.onFacebookApplicationEnabledToggled(viewpoint);
 		}
 	}
 	

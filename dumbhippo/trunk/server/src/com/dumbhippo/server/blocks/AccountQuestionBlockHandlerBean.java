@@ -158,7 +158,7 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 		}
 	}
 	
-	public void onFacebookApplicationEnabled(UserViewpoint viewpoint) {
+	public void onFacebookApplicationEnabledToggled(UserViewpoint viewpoint) {
 		try {
 			Block block = stacker.queryBlock(getKey(viewpoint.getViewer(), AccountQuestion.FACEBOOK_APPLICATION));
 			questionAnswered(viewpoint, block);
@@ -166,7 +166,7 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 			// No block, nothing to do
 		}		
 	}
-
+	
 	public void onMusicSharingToggled(UserViewpoint viewpoint) {
 		// Don't care
 	}
@@ -187,7 +187,7 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 				FacebookAccount facebookAccount = facebookSystem.lookupFacebookAccount(viewpoint, viewpoint.getViewer());
 				// only set applicationEnabled to false based on this if it was not previously true
                 if (facebookAccount.isApplicationEnabled() == null)
-                	facebookAccount.setApplicationEnabled(false);
+                	facebookSystem.setApplicationEnabled(viewpoint, facebookAccount, false);   
 			} catch (NotFoundException e) {
 				logger.warn("Did not find a FacebookAccount for user {} when trying to set their applicationEnabled status to false");
 			}
