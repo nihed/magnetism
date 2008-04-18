@@ -414,6 +414,7 @@ static void
 hippo_block_real_update (HippoBlock     *block)
 {
     gboolean public;
+    gboolean owner_content;
     gint64 timestamp;
     gint64 clicked_timestamp;
     gint64 ignored_timestamp;
@@ -435,6 +436,7 @@ hippo_block_real_update (HippoBlock     *block)
 
     ddm_data_resource_get(block->resource,
                           "public", DDM_DATA_BOOLEAN, &public,
+                          "ownerContent", DDM_DATA_BOOLEAN, &owner_content,
                           "timestamp", DDM_DATA_LONG, &timestamp,
                           "clickedTimestamp", DDM_DATA_LONG, &clicked_timestamp,
                           "ignoredTimestamp", DDM_DATA_LONG, &ignored_timestamp,
@@ -457,7 +459,7 @@ hippo_block_real_update (HippoBlock     *block)
     hippo_block_set_clicked(block, clicked_timestamp >= 0);
     hippo_block_set_ignored(block, ignored_timestamp >= 0);
     
-    hippo_block_set_is_mine(block, owner == self);
+    hippo_block_set_is_mine(block, owner == self && owner_content);
 
     hippo_block_set_icon_url(block, icon);
     hippo_block_set_title(block, title);
