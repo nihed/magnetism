@@ -12,6 +12,7 @@ import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FacebookPhotoData;
 import com.dumbhippo.services.FacebookPhotoDataView;
@@ -171,7 +172,10 @@ public class FacebookBlockView extends AbstractPersonBlockView
 	}
 
 	public String getTitle() {
-		if (getViewpoint().isOfUser(getPersonSource().getUser()))
+		// right now we can (and need to) return getTextForSelf() for the SystemViewpoint because we only display 
+		// Facebook blocks to self, the blocks would all need to have generic text if SystemViewpoint
+		// is passed in in the future for someone other than the block owner
+		if (getViewpoint().isOfUser(getPersonSource().getUser()) || (getViewpoint() instanceof SystemViewpoint))
 			return getTextForSelf();
 		else 		
 			return getGenericText();
