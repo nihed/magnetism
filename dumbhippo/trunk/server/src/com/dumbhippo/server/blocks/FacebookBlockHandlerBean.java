@@ -24,6 +24,9 @@ import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.dm.BlockDMO;
+import com.dumbhippo.server.dm.BlockDMOKey;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.SystemViewpoint;
@@ -165,7 +168,9 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 		StackInclusion stackInclusion = event.getEventType().getDisplayToOthers() ? StackInclusion.IN_ALL_STACKS : StackInclusion.ONLY_WHEN_VIEWING_SELF;
 		BlockKey key = getKey(user, event, stackInclusion);
 		try {
-		    stacker.stackIfFound(key, event.getEventTimestampAsLong(), user, false, StackReason.BLOCK_UPDATE, true);
+		    Block block = stacker.stackIfFound(key, event.getEventTimestampAsLong(), user, false, StackReason.BLOCK_UPDATE, true);
+			BlockDMOKey dmoKey = new BlockDMOKey(block); 
+			DataService.currentSessionRW().changed(BlockDMO.class, dmoKey, "title");
 		} catch (NotFoundException e) {
 			// This can happen if the FacebookAccount was transferred to a new user, and while old 
 			// "recyclable" Facebook Events exist, the Blocks for the new user do not exist
