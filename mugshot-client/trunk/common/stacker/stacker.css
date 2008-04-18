@@ -19,7 +19,7 @@
   font-weight: bold;
 }
 
-.block-heading :link, .block-heading :visted {
+.block-heading :link, .block-heading :visited {
   text-decoration: underline;
 }
 
