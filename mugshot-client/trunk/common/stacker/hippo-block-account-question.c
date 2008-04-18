@@ -28,7 +28,6 @@ struct _HippoBlockAccountQuestion {
     HippoBlock            parent;
 
     char *answer;
-    char *title;
     char *description;
     char *more_link;
     GSList *buttons;
@@ -54,7 +53,6 @@ static int signals[LAST_SIGNAL];
 enum {
     PROP_0,
     PROP_ANSWER,
-    PROP_TITLE,
     PROP_DESCRIPTION,
     PROP_BUTTONS,
     PROP_MORE_LINK
@@ -86,14 +84,6 @@ hippo_block_account_question_class_init(HippoBlockAccountQuestionClass *klass)
                                     g_param_spec_string("answer",
                                                         _("Answer"),
                                                         _("User's answer to the question (may be null)"),
-                                                        NULL,
-                                                        G_PARAM_READABLE));
-
-    g_object_class_install_property(object_class,
-                                    PROP_TITLE,
-                                    g_param_spec_string("title",
-                                                        _("Title"),
-                                                        _("Main heading of the question"),
                                                         NULL,
                                                         G_PARAM_READABLE));
 
@@ -134,20 +124,6 @@ set_answer(HippoBlockAccountQuestion *block_account_question,
     block_account_question->answer = g_strdup(answer);
 
     g_object_notify(G_OBJECT(block_account_question), "answer");
-}
-
-static void
-set_title(HippoBlockAccountQuestion *block_account_question,
-          const char                *title)
-{
-    if (title == block_account_question->title ||
-        (title && block_account_question->title && strcmp(title, block_account_question->title) == 0))
-        return;
-
-    g_free(block_account_question->title);
-    block_account_question->title = g_strdup(title);
-
-    g_object_notify(G_OBJECT(block_account_question), "title");
 }
 
 static void
@@ -199,7 +175,6 @@ hippo_block_account_question_dispose(GObject *object)
     HippoBlockAccountQuestion *block_account_question = HIPPO_BLOCK_ACCOUNT_QUESTION(object);
 
     set_answer(block_account_question, NULL);
-    set_title(block_account_question, NULL);
     set_description(block_account_question, NULL);
     set_buttons(block_account_question, NULL);
     set_more_link(block_account_question, NULL);
@@ -234,9 +209,6 @@ hippo_block_account_question_get_property(GObject         *object,
     case PROP_ANSWER:
         g_value_set_string(value, block_account_question->answer);
         break;
-    case PROP_TITLE:
-        g_value_set_string(value, block_account_question->title);
-        break;
     case PROP_DESCRIPTION:
         g_value_set_string(value, block_account_question->description);
         break;
@@ -257,7 +229,6 @@ static void
 hippo_block_account_question_update (HippoBlock *block)
 {
     HippoBlockAccountQuestion *block_account_question = HIPPO_BLOCK_ACCOUNT_QUESTION(block);
-    const char *title = NULL;
     const char *description = NULL;
     const char *more_link = NULL;
     const char *answer = NULL;
@@ -268,7 +239,6 @@ hippo_block_account_question_update (HippoBlock *block)
     HIPPO_BLOCK_CLASS(hippo_block_account_question_parent_class)->update(block);
 
     ddm_data_resource_get(block->resource,
-                          "title", DDM_DATA_STRING, &title,
                           "description", DDM_DATA_STRING, &description,
                           "moreLink", DDM_DATA_URL, &more_link,
                           "answer", DDM_DATA_STRING, &answer,
@@ -293,7 +263,6 @@ hippo_block_account_question_update (HippoBlock *block)
     buttons = g_slist_reverse(buttons);
             
     set_answer(block_account_question, answer);
-    set_title(block_account_question, title);
     set_description(block_account_question, description);
     set_more_link(block_account_question, more_link);
     hippo_block_set_pinned(block, answer == NULL);

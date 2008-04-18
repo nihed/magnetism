@@ -31,6 +31,7 @@ static void hippo_canvas_block_account_question_append_right_items   (HippoCanva
                                                                       HippoCanvasBox   *parent_box);
 static void hippo_canvas_block_account_question_set_block       (HippoCanvasBlock *canvas_block,
                                                                  HippoBlock       *block);
+static void hippo_canvas_block_account_question_title_activated (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_account_question_expand   (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_account_question_unexpand (HippoCanvasBlock *canvas_block);
 
@@ -76,9 +77,9 @@ hippo_canvas_block_account_question_init(HippoCanvasBlockAccountQuestion *block_
     block->required_type = HIPPO_BLOCK_TYPE_ACCOUNT_QUESTION;
     block->expandable = FALSE;
     block->message_block = TRUE;
-    block->linkify_title = FALSE;
     block->skip_lock = TRUE;
     block->skip_standard_right = TRUE;
+    hippo_canvas_block_set_linkify_title(block, FALSE);
 }
 
 static HippoCanvasItemIface *item_parent_class;
@@ -104,6 +105,7 @@ hippo_canvas_block_account_question_class_init(HippoCanvasBlockAccountQuestionCl
     canvas_block_class->append_content_items = hippo_canvas_block_account_question_append_content_items;
     canvas_block_class->append_right_items = hippo_canvas_block_account_question_append_right_items;
     canvas_block_class->set_block = hippo_canvas_block_account_question_set_block;
+    canvas_block_class->title_activated = hippo_canvas_block_account_question_title_activated;
     canvas_block_class->expand = hippo_canvas_block_account_question_expand;
     canvas_block_class->unexpand = hippo_canvas_block_account_question_unexpand;
 }
@@ -190,8 +192,8 @@ hippo_canvas_block_account_question_append_content_items (HippoCanvasBlock *bloc
 
     block_account_question->buttons_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                                                       "xalign", HIPPO_ALIGNMENT_CENTER,
                                                        "spacing", 20,
+                                                       "padding-top", 5,
                                                        NULL);
     hippo_canvas_box_append(parent_box, HIPPO_CANVAS_ITEM(block_account_question->buttons_box), 0);
 
@@ -242,19 +244,43 @@ disconnect_buttons(HippoCanvasBlockAccountQuestion *block_account_question)
 }
 
 static void
+update_title(HippoCanvasBlockAccountQuestion *block_account_question)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_account_question);
+    
+    char *answer = NULL;
+    char *title = NULL;
+    char *title_link = NULL;
+
+    if (canvas_block->block)
+        g_object_get(canvas_block->block,
+                     "title", &title,
+                     "title-link", &title_link,
+                     "answer", &answer,
+                     NULL);
+
+    hippo_canvas_block_set_title(canvas_block, title, NULL, answer != NULL);
+    hippo_canvas_block_set_linkify_title(canvas_block, title_link != NULL);
+
+    g_free(answer);
+    g_free(title);
+    g_free(title_link);
+}
+
+static void
 on_title_changed(HippoBlock                      *block,
                  GParamSpec                      *arg, /* null when first calling this */
                  HippoCanvasBlockAccountQuestion *block_account_question)
 {
-    char *title = NULL;
-    
-    g_object_get(block,
-                 "title", &title,
-                 NULL);
+    update_title(block_account_question);
+}
 
-    hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(block_account_question), title, NULL, FALSE);
-
-    g_free(title);
+static void
+on_title_link_changed(HippoBlock                      *block,
+                      GParamSpec                      *arg, /* null when first calling this */
+                      HippoCanvasBlockAccountQuestion *block_account_question)
+{
+    update_title(block_account_question);
 }
 
 static void
@@ -288,6 +314,16 @@ on_buttons_changed(HippoBlock                      *block,
                  NULL);
 
     disconnect_buttons(block_account_question);
+
+    hippo_canvas_item_set_visible(HIPPO_CANVAS_ITEM(block_account_question->buttons_box),
+                                  buttons != NULL);
+
+    /* It looks weird to center only one button, but it looks a bit weird to left-align a set of
+     * buttons, so make the alignment conditional.
+     */
+    g_object_set(G_OBJECT(block_account_question->buttons_box),
+                 "xalign", (buttons && buttons->next) ? HIPPO_ALIGNMENT_CENTER : HIPPO_ALIGNMENT_START,
+                 NULL);
     
     for (l = buttons; l; l = l->next) {
         HippoAccountQuestionButton *button = l->data;
@@ -301,10 +337,10 @@ on_buttons_changed(HippoBlock                      *block,
         g_object_set_data_full(G_OBJECT(button_item),
                                "response", g_strdup(response),
                                (GDestroyNotify)g_free);
-            g_signal_connect(button_item, "activated",
-                             G_CALLBACK(on_button_activated), block_account_question);
-            
-            hippo_canvas_box_append(block_account_question->buttons_box, button_item, 0);
+        g_signal_connect(button_item, "activated",
+                         G_CALLBACK(on_button_activated), block_account_question);
+        
+        hippo_canvas_box_append(block_account_question->buttons_box, button_item, 0);
     }
 }
 
@@ -323,6 +359,8 @@ on_more_link_changed(HippoBlock                      *block,
                  "url", more_link,
                  NULL);
 
+    hippo_canvas_item_set_visible(block_account_question->read_more_item, more_link != NULL);
+    
     g_free(more_link);
 }
 
@@ -341,6 +379,8 @@ on_answer_changed(HippoBlock                      *block,
     hippo_canvas_item_set_visible(block_account_question->timestamp_item, answer != NULL);
 
     g_free(answer);
+
+    update_title(block_account_question);
 }
 
 static void
@@ -375,6 +415,9 @@ hippo_canvas_block_account_question_set_block(HippoCanvasBlock *canvas_block,
                                              G_CALLBACK(on_title_changed),
                                              canvas_block);
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_title_link_changed),
+                                             canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_description_changed),
                                              canvas_block);
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
@@ -398,6 +441,8 @@ hippo_canvas_block_account_question_set_block(HippoCanvasBlock *canvas_block,
     if (canvas_block->block != NULL) {
         g_signal_connect(canvas_block->block, "notify::title",
                          G_CALLBACK(on_title_changed), block_account_question);
+        g_signal_connect(canvas_block->block, "notify::title-link",
+                         G_CALLBACK(on_title_link_changed), block_account_question);
         g_signal_connect(canvas_block->block, "notify::description",
                          G_CALLBACK(on_description_changed), block_account_question);
         g_signal_connect(canvas_block->block, "notify::buttons",
@@ -409,12 +454,29 @@ hippo_canvas_block_account_question_set_block(HippoCanvasBlock *canvas_block,
         g_signal_connect(canvas_block->block, "notify::timestamp",
                          G_CALLBACK(on_timestamp_changed), block_account_question);
 
-        on_title_changed(block, NULL, block_account_question);
+        update_title(block_account_question);
         on_description_changed(block, NULL, block_account_question);
         on_buttons_changed(block, NULL, block_account_question);
         on_more_link_changed(block, NULL, block_account_question);
         on_answer_changed(block, NULL, block_account_question);
         on_timestamp_changed(block, NULL, block_account_question);
+    }
+}
+
+static void
+hippo_canvas_block_account_question_title_activated(HippoCanvasBlock *canvas_block)
+{
+    HippoActions *actions = hippo_canvas_block_get_actions(canvas_block);
+    char *title_link = NULL;
+
+    if (canvas_block->block)
+        g_object_get(canvas_block->block,
+                     "title-link", &title_link,
+                     NULL);
+
+    if (title_link != NULL) {
+        hippo_actions_open_url(actions, title_link);
+        g_free(title_link);
     }
 }
 

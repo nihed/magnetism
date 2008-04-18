@@ -44,7 +44,7 @@ struct _HippoCanvasBlock {
     HippoCanvasBox  *heading_box;
     HippoCanvasItem *heading_icon_item;
     HippoCanvasItem *heading_lock_item;
-    HippoCanvasItem *title_link_item;
+    HippoCanvasItem *title_item;
     HippoCanvasItem *headshot_item;
     HippoCanvasItem *name_item;
     HippoCanvasItem *toggle_hush_link;
@@ -100,6 +100,9 @@ void hippo_canvas_block_set_title   (HippoCanvasBlock *canvas_block,
                                      const char       *text,
                                      const char       *tooltip,
                                      gboolean          visited);
+
+void hippo_canvas_block_set_linkify_title (HippoCanvasBlock *canvas_block,
+                                           gboolean          linkify_title);
 
 void hippo_canvas_block_set_expanded(HippoCanvasBlock *canvas_block,
                                      gboolean          value);
