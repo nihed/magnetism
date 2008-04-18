@@ -221,14 +221,14 @@ set_person(HippoCanvasBlockFacebookEvent *block_facebook_event,
 }
 
 static void
-on_user_changed(HippoBlock *block,
-                GParamSpec *arg, /* null when first calling this */
-                HippoCanvasBlockFacebookEvent *block_facebook_event)
+on_source_changed(HippoBlock *block,
+                  GParamSpec *arg, /* null when first calling this */
+                  HippoCanvasBlockFacebookEvent *block_facebook_event)
 {
     HippoPerson *person = NULL;
 
     if (block)
-        g_object_get(G_OBJECT(block), "user", &person, NULL);
+        g_object_get(G_OBJECT(block), "source", &person, NULL);
     
     set_person(block_facebook_event, person);
     
@@ -267,7 +267,7 @@ hippo_canvas_block_facebook_event_set_block(HippoCanvasBlock *canvas_block,
 
     if (canvas_block->block != NULL) {
         g_signal_handlers_disconnect_by_func(canvas_block->block,
-                                             (gpointer)on_user_changed,
+                                             (gpointer)on_source_changed,
                                              canvas_block);
         set_person(HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(canvas_block), NULL);
 
@@ -287,8 +287,8 @@ hippo_canvas_block_facebook_event_set_block(HippoCanvasBlock *canvas_block,
     
     if (canvas_block->block != NULL) {
         g_signal_connect(canvas_block->block,
-                         "notify::user",
-                         G_CALLBACK(on_user_changed),
+                         "notify::source",
+                         G_CALLBACK(on_source_changed),
                          canvas_block);
         g_signal_connect(canvas_block->block,
                          "notify::title",
@@ -300,7 +300,7 @@ hippo_canvas_block_facebook_event_set_block(HippoCanvasBlock *canvas_block,
                          canvas_block);
     }
     
-    on_user_changed(canvas_block->block, NULL, block_facebook_event);
+    on_source_changed(canvas_block->block, NULL, block_facebook_event);
     on_title_changed(canvas_block->block, NULL, block_facebook_event);
 }
 
