@@ -102,8 +102,15 @@ $(EMBEDDED_IMAGE_HEADER):	$(EMBEDDED_IMAGES) Makefile
 	done ;										\
 	echo '{ NULL, NULL, NULL } };' >> $(EMBEDDED_IMAGE_HEADER) || exit 1
 
-BUILT_SOURCES += $(EMBEDDED_IMAGE_HEADER)
-MAINTAINERCLEANFILES +=	$(EMBEDDED_IMAGE_HEADER)
+mugshot-autostart-check: mugshot-autostart-check.in
+	sed -e 's,[@]LIBEXECDIR[@],$(libexecdir),g' mugshot-autostart-check.in > mugshot-autostart-check.tmp && mv mugshot-autostart-check.tmp mugshot-autostart-check
+
+autocheckstartdir=$(libexecdir)
+autocheckstart_SCRIPTS = mugshot-autostart-check
+EXTRA_DIST += mugshot-autostart-check.in
+
+BUILT_SOURCES += $(EMBEDDED_IMAGE_HEADER) mugshot-autostart-check
+MAINTAINERCLEANFILES +=	$(EMBEDDED_IMAGE_HEADER) mugshot-autostart-check
 
 ## we need to nodist these because otherwise automake would copy 
 ## ../common to distdir/../common which puts common outside of distdir.
@@ -140,7 +147,7 @@ desktopfiles_DATA = $(desktopfiles_files)
 mugshot.desktop: mugshot.desktop.in
 	cat $(srcdir)/mugshot.desktop.in | sed -e 's/^_//g' > mugshot.desktop
 mugshot-autostart.desktop: mugshot-autostart.desktop.in
-	cat $(srcdir)/mugshot-autostart.desktop.in | sed -e 's/^_//g' > mugshot-autostart.desktop
+	cat $(srcdir)/mugshot-autostart.desktop.in | sed -e 's/^_//g' -e 's,[@]LIBEXECDIR[@],$(libexecdir),g' > mugshot-autostart.desktop
 
 EXTRA_DIST += $(autostart_in_files) $(desktopfiles_in_files) #$(service_in_files)
 MAINTAINERCLEANFILES +=	$(autostart_files) $(desktopfiles_files) #$(service_DATA)
