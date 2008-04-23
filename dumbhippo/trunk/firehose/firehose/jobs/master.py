@@ -266,7 +266,8 @@ class MasterPoller(object):
         finally:
             self.__task_lock.release()
             
-        maxchars = 8*1024
+        maxchars = 8*1024 # SQS 
+        maxchars *= 0.6666 # Multiply by 0.6666 to account for Base64, with some extra headroom
         remaining_bytes = maxchars
         taskcount = 0
         buf = "add\n"
