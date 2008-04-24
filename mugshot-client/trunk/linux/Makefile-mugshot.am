@@ -103,7 +103,7 @@ $(EMBEDDED_IMAGE_HEADER):	$(EMBEDDED_IMAGES) Makefile
 	echo '{ NULL, NULL, NULL } };' >> $(EMBEDDED_IMAGE_HEADER) || exit 1
 
 mugshot-autostart-check: mugshot-autostart-check.in
-	sed -e 's,[@]LIBEXECDIR[@],$(libexecdir),g' mugshot-autostart-check.in > mugshot-autostart-check.tmp && mv mugshot-autostart-check.tmp mugshot-autostart-check
+	sed -e 's,[@]LIBEXECDIR[@],$(libexecdir),g' $(srcdir)/mugshot-autostart-check.in > mugshot-autostart-check.tmp && mv mugshot-autostart-check.tmp mugshot-autostart-check
 
 autocheckstartdir=$(libexecdir)
 autocheckstart_SCRIPTS = mugshot-autostart-check
