@@ -72,4 +72,4 @@ tag:
 	PACKAGE=`echo $$URL | perl -pe 's@.*/(.*)/.*@$$1@; tr/a-z-/A-Z_/;'` && \
 	TAGURL=`echo $$URL | sed "s@trunk@tags/$${PACKAGE}_$$V@"` && \
 	echo Tagging as $$TAGURL && \
-	echo svn cp -m "Tag as $${PACKAGE}_$$V" $$URL $$TAGURL)
+	svn cp -m "Tag as $${PACKAGE}_$$V" $$URL $$TAGURL)
