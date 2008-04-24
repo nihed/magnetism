@@ -62,3 +62,14 @@ include Makefile-test-hippo-ipc.am
 include Makefile-icons.am
 
 DISTCHECK_CONFIGURE_FLAGS=--with-included-canvas
+
+.PHONY: tag
+tag:
+	@cd $(top_srcdir)/.. && \
+	(svn status | grep '^[MA]' > /dev/null && echo "Uncommitted changes, can't tag") || \
+	(V=`echo $(VERSION) | sed s/\\\\./_/g` && \
+	URL=`svn info --xml | grep '<url>' | sed 's@</\?url>@@g'` && \
+	PACKAGE=`echo $$URL | perl -pe 's@.*/(.*)/.*@$$1@; tr/a-z-/A-Z_/;'` && \
+	TAGURL=`echo $$URL | sed "s@trunk@tags/$${PACKAGE}_$$V@"` && \
+	echo Tagging as $$TAGURL && \
+	echo svn cp -m "Tag as $${PACKAGE}_$$V" $$URL $$TAGURL)
