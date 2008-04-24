@@ -1,0 +1,5 @@
+dirnet.[ch] is the dirent implementation from mingw-runtime-3.3. It can be 
+obtained by
+
+ svn export http://svn.gnome.org/svn/build/trunk/win32/dirent
+

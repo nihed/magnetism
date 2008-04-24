@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
+    <Fragment>
+        <UI>
+            <!-- The installer looks for the particular Dialog ID 'FilesInUse' -->
+	    <Dialog Id="FilesInUse" Width="250" Height="200" Title="[ProductName]">
+	        <Control Id="filesInUseText" Type="Text" X="10" Y="10" Width="230" Height="25">
+	            <Text>Some open windows are using bits of Mugshot. Please try closing them.</Text>
+	        </Control>
+	        <Control Id="filesInUseList" Type="ListBox" X="10" Y="40" Width="230" Height="128" Property="FileInUseProcess"/>
+	        <Control Id="retryButton" Type="PushButton" X="123" Y="173" Width="56" Height="17">
+	            <Text>Retry</Text>
+	            <Publish Event="EndDialog" Value="Retry"/>
+	        </Control>
+	        <Control Id="ignoreButton" Type="PushButton" X="184" Y="173" Width="56" Height="17" Cancel="yes">
+	            <Text>Ignore</Text>
+	            <Publish Event="EndDialog" Value="Ignore"/>
+	        </Control>
+	    </Dialog>
+        </UI>
+    </Fragment>
+</Wix>

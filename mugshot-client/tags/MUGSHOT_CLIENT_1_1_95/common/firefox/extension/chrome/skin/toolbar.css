@@ -1,0 +1,18 @@
+#mugshot-button {
+  list-style-image: url("chrome://mugshot/skin/linkswarm24x24.png");
+}
+
+toolbar[iconsize="small"] #mugshot-button {
+  list-style-image: url("chrome://mugshot/skin/linkswarm16x16.png");
+}
+
+#hippoContentSplitter {
+  -moz-box-align: center;
+  -moz-box-pack: center;
+  border-style: solid;
+  border-width: 2px 0;
+  background-color: ThreeDFace;
+  -moz-border-top-colors: ThreeDShadow ThreeDHighlight;
+  -moz-border-bottom-colors: ThreeDDarkShadow ThreeDFace;
+  min-height: 4px;
+}
