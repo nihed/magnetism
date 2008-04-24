@@ -1,0 +1,147 @@
+noinst_LTLIBRARIES += libstacker.la
+
+libstacker_la_CPPFLAGS =			\
+	$(AM_CPPFLAGS)			\
+	-I $(MARSHAL_DIR)		\
+	$(LIBSTACKER_CFLAGS)		\
+	-DDDM_I_KNOW_THIS_IS_UNSTABLE=1
+
+libstacker_la_LIBADD = 			\
+	$(LIBSTACKER_LIBS)		\
+	libhippo.la
+
+# none of this actually matters since it's just a convenience library, keeping it 
+# for future reference
+# libstacker_la_LDFLAGS= -export-symbols-regex "^[^_].*" -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) -no-undefined
+
+STACKER_MARSHAL_LIST=$(COMMONSRCDIR)/stacker/hippo-stacker-marshal.list
+STACKER_MARSHAL_HEADER=$(MARSHAL_DIR)/hippo-stacker-marshal.h
+STACKER_MARSHAL_BODY=$(MARSHAL_DIR)/hippo-stacker-marshal.c
+
+$(STACKER_MARSHAL_HEADER): $(STACKER_MARSHAL_LIST)
+	mkdir $(MARSHAL_DIR) || true
+	$(GLIB_GENMARSHAL) --prefix=hippo_stacker_marshal $(STACKER_MARSHAL_LIST) --header > $(STACKER_MARSHAL_HEADER)
+
+$(STACKER_MARSHAL_BODY): $(STACKER_MARSHAL_LIST)
+	mkdir $(MARSHAL_DIR) || true
+	(echo "#include \"hippo-stacker-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_stacker_marshal $(STACKER_MARSHAL_LIST) --body) > $(STACKER_MARSHAL_BODY)
+
+LIBSTACKER_SOURCEFILES =						\
+	$(COMMONSRCDIR)/stacker/hippo-actions.c			\
+	$(COMMONSRCDIR)/stacker/hippo-actions.h			\
+	$(COMMONSRCDIR)/stacker/hippo-block.c			\
+	$(COMMONSRCDIR)/stacker/hippo-block.h			\
+	$(COMMONSRCDIR)/stacker/hippo-block-generic.c		\
+	$(COMMONSRCDIR)/stacker/hippo-block-generic.h		\
+	$(COMMONSRCDIR)/stacker/hippo-block-group-chat.c		\
+	$(COMMONSRCDIR)/stacker/hippo-block-group-chat.h		\
+	$(COMMONSRCDIR)/stacker/hippo-block-group-member.c	\
+	$(COMMONSRCDIR)/stacker/hippo-block-group-member.h	\
+	$(COMMONSRCDIR)/stacker/hippo-block-account-question.c	\
+	$(COMMONSRCDIR)/stacker/hippo-block-account-question.h	\
+	$(COMMONSRCDIR)/stacker/hippo-block-abstract-person.c	\
+	$(COMMONSRCDIR)/stacker/hippo-block-abstract-person.h	\
+	$(COMMONSRCDIR)/stacker/hippo-block-amazon-activity.c	\
+	$(COMMONSRCDIR)/stacker/hippo-block-amazon-activity.h	\
+	$(COMMONSRCDIR)/stacker/hippo-block-netflix-movie.c	\
+	$(COMMONSRCDIR)/stacker/hippo-block-netflix-movie.h	\
+	$(COMMONSRCDIR)/stacker/hippo-block-post.c		\
+	$(COMMONSRCDIR)/stacker/hippo-block-post.h		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-base.c		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-base.h		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block.c		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block.h		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-account-question.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-account-question.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-amazon-activity.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-amazon-activity.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-generic.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-generic.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-facebook-event.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-facebook-event.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-group-chat.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-group-chat.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-group-member.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-group-member.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-music.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-music.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-netflix-movie.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-netflix-movie.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-post.c		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-post.h		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-chat-preview.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-chat-preview.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-entity-name.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-entity-name.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-entity-photo.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-entity-photo.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-filter-area.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-filter-area.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-grip.c		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-grip.h		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-last-message-preview.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-last-message-preview.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-message-preview.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-message-preview.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-quipper.c		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-quipper.h		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-resource.c		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-resource.h		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-stack.c		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-stack.h		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-thumbnail.c		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-thumbnail.h		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-thumbnails.c		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-thumbnails.h		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-timestamp.c		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-timestamp.h		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-url-image.c		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-url-image.h		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-url-link.c		\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-url-link.h		\
+	$(COMMONSRCDIR)/stacker/hippo-image-cache.c		\
+	$(COMMONSRCDIR)/stacker/hippo-image-cache.h		\
+	$(COMMONSRCDIR)/stacker/hippo-jpeg-loader.c		\
+	$(COMMONSRCDIR)/stacker/hippo-jpeg-loader.h		\
+	$(COMMONSRCDIR)/stacker/hippo-object-cache.c		\
+	$(COMMONSRCDIR)/stacker/hippo-object-cache.h		\
+	$(COMMONSRCDIR)/stacker/hippo-post.c			\
+	$(COMMONSRCDIR)/stacker/hippo-post.h			\
+	$(COMMONSRCDIR)/stacker/hippo-quip-window.c		\
+	$(COMMONSRCDIR)/stacker/hippo-quip-window.h		\
+	$(COMMONSRCDIR)/stacker/hippo-stack-manager.c		\
+	$(COMMONSRCDIR)/stacker/hippo-stack-manager.h		\
+	$(COMMONSRCDIR)/stacker/hippo-stacker-platform.c		\
+	$(COMMONSRCDIR)/stacker/hippo-stacker-platform.h		\
+	$(COMMONSRCDIR)/stacker/hippo-stacker-internal.h		\
+	$(COMMONSRCDIR)/stacker/hippo-surface.c			\
+	$(COMMONSRCDIR)/stacker/hippo-surface.h			\
+	$(COMMONSRCDIR)/stacker/hippo-window.c			\
+	$(COMMONSRCDIR)/stacker/hippo-window.h
+
+LIBSTACKER_BUILT_SOURCEFILES =			\
+	$(STACKER_MARSHAL_HEADER)		\
+	$(STACKER_MARSHAL_BODY)
+
+MAINTAINERCLEANFILES +=	$(LIBSTACKER_BUILT_SOURCEFILES)
+BUILT_SOURCES += $(LIBSTACKER_BUILT_SOURCEFILES)
+
+# CSS files
+CSS_STYLESHEETS = \
+	$(COMMONSRCDIR)/stacker/stacker.css
+
+cssdir=$(pkgdatadir)
+css_DATA = $(CSS_STYLESHEETS)
+EXTRA_DIST += $(CSS_STYLESHEETS)
+
+## we need to nodist these because otherwise automake would copy 
+## ../common to distdir/../common which puts common outside of distdir.
+## so we handle the disting manually so the destination is always distdir/common-dist
+nodist_libstacker_la_SOURCES=$(LIBSTACKER_SOURCEFILES) $(LIBSTACKER_BUILT_SOURCEFILES)
+libstacker-dist-hook:
+	-mkdir $(distdir)/common-dist
+	-mkdir $(distdir)/common-dist/stacker
+	-mkdir $(distdir)/common-dist/stacker/generated
+	-cp $(LIBSTACKER_SOURCEFILES) $(distdir)/common-dist/stacker
+	-cp $(COMMONSRCDIR)/stacker/hippo-stacker-marshal.list $(distdir)/common-dist/stacker
+	-cp $(COMMONSRCDIR)/stacker/stacker.css $(distdir)/common-dist/stacker
