@@ -140,8 +140,8 @@ EXTRA_DIST += $(CSS_STYLESHEETS)
 nodist_libstacker_la_SOURCES=$(LIBSTACKER_SOURCEFILES) $(LIBSTACKER_BUILT_SOURCEFILES)
 libstacker-dist-hook:
 	-mkdir $(distdir)/common-dist
-	mkdir $(distdir)/common-dist/stacker
-	mkdir $(distdir)/common-dist/stacker/generated
-	cp $(LIBSTACKER_SOURCEFILES) $(distdir)/common-dist/stacker
-	cp $(COMMONSRCDIR)/stacker/hippo-stacker-marshal.list $(distdir)/common-dist/stacker
-	cp $(COMMONSRCDIR)/stacker/stacker.css $(distdir)/common-dist/stacker
+	-mkdir $(distdir)/common-dist/stacker
+	-mkdir $(distdir)/common-dist/stacker/generated
+	-cp $(LIBSTACKER_SOURCEFILES) $(distdir)/common-dist/stacker
+	-cp $(COMMONSRCDIR)/stacker/hippo-stacker-marshal.list $(distdir)/common-dist/stacker
+	-cp $(COMMONSRCDIR)/stacker/stacker.css $(distdir)/common-dist/stacker
