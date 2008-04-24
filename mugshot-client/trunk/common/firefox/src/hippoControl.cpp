@@ -20,6 +20,29 @@
 #endif
 
 #include "nspr.h"
+
+#ifdef HAVE_XULRUNNER
+/* For our usage of nsIDocument, we hit a problem where the
+ * size of nsString and nsString_external are different on
+ * some architectures. Since nsIDocument has a nsString
+ * member, accessing subsequent members then causes a crash
+ * because of their different location within the structure.
+ * As a workaround, we define MOZILLA_INTERNAL_API to use
+ * the internal nsString; this may cause problems with future
+ * versions of Gecko if the internal strings are made more
+ * strictly private.
+ *
+ *  http://bugzilla.redhat.com/show_bug.cgi?id=441643
+ *  http://bugzilla.mozilla.org/show_bug.cgi?id=430581
+ */
+#define MOZILLA_INTERNAL_API 1
+#include <nsString.h>
+#include <nsEscape.h>
+#else
+#include <nsStringAPI.h>
+#endif
+
+#include <nsString.h>
 #include "nsMemory.h"
 #include "nsNetCID.h"
 #include "nsISupportsUtils.h"
@@ -28,7 +51,6 @@
 #include "nsIURI.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsServiceManagerUtils.h"
-#include "nsStringAPI.h"
 #include "hippoControl.h"
 #ifdef HAVE_XULRUNNER
 #include "nsIClassInfoImpl.h"
