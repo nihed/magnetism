@@ -1,0 +1,5 @@
+[D-BUS Service]
+## this is the Mugshot Stacker tray icon application
+Name=com.dumbhippo.Client
+Exec=@bindir@/mugshot --no-show-window
+

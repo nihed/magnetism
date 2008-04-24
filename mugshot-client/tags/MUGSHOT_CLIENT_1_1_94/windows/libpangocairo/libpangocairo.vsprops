@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="libpangocairo"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="../libpango;../../../mugshot-dependencies/windows-binary/gettext/include;../../../mugshot-dependencies/glib;../../../mugshot-dependencies/glib/glib;../libglib;../cairo;../../../mugshot-dependencies/cairo/src;../../../mugshot-dependencies/glib/gmodule;../../../mugshot-dependencies/pango/pango;../../../mugshot-dependencies/pango"
+		PreprocessorDefinitions="PANGO_ENABLE_BACKEND;PANGO_ENABLE_ENGINE"
+		DisableSpecificWarnings="4312;4244"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		OutputFile="$(OutDir)\libpangocairo-1.0-0.dll"
+		ModuleDefinitionFile="../../../mugshot-dependencies/pango/pango/pangocairo.def"
+	/>
+</VisualStudioPropertySheet>

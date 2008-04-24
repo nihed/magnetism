@@ -1,0 +1,153 @@
+bin_PROGRAMS += mugshot
+
+mugshot_CPPFLAGS = 			   \
+	$(AM_CPPFLAGS)			   \
+	-I $(top_srcdir)		   \
+	$(MUGSHOT_CFLAGS)		   \
+	-DHIPPO_DATA_DIR=\"$(pkgdatadir)\" \
+	-DDDM_I_KNOW_THIS_IS_UNSTABLE=1
+
+mugshot_LDFLAGS=
+mugshot_LDADD= libhippo.la libstacker.la $(MUGSHOT_LIBS)
+
+if !HAVE_GTK210
+mugshot_CPPFLAGS += -I$(top_srcdir)/gtkcopy
+mugshot_LDFLAGS += libgtkcopy.la
+endif
+
+mugshot_SOURCES	=				\
+	src/hippo-dbus-client.c			\
+	src/hippo-dbus-client.h			\
+	src/hippo-dbus-stacker.c		\
+	src/hippo-dbus-stacker.h		\
+	src/hippo-embedded-image.c		\
+	src/hippo-embedded-image.h		\
+	src/hippo-http.c			\
+	src/hippo-http.h			\
+	src/hippo-idle.c                	\
+	src/hippo-idle.h                	\
+	src/hippo-stacker-platform-impl.c	\
+	src/hippo-stacker-platform-impl.h	\
+	src/hippo-status-icon.c			\
+	src/hippo-status-icon.h			\
+	src/hippo-ui.c				\
+	src/hippo-ui.h				\
+	src/hippo-window-gtk.c			\
+	src/hippo-window-gtk.h			\
+	src/hippo-window-wrapper.c		\
+	src/hippo-window-wrapper.h		\
+	src/main.c				\
+	src/main.h
+
+## Also edit Windows Applets/Makefile if changing this
+EMBEDDEDIMAGEDIR=$(COMMONSRCDIR)/images
+EMBEDDED_IMAGES=				\
+	$(EMBEDDEDIMAGEDIR)/add_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/amazon_no_image.png	\
+	$(EMBEDDEDIMAGEDIR)/arrow.png		\
+	$(EMBEDDEDIMAGEDIR)/arrow2.png		\
+	$(EMBEDDEDIMAGEDIR)/bar_middle.png	\
+	$(EMBEDDEDIMAGEDIR)/bar_pipe.png	\
+	$(EMBEDDEDIMAGEDIR)/bar_x2.png		\
+	$(EMBEDDEDIMAGEDIR)/bar_x.png		\
+	$(EMBEDDEDIMAGEDIR)/blue_x.png		\
+	$(EMBEDDEDIMAGEDIR)/chat.png		\
+	$(EMBEDDEDIMAGEDIR)/checkbox.png	\
+	$(EMBEDDEDIMAGEDIR)/checked_checkbox.png \
+	$(EMBEDDEDIMAGEDIR)/closetip.png	\
+	$(EMBEDDEDIMAGEDIR)/expandtip.png	\
+	$(EMBEDDEDIMAGEDIR)/filter2.png		\
+	$(EMBEDDEDIMAGEDIR)/filter.png		\
+	$(EMBEDDEDIMAGEDIR)/find.png		\
+	$(EMBEDDEDIMAGEDIR)/flat_x.png		\
+	$(EMBEDDEDIMAGEDIR)/home2.png		\
+	$(EMBEDDEDIMAGEDIR)/home.png		\
+	$(EMBEDDEDIMAGEDIR)/hush2.png		\
+	$(EMBEDDEDIMAGEDIR)/hush.png		\
+	$(EMBEDDEDIMAGEDIR)/lid.png		\
+	$(EMBEDDEDIMAGEDIR)/lock_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/mugshotstacker.png	\
+	$(EMBEDDEDIMAGEDIR)/netflix_no_image.png \
+	$(EMBEDDEDIMAGEDIR)/noart.png		\
+	$(EMBEDDEDIMAGEDIR)/nophoto.png		\
+	$(EMBEDDEDIMAGEDIR)/photo_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/quiphate_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/quiplove_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/rating_star_blank.png \
+	$(EMBEDDEDIMAGEDIR)/rating_star.png	\
+	$(EMBEDDEDIMAGEDIR)/search_x.png	\
+	$(EMBEDDEDIMAGEDIR)/unhush2.png		\
+	$(EMBEDDEDIMAGEDIR)/unhush.png
+
+EMBEDDED_IMAGE_HEADER=$(BUILT_SRC_DIR)/hippo-embedded-image-data.h
+$(EMBEDDED_IMAGE_HEADER):	$(EMBEDDED_IMAGES) Makefile
+	mkdir $(MARSHAL_DIR) || true
+	cat </dev/null > $(EMBEDDED_IMAGE_HEADER) || exit 1 ;				\
+	ALL_NAMES="" ;									\
+	for I in $(EMBEDDED_IMAGES); do							\
+	    IMG=$$I ;									\
+	    NAME=`echo "$$I" | sed -e 's/.png//g' | sed -e 's/.gif//g'` ;		\
+	    NAME=`basename "$$NAME"` ;							\
+	    echo "Writing embedded image $$IMG with name $$NAME" ;			\
+	    gdk-pixbuf-csource --struct --raw --static "$$IMG"				\
+                                --name="$$NAME"						\
+				>> $(EMBEDDED_IMAGE_HEADER) || exit 1;			\
+	    ALL_NAMES="$$ALL_NAMES $$NAME" ;						\
+        done ;										\
+        echo 'struct { const char *name; '  >> $(EMBEDDED_IMAGE_HEADER) ;		\
+        echo 'GdkPixbuf *pixbuf; '  >> $(EMBEDDED_IMAGE_HEADER) ;			\
+	echo 'const GdkPixdata *pixdata; } catalog[] = {' >> $(EMBEDDED_IMAGE_HEADER) ;	\
+	for I in $$ALL_NAMES ; do							\
+            echo "{ \"$$I\", NULL, &$$I }," >> $(EMBEDDED_IMAGE_HEADER) ;		\
+	done ;										\
+	echo '{ NULL, NULL, NULL } };' >> $(EMBEDDED_IMAGE_HEADER) || exit 1
+
+mugshot-autostart-check: mugshot-autostart-check.in
+	sed -e 's,[@]LIBEXECDIR[@],$(libexecdir),g' mugshot-autostart-check.in > mugshot-autostart-check.tmp && mv mugshot-autostart-check.tmp mugshot-autostart-check
+
+autocheckstartdir=$(libexecdir)
+autocheckstart_SCRIPTS = mugshot-autostart-check
+EXTRA_DIST += mugshot-autostart-check.in
+
+BUILT_SOURCES += $(EMBEDDED_IMAGE_HEADER) mugshot-autostart-check
+MAINTAINERCLEANFILES +=	$(EMBEDDED_IMAGE_HEADER) mugshot-autostart-check
+
+## we need to nodist these because otherwise automake would copy 
+## ../common to distdir/../common which puts common outside of distdir.
+## so we handle the disting manually so the destination is always distdir/common-dist
+nodist_mugshot_SOURCES=$(EMBEDDED_IMAGES)
+mugshot-dist-hook:
+	-mkdir $(distdir)/common-dist
+	mkdir $(distdir)/common-dist/images
+	cp $(EMBEDDED_IMAGES) $(distdir)/common-dist/images
+
+autostartdir=$(datadir)/gnome/autostart
+autostart_in_files=mugshot-autostart.desktop.in
+autostart_files=$(autostart_in_files:.desktop.in=.desktop)
+autostart_DATA = $(autostart_files)
+
+if WITH_MAEMO
+desktopfilesdir=$(datadir)/applications/hildon
+else
+desktopfilesdir=$(datadir)/applications
+endif
+desktopfiles_in_files=mugshot.desktop.in
+desktopfiles_files=$(desktopfiles_in_files:.desktop.in=.desktop)
+desktopfiles_DATA = $(desktopfiles_files)
+
+# Dbus service file
+#servicedir = $(datadir)/dbus-1/services
+#service_in_files = # org.freedesktop.od.Engine.service.in com.dumbhippo.Client.service.in
+#service_DATA = $(service_in_files:.service.in=.service)
+#$(service_DATA): $(service_in_files) Makefile
+#	@sed -e "s|\@bindir\@|$(bindir)|" $< > $@
+
+# intltool not here until po exists and all that
+#@INTLTOOL_DESKTOP_RULE@
+mugshot.desktop: mugshot.desktop.in
+	cat $(srcdir)/mugshot.desktop.in | sed -e 's/^_//g' > mugshot.desktop
+mugshot-autostart.desktop: mugshot-autostart.desktop.in
+	cat $(srcdir)/mugshot-autostart.desktop.in | sed -e 's/^_//g' -e 's,[@]LIBEXECDIR[@],$(libexecdir),g' > mugshot-autostart.desktop
+
+EXTRA_DIST += $(autostart_in_files) $(desktopfiles_in_files) #$(service_in_files)
+MAINTAINERCLEANFILES +=	$(autostart_files) $(desktopfiles_files) #$(service_DATA)
