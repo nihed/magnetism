@@ -18,8 +18,8 @@
 
 <head>
 	<title>Application Statistics - <c:out value="${appView.application.name}"/></title>
-	<dht3:stylesheet name="site" iefixes="true"/>	
-	<dht3:stylesheet name="applications"/>
+	<gnome:stylesheet name="site" iefixes="true"/>	
+	<gnome:stylesheet name="applications"/>
 	<dh:script modules="dh.control,dh.util,dh.event"/>
 	<script type="text/javascript">
 		dhApplicationId = <dh:jsString value="${appView.application.id}"/>;
