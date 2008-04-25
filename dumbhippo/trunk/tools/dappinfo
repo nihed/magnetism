@@ -560,6 +560,8 @@ try:
         cmd_setdesktop(args)
     elif sys.argv[1] == "upload":
         cmd_upload(args)
+    else:
+        print >>sys.stderr, "Unknown command %s" % (sys.argv[1],)
 except HumanVisibleException, e:
     print >>sys.stderr, "dappinfo: " + e.__str__()
     sys.exit(1)
