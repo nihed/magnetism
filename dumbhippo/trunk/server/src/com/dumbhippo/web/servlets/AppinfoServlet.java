@@ -24,11 +24,14 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.StreamUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.AppinfoUpload;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
@@ -36,6 +39,7 @@ import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.applications.AppinfoFile;
 import com.dumbhippo.server.applications.AppinfoIcon;
 import com.dumbhippo.server.applications.ApplicationSystem;
+import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.web.WebEJBUtil;
 
 /**
@@ -61,6 +65,7 @@ public class AppinfoServlet extends AbstractServlet {
 	// be around 50k or so.
 	private static final long MAX_ICON_FILE_SIZE = 128 * 1024;
 	
+	private boolean authenticationDisabled;
 	private Configuration config;
 	private ApplicationSystem applicationSystem;
 	private File appinfoDir;
@@ -75,8 +80,16 @@ public class AppinfoServlet extends AbstractServlet {
 		} catch (PropertyNotFoundException e) {
 			throw new RuntimeException("appinfoDir property was not set in super configuration");
 		}
+		authenticationDisabled = Boolean.parseBoolean(config.getProperty(HippoProperty.DISABLE_AUTHENTICATION));	
 	}
 
+	protected User getUserOrSystem(HttpServletRequest request) {
+		User u = getUser(request);
+		if (u != null)
+			return u;
+		return EJBUtil.defaultLookup(AccountSystem.class).getSiteCharacter(Site.GNOME);
+	}
+	
 	////////////////////////////////////////////////////////////
 	//
 	// PUT /upload/appinfo
@@ -90,7 +103,7 @@ public class AppinfoServlet extends AbstractServlet {
 		ServletFileUpload upload = new ServletFileUpload(new DiskFileItemFactory());
 		upload.setSizeMax(MAX_APPINFO_FILE_SIZE);
 		
-		if (!applicationSystem.canEditApplications(getViewpoint(request)))
+		if (!applicationSystem.canEditApplications(getViewpoint(request)) && !authenticationDisabled)
 			throw new HttpException(HttpResponseCode.FORBIDDEN, "you don't have permission to upload application info files");
 
 		Guid uploadId = Guid.createNew();
@@ -135,7 +148,7 @@ public class AppinfoServlet extends AbstractServlet {
 		}
 
 		try {
-			applicationSystem.addUpload(getUser(request).getGuid(), uploadId, file, comment);
+			applicationSystem.addUpload(getUserOrSystem(request).getGuid(), uploadId, file, comment);
 		} catch (RuntimeException e) {
 			file.close();
 			saveLocation.delete();
@@ -339,7 +352,7 @@ public class AppinfoServlet extends AbstractServlet {
 		ServletFileUpload upload = new ServletFileUpload(new DiskFileItemFactory());
 		upload.setSizeMax(MAX_ICON_FILE_SIZE);
 		
-		if (!applicationSystem.canEditApplications(getViewpoint(request)))
+		if (!applicationSystem.canEditApplications(getViewpoint(request)) && !authenticationDisabled)
 			throw new HttpException(HttpResponseCode.FORBIDDEN, "you don't have permission to upload application info files");
 
 		Guid uploadId = Guid.createNew();
@@ -383,7 +396,7 @@ public class AppinfoServlet extends AbstractServlet {
 			out = null;
 			
 
-			applicationSystem.addUpload(getUser(request).getGuid(), uploadId, file, spec.getComment());
+			applicationSystem.addUpload(getUserOrSystem(request).getGuid(), uploadId, file, spec.getComment());
 
 			logger.debug("Edited appinfo file succesfully written to {}", saveLocation.getPath());
 			success = true;
