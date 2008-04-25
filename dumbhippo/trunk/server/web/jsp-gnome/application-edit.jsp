@@ -17,8 +17,8 @@
 
 <head>
 	<title>Edit Application - <c:out value="${appinfo.name}"/></title>
-	<dht3:stylesheet name="site" iefixes="true"/>	
-	<dht3:stylesheet name="applications"/>	
+	<gnome:stylesheet name="site" iefixes="true"/>	
+	<gnome:stylesheet name="applications"/>	
 	<dh:script module="dh.util"/>
 	<script type="text/javascript">
 	dhIconCounter = 0;
