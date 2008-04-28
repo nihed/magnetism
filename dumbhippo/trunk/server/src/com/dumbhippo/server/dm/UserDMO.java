@@ -407,19 +407,34 @@ public abstract class UserDMO extends DMObject<Guid> {
 		return identitySpider.getMusicSharingPrimed(user);
 	}	
 	
+	private static final int MAX_APPLICATION_RESULTS = 15;
+
 	@DMProperty
 	@DMFilter("viewer.canSeePrivate(this)")
-	public Set<ApplicationDMO> getTopApplications() {
+	public List<ApplicationDMO> getTopApplications() {
 		UserViewpoint viewpoint = new UserViewpoint(user, Site.NONE);
 		
-		Set<ApplicationDMO> result = new HashSet<ApplicationDMO>();
-	
-		// returned "since" here can be null, which is OK
-		Date since = applicationSystem.getMyApplicationUsageStart(viewpoint);
+		List<ApplicationDMO> result = new ArrayList<ApplicationDMO>();
 
-		List<String> appIds = applicationSystem.getMyMostUsedApplicationIds(viewpoint, since, 15);
+		// We first get applications from the default timescale (last 30 days); this
+		// gives priority to applications that the user has used recently.
+		List<String> appIds = applicationSystem.getMyMostUsedApplicationIds(viewpoint, null, MAX_APPLICATION_RESULTS);
 		for (String appId : appIds) {
 			result.add(session.findUnchecked(ApplicationDMO.class, appId));
+		}
+		
+		// If that doesn't give us the full number of apps we want to return, extend that
+		// list with apps usage from the beginning of time
+		if (result.size() < MAX_APPLICATION_RESULTS) {
+			Set<String> seen = new HashSet<String>(appIds);
+			List<String> olderAppIds = applicationSystem.getMyMostUsedApplicationIds(viewpoint, new Date(0), 15);
+			for (String appId : olderAppIds) {
+				if (!seen.contains(appId)) {
+					result.add(session.findUnchecked(ApplicationDMO.class, appId));
+					if (result.size() == MAX_APPLICATION_RESULTS)
+						break;
+				}
+			}
 		}
 		
 		return result;
