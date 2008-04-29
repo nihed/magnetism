@@ -127,17 +127,24 @@ class MasterPoller(object):
                                                             prev_time DATETIME)''')
         cursor.execute('''CREATE INDEX IF NOT EXISTS TasksIdx on Tasks (key)''')
         
-        _logger.debug("retrieving current task set...")
-        bucket = self.__s3_conn.get_bucket(config.get('firehose.awsS3Bucket'))
-        key = bucket.get_key(config.get('firehose.awsS3Key'))
-        # FIXME should stream this
-        current_task_keys = {}
-        f = StringIO.StringIO(key.get_contents_as_string())
-        for line in f:
-            current_task_keys[line.strip()] = True
-        _logger.debug("have %d tasks", len(current_task_keys))        
-        self.__ensure_tasks_persisted(current_task_keys)        
+        bname = config.get('firehose.awsS3Bucket')
+        kname = config.get('firehose.awsS3Key')
+        _logger.debug("retrieving current task set from bucket: %r  key: %r", bname, kname)
+        bucket = self.__s3_conn.get_bucket(bname)
         
+        # FIXME should stream this
+        current_task_keys = {}        
+        key = bucket.get_key(kname)
+        if key is not None:
+            contents = key.get_contents_as_string()
+            if contents is not None:
+                f = StringIO.StringIO(contents)
+                for line in f:
+                    current_task_keys[line.strip()] = True
+                _logger.debug("have %d tasks", len(current_task_keys))        
+                self.__ensure_tasks_persisted(current_task_keys)
+        else:
+            _logger.warn("no currently saved task set!")
         curtime = time.time()
         taskentries = []
         dropped_task_keys = {}
