@@ -1,5 +1,9 @@
 @CHARSET "UTF-8";
 
+.dh-grow-div-around-floats {
+	clear:			both;
+}
+
 #dhApplicationsColumns {
 	table-layout: fixed;
 	width: 100%;
