@@ -5,6 +5,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
+<%@ taglib tagdir="/WEB-INF/tags/gnome" prefix="gnome" %>
 
 <dh:bean id="applications" class="com.dumbhippo.web.pages.ApplicationsPage" scope="request"/>
 <dh:bean id="application" class="com.dumbhippo.web.pages.ApplicationPage" scope="page"/>
@@ -20,8 +21,8 @@
 
 <head>
 	<title>Application History - <c:out value="${appView.application.name}"/></title>
-	<dht3:stylesheet name="site" iefixes="true"/>	
-	<dht3:stylesheet name="applications"/>	
+	<gnome:stylesheet name="site" iefixes="true"/>	
+	<gnome:stylesheet name="applications"/>	
     <dh:script modules="dh.util,dh.server"/>
 	<script type="text/javascript">
 	function dhRevertApplication() {
@@ -47,8 +48,8 @@
 	</script>
 </head>
 
-<dht3:page currentPageLink="applications">
-   	<dht3:shinyBox color="grey">
+<body>
+  <gnome:page  currentPageLink="applications">
 		<div class="dh-page-shinybox-title-large">Application History - <c:out value="${appView.application.name}"/></div>
 		<div>
    			This page shows past versions of application information for <c:out value="${appView.application.name}"/>.
@@ -170,5 +171,5 @@
 				<input type="button" value="Revert" onclick="dhRevertApplication()"/>
 			</div>
 		</c:if>
-	</dht3:shinyBox>
-</dht3:page>
+	</gnome:page>
+</body>
