@@ -4,6 +4,7 @@ import os,sys,re,heapq,time,Queue,sha,threading
 import BaseHTTPServer,httplib,urlparse,urllib
 from email.Utils import formatdate,parsedate_tz,mktime_tz
 import logging
+from StringIO import StringIO
 
 import boto
 
@@ -41,7 +42,7 @@ Should compute a new result (newhash, newtimestamp)"""
 class FeedTaskHandler(object):
     FAMILY = 'FEED'
     
-    def run(self, id, prev_hash, prev_timestamp):
+    def run(self, id, prev_hash, prev_timestamp, outpath=None):
         targeturl = id
         parsedurl = urlparse.urlparse(targeturl)
         try:
@@ -61,12 +62,23 @@ class FeedTaskHandler(object):
             if response.status == 304:
                 _logger.info("Got 304 Unmodified for %r", targeturl)
                 return (prev_hash, prev_timestamp)
-            hash = sha.new()            
+            if outpath is not None:
+                outpath_tmpname = outpath+'.tmp'
+                outfile = open(outpath_tmpname, 'w')
+            else:
+                outpath_tmpname = None
+                outfile = None
+            hash = sha.new()
             buf = response.read(8192)
             while buf:
                 hash.update(buf)
+                if outfile is not None:
+                    outfile.write(buf)
                 buf = response.read(8192)
             hash_hex = hash.hexdigest()
+            if outfile is not None:
+                outfile.close()
+                os.rename(outpath_tmpname, outpath)
             timestamp_str = response.getheader('Last-Modified', None)
             if timestamp_str is not None:
                 timestamp = mktime_tz(parsedate_tz(timestamp_str))
@@ -110,6 +122,7 @@ class TaskPoller(object):
         
     def __init__(self):
         bindport = int(config.get('firehose.localslaveport'))
+        self.__savefetches = config.get('firehose.savefetches') == "true"
         self.__server = BaseHTTPServer.HTTPServer(('', bindport), TaskRequestHandler)
         self.__active_collectors = set()
         
@@ -153,8 +166,14 @@ class TaskPoller(object):
             _logger.exception("Failed to find family for task %r", taskid)
             return
         inst = fclass()
+        kwargs = {}
+        if self.__savefetches:
+            quotedname = urllib.quote_plus(taskid)
+            ts = int(time.time())
+            outpath = os.path.join(os.getcwd(), 'data', quotedname + '.' + unicode(ts))
+            kwargs['outpath'] = outpath       
         try:
-            (new_hash, new_timestamp) = inst.run(tid, prev_hash, prev_timestamp)            
+            (new_hash, new_timestamp) = inst.run(tid, prev_hash, prev_timestamp, **kwargs)            
         except Exception, e:
             _logger.error("Failed task id %r: %s", tid, e)
             (new_hash, new_timestamp) = (None, None)
