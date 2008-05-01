@@ -68,6 +68,20 @@ class XmlElementEater(FeedPostProcessor):
             parent.remove(node)
         return lxml.etree.tostring(tree, pretty_print=True)
     
+class RegexpEater(FeedPostProcessor):
+    def __init__(self, regexps):
+        self.__regexps = map(re.compile, regexps)
+        
+    def get_value(self):
+        value = StringIO(super(RegexpEater, self).get_value())
+        outvalue = StringIO()
+        for line in value:
+            for regexp in self.__regexps:
+                if regexp.search(line):
+                    continue
+                outvalue.write(line)
+        return outvalue
+    
 class ChainedProcessors(object):
     def __init__(self, processors):
         super(ChainedProcessors, self).__init__()
@@ -85,9 +99,14 @@ class ChainedProcessors(object):
             buf = processor.get_value()
         return buf
     
+# Define a shared eater for rss which has a lastBuildDate
+rss_eater = XmlElementEater(['/rss/channel/lastBuildDate', '/rss/channel/pubDate'])
 # This maps from a regular expression matching a URL to a list of processors
 feed_transformations = [
-  (r'digg.com/users/.*/history/diggs.rss', [XmlElementEater(['/rss/channel/lastBuildDate', '/rss/channel/pubDate'])]),
+  (r'digg.com/users/.*/history/diggs.rss', [rss_eater]),
+  (r'picasaweb.google.com.*feed.*base.*album', [rss_eater]),
+  (r'google.com/reader/public', [XmlElementEater(['/feed/updated'])]),
+  (r'blogs.gnome.org', [RegexpEater(['<!--.*page served in.*seconds.*-->'])]),
 ]
 feed_transformations = [(re.compile(r'^https?://([A-Z0-9]+\.)*' + x[0]), x[1]) for x in feed_transformations]
 
@@ -292,6 +311,9 @@ efeated Barack Obama Tuesday in Pennsylvania by nine-plus points? Barack Obama i
     '''
     transformers = get_transformations('http://digg.com/users/jdhore/history/diggs.rss')
     processor = ChainedProcessors(transformers)
+    processor.feed(testdata)
+    print processor.get_value()
+    processor = ChainedProcessors([])
     processor.feed(testdata)
     print processor.get_value()
     
