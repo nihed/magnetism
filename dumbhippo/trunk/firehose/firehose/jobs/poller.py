@@ -155,7 +155,7 @@ class FeedTaskHandler(object):
                 processor.feed(buf)
                 buf = response.read(8192)
             hash = sha.new()
-            hash.feed(processor.get_value())
+            hash.update(processor.get_value())
             hash_hex = hash.hexdigest()
             if outfile is not None:
                 outfile.close()
