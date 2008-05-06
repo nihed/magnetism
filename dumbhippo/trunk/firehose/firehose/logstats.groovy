@@ -79,11 +79,16 @@ logf.eachLine { line ->
     	return
 }
 
-def printTopKeys(String prefix, domainHash) {
+def printTopKeys(String prefix, domainHash, other) {
 	def keys = new ArrayList(domainHash.keySet())
 	keys.sort({ a,b -> domainHash[b].compareTo(domainHash[a])})
 	keys.subList(0, 5).each { k ->
-		println " ${prefix} ${k} -> ${domainHash[k]}"
+		def otherValue = other != null ? other[k] : null;
+		print " ${prefix} ${k} -> ${domainHash[k]}"
+		if (otherValue != null)
+			println " (${otherValue})"
+		else
+			println ""	
 	}
 }
 
@@ -92,6 +97,6 @@ resultGroups.each { group ->
     Date d = new Date(group.startDate)
     def pollsPerSec = group.updates/(timeSliceMilliseconds/1000)
 	println "updates from ${d}: ${group.updates} (${pollsPerSec} checks per second)"
-	printTopKeys("U", group.domainUnmodified)
-	printTopKeys("M", group.domainModified)
+	printTopKeys("U", group.domainUnmodified, group.domainModified)
+	printTopKeys("M", group.domainModified, group.domainUnmodified)
 }
