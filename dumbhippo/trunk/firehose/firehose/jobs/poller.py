@@ -109,7 +109,7 @@ def get_transformations(url):
 class FeedTaskHandler(object):
     FAMILY = 'FEED'
 
-    def run(self, id, prev_hash, prev_timestamp, outpath=None):
+    def run(self, id, prev_hash, prev_timestamp, cachedir=None):
         targeturl = id
         transformlist = get_transformations(targeturl)
         parsedurl = urlparse.urlparse(targeturl)
@@ -130,13 +130,15 @@ class FeedTaskHandler(object):
             if response.status == 304:
                 _logger.info("Got 304 Unmodified for %r", targeturl)
                 return (prev_hash, prev_timestamp)
-            if outpath is not None:
-                outpath_tmpname = outpath+'.tmp'
+            if cachedir is not None:
+                quotedname = urllib.quote_plus(targeturl)
+                ts = int(time.time())
+                outpath = os.path.join(cachedir, quotedname + '.' + unicode(ts))
+                outpath_tmpname = outpath + '.tmp'
                 outfile = open(outpath_tmpname, 'w')
             else:
                 outpath_tmpname = None
                 outfile = None
-            processor = ChainedProcessors(transformlist)
             data = StringIO()
             buf = response.read(8192)
             while buf:
@@ -145,13 +147,17 @@ class FeedTaskHandler(object):
                 data.write(buf)
                 buf = response.read(8192)
             datavalue = data.getvalue()
+            processor = ChainedProcessors(transformlist)            
             processed = processor.process(datavalue)
             hash = sha.new()
             hash.update(processed)
             hash_hex = hash.hexdigest()
             if outfile is not None:
                 outfile.close()
-                os.rename(outpath_tmpname, outpath)
+                if prev_hash != hash_hex:                
+                    os.rename(outpath_tmpname, outpath)
+                else:
+                    os.unlink(outpath_tmpname)
             timestamp_str = response.getheader('Last-Modified', None)
             if timestamp_str is not None:
                 timestamp = mktime_tz(parsedate_tz(timestamp_str))
@@ -241,10 +247,8 @@ class TaskPoller(object):
         inst = fclass()
         kwargs = {}
         if self.__savefetches:
-            quotedname = urllib.quote_plus(taskid)
-            ts = int(time.time())
-            outpath = os.path.join(os.getcwd(), 'data', quotedname + '.' + unicode(ts))
-            kwargs['outpath'] = outpath       
+            outpath = os.path.join(os.getcwd(), 'data', 'feedcache')
+            kwargs['cachedir'] = outpath       
         try:
             (new_hash, new_timestamp) = inst.run(tid, prev_hash, prev_timestamp, **kwargs)            
         except Exception, e:
