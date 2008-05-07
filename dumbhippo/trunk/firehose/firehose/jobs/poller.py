@@ -75,27 +75,54 @@ class RegexpEater(FeedPostProcessor):
                     continue
                 outvalue.write(line)
         return outvalue
-    
+
+# This one is designed solely for MySpace which adds some odd
+# base64 encoded binary goo in HTML comments
+class BasicHtmlCommentEater(FeedPostProcessor):
+    def __init__(self):
+        super(BasicHtmlCommentEater, self).__init__()
+        
+    def process(self, data):
+        buf = StringIO(data)
+        outvalue = StringIO()
+        state = 0
+        for line in data:
+            if state == 0:
+                if line.startswith('<!--'):
+                    state = 1
+                else:
+                    outvalue.write(line)
+            elif state == 1:
+                if line.startswith('-->'):
+                    state = 0
+        return outvalue
+                
 class ChainedProcessors(object):
     def __init__(self, processors):
         super(ChainedProcessors, self).__init__()
-        if len(processors) == 0:
+        self.__is_identity = len(processors) == 0        
+        if self.__is_identity:
             processors = [FeedPostProcessor()]
         self._processors = processors
+        
+    def is_identity(self):
+        return self.__is_identity
         
     def process(self, data):
         for processor in self._processors:
             data = processor.process(data)
         return data
 
-# Define a shared eater for rss which has a lastBuildDate
+# Define shared eaters for these feed types
 rss_eater = XmlElementEater(['/rss/channel/lastBuildDate', '/rss/channel/pubDate'])
+atom_eater = XmlElementEater(['/feed/updated'])
 # This maps from a regular expression matching a URL to a list of processors
 feed_transformations = [
   (r'digg.com/users/.*/history/diggs.rss', [rss_eater]),
-  (r'picasaweb.google.com.*feed.*base.*album', [rss_eater]),
+  (r'picasaweb.google.com.*feed.*base.*album', [rss_eater, atom_eater]),
   (r'google.com/reader/public', [XmlElementEater(['/feed/updated'])]),
   (r'blogs.gnome.org', [RegexpEater(['<!--.*page served in.*seconds.*-->'])]),
+  (r'blog.myspace.com', [BasicHtmlCommentEater()]),
 ]
 feed_transformations = [(re.compile(r'^https?://([A-Z0-9]+\.)*' + x[0]), x[1]) for x in feed_transformations]
 
@@ -139,13 +166,16 @@ class FeedTaskHandler(object):
             else:
                 outpath_tmpname = None
                 outfile = None
+            rawhash = sha.new()
             data = StringIO()
             buf = response.read(8192)
             while buf:
                 if outfile is not None:
                     outfile.write(buf)
                 data.write(buf)
+                rawhash.update(buf)
                 buf = response.read(8192)
+            rawhash_hex = rawhash.hexdigest()
             datavalue = data.getvalue()
             processor = ChainedProcessors(transformlist)            
             processed = processor.process(datavalue)
@@ -164,10 +194,11 @@ class FeedTaskHandler(object):
             else:
                 _logger.debug("no last-modified for %r", targeturl)
                 timestamp = time.time()
+            filters_applied = (not processor.is_identity()) and "(filters applied)" or ""  
             if prev_hash != hash_hex:
-                _logger.info("Got new hash:%r (prev:%r) ts:%r for url %r", hash_hex, prev_hash, timestamp, targeturl)                
+                _logger.info("Got new hash:%r (prev:%r) ts:%r %s for url %r", hash_hex, prev_hash, timestamp, filters_applied, targeturl)                
                 return (hash_hex, timestamp)
-            _logger.info("Fetched full unmodified content for %r", targeturl)             
+            _logger.info("Fetched full unmodified content %s for %r", filters_applied, targeturl)             
             return (prev_hash, prev_timestamp)
         finally:
             try:

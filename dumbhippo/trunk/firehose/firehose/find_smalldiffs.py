@@ -19,7 +19,7 @@ def main():
             c -= 3
         if c > 0 and c < 13:
             entry_lines[path] = c
-    simplejson.dump(entry_lines, sys.stdout)
+    simplejson.dump(entry_lines, sys.stdout, sort_keys=True, indent=4)
         
 if __name__ == '__main__':
     main()
