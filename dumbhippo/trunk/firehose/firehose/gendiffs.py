@@ -8,7 +8,7 @@ def main():
     entries.sort()
     items = {}
     for entry in entries:
-        if entry.endswith('.diff'):
+        if entry.endswith('.diff') or entry.endswith('.tmp'):
             continue
         (key, ts) = entry.rsplit('.', 1)        
         if key not in items:
