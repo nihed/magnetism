@@ -3,6 +3,7 @@
 import os,sys,re,heapq,time,Queue,sha,threading
 import BaseHTTPServer,httplib,urlparse,urllib
 from email.Utils import formatdate,parsedate_tz,mktime_tz
+from BeautifulSoup import BeautifulSoup,Comment
 import logging
 from StringIO import StringIO
 
@@ -74,28 +75,34 @@ class RegexpEater(FeedPostProcessor):
                 if regexp.search(line):
                     continue
                 outvalue.write(line)
-        return outvalue
+        return outvalue.getvalue()
 
-# This one is designed solely for MySpace which adds some odd
-# base64 encoded binary goo in HTML comments
-class BasicHtmlCommentEater(FeedPostProcessor):
+class HtmlCommentEater(FeedPostProcessor):
     def __init__(self):
-        super(BasicHtmlCommentEater, self).__init__()
+        super(HtmlCommentEater, self).__init__()
         
     def process(self, data):
-        buf = StringIO(data)
-        outvalue = StringIO()
-        state = 0
-        for line in data:
-            if state == 0:
-                if line.startswith('<!--'):
-                    state = 1
-                else:
-                    outvalue.write(line)
-            elif state == 1:
-                if line.startswith('-->'):
-                    state = 0
-        return outvalue
+        is_xml = False
+        is_html = False
+        for i,line in enumerate(StringIO(data)):
+            if i > 20:
+                break
+            # This is low tech, but should be reliable enough; remember
+            # it's just an optimization here.
+            # We could investiate MIME sniffers though.
+            if line.find('<?.*xml.*version') >= 0:
+                is_xml = True
+                break
+            if line.find('<html>') >= 0:
+                is_html = True
+                break
+        if is_html and not is_xml:
+            soup = BeautifulSoup(data)
+            comments = soup.findAll(text=lambda text:isinstance(text, Comment))
+            for comment in comments:
+                comment.extract()
+            return soup.prettify()
+        return data
                 
 class ChainedProcessors(object):
     def __init__(self, processors):
@@ -122,7 +129,8 @@ feed_transformations = [
   (r'picasaweb.google.com.*feed.*base.*album', [rss_eater, atom_eater]),
   (r'google.com/reader/public', [XmlElementEater(['/feed/updated'])]),
   (r'blogs.gnome.org', [RegexpEater(['<!--.*page served in.*seconds.*-->'])]),
-  (r'blog.myspace.com', [BasicHtmlCommentEater()]),
+  # We try to consume all HTML
+  (r'.*', [HtmlCommentEater()]),
 ]
 feed_transformations = [(re.compile(r'^https?://([A-Z0-9]+\.)*' + x[0]), x[1]) for x in feed_transformations]
 
@@ -341,4 +349,17 @@ efeated Barack Obama Tuesday in Pennsylvania by nine-plus points? Barack Obama i
     print processor.process(testdata)
     processor = ChainedProcessors([])
     print processor.process(testdata)
+    transformers = get_transformations('http://myspace.com/blah')
+    processor = ChainedProcessors(transformers)
+    print processor.process('''
+<html>
+  <!-- foo bar
+  baz -->
+  <head>moo</head>
+<body>
+  testing<!-- one -->two three
+  <b>four</b><!--
+    blabla-->
+</body>
+</html>''')
     
