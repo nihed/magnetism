@@ -907,7 +907,7 @@ on_ready(DDMDataModel *model,
     DDMDataResource *self_resource = ddm_data_model_get_self_resource(model);
 
     if (self_resource != NULL) {
-        DDMDataQuery *query = ddm_data_model_query_resource(model, self_resource, "stack +;stackFilter");
+        DDMDataQuery *query = ddm_data_model_query_resource(model, self_resource, "+;stack +;stackFilter");
         ddm_data_query_set_single_handler(query, on_get_stack_success, manager);
         ddm_data_query_set_error_handler(query, on_get_stack_error, manager);
     }
