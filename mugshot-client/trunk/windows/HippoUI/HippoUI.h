@@ -176,6 +176,7 @@ private:
     //// Signal handlers 
 
     void onConnectedChanged(gboolean connected);
+    void onStateChanged();
     void onHasAuthChanged();
     void onAuthFailed();
     void onAuthSucceeded();
@@ -212,6 +213,7 @@ private:
     HippoStackManager *stack_;
 
     GConnection1<void,gboolean> connectedChanged_;
+    GConnection0<void> stateChanged_;
     GConnection0<void> authFailed_;
     GConnection0<void> authSucceeded_;
     GConnection0<void> hasAuthChanged_;

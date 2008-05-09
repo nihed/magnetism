@@ -84,6 +84,7 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting)
 
     // Set up connections
     connectedChanged_.connect(G_OBJECT(connection), "connected-changed", slot(this, &HippoUI::onConnectedChanged));
+    stateChanged_.connect(G_OBJECT(connection), "state-changed", slot(this, &HippoUI::onStateChanged));
     hasAuthChanged_.connect(G_OBJECT(connection), "has-auth-changed", slot(this, &HippoUI::onHasAuthChanged));
     authFailed_.connect(G_OBJECT(connection), "auth-failed", slot(this, &HippoUI::onAuthFailed));
     authSucceeded_.connect(G_OBJECT(connection), "auth-succeeded", slot(this, &HippoUI::onAuthSucceeded));
@@ -326,6 +327,11 @@ HippoUI::onConnectedChanged(gboolean connected)
         info = hippo_data_cache_get_client_info(getDataCache());
         upgrader_.setUpgradeInfo(info->minimum, info->current, info->download);
     }
+}
+
+void
+HippoUI::onStateChanged()
+{
     updateIcon();
 }
 
@@ -723,17 +729,17 @@ HippoUI::showMenu(UINT buttonFlag)
 {
     POINT pt;
     GetCursorPos(&pt);
+    HMENU menu = NULL;
 
     if (GetAsyncKeyState(VK_CONTROL)) {
-        HMENU menu;
-        HMENU popupMenu;
+        menu = debugMenu_;
+    } else if (buttonFlag == TPM_RIGHTBUTTON) {
+        updateMenu();
+        menu = oldMenu_;
+    }
 
-        if (buttonFlag == TPM_RIGHTBUTTON) {
-            menu = debugMenu_;
-        } else {
-            updateMenu();
-            menu = oldMenu_;
-        }
+    if (menu != NULL) {
+        HMENU popupMenu;
 
         // We:
         //  - Set the foreground window to our (non-shown) window so that clicking

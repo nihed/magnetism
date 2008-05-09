@@ -253,7 +253,8 @@ hippoWindowIsActive(HWND window)
     // want to know for the Mugshot browser window is whether when the user clicks on
     // the mugshot icon, we should raise the window or instead hide it. And when the
     // user clicks on the mugshot icon, the panel is the active window. So, what
-    // we check here is if our window is the top window that isn't WS_EX_TOPMOST.
+    // we check here is if our window is the top visible window that isn't 
+    // WS_EX_TOPMOST.
     //
     // In other uses, we could just do a simple check with GetWindowInfo(), but
     // we'll just always do the same thing for now.
@@ -270,7 +271,7 @@ hippoWindowIsActive(HWND window)
         if (!GetWindowInfo(top, &windowInfo))
             return FALSE;
 
-        if ((windowInfo.dwExStyle & WS_EX_TOPMOST) == 0)
+        if ((windowInfo.dwExStyle & WS_EX_TOPMOST) == 0 && (windowInfo.dwStyle & WS_VISIBLE) != 0)
             return FALSE;
 
         top = GetNextWindow(top, GW_HWNDNEXT);
