@@ -152,8 +152,6 @@ HippoAbstractControl::sizeAllocate(const HippoRectangle *rect)
         return;
     }
 
-    bool hadRequestChangedSinceAllocate = requestChangedSinceAllocate_;
-
     requestChangedSinceAllocate_ = false;
     insideAllocation_ = true;
 
@@ -178,12 +176,7 @@ HippoAbstractControl::sizeAllocate(const HippoRectangle *rect)
         requestChangedSinceAllocate_ = false;
     }
 
-    // we don't want to repaint if we're just moving.
-    // However, if we queued a size request then an invalidate
-    // is required, otherwise we can short circuit the invalidate
-    // (just as we would have skipped this whole function if 
-    // position had not changed either)
-    if (sizeChanged || hadRequestChangedSinceAllocate)
+    if (sizeChanged)
         invalidate(0, 0, getWidth(), getHeight());
 
     insideAllocation_ = false;
