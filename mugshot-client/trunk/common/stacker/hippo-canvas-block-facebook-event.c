@@ -74,6 +74,7 @@ hippo_canvas_block_facebook_event_init(HippoCanvasBlockFacebookEvent *block_face
     HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(block_facebook_event);
 
     block->required_type = HIPPO_BLOCK_TYPE_FACEBOOK_EVENT;
+    block->expandable = FALSE;  /* No thumbnails initially */
 }
 
 static HippoCanvasItemIface *item_parent_class;
