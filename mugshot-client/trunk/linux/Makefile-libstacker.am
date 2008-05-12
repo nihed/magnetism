@@ -37,6 +37,8 @@ LIBSTACKER_SOURCEFILES =						\
 	$(COMMONSRCDIR)/stacker/hippo-block-group-chat.h		\
 	$(COMMONSRCDIR)/stacker/hippo-block-group-member.c	\
 	$(COMMONSRCDIR)/stacker/hippo-block-group-member.h	\
+	$(COMMONSRCDIR)/stacker/hippo-block-group-revision.c	\
+	$(COMMONSRCDIR)/stacker/hippo-block-group-revision.h	\
 	$(COMMONSRCDIR)/stacker/hippo-block-account-question.c	\
 	$(COMMONSRCDIR)/stacker/hippo-block-account-question.h	\
 	$(COMMONSRCDIR)/stacker/hippo-block-abstract-person.c	\
@@ -63,6 +65,8 @@ LIBSTACKER_SOURCEFILES =						\
 	$(COMMONSRCDIR)/stacker/hippo-canvas-block-group-chat.h	\
 	$(COMMONSRCDIR)/stacker/hippo-canvas-block-group-member.c	\
 	$(COMMONSRCDIR)/stacker/hippo-canvas-block-group-member.h	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-group-revision.c	\
+	$(COMMONSRCDIR)/stacker/hippo-canvas-block-group-revision.h	\
 	$(COMMONSRCDIR)/stacker/hippo-canvas-block-music.c	\
 	$(COMMONSRCDIR)/stacker/hippo-canvas-block-music.h	\
 	$(COMMONSRCDIR)/stacker/hippo-canvas-block-netflix-movie.c	\

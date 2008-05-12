@@ -5,6 +5,7 @@
 #include "hippo-block-generic.h"
 #include "hippo-block-group-chat.h"
 #include "hippo-block-group-member.h"
+#include "hippo-block-group-revision.h"
 #include "hippo-block-post.h"
 #include "hippo-block-netflix-movie.h"
 #include "hippo-block-amazon-activity.h"
@@ -510,6 +511,9 @@ hippo_block_new(DDMDataResource *resource,
     case HIPPO_BLOCK_TYPE_GROUP_MEMBER:
         object_type = HIPPO_TYPE_BLOCK_GROUP_MEMBER;
         break;
+    case HIPPO_BLOCK_TYPE_GROUP_REVISION:
+        object_type = HIPPO_TYPE_BLOCK_GROUP_REVISION;
+        break;
     case HIPPO_BLOCK_TYPE_POST:
         object_type = HIPPO_TYPE_BLOCK_POST;
         break;
@@ -992,6 +996,7 @@ hippo_block_create_for_resource(DDMDataResource *resource)
         { "POST", HIPPO_BLOCK_TYPE_POST },
         { "ACCOUNT_QUESTION", HIPPO_BLOCK_TYPE_ACCOUNT_QUESTION },
         { "GROUP_MEMBER", HIPPO_BLOCK_TYPE_GROUP_MEMBER },
+        { "GROUP_REVISION", HIPPO_BLOCK_TYPE_GROUP_REVISION },
         { "GROUP_CHAT", HIPPO_BLOCK_TYPE_GROUP_CHAT },
         { "MUSIC_CHAT", HIPPO_BLOCK_TYPE_MUSIC_CHAT },
         { "MUSIC_PERSON", HIPPO_BLOCK_TYPE_MUSIC_PERSON },
