@@ -2,6 +2,7 @@
 
 import os,sys,re,heapq,time,Queue,sha,threading
 import BaseHTTPServer,httplib,urlparse,urllib
+import tempfile
 from email.Utils import formatdate,parsedate_tz,mktime_tz
 from BeautifulSoup import BeautifulSoup,Comment
 import logging
@@ -143,8 +144,11 @@ def get_transformations(url):
 
 class FeedTaskHandler(object):
     FAMILY = 'FEED'
+    
+    def __init__(self, feedcache_bucket=None):
+        self.__feedcache_bucket = feedcache_bucket
 
-    def run(self, id, prev_hash, prev_timestamp, cachedir=None):
+    def run(self, id, prev_hash, prev_timestamp):
         targeturl = id
         transformlist = get_transformations(targeturl)
         parsedurl = urlparse.urlparse(targeturl)
@@ -165,14 +169,11 @@ class FeedTaskHandler(object):
             if response.status == 304:
                 _logger.info("Got 304 Unmodified for %r", targeturl)
                 return (prev_hash, prev_timestamp)
-            if cachedir is not None:
-                quotedname = urllib.quote_plus(targeturl)
-                ts = int(time.time())
-                outpath = os.path.join(cachedir, quotedname + '.' + unicode(ts))
-                outpath_tmpname = outpath + '.tmp'
-                outfile = open(outpath_tmpname, 'w')
+            if self.__feedcache_bucket is not None:
+                (tempfd, temppath) = tempfile.mkstemp()
+                outfile = os.fdopen(tempfd, 'w')
             else:
-                outpath_tmpname = None
+                (tempfd, temppath) = (None, None)
                 outfile = None
             rawhash = sha.new()
             data = StringIO()
@@ -192,10 +193,14 @@ class FeedTaskHandler(object):
             hash_hex = hash.hexdigest()
             if outfile is not None:
                 outfile.close()
-                if prev_hash != hash_hex:                
-                    os.rename(outpath_tmpname, outpath)
+                if prev_hash != hash_hex:
+                    k = Key(self.__feedcache_bucket)
+                    ts = int(time.time())                    
+                    k.key = targeturl + ('.%d' % (ts,))
+                    _logger.debug("storing to bucket %s key %s", self.__feedcache_bucket.name, k.key)      
+                    k.set_contents_from_filename(temppath)
                 else:
-                    os.unlink(outpath_tmpname)
+                    os.unlink(temppath)
             timestamp_str = response.getheader('Last-Modified', None)
             if timestamp_str is not None:
                 timestamp = mktime_tz(parsedate_tz(timestamp_str))
@@ -243,6 +248,12 @@ class TaskPoller(object):
         self.__savefetches = config.get('firehose.savefetches') == "true"
         self.__server = BaseHTTPServer.HTTPServer(('', bindport), TaskRequestHandler)
         self.__active_collectors = set()
+        aws_accessid = config.get('firehose.awsAccessKeyId')
+        aws_secretkey = config.get('firehose.awsSecretAccessKey')       
+        self.__s3_conn = S3Connection(aws_accessid, aws_secretkey)
+        
+        bname = config.get('firehose.awsS3Bucket')
+        self.__feedcache_bucket = self.__s3_conn.get_bucket('feedcache.' + bname)              
         
     def run_async(self):
         thr = threading.Thread(target=self.run)
@@ -283,11 +294,12 @@ class TaskPoller(object):
         except KeyError, e:
             _logger.exception("Failed to find family for task %r", taskid)
             return
-        inst = fclass()
-        kwargs = {}
         if self.__savefetches:
-            outpath = os.path.join(os.getcwd(), 'data', 'feedcache')
-            kwargs['cachedir'] = outpath       
+            inst_kwargs = {'feedcache_bucket': self.__feedcache_bucket}
+        else:
+            inst_kwargs = {}
+        inst = fclass(**inst_kwargs)
+        kwargs = {}     
         try:
             (new_hash, new_timestamp) = inst.run(tid, prev_hash, prev_timestamp, **kwargs)            
         except Exception, e:

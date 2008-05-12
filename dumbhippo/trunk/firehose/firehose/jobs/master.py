@@ -94,16 +94,6 @@ class MasterPoller(object):
         
         import socket
         self.__hostport = '%s:%s' % (socket.gethostname(), config.get('server.socket_port'))
-        
-        # Default to one slave on localhost
-        self.__worker_endpoints = ['localhost:%d' % (int(config.get('firehose.localslaveport')),)]
-        _logger.debug("worker endpoints are %r", self.__worker_endpoints)
-        for bind in self.__worker_endpoints:
-            (host,port) = bind.split(':')
-            if host == 'localhost':
-                _logger.debug("found localhost worker, starting it")
-                self.__local_handler = TaskPoller.get()
-                self.__local_handler.run_async()
                 
         aws_accessid = config.get('firehose.awsAccessKeyId')
         if aws_accessid is None:
@@ -114,7 +104,20 @@ class MasterPoller(object):
         self.__s3_conn = S3Connection(aws_accessid, aws_secretkey)
         
         self.__sqs_incoming_q = self.__sqs_conn.create_queue(config.get('firehose.awsSqsIncomingName'))
-        self.__sqs_outgoing_q = self.__sqs_conn.create_queue(config.get('firehose.awsSqsOutgoingName'))                
+        self.__sqs_outgoing_q = self.__sqs_conn.create_queue(config.get('firehose.awsSqsOutgoingName'))
+        
+        mainbucket_name = config.get('firehose.awsS3Bucket')   
+        
+        # Default to one slave on localhost
+        self.__worker_endpoints = ['localhost:%d' % (int(config.get('firehose.localslaveport')),)]
+        _logger.debug("worker endpoints are %r", self.__worker_endpoints)
+        for bind in self.__worker_endpoints:
+            (host,port) = bind.split(':')
+            if host == 'localhost':
+                _logger.debug("found localhost worker, starting it")
+                self.__local_handler = TaskPoller.get()
+                self.__local_handler.run_async()        
+                        
         poll_sqs_thread = threading.Thread(target=self.__poll_sqs)
         poll_sqs_thread.setDaemon(True)     
         
@@ -126,15 +129,14 @@ class MasterPoller(object):
                                                             prev_hash TEXT,
                                                             prev_time DATETIME)''')
         cursor.execute('''CREATE INDEX IF NOT EXISTS TasksIdx on Tasks (key)''')
-        
-        bname = config.get('firehose.awsS3Bucket')
-        kname = config.get('firehose.awsS3Key')
-        _logger.debug("retrieving current task set from bucket: %r  key: %r", bname, kname)
-        bucket = self.__s3_conn.get_bucket(bname)
+
+        tasklist_key = config.get('firehose.awsS3Key') 
+        _logger.debug("retrieving current task set from bucket: %r  key: %r", mainbucket_name, tasklist_key)
+        bucket = self.__s3_conn.get_bucket(mainbucket_name)
         
         # FIXME should stream this
         current_task_keys = {}        
-        key = bucket.get_key(kname)
+        key = bucket.get_key(tasklist_key)
         if key is not None:
             contents = key.get_contents_as_string()
             if contents is not None:
