@@ -49,25 +49,6 @@ static void hippo_canvas_block_generic_update_visibility (HippoCanvasBlockGeneri
 static void hippo_canvas_block_generic_update_expandable (HippoCanvasBlockGeneric *block_generic);
 
 
-struct _HippoCanvasBlockGeneric {
-    HippoCanvasBlock canvas_block;
-    HippoCanvasBox *description_parent;
-    HippoCanvasItem *description_item;
-    HippoCanvasItem *reason_item;
-    HippoCanvasItem *expand_tip;
-    HippoCanvasItem *quipper;
-    HippoCanvasItem *last_message_preview;
-    HippoCanvasItem *chat_preview;
-    HippoCanvasItem *thumbnails_item;
-    unsigned int have_description : 1;
-    unsigned int have_thumbnails : 1;
-};
-
-struct _HippoCanvasBlockGenericClass {
-    HippoCanvasBlockClass parent_class;
-
-};
-
 #if 0
 enum {
     NO_SIGNALS_YET,

@@ -7,6 +7,7 @@
 #include "hippo-canvas-block-post.h"
 #include "hippo-canvas-block-group-chat.h"
 #include "hippo-canvas-block-group-member.h"
+#include "hippo-canvas-block-group-revision.h"
 #include "hippo-canvas-block-music.h"
 #include "hippo-canvas-block-netflix-movie.h"
 #include "hippo-canvas-block-amazon-activity.h"
@@ -301,6 +302,9 @@ hippo_canvas_block_new(HippoBlockType type,
         break;
     case HIPPO_BLOCK_TYPE_GROUP_MEMBER:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_GROUP_MEMBER;
+        break;
+    case HIPPO_BLOCK_TYPE_GROUP_REVISION:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_GROUP_REVISION;
         break;
     case HIPPO_BLOCK_TYPE_FACEBOOK_EVENT:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_FACEBOOK_EVENT;
