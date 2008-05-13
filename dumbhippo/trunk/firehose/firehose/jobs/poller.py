@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import os,sys,re,heapq,time,Queue,sha,threading
 import BaseHTTPServer,httplib,urlparse,urllib
@@ -46,16 +47,17 @@ class FeedPostProcessor(object):
         return data
 
 class XmlElementEater(FeedPostProcessor):
-    def __init__(self, deletepaths=[]):
+    def __init__(self, deletepaths=[], namespaces={}):
         super(XmlElementEater, self).__init__()
         self.__deletepaths = deletepaths
+        self.__namespaces = namespaces
         
     def process(self, data):
         import lxml.etree
         tree = lxml.etree.parse(StringIO(data))
         root = tree.getroot()
         for path in self.__deletepaths:
-            node = root.xpath(path)
+            node = root.xpath(path, namespaces=self.__namespaces)
             if not node:
                 continue
             node = node[0]
@@ -85,13 +87,14 @@ class HtmlCommentEater(FeedPostProcessor):
     def process(self, data):
         is_xml = False
         is_html = False
+        xmlre = re.compile(r'<\?.*xml.*version')
         for i,line in enumerate(StringIO(data)):
-            if i > 20:
+            if i > 200:
                 break
             # This is low tech, but should be reliable enough; remember
             # it's just an optimization here.
             # We could investiate MIME sniffers though.
-            if line.find('<?.*xml.*version') >= 0:
+            if xmlre.search(line):
                 is_xml = True
                 break
             if line.find('<html>') >= 0:
@@ -128,17 +131,16 @@ class ChainedProcessors(object):
 
 # Define shared eaters for these feed types
 rss_eater = XmlElementEater(['/rss/channel/lastBuildDate', '/rss/channel/pubDate'])
-atom_eater = XmlElementEater(['/feed/updated'])
+atom_eater = XmlElementEater(['/a:feed/a:updated'], {'a': 'http://www.w3.org/2005/Atom'})
 # This maps from a regular expression matching a URL to a list of processors
 feed_transformations = [
   (r'digg.com/users/.*/history/diggs.rss', [rss_eater]),
   (r'picasaweb.google.com/data/feed', [rss_eater, atom_eater]),
   (r'google.com/reader/public', [XmlElementEater(['/feed/updated'])]),
   (r'blogs.gnome.org', [RegexpEater(['<!--.*page served in.*seconds.*-->'])]),
-  # We try to consume all HTML
-  (r'.*', [HtmlCommentEater()]),
+  (r'blog.myspace.com', [HtmlCommentEater()]),
 ]
-feed_transformations = [(re.compile(r'^https?://([A-Z0-9]+\.)*' + x[0]), x[1]) for x in feed_transformations]
+feed_transformations = [(re.compile(r'^https?://([A-Za-z0-9]+\.)*' + x[0]), x[1]) for x in feed_transformations]
 
 def get_transformations(url):
     transformers = []
@@ -225,7 +227,13 @@ class FeedTaskHandler(object):
             if prev_hash != hash_hex:
                 _logger.info("Got new hash:%r (prev:%r) ts:%r %s for url %r", hash_hex, prev_hash, timestamp, filters_applied, targeturl)                
                 return (hash_hex, timestamp)
-            _logger.info("Fetched full unmodified content %s for %r", filters_applied, targeturl)             
+            if rawhash_hex != hash_hex:
+                filter_status = "(filters succeeded)"
+            elif filters_applied:
+                filter_status = "(filters applied)"
+            else:
+                filter_status = ""
+            _logger.info("Fetched full unmodified content %s for %r", filter_status, targeturl)             
             return (prev_hash, prev_timestamp)
         finally:
             try:
@@ -332,59 +340,3 @@ class TaskPoller(object):
             thread.start()
         collector = threading.Thread(target=self.__run_collect_tasks, args=(taskcount,resultqueue,masterhost,serial))
         collector.start()
-
-if __name__ == '__main__':
-    testdata = '''<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
-    <channel>
-        <title>digg / jdhore1 / history / diggs</title>
-        <link>http://digg.com/users/jdhore1/history/diggs</link>
-        <description>A history of jdhore1's diggs</description>
-        <language>en-us</language>
-        <pubDate>Wed, 30 Apr 2008 16:42:42 UTC</pubDate>
-        <lastBuildDate>Wed, 30 Apr 2008 16:42:42 UTC</lastBuildDate>
-        <generator>Digg.com</generator>
-        <item>
-            <title>Hans Reiser was convicted Monday of first degree murder in t</title>
-            <link>http://digg.com/linux_unix/Hans_Reiser_was_convicted_Monday_of_first_degree_murder_in_t</link>
-            <description><![CDATA[
-                 A jury has found an Oakland software programmer guilty in the death of his estranged wife.        
-    ]]></description>
-            <pubDate>Mon, 28 Apr 2008 23:41:43 UTC</pubDate>
-            <author>jdhore1</author>
-            <guid>http://digg.com/linux_unix/Hans_Reiser_was_convicted_Monday_of_first_degree_murder_in_t</guid>
-        </item>
-        <item>
-            <title>The Democrats Have a Nominee: It's Obama!</title>
-            <link>http://digg.com/political_opinion/The_Democrats_Have_a_Nominee_It_s_Obama</link>
-            <description><![CDATA[
-                Other than ensuring the Greatest Show on Earth will continue, does it matter that Hillary Clinton d
-efeated Barack Obama Tuesday in Pennsylvania by nine-plus points? Barack Obama is the nominee.
-
-            ]]></description>
-            <pubDate>Fri, 25 Apr 2008 21:23:01 UTC</pubDate>
-            <author>jdhore1</author>
-            <guid>http://digg.com/political_opinion/The_Democrats_Have_a_Nominee_It_s_Obama</guid>
-        </item>
-    </channel>
-</rss>
-    '''
-    transformers = get_transformations('http://digg.com/users/jdhore/history/diggs.rss')
-    processor = ChainedProcessors(transformers)
-    print processor.process(testdata)
-    processor = ChainedProcessors([])
-    print processor.process(testdata)
-    transformers = get_transformations('http://myspace.com/blah')
-    processor = ChainedProcessors(transformers)
-    print processor.process('''
-<html>
-  <!-- foo bar
-  baz -->
-  <head>moo</head>
-<body>
-  testing<!-- one -->two three
-  <b>four</b><!--
-    blabla-->
-</body>
-</html>''')
-    
