@@ -20,7 +20,7 @@ public abstract class FacebookPhotoThumbnailDMO extends ThumbnailDMO {
 		super(key);
 	}
 	
-	private static Pattern FACEBOOK_URL_PATTERN = Pattern.compile("http://www.facebook.com/photo.php\\?pid=([0-9]+)&id=([0-9]+])");
+	private static Pattern FACEBOOK_URL_PATTERN = Pattern.compile("http://www.facebook.com/photo.php\\?pid=([0-9]+)&id=([0-9]+)");
 
 	private static String extractExtra(String url) {
 		Matcher m = FACEBOOK_URL_PATTERN.matcher(url);
