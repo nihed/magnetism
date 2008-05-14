@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat
 long timeSliceMilliseconds = 1*60*60*1000 /* 1 hour */
 
 def updatePattern = ~/splitting ([0-9]+) tasks into messages/
-def fullUnmodifiedFetchPattern = ~/Fetched full unmodified content for (.+)$/
+def fullUnmodifiedFetchPattern = ~/Fetched full unmodified content.*for (.+)$/
 def unmodifiedFetchPattern = ~/Got 304 Unmodified for (.+)$/
 def modifiedFetchPattern = ~/Got new hash.+for url (.+)$/
 def asctimeFormat = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss,SSS')
@@ -96,7 +96,7 @@ print "Got ${resultGroups.size()} groups"
 resultGroups.each { group ->
     Date d = new Date(group.startDate)
     def pollsPerSec = group.updates/(timeSliceMilliseconds/1000)
-	println "updates from ${d}: ${group.updates} (${pollsPerSec} checks per second)"
+	println "updates from ${d}: ${group.updates} (${pollsPerSec} changes per second)"
 	printTopKeys("U", group.domainUnmodified, group.domainModified)
 	printTopKeys("M", group.domainModified, group.domainUnmodified)
 }
