@@ -320,12 +320,12 @@ class TaskPoller(object):
         else:
             inst_kwargs = {}
         inst = fclass(**inst_kwargs)
-        kwargs = {}     
+        kwargs = {}   
+        (new_hash, new_timestamp) = (None, None)          
         try:
             (new_hash, new_timestamp) = inst.run(tid, prev_hash, prev_timestamp, **kwargs)            
-        except Exception, e:
-            _logger.exception("Failed task id %r: %s", tid, e)
-            (new_hash, new_timestamp) = (None, None)
+        except:
+            _logger.exception("Failed task id %r: %s", tid)
         if new_hash is not None:
             resultqueue.put((taskid, new_hash, new_timestamp))
         else:
