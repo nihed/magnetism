@@ -1,0 +1,24 @@
+<?xml-stylesheet href="chrome://mugshot/skin/chatWindow.css" type="text/css"?> 
+
+<window id="mugshot"
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  onload="init()"
+  title="Mugshot Quips and Comments">
+
+  <script src="chatWindow.js"/>
+
+  <keyset/>
+
+  <hbox flex="1" >
+    <hbox id="appcontent" flex="100%">
+      <!-- this box is temporary, pending XBLified <browser> -->
+      <hbox id="browser" context="context" flex="1">
+        <!-- type attribute is used by frame construction to locate iframes
+             intended to hold (html) content -->
+        <browser context="context" type="content-primary" id="content"
+          src="about:blank" flex="1"/>
+      </hbox>
+    </hbox>
+  </hbox>
+
+</window>

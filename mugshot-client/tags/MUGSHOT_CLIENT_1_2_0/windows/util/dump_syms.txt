@@ -1,0 +1,13 @@
+dump_syms.exe is simply a prebuilt binary of the dump_syms tool from the
+Google Airbag distribution. The reason for including it here is that
+the necessary header files for building it aren't included in the
+Express or Standard editions of Visual Studio, but only in the
+"Enterprise Edition".
+
+This binary is obtained from the Mozilla CVS tree:
+
+  http://lxr.mozilla.org/seamonkey/source/toolkit/airbag/tools/win32/
+
+From the command line:
+
+  cvs -d :pserver:anonymous@cvs-mirror.mozilla.org:/cvsroot cat mozilla/toolkit/airbag/tools/win32/dump_syms.exe > dump_syms.exe
