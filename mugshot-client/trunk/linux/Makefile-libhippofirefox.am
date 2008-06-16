@@ -69,6 +69,9 @@ libhippofirefox_la_CPPFLAGS =			\
 # The include of $(GECKO_INCLUDEDIR) in the FULL_GECKO case is for 
 # Ubuntu, which has a mix of the gecko-sdk directory arrangement
 # with including the full set of headers
+if USE_XULRUNNER
+# count on LIBHIPPOFIREFOX_CFLAGS from pkg-config
+else
 if HAVE_FULL_GECKO
 libhippofirefox_la_CPPFLAGS +=			\
 	-I $(GECKO_INCLUDEDIR)			\
@@ -89,6 +92,7 @@ libhippofirefox_la_CPPFLAGS +=			\
 	-I $(GECKO_INCLUDEDIR)			\
 	-I $(GECKO_PRIVATE_INCLUDEDIR)
 endif
+endif
 
 nodist_libhippofirefox_la_SOURCES=			\
 	$(FIREFOX_SRCDIR)/src/hippoExtension.cpp	\
@@ -105,15 +109,9 @@ LIBHIPPOFIREFOX_BUILT_SOURCEFILES =			\
 MAINTAINERCLEANFILES +=	$(LIBHIPPOFIREFOX_BUILT_SOURCEFILES)
 BUILT_SOURCES += $(LIBHIPPOFIREFOX_BUILT_SOURCEFILES)
 
-if HAVE_FULL_GECKO
 XPIDL_INCLUDES =				\
 	-I $(GECKO_IDLDIR)			\
 	-I $(FIREFOX_SRCDIR)/public
-else
-XPIDL_INCLUDES =				\
-	-I $(GECKO_IDLDIR)			\
-	-I $(FIREFOX_SRCDIR)/public
-endif
 
 IDL_FILES =							\
 	$(FIREFOX_SRCDIR)/public/hippoIExtension.idl		\
