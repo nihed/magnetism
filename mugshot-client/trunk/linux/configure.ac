@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(mugshot, 1.1.95)
+AM_INIT_AUTOMAKE(mugshot, 1.2.0)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -449,17 +449,15 @@ if test "x$with_xpidl" != x -a "x$with_xpidl" != xyes -a "x$with_xpidl" != xno ;
     XPIDL="$with_xpidl"
 fi
 
-# Look for libxul or libxul-unstable
+# Look for libxul-unstable
 
-AC_MSG_CHECKING([for libxul])
+AC_MSG_CHECKING([for libxul-unstable])
 
 have_xulrunner=false
-for p in libxul libxul-instable ; do
-    if $PKG_CONFIG --exists $p '>=' 1.9 ; then
-       have_xulrunner=true
-       xulrunner_package=$p
-    fi
-done
+if $PKG_CONFIG --exists libxul-unstable '>=' 1.9 ; then
+   have_xulrunner=true
+   xulrunner_package=libxul-unstable
+fi
 
 AM_CONDITIONAL(USE_XULRUNNER, test "x${have_xulrunner}" = "xtrue")
 if test "x${have_xulrunner}" = "xtrue"; then
@@ -560,8 +558,8 @@ fi
 # need the Javascript headers, otherwise we do. Debian packages the Javascript
 # files from XulRunner into a separate directory, so detect that and we'll look
 # for them later
-if $have_full_gecko ; then
-   if test -f "$GECKO_INCLUDEDIR/js/jspubtd.h" ; then
+if $have_xulrunner || $have_full_gecko ; then
+   if test -f "$GECKO_INCLUDEDIR/js/jspubtd.h" -o -f "$GECKO_INCLUDEDIR/unstable/jspubtd.h" ; then
       :
    else
        need_separate_js=true
