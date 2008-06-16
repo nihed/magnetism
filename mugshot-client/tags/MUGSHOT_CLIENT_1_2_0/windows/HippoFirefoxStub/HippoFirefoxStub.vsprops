@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="HippoFirefoxStub"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="&quot;c:\Program Files\gecko-sdk\include&quot;"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalDependencies="&quot;c:\Program Files\gecko-sdk\lib\xpcomglue_s.lib&quot; &quot;c:\Program Files\gecko-sdk\lib\xpcom.lib&quot; &quot;c:\Program Files\gecko-sdk\lib\nspr4.lib&quot;"
+		IgnoreDefaultLibraryNames=""
+	/>
+</VisualStudioPropertySheet>

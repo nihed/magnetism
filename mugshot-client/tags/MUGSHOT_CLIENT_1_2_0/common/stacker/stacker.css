@@ -1,0 +1,54 @@
+:link {
+  color: #0033ff;
+}
+
+:visited {
+  color: #666666;
+}
+
+.block-hushed {
+  color: #666666;
+}
+
+.block-hushed :link {
+  color: #666666;
+}
+
+.block-heading {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.block-heading :link, .block-heading :visited {
+  text-decoration: underline;
+}
+
+HippoCanvasUrlLink {
+  text-decoration: underline;
+}
+
+HippoCanvasUrlLink.netflix-movie-link, HippoCanvasUrlLink.amazon-activity-link {
+  text-decoration: none;
+}
+
+HippoCanvasBlock {
+  font-size: 11px;
+  color: black;    /* We set a background gradient from the code */
+}
+
+.quip-sentiment-inactive :link {
+  color: black;
+}
+
+.quip-sentiment-active {
+  background-color: #ac6ac6;
+}
+
+.quip-sentiment-active :link {
+  color: white;
+}
+
+HippoCanvasFilterArea {
+  color: black;
+  background-color: #e4d0ed;
+}
