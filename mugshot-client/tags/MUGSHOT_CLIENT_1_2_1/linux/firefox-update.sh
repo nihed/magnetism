@@ -1,0 +1,48 @@
+#!/bin/sh
+# 
+# This script is used to add and remove our extension from the Firefox
+# directory, and is run from 'triggers' when Firefox is installed or
+# upgraded, as well as when our package is installed. It is needed because
+# Firefox is installed into versioned directories in /usr/lib[64]/firefox
+#
+
+EXT_ID=firefox@mugshot.org
+if [ "$1" = "install" ] ; then
+    for libdir in /usr/lib /usr/lib64 ; do
+	# Add symlinks to any firefox directory that looks like it is part of a
+	# currently installed package
+	for d in $libdir/firefox* $libdir/iceweasel*; do
+	    if [ "$d" = "$libdir/firefox*" -o "$d" = "$libdir/iceweasel*" ] ; then
+		continue
+	    fi
+	    link=$d/extensions/$EXT_ID
+	    target=$libdir/mugshot/firefox
+	    if [ -e $target -a \( -e $d/firefox-bin -o -e $d/firefox \) -a -d $d/extensions -a ! -L $link ] ; then
+		ln -s $target $link
+	    fi
+	done
+        link="$libdir/mozilla/extensions/$EXT_ID"
+        if [ -d $libdir/mozilla/extensions -a ! -L "$link" ]; then
+            ln -s $libdir/mugshot/firefox "$link"
+        fi
+    done
+elif [ "$1" = "remove" ] ; then
+    for libdir in /usr/lib /usr/lib64 ; do
+	# Remove any symlinks we've created into any firefox directory
+	for d in $libdir/firefox* $libdir/iceweasel*; do
+	    if [ "$d" = "$libdir/firefox*" -o "$d" = "$libdir/iceweasel*" ] ; then
+		continue
+	    fi
+	    link=$d/extensions/$EXT_ID
+	    if [ -L $link ] ; then
+		rm $link
+	    fi
+	done
+     done
+     if [ -d $libdir/mozilla/extensions ]; then
+        rm $libdir/mozilla/extensions/$EXT_ID
+     fi
+else
+    echo "Usage firefox-update.sh [install/remove]"
+fi
+
