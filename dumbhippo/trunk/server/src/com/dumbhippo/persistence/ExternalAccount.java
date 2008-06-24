@@ -257,6 +257,23 @@ public class ExternalAccount extends DBUnique {
 			throw new RuntimeException("Unexpected info source in ExternalAccount::getAccountInfo()");
 		}
 	}
+
+        // This function is used for exporting the username via the data model. Over time we'll figure out what 
+        // makes sense to return for accounts that have other info sources, such as Google Reader, Amazon, Rhapsody,
+        // Netflix, and Facebook. The user info that we require for them right now is different from a username
+        // or e-mail used by users for that service, and can make the most sense to the user in the form of a url,
+        // which they can copy and paste into the browser to verify that it's their account.  
+	@Transient
+	public String getUsername() {
+		switch (accountType.getInfoSource()) {
+		case HANDLE:
+			return getHandle();
+		case EXTRA:
+			return getExtra();
+		default:
+			return null;
+		}
+	}
 	
 	@Transient
 	public boolean isLovedAndEnabled() {

@@ -33,6 +33,7 @@ public class ExternalAccountChangePropagatorBean implements ExternalAccountChang
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
 		DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "lovedAccounts");
 		DataService.currentSessionRW().changed(ExternalAccountDMO.class, new ExternalAccountKey(external), "link");
+                DataService.currentSessionRW().changed(ExternalAccountDMO.class, new ExternalAccountKey(external), "username");
 		notify(user, external);
 	}
 }
