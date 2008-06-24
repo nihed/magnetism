@@ -32,6 +32,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.blocks.EntitySourceBlockView;
+import com.dumbhippo.server.blocks.FacebookBlockView;
 import com.dumbhippo.server.blocks.MusicPersonBlockView;
 import com.dumbhippo.server.blocks.TitleBlockView;
 import com.dumbhippo.server.blocks.TitleDescriptionBlockView;
@@ -212,13 +213,19 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 	@DMProperty(defaultInclude=true, defaultChildren="+")
 	public UserDMO getSourceUser() {
 		if (blockView instanceof EntitySourceBlockView) {
+			if (blockView instanceof FacebookBlockView)
+				logger.debug("Will get the user source for a FacebookBlockView!!");
 			/* User sources might be returned even for EntitySourceBlockView's that aren't
 			 * PersonSourceView; for example, PostBlockView, when posted by a user, instead
 			 * of a feed. 
 			 */
 			EntityView entityView = ((EntitySourceBlockView)blockView).getEntitySource();
+			if (blockView instanceof FacebookBlockView)
+				logger.debug("got entityView");			
 			if (entityView instanceof PersonView) {
 				User user = ((PersonView)entityView).getUser();
+				if (blockView instanceof FacebookBlockView)   
+				    logger.debug("user is {}", user);
 				if (user != null)
 					return session.findUnchecked(UserDMO.class, user.getGuid());
 			}

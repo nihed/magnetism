@@ -86,6 +86,11 @@ public abstract class ExternalAccountDMO extends DMObject<ExternalAccountKey> {
 	public String getIconUrl() {
 		return "/images3/" + externalAccount.getIconName();
 	}
+
+	@DMProperty(defaultInclude=true)
+	public String getUsername() {
+		return externalAccount.getUsername();
+	}
 	
 	@DMProperty
 	public List<ThumbnailDMO> getThumbnails() {
