@@ -325,7 +325,7 @@ class TaskPoller(object):
         try:
             (new_hash, new_timestamp) = inst.run(tid, prev_hash, prev_timestamp, **kwargs)            
         except:
-            _logger.exception("Failed task id %r: %s", tid)
+            _logger.exception("Failed task id %r", tid)
         if new_hash is not None:
             resultqueue.put((taskid, new_hash, new_timestamp))
         else:
@@ -337,6 +337,8 @@ class TaskPoller(object):
         for (taskid, prev_hash, prev_timestamp) in tasks:
             taskcount += 1
             thread = threading.Thread(target=self.__run_task, args=(taskid, prev_hash, prev_timestamp, resultqueue))
+            thread.setDaemon(True)
             thread.start()
         collector = threading.Thread(target=self.__run_collect_tasks, args=(taskcount,resultqueue,masterhost,serial))
         collector.start()
+        collector.setDaemon(True)
