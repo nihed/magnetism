@@ -173,7 +173,7 @@ class MasterPoller(object):
         _logger.debug("%d queued tasks", len(self.__tasks_queue))
         
         poll_sqs_thread.start()
-    
+
     def __add_task_keys_unlocked(self, keys):
         for key in keys:
             if key == '':
@@ -436,7 +436,11 @@ class MasterPoller(object):
             for worker,taskset in zip(self.__worker_endpoints,tasksets):
                 self.__enqueue_taskset(worker, taskset)
             self.__requeue_poll()
-        _logger.debug("%d pending tasksets", len(self.__pending_tasksets))
+        pending_count = len(self.__pending_tasksets)
+        _logger.debug("%d pending tasksets", pending_count)
+        if pending_count > 8:
+            logger.warning("DEADLOCK DETECTED, rebooting")
+            os._exit(1)
 
     def requeue(self):
         self.__requeue_poll(immediate=True)
