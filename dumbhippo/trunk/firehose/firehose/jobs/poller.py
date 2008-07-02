@@ -302,7 +302,7 @@ class TaskPoller(object):
             received_count += 1
             if result is not None:
                 results.append(result)     
-        _logger.debug("sending %d results", len(results)) 
+        _logger.debug("sending %d successful results (%d total)", len(results), resultcount) 
         self.__send_results(results, masterhost, serial)
         
     @log_except(_logger)        
@@ -340,5 +340,5 @@ class TaskPoller(object):
             thread.setDaemon(True)
             thread.start()
         collector = threading.Thread(target=self.__run_collect_tasks, args=(taskcount,resultqueue,masterhost,serial))
-        collector.start()
         collector.setDaemon(True)
+        collector.start()
