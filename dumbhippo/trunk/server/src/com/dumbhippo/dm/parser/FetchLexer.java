@@ -340,7 +340,7 @@ tryAgain:
 		}
 		}
 		{
-		_loop112:
+		_loop58:
 		do {
 			switch ( LA(1)) {
 			case 'a':  case 'b':  case 'c':  case 'd':
@@ -379,7 +379,7 @@ tryAgain:
 			}
 			default:
 			{
-				break _loop112;
+				break _loop58;
 			}
 			}
 		} while (true);
@@ -397,17 +397,17 @@ tryAgain:
 		int _saveIndex;
 		
 		{
-		int _cnt115=0;
-		_loop115:
+		int _cnt61=0;
+		_loop61:
 		do {
 			if (((LA(1) >= '0' && LA(1) <= '9'))) {
 				matchRange('0','9');
 			}
 			else {
-				if ( _cnt115>=1 ) { break _loop115; } else {throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());}
+				if ( _cnt61>=1 ) { break _loop61; } else {throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());}
 			}
 			
-			_cnt115++;
+			_cnt61++;
 		} while (true);
 		}
 		if ( _createToken && _token==null && _ttype!=Token.SKIP ) {

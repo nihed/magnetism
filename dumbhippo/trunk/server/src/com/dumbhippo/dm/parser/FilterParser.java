@@ -99,7 +99,7 @@ public FilterParser(ParserSharedInputState state) {
 		
 		f=andExpression();
 		{
-		_loop28:
+		_loop4:
 		do {
 			if ((LA(1)==OR)) {
 				match(OR);
@@ -107,7 +107,7 @@ public FilterParser(ParserSharedInputState state) {
 				f = new OrFilter(f, f2);
 			}
 			else {
-				break _loop28;
+				break _loop4;
 			}
 			
 		} while (true);
@@ -122,7 +122,7 @@ public FilterParser(ParserSharedInputState state) {
 		
 		f=notExpression();
 		{
-		_loop31:
+		_loop7:
 		do {
 			if ((LA(1)==AND)) {
 				match(AND);
@@ -130,7 +130,7 @@ public FilterParser(ParserSharedInputState state) {
 				f = new AndFilter(f, f2);
 			}
 			else {
-				break _loop31;
+				break _loop7;
 			}
 			
 		} while (true);
