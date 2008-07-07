@@ -25,6 +25,7 @@ public class Balancer {
 	
 	private static String messageHost;
 	private static InetAddress bindInterface;
+	private static List<String> hosts = new ArrayList<String>();
 	
 	private static class WriterThread extends Thread {
 		private Socket socket;
@@ -107,27 +108,50 @@ public class Balancer {
 		}
 	}
 	
+	private static class SocketThread extends Thread {
+		private int port;
+		
+		public SocketThread(int port) {
+			this.port = port;
+		}
+		
+		@Override
+		public void run() {
+			try {
+				ServerSocket socket = new ServerSocket();
+				socket.bind(new InetSocketAddress(bindInterface, port));
+				int currentHost = 0;
+			
+				while (true) {
+					WriterThread wt = new WriterThread(socket.accept(), hosts.get(currentHost), Guid.createNew());
+					wt.start();
+					currentHost++;
+					if (currentHost >= hosts.size())
+						currentHost = 0;
+				}
+			} catch (IOException e) {
+				System.err.println("Exception: " + e.getMessage());
+			}
+		}
+	}
+	
 	public static void main(String[] args) throws NumberFormatException, IOException {
-		List<String> hosts = new ArrayList<String>();
 		System.out.print("Hosts: ");
 		for (int i = 3; i < args.length; i++) {
 			hosts.add(args[i]);
 			System.out.print(args[i] + " ");
 		}
 		System.out.println();
-		
+
 		bindInterface = args[0].length() > 0 ? InetAddress.getByName(args[0]) : null;
 		messageHost = args[1];
-			
-		ServerSocket socket = new ServerSocket();
-		socket.bind(new InetSocketAddress(bindInterface, Integer.parseInt(args[2])));
-		int currentHost = 0;
-		while (true) {
-			WriterThread wt = new WriterThread(socket.accept(), hosts.get(currentHost), Guid.createNew());
-			wt.start();
-			currentHost++;
-			if (currentHost >= hosts.size())
-				currentHost = 0;
+
+		for (String portString : args[2].split(",")) {
+			int port = Integer.parseInt(portString);
+
+			SocketThread st = new SocketThread(port);
+			st.start();
 		}
 	}
 }
+
