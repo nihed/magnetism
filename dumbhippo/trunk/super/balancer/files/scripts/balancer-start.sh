@@ -2,7 +2,7 @@
 
 targetdir=@@targetdir@@
 xmppHost="@@serverHost@@"
-xmppPort="@@openfirePlainPort@@"
+xmppPort="@@balancerBindPorts@@"
 clusterHosts="@@clusterHosts@@"
 balancerBind="@@balancerBind@@"
 
