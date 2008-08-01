@@ -1,0 +1,7 @@
+@import url(chrome://communicator/skin/);
+
+window {
+    width: 600px;
+    height: 600px;
+}
+
