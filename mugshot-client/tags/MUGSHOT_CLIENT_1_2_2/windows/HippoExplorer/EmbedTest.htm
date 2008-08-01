@@ -1,0 +1,29 @@
+<!-- saved from url=(0014)about:internet -->
+<HTML>
+<HEAD>
+<meta name=vs_targetSchema content="http://schemas.microsoft.com/intellisense/ie5">
+<META NAME="GENERATOR" Content="Microsoft Visual Studio .NET 7.1">
+<TITLE></TITLE>
+    <object classid="clsid:5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" id="hippoembed" VIEWASTEXT></object>
+    <script language="javascript">
+function runTest() {
+    embed = document.getElementById("hippoembed");
+    embed.DisplayMessage("Hi there");
+}    
+function doDebugDump() {
+    embed = document.getElementById("hippoembed");
+    span = document.getElementById("debug");
+    embed.DebugDump(span);
+}
+    </script>
+    <script language="javascript" for="hippoembed" event="LocationChanged(url)">
+        alert(url);
+    </script>
+</HEAD>
+<BODY onload="doDebugDump()">
+<form>
+<input type="button" value="Click Me" onclick="runTest()">
+</form>
+<p></p><span id="debug"></span></p>
+</BODY>
+</HTML>
