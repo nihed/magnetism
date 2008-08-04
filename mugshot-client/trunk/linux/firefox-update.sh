@@ -21,10 +21,6 @@ if [ "$1" = "install" ] ; then
 		ln -s $target $link
 	    fi
 	done
-        link="$libdir/mozilla/extensions/$EXT_ID"
-        if [ -d $libdir/mozilla/extensions -a ! -L "$link" ]; then
-            ln -s $libdir/mugshot/firefox "$link"
-        fi
     done
 elif [ "$1" = "remove" ] ; then
     for libdir in /usr/lib /usr/lib64 ; do
@@ -39,9 +35,6 @@ elif [ "$1" = "remove" ] ; then
 	    fi
 	done
      done
-     if [ -d $libdir/mozilla/extensions ]; then
-        rm $libdir/mozilla/extensions/$EXT_ID
-     fi
 else
     echo "Usage firefox-update.sh [install/remove]"
 fi
