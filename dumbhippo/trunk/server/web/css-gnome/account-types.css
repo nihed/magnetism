@@ -1,0 +1,22 @@
+@CHARSET "UTF-8";
+@IMPORT url("account-types-positions.css");
+
+/*
+ * TODO: This has some of the css styling from applications.css because
+ * the page also uses applicationEditRow.tag; we should create generic files and rename the tag
+ * and the css classes if we continue to use it for both.
+ */
+ 
+.dh-application-edit-label {
+	font-weight: bold;
+	text-align: right;
+	vertical-align: baseline;
+}
+
+.dh-application-edit-control textarea {
+	font-family: Luxi Sans, Arial, sans-serif;
+}
+
+.dh-application-edit-help {
+	font-style: italic;
+}

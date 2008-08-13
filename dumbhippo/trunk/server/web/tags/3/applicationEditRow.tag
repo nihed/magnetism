@@ -8,6 +8,7 @@
 <%@ attribute name="name" required="true" type="java.lang.String" rtexprvalue="false"%>
 <%@ attribute name="value" required="false" type="java.lang.String"%>
 <%@ attribute name="onchange" required="false" type="java.lang.String"%>
+<%@ attribute name="onkeyup" required="false" type="java.lang.String"%>
 <%@ attribute name="rowClass" required="false" type="java.lang.String"%>
 <%@ attribute name="help" required="false" fragment="true"%>
 <%@ attribute name="contents" required="false" fragment="true"%>
@@ -31,6 +32,7 @@
 				    <jsp:attribute name="name">${name}</jsp:attribute>
 				    <jsp:attribute name="value"><c:out value="${value}"/></jsp:attribute>
 				    <jsp:attribute name="onchange">${onchange}</jsp:attribute>
+				    <jsp:attribute name="onkeyup">${onkeyup}</jsp:attribute>
 			    </jsp:element>
 			</c:otherwise>
 		</c:choose>

@@ -351,3 +351,22 @@ dh.actions.setGoogleServicedEmail = function(email, checkboxId) {
 		  	    	     alert("Couldn't set google services enabled");
 		  	    	 });
 }
+
+dh.actions.createAccountType = function() {
+    name = document.getElementById("dhAccountTypeName").value
+    fullName = document.getElementById("dhAccountTypeFullName").value
+    siteName = document.getElementById("dhAccountTypeSiteName").value
+    site = document.getElementById("dhAccountTypeSite").value
+    userInfoType = document.getElementById("dhUserInfoType").value
+    public = document.getElementById("dhAccountTypePublic").checked
+  	dh.server.doXmlMethod("createaccounttype",
+			 	          { "name" : name, "fullName" : fullName, "siteName" : siteName, "site" : site, 
+			 	            "userInfoType" : userInfoType, "isSupported" : public },
+  					      function(type, data, http) {
+  					          alert("Account type added!");
+  					 	      dh.util.refresh();
+					      },
+					      function(type, msg, http) {
+						      alert(msg);
+					      });    
+}    

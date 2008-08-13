@@ -66,6 +66,7 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
+import com.dumbhippo.persistence.OnlineAccountType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupDescriptionChangedRevision;
@@ -2631,5 +2632,42 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		out.write(StringUtils.getBytes(link));
 		out.flush();
+	}
+	
+	public void doCreateAccountType(XmlBuilder xml, UserViewpoint viewpoint, String name, String fullName, String siteName, String site, String userInfoType, boolean isSupported)
+	    throws XmlMethodException {
+		
+		try {
+			externalAccountSystem.lookupOnlineAccountTypeForName(name);
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Account type with this name already exists.");
+		} catch (NotFoundException e) {
+			// nothing to do
+		}
+		
+		try {
+			externalAccountSystem.lookupOnlineAccountTypeForFullName(fullName);
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Account type with this full name already exists.");
+		} catch (NotFoundException e) {
+			// nothing to do
+		}
+
+		try {
+			externalAccountSystem.lookupOnlineAccountTypeForUserInfoType(userInfoType);
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Account type with this user info type already exists.");
+		} catch (NotFoundException e) {
+			// nothing to do
+		}
+		
+		if (userInfoType.trim().length() == 0)
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Account type with this full name already exists.");
+		
+		// TODO: create a warning if account types for this site already exist
+		// List<OnlineAccountType> accountTypes = externalAccountSystem.lookupOnlineAccountTypesForSite(site);
+		try { 
+		    OnlineAccountType accountType = externalAccountSystem.createOnlineAccountType(viewpoint, name, fullName, siteName, site, userInfoType);
+		    accountType.setSupported(isSupported);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, e.getMessage());
+		}
 	}
 }

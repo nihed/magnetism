@@ -471,4 +471,9 @@ public interface HttpMethods {
 	@HttpParams( { } )
 	public void getAimVerifyLink(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint)
 		throws IOException, RetryException;
+	
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "name", "fullName", "siteName", "site", "userInfoType", "isSupported" })
+	public void doCreateAccountType(XmlBuilder xml, UserViewpoint viewpoint, String name, String fullName, String siteName, String site, String userInfoType, boolean isSupported)
+			throws XmlMethodException;
 }

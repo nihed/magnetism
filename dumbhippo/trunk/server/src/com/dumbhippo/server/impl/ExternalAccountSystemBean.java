@@ -10,6 +10,7 @@ import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -23,6 +24,7 @@ import com.dumbhippo.dm.ReadWriteSession;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.OnlineAccountType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
@@ -98,6 +100,7 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		ExternalAccount external = a.getExternalAccount(type);
 		if (external == null) {
 			external = new ExternalAccount(type);
+			external.setOnlineAccountType(getOnlineAccountType(type));
 			external.setAccount(a);
 			em.persist(external);
 			a.getExternalAccounts().add(external);
@@ -106,6 +109,66 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		}
 		return external;
 	}
+	
+	public OnlineAccountType getOnlineAccountType(ExternalAccountType accountType) {
+		Query q = em.createQuery("SELECT oat FROM OnlineAccountType oat WHERE " +
+				                 "oat.accountType = " + accountType.ordinal());
+		try {
+			return (OnlineAccountType)q.getSingleResult();
+		} catch (NoResultException e) {
+			throw new RuntimeException("There is an ExternalAccountType for which no matching OnlineAccountType was found: " + accountType.getName());
+		}
+	}
+	
+	public OnlineAccountType lookupOnlineAccountTypeForName(String name) throws NotFoundException {
+		Query q = em.createQuery("SELECT oat FROM OnlineAccountType oat WHERE " +
+				                 "LOWER(oat.name) = :name");
+		q.setParameter("name", name.toLowerCase());
+		
+		try {
+			return (OnlineAccountType)q.getSingleResult();
+		} catch (NoResultException e) {
+			throw new NotFoundException("No OnlineAccountType with name " + name);
+		}
+	}
+	
+	public OnlineAccountType lookupOnlineAccountTypeForFullName(String fullName) throws NotFoundException {
+		Query q = em.createQuery("SELECT oat FROM OnlineAccountType oat WHERE " +
+                                 "LOWER(oat.fullName) = :fullName");
+        q.setParameter("fullName", fullName.toLowerCase());
+
+        try {
+            return (OnlineAccountType)q.getSingleResult();
+        } catch (NoResultException e) {
+            throw new NotFoundException("No OnlineAccountType with full name " + fullName);
+        }
+    }
+
+	public OnlineAccountType lookupOnlineAccountTypeForUserInfoType(String userInfoType) throws NotFoundException {
+		Query q = em.createQuery("SELECT oat FROM OnlineAccountType oat WHERE " +
+                                 "LOWER(oat.userInfoType) = :userInfoType");
+        q.setParameter("userInfoType", userInfoType.toLowerCase());
+
+        try {
+            return (OnlineAccountType)q.getSingleResult();
+        } catch (NoResultException e) {
+            throw new NotFoundException("No OnlineAccountType with user info type " + userInfoType);
+        }
+    }
+	
+	public List<OnlineAccountType> lookupOnlineAccountTypesForSite(String siteUrl) { 
+	    Query q = em.createQuery("SELECT oat FROM OnlineAccountType oat WHERE " +
+                                 "LOWER(oat.site) = :site");
+        q.setParameter("site", siteUrl);						
+        return TypeUtils.castList(OnlineAccountType.class, q.getResultList());
+    }
+
+    public OnlineAccountType createOnlineAccountType(UserViewpoint viewpoint, String name, String fullName, String siteName, String siteUrl, String userInfoType) throws ValidationException {
+    	OnlineAccountType type = new OnlineAccountType(name, fullName, siteName, siteUrl, userInfoType);
+		type.setCreator(viewpoint.getViewer());
+		em.persist(type);
+		return type;
+    }
 
 	public ExternalAccount lookupExternalAccount(Viewpoint viewpoint, User user, ExternalAccountType type)
 		throws NotFoundException {

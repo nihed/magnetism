@@ -8,8 +8,10 @@ import javax.ejb.Local;
 import com.dumbhippo.Thumbnail;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.OnlineAccountType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.listeners.AccountStatusListener;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -78,4 +80,16 @@ public interface ExternalAccountSystem extends AccountStatusListener {
 	public void setSentiment(ExternalAccount externalAccount, Sentiment sentiment);
 	
 	public void validateAll();
+	
+	public OnlineAccountType getOnlineAccountType(ExternalAccountType accountType);
+	
+	public OnlineAccountType lookupOnlineAccountTypeForName(String name) throws NotFoundException;
+	
+	public OnlineAccountType lookupOnlineAccountTypeForFullName(String fullName) throws NotFoundException;
+	
+	public OnlineAccountType lookupOnlineAccountTypeForUserInfoType(String userInfoType) throws NotFoundException;
+
+	public List<OnlineAccountType> lookupOnlineAccountTypesForSite(String siteUrl);
+	
+	public OnlineAccountType createOnlineAccountType(UserViewpoint viewpoint, String name, String fullName, String siteName, String siteUrl, String userInfoType) throws ValidationException;	
 }

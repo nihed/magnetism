@@ -29,6 +29,7 @@ public class ExternalAccount extends DBUnique {
 	
 	// what site is the account on
 	private ExternalAccountType accountType;
+	private OnlineAccountType onlineAccountType;
 	// how do we feel about this site
 	private Sentiment sentiment;
 	// meaning of this varies by the where
@@ -46,9 +47,9 @@ public class ExternalAccount extends DBUnique {
 		feeds = new HashSet<Feed>();
 	}
 	
-	public ExternalAccount(ExternalAccountType where) {
+	public ExternalAccount(ExternalAccountType accountType) {
 		this();
-		this.accountType = where;
+		this.accountType = accountType;
 	}
 	
 	@ManyToOne
@@ -61,12 +62,23 @@ public class ExternalAccount extends DBUnique {
 		this.account = account;
 	}
 	
+	// TODO: eventually, we should get rid of this column and use OnlineAccountType 
 	@Column(nullable=false)
 	public ExternalAccountType getAccountType() {
 		return accountType;
 	}
 	public void setAccountType(ExternalAccountType type) {
 		this.accountType = type;
+	}
+	
+	@ManyToOne
+	@JoinColumn(nullable=false)
+	public OnlineAccountType getOnlineAccountType() {
+		return onlineAccountType;
+	}
+	
+	public void setOnlineAccountType(OnlineAccountType onlineAccountType) {
+		this.onlineAccountType = onlineAccountType;
 	}
 	
 	@Column(nullable=true)
