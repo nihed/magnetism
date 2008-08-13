@@ -1,0 +1,28 @@
+@CHARSET "UTF-8";
+
+.dh-account-type-table {
+	table-layout: fixed;
+}
+
+.dh-application-edit-label {
+	width: 10em;
+}
+
+.dh-application-edit-control {
+	position: relative;
+	width: 	  40em;
+}
+
+.dh-application-edit-control input {
+	width:    40em;
+}
+
+.dh-application-edit-control textarea {
+	width:    40em;
+	height:   5em;
+}
+
+.dh-application-edit-help {
+	width:    40em;
+	padding-bottom: 20px;
+}

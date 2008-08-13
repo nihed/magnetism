@@ -319,7 +319,7 @@
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>account,admin,application-edit,application-history,chatwindow,chatwindow-disabled,create-group,download,friends,getradar,group-account,group-invitation,group-invitations,home,invitation,invitation-admin,network,network-overview,radar-theme-creator,statistics</param-value>
+          <param-value>account,admin,account-type-add,application-edit,application-history,chatwindow,chatwindow-disabled,create-group,download,friends,getradar,group-account,group-invitation,group-invitations,home,invitation,invitation-admin,network,network-overview,radar-theme-creator,statistics</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   

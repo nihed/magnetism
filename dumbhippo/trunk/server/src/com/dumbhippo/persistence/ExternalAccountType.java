@@ -1029,7 +1029,7 @@ public enum ExternalAccountType {
 		
 		@Override
 	    public String getSiteUserInfoType() {
-	    	return "user name";
+	    	return "username";
 	    }
 		
 		@Override
