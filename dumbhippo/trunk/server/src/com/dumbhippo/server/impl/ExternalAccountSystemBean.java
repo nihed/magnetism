@@ -120,6 +120,11 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		}
 	}
 	
+	public List<OnlineAccountType> getAllOnlineAccountTypes() {
+		 Query q = em.createQuery("SELECT oat FROM OnlineAccountType oat");						
+         return TypeUtils.castList(OnlineAccountType.class, q.getResultList());
+	}
+	
 	public OnlineAccountType lookupOnlineAccountTypeForName(String name) throws NotFoundException {
 		Query q = em.createQuery("SELECT oat FROM OnlineAccountType oat WHERE " +
 				                 "LOWER(oat.name) = :name");
