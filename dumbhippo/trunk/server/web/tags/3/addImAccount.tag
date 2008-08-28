@@ -6,7 +6,7 @@
 <div id="dhAddImLink">
 	<a href="javascript:dh.account.showImAccountPopup()">
 		<dh:png klass="dh-add-icon" src="/images3/${buildStamp}/add_icon.png" style="width: 10; height: 10; overflow: hidden;" />
-		Add an IM account
+		Add an account
 	</a>
 	<div id="dhAddImPopup" style="display: none">
 		<div id="dhAddImClose">

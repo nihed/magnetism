@@ -2,13 +2,13 @@
 <%@ page pageEncoding="UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
-<%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht2" %>
+<%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 <%@ taglib tagdir="/WEB-INF/tags/gnome" prefix="gnome" %>
 
 <c:if test="${!signin.valid}">
 	<%-- this is a bad error message but should never happen since we require signin to get here --%>
-	<dht2:errorPage>Not signed in</dht2:errorPage>
+	<dht:errorPage>Not signed in</dht:errorPage>
 </c:if>
 
 <dht3:requirePersonBean beanClass="com.dumbhippo.web.pages.PersonPage"/>
@@ -37,6 +37,6 @@
 			</div>
 		</div>
 	</gnome:page>
-	<dht2:photoChooser/>
+	<dht:photoChooser/>
 </body>
 </html>

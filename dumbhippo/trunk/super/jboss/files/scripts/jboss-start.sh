@@ -83,7 +83,7 @@ $jdwpopt \
 $bindopt \
 "
 
-$JAVA $JAVA_OPTS > /dev/null 2>&1 &
+$JAVA $JAVA_OPTS > /tmp/jboss.start 2>&1 &
 pid=$!
 started=false
 for i in `seq 1 30` ; do

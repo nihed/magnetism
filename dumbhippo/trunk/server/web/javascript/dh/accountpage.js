@@ -13,3 +13,4 @@ dojo.require("dh.popup")
 dojo.require("dh.feeds");
 dojo.require("dh.password");
 dojo.require("dh.lovehate");
+dojo.require("dh.love");

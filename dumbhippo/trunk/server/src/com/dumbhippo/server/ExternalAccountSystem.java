@@ -83,6 +83,8 @@ public interface ExternalAccountSystem extends AccountStatusListener {
 	
 	public OnlineAccountType getOnlineAccountType(ExternalAccountType accountType);
 	
+	public List<OnlineAccountType> getAllOnlineAccountTypes();
+	
 	public OnlineAccountType lookupOnlineAccountTypeForName(String name) throws NotFoundException;
 	
 	public OnlineAccountType lookupOnlineAccountTypeForFullName(String fullName) throws NotFoundException;

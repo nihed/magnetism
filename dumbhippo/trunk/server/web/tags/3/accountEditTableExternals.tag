@@ -2,6 +2,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh"%>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht2"%>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3"%>
+<%@ taglib tagdir="/WEB-INF/tags/gnome" prefix="gnome"%>
 
 <%@ attribute name="account" required="true" type="com.dumbhippo.web.pages.AccountPage" %>
 
@@ -127,6 +128,19 @@
 		</table>
 		<dht3:addImAccount/>
 	    </dht2:formTableRow>
+	    <c:forEach items="${account.gnomeSupportedAccounts.list}" var="supportedAccount">
+	        <dht2:formTableRow controlId="dh${supportedAccount.domNodeIdName}"
+				label="${supportedAccount.siteName}"				
+				icon="/images3/${buildStamp}/${supportedAccount.iconName}">
+	            <gnome:loveEntry name="${supportedAccount.siteName}"
+				  			        userInfoType="${supportedAccount.siteUserInfoType}"
+							        isInfoTypeProvidedBySite="${supportedAccount.infoTypeProvidedBySite}"
+							        link="${supportedAccount.externalAccountType.siteLink}"
+							        baseId="dh${supportedAccount.domNodeIdName}"
+							        mode="${supportedAccount.sentiment}">				        
+			    </gnome:loveEntry>
+			</dht2:formTableRow>			
+	    </c:forEach>
 	</c:if>    
 	<c:if test="${dh:enumIs(site, 'MUGSHOT')}">
 		<dht2:formTableRow label="Website"

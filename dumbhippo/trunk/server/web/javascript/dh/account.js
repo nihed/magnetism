@@ -4,6 +4,7 @@ dojo.require("dh.textinput");
 dojo.require("dh.fileinput");
 dojo.require("dh.photochooser");
 dojo.require("dh.lovehate");
+dojo.require("dh.love");
 dojo.require("dh.password");
 dojo.require("dh.util");
 dojo.require("dh.dom");
@@ -764,6 +765,12 @@ dh.account.createTwitterEntry = function() {
 	dh.account.twitterEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.twitterEntry, 'TWITTER');
 }
 
+dh.account.createGnomeTwitterEntry = function() {	
+	dh.account.twitterEntry = new dh.love.Entry('dhTwitter', 'Twitter username or profile URL', dh.account.initialTwitterName);
+	dh.account.twitterEntry.onLoveSaved = dh.account.onTwitterLoveSaved;
+	dh.account.twitterEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.twitterEntry, 'TWITTER');
+}
+
 dh.account.createDiggEntry = function() {	
 	dh.account.diggEntry = new dh.lovehate.Entry('dhDigg', 'Digg username or profile URL', dh.account.initialDiggName,
 					'I don\'t dig it', dh.account.initialDiggHateQuip, 'Your friends get updates when you add diggs.');
@@ -892,7 +899,10 @@ dhAccountInit = function() {
 		dh.account.createGoogleReaderEntry();
 		dh.account.createPicasaEntry();	
 		dh.account.createAmazonEntry();
-	}
+	} else {
+	    // TODO: not sure yet how we'll figure out which entries to create, so hardcoding Twitter for now
+		dh.account.createGnomeTwitterEntry();
+	}	
 }
 
 dh.event.addPageLoadListener(dhAccountInit);

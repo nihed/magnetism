@@ -10,6 +10,7 @@ import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
+import com.dumbhippo.persistence.OnlineAccountType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.XmppResource;
 import com.dumbhippo.server.AmazonUpdater;
@@ -355,6 +356,24 @@ public class AccountPage {
 				    supportedAccounts.add(new ExternalAccountView(externalAccount));
 				} catch (NotFoundException e) {
 					supportedAccounts.add(new ExternalAccountView(type));
+				}
+			}
+		}
+		return new ListBean<ExternalAccountView>(supportedAccounts);
+	}
+
+	public ListBean<ExternalAccountView> getGnomeSupportedAccounts() {
+		List<ExternalAccountView> supportedAccounts = new ArrayList<ExternalAccountView>(); 
+		for (OnlineAccountType type : externalAccounts.getAllOnlineAccountTypes()) {
+			// this takes advantage of the fact that all online account types currently have corresponding
+			// external accounts, but we'll need to change this soon
+			if (type.isSupported() && type.getAccountType() != null) {
+				try {
+				    ExternalAccount externalAccount = 
+				    	externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), type.getAccountType());
+				    supportedAccounts.add(new ExternalAccountView(externalAccount));
+				} catch (NotFoundException e) {
+					supportedAccounts.add(new ExternalAccountView(type.getAccountType()));
 				}
 			}
 		}
