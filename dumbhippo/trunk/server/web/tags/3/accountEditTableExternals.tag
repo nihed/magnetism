@@ -129,17 +129,19 @@
 		<dht3:addImAccount/>
 	    </dht2:formTableRow>
 	    <c:forEach items="${account.gnomeSupportedAccounts.list}" var="supportedAccount">
-	        <dht2:formTableRow controlId="dh${supportedAccount.domNodeIdName}"
-				label="${supportedAccount.siteName}"				
-				icon="/images3/${buildStamp}/${supportedAccount.iconName}">
-	            <gnome:loveEntry name="${supportedAccount.siteName}"
-				  			        userInfoType="${supportedAccount.siteUserInfoType}"
-							        isInfoTypeProvidedBySite="${supportedAccount.infoTypeProvidedBySite}"
-							        link="${supportedAccount.externalAccountType.siteLink}"
-							        baseId="dh${supportedAccount.domNodeIdName}"
-							        mode="${supportedAccount.sentiment}">				        
-			    </gnome:loveEntry>
-			</dht2:formTableRow>			
+	        <c:if test="${supportedAccount.siteName == 'Twitter'}">
+	            <dht2:formTableRow controlId="dh${supportedAccount.domNodeIdName}"
+				                   label="${supportedAccount.siteName}"				
+				                   icon="/images3/${buildStamp}/${supportedAccount.iconName}">
+	                <gnome:loveEntry name="${supportedAccount.siteName}"
+				  	   		         userInfoType="${supportedAccount.siteUserInfoType}"
+							         isInfoTypeProvidedBySite="${supportedAccount.infoTypeProvidedBySite}"
+							         link="${supportedAccount.externalAccountType.siteLink}"
+							         baseId="dh${supportedAccount.domNodeIdName}"
+							         mode="${supportedAccount.sentiment}">				        
+			        </gnome:loveEntry>
+			    </dht2:formTableRow>			
+			</c:if>
 	    </c:forEach>
 	</c:if>    
 	<c:if test="${dh:enumIs(site, 'MUGSHOT')}">
