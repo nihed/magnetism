@@ -128,21 +128,23 @@
 		</table>
 		<dht3:addImAccount/>
 	    </dht2:formTableRow>
-	    <c:forEach items="${account.gnomeSupportedAccounts.list}" var="supportedAccount">
-	        <c:if test="${supportedAccount.siteName == 'Twitter'}">
-	            <dht2:formTableRow controlId="dh${supportedAccount.domNodeIdName}"
-				                   label="${supportedAccount.siteName}"				
-				                   icon="/images3/${buildStamp}/${supportedAccount.iconName}">
-	                <gnome:loveEntry name="${supportedAccount.siteName}"
-				  	   		         userInfoType="${supportedAccount.siteUserInfoType}"
-							         isInfoTypeProvidedBySite="${supportedAccount.infoTypeProvidedBySite}"
-							         link="${supportedAccount.externalAccountType.siteLink}"
-							         baseId="dh${supportedAccount.domNodeIdName}"
-							         mode="${supportedAccount.sentiment}">				        
-			        </gnome:loveEntry>
-			    </dht2:formTableRow>			
-			</c:if>
-	    </c:forEach>
+	    <c:if test="${dh:enumIs(site, 'GNOME')}">
+	        <c:forEach items="${account.gnomeSupportedAccounts.list}" var="supportedAccount">
+	            <c:if test="${supportedAccount.siteName == 'Twitter'}">
+	                <dht2:formTableRow controlId="dh${supportedAccount.domNodeIdName}"
+				                       label="${supportedAccount.siteName}"				
+				                       icon="/images3/${buildStamp}/${supportedAccount.iconName}">
+	                    <gnome:loveEntry name="${supportedAccount.siteName}"
+				  	   	  	             userInfoType="${supportedAccount.siteUserInfoType}"
+							             isInfoTypeProvidedBySite="${supportedAccount.infoTypeProvidedBySite}"
+							             link="${supportedAccount.externalAccountType.siteLink}"
+							             baseId="dh${supportedAccount.domNodeIdName}"
+							             mode="${supportedAccount.sentiment}">				        
+			            </gnome:loveEntry>
+			        </dht2:formTableRow>			
+			    </c:if>
+	        </c:forEach>
+	    </c:if>
 	</c:if>    
 	<c:if test="${dh:enumIs(site, 'MUGSHOT')}">
 		<dht2:formTableRow label="Website"
