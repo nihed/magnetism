@@ -6,6 +6,7 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import com.dumbhippo.Thumbnail;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.OnlineAccountType;
@@ -84,6 +85,8 @@ public interface ExternalAccountSystem extends AccountStatusListener {
 	public OnlineAccountType getOnlineAccountType(ExternalAccountType accountType);
 	
 	public List<OnlineAccountType> getAllOnlineAccountTypes();
+
+	public void writeSupportedOnlineAccountTypesToXml(XmlBuilder xml, String lang); 
 	
 	public OnlineAccountType lookupOnlineAccountTypeForName(String name) throws NotFoundException;
 	

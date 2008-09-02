@@ -443,6 +443,11 @@ public interface HttpMethods {
 	@HttpOptions( optionalParams = { "participantOnly" } )
 	public void getUserRSS(OutputStream out, HttpResponseData contentType, Viewpoint viewpoint, User who, boolean participantOnly) throws IOException, XmlMethodException;
 
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams({ "lang" })
+	@HttpOptions( optionalParams = { "lang" } )	
+	public void getSupportedOnlineAccountTypes(XmlBuilder xml, Viewpoint viewpoint, String lang) throws XmlMethodException;		
+
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "email", "enabled" })
 	public void doSetGoogleServicedEmail(UserViewpoint viewpoint, String email, boolean enabled) throws IOException, RetryException, ValidationException;

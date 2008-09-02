@@ -2473,6 +2473,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.closeElement();
 	}
 	
+	public void getSupportedOnlineAccountTypes(XmlBuilder xml, Viewpoint viewpoint, String lang) throws XmlMethodException {
+		xml.openElement("onlineAccountTypes");		
+		externalAccountSystem.writeSupportedOnlineAccountTypesToXml(xml, lang);
+		xml.closeElement();		
+	}
+
 	public void getUserRSS(OutputStream out, HttpResponseData contentType, Viewpoint viewpoint, User who, boolean participantOnly) throws IOException, XmlMethodException {
 		
 		// anonymize while keeping Site

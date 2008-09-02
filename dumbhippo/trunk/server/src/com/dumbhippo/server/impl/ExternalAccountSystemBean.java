@@ -20,8 +20,10 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Thumbnail;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.dm.ReadWriteSession;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.Application;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.OnlineAccountType;
@@ -34,10 +36,12 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.PicasaUpdater;
 import com.dumbhippo.server.YouTubeUpdater;
+import com.dumbhippo.server.applications.ApplicationView;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.ExternalAccountDMO;
 import com.dumbhippo.server.dm.ExternalAccountKey;
 import com.dumbhippo.server.views.ExternalAccountView;
+import com.dumbhippo.server.views.OnlineAccountTypeView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FlickrPhotoSize;
@@ -123,6 +127,16 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	public List<OnlineAccountType> getAllOnlineAccountTypes() {
 		 Query q = em.createQuery("SELECT oat FROM OnlineAccountType oat");						
          return TypeUtils.castList(OnlineAccountType.class, q.getResultList());
+	}
+	
+	public void writeSupportedOnlineAccountTypesToXml(XmlBuilder xml, String lang) {
+		Query q = em.createQuery("SELECT oat FROM OnlineAccountType oat WHERE oat.supported = TRUE");		
+		List<OnlineAccountType> supportedTypes = TypeUtils.castList(OnlineAccountType.class,
+				                                                    q.getResultList());													
+		for (OnlineAccountType supportedType : supportedTypes) {
+			OnlineAccountTypeView supportedTypeView = new OnlineAccountTypeView(supportedType);
+			supportedTypeView.writeToXmlBuilder(xml, lang);
+		}
 	}
 	
 	public OnlineAccountType lookupOnlineAccountTypeForName(String name) throws NotFoundException {
