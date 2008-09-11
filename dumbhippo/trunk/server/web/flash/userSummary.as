@@ -155,14 +155,14 @@ var createView = function(summary:Object) {
 											      rightEdgeOfPresenceIcon + 5, -5, 200, 14);
 	name.autoSize = 'left';
 	name.html = true;
-	name.htmlText = "<b><a href='" + escapeXML(summary.homeUrl) + "'>" + escapeXML(summary.name) + "'s Mugshot</a></b>";
+	name.htmlText = "<b><a href='" + escapeXML(summary.homeUrl) + "' target='_blank'>" + escapeXML(summary.name) + "'s Mugshot</a></b>";
 	formatText(name, 14, 0x000000);
 	
 	var homeLink:TextField = topStuff.createTextField("homeLink", topStuff.getNextHighestDepth(),
 													  rightEdgeOfPresenceIcon + 5, name._y + 14 + 5, 200, 12);
 	homeLink.autoSize = 'left';
 	homeLink.html = true;
-	homeLink.htmlText = "<u><a href='" + escapeXML(summary.homeUrl) + "'>Visit my Mugshot page</a></u>";
+	homeLink.htmlText = "<u><a href='" + escapeXML(summary.homeUrl) + "' target='_blank'>Visit my Mugshot page</a></u>";
 	formatText(homeLink, 12, 0x0033ff);
 	
 	var topStuffBottomSide:Number = topSide + Math.max(14 + 5 + 12, headshotSize);
@@ -186,6 +186,9 @@ var createView = function(summary:Object) {
 		var accountButton:MovieClip = ribbon.createEmptyMovieClip("account" + i, ribbon.getNextHighestDepth());
 		accountButton._x = nextX;
 		accountButton._y = 0;
+                accountButton.onRelease = function() {
+                    getURL(account.link, "_blank");
+                }
 		addImageToClip(viewRoot, accountButton, account.icon, null);
 		nextX = nextX + ribbonIconSize + 3;
 	}
@@ -249,7 +252,7 @@ var createView = function(summary:Object) {
 		var link:TextField = blockClip.createTextField("link", blockClip.getNextHighestDepth(), 5, 15, maxTextWidth, 17);
 		//link.autoSize = 'left'; // we want it to be clipped
 		link.html = true;
-		link.htmlText = "<u><b><a href='" + escapeXML(block.link) + "'>" + escapeXML(block.linkText) + "</a></b></u>";
+		link.htmlText = "<u><b><a href='" + escapeXML(block.link) + "' target='_blank'>" + escapeXML(block.linkText) + "</a></b></u>";
 		// Linux seems to screw up the font size, so set a smaller one there
 		formatText(link, isLinux() ? 9 : 11, 0x0033ff);
 		
