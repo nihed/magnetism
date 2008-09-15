@@ -140,12 +140,12 @@ var createView = function(summary:Object) {
 	var photo:MovieClip = topStuff.createEmptyMovieClip("photo", topStuff.getNextHighestDepth());
 	photo._x = 0;
 	photo._y = 0;
-	addImageToClip(viewRoot, photo, summary.photo, null);
+	addImageToClip(viewRoot, photo, summary.photo, null, null);
 
 	var presenceIcon:MovieClip = topStuff.createEmptyMovieClip("presenceIcon", topStuff.getNextHighestDepth());
 	presenceIcon._x = photo._x + headshotSize + 5;
 	presenceIcon._y = 0;
-	addImageToClip(viewRoot, presenceIcon, summary.onlineIcon, null);
+	addImageToClip(viewRoot, presenceIcon, summary.onlineIcon, null, null);
 	
 	var rightEdgeOfPresenceIcon = presenceIcon._x + presenceIconSize;
 	
@@ -186,10 +186,7 @@ var createView = function(summary:Object) {
 		var accountButton:MovieClip = ribbon.createEmptyMovieClip("account" + i, ribbon.getNextHighestDepth());
 		accountButton._x = nextX;
 		accountButton._y = 0;
-                accountButton.onRelease = function() {
-                    getURL(account.link, "_blank");
-                }
-		addImageToClip(viewRoot, accountButton, account.icon, null);
+		addImageToClip(viewRoot, accountButton, account.icon, null, account.link);
 		nextX = nextX + ribbonIconSize + 3;
 	}
 

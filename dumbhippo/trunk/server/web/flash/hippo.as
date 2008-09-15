@@ -164,12 +164,12 @@ var recordOneImageLoadCompleted = function(tracker:Object) {
 }
 
 // caution, this can synchronously call the "on all loaded completed" callback
-var loadImage = function(tracker:Object, target:MovieClip, fullUrl:String, fallbackUrl:String) {
+var loadImage = function(tracker:Object, target:MovieClip, fullUrl:String, fallbackUrl:String, linkUrl:String) {
 	trace("loading to " + target._name + " url " + fullUrl);
 	
 	// happens if no image url was provided at all by the xml
 	if (!fullUrl) {
-		loadImage(tracker, target, fallbackUrl, null);
+		loadImage(tracker, target, fallbackUrl, null, linkUrl);
 		return;
 	}
 	
@@ -179,13 +179,19 @@ var loadImage = function(tracker:Object, target:MovieClip, fullUrl:String, fallb
 		// note, we could be replaced as the loadingMovie already
 		trace("failed to load " + fullUrl + " to " + target._name);
 		if (fallbackUrl != null)
-			loadImage(tracker, target, fallbackUrl, null); // increments pending image loads
+			loadImage(tracker, target, fallbackUrl, null, linkUrl); // increments pending image loads
 		recordOneImageLoadCompleted(tracker);
 	}
 	listener.onLoadComplete = function(targetClip:MovieClip) {
 		// note, we could be replaced as the loadingMovie already
 		trace("completed load of " + fullUrl + " to " + target._name);
 		recordOneImageLoadCompleted(tracker);
+                targetClip.onRelease = function() {
+                        trace("released");
+                        if (linkUrl) {
+                                getURL(linkUrl, "_blank");
+                        }
+                };
 	}
 	loader.addListener(listener);
 	
@@ -207,9 +213,9 @@ var getImageTracker = function(clip:MovieClip) {
 	return clip.imageTracker;
 }
 
-var addImageToClip = function(clip:MovieClip, target:MovieClip, fullUrl:String, fallbackUrl:String) {
+var addImageToClip = function(clip:MovieClip, target:MovieClip, fullUrl:String, fallbackUrl:String, linkUrl:String) {
 	var tracker:Object = getImageTracker(clip);
-	loadImage(tracker, target, fullUrl, fallbackUrl);
+	loadImage(tracker, target, fullUrl, fallbackUrl, linkUrl);
 }
 
 var setAllImagesLoadedCallback = function(clip:MovieClip, callback:Function) {
