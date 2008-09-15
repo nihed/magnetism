@@ -139,7 +139,7 @@ button.lineTo(width, 0);
 button.lineTo(0, 0);
 button.onRelease = function() {
 	trace("released");
-	getURL(baseUrl + "/person?who=" + who, "_self");
+	getURL(baseUrl + "/person?who=" + who, "_blank");
 }
 
 var fadeTime:Number = 1000;
@@ -350,7 +350,7 @@ var setSong = function(clip:MovieClip, song:Object) {
 	// albumArtUrl may be undefined, in which case we fall back
 	trace("setSong() adding album art " + song.albumArtUrl);
 	addImageToClip(songClip, songClip.albumArt, song.albumArtUrl,
-				   baseUrl + "/images/no_image_available75x75light.gif");
+				   baseUrl + "/images/no_image_available75x75light.gif", null);
 }
 
 var setTheme = function(clip:MovieClip, theme:Object) {
@@ -404,11 +404,11 @@ var setTheme = function(clip:MovieClip, theme:Object) {
 	
 	if (theme.activeImageUrl) {
 		trace("theme loading active image");
-		addImageToClip(themeClip, themeClip.activeBackground, baseUrl + theme.activeImageUrl, null);
+		addImageToClip(themeClip, themeClip.activeBackground, baseUrl + theme.activeImageUrl, null, null);
 	}
 	if (theme.inactiveImageUrl) {
 		trace("theme loading inactive image");
-		addImageToClip(themeClip, themeClip.inactiveBackground, baseUrl + theme.inactiveImageUrl, null);
+		addImageToClip(themeClip, themeClip.inactiveBackground, baseUrl + theme.inactiveImageUrl, null, null);
 	}
 }
 
