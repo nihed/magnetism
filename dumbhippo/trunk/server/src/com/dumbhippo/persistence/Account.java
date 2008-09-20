@@ -634,10 +634,21 @@ public class Account extends Resource {
 	}
 	
 	@Transient
+	public Set<ExternalAccount> getMugshotEnabledExternalAccounts() {
+		Set<ExternalAccount> filtered = new HashSet<ExternalAccount>();
+		for (ExternalAccount a : getExternalAccounts()) {
+			if (a.isMugshotEnabled()) {
+				filtered.add(a);
+			}
+		}
+		return filtered;	
+	}
+
+	@Transient
 	private Set<ExternalAccount> getExternalAccountsBySentiment(Sentiment sentiment) {
 		Set<ExternalAccount> filtered = new HashSet<ExternalAccount>();
 		for (ExternalAccount a : getExternalAccounts()) {
-			if (a.getSentiment() == Sentiment.LOVE) {
+			if (a.getSentiment() == Sentiment.LOVE && a.isMugshotEnabled()) {
 				filtered.add(a);
 			}
 		}
@@ -657,13 +668,34 @@ public class Account extends Resource {
 	@Transient
 	public ExternalAccount getExternalAccount(ExternalAccountType type) {
 		for (ExternalAccount a : getExternalAccounts()) {
-			if (a.getAccountType() == type) {
+			if (a.getAccountType() == type && a.isMugshotEnabled()) {
 				return a;
 			}
 		}
 		return null;
 	}
 
+	@Transient
+	public ExternalAccount getExternalAccount(String id) {
+		for (ExternalAccount a : getExternalAccounts()) {
+			if (a.getId() == Long.parseLong(id)) {
+				return a;
+			}
+		}
+		return null;
+	}
+
+	@Transient
+	public Set<ExternalAccount> getExternalAccounts(OnlineAccountType type) {
+		Set<ExternalAccount> externalAccounts = new HashSet<ExternalAccount>(); 
+		for (ExternalAccount a : getExternalAccounts()) {
+			if (a.getOnlineAccountType().equals(type)) {
+				externalAccounts.add(a);
+			}
+		}
+		return externalAccounts;
+	}
+	
 	@Column(nullable=true)
 	public String getStackFilter() {
 		return stackFilter;

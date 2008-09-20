@@ -261,14 +261,14 @@ public class FacebookServlet extends AbstractServlet {
 					    		XPath xpath = XPathFactory.newInstance().newXPath();
 					    		String nsid = ((Node)xpath.evaluate("/result/flickrUser/nsid", doc, XPathConstants.NODE)).getTextContent();
 					    		logger.debug("Got nsid {} when setting Flickr account", nsid);
-					    		httpMethods.doSetFlickrAccount(new XmlBuilder(), userViewpoint, nsid, entryValue);
+					    		httpMethods.doSetFlickrAccount(new XmlBuilder(), userViewpoint, "mugshot", nsid, entryValue);
 					    		accountsSetSuccessful.add(ExternalAccountType.FLICKR);
 					    	} else {
 					    		Method setAccount = httpMethods.getClass().getMethod("doSet" + entry.getKey().getDomNodeIdName() + "Account",
 					    				                                             new Class[] {XmlBuilder.class, UserViewpoint.class, String.class});	
 					    		XmlBuilder resultXml = new XmlBuilder();
 					    		resultXml.openElement("result");
-					    		setAccount.invoke(httpMethods, new Object[] {resultXml, userViewpoint, entryValue});
+					    		setAccount.invoke(httpMethods, new Object[] {resultXml, userViewpoint, "mugshot", entryValue});
 					    		resultXml.closeElement(); // result
 					    		// we have messages telling the user about certain limitations of their account
 					    		// for MySpace, Twitter, Reddit, and Amazon
@@ -428,7 +428,7 @@ public class FacebookServlet extends AbstractServlet {
 				    }
 				    
 				    xml.openElement("div", "style", "color:#666666;width:275px;");			    
-				    if (externalAccount.isInfoTypeProvidedBySite()) {
+				    if (externalAccount.getExternalAccountType().isInfoTypeProvidedBySite()) {
 				        xml.append("Enter your ");
 				        if (externalAccount.getExternalAccountType() == ExternalAccountType.BLOG) {
 				        	xml.append(" blog (e.g. ");
@@ -445,7 +445,7 @@ public class FacebookServlet extends AbstractServlet {
 				        	  	               "href", externalAccount.getExternalAccountType().getSiteLink(), 
 				        		               "target", "_blank");
 				        }    
-				        xml.append(" " + externalAccount.getSiteUserInfoType());
+				        xml.append(" " + externalAccount.getExternalAccountType().getSiteUserInfoType());
 					    if (externalAccount.getExternalAccountType().getHelpUrl().trim().length() > 0) {
 					    	xml.append(" (");
 					        xml.appendTextNode("a", "help me find it", 
@@ -455,7 +455,7 @@ public class FacebookServlet extends AbstractServlet {
 					    }
 					    xml.append(".");
 				    } else {
-				        xml.append("Enter your " + externalAccount.getSiteUserInfoType() + " ");
+				        xml.append("Enter your " + externalAccount.getExternalAccountType().getSiteUserInfoType() + " ");
 				        xml.appendTextNode("a", externalAccount.getSiteName(), 
 				        		           "href", externalAccount.getExternalAccountType().getSiteLink(), 
 				        		           "target", "_blank");
@@ -554,10 +554,10 @@ public class FacebookServlet extends AbstractServlet {
 					    	externalAccounts.lookupExternalAccount(new UserViewpoint(user, Site.MUGSHOT), user, type);
 					    supportedAccounts.add(new ExternalAccountView(externalAccount));
 					} catch (NotFoundException e) {
-						supportedAccounts.add(new ExternalAccountView(type));
+						supportedAccounts.add(new ExternalAccountView(externalAccounts.getOnlineAccountType(type)));
 					}
 				} else {
-					supportedAccounts.add(new ExternalAccountView(type));
+					supportedAccounts.add(new ExternalAccountView(externalAccounts.getOnlineAccountType(type)));
 				}
 			}
 		}

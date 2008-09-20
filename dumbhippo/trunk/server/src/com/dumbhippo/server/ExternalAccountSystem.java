@@ -21,7 +21,7 @@ import com.dumbhippo.server.views.Viewpoint;
 @Local
 public interface ExternalAccountSystem extends AccountStatusListener {
 	/**
-	 * Gets (creating if necessary) an ExternalAccount of the given type for the current user's viewpoint.
+	 * Gets (creating if necessary) a Mugshot enabled ExternalAccount of the given type for the current user's viewpoint.
 	 * 
 	 * If created, the account starts out as Sentiment.INDIFFERENT; if already existing you have to 
 	 * look at its current status.
@@ -32,8 +32,14 @@ public interface ExternalAccountSystem extends AccountStatusListener {
 	 */
 	ExternalAccount getOrCreateExternalAccount(UserViewpoint viewpoint, ExternalAccountType type);
 	
+	// creates an ExternalAccount for the owner of the viepoint that is not Mugshot enabled
+	public ExternalAccount createExternalAccount(UserViewpoint viewpoint, OnlineAccountType type);
+	
+	// looks up an ExternalAccount with the given id for the owner of the viewpoint
+	public ExternalAccount lookupExternalAccount(UserViewpoint viewpoint, String id) throws NotFoundException;
+	
 	/**
-	 * Gets an external account for the given user, only if it already exists.
+	 * Gets an external account for the given user, only if it already exists and is Mugshot-enabled.
 	 * Takes viewpoint into account (though currently the viewpoint doesn't matter).
 	 *  
 	 * Keep in mind that you then have to check whether the account is loved or hated.
@@ -45,6 +51,19 @@ public interface ExternalAccountSystem extends AccountStatusListener {
 	 * @throws NotFoundException if the user in question has no account of this type
 	 */
 	ExternalAccount lookupExternalAccount(Viewpoint viewpoint, User user, ExternalAccountType type) throws NotFoundException;
+
+	/**
+	 * Gets existing external accounts for the given user  of a specified type.
+	 * Takes viewpoint into account (though currently the viewpoint doesn't matter).
+	 *  
+	 * Keep in mind that you then have to check whether the accounts are loved or hated.
+	 *  
+	 * @param viewpoint current user, anonymous, system viewpoint
+	 * @param user user to get an account for
+	 * @param type online account type of accounts
+	 * @return the accounts
+	 */
+	public Set<ExternalAccount> lookupExternalAccounts(Viewpoint viewpoint, User user, OnlineAccountType type);
 	
 	/**
 	 * Checks whether the given external account exists, is loved, and the user's account is enabled. i.e. 
@@ -67,7 +86,6 @@ public interface ExternalAccountSystem extends AccountStatusListener {
 	 * @return the set of external account views for this user (should not be modified)
 	 */
 	public Set<ExternalAccountView> getExternalAccountViews(Viewpoint viewpoint, User user);
-	
 	
 	public ExternalAccountView getExternalAccountView(Viewpoint viewpoint, ExternalAccount externalAccount);
 	

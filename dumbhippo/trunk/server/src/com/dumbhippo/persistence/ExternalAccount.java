@@ -9,7 +9,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
@@ -17,10 +16,6 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 @Entity
-@Table(name="ExternalAccount", 
-		   uniqueConstraints = 
-			      {@UniqueConstraint(columnNames={"account_id", "accountType"})}
-		   )
 @Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ExternalAccount extends DBUnique {
 	private static final long serialVersionUID = 1L;
@@ -41,10 +36,13 @@ public class ExternalAccount extends DBUnique {
 	private String quip;
 	// if the account has associated feeds, they go here
 	private Set<Feed> feeds;
+	// right now we should allow only up to one account of a given type to be Mugshot enabled
+	private boolean mugshotEnabled;
 	
 	public ExternalAccount() {
 		sentiment = Sentiment.INDIFFERENT;
 		feeds = new HashSet<Feed>();
+		mugshotEnabled = false;
 	}
 	
 	public ExternalAccount(ExternalAccountType accountType) {
@@ -63,7 +61,7 @@ public class ExternalAccount extends DBUnique {
 	}
 	
 	// TODO: eventually, we should get rid of this column and use OnlineAccountType 
-	@Column(nullable=false)
+	@Column(nullable=true)
 	public ExternalAccountType getAccountType() {
 		return accountType;
 	}
@@ -95,17 +93,26 @@ public class ExternalAccount extends DBUnique {
 	}
 
 	public String validateHandle(String handle) throws ValidationException {
-		String validatedHandle = accountType.canonicalizeHandle(handle);
-		if (accountType.requiresHandleIfLoved() && validatedHandle == null) {
-			String usedForSite = "";
-			if (!this.getAccountType().isInfoTypeProvidedBySite()) {
-				usedForSite = " " + this.getSiteName() + " account";
+		if (accountType != null) {
+			String validatedHandle = accountType.canonicalizeHandle(handle);
+			if (accountType.requiresHandleIfLoved() && validatedHandle == null) {
+				String usedForSite = "";
+				if (!this.getAccountType().isInfoTypeProvidedBySite()) {
+					usedForSite = " " + this.getSiteName() + " account";
+				}
+				
+				throw new ValidationException("If you love " + this.getSiteName() + " let us know by entering your " 
+						                      + this.getAccountType().getSiteUserInfoType() + usedForSite + ".");
+			}		
+			return validatedHandle;
+		} else {
+			if (handle.trim().length() == 0) {
+				throw new ValidationException("If you use " + this.getSiteName() + " let us know by entering your " 
+	                      + this.getOnlineAccountType().getUserInfoType() + ".");				
 			}
-			
-			throw new ValidationException("If you love " + this.getSiteName() + " let us know by entering your " 
-					                      + this.getAccountType().getSiteUserInfoType() + usedForSite);
+			return handle;
 		}
-		return validatedHandle;
+		
 	}
 	
 	// used when setting a handle for loved accounts
@@ -136,12 +143,16 @@ public class ExternalAccount extends DBUnique {
 
 	// used when setting an extra for loved accounts
 	public void setExtraValidating(String extra) throws ValidationException {
-		String validatedExtra = accountType.canonicalizeExtra(extra);
-		if (accountType.requiresExtraIfLoved() && validatedExtra == null) {
-			// this message should not normally be displayed to the user
-			throw new ValidationException("Setting an empty value for " + this.getSiteName() + " user info extra is not valid");
+		if (accountType != null) {
+		    String validatedExtra = accountType.canonicalizeExtra(extra);
+		    if (accountType.requiresExtraIfLoved() && validatedExtra == null) {
+			    // this message should not normally be displayed to the user
+			    throw new ValidationException("Setting an empty value for " + this.getSiteName() + " user info extra is not valid");
+		    }		
+		    this.extra = validatedExtra;
+		} else {
+			this.extra = extra;
 		}
-		this.extra = validatedExtra;
 	}
 	
 	@Column(nullable=true)
@@ -198,6 +209,15 @@ public class ExternalAccount extends DBUnique {
 		else
 			throw new RuntimeException("The external account has multiple feeds, not sure which feed you want me to return.");
 	}
+	
+	@Column(nullable=false)
+	public boolean isMugshotEnabled() {
+		return mugshotEnabled;
+	}
+
+	public void setMugshotEnabled(boolean mugshotEnabled) {
+		this.mugshotEnabled = mugshotEnabled;
+	}
 
 	public void setFeed(Feed feed) {
 		Set<Feed> feedsSet = new HashSet<Feed>();
@@ -207,12 +227,12 @@ public class ExternalAccount extends DBUnique {
 	
 	@Override
 	public String toString() {
-		return "{" + sentiment + " accountType=" + accountType + " handle=" + handle + " extra=" + extra + " quip=" + quip + "}";
+		return "{" + sentiment + " onlineAccountType=" + onlineAccountType + " handle=" + handle + " extra=" + extra + " quip=" + quip + "}";
 	}
 		
 	@Transient
 	public String getSiteName() {
-		return accountType.getSiteName();
+		return onlineAccountType.getSiteName();
 	}
 	
 	@Transient
@@ -225,16 +245,15 @@ public class ExternalAccount extends DBUnique {
 	
 	@Transient
 	public String getSiteLink() {
-	    if (!accountType.getSiteLink().equals("")) {
-	    	return accountType.getSiteLink();
-	    } else {
-	    	return getLink();
-	    }
+	    return onlineAccountType.getSite();
 	}
 	
 	@Transient
 	public String getIconName() {
-		return accountType.getIconName();
+		if (accountType != null)
+		    return accountType.getIconName();
+		else
+			return "";
 	}
 	
 	@Transient
@@ -247,13 +266,17 @@ public class ExternalAccount extends DBUnique {
 	
 	@Transient
 	public boolean hasLovedAndEnabledType(ExternalAccountType type) {
-		return accountType == type && getSentiment() == Sentiment.LOVE &&
-		getAccount().isActive() && hasAccountInfo() &&
+		// checking for public page makes sure that we don't stack blocks for online.gnome.org users
+		return accountType != null && accountType == type && getSentiment() == Sentiment.LOVE &&
+		isMugshotEnabled() && getAccount().isActive() && getAccount().isPublicPage() && hasAccountInfo() &&
 		(!accountType.isAffectedByMusicSharing() || getAccount().isMusicSharingEnabledWithDefault());
 	}
 	
 	@Transient
 	public String getAccountInfo() {
+		if (accountType == null)
+			return getHandle();
+		
 		switch (accountType.getInfoSource()) {
 		case HANDLE:
 			return getHandle();
@@ -277,14 +300,7 @@ public class ExternalAccount extends DBUnique {
         // which they can copy and paste into the browser to verify that it's their account.  
 	@Transient
 	public String getUsername() {
-		switch (accountType.getInfoSource()) {
-		case HANDLE:
-			return getHandle();
-		case EXTRA:
-			return getExtra();
-		default:
-			return null;
-		}
+		return getAccountInfo();
 	}
 	
 	@Transient
@@ -300,14 +316,17 @@ public class ExternalAccount extends DBUnique {
 	 */
 	@Transient
 	public boolean hasAccountInfo() {
-		return accountType.getHasAccountInfo(handle, extra);
+		return accountType != null && accountType.getHasAccountInfo(handle, extra);
 	}
 	
 	public static int compare(ExternalAccount first, ExternalAccount second) {
-		// Equality should be impossible, someone should not have two of the same account.
-		// But we'll put it here in case the java sort algorithm somehow needs it (tough to imagine)
-		if (first.getAccountType() == second.getAccountType())
-			return 0;
+		if (first.getOnlineAccountType().equals(second.getAccountType()))
+			if (first.isMugshotEnabled())
+				return -1;
+			else if (second.isMugshotEnabled())
+				return 1;
+			else 
+			    return 0;
 		
 		// We want "my website" first, "blog" second, then everything alphabetized by the human-readable name.
 		
@@ -320,6 +339,6 @@ public class ExternalAccount extends DBUnique {
 		if (second.getAccountType() == ExternalAccountType.BLOG)
 			return 1;				
 		
-		return String.CASE_INSENSITIVE_ORDER.compare(first.getSiteName(), second.getSiteName());
+		return String.CASE_INSENSITIVE_ORDER.compare(first.getOnlineAccountType().getFullName(), second.getOnlineAccountType().getFullName());
 	}
 }

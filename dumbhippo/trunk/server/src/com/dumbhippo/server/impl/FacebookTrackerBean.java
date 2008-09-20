@@ -807,7 +807,7 @@ public class FacebookTrackerBean implements FacebookTracker {
             	imageTitle = imageTitle + ": " + a.getExternalAccount().getLinkText();
           			
             accountListingSb.append("<a target='_blank' href='" + a.getLink() + "'>" +
-					                 "<img src='" + config.getBaseUrlMugshot().toExternalForm() + "/images3/" + a.getIconName() + "' title='" + imageTitle + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
+					                 "<img src='" + config.getBaseUrlMugshot().toExternalForm() + "/images3/" + a.getExternalAccountType().getIconName() + "' title='" + imageTitle + "' style='width: 16; height: 16; border: none; margin-right: 3px;'/>" +
 					                 "</a>");
 		}		
 

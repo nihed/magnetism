@@ -2,11 +2,13 @@ package com.dumbhippo.web.pages;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
+import com.dumbhippo.SortUtils;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
@@ -51,6 +53,8 @@ public class AccountPage {
 	private String facebookAuthToken;
 	private String facebookErrorMessage;
 	private AmazonUpdater amazonUpdater;
+	private ListBean<ExternalAccountView> supportedAccountsListBean;
+	private ListBean<ExternalAccountView> gnomeSupportedAccountsListBean;
 	
 	public AccountPage() {
 		claimVerifier = WebEJBUtil.defaultLookup(ClaimVerifier.class);
@@ -61,6 +65,8 @@ public class AccountPage {
 		facebookAuthToken = null;
 		facebookErrorMessage = null;
 		amazonUpdater = WebEJBUtil.defaultLookup(AmazonUpdater.class);
+		supportedAccountsListBean = null;
+		gnomeSupportedAccountsListBean = null;
 	}
 	
 	public SigninBean getSignin() {
@@ -99,22 +105,6 @@ public class AccountPage {
 		return signin.getUser().getAccount().getHasPassword();
 	}
 	
-	public String getRhapsodyListeningHistoryFeedUrl() {
-		ExternalAccount external;
-		try {
-			external = externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), ExternalAccountType.RHAPSODY);
-            if (external.getFeed() != null)
-			    return external.getFeed().getSource().getUrl();
-		} catch (NotFoundException e) {
-			// nothing to do
-		}
-		return ""; 
-	}
-	
-	public String getRhapsodyHateQuip() {
-		return getExternalAccountHateQuip(ExternalAccountType.RHAPSODY);
-	}
-	
 	private String getExternalAccountSentiment(ExternalAccountType type) {
 		ExternalAccount external;
 		try {
@@ -124,17 +114,6 @@ public class AccountPage {
 		}
 		
 		return external.getSentiment().name().toLowerCase();
-	}
-	
-	private String getExternalAccountHateQuip(ExternalAccountType type) {
-		ExternalAccount external;
-		try {
-			external = externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), type);
-		} catch (NotFoundException e) {
-			return "";
-		}
-		
-		return external.getQuip();
 	}
 	
 	// don't export the "Handle" vague name to the .jsp please, change the bean getter 
@@ -149,242 +128,101 @@ public class AccountPage {
 		return external.getHandle();
 	}
 
-	// don't export the "Extra" vague name to the .jsp please, change the bean getter 
-	// to be something legible like "email" or "userid" or whatever it is for the account type
-	private String getExternalAccountExtra(ExternalAccountType type) {
-		ExternalAccount external;
-		try {
-			external = externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), type);
-		} catch (NotFoundException e) {
-			return "";
-		}
-		return external.getExtra();
-	}
-
-	public String getMySpaceSentiment() {
-		return getExternalAccountSentiment(ExternalAccountType.MYSPACE);
-	}
-	
-	public String getMySpaceHateQuip() {
-		return getExternalAccountHateQuip(ExternalAccountType.MYSPACE);
-	}
-	
-	public String getMySpaceName() {
-		return getExternalAccountHandle(ExternalAccountType.MYSPACE);
-	}
-	
-	public String getFlickrSentiment() {
-		return getExternalAccountSentiment(ExternalAccountType.FLICKR);
-	}
-	
-	public String getFlickrHateQuip() {
-		return getExternalAccountHateQuip(ExternalAccountType.FLICKR);
-	}
-	
-	public String getFlickrEmail() {
-		return getExternalAccountExtra(ExternalAccountType.FLICKR);
-	}
-	
-	public String getLinkedInSentiment() {
-		return getExternalAccountSentiment(ExternalAccountType.LINKED_IN);
-	}
-	
-	public String getLinkedInHateQuip() {
-		return getExternalAccountHateQuip(ExternalAccountType.LINKED_IN);
-	}
-	
-	public String getLinkedInName() {
-		return getExternalAccountHandle(ExternalAccountType.LINKED_IN);
-	}
-
-	public String getYouTubeSentiment() {
-		return getExternalAccountSentiment(ExternalAccountType.YOUTUBE);
-	}
-	
-	public String getYouTubeHateQuip() {
-		return getExternalAccountHateQuip(ExternalAccountType.YOUTUBE);
-	}
-	
-	public String getYouTubeName() {
-		return getExternalAccountHandle(ExternalAccountType.YOUTUBE);
-	}
-
-	public String getLastFmSentiment() {
-		return getExternalAccountSentiment(ExternalAccountType.LASTFM);
-	}
-	
-	public String getLastFmHateQuip() {
-		return getExternalAccountHateQuip(ExternalAccountType.LASTFM);
-	}
-	
-	public String getLastFmName() {
-		return getExternalAccountHandle(ExternalAccountType.LASTFM);
-	}	
-	
-	public String getDeliciousSentiment() {
-		return getExternalAccountSentiment(ExternalAccountType.DELICIOUS);
-	}
-	
-	public String getDeliciousHateQuip() {
-		return getExternalAccountHateQuip(ExternalAccountType.DELICIOUS);
-	}
-	
-	public String getDeliciousName() {
-		return getExternalAccountHandle(ExternalAccountType.DELICIOUS);
-	}
-	
-	public String getTwitterSentiment() {
-		return getExternalAccountSentiment(ExternalAccountType.TWITTER);
-	}
-	
-	public String getTwitterHateQuip() {
-		return getExternalAccountHateQuip(ExternalAccountType.TWITTER);
-	}
-	
-	public String getTwitterName() {
-		return getExternalAccountHandle(ExternalAccountType.TWITTER);
-	}
-	
-	public String getDiggSentiment() {
-		return getExternalAccountSentiment(ExternalAccountType.DIGG);
-	}
-	
-	public String getDiggHateQuip() {
-		return getExternalAccountHateQuip(ExternalAccountType.DIGG);
-	}
-	
-	public String getDiggName() {
-		return getExternalAccountHandle(ExternalAccountType.DIGG);
-	}
-
-	public String getRedditSentiment() {
-		return getExternalAccountSentiment(ExternalAccountType.REDDIT);
-	}
-	
-	public String getRedditHateQuip() {
-		return getExternalAccountHateQuip(ExternalAccountType.REDDIT);
-	}
-	
-	public String getRedditName() {
-		return getExternalAccountHandle(ExternalAccountType.REDDIT);
-	}
-
-	public String getNetflixFeedUrl() {
-		ExternalAccount external;
-		try {
-			external = externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), ExternalAccountType.NETFLIX);
-			// TODO: remove returning handle, that's temporary
-            if (external.getFeed() != null)
-			    return external.getFeed().getSource().getUrl();
-            else
-            	return external.getHandle();
-		} catch (NotFoundException e) {
-			// nothing to do
-		}
-		return ""; 
-	}
-	
-	public String getNetflixHateQuip() {
-		return getExternalAccountHateQuip(ExternalAccountType.NETFLIX);
-	}
-
-	public String getGoogleReaderUrl() {
-		ExternalAccount external;
-		try {
-			external = externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), ExternalAccountType.GOOGLE_READER);
-			if (external.hasAccountInfo()) {
-			    return external.getLink();
-			}
-		} catch (NotFoundException e) {
-			// nothing to do
-		}
-		return ""; 
-	}
-	
-	public String getGoogleReaderHateQuip() {
-		return getExternalAccountHateQuip(ExternalAccountType.GOOGLE_READER);
-	}	
-
-	public String getGoogleReaderSentiment() {
-		return getExternalAccountSentiment(ExternalAccountType.GOOGLE_READER);
-	}	
-	
-	public String getPicasaSentiment() {
-		return getExternalAccountSentiment(ExternalAccountType.PICASA);
-	}
-	
-	public String getPicasaHateQuip() {
-		return getExternalAccountHateQuip(ExternalAccountType.PICASA);
-	}
-	
-	public String getPicasaName() {
-		return getExternalAccountHandle(ExternalAccountType.PICASA);
-	}
-	
-	public String getAmazonSentiment() {
-		return getExternalAccountSentiment(ExternalAccountType.AMAZON);
-	}
-	
-	public String getAmazonHateQuip() {
-		return getExternalAccountHateQuip(ExternalAccountType.AMAZON);
-	}
-	
-	public String getAmazonUrl() {
-		ExternalAccount external;
-		try {
-			external = externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), ExternalAccountType.AMAZON);
-			if (external.hasAccountInfo()) {
-			    return external.getLink();
-			}
-		} catch (NotFoundException e) {
-			// nothing to do
-		}
-		return "";
-	}
-	
 	/**
 	 * Returns a list of supported account views; with the ExternalAccount information for the
 	 * user filled in for the account types for which the user has accounts.
 	 */
 	public ListBean<ExternalAccountView> getSupportedAccounts() {
+		if (supportedAccountsListBean != null) {
+			return supportedAccountsListBean;
+		}
+			
 		List<ExternalAccountView> supportedAccounts = new ArrayList<ExternalAccountView>(); 
 		for (ExternalAccountType type : ExternalAccountType.alphabetizedValues()) {
 			if (type.isSupported()) {
-				try {
-				    ExternalAccount externalAccount = 
-				    	externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), type);
-				    supportedAccounts.add(new ExternalAccountView(externalAccount));
-				} catch (NotFoundException e) {
-					supportedAccounts.add(new ExternalAccountView(type));
-				}
+	            OnlineAccountType onlineAccountType = externalAccounts.getOnlineAccountType(type);
+	            	  
+	            Set<ExternalAccount> externalAccountsSet = 
+			        externalAccounts.lookupExternalAccounts(signin.getViewpoint(), signin.getUser(), onlineAccountType);
+			
+	            ExternalAccountView indifferentAccount = null;
+	            boolean foundLovedOrHatedAccount = false;
+			    for (ExternalAccount externalAccount : externalAccountsSet) {
+			    	// normally we shouldn't have some accounts that are hated and some that are loved of the same time,
+			    	// but we don't have to check for it here
+			    	if (externalAccount.getSentiment() == Sentiment.LOVE || externalAccount.getSentiment() == Sentiment.HATE) {
+					    supportedAccounts.add(new ExternalAccountView(externalAccount));
+					    foundLovedOrHatedAccount = true;
+			    	} else {
+			    		indifferentAccount = new ExternalAccountView(externalAccount);
+			    	}		    	    
+			    }
+			    
+			    // we should only allow the user to edit one indifferent account at a time; since we never delete accounts, this
+			    // is a way to allow reusing accounts
+			    if (!foundLovedOrHatedAccount && indifferentAccount != null) {
+			    	supportedAccounts.add(indifferentAccount);
+			    }
+			    
+			    if (externalAccountsSet.isEmpty()) {    
+				    supportedAccounts.add(new ExternalAccountView(onlineAccountType));
+			    }
 			}
 		}
-		return new ListBean<ExternalAccountView>(supportedAccounts);
+		
+		supportedAccountsListBean = new ListBean<ExternalAccountView>(supportedAccounts);
+		return supportedAccountsListBean;
 	}
 
 	public ListBean<ExternalAccountView> getGnomeSupportedAccounts() {
+		if (gnomeSupportedAccountsListBean != null) {
+			return gnomeSupportedAccountsListBean;
+		}
+			
 		List<ExternalAccountView> supportedAccounts = new ArrayList<ExternalAccountView>(); 
-		for (OnlineAccountType type : externalAccounts.getAllOnlineAccountTypes()) {
-			// this takes advantage of the fact that all online account types currently have corresponding
-			// external accounts, but we'll need to change this soon
-			if (type.isSupported() && type.getAccountType() != null) {
-				try {
-				    ExternalAccount externalAccount = 
-				    	externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), type.getAccountType());
-				    supportedAccounts.add(new ExternalAccountView(externalAccount));
-				} catch (NotFoundException e) {
-					supportedAccounts.add(new ExternalAccountView(type.getAccountType()));
-				}
+		List<OnlineAccountType> allTypes = externalAccounts.getAllOnlineAccountTypes();
+		List<OnlineAccountType> alphabetizedTypes =
+			SortUtils.sortCollection(allTypes.toArray(new OnlineAccountType[allTypes.size()]), "getFullName");
+		
+		for (OnlineAccountType type : alphabetizedTypes) {
+			if (type.isSupported()) {
+			    Set<ExternalAccount> externalAccountsSet = 
+			    	externalAccounts.lookupExternalAccounts(signin.getViewpoint(), signin.getUser(), type);
+
+	            ExternalAccountView indifferentAccount = null;
+	            boolean foundLovedOrHatedAccount = false;
+			    for (ExternalAccount externalAccount : externalAccountsSet) {
+			    	// normally we shouldn't have some accounts that are hated and some that are loved of the same time,
+			    	// but we don't have to check for it here
+			    	if (externalAccount.getSentiment() == Sentiment.LOVE || externalAccount.getSentiment() == Sentiment.HATE) {
+					    supportedAccounts.add(new ExternalAccountView(externalAccount));
+					    foundLovedOrHatedAccount = true;
+			    	} else {
+			    		indifferentAccount = new ExternalAccountView(externalAccount);
+			    	}		    	    
+			    }
+			    
+			    // we should only allow the user to edit one indifferent account at a time; since we never delete accounts, this
+			    // is a way to allow reusing accounts
+			    if (!foundLovedOrHatedAccount && indifferentAccount != null) {
+			    	supportedAccounts.add(indifferentAccount);		    
+			    }
+			    
+			    if (externalAccountsSet.isEmpty()) {    
+				    supportedAccounts.add(new ExternalAccountView(type));
+			    }
 			}
 		}
-		return new ListBean<ExternalAccountView>(supportedAccounts);
+		
+		gnomeSupportedAccountsListBean = new ListBean<ExternalAccountView>(supportedAccounts);
+		return gnomeSupportedAccountsListBean;
 	}
 	
 	/**
 	 * Returns names and links for user's Amazon reviews page and public wish lists.
 	 */
 	public List<Pair<String, String>> getAmazonLinks() {
-		if (!getAmazonSentiment().equalsIgnoreCase(Sentiment.LOVE.name()))
+		if (!getExternalAccountSentiment(ExternalAccountType.AMAZON).equalsIgnoreCase(Sentiment.LOVE.name()))
 			return null;
 		
 		String amazonUserId = getExternalAccountHandle(ExternalAccountType.AMAZON);

@@ -26,7 +26,7 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	
 	this._loveEntryNode = document.getElementById(baseId + 'LoveEntryId');
 	this._hateEntryNode = document.getElementById(baseId + 'HateEntryId');
-	
+	 
 	this._defaultLoveText = defaultLoveText;
 	this._defaultHateText = defaultHateText;
 

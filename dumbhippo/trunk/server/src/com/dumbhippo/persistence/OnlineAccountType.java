@@ -62,6 +62,14 @@ public class OnlineAccountType extends DBUnique {
 				throw new ValidationException("Account type name can only contain lower case characters and an underscore.");
 		}
     	
+    	// the following rules ensure uniqueness when we create DOM ids based on the names by capitalizing first character and each 
+    	// character that is preceded by an underscore 
+    	if (name.startsWith("_") || name.endsWith("_"))
+    		throw new ValidationException("Account type name can't start or end with and underscore.");
+    	
+    	if (name.indexOf("__") >= 0) 
+    		throw new ValidationException("Account type name can't contain multiple underscores in a row.");
+    	
 		this.name = name;
 	}
 
@@ -141,5 +149,10 @@ public class OnlineAccountType extends DBUnique {
 
 	public void setSupported(boolean supported) {
 		this.supported = supported;
+	}
+	
+	@Override
+	public String toString() {
+		return "OnlineAccountType " + name;
 	}
 }

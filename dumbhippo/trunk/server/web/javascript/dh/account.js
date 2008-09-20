@@ -10,6 +10,51 @@ dojo.require("dh.util");
 dojo.require("dh.dom");
 dojo.require("dh.event");
 
+
+dh.account.hateQuipsArray = [];
+dh.account.hateQuipsArray['myspace'] = 'I despise Tom and his space';
+dh.account.hateQuipsArray['youtube'] = 'Video should kill the internet geeks';
+dh.account.hateQuipsArray['flickr'] = 'Flickr doesn\'t do it for me';
+dh.account.hateQuipsArray['linkedin'] = 'LinkedIn is for nerds';
+dh.account.hateQuipsArray['rhapsody_rss'] = 'All-you-can-eat music services hurt my diet';
+dh.account.hateQuipsArray['lastfm'] = 'Uhh...what\'s Last.fm?';
+dh.account.hateQuipsArray['delicious'] = 'del.icio.us isn\'t';
+dh.account.hateQuipsArray['twitter'] = 'And *why* do I care what you\'re doing?';
+dh.account.hateQuipsArray['digg'] = 'I don\'t dig it';
+dh.account.hateQuipsArray['reddit'] = 'Not reading it';
+dh.account.hateQuipsArray['netflix_rss'] = 'Movie rental stores are my daily respite';
+dh.account.hateQuipsArray['google_reader_rss'] = 'I don\'t like to read';
+dh.account.hateQuipsArray['picasa'] = 'Pictures of cats';
+dh.account.hateQuipsArray['amazon'] = 'I enjoy an ascetic lifestyle';
+    
+dh.account.whatWillHappenArray = [];
+dh.account.whatWillHappenArray['myspace'] = 'Your friends get updates when you post to your MySpace blog.';
+dh.account.whatWillHappenArray['youtube'] = 'Your friends get updates when you upload new videos.';
+dh.account.whatWillHappenArray['flickr'] = 'Your friends get updates when you upload new photos and photo sets.';
+dh.account.whatWillHappenArray['linkedin'] = '';
+dh.account.whatWillHappenArray['rhapsody_rss'] = 'Your friends will see updates from your Rhapsody playlist.';
+dh.account.whatWillHappenArray['lastfm'] = 'Your friends see what music you\'re listening to.';
+dh.account.whatWillHappenArray['delicious'] = 'Your friends get updates when you add public bookmarks.';
+dh.account.whatWillHappenArray['twitter'] = 'Your friends see your Twitter updates.';
+dh.account.whatWillHappenArray['digg'] = 'Your friends get updates when you add diggs.';
+dh.account.whatWillHappenArray['reddit'] = 'Your friends get updates when you rate sites.';
+dh.account.whatWillHappenArray['netflix_rss'] = 'Your friends get updates when you are sent new movies.';
+dh.account.whatWillHappenArray['google_reader_rss'] = 'Your friends see your Google Reader public shared items.';
+dh.account.whatWillHappenArray['picasa'] = 'Your friends see your public Picasa albums.';
+dh.account.whatWillHappenArray['amazon'] = 'Your friends see what you add to your public wish lists and your reviews.';
+        
+dh.account.helpLinkArray = [];
+dh.account.helpLinkArray['rhapsody_rss'] = 'http://www.rhapsody.com/myrhapsody/rss.html';
+dh.account.helpLinkArray['netflix_rss'] = 'http://www.netflix.com/RSSFeeds';
+dh.account.helpLinkArray['google_reader_rss'] = 'http://www.google.com/reader/view';
+dh.account.helpLinkArray['amazon'] ='http://www.amazon.com/gp/pdp/profile/';
+        
+dh.account.specialLoveValuesArray = [];
+dh.account.specialLoveValuesArray['rhapsody_rss'] = 'My Recently Played Tracks'; 
+dh.account.specialLoveValuesArray['netflix_rss'] = 'My Movies At Home';
+dh.account.specialLoveValuesArray['google_reader_rss'] = 'My Shared Items';
+dh.account.specialLoveValuesArray['amazon'] = 'My Profile';
+   
 dh.account.generatingRandomBio = false;
 dh.account.generateRandomBio = function() {
 	if (dh.account.generatingRandomBio) {
@@ -176,9 +221,9 @@ dh.account.hateExternalAccount = function(type, quip, loadFunc, errorFunc) {
 					loadFunc, errorFunc);
 }
 
-dh.account.removeExternalAccount = function(type, loadFunc, errorFunc) {
+dh.account.removeExternalAccount = function(id, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("removeexternalaccount",
-				     { "type" : type },
+				     { "id" : id },
 						loadFunc, errorFunc);
 }
 dh.account.findFlickrAccount = function(email, loadFunc, errorFunc) {
@@ -187,87 +232,144 @@ dh.account.findFlickrAccount = function(email, loadFunc, errorFunc) {
 						loadFunc, errorFunc);
 }
 
-dh.account.setFlickrAccount = function(nsid, email, loadFunc, errorFunc) {
+dh.account.setFlickrAccount = function(id, nsid, email, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setflickraccount",
-				     { "nsid" : nsid, "email" : email },
+				     { "id" : id, "nsid" : nsid, "email" : email },
 				     	loadFunc, errorFunc);
 }
-dh.account.setLinkedInProfile = function(name, loadFunc, errorFunc) {
+dh.account.setLinkedInProfile = function(id, name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setlinkedinaccount",
-				     { "urlOrName" : name },
+				     { "id" : id, "urlOrName" : name },
 						loadFunc, errorFunc);
 }
-dh.account.setMyspaceName = function(name, loadFunc, errorFunc) {
+dh.account.setMyspaceName = function(id, name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setmyspaceaccount",
-				     { "name" : name },
+				     { "id" : id, "name" : name },
 						loadFunc, errorFunc);
 }
-dh.account.setYouTubeName = function(name, loadFunc, errorFunc) {
+dh.account.setYouTubeName = function(id, name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setyoutubeaccount",
-				     { "urlOrName" : name },
+				     { "id" : id, "urlOrName" : name },
 						loadFunc, errorFunc);
 }
-dh.account.setLastFmName = function(name, loadFunc, errorFunc) {
+dh.account.setLastFmName = function(id, name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setlastfmaccount",
-				     { "urlOrName" : name },
+				     { "id" : id, "urlOrName" : name },
 						loadFunc, errorFunc);
 }
-dh.account.setDeliciousName = function(name, loadFunc, errorFunc) {
+dh.account.setDeliciousName = function(id, name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setdeliciousaccount",
-				     { "urlOrName" : name },
+				     { "id" : id, "urlOrName" : name },
 						loadFunc, errorFunc);
 }
-dh.account.setTwitterName = function(name, loadFunc, errorFunc) {
+dh.account.setTwitterName = function(id, name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("settwitteraccount",
-				     { "urlOrName" : name },
+				     { "id" : id, "urlOrName" : name },
 						loadFunc, errorFunc);
 }
-dh.account.setDiggName = function(name, loadFunc, errorFunc) {
+dh.account.setDiggName = function(id, name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setdiggaccount",
-				     { "urlOrName" : name },
+				     { "id" : id, "urlOrName" : name },
 						loadFunc, errorFunc);
 }
-dh.account.setRedditName = function(name, loadFunc, errorFunc) {
+dh.account.setRedditName = function(id, name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setredditaccount",
-				     { "urlOrName" : name },
+				     { "id" : id, "urlOrName" : name },
 						loadFunc, errorFunc);
 }
-dh.account.setRhapsodyUrl = function(name, loadFunc, errorFunc) {
+dh.account.setRhapsodyUrl = function(id, name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setrhapsodyaccount",
-   	                      { "url" : name },
+   	                      { "id" : id, "url" : name },
    	                      loadFunc, errorFunc);
 }
-dh.account.setNetflixUrl = function(name, loadFunc, errorFunc) {
+dh.account.setNetflixUrl = function(id, name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setnetflixaccount",
-   	                      { "url" : name },
+   	                      { "id" : id, "url" : name },
    	                      loadFunc, errorFunc);
 }
  
-dh.account.setGoogleReaderUrl = function(name, loadFunc, errorFunc) {
+dh.account.setGoogleReaderUrl = function(id, name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setgooglereaderaccount",
-   	                      { "url" : name },
+   	                      { "id" : id, "url" : name },
    	                      loadFunc, errorFunc);
 }
-dh.account.setPicasaName = function(name, loadFunc, errorFunc) {
+dh.account.setPicasaName = function(id, name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setpicasaaccount",
-				     { "urlOrName" : name },
+				     { "id" : id, "urlOrName" : name },
 						loadFunc, errorFunc);
 }
 
-dh.account.setAmazonUrl = function(name, loadFunc, errorFunc) {
+dh.account.setAmazonUrl = function(id, name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setamazonaccount",
-				          { "urlOrUserId" : name },
+				          { "id" : id, "urlOrUserId" : name },
 						  loadFunc, errorFunc);
 }
 
-dh.account.createExternalAccountOnHateSavedFunc = function(entry, accountType) {
+dh.account.setOnlineAccountValue = function(type, id, value, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("setonlineaccountvalue",
+				          { "type" : type, "id" : id, "value" : value },
+						  loadFunc, errorFunc);
+}
+
+dh.account.createExternalAccountOnLoveSavedFunc = function(entry, accountType, id, mugshotEnabled) {
+	return function(value) {
+	    switch(accountType) {
+		case 'myspace':
+		    dh.account.onMyspaceLoveSaved(entry, id, value);
+		    break;
+        case 'youtube':
+            dh.account.onYouTubeLoveSaved(entry, id, value);
+		    break;
+        case 'flickr':
+            dh.account.onFlickrLoveSaved(entry, id, value);
+            break;
+        case 'linkedin':
+            dh.account.onLinkedInLoveSaved(entry, id, value);
+		    break;
+        case 'rhapsody_rss':
+            dh.account.onRhapsodyLoveSaved(entry, id, value);
+		    break;
+        case 'lastfm':
+            dh.account.onLastFmLoveSaved(entry, id, value);
+		    break;
+        case 'delicious':
+            dh.account.onDeliciousLoveSaved(entry, id, value);
+            break;
+        case 'twitter':
+            dh.account.onTwitterLoveSaved(entry, id, value);
+            break;
+        case 'digg':
+            dh.account.onDiggLoveSaved(entry, id, value);
+		    break;            
+        case 'reddit':
+            dh.account.onRedditLoveSaved(entry, id, value);
+		    break;            
+        case 'netflix_rss':
+            dh.account.onNetflixLoveSaved(entry, id, value);
+		    break;            
+        case 'google_reader_rss':
+            dh.account.onGoogleReaderLoveSaved(entry, id, value);
+		    break;            
+        case 'picasa':
+            dh.account.onPicasaLoveSaved(entry, id, value);
+		    break;            
+        case 'amazon':
+            dh.account.onAmazonLoveSaved(entry, id, value);
+            break;
+		default:
+			dh.account.onLoveSaved(entry, accountType, id, value);
+		}
+	}
+}
+
+dh.account.createExternalAccountOnHateSavedFunc = function(entry, accountType, id, mugshotEnabled) {
 	return function(value) {
 		var oldMode = entry.getMode();
 		entry.setBusy();
 		dh.account.hateExternalAccount(accountType, value,
 		 	    	 function(childNodes, http) {
 		 	    	 	entry.setMode('hate');
-		 	    	 	if (accountType == 'AMAZON') {
+		 	    	 	if (mugshotEnabled && accountType == 'AMAZON') {
 	 	    	            var amazonDetailsNodes = dh.html.getElementsByClass('dh-amazon-details');
 	                        var i = 0;
 	                        for (i = 0; i < amazonDetailsNodes.length; ++i) {
@@ -283,14 +385,14 @@ dh.account.createExternalAccountOnHateSavedFunc = function(entry, accountType) {
 	}
 }
 
-dh.account.createExternalAccountOnCanceledFunc = function(entry, accountType) {
+dh.account.createExternalAccountOnCanceledFunc = function(entry, accountType, id, mugshotEnabled) {
 	return function(value) {
 		var oldMode = entry.getMode();
 		entry.setBusy();
-		dh.account.removeExternalAccount(accountType, 
+		dh.account.removeExternalAccount(id, 
 		 	    	 function(childNodes, http) {
 		 	    	 	entry.setMode('indifferent');
-		 	    	 	if (accountType == 'AMAZON') {
+		 	    	 	if (mugshotEnabled && accountType == 'amazon') {
 	 	    	            var amazonDetailsNodes = dh.html.getElementsByClass('dh-amazon-details');
 	                        var i = 0;
 	                        for (i = 0; i < amazonDetailsNodes.length; ++i) {
@@ -306,8 +408,7 @@ dh.account.createExternalAccountOnCanceledFunc = function(entry, accountType) {
 	}
 }
 
-dh.account.onFlickrLoveSaved = function(value) {
-	var entry = dh.account.flickrEntry;
+dh.account.onFlickrLoveSaved = function(entry, value, id) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
 	dh.account.findFlickrAccount(value,
@@ -330,7 +431,7 @@ dh.account.onFlickrLoveSaved = function(value) {
 					}
 				}
 				
-				dh.account.setFlickrAccount(nsid, value,
+				dh.account.setFlickrAccount(id, nsid, value,
 					function(childNodes, http) {
 						entry.setMode('love');
 					},
@@ -345,11 +446,10 @@ dh.account.onFlickrLoveSaved = function(value) {
 	  	    });
 }
 
-dh.account.onMyspaceLoveSaved = function(value) {
-	var entry = dh.account.myspaceEntry;
+dh.account.onMyspaceLoveSaved = function(entry, id, value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
-  	dh.account.setMyspaceName(value, 
+  	dh.account.setMyspaceName(id, value, 
 	 	    	 function(childNodes, http) {
 	 	    	     var i = 0;
 					 for (i = 0; i < childNodes.length; ++i) {
@@ -371,11 +471,10 @@ dh.account.onMyspaceLoveSaved = function(value) {
 	  	    	 }); 
 }
 
-dh.account.onYouTubeLoveSaved = function(value) {
-	var entry = dh.account.youTubeEntry;
+dh.account.onYouTubeLoveSaved = function(entry, id, value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
-  	dh.account.setYouTubeName(value, 
+  	dh.account.setYouTubeName(id, value, 
 	 	    	 function(childNodes, http) {
 	 	    	 	entry.setMode('love');
 	  	    	 },
@@ -385,11 +484,10 @@ dh.account.onYouTubeLoveSaved = function(value) {
 	  	    	 }); 
 }
 
-dh.account.onLastFmLoveSaved = function(value) {
-	var entry = dh.account.lastFmEntry;
+dh.account.onLastFmLoveSaved = function(entry, id, value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
-  	dh.account.setLastFmName(value, 
+  	dh.account.setLastFmName(id, value, 
 	 	    	 function(childNodes, http) {
 	 	    	 	entry.setError(null);
 	 	    	 	entry.setMode('love');
@@ -400,11 +498,10 @@ dh.account.onLastFmLoveSaved = function(value) {
 	  	    	 }); 
 }
 
-dh.account.onLinkedInLoveSaved = function(value) {
-	var entry = dh.account.linkedInEntry;
+dh.account.onLinkedInLoveSaved = function(entry, id, value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
-  	dh.account.setLinkedInProfile(value,
+  	dh.account.setLinkedInProfile(id, value,
 	 	    	 function(childNodes, http) {
 				    var username = null;
 					var i = 0;
@@ -426,11 +523,10 @@ dh.account.onLinkedInLoveSaved = function(value) {
 	  	    	 }); 
 }
 
-dh.account.onRhapsodyLoveSaved = function(value) {
-	var entry = dh.account.rhapsodyEntry;
+dh.account.onRhapsodyLoveSaved = function(entry, id, value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
-  	dh.account.setRhapsodyUrl(value, 
+  	dh.account.setRhapsodyUrl(id, value, 
 	 	    	 function(childNodes, http) {
 	 	    	 	entry.setMode('love');
 	  	    	 },
@@ -440,11 +536,10 @@ dh.account.onRhapsodyLoveSaved = function(value) {
 	  	    	 }); 
 }
 
-dh.account.onDeliciousLoveSaved = function(value) {
-	var entry = dh.account.deliciousEntry;
+dh.account.onDeliciousLoveSaved = function(entry, id, value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
-  	dh.account.setDeliciousName(value,
+  	dh.account.setDeliciousName(id, value,
 	 	    	 function(childNodes, http) {
 				    var username = null;
 					var i = 0;
@@ -466,11 +561,10 @@ dh.account.onDeliciousLoveSaved = function(value) {
 	  	    	 }); 
 }
 
-dh.account.onTwitterLoveSaved = function(value) {
-	var entry = dh.account.twitterEntry;
+dh.account.onTwitterLoveSaved = function(entry, id, value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
-  	dh.account.setTwitterName(value,
+  	dh.account.setTwitterName(id, value,
 	 	    	 function(childNodes, http) {
 				    var username = null;
 					var i = 0;
@@ -497,11 +591,10 @@ dh.account.onTwitterLoveSaved = function(value) {
 	  	    	 }); 
 }
 
-dh.account.onDiggLoveSaved = function(value) {
-	var entry = dh.account.diggEntry;
+dh.account.onDiggLoveSaved = function(entry, id, value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
-  	dh.account.setDiggName(value,
+  	dh.account.setDiggName(id, value,
 	 	    	 function(childNodes, http) {
 				    var username = null;
 					var i = 0;
@@ -523,11 +616,10 @@ dh.account.onDiggLoveSaved = function(value) {
 	  	    	 }); 
 }
 
-dh.account.onRedditLoveSaved = function(value) {
-	var entry = dh.account.redditEntry;
+dh.account.onRedditLoveSaved = function(entry, id, value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
-  	dh.account.setRedditName(value,
+  	dh.account.setRedditName(id, value,
 	 	    	 function(childNodes, http) {
 				    var username = null;
 					var i = 0;
@@ -554,11 +646,10 @@ dh.account.onRedditLoveSaved = function(value) {
 	  	    	 }); 
 }
 
-dh.account.onNetflixLoveSaved = function(value) {
-	var entry = dh.account.netflixEntry;
+dh.account.onNetflixLoveSaved = function(entry, id, value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
-  	dh.account.setNetflixUrl(value, 
+  	dh.account.setNetflixUrl(id, value, 
 	 	    	 function(childNodes, http) {
 	 	    	 	entry.setMode('love');
 	  	    	 },
@@ -568,11 +659,10 @@ dh.account.onNetflixLoveSaved = function(value) {
 	  	    	 }); 
 }
 
-dh.account.onGoogleReaderLoveSaved = function(value) {
-	var entry = dh.account.googleReaderEntry;
+dh.account.onGoogleReaderLoveSaved = function(entry, id, value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
-  	dh.account.setGoogleReaderUrl(value, 
+  	dh.account.setGoogleReaderUrl(id, value, 
 	 	    	 function(childNodes, http) {
 	 	    	 	entry.setMode('love');
 	  	    	 },
@@ -582,11 +672,10 @@ dh.account.onGoogleReaderLoveSaved = function(value) {
 	  	    	 }); 
 }
 
-dh.account.onPicasaLoveSaved = function(value) {
-	var entry = dh.account.picasaEntry;
+dh.account.onPicasaLoveSaved = function(entry, id, value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
-  	dh.account.setPicasaName(value,
+  	dh.account.setPicasaName(id, value,
 	 	    	 function(childNodes, http) {
 				    var username = null;
 					var i = 0;
@@ -608,11 +697,10 @@ dh.account.onPicasaLoveSaved = function(value) {
 	  	    	 }); 
 }
 
-dh.account.onAmazonLoveSaved = function(value) {
-	var entry = dh.account.amazonEntry;
+dh.account.onAmazonLoveSaved = function(entry, id, value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
-  	dh.account.setAmazonUrl(value, 
+  	dh.account.setAmazonUrl(id, value, 
 	 	    	 function(childNodes, http) {
 	 	    	 	entry.setMode('love');
 	 	    	    var amazonDetailsNodes = dh.html.getElementsByClass('dh-amazon-details');
@@ -670,6 +758,19 @@ dh.account.onAmazonLoveSaved = function(value) {
 	  	    	 }); 
 }
 
+dh.account.onLoveSaved = function(entry, type, id, value) {
+	var oldMode = entry.getMode();
+	entry.setBusy();
+  	dh.account.setOnlineAccountValue(type, id, value, 
+	 	    	 function(childNodes, http) {
+	 	    	 	entry.setMode('love');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 }); 
+}
+
 dh.account.aimVerify = function() {
 	dh.server.getTextGET("aimVerifyLink", 
 						{ },
@@ -696,134 +797,6 @@ dh.account.disableFacebookSession = function() {
 					 function(type, error, http) {
 						 alert("Couldn't disabled the Facebook session.");
 					 });    
-}
-
-dh.account.createMyspaceEntry = function() {
-    dh.account.myspaceEntry = new dh.lovehate.Entry('dhMySpace', 'Myspace username', dh.account.initialMyspaceName,
-							'I despise Tom and his space', dh.account.initialMyspaceHateQuip, 'Your friends get updates when you post to your MySpace blog.');
-	dh.account.myspaceEntry.onLoveSaved = dh.account.onMyspaceLoveSaved;
-	dh.account.myspaceEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.myspaceEntry, 'MYSPACE');
-	dh.account.myspaceEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.myspaceEntry, 'MYSPACE');
-}
-
-dh.account.createYouTubeEntry = function() {
-    dh.account.youTubeEntry = new dh.lovehate.Entry('dhYouTube', 'YouTube username or profile URL', dh.account.initialYouTubeName,
-							'Video should kill the internet geeks', dh.account.initialYouTubeHateQuip, 'Your friends get updates when you upload new videos.');
-	dh.account.youTubeEntry.onLoveSaved = dh.account.onYouTubeLoveSaved;
-	dh.account.youTubeEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.youTubeEntry, 'YOUTUBE');
-	dh.account.youTubeEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.youTubeEntry, 'YOUTUBE');
-}
-
-dh.account.createLastFmEntry = function() {	
-	dh.account.lastFmEntry = new dh.lovehate.Entry('dhLastFm', 'Last.fm username', dh.account.initialLastFmName,
-					'Uhh...what\'s Last.fm?', dh.account.initialLastFmHateQuip, 'Your friends see what music you\'re listening to.');
-	dh.account.lastFmEntry.onLoveSaved = dh.account.onLastFmLoveSaved;
-	dh.account.lastFmEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.lastFmEntry, 'LASTFM');
-	dh.account.lastFmEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.lastFmEntry, 'LASTFM');		
-}
-
-dh.account.createFlickrEntry = function() {		
-	dh.account.flickrEntry = new dh.lovehate.Entry('dhFlickr', 'Email used for Flickr account', dh.account.initialFlickrEmail,
-					'Flickr doesn\'t do it for me', dh.account.initialFlickrHateQuip, 'Your friends get updates when you upload new photos and photo sets.');
-	dh.account.flickrEntry.onLoveSaved = dh.account.onFlickrLoveSaved;
-	dh.account.flickrEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.flickrEntry, 'FLICKR');
-	dh.account.flickrEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.flickrEntry, 'FLICKR');
-}
-
-dh.account.createLinkedInEntry = function() {	
-	dh.account.linkedInEntry = new dh.lovehate.Entry('dhLinkedIn', 'LinkedIn username or profile URL', dh.account.initialLinkedInName,
-					'LinkedIn is for nerds', dh.account.initialLinkedInHateQuip);
-	dh.account.linkedInEntry.onLoveSaved = dh.account.onLinkedInLoveSaved;
-	dh.account.linkedInEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.linkedInEntry, 'LINKED_IN');
-	dh.account.linkedInEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.linkedInEntry, 'LINKED_IN');	
-}
-
-dh.account.createRhapsodyEntry = function() {	
-	dh.account.rhapsodyEntry = new dh.lovehate.Entry('dhRhapsody', 'Rhapsody \u201CRecently Played Tracks\u201D RSS feed URL', dh.account.initialRhapsodyUrl,
-					'All-you-can-eat music services hurt my diet', dh.account.initialRhapsodyHateQuip, 
-					'Your friends will see updates from your Rhapsody playlist.',
-                    'http://www.rhapsody.com/myrhapsody/rss.html');
-	dh.account.rhapsodyEntry.setSpecialLoveValue("My Recently Played Tracks");				
-	dh.account.rhapsodyEntry.onLoveSaved = dh.account.onRhapsodyLoveSaved;
-	dh.account.rhapsodyEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.rhapsodyEntry, 'RHAPSODY');
-	dh.account.rhapsodyEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.rhapsodyEntry, 'RHAPSODY');	
-}
-
-dh.account.createDeliciousEntry = function() {	
-	dh.account.deliciousEntry = new dh.lovehate.Entry('dhDelicious', 'del.icio.us username or profile URL', dh.account.initialDeliciousName,
-					'del.icio.us isn\'t', dh.account.initialDeliciousHateQuip, 'Your friends get updates when you add public bookmarks.');
-	dh.account.deliciousEntry.onLoveSaved = dh.account.onDeliciousLoveSaved;
-	dh.account.deliciousEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.deliciousEntry, 'DELICIOUS');
-	dh.account.deliciousEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.deliciousEntry, 'DELICIOUS');
-}
-
-dh.account.createTwitterEntry = function() {	
-	dh.account.twitterEntry = new dh.lovehate.Entry('dhTwitter', 'Twitter username or profile URL', dh.account.initialTwitterName,
-					'And *why* do I care what you\'re doing?', dh.account.initialTwitterHateQuip, 'Your friends see your Twitter updates.');
-	dh.account.twitterEntry.onLoveSaved = dh.account.onTwitterLoveSaved;
-	dh.account.twitterEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.twitterEntry, 'TWITTER');
-	dh.account.twitterEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.twitterEntry, 'TWITTER');
-}
-
-dh.account.createGnomeTwitterEntry = function() {	
-	dh.account.twitterEntry = new dh.love.Entry('dhTwitter', 'Twitter username or profile URL', dh.account.initialTwitterName);
-	dh.account.twitterEntry.onLoveSaved = dh.account.onTwitterLoveSaved;
-	dh.account.twitterEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.twitterEntry, 'TWITTER');
-}
-
-dh.account.createDiggEntry = function() {	
-	dh.account.diggEntry = new dh.lovehate.Entry('dhDigg', 'Digg username or profile URL', dh.account.initialDiggName,
-					'I don\'t dig it', dh.account.initialDiggHateQuip, 'Your friends get updates when you add diggs.');
-	dh.account.diggEntry.onLoveSaved = dh.account.onDiggLoveSaved;
-	dh.account.diggEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.diggEntry, 'DIGG');
-	dh.account.diggEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.diggEntry, 'DIGG');
-}
-
-dh.account.createRedditEntry = function() {	
-	dh.account.redditEntry = new dh.lovehate.Entry('dhReddit', 'Reddit username or profile URL', dh.account.initialRedditName,
-					'Not reading it', dh.account.initialRedditHateQuip, 'Your friends get updates when you rate sites.');
-	dh.account.redditEntry.onLoveSaved = dh.account.onRedditLoveSaved;
-	dh.account.redditEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.redditEntry, 'REDDIT');
-	dh.account.redditEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.redditEntry, 'REDDIT');
-}
-
-dh.account.createNetflixEntry = function() {	
-	dh.account.netflixEntry = new dh.lovehate.Entry('dhNetflix', 'Netflix \u201CMovies At Home\u201D RSS feed URL', dh.account.initialNetflixUrl,
-					'Movie rental stores are my daily respite', dh.account.initialNetflixHateQuip, 'Your friends get updates when you are sent new movies.',
-					'http://www.netflix.com/RSSFeeds');
-	dh.account.netflixEntry.setSpecialLoveValue("My Movies At Home");	
-	dh.account.netflixEntry.onLoveSaved = dh.account.onNetflixLoveSaved;
-	dh.account.netflixEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.netflixEntry, 'NETFLIX');
-	dh.account.netflixEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.netflixEntry, 'NETFLIX');
-}
-
-dh.account.createGoogleReaderEntry = function() {	
-	dh.account.googleReaderEntry = new dh.lovehate.Entry('dhGoogleReader', 'Google Reader public shared items page', dh.account.initialGoogleReaderUrl,
-					"I don't like to read", dh.account.initialGoogleReaderHateQuip, 'Your friends see your Google Reader public shared items.',
-					'http://www.google.com/reader/view');
-	dh.account.googleReaderEntry.setSpecialLoveValue("My Shared Items");
-	dh.account.googleReaderEntry.onLoveSaved = dh.account.onGoogleReaderLoveSaved;
-	dh.account.googleReaderEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.googleReaderEntry, 'GOOGLE_READER');
-	dh.account.googleReaderEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.googleReaderEntry, 'GOOGLE_READER');
-}
-
-dh.account.createPicasaEntry = function() {	
-	dh.account.picasaEntry = new dh.lovehate.Entry('dhPicasa', 'Picasa username or public gallery URL', dh.account.initialPicasaName,
-					'Pictures of cats', dh.account.initialPicasaHateQuip, 'Your friends see your public Picasa albums.');
-	dh.account.picasaEntry.onLoveSaved = dh.account.onPicasaLoveSaved;
-	dh.account.picasaEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.picasaEntry, 'PICASA');
-	dh.account.picasaEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.picasaEntry, 'PICASA');
-}
-
-dh.account.createAmazonEntry = function() {	
-	dh.account.amazonEntry = new dh.lovehate.Entry('dhAmazon', 'Amazon profile URL', dh.account.initialAmazonUrl,
-					'I enjoy an ascetic lifestyle', dh.account.initialAmazonHateQuip, 
-					'Your friends see what you add to your public wish lists and your reviews.',
-					'http://www.amazon.com/gp/pdp/profile/');
-	dh.account.amazonEntry.setSpecialLoveValue("My Profile");				
-	dh.account.amazonEntry.onLoveSaved = dh.account.onAmazonLoveSaved;
-	dh.account.amazonEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.amazonEntry, 'AMAZON');
-	dh.account.amazonEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.amazonEntry, 'AMAZON');
 }
 
 dhAccountInit = function() {
@@ -879,30 +852,36 @@ dhAccountInit = function() {
 	
     dh.account.createImEntry();
 
+    dh.account.onlineAccountEntries = [];
+    
+    if (dh.account.dhMugshotEnabledFlags != null) {
+	    for (var i = 0; i < dh.account.dhNames.length; ++i) {
+	        if (dh.account.dhNames[i] == "facebook")
+	            continue;
+	            
+	        var onlineAccountEntry = new dh.lovehate.Entry('dh' + dh.account.dhDomIds[i], dh.account.dhUserInfoTypes[i],  dh.account.dhValues[i],
+							                               dh.account.hateQuipsArray[dh.account.dhNames[i]], dh.account.dhHateQuips[i], dh.account.whatWillHappenArray[dh.account.dhNames[i]], 
+							                               dh.account.helpLinkArray[dh.account.dhNames[i]]);
+		
+		    if (dh.account.specialLoveValuesArray[dh.account.dhNames[i]] != null)
+		        onlineAccountEntry.setSpecialLoveValue(dh.account.specialLoveValuesArray[dh.account.dhNames[i]]);
+		    					                                                                                                                             
+	        onlineAccountEntry.onLoveSaved = dh.account.createExternalAccountOnLoveSavedFunc(onlineAccountEntry, dh.account.dhNames[i], dh.account.dhIds[i], dh.account.dhMugshotEnabledFlags[i]);
+	        onlineAccountEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(onlineAccountEntry,  dh.account.dhNames[i], dh.account.dhIds[i], dh.account.dhMugshotEnabledFlags[i]);
+	        onlineAccountEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(onlineAccountEntry, dh.account.dhNames[i], dh.account.dhIds[i], dh.account.dhMugshotEnabledFlags[i]);
+            dh.account.onlineAccountEntries.push(onlineAccountEntry)
+        }  
+    } else {	    
+	    for (var i = 0; i < dh.account.dhNames.length; ++i) {
+	        var onlineAccountEntry = new dh.love.Entry('dh' + dh.account.dhDomIds[i], dh.account.dhUserInfoTypes[i], dh.account.dhValues[i]);
+	        onlineAccountEntry.onLoveSaved = dh.account.createExternalAccountOnLoveSavedFunc(onlineAccountEntry, dh.account.dhNames[i], dh.account.dhIds[i], false);
+	        onlineAccountEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(onlineAccountEntry, dh.account.dhNames[i], dh.account.dhIds[i], false);
+            dh.account.onlineAccountEntries.push(onlineAccountEntry);
+        }
+    }
+       
 	dh.photochooser.init("user", dh.account.userId)
-
-	// We assume if one of these exists, they all exist. If the division between the
-	// online.gnome.org and mugshot version of the account page changes, then this needs
-	// to be adjusted
-	if (dh.util.exists('dhMySpaceFormContainer')) {
-	    dh.account.createMyspaceEntry();
-		dh.account.createYouTubeEntry();
-		dh.account.createLastFmEntry();
-		dh.account.createFlickrEntry();
-		dh.account.createLinkedInEntry();
-		dh.account.createRhapsodyEntry();
-		dh.account.createDeliciousEntry();
-		dh.account.createTwitterEntry();
-		dh.account.createDiggEntry();
-		dh.account.createRedditEntry();
-		dh.account.createNetflixEntry();
-		dh.account.createGoogleReaderEntry();
-		dh.account.createPicasaEntry();	
-		dh.account.createAmazonEntry();
-	} else {
-	    // TODO: not sure yet how we'll figure out which entries to create, so hardcoding Twitter for now
-		dh.account.createGnomeTwitterEntry();
-	}	
+	
 }
 
 dh.event.addPageLoadListener(dhAccountInit);
