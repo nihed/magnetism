@@ -130,19 +130,16 @@
 	    </dht2:formTableRow>
 	    <c:if test="${dh:enumIs(site, 'GNOME')}">
 	        <c:forEach items="${account.gnomeSupportedAccounts.list}" var="supportedAccount">
-	            <c:if test="${supportedAccount.siteName == 'Twitter'}">
-	                <dht2:formTableRow controlId="dh${supportedAccount.domNodeIdName}"
-				                       label="${supportedAccount.siteName}"				
-				                       icon="/images3/${buildStamp}/${supportedAccount.iconName}">
-	                    <gnome:loveEntry name="${supportedAccount.siteName}"
-				  	   	  	             userInfoType="${supportedAccount.siteUserInfoType}"
-							             isInfoTypeProvidedBySite="${supportedAccount.infoTypeProvidedBySite}"
-							             link="${supportedAccount.externalAccountType.siteLink}"
-							             baseId="dh${supportedAccount.domNodeIdName}"
-							             mode="${supportedAccount.sentiment}">				        
-			            </gnome:loveEntry>
-			        </dht2:formTableRow>			
-			    </c:if>
+	            <dht2:formTableRow controlId="dh${supportedAccount.domNodeIdName}"
+		                           label="${supportedAccount.siteName}"				
+			                       icon="/images3/${buildStamp}/${supportedAccount.iconName}">
+                    <gnome:loveEntry name="${supportedAccount.siteName}"
+			  	   	  	             userInfoType="${supportedAccount.userInfoType}"
+							         link="${supportedAccount.onlineAccountType.site}"
+					                 baseId="dh${supportedAccount.domNodeIdName}"
+					                 mode="${supportedAccount.sentiment}">				        
+			        </gnome:loveEntry>
+			    </dht2:formTableRow>			
 	        </c:forEach>
 	    </c:if>
 	</c:if>    
@@ -210,13 +207,15 @@
 						</c:choose>
 					</c:when>
 					<c:otherwise>
+					    <%-- it's ok to assume that supportedAccount.externalAccountType is not null here --%>
+					    <%-- because the list of supported accounts for Mugshot is generated based on the ExternalAccountType enumeration --%> 
 						<dht2:loveHateEntry name="${supportedAccount.siteName}"
-							userInfoType="${supportedAccount.siteUserInfoType}"
-							isInfoTypeProvidedBySite="${supportedAccount.infoTypeProvidedBySite}"
+							userInfoType="${supportedAccount.externalAccountType.siteUserInfoType}"
+							isInfoTypeProvidedBySite="${supportedAccount.externalAccountType.infoTypeProvidedBySite}"
 							link="${supportedAccount.externalAccountType.siteLink}"
 							baseId="dh${supportedAccount.domNodeIdName}"
 							mode="${supportedAccount.sentiment}">
-
+					                 
 							<c:if test="${supportedAccount.siteName == 'Amazon'}">
 								<div class="dh-amazon-details">
 								<c:forEach items="${account.amazonLinks}" var="amazonLinkPair">

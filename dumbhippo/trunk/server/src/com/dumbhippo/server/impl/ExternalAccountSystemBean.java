@@ -23,7 +23,6 @@ import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.dm.ReadWriteSession;
 import com.dumbhippo.persistence.Account;
-import com.dumbhippo.persistence.Application;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.OnlineAccountType;
@@ -36,7 +35,6 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.PicasaUpdater;
 import com.dumbhippo.server.YouTubeUpdater;
-import com.dumbhippo.server.applications.ApplicationView;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.ExternalAccountDMO;
 import com.dumbhippo.server.dm.ExternalAccountKey;
@@ -105,15 +103,66 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		if (external == null) {
 			external = new ExternalAccount(type);
 			external.setOnlineAccountType(getOnlineAccountType(type));
+			external.setMugshotEnabled(true);
 			external.setAccount(a);
 			em.persist(external);
-			a.getExternalAccounts().add(external);
+			a.getExternalAccounts().add(external);			
 			
 			notifier.onExternalAccountCreated(a.getOwner(), external);
 		}
 		return external;
 	}
 	
+	public ExternalAccount createExternalAccount(UserViewpoint viewpoint, OnlineAccountType type) {
+		Account a = viewpoint.getViewer().getAccount();
+		if (!em.contains(a))
+			throw new RuntimeException("detached account in getOrCreateExternalAccount");
+
+		ExternalAccount external = new ExternalAccount();
+		external.setOnlineAccountType(type);
+		external.setAccount(a);
+		em.persist(external);
+		a.getExternalAccounts().add(external);			
+			
+		notifier.onExternalAccountCreated(a.getOwner(), external);
+		return external;
+	}
+	
+	public ExternalAccount lookupExternalAccount(UserViewpoint viewpoint, String id) throws NotFoundException {
+		Account a = viewpoint.getViewer().getAccount();
+		if (!em.contains(a))
+			throw new RuntimeException("detached account in lookupExternalAccount");
+		
+		ExternalAccount external = a.getExternalAccount(id);
+		if (external == null)
+			throw new NotFoundException("ExternalAccount with id " +  id + " was not found for account " + a);
+		
+		return external;
+	}
+	
+	public ExternalAccount lookupExternalAccount(Viewpoint viewpoint, User user, ExternalAccountType type)
+	    throws NotFoundException {
+	    if (!em.contains(user.getAccount()))
+		    throw new RuntimeException("detached account in lookupExternalAccount()");
+	
+	    // Right now, external accounts are public, unlike email/aim resources which are friends only...
+	    // so we don't need to use the viewpoint. But here in case we want to add it later.
+	    ExternalAccount external = user.getAccount().getExternalAccount(type);
+	    if (external == null)
+		    throw new NotFoundException("No external account of type " + type + " for user " + user);
+	    else
+	    	return external;
+    }
+ 
+    public Set<ExternalAccount> lookupExternalAccounts(Viewpoint viewpoint, User user, OnlineAccountType type) {
+	    if (!em.contains(user.getAccount()))
+	        throw new RuntimeException("detached account in lookupExternalAccount()");
+
+        // Right now, external accounts are public, unlike email/aim resources which are friends only...
+        // so we don't need to use the viewpoint. But here in case we want to add it later.
+        return user.getAccount().getExternalAccounts(type);
+    }
+
 	public OnlineAccountType getOnlineAccountType(ExternalAccountType accountType) {
 		Query q = em.createQuery("SELECT oat FROM OnlineAccountType oat WHERE " +
 				                 "oat.accountType = " + accountType.ordinal());
@@ -188,20 +237,6 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		em.persist(type);
 		return type;
     }
-
-	public ExternalAccount lookupExternalAccount(Viewpoint viewpoint, User user, ExternalAccountType type)
-		throws NotFoundException {
-		if (!em.contains(user.getAccount()))
-			throw new RuntimeException("detached account in lookupExternalAccount()");
-		
-		// Right now, external accounts are public, unlike email/aim resources which are friends only...
-		// so we don't need to use the viewpoint. But here in case we want to add it later.
-		ExternalAccount external = user.getAccount().getExternalAccount(type);
-		if (external == null)
-			throw new NotFoundException("No external account of type " + type + " for user " + user);
-		else
-			return external;
-	}
 	
 	public Set<ExternalAccountView> getExternalAccountViews(Viewpoint viewpoint, User user) {
 		// Right now we ignore the viewpoint, so this method is pretty pointless.
@@ -211,7 +246,7 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		if (!em.contains(user.getAccount()))
 			throw new RuntimeException("detached account in getExternalAccounts()");
 		
-		Set<ExternalAccount> accounts = user.getAccount().getExternalAccounts();
+		Set<ExternalAccount> accounts = user.getAccount().getMugshotEnabledExternalAccounts();
 		//logger.debug("{} external accounts for user {}", accounts.size(), user);
 		
 		Set<ExternalAccountView> accountViews = new HashSet<ExternalAccountView>();

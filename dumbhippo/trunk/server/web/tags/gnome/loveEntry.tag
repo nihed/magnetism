@@ -4,7 +4,6 @@
 
 <%@ attribute name="name" required="true" type="java.lang.String" %>
 <%@ attribute name="userInfoType" required="true" type="java.lang.String" %>
-<%@ attribute name="isInfoTypeProvidedBySite" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="link" required="true" type="java.lang.String" %>
 <%@ attribute name="baseId" required="true" type="java.lang.String" %>
 <%@ attribute name="mode" required="true" type="java.lang.String" %>

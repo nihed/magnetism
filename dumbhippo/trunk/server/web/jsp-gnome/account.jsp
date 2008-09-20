@@ -20,6 +20,15 @@
 <jsp:setProperty name="account" property="facebookAuthToken" param="auth_token"/>
 <jsp:setProperty name="account" property="facebookErrorMessage" param="error_message"/>
 
+<dh:script modules="dh.account"/>
+<script type="text/javascript">
+    dh.account.dhNames = [ <c:forEach items="${account.gnomeSupportedAccounts.list}" var="supportedAccount" varStatus="status"><dh:jsString value="${supportedAccount.onlineAccountType.name}"/> ${status.last ? '];' : ','}</c:forEach>
+    dh.account.dhUserInfoTypes = [ <c:forEach items="${account.gnomeSupportedAccounts.list}" var="supportedAccount" varStatus="status"><dh:jsString value="${supportedAccount.userInfoType}"/> ${status.last ? '];' : ','}</c:forEach>
+    dh.account.dhValues = [ <c:forEach items="${account.gnomeSupportedAccounts.list}" var="supportedAccount" varStatus="status"><dh:jsString value="${supportedAccount.username}"/> ${status.last ? '];' : ','}</c:forEach>
+    dh.account.dhIds = [ <c:forEach items="${account.gnomeSupportedAccounts.list}" var="supportedAccount" varStatus="status"><dh:jsString value="${supportedAccount.id}"/> ${status.last ? '];' : ','}</c:forEach>
+    dh.account.dhDomIds = [ <c:forEach items="${account.gnomeSupportedAccounts.list}" var="supportedAccount" varStatus="status"><dh:jsString value="${supportedAccount.domNodeIdName}"/> ${status.last ? '];' : ','}</c:forEach>
+</script>
+
 <head>
     <gnome:title><c:out value="${person.viewedPerson.name}"/>'s Account</gnome:title>
 	<gnome:stylesheet name="site"/>

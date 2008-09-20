@@ -10,11 +10,13 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Feed;
+import com.dumbhippo.persistence.OnlineAccountType;
 import com.dumbhippo.persistence.Sentiment;
 
 public class ExternalAccountView {
     private ExternalAccount externalAccount;
     private ExternalAccountType externalAccountType;
+    private OnlineAccountType onlineAccountType;
     private String link;
     private Thumbnails thumbnails;
     
@@ -25,13 +27,20 @@ public class ExternalAccountView {
 		
 		@Override
 		public String getTotalThumbnailItemsString() {
-			return externalAccount.getAccountType().formatThumbnailCount(getTotalThumbnailItems());
+			if (externalAccount.getAccountType() != null) {
+			    return externalAccount.getAccountType().formatThumbnailCount(getTotalThumbnailItems());
+			} else if (getTotalThumbnailItems() == 1) {
+			    return getTotalThumbnailItems() + " item";
+			} else {
+				return getTotalThumbnailItems() + " items";
+			}
 		}
 	}
     
     public ExternalAccountView(ExternalAccount externalAccount) {
     	this.externalAccount = externalAccount;
     	this.externalAccountType = externalAccount.getAccountType();
+    	this.onlineAccountType = externalAccount.getOnlineAccountType();
     }
     
     public ExternalAccountView(ExternalAccount externalAccount, String link) {
@@ -44,8 +53,9 @@ public class ExternalAccountView {
      * ExternalAccountType, not ExternalAccountView.
      * @param externalAccountType
      */
-    public ExternalAccountView(ExternalAccountType externalAccountType) {
-    	this.externalAccountType = externalAccountType;
+    public ExternalAccountView(OnlineAccountType onlineAccountType) {
+    	this.onlineAccountType = onlineAccountType;
+    	this.externalAccountType = onlineAccountType.getAccountType();
     }
     
 	public ExternalAccount getExternalAccount() {
@@ -55,25 +65,57 @@ public class ExternalAccountView {
 	public ExternalAccountType getExternalAccountType() {
 		return externalAccountType;
 	}
+	
+	public OnlineAccountType getOnlineAccountType() {
+		return onlineAccountType;
+	}
 
 	public String getSiteName() {
-		return externalAccountType.getSiteName();
+		return onlineAccountType.getSiteName();
 	}
 	
 	public String getDomNodeIdName() {	
-		return externalAccountType.getDomNodeIdName();
+		String name = onlineAccountType.getName();
+		String idName = "";
+		int startIndex = 0;
+		
+		while (startIndex < name.length() && name.indexOf("_", startIndex) >= 0) {
+			int underscoreIndex = name.indexOf("_", startIndex);
+			if (startIndex < underscoreIndex)
+			    idName = idName + name.substring(startIndex, startIndex+1).toUpperCase() + name.substring(startIndex+1, underscoreIndex);
+			startIndex = underscoreIndex + 1;
+		}
+		if (startIndex+1 == name.length())
+		    idName = idName + name.substring(startIndex, startIndex+1).toUpperCase();
+        else if (startIndex+1 < name.length())
+        	idName = idName + name.substring(startIndex, startIndex+1).toUpperCase() + name.substring(startIndex+1);
+		    
+		if (externalAccount != null)
+		    return idName + externalAccount.getId();
+		else
+			return idName;
 	}
 	
-	public String getSiteUserInfoType() {
-		return externalAccountType.getSiteUserInfoType();
+	public String getId() {
+		if (externalAccount != null)
+		    return String.valueOf(externalAccount.getId());
+		else
+			return "";		
 	}
 
-	public boolean isInfoTypeProvidedBySite() {
-		return externalAccountType.isInfoTypeProvidedBySite();
+	public String getHateQuip() {
+		if (externalAccount != null)
+		    return externalAccount.getQuip();
+		else
+			return "";		
 	}
 	
-	public String getIconName() {
-		return externalAccountType.getIconName();
+	public boolean isMugshotEnabled() {
+	    return (externalAccount != null) && externalAccount.isMugshotEnabled();
+	}
+	
+	public String getUserInfoType() {
+		return onlineAccountType.getUserInfoType();
 	}
 	
 	public String getSentiment() {
@@ -81,6 +123,20 @@ public class ExternalAccountView {
 		     return externalAccount.getSentiment().name().toLowerCase();
 	
 		return Sentiment.INDIFFERENT.name().toLowerCase();
+	}
+	
+	public String getUsername() {
+		if (externalAccount != null && externalAccount.hasAccountInfo() && externalAccount.getUsername() != null)
+			return externalAccount.getUsername();
+		
+		return "";
+	}
+	
+	public String getIconName() {
+		if (externalAccountType != null)
+		    return externalAccountType.getIconName();
+		else
+			return "";
 	}
 	
 	public String getLink() {
@@ -130,7 +186,7 @@ public class ExternalAccountView {
 	
 	public void writeToXmlBuilder(XmlBuilder builder) {
 		builder.openElement("externalAccount",
-				"type", getExternalAccount().getAccountType().name(),
+				"type", getOnlineAccountType().getName(),
 				"sentiment", getSentiment(),
 				"icon", "/images3/" + getExternalAccount().getIconName(),
 				// The following will not be added unless the account is loved and enabled

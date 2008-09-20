@@ -1505,7 +1505,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feedSystem.removeGroupFeed(viewpoint.getViewer(), group, feed);		
 	}
 
-	public void doSetRhapsodyAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException, RetryException {
+	public void doSetRhapsodyAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String urlOrIdStr) throws XmlMethodException, RetryException {
 		String urlOrId = urlOrIdStr.trim();
 
 		String rhapUserId = StringUtils.findParamValueInUrl(urlOrId, "rhapUserId");		
@@ -1518,7 +1518,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			}
 		}
 
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.RHAPSODY);
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.RHAPSODY, id);
 		String validatedHandle = null;
 		try {
 			validatedHandle = external.validateHandle(rhapUserId);
@@ -1546,7 +1546,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feed.getAccounts().add(external);
 	}
 	
-	public void doSetNetflixAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException, RetryException {
+	public void doSetNetflixAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String urlOrIdStr) throws XmlMethodException, RetryException {
 		String urlOrId = urlOrIdStr.trim();
 
 		String netflixUserId = StringUtils.findParamValueInUrl(urlOrId, "id");		
@@ -1559,7 +1559,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			}
 		}
 		
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.NETFLIX);
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.NETFLIX, id);
 		String validatedHandle = null;
 		try {
 			validatedHandle = external.validateHandle(netflixUserId);
@@ -1586,14 +1586,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		external.setFeed(feed);
 		feed.getAccounts().add(external);			
 	}
-	
-	private ExternalAccountType parseExternalAccountType(String type) throws XmlMethodException {
-		try {
-			return ExternalAccountType.valueOf(type);
-		} catch (IllegalArgumentException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Unknown external account type: " + type);
-		}
-	}
 
 	private String parseEmail(String email) throws XmlMethodException {
 		try {
@@ -1610,27 +1602,85 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// the polling task for it; also for MySpace we could check if there is a polling task for checking on
 		// a feed for a private profile and remove that task
 		
-		ExternalAccountType typeEnum = parseExternalAccountType(type);
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, typeEnum);
-		externalAccountSystem.setSentiment(external, Sentiment.HATE);
-		if (quip != null) {
-			quip = quip.trim();
-			if (quip.length() == 0)
-				quip = null;
-		}
-		external.setQuip(quip);
-		DataService.currentSessionRW().changed(ExternalAccountDMO.class, new ExternalAccountKey(external), "quip");
+		OnlineAccountType onlineAccountType = null;
+		try {
+	        onlineAccountType = externalAccountSystem.lookupOnlineAccountTypeForName(type);
+	    } catch (NotFoundException e) {
+		    throw new RuntimeException(e.getMessage());
+	    }    
+	    if (onlineAccountType.getAccountType() != null) {
+	    	// This will make sure that there is one mugshotEnabled exernal account of a given type that is hated. 
+	    	// It will through an exception if there are other accounts of this type that are loved, even if they are
+	    	// not Mugshot enabled, so we eed to make sure it's not possible to hate an account type in the UI when
+	    	// you have accounts of this type listed.
+	    	Set<ExternalAccount> allExternals = externalAccountSystem.lookupExternalAccounts(viewpoint, viewpoint.getViewer(), onlineAccountType);
+	    	for (ExternalAccount external : allExternals) {
+	    		if (external.getSentiment() == Sentiment.LOVE) {
+	    			throw new RuntimeException("Can't allow hating an external account of type " + onlineAccountType + " because other loved accounts of this type exist.");
+	    		}
+	    	}
+	        ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, onlineAccountType.getAccountType());
+	        externalAccountSystem.setSentiment(external, Sentiment.HATE);
+	        if (quip != null) {
+		        quip = quip.trim();
+		        if (quip.length() == 0)
+			        quip = null;
+	        }
+	        external.setQuip(quip);
+	        DataService.currentSessionRW().changed(ExternalAccountDMO.class, new ExternalAccountKey(external), "quip");
+	    } else {
+	    	throw new RuntimeException("OnlineAccountType " + onlineAccountType + " did no have a corresponding ExternalAccountType.");
+	    }
 	}
 
-	public void doRemoveExternalAccount(XmlBuilder xml, UserViewpoint viewpoint, String type) throws XmlMethodException {
+	public void doRemoveExternalAccount(XmlBuilder xml, UserViewpoint viewpoint, String id) throws XmlMethodException {
 		
 		// FIXME for any external account that has a feed associated with it, we could try to remove the feed and
 		// the polling task for it; also for MySpace we could check if there is a polling task for checking on
 		// a feed for a private profile and remove that task
 		
-		ExternalAccountType typeEnum = parseExternalAccountType(type);
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, typeEnum);
-		externalAccountSystem.setSentiment(external, Sentiment.INDIFFERENT);
+		if (id=="") {
+			// nothing to do, the account the user was editing didn't exist before
+			return;
+		}
+			
+        try {
+		    ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, id);
+		    externalAccountSystem.setSentiment(external, Sentiment.INDIFFERENT);	
+	    } catch (NotFoundException e) {
+		    throw new RuntimeException(e.getMessage());
+	    }
+	}
+	
+	private ExternalAccount getOrCreateExternalAccount(UserViewpoint viewpoint, ExternalAccountType externalAccountType, String id) {
+		OnlineAccountType onlineAccountType = externalAccountSystem.getOnlineAccountType(externalAccountType);
+		
+	    ExternalAccount external = null;
+	    if (id == "mugshot") {
+	    	// id = "mugshot" means we want to set the value for the mugshot enabled account
+	    	external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, externalAccountType);
+	    } else if (id == "") {
+		    try {
+		        ExternalAccount mugshotEnabledExternal = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.YOUTUBE);
+		        // we shouldn't allow hating an account type and having some accounts of that type listed, so we just override the value on the
+		        // hated account if one exists
+		        if (mugshotEnabledExternal.getSentiment() == Sentiment.INDIFFERENT || mugshotEnabledExternal.getSentiment() == Sentiment.HATE) {
+		    	    external = mugshotEnabledExternal;
+		        } else {
+		            external = externalAccountSystem.createExternalAccount(viewpoint, onlineAccountType);
+		        }
+		    } catch (NotFoundException e) {
+			    external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, externalAccountType);
+		    }			
+	    } else {
+            try {
+		        external = externalAccountSystem.lookupExternalAccount(viewpoint, id);
+	        } catch (NotFoundException e) {
+		        throw new RuntimeException(e.getMessage());
+	        }
+	    }
+	    
+	    return external;
 	}
 
 	public void doFindFlickrAccount(XmlBuilder xml, UserViewpoint viewpoint, String email) throws XmlMethodException {
@@ -1644,9 +1694,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.closeElement();
 	}
 
-	public void doSetFlickrAccount(XmlBuilder xml, UserViewpoint viewpoint, String nsid, String email) throws XmlMethodException {
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.FLICKR);		
-
+	public void doSetFlickrAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String nsid, String email) throws XmlMethodException {	
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.FLICKR, id);
+		
 		email = parseEmail(email);
 		
 		try {
@@ -1658,8 +1708,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
 	
-	public void doSetMySpaceAccount(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException, RetryException {
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.MYSPACE);		
+	public void doSetMySpaceAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String name) throws XmlMethodException, RetryException {
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.MYSPACE, id);		
 		String friendId;		
 		boolean isPrivate;
 		try {
@@ -1698,7 +1748,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}	
 	}
 
-	public void doSetYouTubeAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+	public void doSetYouTubeAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String urlOrName) throws XmlMethodException {
 		// Try to pull youtube name out of either a youtube profile url ("http://www.youtube.com/user/$username" || "http://www.youtube.com/profile?user=$username") or 
 		// just try using the thing as a username directly
 		String name = urlOrName.trim();
@@ -1714,7 +1764,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.YOUTUBE);
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.YOUTUBE, id);
+		
 		try {
 			external.setHandleValidating(name);
 		} catch (ValidationException e) {
@@ -1725,7 +1776,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 	
-	public void doSetLastFmAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+	public void doSetLastFmAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String urlOrName) throws XmlMethodException {
 		String name = urlOrName.trim();
 		String found = StringUtils.findPathElementAfter(name, "/user/");
 		if (found != null)
@@ -1734,7 +1785,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.LASTFM);
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.LASTFM, id);
 		try {
 			external.validateHandle(name);
 		} catch (ValidationException e) {
@@ -1757,7 +1808,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}	
 	
-	public void doSetDeliciousAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
+	public void doSetDeliciousAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 		// del.icio.us urls are just "http://del.icio.us/myusername"
 		
@@ -1768,7 +1819,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.DELICIOUS);
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.DELICIOUS, id);
 		String validatedHandle = null;
 		try {
 			validatedHandle = external.validateHandle(name);
@@ -1798,7 +1849,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 	
-	public void doSetTwitterAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
+	public void doSetTwitterAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 		
 		// Twitter urls are just "http://twitter.com/myusername"
@@ -1810,7 +1861,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.TWITTER);
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.TWITTER, id);
 		String validatedHandle = null;
 		try {
 			validatedHandle = external.validateHandle(name);
@@ -1848,7 +1899,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	    }
 	}
 
-	public void doSetDiggAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
+	public void doSetDiggAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 		
 		// Digg urls are "http://digg.com/users/myusername/stuff"
@@ -1860,7 +1911,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.DIGG);
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.DIGG, id);
 		String validatedHandle = null;
 		try {
 			validatedHandle = external.validateHandle(name);
@@ -1891,7 +1942,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 
-	public void doSetRedditAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
+	public void doSetRedditAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 
 		// Reddit urls are "http://reddit.com/user/myusername"
@@ -1907,7 +1958,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.REDDIT);
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.REDDIT, id);
 		String validatedHandle = null;
 		try {
 			validatedHandle = external.validateHandle(name);
@@ -1965,7 +2016,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	    }
 	}
 	
-	public void doSetLinkedInAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+	public void doSetLinkedInAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String urlOrName) throws XmlMethodException {
 		// Try to pull linked in name out of either a linked in profile url ("http://www.linkedin.com/in/username") or 
 		// just try using the thing as a username directly
 		String name = urlOrName.trim();
@@ -1978,7 +2029,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.LINKED_IN);
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.LINKED_IN, id);
 		try {
 			external.setHandleValidating(name);
 		} catch (ValidationException e) {
@@ -1989,7 +2040,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 
-	public void doSetPicasaAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
+	public void doSetPicasaAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 		
 		// Picasa public urls are http://picasaweb.google.com/username
@@ -2001,7 +2052,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (startsWithHttp(name))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public gallery URL or just your username");
 		
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.PICASA);
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.PICASA, id);
 		String validatedHandle = null;
 		try {
 			validatedHandle = external.validateHandle(name);
@@ -2035,7 +2086,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 	
-	public void doSetAmazonAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlOrUserIdStr) throws XmlMethodException {		
+	public void doSetAmazonAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String urlOrUserIdStr) throws XmlMethodException {		
 		String urlOrUserId = urlOrUserIdStr.trim();
 
 		String amazonUserId = StringUtils.findPathElementAfter(urlOrUserId, "/profile/");
@@ -2048,7 +2099,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			}
 		}
 		
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.AMAZON);
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.AMAZON, id);
 		try {
 			external.validateHandle(amazonUserId);
 		} catch (ValidationException e) {
@@ -2094,14 +2145,43 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.closeElement();
 	}
 	
+	public void doSetOnlineAccountValue(XmlBuilder xml, UserViewpoint viewpoint, String type, String id, String value) throws XmlMethodException {	
+		OnlineAccountType onlineAccountType = null;
+		try {
+	        onlineAccountType = externalAccountSystem.lookupOnlineAccountTypeForName(type);
+	    } catch (NotFoundException e) {
+		    throw new RuntimeException(e.getMessage());
+	    }    
+	        
+		ExternalAccount external;
+		if (id == "") {
+			external = externalAccountSystem.createExternalAccount(viewpoint, onlineAccountType);
+		} else {
+	        try {
+			    external = externalAccountSystem.lookupExternalAccount(viewpoint, id);
+		    } catch (NotFoundException e) {
+			    throw new RuntimeException(e.getMessage());
+		    }
+		}
+		
+		try {
+			external.setHandleValidating(value);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
+		xml.appendTextNode("username", external.getHandle());		
+	}
+	
 	public void doSetWebsiteAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlStr) throws XmlMethodException {
 		// DO NOT cut and paste this block into similar external account methods. It's only here because
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
 		// for the plain entries assumes this works.
 		if (urlStr == null || urlStr.trim().length() == 0) {
-			doRemoveExternalAccount(xml, viewpoint, "WEBSITE");
 			try {
 				ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.WEBSITE);
+				externalAccountSystem.setSentiment(external, Sentiment.INDIFFERENT);
 				// otherwise the website url would keep "coming back" since there's no visual indication of hate/indifferent status
 				external.setHandle(null);
 			} catch (NotFoundException e) {
@@ -2138,9 +2218,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
 		// for the plain entries assumes this works.
 		if (urlStr == null || urlStr.trim().length() == 0) {
-			doRemoveExternalAccount(xml, viewpoint, "BLOG");
 			try {
 				ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.BLOG);
+				externalAccountSystem.setSentiment(external, Sentiment.INDIFFERENT);	
 				// otherwise the blog url would keep "coming back" since there's no visual indication of hate/indifferent status
 				external.setHandle(null);
 			} catch (NotFoundException e) {
@@ -2176,7 +2256,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feed.getAccounts().add(external);
 	}
 	
-	public void doSetGoogleReaderAccount(XmlBuilder xml, UserViewpoint viewpoint, String feedOrPageUrl) throws XmlMethodException, RetryException {
+	public void doSetGoogleReaderAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String feedOrPageUrl) throws XmlMethodException, RetryException {
 		feedOrPageUrl = feedOrPageUrl.trim();
 		
 		if (feedOrPageUrl.startsWith("https://"))
@@ -2203,7 +2283,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			logger.debug("Parsed google reader id '{}' from '{}'", userId, feedOrPageUrl);
 		}
 		
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.GOOGLE_READER);
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.GOOGLE_READER, id);
 		String validatedHandle = null;
 		try {
 			validatedHandle = external.validateHandle(userId);
