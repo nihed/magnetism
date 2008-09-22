@@ -405,7 +405,7 @@ dh.account.createExternalAccountOnCanceledFunc = function(entry, accountType, id
 	}
 }
 
-dh.account.onFlickrLoveSaved = function(entry, value, id) {
+dh.account.onFlickrLoveSaved = function(entry, id, value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
 	dh.account.findFlickrAccount(value,
@@ -765,7 +765,8 @@ dh.account.onAmazonLoveSaved = function(entry, id, value) {
 						                var linkDiv = document.createElement("div");
 						                amazonDetailsNode.appendChild(linkDiv);
 						                var linkElement = document.createElement("a");
-                                        linkElement.href = dh.util.getPreparedUrl(dh.dom.textContent(urlNode));						            
+                                        linkElement.href = dh.util.getPreparedUrl(dh.dom.textContent(urlNode));		
+                                        linkElement.target = "_blank";				            
                                         var linkTextNode = document.createTextNode(dh.dom.textContent(nameNode));
                                         linkElement.appendChild(linkTextNode);
                                         linkDiv.appendChild(linkElement);						                 

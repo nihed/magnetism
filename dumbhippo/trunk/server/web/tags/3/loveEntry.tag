@@ -30,6 +30,7 @@
 		    <dh:png klass="dh-love-hate-icon" src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/> 
 			<span id="${baseId}LoveValueId"></span>
 		</a>
+		<jsp:doBody/>
 	</div>
 	<div id="${baseId}IndifferentId" style="display: ${indifferentDisplay};">
 		<a href="javascript:dh.love.setMode('${baseId}', 'loveEdit')" title="Add another account"><dh:png klass="dh-add-icon" src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/>Add another account</a>
@@ -39,6 +40,7 @@
 		<dht:textInput id="${baseId}LoveEntryId" maxlength="255"/>
 		<img src="/images3/${buildStamp}/save_button.gif" onclick="dh.love.saveClicked('${baseId}', 'love')"/>
 		<a href="javascript:dh.love.cancelClicked('${baseId}')" title="Remove the account"><img src="/images3/${buildStamp}/x_button.gif"/></a>
+        <jsp:doBody/>
         <div dhId="DescriptionNormal">
             <div class="dh-love-hate-instruction-editing">
 				Editing <c:out value="${name}"/>.<br/>	

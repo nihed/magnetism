@@ -28,6 +28,7 @@
 		<a href="javascript:dh.love.setMode('${baseId}', 'loveEdit')" title="Click to change">
 			<span id="${baseId}LoveValueId"></span>
 		</a>
+		<jsp:doBody/>
 	</div>
 	<div id="${baseId}IndifferentId" style="display: ${indifferentDisplay};">
 		<a href="javascript:dh.love.setMode('${baseId}', 'loveEdit')" title="Add an account"><dh:png klass="dh-add-icon" src="/images3/${buildStamp}/add_icon.png" style="width: 10; height: 10; overflow: hidden;" />
@@ -37,6 +38,7 @@
 		<dht:textInput id="${baseId}LoveEntryId" maxlength="255"/>
 		<img src="/images-gnome/${buildStamp}/save_button.gif" onclick="dh.love.saveClicked('${baseId}', 'love')"/>
 		<a href="javascript:dh.love.cancelClicked('${baseId}')" title="Remove the account"><img src="/images-gnome/${buildStamp}/x_button.gif"/></a>
+		<jsp:doBody/>
         <div dhId="DescriptionNormal">
             Enter your  
 	        <jsp:element name="a">
