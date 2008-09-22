@@ -231,7 +231,7 @@
 								        <div class="dh-amazon-details">
 								        <c:forEach items="${account.amazonLinks}" var="amazonLinkPair">
 									        <div>
-									            <a href="${amazonLinkPair.second}">${amazonLinkPair.first}</a>
+									            <a href="${amazonLinkPair.second}" target="_blank">${amazonLinkPair.first}</a>
 									        </div>
 								        </c:forEach>
 								        </div>
@@ -245,6 +245,15 @@
 							        link="${supportedAccount.externalAccountType.siteLink}"
 							        baseId="dh${supportedAccount.domNodeIdName}"
 							        mode="${supportedAccount.sentiment}">					                 							        
+							        <c:if test="${supportedAccount.siteName == 'Amazon' && supportedAccount.mugshotEnabled}">
+								        <div class="dh-amazon-details">
+								        <c:forEach items="${account.amazonLinks}" var="amazonLinkPair">
+									        <div>
+									            <a href="${amazonLinkPair.second}" target="_blank">${amazonLinkPair.first}</a>
+									        </div>
+								        </c:forEach>
+								        </div>
+							        </c:if>
 						        </dht3:loveEntry>						    
 						    </c:otherwise>
 						</c:choose>
