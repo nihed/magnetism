@@ -1614,9 +1614,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	    	// not Mugshot enabled, so we eed to make sure it's not possible to hate an account type in the UI when
 	    	// you have accounts of this type listed.
 	    	Set<ExternalAccount> allExternals = externalAccountSystem.lookupExternalAccounts(viewpoint, viewpoint.getViewer(), onlineAccountType);
+	    	boolean foundOneLovedAccount = false; 
 	    	for (ExternalAccount external : allExternals) {
-	    		if (external.getSentiment() == Sentiment.LOVE) {
+	    		if (external.getSentiment() == Sentiment.LOVE && foundOneLovedAccount) {
 	    			throw new RuntimeException("Can't allow hating an external account of type " + onlineAccountType + " because other loved accounts of this type exist.");
+	    		} else if (external.getSentiment() == Sentiment.LOVE) {
+	    			foundOneLovedAccount = true;
 	    		}
 	    	}
 	        ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, onlineAccountType.getAccountType());
@@ -1654,14 +1657,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	private ExternalAccount getOrCreateExternalAccount(UserViewpoint viewpoint, ExternalAccountType externalAccountType, String id) {
 		OnlineAccountType onlineAccountType = externalAccountSystem.getOnlineAccountType(externalAccountType);
-		
 	    ExternalAccount external = null;
 	    if (id == "mugshot") {
 	    	// id = "mugshot" means we want to set the value for the mugshot enabled account
 	    	external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, externalAccountType);
 	    } else if (id == "") {
 		    try {
-		        ExternalAccount mugshotEnabledExternal = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.YOUTUBE);
+		        ExternalAccount mugshotEnabledExternal = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), externalAccountType);
 		        // we shouldn't allow hating an account type and having some accounts of that type listed, so we just override the value on the
 		        // hated account if one exists
 		        if (mugshotEnabledExternal.getSentiment() == Sentiment.INDIFFERENT || mugshotEnabledExternal.getSentiment() == Sentiment.HATE) {
@@ -1679,7 +1681,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		        throw new RuntimeException(e.getMessage());
 	        }
 	    }
-	    
 	    return external;
 	}
 

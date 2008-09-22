@@ -27,6 +27,9 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._loveEntryNode = document.getElementById(baseId + 'LoveEntryId');
 	this._hateEntryNode = document.getElementById(baseId + 'HateEntryId');
 	 
+	// alert("searched for " + baseId + "LoveEntryId" + " found " + this._loveEntryNode);
+	// alert("searched for " + baseId + "HateEntryId" + " found " + this._hateEntryNode);
+	 
 	this._defaultLoveText = defaultLoveText;
 	this._defaultHateText = defaultHateText;
 
@@ -40,8 +43,9 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._allNodes = [me._loveNode, me._hateNode, me._loveEditNode, me._hateEditNode, me._indifferentNode, me._indifferentInfoNode, me._busyNode];
 	
 	this._errorText = "";
+	this._initialMode = "";
 	
-	dh.formtable.initExpanded(me._baseId, true);
+	dh.formtable.initExpanded(me._baseId, false);
 
     // Traverse root node of this widget, calling function on each node
 	this._foreachDhIdNode = function(id, func) {
@@ -235,6 +239,12 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	// this updates the current values and what's showing
 	this.setError(null);
 	this.setMode(this.getMode());
+	
+	this._initialMode = this.getMode();
+	
+	this.getInitialMode = function() {
+		return this._initialMode;
+	}	
 	
 	return this;
 }

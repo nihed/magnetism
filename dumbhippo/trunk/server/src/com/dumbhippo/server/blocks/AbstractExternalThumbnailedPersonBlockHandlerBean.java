@@ -77,8 +77,13 @@ public abstract class AbstractExternalThumbnailedPersonBlockHandlerBean<BlockVie
 		// Note that we create the block even if the new account is not loved-and-enabled
 		if (external.getAccountType() != accountType)
 			return;
-		Block block = stacker.createBlock(getKey(user));
-		stacker.stack(block, System.currentTimeMillis(), user, false, StackReason.NEW_BLOCK);
+		
+		try {
+		    stacker.queryBlock(getKey(user));
+		} catch (NotFoundException e) {    
+			Block block = stacker.createBlock(getKey(user));
+			stacker.stack(block, System.currentTimeMillis(), user, false, StackReason.NEW_BLOCK);
+		}
 	}
 
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {

@@ -34,7 +34,8 @@
     dh.account.dhHateQuips = [ <c:forEach items="${account.supportedAccounts.list}" var="supportedAccount" varStatus="status"><dh:jsString value="${supportedAccount.hateQuip}"/> ${status.last ? '];' : ','}</c:forEach>
     dh.account.dhIds = [ <c:forEach items="${account.supportedAccounts.list}" var="supportedAccount" varStatus="status"><dh:jsString value="${supportedAccount.id}"/> ${status.last ? '];' : ','}</c:forEach>
     dh.account.dhDomIds = [ <c:forEach items="${account.supportedAccounts.list}" var="supportedAccount" varStatus="status"><dh:jsString value="${supportedAccount.domNodeIdName}"/> ${status.last ? '];' : ','}</c:forEach>
-    dh.account.dhMugshotEnabledFlags = [ <c:forEach items="${account.supportedAccounts.list}" var="supportedAccount" varStatus="status"><dh:jsString value="${supportedAccount.mugshotEnabled}"/> ${status.last ? '];' : ','}</c:forEach>
+    dh.account.dhMugshotEnabledFlags = [ <c:forEach items="${account.supportedAccounts.list}" var="supportedAccount" varStatus="status">${supportedAccount.mugshotEnabled} ${status.last ? '];' : ','}</c:forEach>
+    dh.account.dhHateAllowedFlags = [ <c:forEach items="${account.supportedAccounts.list}" var="supportedAccount" varStatus="status">${supportedAccount.hateAllowed} ${status.last ? '];' : ','}</c:forEach>
 </script>
     
 <head>

@@ -19,6 +19,10 @@ public class ExternalAccountView {
     private OnlineAccountType onlineAccountType;
     private String link;
     private Thumbnails thumbnails;
+    private boolean hateAllowed;
+    // this is used when we construct a list of accounts and we want to indicate that there are several accounts
+    // of the same type in a row
+    private boolean newType;
     
 	private class ExternalAccountThumbnails extends BasicThumbnails {
 		ExternalAccountThumbnails(List<? extends Thumbnail> thumbnails, int thumbnailTotalItems, int thumbnailWidth, int thumbnailHeight) {
@@ -37,7 +41,13 @@ public class ExternalAccountView {
 		}
 	}
     
+	private ExternalAccountView() {
+    	this.hateAllowed = true;
+    	this.newType = true;
+	}
+	
     public ExternalAccountView(ExternalAccount externalAccount) {
+    	this();
     	this.externalAccount = externalAccount;
     	this.externalAccountType = externalAccount.getAccountType();
     	this.onlineAccountType = externalAccount.getOnlineAccountType();
@@ -54,6 +64,7 @@ public class ExternalAccountView {
      * @param externalAccountType
      */
     public ExternalAccountView(OnlineAccountType onlineAccountType) {
+    	this();
     	this.onlineAccountType = onlineAccountType;
     	this.externalAccountType = onlineAccountType.getAccountType();
     }
@@ -69,7 +80,23 @@ public class ExternalAccountView {
 	public OnlineAccountType getOnlineAccountType() {
 		return onlineAccountType;
 	}
+	
+	public void setAllowHate(boolean hateAllowed) {
+		this.hateAllowed = hateAllowed;
+	}
+	
+	public boolean isHateAllowed() {
+		return hateAllowed;
+	}
 
+	public void setNewType(boolean newType) {
+		this.newType = newType;
+	}
+	
+	public boolean isNewType() {
+		return newType;
+	}
+	
 	public String getSiteName() {
 		return onlineAccountType.getSiteName();
 	}

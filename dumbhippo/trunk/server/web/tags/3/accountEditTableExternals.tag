@@ -130,8 +130,13 @@
 	    </dht2:formTableRow>
 	    <c:if test="${dh:enumIs(site, 'GNOME')}">
 	        <c:forEach items="${account.gnomeSupportedAccounts.list}" var="supportedAccount">
+	            <%-- icon is only used when label is set, otherwise we'd also have to set it to "" here --%> 
+	            <c:set var="label" value=""/>
+	            <c:if test="${supportedAccount.newType}">
+	                <c:set var="label" value="${supportedAccount.siteName}"/>  
+	            </c:if>
 	            <dht2:formTableRow controlId="dh${supportedAccount.domNodeIdName}"
-		                           label="${supportedAccount.siteName}"				
+		                           label="${label}"				
 			                       icon="/images3/${buildStamp}/${supportedAccount.iconName}">
                     <gnome:loveEntry name="${supportedAccount.siteName}"
 			  	   	  	             userInfoType="${supportedAccount.userInfoType}"
@@ -181,13 +186,17 @@
 			<c:set var="prefixIcon" value="" />
 			<c:set var="prefixIconWidth" value="" />
 			<c:set var="prefixIconHeight" value="" />
-			<c:if test="${supportedAccount.externalAccountType.new}">
+			<c:if test="${supportedAccount.externalAccountType.new && supportedAccount.newType}">
 				<c:set var="prefixIcon" value="/images3/${buildStamp}/new_icon.png" />
 				<c:set var="prefixIconWidth" value="31" />
 				<c:set var="prefixIconHeight" value="10" />
-			</c:if>			
+			</c:if>
+		    <c:set var="label" value=""/>
+	        <c:if test="${supportedAccount.newType}">
+	            <c:set var="label" value="${supportedAccount.siteName}"/>  
+	        </c:if>						
 			<dht2:formTableRow controlId="dh${supportedAccount.domNodeIdName}"
-				label="${supportedAccount.siteName}"				
+				label="${label}"				
 				icon="/images3/${buildStamp}/${supportedAccount.iconName}"
 				info="${facebookAppInfo}"
 				infoLink ="${facebookAppInfoLink}" 
@@ -209,23 +218,36 @@
 					<c:otherwise>
 					    <%-- it's ok to assume that supportedAccount.externalAccountType is not null here --%>
 					    <%-- because the list of supported accounts for Mugshot is generated based on the ExternalAccountType enumeration --%> 
-						<dht2:loveHateEntry name="${supportedAccount.siteName}"
-							userInfoType="${supportedAccount.externalAccountType.siteUserInfoType}"
-							isInfoTypeProvidedBySite="${supportedAccount.externalAccountType.infoTypeProvidedBySite}"
-							link="${supportedAccount.externalAccountType.siteLink}"
-							baseId="dh${supportedAccount.domNodeIdName}"
-							mode="${supportedAccount.sentiment}">
+                        <c:choose>
+                            <c:when test="${supportedAccount.hateAllowed}">
+						        <dht2:loveHateEntry name="${supportedAccount.siteName}"
+							        userInfoType="${supportedAccount.externalAccountType.siteUserInfoType}"
+							        isInfoTypeProvidedBySite="${supportedAccount.externalAccountType.infoTypeProvidedBySite}"
+							        link="${supportedAccount.externalAccountType.siteLink}"
+							        baseId="dh${supportedAccount.domNodeIdName}"
+							        mode="${supportedAccount.sentiment}">
 					                 
-							<c:if test="${supportedAccount.siteName == 'Amazon'}">
-								<div class="dh-amazon-details">
-								<c:forEach items="${account.amazonLinks}" var="amazonLinkPair">
-									<div>
-									<a href="${amazonLinkPair.second}">${amazonLinkPair.first}</a>
-									</div>
-								</c:forEach>
-								</div>
-							</c:if>
-						</dht2:loveHateEntry>
+							        <c:if test="${supportedAccount.siteName == 'Amazon' && supportedAccount.mugshotEnabled}">
+								        <div class="dh-amazon-details">
+								        <c:forEach items="${account.amazonLinks}" var="amazonLinkPair">
+									        <div>
+									            <a href="${amazonLinkPair.second}">${amazonLinkPair.first}</a>
+									        </div>
+								        </c:forEach>
+								        </div>
+							        </c:if>
+						        </dht2:loveHateEntry>
+						    </c:when>    
+						    <c:otherwise>
+						        <dht3:loveEntry name="${supportedAccount.siteName}"
+							        userInfoType="${supportedAccount.externalAccountType.siteUserInfoType}"
+							        isInfoTypeProvidedBySite="${supportedAccount.externalAccountType.infoTypeProvidedBySite}"
+							        link="${supportedAccount.externalAccountType.siteLink}"
+							        baseId="dh${supportedAccount.domNodeIdName}"
+							        mode="${supportedAccount.sentiment}">					                 							        
+						        </dht3:loveEntry>						    
+						    </c:otherwise>
+						</c:choose>
 					</c:otherwise>
 				</c:choose>
 			</dht2:formTableRow>

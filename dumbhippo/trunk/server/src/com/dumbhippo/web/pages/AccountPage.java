@@ -127,6 +127,71 @@ public class AccountPage {
 		}
 		return external.getHandle();
 	}
+	
+	private List<ExternalAccountView> getAccountsListForType(OnlineAccountType onlineAccountType) {		
+		Set<ExternalAccount> externalAccountsSet = 
+            externalAccounts.lookupExternalAccounts(signin.getViewpoint(), signin.getUser(), onlineAccountType);
+		
+        List<ExternalAccountView> accountsList= new ArrayList<ExternalAccountView>();  		
+        ExternalAccountView indifferentAccount = null;     
+    
+        for (ExternalAccount externalAccount : externalAccountsSet) {
+    	    if (externalAccount.getSentiment() == Sentiment.LOVE) {
+    	    	if (externalAccount.isMugshotEnabled()) {    	
+    	    	    // always list the Mugshot enabled account first
+    	    		accountsList.add(0, new ExternalAccountView(externalAccount));
+    	    	} else { 
+    		        accountsList.add(new ExternalAccountView(externalAccount));    
+    	    	}
+    		} else if (externalAccount.getSentiment() == Sentiment.HATE) {
+    	    	// if there is a hated account, we want to return it on its own
+    	        // if you hate this account type, you can't have other accounts of this type that you love or
+    	        // add new accounts of this type, you can edit the hated account type in place though
+    	    	accountsList.clear();
+    	    	accountsList.add(new ExternalAccountView(externalAccount));
+    		    return accountsList;   		    
+    	    } else {
+    		    // we don't return here because it is possible to have old indifferent accounts,
+    		    // but also have some loved accounts or one hated account
+    		    indifferentAccount = new ExternalAccountView(externalAccount);
+    	    }		    	    
+        }
+    
+    	if (accountsList.size() > 1) {
+    		boolean isFirstLovedAccount = true;
+    	    for (ExternalAccountView lovedAccount : accountsList) {
+    	    	lovedAccount.setAllowHate(false);
+    	    	
+    	    	if (!isFirstLovedAccount)
+    	    	    lovedAccount.setNewType(false);
+    	    	else
+    	    		isFirstLovedAccount = false;
+    	    }
+    	}
+    	
+    	ExternalAccountView viewForAddingNewAccount = null;
+	    // we should only allow the user to edit one indifferent account at a time; since we never delete accounts, this
+	    // is a way to allow reusing accounts
+        if (indifferentAccount != null) {
+        	viewForAddingNewAccount = indifferentAccount;				        	
+        } else {
+        	viewForAddingNewAccount = new ExternalAccountView(onlineAccountType);
+        }
+        
+        if (accountsList.size() != 0) {
+            viewForAddingNewAccount.setAllowHate(false);
+            viewForAddingNewAccount.setNewType(false);
+        }
+        
+        accountsList.add(viewForAddingNewAccount);
+        
+        if (onlineAccountType.getAccountType() != null && onlineAccountType.getAccountType() == ExternalAccountType.FACEBOOK) {
+        	// make sure we only list one account for Facebook, because we don't support adding multiple Facebook accounts at the moment
+        	return accountsList.subList(0, 1);
+        }
+        
+        return accountsList;
+    }
 
 	/**
 	 * Returns a list of supported account views; with the ExternalAccount information for the
@@ -141,32 +206,7 @@ public class AccountPage {
 		for (ExternalAccountType type : ExternalAccountType.alphabetizedValues()) {
 			if (type.isSupported()) {
 	            OnlineAccountType onlineAccountType = externalAccounts.getOnlineAccountType(type);
-	            	  
-	            Set<ExternalAccount> externalAccountsSet = 
-			        externalAccounts.lookupExternalAccounts(signin.getViewpoint(), signin.getUser(), onlineAccountType);
-			
-	            ExternalAccountView indifferentAccount = null;
-	            boolean foundLovedOrHatedAccount = false;
-			    for (ExternalAccount externalAccount : externalAccountsSet) {
-			    	// normally we shouldn't have some accounts that are hated and some that are loved of the same time,
-			    	// but we don't have to check for it here
-			    	if (externalAccount.getSentiment() == Sentiment.LOVE || externalAccount.getSentiment() == Sentiment.HATE) {
-					    supportedAccounts.add(new ExternalAccountView(externalAccount));
-					    foundLovedOrHatedAccount = true;
-			    	} else {
-			    		indifferentAccount = new ExternalAccountView(externalAccount);
-			    	}		    	    
-			    }
-			    
-			    // we should only allow the user to edit one indifferent account at a time; since we never delete accounts, this
-			    // is a way to allow reusing accounts
-			    if (!foundLovedOrHatedAccount && indifferentAccount != null) {
-			    	supportedAccounts.add(indifferentAccount);
-			    }
-			    
-			    if (externalAccountsSet.isEmpty()) {    
-				    supportedAccounts.add(new ExternalAccountView(onlineAccountType));
-			    }
+	            supportedAccounts.addAll(getAccountsListForType(onlineAccountType));
 			}
 		}
 		
@@ -186,31 +226,7 @@ public class AccountPage {
 		
 		for (OnlineAccountType type : alphabetizedTypes) {
 			if (type.isSupported()) {
-			    Set<ExternalAccount> externalAccountsSet = 
-			    	externalAccounts.lookupExternalAccounts(signin.getViewpoint(), signin.getUser(), type);
-
-	            ExternalAccountView indifferentAccount = null;
-	            boolean foundLovedOrHatedAccount = false;
-			    for (ExternalAccount externalAccount : externalAccountsSet) {
-			    	// normally we shouldn't have some accounts that are hated and some that are loved of the same time,
-			    	// but we don't have to check for it here
-			    	if (externalAccount.getSentiment() == Sentiment.LOVE || externalAccount.getSentiment() == Sentiment.HATE) {
-					    supportedAccounts.add(new ExternalAccountView(externalAccount));
-					    foundLovedOrHatedAccount = true;
-			    	} else {
-			    		indifferentAccount = new ExternalAccountView(externalAccount);
-			    	}		    	    
-			    }
-			    
-			    // we should only allow the user to edit one indifferent account at a time; since we never delete accounts, this
-			    // is a way to allow reusing accounts
-			    if (!foundLovedOrHatedAccount && indifferentAccount != null) {
-			    	supportedAccounts.add(indifferentAccount);		    
-			    }
-			    
-			    if (externalAccountsSet.isEmpty()) {    
-				    supportedAccounts.add(new ExternalAccountView(type));
-			    }
+				supportedAccounts.addAll(getAccountsListForType(type));
 			}
 		}
 		

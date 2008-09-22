@@ -7,7 +7,7 @@ dojo.require("dh.event");
 
 dh.love.allEntries = {}
 
-dh.love.Entry = function(baseId, defaultLoveText, currentLoveValue)
+dh.love.Entry = function(baseId, defaultLoveText, currentLoveValue, loveTip, accountHelp)
 {
 	dh.love.allEntries[baseId] = this;
 
@@ -22,6 +22,7 @@ dh.love.Entry = function(baseId, defaultLoveText, currentLoveValue)
 	this._busyNode = document.getElementById(baseId + 'BusyId');
 	
 	this._loveEntryNode = document.getElementById(baseId + 'LoveEntryId');
+	// alert("searched for " + baseId + "LoveEntryId" + " found " + this._loveEntryNode);
 	
 	this._defaultLoveText = defaultLoveText;
 
@@ -33,8 +34,9 @@ dh.love.Entry = function(baseId, defaultLoveText, currentLoveValue)
 	this._allNodes = [me._loveNode, me._loveEditNode, me._indifferentNode, me._busyNode];
 	
 	this._errorText = "";
+	this._initialMode = "";
 	
-	dh.formtable.initExpanded(me._baseId, true);
+	dh.formtable.initExpanded(me._baseId, false);
 
     // Traverse root node of this widget, calling function on each node
 	this._foreachDhIdNode = function(id, func) {
@@ -43,6 +45,24 @@ dh.love.Entry = function(baseId, defaultLoveText, currentLoveValue)
 	                                 if (node.getAttribute("dhId") == id) func(node);
 	                               });
 	}
+	
+	if (loveTip)
+	    this._foreachDhIdNode("LoveTipId", function (node) { node.appendChild(document.createTextNode(loveTip)); });
+	
+	if (accountHelp)
+  	    this._foreachDhIdNode("AccountHelpId", 
+	                          function(node) { 
+	                              var span = document.createElement("span");
+	                              span.appendChild(document.createTextNode(" ("));
+	                              var a = document.createElement("a");
+	                              a.setAttribute("target", "_blank");
+   	                              a.setAttribute("href", accountHelp);
+	                              dh.util.prependClass(a, "dh-text-input-help");
+	                              a.appendChild(document.createTextNode("help me find it"));
+	                              span.appendChild(a);
+	                              span.appendChild(document.createTextNode(")"));	                          
+	                              node.appendChild(span);
+	                          });       
 	
 	this._loveEntryNode.onkeydown = function(ev) {
 		var key = dh.event.getKeyCode(ev);
@@ -113,6 +133,7 @@ dh.love.Entry = function(baseId, defaultLoveText, currentLoveValue)
 		me.setMode('busy');
 	}
 	
+	// this is currently not enabled for loveEntry
 	this.setError = function(msg) {
 		if (msg) {
 			me._foreachDhIdNode("DescriptionError",
@@ -178,6 +199,12 @@ dh.love.Entry = function(baseId, defaultLoveText, currentLoveValue)
 	// this updates the current values and what's showing
 	this.setError(null);
 	this.setMode(this.getMode());
+	
+	this._initialMode = this.getMode();
+	
+	this.getInitialMode = function() {
+		return this._initialMode;
+	}	
 	
 	return this;
 }

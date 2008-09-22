@@ -118,8 +118,10 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		if (!em.contains(a))
 			throw new RuntimeException("detached account in getOrCreateExternalAccount");
 
+		logger.debug("in createExternalAccount"); 
 		ExternalAccount external = new ExternalAccount();
 		external.setOnlineAccountType(type);
+		external.setAccountType(type.getAccountType()); // it's ok if this is null
 		external.setAccount(a);
 		em.persist(external);
 		a.getExternalAccounts().add(external);			

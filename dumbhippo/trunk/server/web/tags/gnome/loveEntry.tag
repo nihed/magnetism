@@ -42,9 +42,8 @@
 	        <jsp:element name="a">
 		        <jsp:attribute name="href"><c:out value="${link}"/></jsp:attribute>
 			    <jsp:attribute name="target">_blank</jsp:attribute>
-		 	    <jsp:body><c:out value="${name}"/></jsp:body>
-		    </jsp:element>
-		    <c:out value="${userInfoType}"/>
+		 	    <jsp:body><c:out value="${userInfoType}"/></jsp:body>
+		    </jsp:element>.
 		</div>    		    
 	</div>	
 	<div id="${baseId}BusyId" style="display: none;">

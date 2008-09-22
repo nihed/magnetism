@@ -368,15 +368,17 @@ dh.account.createExternalAccountOnHateSavedFunc = function(entry, accountType, i
 		entry.setBusy();
 		dh.account.hateExternalAccount(accountType, value,
 		 	    	 function(childNodes, http) {
-		 	    	 	entry.setMode('hate');
-		 	    	 	if (mugshotEnabled && accountType == 'AMAZON') {
-	 	    	            var amazonDetailsNodes = dh.html.getElementsByClass('dh-amazon-details');
-	                        var i = 0;
-	                        for (i = 0; i < amazonDetailsNodes.length; ++i) {
-	                            var amazonDetailsNode = amazonDetailsNodes[i];
-	 	    	                dh.dom.removeChildren(amazonDetailsNode);
-	 	    	            }    
-	 	    	        }
+		 	    	     // if we leave entry mode as "busy" we get weird problems with css styling,
+		 	    	     // so we set it to the new mode in all cases 
+		 	    	     entry.setMode('hate'); 
+		 	    	     if (entry.getInitialMode() == "love") { 
+		 	    	         // There is also no need to reload if the account was already hated 
+		 	    	         // or the user was indifferent to it because we don't allow adding more accounts
+		 	    	         // if you hate one of the type.
+		 	    	 	     // But if you hate an account that you used to love, we want to make sure you are not
+		 	    	 	     // able to add other accounts of this type, so we need to refresh.
+		 	    	         dh.util.refresh();    
+		 	             }
 		  	    	 },
 		  	    	 function(code, msg, http) {
 		  	    	 	alert(msg);
@@ -391,19 +393,14 @@ dh.account.createExternalAccountOnCanceledFunc = function(entry, accountType, id
 		entry.setBusy();
 		dh.account.removeExternalAccount(id, 
 		 	    	 function(childNodes, http) {
-		 	    	 	entry.setMode('indifferent');
-		 	    	 	if (mugshotEnabled && accountType == 'amazon') {
-	 	    	            var amazonDetailsNodes = dh.html.getElementsByClass('dh-amazon-details');
-	                        var i = 0;
-	                        for (i = 0; i < amazonDetailsNodes.length; ++i) {
-	                            var amazonDetailsNode = amazonDetailsNodes[i];
-	 	    	                dh.dom.removeChildren(amazonDetailsNode);
-	 	    	            }    
-	 	    	        }
+		 	    	     entry.setMode('indifferent'); 
+		 	    	     if (entry.getInitialMode() == "love") {
+		 	    	         dh.util.refresh();    
+		 	             }  
 		  	    	 },
 		  	    	 function(code, msg, http) {
-		  	    	 	alert(msg);
-		  	    	 	entry.setMode(oldMode);
+		  	    	 	 alert(msg);
+		  	    	 	 entry.setMode(oldMode);
 		  	    	 });
 	}
 }
@@ -433,7 +430,10 @@ dh.account.onFlickrLoveSaved = function(entry, value, id) {
 				
 				dh.account.setFlickrAccount(id, nsid, value,
 					function(childNodes, http) {
-						entry.setMode('love');
+					     entry.setMode('love');
+					     if (entry.getInitialMode() != "love") {
+					         dh.util.refresh();  
+		 	    	 	 }
 					},
 					function(code, msg, http) {
 						alert(msg);
@@ -463,7 +463,10 @@ dh.account.onMyspaceLoveSaved = function(entry, id, value) {
 							 break;
 						 }
 	 	    	 	 }
-	 	    	 	 entry.setMode('love');
+	 	    	 	 entry.setMode('love'); 
+	 	    	     if (entry.getInitialMode() != "love") {	 	    	          
+					     dh.util.refresh();  
+		 	    	 }
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	 alert(msg);
@@ -476,7 +479,10 @@ dh.account.onYouTubeLoveSaved = function(entry, id, value) {
 	entry.setBusy();
   	dh.account.setYouTubeName(id, value, 
 	 	    	 function(childNodes, http) {
-	 	    	 	entry.setMode('love');
+	 	    	     entry.setMode('love');
+	 	    	     if (entry.getInitialMode() != "love") { 	    	           
+				         dh.util.refresh();  
+		 	    	 }
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	alert(msg);
@@ -489,11 +495,13 @@ dh.account.onLastFmLoveSaved = function(entry, id, value) {
 	entry.setBusy();
   	dh.account.setLastFmName(id, value, 
 	 	    	 function(childNodes, http) {
-	 	    	 	entry.setError(null);
-	 	    	 	entry.setMode('love');
+	 	    	     entry.setMode('love');
+	 	             if (entry.getInitialMode() != "love") {
+			             dh.util.refresh();  
+		 	    	 }
 	  	    	 },
 	  	    	 function(code, msg, http) {
-	  	    	 	entry.setError(msg);
+	  	    	 	alert(msg); // entry.setError(msg);
 	  	    	 	entry.setMode(oldMode);
 	  	    	 }); 
 }
@@ -503,19 +511,22 @@ dh.account.onLinkedInLoveSaved = function(entry, id, value) {
 	entry.setBusy();
   	dh.account.setLinkedInProfile(id, value,
 	 	    	 function(childNodes, http) {
-				    var username = null;
-					var i = 0;
-					for (i = 0; i < childNodes.length; ++i) {
-						var child = childNodes.item(i);
-						if (child.nodeType != dh.dom.ELEMENT_NODE)
-							continue;
+	 	    	     var username = null;
+					 var i = 0;
+					 for (i = 0; i < childNodes.length; ++i) {
+					     var child = childNodes.item(i);
+						 if (child.nodeType != dh.dom.ELEMENT_NODE)
+							 continue;
 			
-						if (child.nodeName == "username") {
-							username = dh.dom.textContent(child);
-						}
-	 	    	 	}
-					entry.setLoveValueAlreadySaved(username);
-	 	    	 	entry.setMode('love');
+						 if (child.nodeName == "username") {
+							 username = dh.dom.textContent(child);
+						 }
+	 	    	 	 }
+					 entry.setLoveValueAlreadySaved(username);		 	    	
+		 	         entry.setMode('love');      
+	 	    	     if (entry.getInitialMode() != "love") {
+					     dh.util.refresh();  
+		 	    	 }
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	alert(msg);
@@ -528,7 +539,10 @@ dh.account.onRhapsodyLoveSaved = function(entry, id, value) {
 	entry.setBusy();
   	dh.account.setRhapsodyUrl(id, value, 
 	 	    	 function(childNodes, http) {
-	 	    	 	entry.setMode('love');
+	 	    	     entry.setMode('love');  
+					 if (entry.getInitialMode() != "love") {
+				         dh.util.refresh();  
+		 	    	 }
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	alert(msg);
@@ -541,19 +555,22 @@ dh.account.onDeliciousLoveSaved = function(entry, id, value) {
 	entry.setBusy();
   	dh.account.setDeliciousName(id, value,
 	 	    	 function(childNodes, http) {
-				    var username = null;
-					var i = 0;
-					for (i = 0; i < childNodes.length; ++i) {
-						var child = childNodes.item(i);
-						if (child.nodeType != dh.dom.ELEMENT_NODE)
-							continue;
+	 	    	     var username = null;
+					 var i = 0;
+					 for (i = 0; i < childNodes.length; ++i) {
+						 var child = childNodes.item(i);
+						 if (child.nodeType != dh.dom.ELEMENT_NODE)
+							 continue;
 			
-						if (child.nodeName == "username") {
-							username = dh.dom.textContent(child);
-						}
-	 	    	 	}
-					entry.setLoveValueAlreadySaved(username);
-	 	    	 	entry.setMode('love');
+						 if (child.nodeName == "username") {
+							 username = dh.dom.textContent(child);
+						 }
+	 	    	 	 }
+					 entry.setLoveValueAlreadySaved(username);
+		 	    	 entry.setMode('love');
+					 if (entry.getInitialMode() != "love") {  
+					    dh.util.refresh();  
+		 	    	 }
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	alert(msg);
@@ -582,8 +599,11 @@ dh.account.onTwitterLoveSaved = function(entry, id, value) {
 							alert(msg);
 						}
 	 	    	 	}
-					entry.setLoveValueAlreadySaved(username);
-	 	    	 	entry.setMode('love');
+			        entry.setLoveValueAlreadySaved(username);
+		 	    	entry.setMode('love');      
+					if (entry.getInitialMode() != "love") {
+				        dh.util.refresh();  
+		 	    	} 	    	 		 	    	 	
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	alert(msg);
@@ -596,19 +616,22 @@ dh.account.onDiggLoveSaved = function(entry, id, value) {
 	entry.setBusy();
   	dh.account.setDiggName(id, value,
 	 	    	 function(childNodes, http) {
-				    var username = null;
-					var i = 0;
-					for (i = 0; i < childNodes.length; ++i) {
-						var child = childNodes.item(i);
-						if (child.nodeType != dh.dom.ELEMENT_NODE)
-							continue;
+	 	    	     var username = null;
+					 var i = 0;
+					 for (i = 0; i < childNodes.length; ++i) {
+						 var child = childNodes.item(i);
+						 if (child.nodeType != dh.dom.ELEMENT_NODE)
+							 continue;
 			
-						if (child.nodeName == "username") {
-							username = dh.dom.textContent(child);
-						}
-	 	    	 	}
-					entry.setLoveValueAlreadySaved(username);
-	 	    	 	entry.setMode('love');
+						 if (child.nodeName == "username") {
+						     username = dh.dom.textContent(child);
+						 }
+	 	    	 	 }
+					 entry.setLoveValueAlreadySaved(username);		 	    	  		 	    	 
+		 	    	 entry.setMode('love');    
+	 	    	 	 if (entry.getInitialMode() != "love") {
+				         dh.util.refresh();  
+		 	    	 }
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	alert(msg);
@@ -637,8 +660,11 @@ dh.account.onRedditLoveSaved = function(entry, id, value) {
 							 alert(msg);
 						 }
 	 	    	 	}
-					entry.setLoveValueAlreadySaved(username);
-	 	    	 	entry.setMode('love');
+			        entry.setLoveValueAlreadySaved(username);
+		 	    	entry.setMode('love'); 
+					if (entry.getInitialMode() != "love") {
+				        dh.util.refresh();  
+		 	    	}
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	alert(msg);
@@ -651,7 +677,10 @@ dh.account.onNetflixLoveSaved = function(entry, id, value) {
 	entry.setBusy();
   	dh.account.setNetflixUrl(id, value, 
 	 	    	 function(childNodes, http) {
-	 	    	 	entry.setMode('love');
+	 	    	     entry.setMode('love'); 
+					 if (entry.getInitialMode() != "love") {
+				         dh.util.refresh();  
+		 	    	 }
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	alert(msg);
@@ -664,7 +693,10 @@ dh.account.onGoogleReaderLoveSaved = function(entry, id, value) {
 	entry.setBusy();
   	dh.account.setGoogleReaderUrl(id, value, 
 	 	    	 function(childNodes, http) {
-	 	    	 	entry.setMode('love');
+	 	    	     entry.setMode('love'); 
+					 if (entry.getInitialMode() != "love") {		      
+				         dh.util.refresh();  
+		 	    	 }
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	alert(msg);
@@ -677,19 +709,22 @@ dh.account.onPicasaLoveSaved = function(entry, id, value) {
 	entry.setBusy();
   	dh.account.setPicasaName(id, value,
 	 	    	 function(childNodes, http) {
-				    var username = null;
-					var i = 0;
-					for (i = 0; i < childNodes.length; ++i) {
-						var child = childNodes.item(i);
-						if (child.nodeType != dh.dom.ELEMENT_NODE)
-							continue;
+		 	    	 var username = null;
+					 var i = 0;
+					 for (i = 0; i < childNodes.length; ++i) {
+						 var child = childNodes.item(i);
+						 if (child.nodeType != dh.dom.ELEMENT_NODE)
+							 continue;
 			
-						if (child.nodeName == "username") {
-							username = dh.dom.textContent(child);
-						}
-	 	    	 	}
-					entry.setLoveValueAlreadySaved(username);
-	 	    	 	entry.setMode('love');
+						 if (child.nodeName == "username") {
+							 username = dh.dom.textContent(child);
+						 }
+	 	    	 	 }
+	 	    	 	 entry.setLoveValueAlreadySaved(username);
+		 	    	 entry.setMode('love');  	 	    	 
+					 if (entry.getInitialMode() != "love") { 
+				         dh.util.refresh();  
+		 	    	 }	 	    	 	
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	alert(msg);
@@ -751,6 +786,10 @@ dh.account.onAmazonLoveSaved = function(entry, id, value) {
 							break;
 					    }
 	 	    	 	}	
+	 	    	 	
+	 	    	 	if (entry.getInitialMode() != "love") {
+				        dh.util.refresh();  
+		 	    	}
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	alert(msg);
@@ -763,7 +802,10 @@ dh.account.onLoveSaved = function(entry, type, id, value) {
 	entry.setBusy();
   	dh.account.setOnlineAccountValue(type, id, value, 
 	 	    	 function(childNodes, http) {
-	 	    	 	entry.setMode('love');
+	 	    	     entry.setMode('love'); 
+	 	    	     if (entry.getInitialMode() != "love") {
+				         dh.util.refresh();  
+		 	    	 }
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	alert(msg);
@@ -857,17 +899,24 @@ dhAccountInit = function() {
     if (dh.account.dhMugshotEnabledFlags != null) {
 	    for (var i = 0; i < dh.account.dhNames.length; ++i) {
 	        if (dh.account.dhNames[i] == "facebook")
-	            continue;
-	            
-	        var onlineAccountEntry = new dh.lovehate.Entry('dh' + dh.account.dhDomIds[i], dh.account.dhUserInfoTypes[i],  dh.account.dhValues[i],
+	            continue;  
+	        	        
+	        var onlineAccountEntry = null;
+
+	        if (dh.account.dhHateAllowedFlags[i]) {    
+	            onlineAccountEntry = new dh.lovehate.Entry('dh' + dh.account.dhDomIds[i], dh.account.dhUserInfoTypes[i], dh.account.dhValues[i],
 							                               dh.account.hateQuipsArray[dh.account.dhNames[i]], dh.account.dhHateQuips[i], dh.account.whatWillHappenArray[dh.account.dhNames[i]], 
 							                               dh.account.helpLinkArray[dh.account.dhNames[i]]);
-		
+               	onlineAccountEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(onlineAccountEntry,  dh.account.dhNames[i], dh.account.dhIds[i], dh.account.dhMugshotEnabledFlags[i]);
+            } else {
+	            onlineAccountEntry = new dh.love.Entry('dh' + dh.account.dhDomIds[i], dh.account.dhUserInfoTypes[i], dh.account.dhValues[i],
+	                                                   dh.account.whatWillHappenArray[dh.account.dhNames[i]], dh.account.helpLinkArray[dh.account.dhNames[i]]);            
+            }   		
+				
 		    if (dh.account.specialLoveValuesArray[dh.account.dhNames[i]] != null)
 		        onlineAccountEntry.setSpecialLoveValue(dh.account.specialLoveValuesArray[dh.account.dhNames[i]]);
 		    					                                                                                                                             
 	        onlineAccountEntry.onLoveSaved = dh.account.createExternalAccountOnLoveSavedFunc(onlineAccountEntry, dh.account.dhNames[i], dh.account.dhIds[i], dh.account.dhMugshotEnabledFlags[i]);
-	        onlineAccountEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(onlineAccountEntry,  dh.account.dhNames[i], dh.account.dhIds[i], dh.account.dhMugshotEnabledFlags[i]);
 	        onlineAccountEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(onlineAccountEntry, dh.account.dhNames[i], dh.account.dhIds[i], dh.account.dhMugshotEnabledFlags[i]);
             dh.account.onlineAccountEntries.push(onlineAccountEntry)
         }  
