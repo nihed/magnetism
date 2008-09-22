@@ -123,18 +123,23 @@ dh.formtable.setExpandedEditing = function (controlId, active) {
 }
 	
 dh.formtable.setExpandedError = function(controlId, active) {
+    var container = document.getElementById(controlId + "FormContainer");
 	var label = document.getElementById(controlId + "FormLabel");
 	var content = document.getElementById(controlId + "FormContent");
 	if (active) {
-		dh.util.removeClass(label.parentNode, "dh-account-editing-box-success");		
 		dh.util.removeClass(content.parentNode, "dh-account-editing-box-success");			
-		dh.util.prependClass(label.parentNode, "dh-account-editing-box-error");		
 		dh.util.prependClass(content.parentNode, "dh-account-editing-box-error");	
+		if (container.dhExpandedLabel) {
+		    dh.util.removeClass(label.parentNode, "dh-account-editing-box-success");
+			dh.util.prependClass(label.parentNode, "dh-account-editing-box-error");				
+		}
 	} else {
-		dh.util.removeClass(label.parentNode, "dh-account-editing-box-error");		
-		dh.util.removeClass(content.parentNode, "dh-account-editing-box-error");				
-		dh.util.prependClass(label.parentNode, "dh-account-editing-box-success");		
-		dh.util.prependClass(content.parentNode, "dh-account-editing-box-success");			
+		dh.util.removeClass(content.parentNode, "dh-account-editing-box-error");						
+		dh.util.prependClass(content.parentNode, "dh-account-editing-box-success");		
+		if (container.dhExpandedLabel) {
+		    dh.util.removeClass(label.parentNode, "dh-account-editing-box-error");	
+			dh.util.prependClass(label.parentNode, "dh-account-editing-box-success");		
+		}			
 	}
 }
 

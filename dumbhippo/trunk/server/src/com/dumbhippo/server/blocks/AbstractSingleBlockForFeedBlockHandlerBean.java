@@ -94,7 +94,16 @@ public abstract class AbstractSingleBlockForFeedBlockHandlerBean<ViewType extend
 		// Note that we create the block even if the new account is not loved-and-enabled
 		if (external.getAccountType() != getAccountType())
 			return;
-		stacker.createBlock(getKey(user));
+		
+		try {
+		    stacker.queryBlock(getKey(user));
+		} catch (NotFoundException e) {    
+			// Make sure we only try to create a block once for all the external accounts of a given type.
+			// Will need to create multiple blocks and change what we use as a key if we decide to support
+			// multiple accounts of the same type per user for Mugshot. The key can probably be externalAccount,
+			// or a combination of user and externalAccount if we want to include the user.
+		    stacker.createBlock(getKey(user));
+		}
 	}
 
 	public void onExternalAccountFeedEntry(User user, ExternalAccount external, FeedEntry entry, int entryPosition) {
