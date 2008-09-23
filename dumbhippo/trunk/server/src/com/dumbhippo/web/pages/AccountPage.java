@@ -137,7 +137,7 @@ public class AccountPage {
     
         for (ExternalAccount externalAccount : externalAccountsSet) {
     	    if (externalAccount.getSentiment() == Sentiment.LOVE) {
-    	    	if (externalAccount.isMugshotEnabled()) {    	
+    	    	if (externalAccount.isMugshotEnabledWithDefault()) {    	
     	    	    // always list the Mugshot enabled account first
     	    		accountsList.add(0, new ExternalAccountView(externalAccount));
     	    	} else { 

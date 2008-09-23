@@ -637,7 +637,7 @@ public class Account extends Resource {
 	public Set<ExternalAccount> getMugshotEnabledExternalAccounts() {
 		Set<ExternalAccount> filtered = new HashSet<ExternalAccount>();
 		for (ExternalAccount a : getExternalAccounts()) {
-			if (a.isMugshotEnabled()) {
+			if (a.isMugshotEnabledWithDefault()) {
 				filtered.add(a);
 			}
 		}
@@ -648,7 +648,7 @@ public class Account extends Resource {
 	private Set<ExternalAccount> getExternalAccountsBySentiment(Sentiment sentiment) {
 		Set<ExternalAccount> filtered = new HashSet<ExternalAccount>();
 		for (ExternalAccount a : getExternalAccounts()) {
-			if (a.getSentiment() == Sentiment.LOVE && a.isMugshotEnabled()) {
+			if (a.getSentiment() == sentiment && a.isMugshotEnabledWithDefault()) {
 				filtered.add(a);
 			}
 		}
@@ -667,12 +667,17 @@ public class Account extends Resource {
 	
 	@Transient
 	public ExternalAccount getExternalAccount(ExternalAccountType type) {
+		ExternalAccount indifferentAccount = null;
 		for (ExternalAccount a : getExternalAccounts()) {
-			if (a.getAccountType() == type && a.isMugshotEnabled()) {
+			if (a.getAccountType() == type && a.isMugshotEnabledWithDefault()) {
 				return a;
+			} else if (a.getAccountType() == type && a.getSentiment() == Sentiment.INDIFFERENT) {
+				indifferentAccount = a;
 			}
 		}
-		return null;
+		// this could have returned an indifferent account before if one existed, so it should be ok
+		// to return it now too
+		return indifferentAccount;
 	}
 
 	@Transient

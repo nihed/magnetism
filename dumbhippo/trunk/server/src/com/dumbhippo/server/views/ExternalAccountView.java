@@ -138,7 +138,7 @@ public class ExternalAccountView {
 	}
 	
 	public boolean isMugshotEnabled() {
-	    return (externalAccount != null) && externalAccount.isMugshotEnabled();
+	    return (externalAccount != null) && externalAccount.isMugshotEnabledWithDefault();
 	}
 	
 	public String getUserInfoType() {

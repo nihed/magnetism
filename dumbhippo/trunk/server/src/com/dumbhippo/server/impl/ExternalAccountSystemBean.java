@@ -18,6 +18,7 @@ import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.Thumbnail;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
@@ -103,7 +104,6 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		if (external == null) {
 			external = new ExternalAccount(type);
 			external.setOnlineAccountType(getOnlineAccountType(type));
-			external.setMugshotEnabled(true);
 			external.setAccount(a);
 			em.persist(external);
 			a.getExternalAccounts().add(external);			
@@ -443,15 +443,76 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		if ((sentiment == Sentiment.LOVE) && !externalAccount.hasAccountInfo()) {
 			throw new RuntimeException("Trying to set a love sentiment on account with no valid account info");
 		}
+
+		ReadWriteSession session = DataService.currentSessionRW();
+		User user = externalAccount.getAccount().getOwner(); 
 		
-		externalAccount.setSentiment(sentiment);
+		Sentiment previousSentiment = externalAccount.getSentiment();
+
+		// it's important that this is done before the checks below, because the way they are structured relies on
+		// the new sentiment being set
+		externalAccount.setSentiment(sentiment);		
+		
+		ExternalAccountType externalAccountType = externalAccount.getOnlineAccountType().getAccountType();
+
+		if (externalAccountType != null) {
+		    if (sentiment == Sentiment.INDIFFERENT) {
+		    	externalAccount.setMugshotEnabled(null);
+		    }	
+		    
+		    if (sentiment == Sentiment.HATE || sentiment == Sentiment.LOVE) {
+		    	// This will make sure that there is one exernal account of a given type that is hated and 
+		    	// it will through an exception if there are other accounts of this type that are loved when we try to add a new hated
+		    	// account and if there is a hated account when we try to add a new loved account.
+	    	    Set<ExternalAccount> externalAccounts = lookupExternalAccounts(new UserViewpoint(user, Site.NONE), user, externalAccount.getOnlineAccountType());
+	    	    for (ExternalAccount externalAccountToCheck : externalAccounts) {
+	    	    	if (externalAccountToCheck.getSentiment() == Sentiment.HATE && !externalAccountToCheck.equals(externalAccount)) {
+	    	    		if (sentiment == Sentiment.HATE)
+	    			        throw new RuntimeException("Can't allow hating an external account of type " + externalAccount.getOnlineAccountType() + " because another hated account of this type already exists.");	    	      
+	    	    		else if (sentiment == Sentiment.LOVE)
+	    	    			throw new RuntimeException("Can't allow loving an external account of type " + externalAccount.getOnlineAccountType() + " because another hated account of this type already exists.");	    	      	    	    		
+	    	    	} else if (sentiment == Sentiment.HATE && externalAccountToCheck.getSentiment() == Sentiment.LOVE) {
+	    			    throw new RuntimeException("Can't allow hating an external account of type " + externalAccount.getOnlineAccountType() + " because other loved accounts of this type exist.");
+	    		    }
+	    	    }
+	    	}
+			    
+		    boolean mugshotEnabledAccountExists = false;
+            try {
+            	// this will return a mugshotEnabled account if one exists or a neutral account if that's not the case
+	            ExternalAccount ea = lookupExternalAccount(new UserViewpoint(user, Site.NONE), user, externalAccountType);	
+	            if (ea.isMugshotEnabledWithDefault())
+	            	mugshotEnabledAccountExists = true;
+            } catch (NotFoundException e) {
+            	// nothing to do
+            }	
+            
+            if (!mugshotEnabledAccountExists) {
+            	if ((sentiment == Sentiment.LOVE || sentiment == Sentiment.HATE) && externalAccount.isMugshotEnabled() == null) {
+            		externalAccount.setMugshotEnabled(true);
+            	} else if (sentiment == Sentiment.INDIFFERENT && previousSentiment == Sentiment.LOVE) {
+            	    // search for another loved account that we could set to be mugshotEnabled
+    		    	// if previous sentiment was HATE, we shouldn't have any other loved accounts because we don't allow that
+    		    	Set<ExternalAccount> externalAccounts = lookupExternalAccounts(new UserViewpoint(user, Site.NONE), user, externalAccount.getOnlineAccountType());
+    		    	for (ExternalAccount externalAccountToCheck : externalAccounts) {
+    		    	    if (externalAccountToCheck.getSentiment() == Sentiment.LOVE && externalAccountToCheck.isMugshotEnabled() == null) {
+    		    	    	externalAccountToCheck.setMugshotEnabled(true);
+    		    	    	notifier.onExternalAccountLovedAndEnabledMaybeChanged(user, externalAccountToCheck);		    	    		
+    		    	    	break;
+    		    	    }
+    		    	}
+                }			
+		    }
+		} else if (sentiment == Sentiment.HATE) {
+			throw new RuntimeException("Can't set a HATE sentiment for an account of type " + externalAccount.getOnlineAccountType()
+					                   + " with no corresponding ExternalAccountType");
+		}
 		
 		ExternalAccountKey key = new ExternalAccountKey(externalAccount);
-		ReadWriteSession session = DataService.currentSessionRW();
 		session.changed(ExternalAccountDMO.class, key, "sentiment");
 		session.changed(ExternalAccountDMO.class, key, "quip"); // Quip is only present for HATE
 		
-		notifier.onExternalAccountLovedAndEnabledMaybeChanged(externalAccount.getAccount().getOwner(), externalAccount);
+		notifier.onExternalAccountLovedAndEnabledMaybeChanged(user, externalAccount);
 	}
 
 	public boolean getExternalAccountExistsLovedAndEnabled(Viewpoint viewpoint, User user, ExternalAccountType accountType) {
