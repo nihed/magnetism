@@ -37,12 +37,11 @@ public class ExternalAccount extends DBUnique {
 	// if the account has associated feeds, they go here
 	private Set<Feed> feeds;
 	// right now we should allow only up to one account of a given type to be Mugshot enabled
-	private boolean mugshotEnabled;
+	private Boolean mugshotEnabled;
 	
 	public ExternalAccount() {
 		sentiment = Sentiment.INDIFFERENT;
 		feeds = new HashSet<Feed>();
-		mugshotEnabled = false;
 	}
 	
 	public ExternalAccount(ExternalAccountType accountType) {
@@ -210,15 +209,20 @@ public class ExternalAccount extends DBUnique {
 			throw new RuntimeException("The external account has multiple feeds, not sure which feed you want me to return.");
 	}
 	
-	@Column(nullable=false)
-	public boolean isMugshotEnabled() {
+	@Column(nullable=true)
+	public Boolean isMugshotEnabled() {
 		return mugshotEnabled;
 	}
 
-	public void setMugshotEnabled(boolean mugshotEnabled) {
+	public void setMugshotEnabled(Boolean mugshotEnabled) {
 		this.mugshotEnabled = mugshotEnabled;
 	}
 
+	@Transient
+	public boolean isMugshotEnabledWithDefault() {
+	    return mugshotEnabled == null ? false : mugshotEnabled; 	
+	}
+	
 	public void setFeed(Feed feed) {
 		Set<Feed> feedsSet = new HashSet<Feed>();
 		feedsSet.add(feed);	
@@ -268,7 +272,7 @@ public class ExternalAccount extends DBUnique {
 	public boolean hasLovedAndEnabledType(ExternalAccountType type) {
 		// checking for public page makes sure that we don't stack blocks for online.gnome.org users
 		return accountType != null && accountType == type && getSentiment() == Sentiment.LOVE &&
-		isMugshotEnabled() && getAccount().isActive() && getAccount().isPublicPage() && hasAccountInfo() &&
+		isMugshotEnabledWithDefault() && getAccount().isActive() && getAccount().isPublicPage() && hasAccountInfo() &&
 		(!accountType.isAffectedByMusicSharing() || getAccount().isMusicSharingEnabledWithDefault());
 	}
 	
@@ -321,9 +325,9 @@ public class ExternalAccount extends DBUnique {
 	
 	public static int compare(ExternalAccount first, ExternalAccount second) {
 		if (first.getOnlineAccountType().equals(second.getAccountType()))
-			if (first.isMugshotEnabled())
+			if (first.isMugshotEnabledWithDefault())
 				return -1;
-			else if (second.isMugshotEnabled())
+			else if (second.isMugshotEnabledWithDefault())
 				return 1;
 			else 
 			    return 0;

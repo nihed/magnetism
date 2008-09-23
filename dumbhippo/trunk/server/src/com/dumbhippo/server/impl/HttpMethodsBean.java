@@ -1609,19 +1609,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		    throw new RuntimeException(e.getMessage());
 	    }    
 	    if (onlineAccountType.getAccountType() != null) {
-	    	// This will make sure that there is one mugshotEnabled exernal account of a given type that is hated. 
-	    	// It will through an exception if there are other accounts of this type that are loved, even if they are
-	    	// not Mugshot enabled, so we eed to make sure it's not possible to hate an account type in the UI when
-	    	// you have accounts of this type listed.
-	    	Set<ExternalAccount> allExternals = externalAccountSystem.lookupExternalAccounts(viewpoint, viewpoint.getViewer(), onlineAccountType);
-	    	boolean foundOneLovedAccount = false; 
-	    	for (ExternalAccount external : allExternals) {
-	    		if (external.getSentiment() == Sentiment.LOVE && foundOneLovedAccount) {
-	    			throw new RuntimeException("Can't allow hating an external account of type " + onlineAccountType + " because other loved accounts of this type exist.");
-	    		} else if (external.getSentiment() == Sentiment.LOVE) {
-	    			foundOneLovedAccount = true;
-	    		}
-	    	}
 	        ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, onlineAccountType.getAccountType());
 	        externalAccountSystem.setSentiment(external, Sentiment.HATE);
 	        if (quip != null) {
@@ -1649,7 +1636,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			
         try {
 		    ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, id);
-		    externalAccountSystem.setSentiment(external, Sentiment.INDIFFERENT);	
+		    externalAccountSystem.setSentiment(external, Sentiment.INDIFFERENT);
 	    } catch (NotFoundException e) {
 		    throw new RuntimeException(e.getMessage());
 	    }
@@ -1663,16 +1650,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	    	external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, externalAccountType);
 	    } else if (id == "") {
 		    try {
-		        ExternalAccount mugshotEnabledExternal = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), externalAccountType);
-		        // we shouldn't allow hating an account type and having some accounts of that type listed, so we just override the value on the
-		        // hated account if one exists
-		        if (mugshotEnabledExternal.getSentiment() == Sentiment.INDIFFERENT || mugshotEnabledExternal.getSentiment() == Sentiment.HATE) {
-		    	    external = mugshotEnabledExternal;
+		        ExternalAccount existingExternal = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), externalAccountType);
+		        // we can reuse an account with INDIFFERENT sentiment if one exists
+		        if (existingExternal.getSentiment() == Sentiment.INDIFFERENT) {
+		    	    external = existingExternal;
 		        } else {
 		            external = externalAccountSystem.createExternalAccount(viewpoint, onlineAccountType);
 		        }
 		    } catch (NotFoundException e) {
-			    external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, externalAccountType);
+			    external = externalAccountSystem.createExternalAccount(viewpoint, onlineAccountType);
 		    }			
 	    } else {
             try {
