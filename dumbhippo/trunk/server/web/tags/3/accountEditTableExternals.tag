@@ -135,9 +135,13 @@
 	            <c:if test="${supportedAccount.newType}">
 	                <c:set var="label" value="${supportedAccount.siteName}"/>  
 	            </c:if>
+	            <c:set var="icon" value=""/>
+	            <c:if test="${!empty supportedAccount.iconName}">
+	                <c:set var="icon" value="/images3/${buildStamp}/${supportedAccount.iconName}"/>
+	            </c:if>    
 	            <dht2:formTableRow controlId="dh${supportedAccount.domNodeIdName}"
 		                           label="${label}"				
-			                       icon="/images3/${buildStamp}/${supportedAccount.iconName}">
+			                       icon="${icon}">
                     <gnome:loveEntry name="${supportedAccount.siteName}"
 			  	   	  	             userInfoType="${supportedAccount.userInfoType}"
 							         link="${supportedAccount.onlineAccountType.site}"

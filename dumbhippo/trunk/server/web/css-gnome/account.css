@@ -24,13 +24,13 @@
 
 #dhAccounts .dh-label-cell {
 	text-align:     left;
-	width:          120px; /* if you change this, you also have to change the -with-prefix one below */
+	width:          210px; /* if you change this, you also have to change the -with-prefix one below */
 }
 
 #dhAccounts .dh-label-cell .dh-label-cell-div-with-prefix {
     position:       relative;
     margin-left:    -40px;
-    width:          160px; /* if you change this, you also have to change the one above */
+    width:          250px; /* if you change this, you also have to change the one above */
 }
 
 #dhAccounts .dh-control-cell-next-to-info {
@@ -40,6 +40,10 @@
 #dhAccounts .dh-label-cell .dh-form-table-row-icon {
     margin-right:    5px;
     vertical-align:  middle;
+}
+
+#dhAccounts .dh-no-icon-label {
+    margin-left:     26px;
 }
 
 .dh-account-preferences-row label {
