@@ -98,6 +98,8 @@ public interface ExternalAccountSystem extends AccountStatusListener {
 
 	public void setSentiment(ExternalAccount externalAccount, Sentiment sentiment);
 	
+	public void setMugshotEnabled(ExternalAccount externalAccount, boolean mugshotEnabled);
+	
 	public void validateAll();
 	
 	public OnlineAccountType getOnlineAccountType(ExternalAccountType accountType);

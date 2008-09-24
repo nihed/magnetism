@@ -214,6 +214,17 @@ dh.account.setImAccountType = function(type) {
 	}
 }
 
+dh.account.toggleMugshotEnabled = function(accountId) {
+  	dh.server.doPOST("togglemugshotenabled",
+			 	     { "accountId" : accountId },
+  					 function(type, data, http) {
+  					 	dh.util.refresh();
+					 },
+					 function(type, error, http) {
+						 alert("Couldn't change the setting for Mugshot use.");
+					 });
+}
+
 dh.account.hateExternalAccount = function(type, quip, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("hateexternalaccount",
 				     { "type" : type,

@@ -7,7 +7,9 @@
 <%@ attribute name="isInfoTypeProvidedBySite" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="link" required="true" type="java.lang.String" %>
 <%@ attribute name="baseId" required="true" type="java.lang.String" %>
+<%@ attribute name="accountId" required="true" type="java.lang.String" %>
 <%@ attribute name="mode" required="true" type="java.lang.String" %>
+<%@ attribute name="mugshotEnabled" required="true" type="java.lang.Boolean" %>
 
 <%-- Note: <jsp:doBody/> is used only when an account is loved to dispay additional details --%>
 <%-- because right now it is only useful when an account is loved. It's ok to use it when an --%>
@@ -43,6 +45,12 @@
 			<dh:png klass="dh-love-hate-icon" src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/>
 			<span id="${baseId}LoveValueId"></span>
 		</a>
+	    <c:if test="${!mugshotEnabled}">
+	        &nbsp;
+            <a href="javascript:dh.love.setMode('${baseId}', 'loveEdit')" title="Click to change">
+		      (not used)
+		    </a>   
+		</c:if>  
 	    <jsp:doBody/>
 	</div>
 	<div id="${baseId}HateId" style="display: ${hateDisplay};">
@@ -66,6 +74,22 @@
 		<dht:textInput id="${baseId}LoveEntryId" maxlength="255"/>
 		<img src="/images3/${buildStamp}/save_button.gif" onclick="dh.lovehate.saveClicked('${baseId}', 'love')"/>
 		<a href="javascript:dh.lovehate.cancelClicked('${baseId}')" title="I don't love it anymore - go back to being indifferent"><img src="/images3/${buildStamp}/x_button.gif"/></a>
+		<c:if test="${mode == 'love'}">
+		    <c:set var="title" value="You can list multiple accounts of a given type, but only up to one of them can be used on Mugshot at the moment."/>
+		    <div class="dh-account-preferences-row dh-mugshot-enabled-preference">
+		        <c:choose>
+		            <c:when test="${mugshotEnabled}">
+                        <input type="checkbox" id="${baseId}MugshotEnabled" checked
+			                   onclick="dh.account.toggleMugshotEnabled('${accountId}');" title="${title}">		            
+		            </c:when>
+		            <c:otherwise>
+                        <input type="checkbox" id="${baseId}MugshotEnabled"
+			                   onclick="dh.account.toggleMugshotEnabled('${accountId}');" title="${title}">			            
+		            </c:otherwise>
+		        </c:choose>    
+			    <label for="${baseId}MugshotEnabled" title="${title}">Use on Mugshot</label>
+			</div>
+		</c:if>	
 	    <jsp:doBody/>
 		<dht:loveHateEntryDescription isEditing="true" baseId="${baseId}" name="${name}" userInfoType="${userInfoType}" isInfoTypeProvidedBySite="${isInfoTypeProvidedBySite}" link="${link}"/>
 	</div>	
@@ -73,7 +97,7 @@
 		<dh:png klass="dh-love-hate-icon" src="/images3/${buildStamp}/quiphate_icon.png" style="width: 11; height: 11; overflow: hidden;"/>
 		<dht:textInput id="${baseId}HateEntryId" maxlength="255"/>
 		<img src="/images3/${buildStamp}/save_button.gif" onclick="dh.lovehate.saveClicked('${baseId}', 'hate')"/>
-		<a href="javascript:dh.lovehate.cancelClicked('${baseId}')" title="End the hate - go back to being indifferent"><img src="/images3/${buildStamp}/x_button.gif"/></a>
+		<a href="javascript:dh.lovehate.cancelClicked('${baseId}')" title="End the hate - go back to being indifferent"><img src="/images3/${buildStamp}/x_button.gif"/></a>		
 		<dht:loveHateEntryDescription isEditing="true" baseId="${baseId}" name="${name}" userInfoType="${userInfoType}" isInfoTypeProvidedBySite="${isInfoTypeProvidedBySite}" link="${link}"/>		
 	</div>
 	<div id="${baseId}BusyId" style="display: none;">

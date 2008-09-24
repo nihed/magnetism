@@ -225,7 +225,9 @@
 							        isInfoTypeProvidedBySite="${supportedAccount.externalAccountType.infoTypeProvidedBySite}"
 							        link="${supportedAccount.externalAccountType.siteLink}"
 							        baseId="dh${supportedAccount.domNodeIdName}"
-							        mode="${supportedAccount.sentiment}">
+							        accountId="${supportedAccount.id}"
+							        mode="${supportedAccount.sentiment}"
+							        mugshotEnabled="${supportedAccount.mugshotEnabled}">
 					                 
 							        <c:if test="${supportedAccount.siteName == 'Amazon' && supportedAccount.mugshotEnabled}">
 								        <div class="dh-amazon-details">
@@ -244,7 +246,9 @@
 							        isInfoTypeProvidedBySite="${supportedAccount.externalAccountType.infoTypeProvidedBySite}"
 							        link="${supportedAccount.externalAccountType.siteLink}"
 							        baseId="dh${supportedAccount.domNodeIdName}"
-							        mode="${supportedAccount.sentiment}">					                 							        
+							        accountId="${supportedAccount.id}"
+							        mode="${supportedAccount.sentiment}"
+							        mugshotEnabled="${supportedAccount.mugshotEnabled}">					                 							        
 							        <c:if test="${supportedAccount.siteName == 'Amazon' && supportedAccount.mugshotEnabled}">
 								        <div class="dh-amazon-details">
 								        <c:forEach items="${account.amazonLinks}" var="amazonLinkPair">

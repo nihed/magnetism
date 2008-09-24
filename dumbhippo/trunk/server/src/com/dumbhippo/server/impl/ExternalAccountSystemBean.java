@@ -514,6 +514,32 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		
 		notifier.onExternalAccountLovedAndEnabledMaybeChanged(user, externalAccount);
 	}
+	
+	public void setMugshotEnabled(ExternalAccount externalAccount, boolean mugshotEnabled) {
+		if (externalAccount.isMugshotEnabled() != null && externalAccount.isMugshotEnabled().booleanValue() == mugshotEnabled)
+			return;
+		
+		User user = externalAccount.getAccount().getOwner(); 
+
+		// unset mugshotEnabled on any other account that might have it set if mugshotEnabled=true
+		// set mugshotEnabled to true on some other account that can have it set if mugshotEnabled=false
+		Set<ExternalAccount> externalAccounts = lookupExternalAccounts(new UserViewpoint(user, Site.NONE), user, externalAccount.getOnlineAccountType());
+    	for (ExternalAccount externalAccountToCheck : externalAccounts) {
+    		if (mugshotEnabled && externalAccountToCheck.getSentiment() == Sentiment.LOVE 
+    			&& externalAccountToCheck.isMugshotEnabled() != null && externalAccountToCheck.isMugshotEnabled()) {
+    			externalAccountToCheck.setMugshotEnabled(null);
+    			notifier.onExternalAccountLovedAndEnabledMaybeChanged(user, externalAccountToCheck);
+    			break;
+    		} else if (!mugshotEnabled && externalAccountToCheck.getSentiment() == Sentiment.LOVE 
+    				   && externalAccountToCheck.isMugshotEnabled() == null && !externalAccount.equals(externalAccountToCheck)) {
+    			externalAccountToCheck.setMugshotEnabled(true);
+    		    notifier.onExternalAccountLovedAndEnabledMaybeChanged(user, externalAccountToCheck);
+    		    break;
+    		}    
+    	}    
+        externalAccount.setMugshotEnabled(mugshotEnabled);
+        notifier.onExternalAccountLovedAndEnabledMaybeChanged(user, externalAccount);
+	}
 
 	public boolean getExternalAccountExistsLovedAndEnabled(Viewpoint viewpoint, User user, ExternalAccountType accountType) {
 		try {

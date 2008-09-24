@@ -39,6 +39,11 @@
     bottom:   2px;
 }
 
+.dh-mugshot-enabled-preference {
+    margin-top: 4px;
+    margin-left: 12px;
+}
+
 #dhAccounts .dh-spacer-row {
 	height:			5px;
 }

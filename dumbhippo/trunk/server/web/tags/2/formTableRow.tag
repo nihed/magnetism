@@ -41,7 +41,7 @@
 	</c:choose>
 	<c:choose>
 	    <c:when test="${!empty info}">
-	        <td class="dh-control-cell dh-control-cell-next-to-info"><div class="dh-control-cell-div"><jsp:doBody/></div></td>
+	        <td class="dh-control-cell dh-control-cell-next-to-info"><div class="dh-control-cell-div" id="${controlId}FormContent"><jsp:doBody/></div></td>
 	        <td class="dh-info-cell">
 	        <c:choose>
 	            <c:when test="${!empty infoLink}">
