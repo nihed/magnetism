@@ -30,8 +30,9 @@
 	    <td class="dh-label-cell">
 		    <div class="dh-label-cell-div ${withPrefixClass}" id="${controlId}FormLabel">
                 <c:if test="${!empty prefixIcon}"><dh:png klass="dh-form-table-row-icon" src="${prefixIcon}" style="width: ${prefixIconWidth}; height: ${prefixIconHeight}; border: none; overflow: hidden;"/></c:if>
-			    <c:if test="${!empty icon}"><dh:png klass="dh-form-table-row-icon" src="${icon}" style="width: 16; height: 16; border: none; overflow: hidden;"/></c:if>
-		        <c:out value="${label}"/>:
+                <c:set var="noIconClass" value="dh-no-icon-label"/>
+			    <c:if test="${!empty icon}"><dh:png klass="dh-form-table-row-icon" src="${icon}" style="width: 16; height: 16; border: none; overflow: hidden;"/><c:set var="noIconClass" value=""/></c:if>
+		        <span class="${noIconClass}"><c:out value="${label}"/>:</span>
 	        </div>
 	    </td>
 	</c:when>
