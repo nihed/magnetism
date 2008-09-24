@@ -1596,6 +1596,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}		
 	}
 	
+	public void doToggleMugshotEnabled(UserViewpoint viewpoint, String accountId) throws IOException, HumanVisibleException {
+        try {
+		    ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, accountId);
+		    externalAccountSystem.setMugshotEnabled(external, !external.isMugshotEnabledWithDefault());
+	    } catch (NotFoundException e) {
+		    throw new RuntimeException(e.getMessage());
+	    }
+	}
+	
 	public void doHateExternalAccount(XmlBuilder xml, UserViewpoint viewpoint, String type, String quip) throws XmlMethodException {
 		
 		// FIXME for any external account that has a feed associated with it, we could try to remove the feed and

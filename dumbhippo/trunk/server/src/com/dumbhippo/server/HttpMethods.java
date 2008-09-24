@@ -282,7 +282,11 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "groupId", "url" })
 	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, Group group, URL url) throws XmlMethodException;
-
+	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "accountId" })
+	public void doToggleMugshotEnabled(UserViewpoint viewpoint, String accountId) throws IOException, HumanVisibleException;	
+	
 	/**
 	 * Mark an external account as "hated" and give an optional quip about why.
 	 * If the quip is missing or empty it's taken as "delete any quip"
