@@ -96,7 +96,7 @@ public class WhereImIQHandler extends AnnotatedIQHandler implements LiveEventLis
 		UserViewpoint viewpoint = new UserViewpoint(user, Site.XMPP);		
 		ExternalAccount acct;
 		try {
-			acct = externalAccountSystem.lookupExternalAccount(viewpoint, user, event.getType());
+			acct = externalAccountSystem.lookupExternalAccount(viewpoint, String.valueOf(event.getId()));
 		} catch (NotFoundException e) {
 			throw new RuntimeException("Couldn't find changed external account for user " + user, e);
 		}
