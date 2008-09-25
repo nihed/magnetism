@@ -320,7 +320,8 @@ public class ExternalAccount extends DBUnique {
 	 */
 	@Transient
 	public boolean hasAccountInfo() {
-		return accountType != null && accountType.getHasAccountInfo(handle, extra);
+		return ((accountType != null && accountType.getHasAccountInfo(handle, extra)) || 
+		        (accountType == null && handle != null && handle.trim().length() > 0 ));
 	}
 	
 	public static int compare(ExternalAccount first, ExternalAccount second) {

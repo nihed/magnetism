@@ -1626,6 +1626,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			        quip = null;
 	        }
 	        external.setQuip(quip);
+	        // while we don't really need this call hare because externalAccountSystem.setSentiment() above makes it as well,
+	        // it's better to be clear in making it here as well along with the setting of a quip 
 	        DataService.currentSessionRW().changed(ExternalAccountDMO.class, new ExternalAccountKey(external), "quip");
 	    } else {
 	    	throw new RuntimeException("OnlineAccountType " + onlineAccountType + " did no have a corresponding ExternalAccountType.");

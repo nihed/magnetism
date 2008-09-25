@@ -1,7 +1,7 @@
 package com.dumbhippo.live;
 
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.OnlineAccountType;
 
 /**
  * Event sent when an external account changes for a user
@@ -10,16 +10,19 @@ import com.dumbhippo.persistence.ExternalAccountType;
 public class ExternalAccountChangedEvent implements LiveEvent {
 	private static final long serialVersionUID = 1L;
 	
+	private long id = -1;
+	
 	private Guid userId;
 
-	private ExternalAccountType type;
+	private String type;	
 	
 	/**
 	 * @param userId the userID
 	 */
-	public ExternalAccountChangedEvent(Guid userID, ExternalAccountType type) {
+	public ExternalAccountChangedEvent(Guid userID, OnlineAccountType type, long id) {
 		this.userId = userID;
-		this.type = type;
+		this.type = type.getName();
+		this.id = id;
 	}
 
 	public Guid getUserId() {
@@ -30,7 +33,11 @@ public class ExternalAccountChangedEvent implements LiveEvent {
 		return null;
 	}
 
-	public ExternalAccountType getType() {
+	public String getType() {
 		return type;
+	}
+	
+	public long getId() {
+		return id;
 	}
 }
