@@ -22,7 +22,7 @@ public class ExternalAccountChangePropagatorBean implements ExternalAccountChang
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountChangePropagator.class);
 
 	private void notify(User user, ExternalAccount external) {
-		LiveState.getInstance().queueUpdate(new ExternalAccountChangedEvent(user.getGuid(), external.getAccountType()));		
+		LiveState.getInstance().queueUpdate(new ExternalAccountChangedEvent(user.getGuid(),  external.getOnlineAccountType(), external.getId()));		
 	}
 	
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
@@ -33,7 +33,7 @@ public class ExternalAccountChangePropagatorBean implements ExternalAccountChang
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
 		DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "lovedAccounts");
 		DataService.currentSessionRW().changed(ExternalAccountDMO.class, new ExternalAccountKey(external), "link");
-                DataService.currentSessionRW().changed(ExternalAccountDMO.class, new ExternalAccountKey(external), "username");
+        DataService.currentSessionRW().changed(ExternalAccountDMO.class, new ExternalAccountKey(external), "username");
 		notify(user, external);
 	}
 }

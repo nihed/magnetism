@@ -7,6 +7,7 @@ import java.util.List;
 import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 
+import com.dumbhippo.Site;
 import com.dumbhippo.Thumbnail;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
@@ -19,7 +20,7 @@ import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
 
 @DMO(classId="http://mugshot.org/p/o/externalAccount", resourceBase="/o/externalAccount")
 public abstract class ExternalAccountDMO extends DMObject<ExternalAccountKey> {
@@ -41,17 +42,11 @@ public abstract class ExternalAccountDMO extends DMObject<ExternalAccountKey> {
 	@Override
 	protected void init() throws NotFoundException {
 		ExternalAccountKey key = getKey();
-		
-		long id = key.getId();
-		if (id >= 0) {
-			externalAccount = em.find(ExternalAccount.class, id);
-		} else {
-			User user = em.find(User.class, key.getUserId().toString());
-			if (user == null)
-				throw new NotFoundException("No such user");
+		User user = em.find(User.class, key.getUserId().toString());
+		if (user == null)
+		    throw new NotFoundException("No such user");
 			
-			externalAccount = externalAccountSystem.lookupExternalAccount(SystemViewpoint.getInstance(), user, key.getType());
-		}
+		externalAccount = externalAccountSystem.lookupExternalAccount(new UserViewpoint(user, Site.NONE), String.valueOf(key.getId()));
 	}
 		
 	// FIXME: probably should add enum support and only convert to string when going to XML
