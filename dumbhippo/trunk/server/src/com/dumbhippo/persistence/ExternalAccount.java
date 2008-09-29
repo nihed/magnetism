@@ -240,11 +240,18 @@ public class ExternalAccount extends DBUnique {
 	}
 	
 	@Transient
+	public String getFullName() {
+		return onlineAccountType.getFullName();
+	}
+	
+	@Transient
 	public String getLink() {
-		if (hasAccountInfo())
+		// TODO: probably need to have another field in OnlineAccountType to get a format
+		// of the profile link, given the handle
+		if (accountType != null && hasAccountInfo())
 			return accountType.getLink(handle, extra);
 		else
-			throw new RuntimeException("can't getLink() on account without handle/extra");
+			return onlineAccountType.getSite();
 	}
 	
 	@Transient
@@ -310,6 +317,11 @@ public class ExternalAccount extends DBUnique {
 	@Transient
 	public boolean isLovedAndEnabled() {
 		return hasLovedAndEnabledType(accountType);
+	}
+		
+	@Transient
+	public boolean isGnomeLovedAndEnabled() {
+		return getSentiment() == Sentiment.LOVE && getAccount().isActive() && hasAccountInfo();
 	}
 	
 	/** 

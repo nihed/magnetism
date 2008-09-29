@@ -52,7 +52,7 @@ public abstract class ExternalAccountDMO extends DMObject<ExternalAccountKey> {
 	// FIXME: probably should add enum support and only convert to string when going to XML
 	@DMProperty(defaultInclude=true)
 	public String getAccountType() {
-		return externalAccount.getAccountType().toString();
+		return externalAccount.getOnlineAccountType().getName();
 	}
 	
 	// FIXME: probably should add enum support and only convert to string when going to XML
@@ -71,7 +71,7 @@ public abstract class ExternalAccountDMO extends DMObject<ExternalAccountKey> {
 	
 	@DMProperty(defaultInclude=true, type=PropertyType.URL)
 	public String getLink() {
-		if (externalAccount.isLovedAndEnabled())
+		if (externalAccount.isGnomeLovedAndEnabled())
 			return externalAccount.getLink();
 		else
 			return null;
@@ -79,7 +79,12 @@ public abstract class ExternalAccountDMO extends DMObject<ExternalAccountKey> {
 	
 	@DMProperty(defaultInclude=true, type=PropertyType.URL)
 	public String getIconUrl() {
-		return "/images3/" + externalAccount.getIconName();
+		String iconName = externalAccount.getIconName();
+		// TODO: need a generic favicon icon or use favicon scraping
+		if (iconName.isEmpty())
+			return "/images3/feed_icon16x16.png";
+		else 	
+		    return "/images3/" + externalAccount.getIconName();
 	}
 
 	@DMProperty(defaultInclude=true)
