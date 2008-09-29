@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.Site;
+import com.dumbhippo.SortUtils;
 import com.dumbhippo.dm.DMFeed;
 import com.dumbhippo.dm.DMFeedItem;
 import com.dumbhippo.dm.DMObject;
@@ -136,9 +137,13 @@ public abstract class UserDMO extends DMObject<Guid> {
 	@DMProperty
 	public List<ExternalAccountDMO> getLovedAccounts() {
 		List<ExternalAccountDMO> result = new ArrayList<ExternalAccountDMO>();
-		
-		for (ExternalAccount externalAccount : user.getAccount().getExternalAccounts()) {
-			if (externalAccount.isLovedAndEnabled())
+
+		Set<ExternalAccount> allAccounts = user.getAccount().getExternalAccounts();
+		List<ExternalAccount> alphabetizedAccounts = 
+			SortUtils.sortCollection(allAccounts.toArray(new ExternalAccount[allAccounts.size()]), "getFullName");
+
+		for (ExternalAccount externalAccount : alphabetizedAccounts) {
+			if (externalAccount.isGnomeLovedAndEnabled())
 				result.add(session.findUnchecked(ExternalAccountDMO.class, new ExternalAccountKey(externalAccount)));
 		}
 		
