@@ -79,9 +79,9 @@ public class OnlineDesktopSystemBean implements OnlineDesktopSystem {
 	}
 
 	public void setGoogleServicedEmail(Viewpoint viewpoint, User user, EmailResource email, boolean enabled) throws RetryException {
-		if (!(viewpoint instanceof SystemViewpoint) && !viewpoint.isOfUser(user))
+		if (!(viewpoint instanceof SystemViewpoint) && (user == null || !viewpoint.isOfUser(user)))
 			throw new RuntimeException("can only get your own enabled emails");
-		if (!(viewpoint instanceof SystemViewpoint) && !email.getAccountClaim().getOwner().equals(user))
+		if (!(viewpoint instanceof SystemViewpoint) && (user == null || !email.getAccountClaim().getOwner().equals(user)))
 			throw new RuntimeException("can only set Google state for emails you own");
 		EmailDetails ed = getEmailDetails(email);
 		ed.setGoogleServicesEnabled(enabled);

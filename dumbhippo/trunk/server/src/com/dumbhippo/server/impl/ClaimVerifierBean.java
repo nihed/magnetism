@@ -171,6 +171,10 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		} catch (ValidationException e) {
 			throw new HumanVisibleException("That isn't a valid email address (" + e.getMessage() + ")");
 		}
+		
+    	if (resource.getAccountClaim() != null && !resource.getAccountClaim().getOwner().equals(user))
+    		throw new HumanVisibleException("This email address is already claimed by someone else.");
+    	
 		String link = getClaimVerifierLink(viewpoint, user, resource);
 		MimeMessage message = mailer.createMessage(viewpoint, Mailer.SpecialSender.VERIFIER, resource.getEmail());
 		

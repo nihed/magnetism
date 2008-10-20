@@ -102,6 +102,7 @@ public class HippoPlugin implements Plugin {
 			addIQHandler(new LegacyContactsIQHandler());
 			addIQHandler(new ContactsIQHandler());
 			addIQHandler(new EntityIQHandler());			
+			addIQHandler(new AccountsIQHandler());
 			
 			Log.debug("... done initializing Hippo plugin");
 		} catch (Exception e) {

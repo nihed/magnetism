@@ -265,7 +265,7 @@ public class FacebookServlet extends AbstractServlet {
 					    		accountsSetSuccessful.add(ExternalAccountType.FLICKR);
 					    	} else {
 					    		Method setAccount = httpMethods.getClass().getMethod("doSet" + entry.getKey().getDomNodeIdName() + "Account",
-					    				                                             new Class[] {XmlBuilder.class, UserViewpoint.class, String.class});	
+					    				                                             new Class[] {XmlBuilder.class, UserViewpoint.class, String.class, String.class});	
 					    		XmlBuilder resultXml = new XmlBuilder();
 					    		resultXml.openElement("result");
 					    		setAccount.invoke(httpMethods, new Object[] {resultXml, userViewpoint, "mugshot", entryValue});

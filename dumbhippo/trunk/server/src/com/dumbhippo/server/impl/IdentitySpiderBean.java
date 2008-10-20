@@ -618,12 +618,19 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 					}
 				}						
 				
+				if (res instanceof EmailResource) {
+				     EmailDetails emailDetails = onlineDesktop.lookupEmailDetails((EmailResource)res);
+				     if (emailDetails != null && emailDetails.getGoogleServicesEnabled()) {
+				    	 // we want to send out a notification for the claimedOwner about a removed Google serviced e-mail
+				    	 onlineDesktop.onGoogleServicedEmailChange(SystemViewpoint.getInstance(), owner, (EmailResource)res);
+				    }						
+				}
 				return;
 			}
 		}
 		
 		logger.warn("No current claims for {} on {}, cancelling pending claims", owner,	res);
-
+		
 		claimVerifier.cancelClaimToken(owner, res);
 	}
 
