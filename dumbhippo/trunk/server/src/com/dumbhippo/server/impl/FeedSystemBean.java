@@ -199,8 +199,12 @@ public class FeedSystemBean implements FeedSystem {
 		String guid = syndEntry.getUri();
 		// Null does occur in practice, if rarely, we just silently such entries
 		// assuming that they won't be interesting things to post in any case. 
-		if (guid == null) 
-			throw new NoEntryGuidException();
+		if (guid == null) {
+			logger.debug("SyndEntry did not have a uri, will try to use the link which is {}", syndEntry.getLink());
+			guid = syndEntry.getLink();
+			if (guid == null)
+			    throw new NoEntryGuidException();
+		}
 		
 		if (guid.length() <= FeedEntry.MAX_ENTRY_GUID_LENGTH)
 			return guid;
@@ -351,7 +355,8 @@ public class FeedSystemBean implements FeedSystem {
 			try {
 				guid = makeEntryGuid(syndEntry);
 			} catch (NoEntryGuidException e1) {
-				continue; // Silently ignore; its hard to log usefully
+				logger.warn("Could not make entry Guid");
+				continue;
 			}
 			
 			if (foundGuids.contains(guid))
@@ -410,11 +415,13 @@ public class FeedSystemBean implements FeedSystem {
 			try {
 				guid = makeEntryGuid(syndEntry);
 			} catch (NoEntryGuidException e1) {
+				logger.warn("Could not make entry Guid");
 				continue;
 			}
 			
-			if (foundGuids.contains(guid))
+			if (foundGuids.contains(guid)) {
 				continue;
+			}
 			
 			if (lastEntries.containsKey(guid)) {
 				// We don't try to update old entries, because it is painful and expensive:
@@ -450,7 +457,6 @@ public class FeedSystemBean implements FeedSystem {
 			try {
 				FeedEntry entry = createEntryFromSyndEntry(feed, syndFeed, syndEntry);
 				em.persist(entry);
-				
 				long age = now - entry.getDate().getTime();
 				
 				// never create/stack blocks for stuff older than 14 days, prevents 
