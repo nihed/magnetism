@@ -20,10 +20,14 @@ import org.xmpp.packet.IQ;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.dm.BadIdException;
 import com.dumbhippo.jive.annotations.IQHandler;
 import com.dumbhippo.jive.annotations.IQMethod;
+import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.OnlineAccountType;
+import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.ExternalAccountSystem;
@@ -33,6 +37,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.OnlineDesktopSystem;
 import com.dumbhippo.server.XmlMethodException;
+import com.dumbhippo.server.dm.ExternalAccountKey;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -175,5 +180,37 @@ public class AccountsIQHandler extends AnnotatedIQHandler {
      		    throw IQException.createBadRequest(e.getMessage());	    		
      	    }    
 	    }
+	}
+	
+	@IQMethod(name="removeOnlineAccount", type=IQ.Type.set)
+	@IQParams({"accountType", "resourceId"})
+	public void removeOnlineAccount(UserViewpoint viewpoint, String accountType, String resourceId) throws IQException {
+		logger.debug("inside removeOnlineAccount");
+		
+		if (accountType.equals("google")) {
+		    IdentitySpider identitySpider = EJBUtil.defaultLookup(IdentitySpider.class);
+			try {
+				Resource resource = identitySpider.lookupEmail(resourceId);
+				identitySpider.removeVerifiedOwnershipClaim(viewpoint, viewpoint.getViewer(), resource);
+			} catch (NotFoundException e) {
+				throw IQException.createBadRequest("Did not find an e-mail for " + resourceId);
+		    } catch (HumanVisibleException e) {
+		    	throw IQException.createBadRequest(e.getMessage());
+		    }
+		} else {    
+			String externalAccountPath = "externalAccount/";
+			String keyString = resourceId.substring(resourceId.indexOf(externalAccountPath) + externalAccountPath.length());
+	        try {           
+			    ExternalAccountKey externalAccountKey = new ExternalAccountKey(keyString);
+			    String accountId = String.valueOf(externalAccountKey.getId());
+			    ExternalAccountSystem externalAccountSystem = EJBUtil.defaultLookup(ExternalAccountSystem.class);
+		        ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, accountId);
+		        externalAccountSystem.setSentiment(external, Sentiment.INDIFFERENT);
+	        } catch (BadIdException e) {
+	        	throw IQException.createBadRequest(e.getMessage());
+	        } catch (NotFoundException e) {
+		        throw IQException.createBadRequest("Online account with resoure id " + resourceId + " did not exist on the server.");
+	        }
+		}        
 	}
 }

@@ -202,7 +202,7 @@ public interface IdentitySpider {
 	 * @param owner the owner in the claim
 	 * @param res the resource they currently may own
 	 */
-	public void removeVerifiedOwnershipClaim(UserViewpoint viewpoint, User owner, Resource res);
+	public void removeVerifiedOwnershipClaim(UserViewpoint viewpoint, User owner, Resource res) throws HumanVisibleException;
 	
 	public Contact findContactByResource(User owner, Resource resource) throws NotFoundException;	
 	
