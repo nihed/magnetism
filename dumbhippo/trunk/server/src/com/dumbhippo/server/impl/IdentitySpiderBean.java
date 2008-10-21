@@ -64,6 +64,7 @@ import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.NotFoundException;
@@ -580,22 +581,40 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		    	 onlineDesktop.onGoogleServicedEmailChange(SystemViewpoint.getInstance(), claimedOwner, (EmailResource)res);
 		    }						
 		}
-	}
+	} 
 
 	public void removeVerifiedOwnershipClaim(UserViewpoint viewpoint,
-			User owner, Resource res) {
+			User owner, Resource res) throws HumanVisibleException {
 		Collection<Contact> oldContacts = findResourceContacts(res);
 		
 		if (!viewpoint.isOfUser(owner)) {
 			throw new RuntimeException(
 					"can only remove your own ownership claims");
 		}
+
 		Set<AccountClaim> claims = owner.getAccountClaims();
-		if (claims.size() < 2) {
-			// UI shouldn't let this happen, but we double-check here
-			throw new RuntimeException(
-					"you have to keep at least one address on an account");
+
+		// normally, any user will claim their Account resource, up to one FacebookResource,
+		// and multiple email, aim, and xmpp resources 
+		// it's possible to not have a single EmailResource if a user has a FacebookResource,
+		// but once an EmailResource has been added, we don't allow deleting the last EmailResource
+		// we are currently never deleting a FacebookResource claim
+		if (res instanceof EmailResource) {
+		    int emailClaimsCounter = 0;	
+			for (AccountClaim claim : claims) {
+			    if (claim.getResource() instanceof EmailResource) {
+			    	emailClaimsCounter++;
+			    	if (emailClaimsCounter > 1)
+			    		break;
+			    }
+			}
+			if (emailClaimsCounter < 2)	{
+				// UI shouldn't let this happen, but we double-check here
+				throw new HumanVisibleException(
+						"You have to keep at least one e-mail address on your user account.");
+			}
 		}
+
 		for (AccountClaim claim : claims) {
 			if (claim.getResource().equals(res)) {
 				logger.debug("Found claim for {} on {}, removing it", owner,
