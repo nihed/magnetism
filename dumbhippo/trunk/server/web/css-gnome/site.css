@@ -199,6 +199,18 @@ input.dh-text-input-showing-default {
     margin-right:       7px;
 }
 
+.gnome-learn-more-text h2 {
+	margin-top: 8px;
+	margin-bottom: 4px;
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.gnome-learn-more-text p {
+	margin-top: 4px;
+	margin-top: 4px;
+}
+
 #dhAccountStatus {
 	background-color:	#fbfadc;
 	border:				1px solid #cccc99;
