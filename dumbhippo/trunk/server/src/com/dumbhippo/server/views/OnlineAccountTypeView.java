@@ -19,6 +19,7 @@ public class OnlineAccountTypeView {
 				            "fullName", onlineAccountType.getFullName(),				                
 				            "siteName", onlineAccountType.getSiteName(),
 				            "site", onlineAccountType.getSite(),
+				            "helpfulLink", onlineAccountType.getSite(),
 				            "userInfoType", onlineAccountType.getUserInfoType(),
 				            "supported", Boolean.toString(onlineAccountType.isSupported()));
 		builder.closeElement();
