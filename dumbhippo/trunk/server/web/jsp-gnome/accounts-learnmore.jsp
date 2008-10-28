@@ -12,7 +12,7 @@
 </head>
 
 <body>
-	<gnome:page currentPageLink="applications">
+	<gnome:page currentPageLink="accounts-learnmore">
 	    <h1>Accounts Service</h1>
    		<div class="gnome-learn-more-text">
    		    <h2>Accounts Service on the Desktop</h2>
