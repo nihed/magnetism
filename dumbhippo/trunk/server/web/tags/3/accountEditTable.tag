@@ -98,6 +98,12 @@
 	    </dht2:formTableRow>
 	</c:if>    
 	<dht2:formTableRow label="Accounts" altRow="${dh:enumIs(site, 'MUGSHOT')}">
+	    <c:if test="${dh:enumIs(site, 'GNOME')}">
+		    <div class="dh-explanation">
+	        Listing your accounts here will make them available to the desktop applications (<a href="/accounts-learnmore">Learn more</a>),
+	        as well as to Mugshot if you have it enabled.
+		    </div>
+		</c:if>    
 		<dht3:accountEditTableExternals account="${account}"/>
 	</dht2:formTableRow>
 	<c:if test="${dh:enumIs(site, 'MUGSHOT')}">	
