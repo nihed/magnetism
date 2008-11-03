@@ -400,16 +400,16 @@ public interface HttpMethods {
 	public void doSetOnlineAccountValue(XmlBuilder xml, UserViewpoint viewpoint, String type, String id, String value) throws XmlMethodException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
-	@HttpParams( { "url" })
-	public void doSetWebsiteAccount(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;
+	@HttpParams( { "id", "url" })
+	public void doSetWebsiteAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String url) throws XmlMethodException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "id", "url" })
 	public void doSetRhapsodyAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String url) throws XmlMethodException, RetryException;
     
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
-	@HttpParams( { "url" })
-	public void doSetBlogAccount(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException, RetryException;	
+	@HttpParams( { "id", "url" })
+	public void doSetBlogAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String url) throws XmlMethodException, RetryException;	
 	
  	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "filename" })
