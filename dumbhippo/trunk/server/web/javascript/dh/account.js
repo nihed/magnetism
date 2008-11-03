@@ -877,13 +877,15 @@ dhAccountInit = function() {
 	if (dh.util.exists('dhWebsiteEntry')) {
 		var websiteEntry = new dh.formtable.ExpandableTextInput('dhWebsiteEntry', 'Your website URL');
 		websiteEntry.setDescription("Your website will be linked from your Mugshot page.");
-		websiteEntry.setChangedXmlMethod('setwebsiteaccount', 'url');
+		var fixedArgs = { 'id' : 'mugshot' };
+		websiteEntry.setChangedXmlMethod('setwebsiteaccount', 'url', fixedArgs);
 	}
 	
 	if (dh.util.exists('dhBlogEntry')) {
 		var blogEntry = new dh.formtable.ExpandableTextInput('dhBlogEntry', 'Your blog URL');
-		blogEntry.setDescription("Your friends will get updates when you post to your blog.")
-		blogEntry.setChangedXmlMethod('setblogaccount', 'url');
+		blogEntry.setDescription("Your friends will get updates when you post to your blog.");
+		var fixedArgs = { 'id' : 'mugshot' };
+		blogEntry.setChangedXmlMethod('setblogaccount', 'url', fixedArgs);
 	}
 	
 	if (dh.util.exists('dhPictureEntry')) {

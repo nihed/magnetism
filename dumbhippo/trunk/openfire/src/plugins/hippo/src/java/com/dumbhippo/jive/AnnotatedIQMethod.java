@@ -185,7 +185,7 @@ public abstract class AnnotatedIQMethod {
 			logger.error("Failure during IQ request run {}", e.getMessage());			
 			throw e;
 		} catch (Exception e) {
-			logger.error("General failure during IQ request run {}", e);			
+			logger.error("General failure during IQ request run " + e.getStackTrace());			
 			throw new RuntimeException("Unexpected exception running IQ method in transaction", e);
 		}
 		logger.debug("Completed IQ request run in {}s", (new Date().getTime() - iqStartTime)/1000);		

@@ -1656,10 +1656,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	private ExternalAccount getOrCreateExternalAccount(UserViewpoint viewpoint, ExternalAccountType externalAccountType, String id) {
 		OnlineAccountType onlineAccountType = externalAccountSystem.getOnlineAccountType(externalAccountType);
 	    ExternalAccount external = null;
-	    if (id == "mugshot") {
+	    if (id.equals("mugshot")) {
 	    	// id = "mugshot" means we want to set the value for the mugshot enabled account
 	    	external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, externalAccountType);
-	    } else if (id == "") {
+	    } else if (id.trim().equals("")) {
 		    try {
 		        ExternalAccount existingExternal = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), externalAccountType);
 		        // we can reuse an account with INDIFFERENT sentiment if one exists
@@ -2172,17 +2172,29 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());		
 	}
 	
-	public void doSetWebsiteAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlStr) throws XmlMethodException {
+	public void doSetWebsiteAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String urlStr) throws XmlMethodException {
 		// DO NOT cut and paste this block into similar external account methods. It's only here because
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
 		// for the plain entries assumes this works.
 		if (urlStr == null || urlStr.trim().length() == 0) {
-			try {
-				ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.WEBSITE);
+			ExternalAccount external = null;
+			if (id.equals("mugshot")) {
+				try {
+					// this will get a Mugshot enabled account or an indifferent account if a Mugshot enabled one doesn't exist 
+					external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.WEBSITE);
+				} catch (NotFoundException e) {
+				}
+			} else if (!id.trim().equals("")) {		
+			    try {
+				    external = externalAccountSystem.lookupExternalAccount(viewpoint, id);
+	            } catch (NotFoundException e) {
+		            throw new RuntimeException(e.getMessage());
+	            }
+			}
+			if (external != null) {
 				externalAccountSystem.setSentiment(external, Sentiment.INDIFFERENT);
 				// otherwise the website url would keep "coming back" since there's no visual indication of hate/indifferent status
 				external.setHandle(null);
-			} catch (NotFoundException e) {
 			}
 			return;
 		}
@@ -2201,7 +2213,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		// the rest of this is more typical of a "set external account" http method
 				
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.WEBSITE);
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.WEBSITE, id);
 		try {
 			external.setHandleValidating(url.toExternalForm());
 		} catch (ValidationException e) {
@@ -2210,21 +2222,32 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
 
-	public void doSetBlogAccount(XmlBuilder xml, UserViewpoint viewpoint, String urlStr) throws XmlMethodException, RetryException {
-		
+	public void doSetBlogAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String urlStr) throws XmlMethodException, RetryException {
 		// DO NOT cut and paste this block into similar external account methods. It's only here because
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
 		// for the plain entries assumes this works.
 		if (urlStr == null || urlStr.trim().length() == 0) {
-			try {
-				ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.BLOG);
-				externalAccountSystem.setSentiment(external, Sentiment.INDIFFERENT);	
+			ExternalAccount external = null;
+			if (id.equals("mugshot")) {
+				try {
+					// this will get a Mugshot enabled account or an indifferent account if a Mugshot enabled one doesn't exist 
+					external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.BLOG);
+				} catch (NotFoundException e) {
+				}
+			} else if (!id.trim().equals("")) {		
+			    try {
+				    external = externalAccountSystem.lookupExternalAccount(viewpoint, id);
+	            } catch (NotFoundException e) {
+		            throw new RuntimeException(e.getMessage());
+	            }
+			}
+			if (external != null) {
+				externalAccountSystem.setSentiment(external, Sentiment.INDIFFERENT);
 				// otherwise the blog url would keep "coming back" since there's no visual indication of hate/indifferent status
 				external.setHandle(null);
-			} catch (NotFoundException e) {
 			}
 			return;
-		}
+		}   
 		
 		URL url = null;
 		
@@ -2241,7 +2264,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Feed feed = feedSystem.scrapeFeedFromUrl(url);
 		EJBUtil.forceInitialization(feed.getAccounts());
 		
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.BLOG);
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.BLOG, id);
 		
 		try {
 			external.setHandleValidating(url.toExternalForm());
