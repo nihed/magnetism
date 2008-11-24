@@ -13,6 +13,7 @@
 <%@ attribute name="help" required="false" fragment="true"%>
 <%@ attribute name="contents" required="false" fragment="true"%>
 <%@ attribute name="multiline" required="false" type="java.lang.Boolean"%>
+<%@ attribute name="disabled" required="false" type="java.lang.Boolean"%>
 
 <tr class="${rowClass}">
 	<td class="dh-application-edit-label">
@@ -24,16 +25,32 @@
 				<jsp:invoke fragment="contents"/>
 			</c:when>
 			<c:when test="${multiline}">
-			    <textarea id="${id}" name="${name}" onchange="${onchange}"><c:out value="${value}"/></textarea>
+			    <textarea id="${id}" name="${name}" onchange="${onchange} disabled="${disabled}"><c:out value="${value}"/></textarea>
 			</c:when>
 			<c:otherwise>
-			    <jsp:element name="input">
-				    <jsp:attribute name="id">${id}</jsp:attribute>
-				    <jsp:attribute name="name">${name}</jsp:attribute>
-				    <jsp:attribute name="value"><c:out value="${value}"/></jsp:attribute>
-				    <jsp:attribute name="onchange">${onchange}</jsp:attribute>
-				    <jsp:attribute name="onkeyup">${onkeyup}</jsp:attribute>
-			    </jsp:element>
+			    <%-- since it doesn't appear to be possible to have a conditional inside a jsp:element, we must have --%>
+			    <%-- conditional around the whole jsp:element block --%> 
+			    <c:choose>
+			        <c:when test="${(!empty disabled) && disabled}">
+			            <jsp:element name="input">
+				            <jsp:attribute name="id">${id}</jsp:attribute>
+				            <jsp:attribute name="name">${name}</jsp:attribute>
+				            <jsp:attribute name="value"><c:out value="${value}"/></jsp:attribute>
+				            <jsp:attribute name="onchange">${onchange}</jsp:attribute>
+				            <jsp:attribute name="onkeyup">${onkeyup}</jsp:attribute>
+				            <jsp:attribute name="disabled"/>
+			            </jsp:element>
+				    </c:when>        
+                    <c:otherwise>
+			            <jsp:element name="input">
+				            <jsp:attribute name="id">${id}</jsp:attribute>
+				            <jsp:attribute name="name">${name}</jsp:attribute>
+				            <jsp:attribute name="value"><c:out value="${value}"/></jsp:attribute>
+				            <jsp:attribute name="onchange">${onchange}</jsp:attribute>
+				            <jsp:attribute name="onkeyup">${onkeyup}</jsp:attribute>
+			            </jsp:element>                    
+                    </c:otherwise>
+                </c:choose>    
 			</c:otherwise>
 		</c:choose>
 	</td>

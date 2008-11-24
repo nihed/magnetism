@@ -10,6 +10,10 @@ public class OnlineAccountTypeView {
     	this.onlineAccountType = onlineAccountType;
     }
     
+    public OnlineAccountType getOnlineAccountType() {
+    	return onlineAccountType;
+    }
+    
 	/**
 	 *  we are not using lang at the moment
 	 */
