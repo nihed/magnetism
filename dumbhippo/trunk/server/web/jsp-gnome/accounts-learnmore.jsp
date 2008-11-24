@@ -9,6 +9,7 @@
 <head>
 	<title>Accounts Service</title>
 	<gnome:stylesheet name="site" iefixes="true"/>	
+	<dh:script modules="dh.actions"/>	
 </head>
 
 <body>
@@ -50,10 +51,14 @@
                 <li>You do not need to do own GConf and GNOME Keyring manipulations.
                 <li>You do not need to create a custom dialog for getting the username and a password. 
                 </ul>                
-                You can find a sample usage of the Online Accounts service in the <a href="http://svn.gnome.org/svn/bigboard/trunk/">code for the Bigboard sidebar</a>.
-                You can add new account types by using <a href="/account-type-add">this form</a>, after which they will show up on the <a href="/account">account page</a>. 
-                The new account types will be available on the desktop once you restart the desktop-data-engine and web-login-driver processes. Please check in with us 
-                to see if the account type you want to create already exists. Feel free use <a href="http://mail.gnome.org/mailman/listinfo/online-desktop-list">online-desktop-list@gnome.org mailing list</a>
+                You can find a sample usage of the Online Accounts service in the <a href="http://svn.gnome.org/svn/bigboard/trunk/">code for the Bigboard sidebar</a> 
+                or in <a href="http://twitux.svn.sourceforge.net">Twitux</a>.
+                You can view a list of existing account types <a href="/account-types">here</a>. You can add new account types by using <a href="/account-type-add">this form</a>, 
+                after which they will show up on the <a href="/account">account page</a> if you mark them as public. 
+                The new public account types will be available on the desktop once you restart the desktop-data-engine and web-login-driver processes. 
+                You will be able to edit account types you create, but you need to let us know if you want some account type that already exists to be changed 
+                (for example, switched to be public).
+                Feel free to use <a href="http://mail.gnome.org/mailman/listinfo/online-desktop-list">online-desktop-list@gnome.org mailing list</a>
                 or irc.gnome.org #online-desktop channel for any questions.
             </p>    
 	    </div> 

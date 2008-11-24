@@ -11,6 +11,8 @@
 <head>
 	<title>Existing Account Types</title>
 	<gnome:stylesheet name="site" iefixes="true"/>	
+	<gnome:stylesheet name="account-types"/>	
+    <dh:script modules="dh.actions"/>	
 </head>
 
 <body>
@@ -18,7 +20,7 @@
 	    <h3>Existing Account Types</h3>
    		<div class="gnome-learn-more-text">
 		    <p>		    
-		      Click on the account type to view or edit information about it.	
+		      Click on the account type to view or edit information about it. You can add new account types <a href="/account-type-add">here</a>.	
 		    </p>
         </div> 
         <hr>

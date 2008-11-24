@@ -369,4 +369,36 @@ dh.actions.createAccountType = function() {
 					      function(type, msg, http) {
 						      alert(msg);
 					      });    
+}
+
+dh.actions.updateAccountType = function() {
+    name = document.getElementById("dhAccountTypeName").value
+    fullName = document.getElementById("dhAccountTypeFullName").value
+    siteName = document.getElementById("dhAccountTypeSiteName").value
+    site = document.getElementById("dhAccountTypeSite").value
+    userInfoType = document.getElementById("dhUserInfoType").value
+    public = document.getElementById("dhAccountTypePublic").checked
+  	dh.server.doXmlMethod("updateaccounttype",
+			 	          { "name" : name, "fullName" : fullName, "siteName" : siteName, "site" : site, 
+			 	            "userInfoType" : userInfoType, "isSupported" : public },
+  					      function(type, data, http) {
+  					          alert("Account type updated!");
+  					 	      dh.util.refresh();
+					      },
+					      function(type, msg, http) {
+						      alert(msg);
+					      });    
 }    
+
+dh.actions.removeAccountType = function() {
+    name = document.getElementById("dhAccountTypeName").value
+  	dh.server.doXmlMethod("removeaccounttype",
+			 	          { "name" : name },
+  					      function(type, data, http) {
+  					          alert("Account type removed!");
+  					 	      window.open("/account-types", "_self");
+					      },
+					      function(type, msg, http) {
+						      alert(msg);
+					      });    
+}  

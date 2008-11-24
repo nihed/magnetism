@@ -117,4 +117,9 @@ public interface ExternalAccountSystem extends AccountStatusListener {
 	public List<OnlineAccountType> lookupOnlineAccountTypesForSite(String siteUrl);
 	
 	public OnlineAccountType createOnlineAccountType(UserViewpoint viewpoint, String name, String fullName, String siteName, String siteUrl, String userInfoType) throws ValidationException;	
+
+    public long getNumberOfOnlineAccountsForType(Viewpoint viewpoint, OnlineAccountType onlineAccountType);
+	    
+    public void removeOnlineAccountType(Viewpoint viewpoint, OnlineAccountType onlineAccountType) throws IllegalArgumentException;
+	   
 }

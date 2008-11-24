@@ -2766,7 +2766,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		if (userInfoType.trim().length() == 0)
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Account type with this full name already exists.");
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Account type must have a user info type specified.");
 		
 		// TODO: create a warning if account types for this site already exist
 		// List<OnlineAccountType> accountTypes = externalAccountSystem.lookupOnlineAccountTypesForSite(site);
@@ -2776,5 +2776,60 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, e.getMessage());
 		}
+	}
+	
+	public void doUpdateAccountType(XmlBuilder xml, UserViewpoint viewpoint, String name, String fullName, String siteName, String site, String userInfoType, boolean isSupported)
+        throws XmlMethodException {
+		
+		OnlineAccountType onlineAccountType = null;
+		try {
+			onlineAccountType = externalAccountSystem.lookupOnlineAccountTypeForName(name);
+		} catch (NotFoundException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Account type with name " + name + " does not exist.");
+		}
+		
+		try {
+			OnlineAccountType onlineAccountTypeWithFullName = externalAccountSystem.lookupOnlineAccountTypeForFullName(fullName);
+			if (!onlineAccountType.equals(onlineAccountTypeWithFullName)) {
+			    throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Another account type with this full name already exists.");
+			}
+		} catch (NotFoundException e) {
+			// nothing to do
+		}
+	
+		try {
+			OnlineAccountType onlineAccountTypeWithUserInfoType = externalAccountSystem.lookupOnlineAccountTypeForUserInfoType(userInfoType);
+			if (!onlineAccountType.equals(onlineAccountTypeWithUserInfoType)) {
+			    throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Another account type with this user info type already exists.");
+			}
+		} catch (NotFoundException e) {
+			// nothing to do
+		}
+		
+		if (userInfoType.trim().length() == 0)
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Account type must have a user info type specified.");
+		
+		try { 
+			onlineAccountType.setFullName(fullName);
+			onlineAccountType.setSiteName(siteName);
+			onlineAccountType.setSite(site);
+			onlineAccountType.setUserInfoType(userInfoType);
+		    onlineAccountType.setSupported(isSupported);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, e.getMessage());
+		}
+	}
+	
+	public void doRemoveAccountType(XmlBuilder xml, UserViewpoint viewpoint, String name)
+	    throws XmlMethodException {
+
+		try {
+			OnlineAccountType onlineAccountType = externalAccountSystem.lookupOnlineAccountTypeForName(name);
+			externalAccountSystem.removeOnlineAccountType(viewpoint, onlineAccountType);
+		} catch (NotFoundException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Account type with name " + name + " does not exist.");
+ 		} catch (IllegalArgumentException e) {
+ 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, e.getMessage());
+ 		}
 	}
 }

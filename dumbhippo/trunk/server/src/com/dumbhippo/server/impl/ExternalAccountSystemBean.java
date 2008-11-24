@@ -240,6 +240,24 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		return type;
     }
 	
+    public long getNumberOfOnlineAccountsForType(Viewpoint viewpoint, OnlineAccountType onlineAccountType) {
+    	Query q = em.createQuery("SELECT COUNT(e) FROM ExternalAccount e WHERE " +
+    			                 "e.onlineAccountType = :onlineAccountType");
+    	q.setParameter("onlineAccountType", onlineAccountType);  	
+    	Number num = (Number) q.getSingleResult();
+		return num.longValue(); 	
+    }
+    
+    public void removeOnlineAccountType(Viewpoint viewpoint, OnlineAccountType onlineAccountType) throws IllegalArgumentException {
+    	// ideally, we would allow removing an account type if all the accounts of this type have sentiment indifferent,
+    	// but this would involve removing the accounts as well, and everything that relates to them
+    	if (getNumberOfOnlineAccountsForType(viewpoint, onlineAccountType) == 0) {
+    		em.remove(onlineAccountType);
+    	} else {
+    		throw new IllegalArgumentException("There are online accounts that have this type, so the tyoe can't be removed.");
+    	}
+    }
+    
 	public Set<ExternalAccountView> getExternalAccountViews(Viewpoint viewpoint, User user) {
 		// Right now we ignore the viewpoint, so this method is pretty pointless.
 		// but if people use it, future code will work properly.

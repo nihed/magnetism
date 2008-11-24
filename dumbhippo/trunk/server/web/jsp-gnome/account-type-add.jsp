@@ -10,7 +10,8 @@
 	<title>Add Account Type</title>
 	<gnome:stylesheet name="site" iefixes="true"/>	
 	<gnome:stylesheet name="account-types"/>	
-	<dh:script modules="dh.textinput,dh.util"/>	
+	<gnome:faviconIncludes/>
+	<dh:script modules="dh.textinput,dh.util,dh.actions"/>	
 	<script type="text/javascript">
 	    function dhOnLoad() {
 	        siteName = document.getElementById('dhAccountTypeSiteName');
@@ -26,10 +27,10 @@
 
 <body onload="dhOnLoad()">
 <gnome:page currentPageLink="account-type-add">
-		<div class="dh-page-shinybox-title-large">Add Account Type</div>
+		<h3>Add Account Type</h3>
 		<div>
    			This page allows you to create a new online account type.
-			<a href="/account-types">View existing types</a>
+			You can view existing account types <a href="/account-types">here</a>.
 		</div>
 	    <hr>
          <gnome:accountTypeForm allowEdit="true"/> 

@@ -20,7 +20,7 @@
 	<title>Application Statistics - <c:out value="${appView.application.name}"/></title>
 	<gnome:stylesheet name="site" iefixes="true"/>	
 	<gnome:stylesheet name="applications"/>
-	<dh:script modules="dh.control,dh.util,dh.event"/>
+	<dh:script modules="dh.control,dh.util,dh.event,dh.actions"/>
 	<script type="text/javascript">
 		dhApplicationId = <dh:jsString value="${appView.application.id}"/>;
 		dhApplicationPackageNames = <dh:jsString value="${appView.application.packageNames}"/>;

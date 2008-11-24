@@ -5,6 +5,7 @@
 
 <%@ attribute name="accountTypeView" required="false" type="com.dumbhippo.server.views.OnlineAccountTypeView" %>
 <%@ attribute name="allowEdit" required="true" type="java.lang.Boolean" %>
+<%@ attribute name="allowRemoval" required="false" type="java.lang.Boolean" %>
 
 <c:if test="${(accountTypeView == null) && !allowEdit}">
 	<%-- the user should never see this error message, but we should check to make sure this tag is used correctly --%>
@@ -25,43 +26,50 @@
 <c:set var="siteName" value=""/>
 <c:set var="site" value=""/>
 <c:set var="userInfoType" value=""/>    
-<c:set var="isPublic" value="false"/>  
+<c:set var="publicCheckedAttr" value=""/>
+<c:set var="privateCheckedAttr" value="checked"/>
 <c:set var="disabledAttr" value=""/>
 <c:if test="${accountTypeView != null}">
     <c:set var="name" value="${accountTypeView.onlineAccountType.name}"/>
     <c:set var="fullName" value="${accountTypeView.onlineAccountType.fullName}"/>
     <c:set var="siteName" value="${accountTypeView.onlineAccountType.siteName}"/>
     <c:set var="site" value="${accountTypeView.onlineAccountType.site}"/>
-    <c:set var="userInfoType" value="${accountTypeView.onlineAccountType.userInfoType}"/>    
-    <c:set var="isPublic" value="${accountTypeView.onlineAccountType.supported}"/> 
-    <%-- TODO: change this once we allow editing of existing accounts--%>
+    <c:set var="userInfoType" value="${accountTypeView.onlineAccountType.userInfoType}"/>  
+    <c:if test="${accountTypeView.onlineAccountType.supported}">
+        <c:set var="publicCheckedAttr" value="checked"/>
+        <c:set var="privateCheckedAttr" value=""/>
+    </c:if>      
+</c:if>
+
+<c:if test="${!allowEdit}">
     <c:set var="disabledAttr" value="disabled"/> 
 </c:if>
 
 <div>
     <h3>Account Type Information</h3>
 	<table class="dh-application-edit">
+	    <%-- we never allow changing an existing account type name --%>
         <dht3:applicationEditRow id="dhAccountTypeName" disabled="${accountTypeView != null}" name="name" label="Name" value="${name}" onkeyup="dhLowerCaseAccountTypeName()">
 		    <jsp:attribute name="help">
 		        A short name uniquely identifying the account type. Can only contain lower-case letters and underscores. (e.g. twitter, remember_the_milk, google_reader_rss)
 		    </jsp:attribute>
 		</dht3:applicationEditRow>
-		<dht3:applicationEditRow id="dhAccountTypeFullName" disabled="${accountTypeView != null}" name="fullName" label="Full Name" value="${fullName}">
+		<dht3:applicationEditRow id="dhAccountTypeFullName" disabled="${!allowEdit}" name="fullName" label="Full Name" value="${fullName}">
 		    <jsp:attribute name="help">
 		        A full name for the account type. (e.g. Twitter, Remember the Milk, Netflix RSS Feed)
 		    </jsp:attribute>
 		</dht3:applicationEditRow>
-		<dht3:applicationEditRow id="dhAccountTypeSiteName" disabled="${accountTypeView != null}" name="siteName" label="Site Name" value="${siteName}">
+		<dht3:applicationEditRow id="dhAccountTypeSiteName" disabled="${!allowEdit}" name="siteName" label="Site Name" value="${siteName}">
 		    <jsp:attribute name="help">
 		    	The name of the web site where the user can get this account type. (e.g. Twitter, Remember the Milk)
 		    </jsp:attribute>
 		</dht3:applicationEditRow>
-		<dht3:applicationEditRow id="dhAccountTypeSite" disabled="${accountTypeView != null}" name="site" label="Site" value="${site}">
+		<dht3:applicationEditRow id="dhAccountTypeSite" disabled="${!allowEdit}" name="site" label="Site" value="${site}">
 		    <jsp:attribute name="help">
 	            The url of the web site where the user can get this account type. (e.g. twitter.com, rememberthemilk.com)
 		    </jsp:attribute>
 		</dht3:applicationEditRow>
-		<dht3:applicationEditRow id="dhUserInfoType" disabled="${accountTypeView != null}" name="userInfoType" label="User Info Type" value="${userInfoType}">
+		<dht3:applicationEditRow id="dhUserInfoType" disabled="${!allowEdit}" name="userInfoType" label="User Info Type" value="${userInfoType}">
 		    <jsp:attribute name="help">
 			    What is the type of user information being requested. (e.g. Twitter username, e-mail used for Flickr, Rhapsody "Recently Played Tracks" RSS feed URL)
 		    </jsp:attribute>
@@ -71,8 +79,8 @@
 	    	    Public:
 	    	</td>
 	        <td>
-	    	    <input type="radio" ${disabledAttr} name="dhAccountTypeStatus" id="dhAccountTypePublic" checked="${isPublic}"> <label for="dhAccountTypePublic">Yes</label>
-			    <input type="radio" ${disabledAttr} name="dhAccountTypeStatus" id="dhAccountTypePrivate"  checked="${!isPublic}"> <label for="dhAccountTypePrivate">No</label>		
+	    	    <input type="radio" ${disabledAttr} name="dhAccountTypeStatus" id="dhAccountTypePublic" ${publicCheckedAttr}"> <label for="dhAccountTypePublic">Yes</label>
+			    <input type="radio" ${disabledAttr} name="dhAccountTypeStatus" id="dhAccountTypePrivate"  ${privateCheckedAttr}"> <label for="dhAccountTypePrivate">No</label>		
 	    	</td>
 	    </tr>
 	    <tr>
@@ -89,10 +97,12 @@
 		                <input type="button" value="Save" onclick="dh.actions.createAccountType()"></input>
 		            </c:when>
 		            <c:when test="${allowEdit}">
-		                <%-- TODO: implement this--%>
-		                <%-- <input type="button" value="Save Changes" onclick="dh.actions.updateAccountType()"></input> --%>
+		                <input type="button" value="Save Changes" onclick="dh.actions.updateAccountType()"></input>
 		            </c:when>
 		        </c:choose>
+		        <c:if test="${allowRemoval}">
+		            <input type="button" value="Remove Account Type" onclick="dh.actions.removeAccountType()"></input>
+		        </c:if>
 		    </td>        
 		</tr>
     </table>

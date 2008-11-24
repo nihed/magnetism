@@ -489,4 +489,14 @@ public interface HttpMethods {
 	@HttpParams( { "name", "fullName", "siteName", "site", "userInfoType", "isSupported" })
 	public void doCreateAccountType(XmlBuilder xml, UserViewpoint viewpoint, String name, String fullName, String siteName, String site, String userInfoType, boolean isSupported)
 			throws XmlMethodException;
+
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "name", "fullName", "siteName", "site", "userInfoType", "isSupported" })
+	public void doUpdateAccountType(XmlBuilder xml, UserViewpoint viewpoint, String name, String fullName, String siteName, String site, String userInfoType, boolean isSupported)
+			throws XmlMethodException;
+
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "name" })
+	public void doRemoveAccountType(XmlBuilder xml, UserViewpoint viewpoint, String name)
+			throws XmlMethodException;
 }

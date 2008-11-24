@@ -20,7 +20,7 @@
 	<title>Edit Application - <c:out value="${appinfo.name}"/></title>
 	<gnome:stylesheet name="site" iefixes="true"/>	
 	<gnome:stylesheet name="applications"/>	
-	<dh:script module="dh.util"/>
+	<dh:script modules="dh.util,dh.actions"/>
 	<script type="text/javascript">
 	dhIconCounter = 0;
 	dhIconSizes = ["unspecified", "16x16", "22x22", "24x24", "32x32", "48x48", "64x64", "128x128", "scalable"];
