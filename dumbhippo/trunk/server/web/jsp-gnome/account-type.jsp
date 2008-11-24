@@ -13,18 +13,29 @@
 </c:if>
 
 <head>
-	<title>Add Account Type</title>
+	<title>View Account Type</title>
 	<gnome:stylesheet name="site" iefixes="true"/>	
 	<gnome:stylesheet name="account-types"/>	
 	<dh:script modules="dh.actions"/>	      
 </head>
 
 <gnome:page currentPageLink="account-type">
-		<div class="dh-page-shinybox-title-large">View Account Type</div>
+		<h3>View Account Type</h3>
 		<div>
-   			This page allows you to view information about an online account type.
+   			<c:choose>
+   			    <c:when test="${accountTypes.allowEdit}">
+   			        This page allows you to view and edit information about an online account type.   
+   			    </c:when>
+   			    <c:otherwise>
+   			        This page allows you to view information about an online account type. Feel free to use <a href="http://mail.gnome.org/mailman/listinfo/online-desktop-list">online-desktop-list@gnome.org mailing list</a>
+                    or irc.gnome.org #online-desktop channel to request a change in the settings for this account type. 
+   			    </c:otherwise>
+   			</c:choose>    
+   			<c:if test="${accountTypes.allowRemoval}">
+   			    You can remove this account type because no accounts of this type have been created so far.
+   			</c:if>
 		</div>
 	    <hr>
-	    <gnome:accountTypeForm accountTypeView="${accountTypes.onlineAccountType}" allowEdit="false"/> 
+	    <gnome:accountTypeForm accountTypeView="${accountTypes.onlineAccountType}" allowEdit="${accountTypes.allowEdit}" allowRemoval="${accountTypes.allowRemoval}"/> 
 	</gnome:page>
 </body>

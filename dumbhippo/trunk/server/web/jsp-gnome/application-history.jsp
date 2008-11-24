@@ -23,7 +23,7 @@
 	<title>Application History - <c:out value="${appView.application.name}"/></title>
 	<gnome:stylesheet name="site" iefixes="true"/>	
 	<gnome:stylesheet name="applications"/>	
-    <dh:script modules="dh.util,dh.server"/>
+    <dh:script modules="dh.util,dh.server,dh.actions"/>
 	<script type="text/javascript">
 	function dhRevertApplication() {
 		var applicationId = <dh:jsString value="${appView.application.id}"/>;

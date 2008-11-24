@@ -16,6 +16,11 @@
 .dh-application-edit-control textarea {
 	font-family: Luxi Sans, Arial, sans-serif;
 }
+ 
+/* this ensures that the text in the form is easy to read even if the fields are disabled */ 
+.dh-application-edit-control input {
+    color: black;
+}
 
 .dh-application-edit-help {
 	font-style: italic;

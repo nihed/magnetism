@@ -14,6 +14,7 @@
 	<title>Application Statistics</title>
 	<gnome:stylesheet name="site" iefixes="true"/>	
 	<gnome:stylesheet name="applications"/>	
+	<dh:script modules="dh.actions"/>
 </head>
 
 <body>
