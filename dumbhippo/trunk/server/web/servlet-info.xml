@@ -311,7 +311,7 @@
            they are listed below for completeness -->
       <init-param>
           <param-name>noSignin</param-name>
-          <param-value>accounts-learnmore,apple-dashboard-content,application,applications,applications-learnmore,badges,busy,buttons,comingsoon,error,facebook-welcome,files,flash,google-stacker,google-stacker-spec,google-stacker-content,group-files,licenses,mugshot-eula,public-groups,radar-theme,sharelink,sharelink-inactive,signup,summit,tour,unknownlink,upgrade,user-summary,who-are-you,robots.txt,trademark</param-value>
+          <param-value>account-type,account-types,accounts-learnmore,apple-dashboard-content,application,applications,applications-learnmore,badges,busy,buttons,comingsoon,error,facebook-welcome,files,flash,google-stacker,google-stacker-spec,google-stacker-content,group-files,licenses,mugshot-eula,public-groups,radar-theme,sharelink,sharelink-inactive,signup,summit,tour,unknownlink,upgrade,user-summary,who-are-you,robots.txt,trademark</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
@@ -319,7 +319,7 @@
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>account,admin,account-type-add,account-types,application-edit,application-history,chatwindow,chatwindow-disabled,create-group,download,friends,getradar,group-account,group-invitation,group-invitations,home,invitation,invitation-admin,network,network-overview,radar-theme-creator,statistics</param-value>
+          <param-value>account,admin,account-type-add,application-edit,application-history,chatwindow,chatwindow-disabled,create-group,download,friends,getradar,group-account,group-invitation,group-invitations,home,invitation,invitation-admin,network,network-overview,radar-theme-creator,statistics</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   
