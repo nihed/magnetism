@@ -1,9 +1,9 @@
-/* Copyright 2000-2005 The Apache Software Foundation or its licensors, as
- * applicable.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+/* Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
+/**
+ * @file mod_cache.h
+ * @brief Main include file for the Apache Transparent Cache
+ *
+ * @defgroup MOD_CACHE mod_cache
+ * @ingroup  APACHE_MODS
+ * @{
+ */
+
 #ifndef MOD_CACHE_H
 #define MOD_CACHE_H 
-
-/*
- * Main include file for the Apache Transparent Cache
- */
 
 #define CORE_PRIVATE
 
@@ -74,8 +79,6 @@
 #define MIN(a,b)                ((a) < (b) ? (a) : (b))
 #endif
 
-/* default completion is 60% */
-#define DEFAULT_CACHE_COMPLETION (60)
 #define MSEC_ONE_DAY    ((apr_time_t)(86400*APR_USEC_PER_SEC)) /* one day, in microseconds */
 #define MSEC_ONE_HR     ((apr_time_t)(3600*APR_USEC_PER_SEC))  /* one hour, in microseconds */
 #define MSEC_ONE_MIN    ((apr_time_t)(60*APR_USEC_PER_SEC))    /* one minute, in microseconds */
@@ -106,41 +109,51 @@
 #endif
 
 struct cache_enable {
-    const char *url;
+    apr_uri_t url;
     const char *type;
-    apr_size_t urllen;
+    apr_size_t pathlen;
 };
 
 struct cache_disable {
-    const char *url;
-    apr_size_t urllen;
+    apr_uri_t url;
+    apr_size_t pathlen;
 };
 
 /* static information about the local cache */
 typedef struct {
-    apr_array_header_t *cacheenable;	/* URLs to cache */
-    apr_array_header_t *cachedisable;	/* URLs not to cache */
+    apr_array_header_t *cacheenable;    /* URLs to cache */
+    apr_array_header_t *cachedisable;   /* URLs not to cache */
     apr_array_header_t *hippo_always;	/* URLs to cache even when authorized */
-    apr_time_t maxex;			/* Maximum time to keep cached files in msecs */
+    /* Maximum time to keep cached files in msecs */
+    apr_time_t maxex;
     int maxex_set;
-    apr_time_t defex;           /* default time to keep cached file in msecs */
+    /* default time to keep cached file in msecs */
+    apr_time_t defex;
     int defex_set;
-    double factor;              /* factor for estimating expires date */
+    /* factor for estimating expires date */
+    double factor;
     int factor_set;
-    int complete;               /* Force cache completion after this point */
-    int complete_set;
     /** ignore the last-modified header when deciding to cache this request */
     int no_last_mod_ignore_set;
     int no_last_mod_ignore; 
     /** ignore client's requests for uncached responses */
     int ignorecachecontrol;
     int ignorecachecontrol_set;
+    /** ignore Cache-Control: private header from server */
+    int store_private;
+    int store_private_set;
+    /** ignore Cache-Control: no-store header from client or server */
+    int store_nostore;
+    int store_nostore_set;
     /** store the headers that should not be stored in the cache */
     apr_array_header_t *ignore_headers;
     /* flag if CacheIgnoreHeader has been set */
     #define CACHE_IGNORE_HEADERS_SET   1
     #define CACHE_IGNORE_HEADERS_UNSET 0
     int ignore_headers_set;
+    /** ignore query-string when caching */
+    int ignorequerystring;
+    int ignorequerystring_set;
     const char *hippo_server_name;
     apr_size_t hippo_server_name_len;
     /** cache requests with query strings even when there is no Expires: */
@@ -152,21 +165,10 @@ typedef struct {
 typedef struct cache_info cache_info;
 struct cache_info {
     int status;
-    char *content_type;
-    char *etag;
-    char *lastmods;         /* last modified of cache entity */
-    char *filename;   
     apr_time_t date;
-    apr_time_t lastmod;
-    char lastmod_str[APR_RFC822_DATE_LEN];
     apr_time_t expire;
     apr_time_t request_time;
     apr_time_t response_time;
-    apr_size_t len;
-    apr_time_t ims;    /*  If-Modified_Since header value    */
-    apr_time_t ius;    /*  If-UnModified_Since header value    */
-    const char *im;         /* If-Match header value */
-    const char *inm;         /* If-None-Match header value */
 };
 
 /* cache handle information */
@@ -179,17 +181,23 @@ struct cache_info {
  */
 typedef struct cache_object cache_object_t;
 struct cache_object {
-    char *key;
+    const char *key;
     cache_object_t *next;
     cache_info info;
-    void *vobj;         /* Opaque portion (specific to the cache implementation) of the cache object */
+    /* Opaque portion (specific to the implementation) of the cache object */
+    void *vobj;
+    /* FIXME: These are only required for mod_mem_cache. */
     apr_size_t count;   /* Number of body bytes written to the cache so far */
     int complete;
-    apr_atomic_t refcount;
-    apr_size_t cleanup;
+    apr_uint32_t refcount;  /* refcount and bit flag to cleanup object */
 };
 
 typedef struct cache_handle cache_handle_t;
+struct cache_handle {
+    cache_object_t *cache_obj;
+    apr_table_t *req_hdrs;        /* cached request headers */
+    apr_table_t *resp_hdrs;       /* cached response headers */
+};
 
 #define CACHE_PROVIDER_GROUP "cache"
 
@@ -203,7 +211,7 @@ typedef struct {
                            const char *urlkey, apr_off_t len);
     int (*open_entity) (cache_handle_t *h, request_rec *r,
                            const char *urlkey);
-    int (*remove_url) (const char *urlkey);
+    int (*remove_url) (cache_handle_t *h, apr_pool_t *p);
 } cache_provider;
 
 /* A linked-list of authn providers. */
@@ -215,36 +223,33 @@ struct cache_provider_list {
     cache_provider_list *next;
 };
 
-struct cache_handle {
-    cache_object_t *cache_obj;
-    apr_table_t *req_hdrs;        /* cached request headers */
-    apr_table_t *resp_hdrs;       /* cached response headers */
-    apr_table_t *resp_err_hdrs;   /* cached response err headers */
-    const char *content_type;     /* cached content type */
-    int status;                   /* cached status */
-};
-
 /* per request cache information */
 typedef struct {
-    cache_provider_list *providers;         /* possible cache providers */
-    const cache_provider *provider;         /* current cache provider */
-    const char *provider_name;              /* current cache provider name */
-    int fresh;				/* is the entitey fresh? */
-    cache_handle_t *handle;		/* current cache handle */
-    cache_handle_t *stale_handle;	/* stale cache handle */
-    apr_table_t *stale_headers;		/* original request headers. */
-    int in_checked;			/* CACHE_SAVE must cache the entity */
-    int block_response;			/* CACHE_SAVE must block response. */
+    cache_provider_list *providers;     /* possible cache providers */
+    const cache_provider *provider;     /* current cache provider */
+    const char *provider_name;          /* current cache provider name */
+    int fresh;                          /* is the entitey fresh? */
+    cache_handle_t *handle;             /* current cache handle */
+    cache_handle_t *stale_handle;       /* stale cache handle */
+    apr_table_t *stale_headers;         /* original request headers. */
+    int in_checked;                     /* CACHE_SAVE must cache the entity */
+    int block_response;                 /* CACHE_SAVE must block response. */
     apr_bucket_brigade *saved_brigade;  /* copy of partial response */
     apr_off_t saved_size;               /* length of saved_brigade */
     apr_time_t exp;                     /* expiration */
     apr_time_t lastmod;                 /* last-modified time */
     cache_info *info;                   /* current cache info */
+    ap_filter_t *remove_url_filter;     /* Enable us to remove the filter */
+    char *key;                          /* The cache key created for this
+                                         * request
+                                         */
 } cache_request_rec;
 
 
 /* cache_util.c */
 /* do a HTTP/1.1 age calculation */
+CACHE_DECLARE(int) api_cache_uri_meets_conditions(apr_uri_t filter, int pathlen, apr_uri_t url);
+
 CACHE_DECLARE(apr_time_t) ap_cache_current_age(cache_info *info, const apr_time_t age_value,
                                                apr_time_t now);
 
@@ -255,13 +260,23 @@ CACHE_DECLARE(apr_time_t) ap_cache_current_age(cache_info *info, const apr_time_
  * @return 0 ==> cache object is stale, 1 ==> cache object is fresh
  */
 CACHE_DECLARE(int) ap_cache_check_freshness(cache_handle_t *h, request_rec *r);
+
+/**
+ * Merge in cached headers into the response
+ * @param h cache_handle_t
+ * @param r request_rec
+ * @param preserve_orig If 1, the values in r->headers_out are preserved.
+ *        Otherwise, they are overwritten by the cached value.
+ */
+CACHE_DECLARE(void) ap_cache_accept_headers(cache_handle_t *h, request_rec *r,
+                                            int preserve_orig);
+
 CACHE_DECLARE(apr_time_t) ap_cache_hex2usec(const char *x);
 CACHE_DECLARE(void) ap_cache_usec2hex(apr_time_t j, char *y);
-CACHE_DECLARE(char *) generate_name(apr_pool_t *p, int dirlevels, 
-                                    int dirlength, 
-                                    const char *name);
-CACHE_DECLARE(int) ap_cache_request_is_conditional(apr_table_t *table);
-CACHE_DECLARE(cache_provider_list *)ap_cache_get_providers(request_rec *r, cache_server_conf *conf, const char *url);
+CACHE_DECLARE(char *) ap_cache_generate_name(apr_pool_t *p, int dirlevels, 
+                                             int dirlength, 
+                                             const char *name);
+CACHE_DECLARE(cache_provider_list *)ap_cache_get_providers(request_rec *r, cache_server_conf *conf, apr_uri_t uri);
 CACHE_DECLARE(int) ap_cache_liststr(apr_pool_t *p, const char *list,
                                     const char *key, char **val);
 CACHE_DECLARE(const char *)ap_cache_tokstr(apr_pool_t *p, const char *list, const char **str);
@@ -276,9 +291,9 @@ CACHE_DECLARE(apr_table_t *)ap_cache_cacheable_hdrs_out(apr_pool_t *pool,
 /**
  * cache_storage.c
  */
-int cache_remove_url(request_rec *r, char *url);
-int cache_create_entity(request_rec *r, char *url, apr_off_t size);
-int cache_select_url(request_rec *r, char *url);
+int cache_remove_url(cache_request_rec *cache, apr_pool_t *p);
+int cache_create_entity(request_rec *r, apr_off_t size);
+int cache_select(request_rec *r);
 apr_status_t cache_generate_key_default( request_rec *r, apr_pool_t*p, char**key );
 /**
  * create a key for the cache based on the request record
@@ -297,7 +312,7 @@ apr_status_t cache_recall_entity_body(cache_handle_t *h, apr_pool_t *p, apr_buck
 /**
  * hippo_cookie.c
  */
-int hippo_cache_check(request_rec *r, cache_server_conf *conf, const char *url);
+int hippo_cache_check(request_rec *r, cache_server_conf *conf);
 
 /* hooks */
 
@@ -328,3 +343,4 @@ APR_DECLARE_OPTIONAL_FN(apr_status_t,
 
 
 #endif /*MOD_CACHE_H*/
+/** @} */
