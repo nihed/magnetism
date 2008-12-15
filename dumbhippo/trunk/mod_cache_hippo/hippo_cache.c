@@ -253,15 +253,14 @@ int main()
 
 #else /* !TEST */
 static int hippo_cache_check_always(request_rec *r,
-                                    cache_server_conf *conf,
-				    const char *url)
+                                    cache_server_conf *conf)
 {
     int i;
 
     for (i = 0; i < conf->hippo_always->nelts; i++) {
         struct cache_disable *ent = 
                                (struct cache_disable *)conf->hippo_always->elts;
-        if ((ent[i].url) && !strncasecmp(url, ent[i].url, ent[i].urllen)) {
+        if (api_cache_uri_meets_conditions(ent[i].url, ent[i].pathlen, r->parsed_uri)) {
             /* Stop searching now. */
             return 1;
         }
@@ -274,29 +273,25 @@ static int hippo_cache_check_always(request_rec *r,
  * DumbHippo specific caching configuration
  */
 int hippo_cache_check(request_rec *r,
-                      cache_server_conf *conf,
-		      const char *url)
+                      cache_server_conf *conf)
 {
     const char *cookie_header;
-    
-    /* paranoia */
-    if (!url) return 0;
 
     if (conf->hippo_server_name == NULL) {
 	return 1;
     }
 
     /* Check if the URL is excepted from the cookie check */
-    if (hippo_cache_check_always(r, conf, url)) {
+    if (hippo_cache_check_always(r, conf)) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, r->server,
-	            "hippo_cache: %s is always eligible for caching", url);
+	            "hippo_cache: %s is always eligible for caching", r->unparsed_uri);
 	return 1;
     }
 
     cookie_header = apr_table_get(r->headers_in, "Cookie");
     if (cookie_header == NULL) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, r->server,
-	            "hippo_cache: no Cookie header sent for %s, can cache", url);
+	            "hippo_cache: no Cookie header sent for %s, can cache", r->unparsed_uri);
 	return 1;
     }
 
@@ -304,7 +299,7 @@ int hippo_cache_check(request_rec *r,
     if (!hippo_has_cookie(conf, "auth", cookie_header) &&
 	!hippo_has_cookie(conf, "authenticated", cookie_header)) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, r->server,
-		     "hippo_cache: Cookie header sent for %s doesn't have auth cookie, can cache", url);
+		     "hippo_cache: Cookie header sent for %s doesn't have auth cookie, can cache", r->unparsed_uri);
 	return 1;
     }
     

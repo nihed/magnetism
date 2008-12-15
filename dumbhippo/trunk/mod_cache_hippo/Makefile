@@ -1,4 +1,4 @@
-CFLAGS=-fPIC -g -Wall -O2 -I/usr/include/httpd -I/usr/include/apr-0
+CFLAGS=-fPIC -g -Wall -O2 -I/usr/include/httpd `pkg-config --cflags apr-1`
 
 HEADERS =		\
 	mod_cache.h
@@ -27,7 +27,7 @@ hippo_cache_test.o: hippo_cache.c
 	gcc -c $(CFLAGS) $(CPPFLAGS) -DTEST -o $@ $<
 
 hippo_cache_test: $(TEST_OBJECTS)
-	gcc -o $@ $(TEST_OBJECTS) -lpthread -lapr-0
+	gcc -o $@ $(TEST_OBJECTS) -lpthread -lapr-1
 
 clean:
 	rm -rf $(OBJECTS) $(TEST_OBJECTS) mod_cache_hippo.so hippo_cache_test
