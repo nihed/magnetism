@@ -201,6 +201,7 @@
 				<include name="**/statistics/**/*.class" />
 				<include name="**/tx/**/*.class" />
 				<include name="**/views/**/*.class" />
+				<include name="**/services/**/*.class" />
 			</fileset>
 			<manifest>
 				<attribute name="Class-Path" value="${bundled-classpath}" />
