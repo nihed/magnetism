@@ -8,7 +8,6 @@ deploy-hasingleton/jms/hsqldb-jdbc2-service.xml
 #/farm
 /lib/avalon-framework.jar
 /lib/axis.jar
-/lib/castor*.jar
 #/lib/jgroups.jar
 /lib/jacorb.jar
 /lib/jaxr-client.jar
