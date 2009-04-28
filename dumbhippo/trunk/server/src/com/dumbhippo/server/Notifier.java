@@ -2,21 +2,7 @@ package com.dumbhippo.server;
 
 import javax.ejb.Local;
 
-import com.dumbhippo.server.listeners.AccountStatusListener;
-import com.dumbhippo.server.listeners.AmazonListener;
-import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
-import com.dumbhippo.server.listeners.ExternalAccountsListener;
-import com.dumbhippo.server.listeners.FacebookListener;
-import com.dumbhippo.server.listeners.FlickrListener;
-import com.dumbhippo.server.listeners.GroupCreationListener;
-import com.dumbhippo.server.listeners.GroupMembershipListener;
-import com.dumbhippo.server.listeners.MusicListener;
-import com.dumbhippo.server.listeners.PicasaListener;
-import com.dumbhippo.server.listeners.PostClickedListener;
-import com.dumbhippo.server.listeners.PostListener;
-import com.dumbhippo.server.listeners.RevisionListener;
-import com.dumbhippo.server.listeners.UserCreationListener;
-import com.dumbhippo.server.listeners.YouTubeListener;
+import com.dumbhippo.server.listeners.*;
 
 /** 
  * The notifier bean implements synchronous notifications to interested 
@@ -47,7 +33,7 @@ public interface Notifier
 	PostListener, ExternalAccountsListener, GroupMembershipListener,
 	MusicListener, PostClickedListener,
 	ExternalAccountFeedListener, FacebookListener, FlickrListener, YouTubeListener,
-	RevisionListener, PicasaListener, AmazonListener {
+	RevisionListener, PicasaListener, AmazonListener, SmugmugListener {
 
 	// Nothing in Notifier itself; Notifier just "aggregates"
 	// the listener interfaces. If you do add something here
