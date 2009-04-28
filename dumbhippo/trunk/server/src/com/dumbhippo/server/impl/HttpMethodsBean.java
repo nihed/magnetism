@@ -33,6 +33,7 @@ import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.jboss.mx.util.MBeanProxyExt;
 import org.jboss.mx.util.MBeanServerLocator;
@@ -50,6 +51,7 @@ import com.dumbhippo.Pair;
 import com.dumbhippo.RssBuilder;
 import com.dumbhippo.Site;
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -84,6 +86,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserNameChangedRevision;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
+import com.dumbhippo.persistence.caches.CachedSmugmugAlbum;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AccountSystem;
@@ -154,6 +157,8 @@ import com.dumbhippo.statistics.StatisticsSet;
 import com.dumbhippo.statistics.Timescale;
 import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.tx.TxUtils;
+import com.dumbhippo.services.smugmug.rest.bind.*;
+import com.dumbhippo.services.smugmug.*;
 
 @Stateless
 public class HttpMethodsBean implements HttpMethods, Serializable {
@@ -2082,6 +2087,44 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		*/
 		
 		xml.appendTextNode("username", external.getHandle());
+	}
+
+	public void doFindSmugmugAccount(XmlBuilder xml, UserViewpoint viewpoint, String nickName) 
+	        throws XmlMethodException 
+    {
+        xml.openElement("smugmugUser");
+	    xml.appendTextNode("nsid", nickName);
+		xml.appendTextNode("username", nickName);
+		xml.closeElement();
+
+		Login smugmugLogin = null;
+		boolean validNickName = false;
+		try
+		{
+  		  String apiKey = config.getPropertyNoDefault(HippoProperty.SMUGMUG_API_KEY);
+			//String apiKey = "Ett34Z1b2TA16pkotZnXBrE1dwBZsAw7";
+		  SmugMugWebServices ws = new SmugMugWebServices(8000, apiKey);
+		  logger.debug("doFindSmugmugAccount nickName = " + nickName);
+		  smugmugLogin = ws.loginAnonymously();
+		  validNickName = ws.ping(smugmugLogin.getSession().getId(), nickName);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		if (!validNickName)
+			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "Smugmug doesn't report a user with the email address '" + nickName + "'");
+	}
+
+	public void doSetSmugmugAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String nsid, String nickName) throws XmlMethodException {	
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.SMUGMUG, id);
+		try {
+			external.setHandleValidating(nickName);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+		external.setExtra(nickName);
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
 	
 	public void doSetAmazonAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String urlOrUserIdStr) throws XmlMethodException {		
