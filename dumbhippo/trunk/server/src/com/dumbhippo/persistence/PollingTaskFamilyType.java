@@ -6,6 +6,7 @@ import com.dumbhippo.server.FlickrUpdater;
 import com.dumbhippo.server.LastFmUpdater;
 import com.dumbhippo.server.MySpaceUpdater;
 import com.dumbhippo.server.PicasaUpdater;
+import com.dumbhippo.server.SmugmugUpdater;
 import com.dumbhippo.server.YouTubeUpdater;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoader;
 
@@ -57,7 +58,13 @@ public enum PollingTaskFamilyType {
 		public Class<? extends PollingTaskLoader> getLoader() {
 			return AmazonUpdater.class;
 		}		
-	};
+	},
+	SMUGMUG() { // 7
+		@Override
+		public Class<? extends PollingTaskLoader> getLoader() {
+			return SmugmugUpdater.class;
+		}
+	};	
 	
 	public abstract Class<? extends PollingTaskLoader> getLoader();
 }
