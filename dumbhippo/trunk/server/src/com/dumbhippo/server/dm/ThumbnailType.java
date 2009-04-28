@@ -4,5 +4,6 @@ public enum ThumbnailType {
 	FACEBOOK_PHOTO,
 	FLICKR_PHOTO,
 	PICASA_ALBUM,
+	SMUGMUG_ALBUM,
 	YOUTUBE
 }

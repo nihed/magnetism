@@ -11,6 +11,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.services.FacebookPhotoDataView;
 import com.dumbhippo.services.FlickrPhotoView;
 import com.dumbhippo.services.PicasaAlbum;
+import com.dumbhippo.services.smugmug.rest.bind.Image;
 import com.dumbhippo.services.YouTubeVideo;
 
 @DMO(classId="http://mugshot.org/p/o/thumbnail", resourceBase="/o/thumbnail")
@@ -30,6 +31,8 @@ public abstract class ThumbnailDMO extends DMObject<ThumbnailKey> {
 			return FlickrPhotoThumbnailDMO.class;
 		case PICASA_ALBUM:
 			return PicasaAlbumThumbnailDMO.class;
+		case SMUGMUG_ALBUM:
+			return SmugmugAlbumThumbnailDMO.class;
 		case YOUTUBE:
 			return YouTubeThumbnailDMO.class;
 		}
@@ -91,6 +94,8 @@ public abstract class ThumbnailDMO extends DMObject<ThumbnailKey> {
 			return FlickrPhotoThumbnailDMO.getKey(user, (FlickrPhotoView)thumbnail);
 		else if (thumbnail instanceof PicasaAlbum)
 			return PicasaAlbumThumbnailDMO.getKey(user, (PicasaAlbum)thumbnail);
+		else if (thumbnail instanceof Image)
+			return SmugmugAlbumThumbnailDMO.getKey(user, (Image)thumbnail);
 		else if (thumbnail instanceof YouTubeVideo)
 			return YouTubeThumbnailDMO.getKey(user, (YouTubeVideo)thumbnail);
 		else
