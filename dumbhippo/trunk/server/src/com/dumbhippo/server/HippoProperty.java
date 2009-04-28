@@ -38,6 +38,7 @@ public enum HippoProperty {
 	NEW_USER_INVITATION_COUNT("dumbhippo.server.newuserinvitationcount", "0"),
 	SPECIAL_NEW_USER_INVITATION_COUNT("dumbhippo.server.specialnewuserinvitationcount", "5"), 
 	FLICKR_API_ID("dumbhippo.server.flickr.apiid", null),
+	SMUGMUG_API_KEY("dumbhippo.server.smugmug.apikey", null),
 	FACEBOOK_API_KEY("dumbhippo.server.facebook.apikey", null),
 	FACEBOOK_SECRET("dumbhippo.server.facebook.secret", null),	
 	BIND_HOST("dumbhippo.server.bind.host", null),

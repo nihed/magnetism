@@ -346,6 +346,14 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "id", "nsid", "email" })
 	public void doSetFlickrAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String nsid, String email) throws XmlMethodException;	
+
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "email" })
+	public void doFindSmugmugAccount(XmlBuilder xml, UserViewpoint viewpoint, String email) throws XmlMethodException;
+
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "id", "nsid", "email" })
+	public void doSetSmugmugAccount(XmlBuilder xml, UserViewpoint viewpoint, String id, String nsid, String email) throws XmlMethodException;	
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "id", "name" })
