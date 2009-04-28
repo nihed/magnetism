@@ -35,6 +35,7 @@ import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.PicasaUpdater;
+import com.dumbhippo.server.SmugmugUpdater;
 import com.dumbhippo.server.YouTubeUpdater;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.ExternalAccountDMO;
@@ -47,10 +48,12 @@ import com.dumbhippo.services.FlickrPhotoSize;
 import com.dumbhippo.services.FlickrPhotoView;
 import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.PicasaAlbum;
+import com.dumbhippo.services.smugmug.rest.bind.Image;
 import com.dumbhippo.services.YouTubeVideo;
 import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.FlickrUserPhotosCache;
 import com.dumbhippo.services.caches.PicasaAlbumsCache;
+import com.dumbhippo.services.caches.SmugmugAlbumsCache;
 import com.dumbhippo.services.caches.WebServiceCache;
 import com.dumbhippo.services.caches.YouTubeVideosCache;
 
@@ -71,6 +74,10 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	@EJB
 	@IgnoreDependency
 	private PicasaUpdater picasaUpdater;
+
+	@EJB
+	@IgnoreDependency
+	private SmugmugUpdater smugmugUpdater;
 	
 	@EJB
 	private Notifier notifier;
@@ -86,6 +93,9 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	
 	@WebServiceCache
 	private PicasaAlbumsCache picasaAlbumsCache;
+
+	@WebServiceCache
+	private SmugmugAlbumsCache smugmugAlbumsCache;
 	
 	@EJB
 	private CacheFactory cacheFactory;	
@@ -397,6 +407,33 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		
 		return albums;
 	}		
+
+	private List<? extends Image> getSmugmugThumbnails(ExternalAccount account) {
+		if (account.getAccountType() != ExternalAccountType.SMUGMUG)
+			throw new IllegalArgumentException("should be a Smugmug account here");
+	
+		if (account.getSentiment() != Sentiment.LOVE)
+			throw new IllegalArgumentException("Smugmug account is unloved =(");
+		
+		if (account.getHandle() == null)
+			return null;
+		
+		try {
+			smugmugUpdater.getCachedStatus(account);
+		} catch (NotFoundException e) {
+			logger.debug("No cached Smugmug status for {}", account);
+			return null;
+		}
+		
+		//List<? extends Image> albums = smugmugAlbumsCache.getSync(account.getExtra());
+		List<? extends Image> albums = smugmugAlbumsCache.fetchFromNet(account.getHandle());
+		if (albums.isEmpty()) {
+			logger.debug("Empty list of albums for {}", account);
+			return null;
+		}
+		
+		return albums;
+	}		
 	
 	private void loadPicasaThumbnails(Viewpoint viewpoint, ExternalAccountView accountView) {
 		ExternalAccount externalAccount = accountView.getExternalAccount();
@@ -408,6 +445,18 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, albums), albums.size(), 
 	             			          albums.get(0).getThumbnailWidth(), albums.get(0).getThumbnailHeight());
 	}
+
+	private void loadSmugmugThumbnails(Viewpoint viewpoint, ExternalAccountView accountView) {
+		ExternalAccount externalAccount = accountView.getExternalAccount();
+		
+		List<? extends Image> albums = getSmugmugThumbnails(externalAccount);	
+		if (albums == null)
+			return;
+		
+		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, albums), albums.size(), 
+	             			          albums.get(0).getThumbnailWidth(), albums.get(0).getThumbnailHeight());
+	}
+
 
 	public List<? extends Thumbnail> getThumbnails(ExternalAccount externalAccount) {
 		ExternalAccountType type = externalAccount.getAccountType();
@@ -422,6 +471,8 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			return getYouTubeThumbnails(externalAccount);
 		case PICASA:
 			return getPicasaThumbnails(externalAccount);
+		case SMUGMUG:
+			return getSmugmugThumbnails(externalAccount);
 		default:
 			// most accounts lack thumbnails
 			return null;
@@ -444,6 +495,9 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			break;
 		case PICASA:
 			loadPicasaThumbnails(viewpoint, externalAccountView);
+			break;
+		case SMUGMUG:
+			loadSmugmugThumbnails(viewpoint, externalAccountView);
 			break;
 		default:
 			// most accounts lack thumbnails

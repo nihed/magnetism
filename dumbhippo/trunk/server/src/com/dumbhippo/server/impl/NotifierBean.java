@@ -45,6 +45,7 @@ import com.dumbhippo.server.listeners.GroupCreationListener;
 import com.dumbhippo.server.listeners.GroupMembershipListener;
 import com.dumbhippo.server.listeners.MusicListener;
 import com.dumbhippo.server.listeners.PicasaListener;
+import com.dumbhippo.server.listeners.SmugmugListener;
 import com.dumbhippo.server.listeners.PostClickedListener;
 import com.dumbhippo.server.listeners.PostListener;
 import com.dumbhippo.server.listeners.RevisionListener;
@@ -54,6 +55,7 @@ import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.PicasaAlbum;
+import com.dumbhippo.services.smugmug.rest.bind.Image;
 import com.dumbhippo.services.YouTubeVideo;
 
 /**
@@ -335,6 +337,12 @@ public class NotifierBean implements Notifier {
 	public void onPicasaRecentAlbumsChanged(String username, List<? extends PicasaAlbum> albums) {
 		for (PicasaListener l : getListeners(PicasaListener.class)) {
 			l.onPicasaRecentAlbumsChanged(username, albums);
+		}
+	}
+
+	public void onSmugmugRecentAlbumsChanged(String username, List<? extends Image> albums) {
+		for (SmugmugListener l : getListeners(SmugmugListener.class)) {
+			l.onSmugmugRecentAlbumsChanged(username, albums);
 		}
 	}
 	
