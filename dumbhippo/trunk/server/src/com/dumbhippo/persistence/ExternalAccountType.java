@@ -1140,6 +1140,61 @@ public enum ExternalAccountType {
 		public String getHelpUrl() {
 			return "http://www.amazon.com/gp/pdp/profile/";
 		}
+	},
+	SMUGMUG("SmugMug") { // 19	
+		@Override
+		public String getIconName() {
+			return "smugmug_icon.gif";
+		}
+		
+		@Override
+		public String getLink(String handle, String extra) 
+		{
+			//String userName = handle.substring(0, handle.indexOf("@"));
+			String userName = handle;
+			return String.format("http://%1$s.smugmug.com", userName);
+		}
+		
+		@Override
+		public String getSiteLink() {
+			return "http://www.smugmug.com/";
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "My Photos";
+		}
+		
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "Nick Name";
+	    }
+		
+	
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}
+
+		@Override
+		public ExternalAccountInfoSource getInfoSource() {
+			return ExternalAccountInfoSource.LINK;
+		}
+		
+		@Override
+		public String getSupportType() {
+			return "upload new photos and photo sets";
+		}
+		
+		@Override
+		public ExternalAccountCategory getCategory() {
+			return ExternalAccountCategory.MEDIA;
+		}
+		
+		@Override
+		public String getHelpUrl() {
+			return "http://www.smugmug.com/visitor-help";
+		}
 	};
 	
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountType.class);	
