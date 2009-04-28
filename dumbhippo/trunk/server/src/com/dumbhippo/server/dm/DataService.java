@@ -104,6 +104,7 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 		model.addDMClass(FlickrPersonBlockDMO.class);
 		model.addDMClass(FlickrPhotosetBlockDMO.class);
 		model.addDMClass(PicasaPersonBlockDMO.class);
+		model.addDMClass(SmugmugPersonBlockDMO.class);
 
 		model.addDMClass(PostBlockDMO.class);
 
@@ -125,6 +126,7 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 		model.addDMClass(FlickrPhotoThumbnailDMO.class);
 		model.addDMClass(FacebookPhotoThumbnailDMO.class);
 		model.addDMClass(PicasaAlbumThumbnailDMO.class);
+		model.addDMClass(SmugmugAlbumThumbnailDMO.class);
 		model.addDMClass(YouTubeThumbnailDMO.class);
 		
 		model.addDMClass(TrackDMO.class);

@@ -119,6 +119,9 @@ public abstract class BlockDMO extends DMObject<BlockDMOKey> {
 
 		case PICASA_PERSON:
 			return PicasaPersonBlockDMO.class;
+
+		case SMUGMUG_PERSON:
+			return SmugmugPersonBlockDMO.class;
 			
 		case POST:
 			return PostBlockDMO.class;
