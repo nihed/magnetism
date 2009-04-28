@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2007 (http://www.altova.com) by Nikolay.Samoylov (EMBRACE) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+  <xs:element name="rsp">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="method" type="xs:string" minOccurs="0"/>
+        <xs:choice>
+          <xs:element name="Login">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="Session">
+                  <xs:complexType>
+                    <xs:attribute name="id" type="xs:string" use="required"/>
+                  </xs:complexType>
+                </xs:element>
+                <xs:element name="User" minOccurs="0">
+                  <xs:complexType>
+                    <xs:attribute name="id" type="xs:string" use="required"/>
+                    <xs:attribute name="NickName" type="xs:string" use="required"/>
+                    <xs:attribute name="DisplayName" type="xs:string"/>
+                  </xs:complexType>
+                </xs:element>
+              </xs:sequence>
+              <xs:attribute name="PasswordHash" type="xs:string"/>
+              <xs:attribute name="AccountType" type="AccountType"/>
+              <xs:attribute name="FileSizeLimit" type="xs:int"/>
+              <xs:attribute name="SmugVault" type="xs:short"/>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="Albums">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element ref="Album" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="Images">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="Image" minOccurs="0" maxOccurs="unbounded">
+                  <xs:complexType>
+                    <xs:sequence>
+                      <xs:element ref="Album" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                    <xs:attribute name="id" type="xs:string" use="required"/>
+                    <xs:attribute name="Key" type="xs:string" use="required"/>
+                    <xs:attribute name="FileName" type="xs:string"/>
+                    <xs:attribute name="Caption" type="xs:string"/>
+                    <xs:attribute name="Date" type="xs:string"/>
+                    <xs:attribute name="Format" type="xs:string"/>
+                    <xs:attribute name="Width" type="xs:short"/>
+                    <xs:attribute name="Height" type="xs:short"/>
+                    <xs:attribute name="LastUpdated" type="xs:string"/>
+                    <xs:attribute name="AlbumURL" type="xs:anyURI"/>
+                    <xs:attribute name="ThumbURL" type="xs:anyURI"/>
+                    <xs:attribute name="MediumURL" type="xs:anyURI"/>
+                    <xs:anyAttribute namespace="##local" processContents="skip"/>
+                  </xs:complexType>
+                </xs:element>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="err">
+            <xs:complexType>
+              <xs:attribute name="code" type="xs:short" use="required"/>
+              <xs:attribute name="msg" type="xs:string" use="required"/>
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:sequence>
+      <xs:attribute name="stat" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="ok"/>
+            <xs:enumeration value="fail"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Album">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Category" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:attribute name="id" type="xs:string" use="required"/>
+            <xs:attribute name="Name" type="xs:string" use="required"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="id" type="xs:string" use="required"/>
+      <xs:attribute name="Key" type="xs:string" use="required"/>
+      <xs:attribute name="Title" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="AccountType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Standard"/>
+      <xs:enumeration value="Power"/>
+      <xs:enumeration value="Pro"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>
