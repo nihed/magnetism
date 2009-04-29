@@ -86,6 +86,7 @@ import com.dumbhippo.server.blocks.MusicPersonBlockHandler;
 import com.dumbhippo.server.blocks.MySpacePersonBlockHandler;
 import com.dumbhippo.server.blocks.NetflixBlockHandler;
 import com.dumbhippo.server.blocks.PicasaBlockHandler;
+import com.dumbhippo.server.blocks.SmugmugBlockHandler;
 import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.blocks.RedditBlockHandler;
 import com.dumbhippo.server.blocks.TwitterPersonBlockHandler;
@@ -220,6 +221,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;
 		case PICASA_PERSON:
 			handlerClass = PicasaBlockHandler.class;
+			break;
+		case SMUGMUG_PERSON:
+			handlerClass = SmugmugBlockHandler.class;
 			break;
 		case AMAZON_REVIEW:
 			handlerClass = AmazonActivityBlockHandler.class;
@@ -2324,6 +2328,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case ACCOUNT_QUESTION:
 		case GOOGLE_READER_SHARED_ITEM:
 		case PICASA_PERSON:
+		case SMUGMUG_PERSON:
 		case AMAZON_REVIEW:
 		case AMAZON_WISH_LIST_ITEM:	
 			isGroupParticipation = false;
