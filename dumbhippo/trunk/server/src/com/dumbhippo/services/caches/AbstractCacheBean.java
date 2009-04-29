@@ -30,7 +30,6 @@ import com.dumbhippo.tx.TxUtils;
  */
 @TransactionAttribute(TransactionAttributeType.SUPPORTS) // hackaround for bug with method tx attr on generic methods
 public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> implements Cache<KeyType,ResultType> {
-	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AbstractCacheBean.class);
 	
 	// how long to wait on the search API call
@@ -60,7 +59,8 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 		AMAZON_REVIEWS,
 		AMAZON_LISTS,
 		AMAZON_LIST_ITEMS,
-		AMAZON_ITEM
+		AMAZON_ITEM,
+		SMUGMUG_ALBUM
 	}
 	
 	private static EnumMap<Request,UniqueTaskExecutor<?,?>> executors;
@@ -116,12 +116,10 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 		this.expirationTime = expirationTime;
 	}
 	
-	@SuppressWarnings("unchecked")
 	protected UniqueTaskExecutor<KeyType,ResultType> getExecutor() {
 		return getExecutorInternal(defaultRequest);
 	}
 	
-	@SuppressWarnings("unchecked")
 	protected UniqueTaskExecutor<KeyType,ResultType> getExecutor(Request request) {
 		return getExecutorInternal(request);
 	}	
@@ -141,9 +139,9 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 	
 	protected abstract ResultType fetchFromNetImpl(KeyType key);	
 	
-	@TransactionAttribute(TransactionAttributeType.NEVER)
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public ResultType fetchFromNet(KeyType key) {
-		TxUtils.assertNoTransaction();
+		//TxUtils.assertNoTransaction();
 		return fetchFromNetImpl(key);
 	}
 
